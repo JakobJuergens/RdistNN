@@ -42,6 +42,6 @@ score_plqr_component(
 \item{h}{bandwidth for "kernel" (NULL => auto median of positive distances).}
 }
 \description{
-For subset S, returns sum_{i in S} w_i(x0) * (tau - 1{Y_i <= D_i^T beta + q(X_i)}) * (D_{i,j} - mD_{i,j})
+For subset S, returns sum_{i in S} w_i(x0) * (tau - 1(Y_i <= D_i^T beta + q(X_i)) * (D_ij - mD_ij)
 using a localizer around x0. No nuisances are fit inside; all columns must be supplied.
 }

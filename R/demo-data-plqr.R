@@ -16,12 +16,12 @@
 #' Minimal PLQR demo data (oracle nuisances, no internal fitting)
 #'
 #' Generates data for a partially linear quantile regression model
-#' \deqn{ Q_\tau(Y \mid X, D) = D^\top \beta_0(\tau) + q_\tau(X), }
-#' with user-chosen design for \eqn{q_\tau}. Errors are Asymmetric Laplace
-#' so the conditional \eqn{\tau}-quantile is exactly the right-hand side.
+#' deqn{ Q_tau(Y given X, D) = D^T beta_0(tau) + q_tau(X), }
+#' with user-chosen design for eqn{q_tau}. Errors are Asymmetric Laplace
+#' so the conditional eqn{tau}-quantile is exactly the right-hand side.
 #'
-#' Also returns oracle \eqn{m_D(X)=E[D\mid X]} to build the *orthogonal* PLQR score
-#' \deqn{ \psi(W;\beta) = (\,\tau - 1\{Y \le D^\top\beta + q_\tau(X)\}\,)\,(D - m_D(X)). }
+#' Also returns oracle eqn{m_D(X)=E(D given X)} to build the orthogonal PLQR score
+#' deqn{ psi(W;beta) = (\,tau - 1\{Y le D^T beta + q_tau(X)\}\,)\,(D - m_D(X)). }
 #'
 #' @param n Sample size.
 #' @param p Number of features in X (>= 2 recommended).
@@ -34,7 +34,7 @@
 #' @return A list with:
 #' \itemize{
 #'   \item \code{data}: data.frame with columns \code{X1..Xp}, \code{D1..Dp_d}, \code{Y},
-#'         oracle nuisances \code{q_oracle} (== q_tau(X)) and \code{mD1..mDp_d} (== E[D|X]),
+#'         oracle nuisances \code{q_oracle} (== q_tau(X)) and \code{mD1..mDp_d} (== E(D given X),
 #'         and residuals \code{rD1..rDp_d} (== D - mD).
 #'   \item \code{x0}: the target point used.
 #'   \item \code{truth}: list with \code{beta_true} (length p_d),
@@ -83,14 +83,14 @@ plqr_demo_data <- function(n = 300,
   )
   qX <- q_fn(X)
 
-  # Partially linear regressors D with oracle E[D|X] = mD(X)
+  # Partially linear regressors D with oracle E(D given X) = mD(X)
   # We'll use a simple linear mD(X) with different loadings per column of D.
   Gamma <- matrix(0, nrow = p, ncol = p_d)
   for (j in seq_len(p_d)) {
     g <- c(0.6, -0.4, rep(0, max(0, p - 2L))) + (j - 1) * 0.2
     Gamma[, j] <- g[seq_len(p)]
   }
-  mD <- X %*% Gamma                 # n x p_d matrix, oracle E[D|X]
+  mD <- X %*% Gamma                 # n x p_d matrix, oracle E(D given X)
   V  <- matrix(rnorm(n * p_d, sd = 0.6), n, p_d)
   D  <- mD + V
   colnames(D) <- paste0("D", seq_len(p_d))
@@ -99,7 +99,7 @@ plqr_demo_data <- function(n = 300,
   U <- .r_ald(n, tau = tau, sigma = sigma)
 
   # Outcome satisfying PLQR structure:
-  # Y = D^T beta_true + q_tau(X) + U   with Q_tau(U | X, D) = 0
+  # Y = D^T beta_true + q_tau(X) + U   with Q_tau(U  given  X, D) = 0
   Y <- as.vector(D %*% beta_true) + qX + U
 
   # Tidy outputs
@@ -125,7 +125,7 @@ plqr_demo_data <- function(n = 300,
 
 #' Orthogonal PLQR moment contributions for a given beta (uses oracle nuisances)
 #'
-#' For each i, returns \eqn{ ( \tau - 1\{Y_i \le D_i^\top \beta + q_\tau(X_i)\} ) (D_i - m_D(X_i)) }.
+#' For each i, returns eqn{ ( tau - 1\{Y_i le D_i^T beta + q_tau(X_i)\} ) (D_i - m_D(X_i)) }.
 #' This is the vector moment entering the Z-estimation.
 #'
 #' @param df A data.frame returned by \code{plqr_demo_data()$data}.

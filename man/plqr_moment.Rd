@@ -17,7 +17,7 @@ plqr_moment(df, beta, tau)
 An n x p_d matrix of moment contributions.
 }
 \description{
-For each i, returns \eqn{ ( \tau - 1\{Y_i \le D_i^\top \beta + q_\tau(X_i)\} ) (D_i - m_D(X_i)) }.
+For each i, returns eqn{ ( tau - 1\{Y_i le D_i^T beta + q_tau(X_i)\} ) (D_i - m_D(X_i)) }.
 This is the vector moment entering the Z-estimation.
 }
 \examples{
