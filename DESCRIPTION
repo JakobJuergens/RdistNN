@@ -23,6 +23,7 @@ Suggests:
     optimx,
     nloptr,
     quantreg,
+    bench,
     knitr,
     rmarkdown,
     testthat (>= 3.0.0)
