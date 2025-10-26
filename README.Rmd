@@ -21,38 +21,90 @@ knitr::opts_chunk$set(
 [![Codecov test coverage](https://codecov.io/gh/JakobJuergens/RdistNN/graph/badge.svg)](https://app.codecov.io/gh/JakobJuergens/RdistNN)
 <!-- badges: end -->
 
-The goal of RdistNN is to ...
+**RdistNN** is a small, focused toolkit for distance-based nearest-neighbor (DNN) kernels and U-statistic building blocks used in conditional Z-estimation and partially linear quantile regression (PLQR).
+
+- Fast C++ implementations (with automatic R fallbacks) for core DNN primitives  
+- Deterministic tie handling and permutation-invariance checks  
+- Score factories for PLQR and CATE-style estimators, with tests and CI
+
+> Status: early research package. APIs may change.
 
 ## Installation
 
-You can install the development version of RdistNN from [GitHub](https://github.com/) with:
+Install the development version from GitHub:
 
-``` r
+```r
 # install.packages("pak")
 pak::pak("JakobJuergens/RdistNN")
 ```
 
-## Example
+## Quick start
 
-This is a basic example which shows you how to solve a common problem:
+Non-evaluating examples that show intended usage without requiring all features to be present yet.
 
-```{r example}
+### 1) Local mean with DNN weights
+
+```{r, eval = FALSE}
 library(RdistNN)
-## basic example code
+
+set.seed(1)
+n  <- 500
+x  <- runif(n)
+y  <- sin(2*pi*x) + rnorm(n, sd = 0.2)
+X  <- matrix(x, ncol = 1)
+x0 <- 0.4
+
+# Nearest-neighbor weight vector at x0 using k = 1 (DNN-1)
+w1 <- dnn1(x0, X)           # length n, nonnegative, sums to 1
+
+# Or k-NN weights (k ≥ 1); when k = 1 this should equal dnn1()
+wk <- dnnk(x0, X, k = 5)
+
+# Local average at x0
+mu_hat <- sum(wk * y)
+mu_hat
 ```
 
-What is special about using `README.Rmd` instead of just `README.md`? You can include R chunks like so:
+### 2) PLQR score components (work in progress)
 
-```{r cars}
-summary(cars)
+```{r, eval = FALSE}
+library(RdistNN)
+
+# Suppose you have (Y, D, X, Z), a target quantile tau, and a component index j.
+tau <- 0.5
+j   <- 1L
+
+# Factory returns a function you can map over subsets / batches
+sc <- score_plqr_component(tau = tau, j = j)
+
+# Minimal illustration:
+# sc(data = list(Y = Y, D = D, X = X, Z = Z), beta = beta_init)
 ```
 
-You'll still need to render `README.Rmd` regularly, to keep `README.md` up-to-date. `devtools::build_readme()` is handy for this.
+## Design notes
 
-You can also embed plots, for example:
+- **Engine selection.** Uses compiled code when available; otherwise falls back to R. Unit tests check parity.  
+- **Determinism.** Tie handling and ordering are fixed so runs are reproducible.  
+- **Testing.** `testthat` (edition 3) and GitHub Actions. Run:
+  ```r
+  devtools::test()
+  ```
+- **Docs.** Rebuild this file with:
+  ```r
+  devtools::build_readme()
+  ```
 
-```{r pressure, echo = FALSE}
-plot(pressure)
-```
+## Roadmap (short)
 
-In that case, don't forget to commit and push the resulting figure files, so they display on GitHub and CRAN.
+- DNN / DNN-k kernels with auto-bandwidth helpers  
+- Score factories for CATE and PLQR  
+- Jackknife / IJ helpers for generalized U-statistics  
+- Vignettes with small simulations once the API stabilizes
+
+## Getting help
+
+Please open an issue with a minimal reproducible example once the public API stabilizes. Until then, expect frequent changes.
+
+---
+
+*This package accompanies ongoing work on generalized U-statistics, jackknife variance estimation, and distance-based localizers.*

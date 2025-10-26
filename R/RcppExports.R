@@ -9,3 +9,11 @@ rustat_cate_eval_batch <- function(subs, ctx_) {
     .Call(`_RdistNN_rustat_cate_eval_batch`, subs, ctx_)
 }
 
+rustat_plqr_ctx_create <- function(X, Y, D, qx, mD, x0, localizer, k, h, tau, j, beta) {
+    .Call(`_RdistNN_rustat_plqr_ctx_create`, X, Y, D, qx, mD, x0, localizer, k, h, tau, j, beta)
+}
+
+rustat_plqr_eval_batch <- function(subs, ctx_) {
+    .Call(`_RdistNN_rustat_plqr_eval_batch`, subs, ctx_)
+}
+
