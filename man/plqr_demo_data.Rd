@@ -36,7 +36,7 @@ plqr_demo_data(
 A list with:
 \itemize{
 \item \code{data}: data.frame with columns \code{X1..Xp}, \code{D1..Dp_d}, \code{Y},
-oracle nuisances \code{q_oracle} (== q_tau(X)) and \code{mD1..mDp_d} (== E\link{D|X}),
+oracle nuisances \code{q_oracle} (== q_tau(X)) and \code{mD1..mDp_d} (== E(D given X),
 and residuals \code{rD1..rDp_d} (== D - mD).
 \item \code{x0}: the target point used.
 \item \code{truth}: list with \code{beta_true} (length p_d),
@@ -46,13 +46,13 @@ and residuals \code{rD1..rDp_d} (== D - mD).
 }
 \description{
 Generates data for a partially linear quantile regression model
-\deqn{ Q_\tau(Y \mid X, D) = D^\top \beta_0(\tau) + q_\tau(X), }
-with user-chosen design for \eqn{q_\tau}. Errors are Asymmetric Laplace
-so the conditional \eqn{\tau}-quantile is exactly the right-hand side.
+deqn{ Q_tau(Y given X, D) = D^T beta_0(tau) + q_tau(X), }
+with user-chosen design for eqn{q_tau}. Errors are Asymmetric Laplace
+so the conditional eqn{tau}-quantile is exactly the right-hand side.
 }
 \details{
-Also returns oracle \eqn{m_D(X)=E[D\mid X]} to build the \emph{orthogonal} PLQR score
-\deqn{ \psi(W;\beta) = (\,\tau - 1\{Y \le D^\top\beta + q_\tau(X)\}\,)\,(D - m_D(X)). }
+Also returns oracle eqn{m_D(X)=E(D given X)} to build the orthogonal PLQR score
+deqn{ psi(W;beta) = (\,tau - 1\{Y le D^T beta + q_tau(X)\}\,)\,(D - m_D(X)). }
 }
 \examples{
 demo <- plqr_demo_data(n = 300, p = 2, p_d = 1, tau = 0.5, design = "sinusoidal", seed = 1)
