@@ -38,10 +38,46 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rustat_plqr_ctx_create
+SEXP rustat_plqr_ctx_create(NumericMatrix X, NumericVector Y, NumericMatrix D, NumericVector qx, NumericMatrix mD, NumericVector x0, std::string localizer, int k, double h, double tau, int j, NumericVector beta);
+RcppExport SEXP _RdistNN_rustat_plqr_ctx_create(SEXP XSEXP, SEXP YSEXP, SEXP DSEXP, SEXP qxSEXP, SEXP mDSEXP, SEXP x0SEXP, SEXP localizerSEXP, SEXP kSEXP, SEXP hSEXP, SEXP tauSEXP, SEXP jSEXP, SEXP betaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type D(DSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type qx(qxSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type mD(mDSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type x0(x0SEXP);
+    Rcpp::traits::input_parameter< std::string >::type localizer(localizerSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< double >::type h(hSEXP);
+    Rcpp::traits::input_parameter< double >::type tau(tauSEXP);
+    Rcpp::traits::input_parameter< int >::type j(jSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type beta(betaSEXP);
+    rcpp_result_gen = Rcpp::wrap(rustat_plqr_ctx_create(X, Y, D, qx, mD, x0, localizer, k, h, tau, j, beta));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rustat_plqr_eval_batch
+NumericVector rustat_plqr_eval_batch(IntegerMatrix subs, SEXP ctx_);
+RcppExport SEXP _RdistNN_rustat_plqr_eval_batch(SEXP subsSEXP, SEXP ctx_SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type subs(subsSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type ctx_(ctx_SEXP);
+    rcpp_result_gen = Rcpp::wrap(rustat_plqr_eval_batch(subs, ctx_));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_RdistNN_rustat_cate_ctx_create", (DL_FUNC) &_RdistNN_rustat_cate_ctx_create, 6},
     {"_RdistNN_rustat_cate_eval_batch", (DL_FUNC) &_RdistNN_rustat_cate_eval_batch, 2},
+    {"_RdistNN_rustat_plqr_ctx_create", (DL_FUNC) &_RdistNN_rustat_plqr_ctx_create, 12},
+    {"_RdistNN_rustat_plqr_eval_batch", (DL_FUNC) &_RdistNN_rustat_plqr_eval_batch, 2},
     {NULL, NULL, 0}
 };
 
