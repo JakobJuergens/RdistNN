@@ -22,36 +22,44 @@ static inline void weights_dnn1(const NumericVector& dx, NumericVector& w) {
 
 // helper: assign weights for dnnk
 static inline void weights_dnnk(const NumericVector& dx, NumericVector& w, int k) {
-  IntegerVector ord = seq(0, dx.size() - 1);
-  std::sort(ord.begin(), ord.end(), [&](int i, int j){ return dx[i] < dx[j]; });
+  std::vector<int> ord(dx.size());
+  std::iota(ord.begin(), ord.end(), 0);
+  std::sort(ord.begin(), ord.end(), [&](int i, int j){
+    if (dx[i] < dx[j]) return true;
+    if (dx[i] > dx[j]) return false;
+    return i < j; // tie -> smaller index first (mimics R's order)
+  });
   std::fill(w.begin(), w.end(), 0.0);
   int kk = std::min(k, (int)dx.size());
   for (int t = 0; t < kk; ++t) w[ ord[t] ] = 1.0 / kk;
 }
+
 
 // helper: Gaussian kernel weights, auto-bandwidth if needed
 static inline void weights_kernel(const NumericVector& dx, NumericVector& w, double h) {
   std::fill(w.begin(), w.end(), 0.0);
   double hh = h;
   if (!(hh > 0)) {
-    // crude auto h: median of positive distances, else 1.0
     std::vector<double> pos; pos.reserve(dx.size());
-    for (int i=0;i<dx.size();++i) if (dx[i] > 0 && R_finite(dx[i])) pos.push_back(dx[i]);
+    for (int i=0; i<dx.size(); ++i) if (dx[i] > 0 && R_finite(dx[i])) pos.push_back(dx[i]);
     if (!pos.empty()) {
-      std::nth_element(pos.begin(), pos.begin() + pos.size()/2, pos.end());
-      hh = pos[pos.size()/2];
+      std::sort(pos.begin(), pos.end());
+      const size_t m = pos.size();
+      if (m % 2u == 1u) hh = pos[m/2];
+      else              hh = 0.5 * (pos[m/2 - 1] + pos[m/2]);  // average the two middles
     } else {
       hh = 1.0;
     }
   }
-  double s = 0.0;
-  for (int i=0;i<dx.size();++i) {
-    double g = std::exp(-0.5 * (dx[i]/hh)*(dx[i]/hh));
-    w[i] = g; s += g;
+  double ssum = 0.0;
+  for (int i=0; i<dx.size(); ++i) {
+    const double g = std::exp(-0.5 * (dx[i]/hh) * (dx[i]/hh));
+    w[i] = g; ssum += g;
   }
-  if (s <= 0) for (int i=0;i<dx.size();++i) w[i] = 1.0/dx.size();
-  else for (int i=0;i<dx.size();++i) w[i] /= s;
+  if (ssum <= 0) for (int i=0; i<dx.size(); ++i) w[i] = 1.0 / dx.size();
+  else           for (int i=0; i<dx.size(); ++i) w[i] /= ssum;
 }
+
 
 // Create a context external pointer
 // [[Rcpp::export]]
