@@ -4,9 +4,9 @@
 \name{RdistNN-package}
 \alias{RdistNN}
 \alias{RdistNN-package}
-\title{RdistNN: What the Package Does (One Line, Title Case)}
+\title{RdistNN: Generalized U-Statistics and Z-Estimation with Pluggable Scores}
 \description{
-What the package does (one paragraph).
+Fast, extensible framework for generalized U-statistics and Z-estimation with a pluggable score (kernel) interface. Uses compiled C++ fast paths when available and falls back to batched R evaluation otherwise. Supports complete and incomplete subsampling, batched evaluation, and variance estimation via delete-1 jackknife.
 }
 \seealso{
 Useful links:
@@ -17,7 +17,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: First Last \email{first.last@example.com}
+\strong{Maintainer}: Jakob Juergens \email{info@jakobjuergens.com}
 
 }
 \keyword{internal}
