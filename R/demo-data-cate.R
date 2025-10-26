@@ -4,8 +4,8 @@
 #'
 #' Generates a small synthetic dataset for experimenting with the CATE score.
 #' It returns X, D, Y, along with oracle nuisance quantities:
-#'   e(x) = P(D=1|X=x), m0(x) = E[Y|X=x, D=0], tau(x) = treatment effect,
-#'   m(x) = E[Y|X=x] = m0(x) + e(x) * tau(x),
+#'   e(x) = P(D=1|X=x), m0(x) = E[Y given X=x, D=0], tau(x) = treatment effect,
+#'   m(x) = E[Y given X=x] = m0(x) + e(x) * tau(x),
 #' and the R-learner style pseudo-outcome:
 #'   rho = (D - e) * (Y - m) / { e (1 - e) }.
 #'

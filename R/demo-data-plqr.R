@@ -16,12 +16,12 @@
 #' Minimal PLQR demo data (oracle nuisances, no internal fitting)
 #'
 #' Generates data for a partially linear quantile regression model
-#' \deqn{ Q_\tau(Y \mid X, D) = D^\top \beta_0(\tau) + q_\tau(X), }
-#' with user-chosen design for \eqn{q_\tau}. Errors are Asymmetric Laplace
-#' so the conditional \eqn{\tau}-quantile is exactly the right-hand side.
+#' deqn{ Q_tau(Y given X, D) = D^T beta_0(tau) + q_tau(X), }
+#' with user-chosen design for eqn{q_\tau}. Errors are Asymmetric Laplace
+#' so the conditional eqn{tau}-quantile is exactly the right-hand side.
 #'
-#' Also returns oracle \eqn{m_D(X)=E[D\mid X]} to build the *orthogonal* PLQR score
-#' \deqn{ \psi(W;\beta) = (\,\tau - 1\{Y \le D^\top\beta + q_\tau(X)\}\,)\,(D - m_D(X)). }
+#' Also returns oracle eqn{m_D(X)=E[D given X]} to build the orthogonal PLQR score
+#' deqn{ psi(W;beta) = (\,tau - 1\{Y le D^T beta + q_tau(X)\}\,)\,(D - m_D(X)). }
 #'
 #' @param n Sample size.
 #' @param p Number of features in X (>= 2 recommended).
@@ -125,7 +125,7 @@ plqr_demo_data <- function(n = 300,
 
 #' Orthogonal PLQR moment contributions for a given beta (uses oracle nuisances)
 #'
-#' For each i, returns \eqn{ ( \tau - 1\{Y_i \le D_i^\top \beta + q_\tau(X_i)\} ) (D_i - m_D(X_i)) }.
+#' For each i, returns eqn{ ( tau - 1\{Y_i le D_i^T beta + q_tau(X_i)\} ) (D_i - m_D(X_i)) }.
 #' This is the vector moment entering the Z-estimation.
 #'
 #' @param df A data.frame returned by \code{plqr_demo_data()$data}.
