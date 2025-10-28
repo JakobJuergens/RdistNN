@@ -1,123 +1,108 @@
+// src/score_plqr.cpp
 // [[Rcpp::depends(Rcpp)]]
 #include <Rcpp.h>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 using namespace Rcpp;
 
+// Scores-only context for PLQR (no geometry, no localizer, no weights)
 struct PlqrCtx {
-  NumericMatrix X;      // n x p
-  NumericMatrix D;      // n x p_d
-  NumericMatrix mD;     // n x p_d
-  NumericVector Y;      // n
-  NumericVector qx;     // n
-  NumericVector x0;     // p
-  NumericVector beta;   // p_d
-
-  int p;                // dim X
-  int p_d;              // dim D
-  int j;                // component index (1-based from R)
-  std::string localizer;
-  int k;
-  double h;             // <=0 => auto
-  double tau;
+  NumericMatrix D;   // n x p_d
+  NumericMatrix mD;  // n x p_d
+  NumericVector Y;   // n
+  NumericVector qx;  // n
+  NumericVector beta;// p_d
+  int n;             // rows
+  int p_d;           // cols in D/mD
+  int j;             // 1-based component index
+  double tau;        // quantile in (0,1)
 };
 
-static inline void weights_dnn1(const NumericVector& dx, NumericVector& w) {
-  int m = which_min(dx);
-  std::fill(w.begin(), w.end(), 0.0);
-  w[m] = 1.0;
-}
-
-static inline void weights_dnnk(const NumericVector& dx, NumericVector& w, int k) {
-  std::vector<int> ord(dx.size());
-  std::iota(ord.begin(), ord.end(), 0);
-  std::sort(ord.begin(), ord.end(), [&](int a, int b){
-    if (dx[a] < dx[b]) return true;
-    if (dx[a] > dx[b]) return false;
-    return a < b; // tie-break by index to mimic R's order()
-  });
-  std::fill(w.begin(), w.end(), 0.0);
-  int kk = std::min(k, (int)dx.size());
-  for (int t=0; t<kk; ++t) w[ ord[t] ] = 1.0 / kk;
-}
-
-static inline void weights_kernel(const NumericVector& dx, NumericVector& w, double h) {
-  std::fill(w.begin(), w.end(), 0.0);
-  double hh = h;
-  if (!(hh > 0)) {
-    std::vector<double> pos; pos.reserve(dx.size());
-    for (int i=0; i<dx.size(); ++i) if (dx[i] > 0 && R_finite(dx[i])) pos.push_back(dx[i]);
-    if (!pos.empty()) {
-      std::sort(pos.begin(), pos.end());
-      size_t m = pos.size();
-      hh = (m % 2u) ? pos[m/2] : 0.5 * (pos[m/2 - 1] + pos[m/2]);  // true median
-    } else {
-      hh = 1.0;
-    }
-  }
-  double ssum = 0.0;
-  for (int i=0; i<dx.size(); ++i) { double g = std::exp(-0.5 * (dx[i]/hh)*(dx[i]/hh)); w[i] = g; ssum += g; }
-  if (ssum <= 0) for (int i=0; i<dx.size(); ++i) w[i] = 1.0/dx.size();
-  else           for (int i=0; i<dx.size(); ++i) w[i] /= ssum;
-}
-
 // [[Rcpp::export]]
-SEXP rustat_plqr_ctx_create(NumericMatrix X, NumericVector Y,
-                            NumericMatrix D, NumericVector qx, NumericMatrix mD,
-                            NumericVector x0,
-                            std::string localizer, int k, double h,
-                            double tau, int j, NumericVector beta) {
-  if (X.nrow() != D.nrow() || X.nrow() != mD.nrow() || X.nrow() != Y.size() || X.nrow() != qx.size())
-    stop("X, D, mD, Y, qx must share n.");
-  if (X.ncol() != x0.size()) stop("x0 length must equal ncol(X).");
-  if (D.ncol() != beta.size()) stop("beta length must equal ncol(D).");
-  if (!(j >= 1 && j <= D.ncol())) stop("j out of range.");
+SEXP rustat_plqr_ctx_create(NumericVector Y,
+                            NumericMatrix D,
+                            NumericVector qx,
+                            NumericMatrix mD,
+                            NumericVector beta,
+                            double tau,
+                            int j) {
+  const int n = Y.size();
+  if (D.nrow() != n || mD.nrow() != n || qx.size() != n)
+    stop("Y, D, mD, and qx must share the same number of rows n.");
+  if (D.ncol() != mD.ncol()) stop("D and mD must have the same number of columns.");
+  if (beta.size() != D.ncol()) stop("beta length must equal ncol(D).");
+  if (!(j >= 1 && j <= D.ncol())) stop("j is out of range.");
+  if (!(tau > 0.0 && tau < 1.0)) stop("tau must be in (0,1).");
 
   XPtr<PlqrCtx> ctx(new PlqrCtx(), true);
-  ctx->X = X; ctx->D = D; ctx->mD = mD;
-  ctx->Y = Y; ctx->qx = qx; ctx->x0 = x0; ctx->beta = beta;
-  ctx->p = X.ncol(); ctx->p_d = D.ncol();
-  ctx->j = j; ctx->localizer = localizer; ctx->k = k; ctx->h = h; ctx->tau = tau;
+  ctx->D    = D;
+  ctx->mD   = mD;
+  ctx->Y    = Y;
+  ctx->qx   = qx;
+  ctx->beta = beta;
+  ctx->n    = n;
+  ctx->p_d  = D.ncol();
+  ctx->j    = j;
+  ctx->tau  = tau;
   return ctx;
 }
 
+// (Optional) update beta in-place without rebuilding the context
 // [[Rcpp::export]]
-NumericVector rustat_plqr_eval_batch(IntegerMatrix subs, SEXP ctx_) {
+void rustat_plqr_ctx_set_beta(SEXP ctx_, NumericVector beta) {
   XPtr<PlqrCtx> ctx(ctx_);
-  int K = subs.nrow(), s = subs.ncol();
-  NumericVector out(K);
-  NumericVector dx(s), w(s);
+  if (beta.size() != ctx->p_d) stop("beta length must equal ncol(D).");
+  ctx->beta = beta;
+}
 
-  const int j0 = ctx->j - 1; // 0-based column
+// Compute all per-row PLQR contributions g (parallel)
+// g_i = (tau - 1{ Y_i <= D_i^T beta + qx_i }) * (D_{i,j} - mD_{i,j})
+// [[Rcpp::export]]
+NumericVector rustat_plqr_g_all(SEXP ctx_) {
+  XPtr<PlqrCtx> ctx(ctx_);
+  const int n     = ctx->n;
+  const int p_d   = ctx->p_d;
+  const int j0    = ctx->j - 1;
+  NumericVector g(n);
 
-  for (int kk=0; kk<K; ++kk) {
-    // distances to x0 for subset rows
-    for (int t=0; t<s; ++t) {
-      int i = subs(kk, t) - 1;
-      double acc = 0.0;
-      for (int p=0; p<ctx->p; ++p) {
-        double dif = ctx->X(i,p) - ctx->x0[p];
-        acc += dif*dif;
-      }
-      dx[t] = std::sqrt(acc);
-    }
-    // weights
-    if (ctx->localizer == "dnn1")      weights_dnn1(dx, w);
-    else if (ctx->localizer == "dnnk") weights_dnnk(dx, w, std::max(1, std::min(ctx->k, s)));
-    else                                weights_kernel(dx, w, ctx->h);
-
-    // compute value
-    double val = 0.0;
-    for (int t=0; t<s; ++t) {
-      int i = subs(kk, t) - 1;
-      // threshold D_i^T beta + qx_i
-      double db = 0.0;
-      for (int pd=0; pd<ctx->p_d; ++pd) db += ctx->D(i,pd) * ctx->beta[pd];
-      double thr = db + ctx->qx[i];
-      int ind = (ctx->Y[i] <= thr) ? 1 : 0;
-      double resid = ctx->tau - ind;
-      double rDj = ctx->D(i, j0) - ctx->mD(i, j0);
-      val += w[t] * resid * rDj;
-    }
-    out[kk] = val;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (n >= 1024)
+#endif
+  for (int i = 0; i < n; ++i) {
+    double db = 0.0;
+    for (int pd = 0; pd < p_d; ++pd) db += ctx->D(i, pd) * ctx->beta[pd];
+    const double thr   = db + ctx->qx[i];
+    const int    ind   = (ctx->Y[i] <= thr) ? 1 : 0;
+    const double resid = ctx->tau - ind;
+    const double rDj   = ctx->D(i, j0) - ctx->mD(i, j0);
+    g[i] = resid * rDj;
   }
-  return out;
+  return g;
+}
+
+// Same, but for a supplied 1-based index set (useful for block work)
+// [[Rcpp::export]]
+NumericVector rustat_plqr_g_indexed(IntegerVector idxs, SEXP ctx_) {
+  XPtr<PlqrCtx> ctx(ctx_);
+  const int m   = idxs.size();
+  const int p_d = ctx->p_d;
+  const int j0  = ctx->j - 1;
+  NumericVector g(m);
+
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (m >= 1024)
+#endif
+  for (int t = 0; t < m; ++t) {
+    const int i = idxs[t] - 1;
+    if (i < 0 || i >= ctx->n) Rcpp::stop("Index out of bounds in plqr_g_indexed.");
+    double db = 0.0;
+    for (int pd = 0; pd < p_d; ++pd) db += ctx->D(i, pd) * ctx->beta[pd];
+    const double thr   = db + ctx->qx[i];
+    const int    ind   = (ctx->Y[i] <= thr) ? 1 : 0;
+    const double resid = ctx->tau - ind;
+    const double rDj   = ctx->D(i, j0) - ctx->mD(i, j0);
+    g[t] = resid * rDj;
+  }
+  return g;
 }

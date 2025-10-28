@@ -2,33 +2,30 @@
 % Please edit documentation in R/score-cate.R
 \name{score_cate_rho}
 \alias{score_cate_rho}
-\title{CATE score from precomputed pseudo-outcome rho (no nuisance fitting)}
+\title{CATE score from precomputed pseudo-outcome rho (pure score; no weights)}
 \usage{
-score_cate_rho(
-  x0,
-  x_cols,
-  rho_col = NULL,
-  rho = NULL,
-  localizer = c("dnn1", "dnnk", "kernel"),
-  k = 5L,
-  h = NULL
-)
+score_cate_rho(x0, x_cols, s, k = 1L, rho_col = NULL, rho = NULL)
 }
 \arguments{
-\item{x0}{numeric length-p target point}
+\item{x0}{numeric length-p target point (checked for dimension only; not used here).}
 
-\item{x_cols}{columns of X in \code{data}}
+\item{x_cols}{names/indices of X columns in \code{data} (used for dimension checks).}
 
-\item{rho_col}{optional name of a column in \code{data} holding rho}
+\item{s}{integer subset size (reported as the kernel order; not used internally).}
 
-\item{rho}{optional numeric vector (length n) of rho; used if rho_col is NULL}
+\item{k}{integer (present only for API compatibility; ignored by this pure score).}
 
-\item{localizer}{"dnn1","dnnk","kernel"}
+\item{rho_col}{optional name of a column in \code{data} holding rho.}
 
-\item{k}{integer for dnnk}
-
-\item{h}{numeric bandwidth for "kernel" (if NULL, auto inside evaluator)}
+\item{rho}{optional numeric vector (length n) of rho; used if \code{rho_col} is NULL.}
+}
+\value{
+An \code{ustat_score} whose setup places \code{g} in the context; \code{eval} and
+\code{eval_batch} only index/sum \code{g} (no weights).
 }
 \description{
-CATE score from precomputed pseudo-outcome rho (no nuisance fitting)
+This is a pure-score implementation. It computes the per-observation
+contributions \eqn{g_i = \rho_i} and stores them in \code{ctx$g}.
+No ordering, no DNN/kernels, no L-stat weights are touched here.
+Any weighting/aggregation happens outside the score layer.
 }

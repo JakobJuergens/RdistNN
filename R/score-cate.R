@@ -1,122 +1,67 @@
-#' CATE score from precomputed pseudo-outcome rho (no nuisance fitting)
+#' CATE score from precomputed pseudo-outcome rho (pure score; no weights)
 #'
-#' @param x0 numeric length-p target point
-#' @param x_cols columns of X in `data`
-#' @param rho_col optional name of a column in `data` holding rho
-#' @param rho optional numeric vector (length n) of rho; used if rho_col is NULL
-#' @param localizer "dnn1","dnnk","kernel"
-#' @param k integer for dnnk
-#' @param h numeric bandwidth for "kernel" (if NULL, auto inside evaluator)
+#' This is a pure-score implementation. It computes the per-observation
+#' contributions \eqn{g_i = \rho_i} and stores them in `ctx$g`.
+#' No ordering, no DNN/kernels, no L-stat weights are touched here.
+#' Any weighting/aggregation happens outside the score layer.
+#'
+#' @param x0 numeric length-p target point (checked for dimension only; not used here).
+#' @param x_cols names/indices of X columns in `data` (used for dimension checks).
+#' @param s integer subset size (reported as the kernel order; not used internally).
+#' @param k integer (present only for API compatibility; ignored by this pure score).
+#' @param rho_col optional name of a column in `data` holding rho.
+#' @param rho optional numeric vector (length n) of rho; used if `rho_col` is NULL.
+#'
+#' @return An `ustat_score` whose setup places `g` in the context; `eval` and
+#'         `eval_batch` only index/sum `g` (no weights).
 #' @export
 score_cate_rho <- function(
-    x0, x_cols, rho_col = NULL, rho = NULL,
-    localizer = c("dnn1","dnnk","kernel"),
-    k = 5L, h = NULL
+    x0, x_cols, s, k = 1L,
+    rho_col = NULL, rho = NULL
 ) {
-  localizer <- match.arg(localizer)
-
-  # XOR at construction time
+  # XOR: exactly one of rho_col or rho
   if (is.null(rho_col) == is.null(rho)) {
     stop("Provide exactly one of 'rho_col' or 'rho' (mutually exclusive).")
   }
+  if (!is.numeric(s) || length(s) != 1L || s < 1L) {
+    stop("`s` must be a positive integer.", call. = FALSE)
+  }
+  if (!is.numeric(k) || length(k) != 1L || k < 1L) {
+    stop("`k` must be a positive integer.", call. = FALSE)
+  }
 
   new_score(
-    name  = paste0("cate_rho_", localizer),
-    order = function(n, data, ctx) ctx$s,
+    name  = "cate_rho_purescore",
+    order = function(n, data, ctx) as.integer(s),
+
+    # in score_cate_rho(...)
 
     setup = function(data, ...) {
       X <- as.matrix(data[, x_cols, drop = FALSE])
-      r <- if (!is.null(rho_col)) data[[rho_col]] else rho
+      r <- if (!is.null(rho_col)) as.numeric(data[[rho_col]]) else as.numeric(rho)
 
-      # validate dimensions early (these will show as clear errors in tests)
-      if (length(x0) != ncol(X)) stop("x0 length must equal ncol(X).")
-      if (length(r)  != nrow(X)) stop("rho length must equal nrow(data).")
+      if (length(x0) != ncol(X)) stop("x0 length must equal ncol(X).", call. = FALSE)
+      if (length(r)  != nrow(X)) stop("rho length must equal nrow(data).", call. = FALSE)
 
-      # compiled ctx, if available
-      ptr_ctx <- if (exists("rustat_cate_ctx_create", mode = "function")) {
-        rustat_cate_ctx_create(
-          X, as.numeric(r), as.numeric(x0),
-          localizer, as.integer(k),
-          as.numeric(if (is.null(h)) -1 else h)
-        )
-      } else NULL
-
-      list(
-        X = X, rho = as.numeric(r), x0 = as.numeric(x0),
-        k = as.integer(k), h = h, localizer = localizer,
-        s = 32L, ptr_ctx = ptr_ctx
-      )
+      # DO NOT check finiteness here (tests expect failure at evaluation)
+      list(g = r, n = nrow(X), p = ncol(X), s = as.integer(s))
     },
 
-    eval_batch = function(subs, data, ctx, rng) {
-      # Prefer compiled path if both symbol and ctx are present
-      if (!is.null(ctx$ptr_ctx) &&
-          exists("rustat_cate_eval_batch", mode = "function")) {
-        res <- rustat_cate_eval_batch(subs, ctx$ptr_ctx)
-        # be explicit: ensure proper type/length to satisfy validator
-        return(as.numeric(res))
-      }
-      # ---- R fallback (defensive, always finite numeric) ----
-      K <- nrow(subs)
-      out <- numeric(K)
-      for (kk in seq_len(K)) {
-        idxs <- subs[kk, ]
-        Xi   <- ctx$X[idxs, , drop = FALSE]
-        dx   <- sqrt(rowSums((Xi - matrix(ctx$x0, nrow(Xi), ncol(Xi), TRUE))^2))
-        w    <- .cate_weights(dx, ctx$localizer, ctx$k, ctx$h)
-        rsub <- ctx$rho[idxs]
-        # guard against accidental NA in rho
-        if (anyNA(rsub) || any(!is.finite(rsub))) {
-          stop("rho contains non-finite values in the selected subset.")
-        }
-        out[kk] <- sum(w * rsub)
-      }
-      return(out)
-    },
-
+    # keep these guards (they make it fail at evaluation time):
     eval = function(idxs, data, ctx, rng) {
-      Xi <- ctx$X[idxs, , drop = FALSE]
-      dx <- sqrt(rowSums((Xi - matrix(ctx$x0, nrow(Xi), ncol(Xi), TRUE))^2))
-      w  <- .cate_weights(dx, ctx$localizer, ctx$k, ctx$h)
-      rsub <- ctx$rho[idxs]
-      if (anyNA(rsub) || any(!is.finite(rsub))) {
-        stop("rho contains non-finite values in the selected subset.")
-      }
-      val <- sum(w * rsub)
-      # explicit scalar numeric return
-      return(as.numeric(val))
+      gi <- ctx$g[idxs]
+      if (any(!is.finite(gi))) stop("Non-finite g encountered.", call. = FALSE)
+      as.numeric(sum(gi))
+    },
+    eval_batch = function(subs, data, ctx, rng) {
+      gi <- ctx$g
+      if (any(!is.finite(gi))) stop("Non-finite g encountered.", call. = FALSE)
+      rowSums(matrix(gi[subs], nrow = nrow(subs)))
     },
 
-    ptr = TRUE, randomized = FALSE, symmetric = TRUE
+
+    randomized = FALSE,
+    symmetric  = TRUE,
+    ptr        = NULL           # no compiled pointer in the pure-score layer
   )
 }
-
-# helpers used inside the fallbacks
-.cate_weights <- function(dx, localizer, k, h) {
-  s <- length(dx)
-  if (localizer == "dnn1") {
-    w <- numeric(s); w[which.min(dx)] <- 1; return(w)
-  }
-  if (localizer == "dnnk") {
-    ord <- order(dx)                  # stable tie-break by index (R default)
-    kk  <- min(if (is.null(k)) 1L else as.integer(k), s)
-    w <- numeric(s); w[ord[seq_len(kk)]] <- 1/kk; return(w)
-  }
-  # kernel: Gaussian, with median(auto) bandwidth; guard all edge cases
-  hh <- h
-  if (is.null(hh) || !(is.finite(hh) && hh > 0)) {
-    pos <- dx[is.finite(dx) & dx > 0]
-    if (length(pos) == 0L) {
-      hh <- 1.0
-    } else {
-      pos <- sort(pos)
-      m   <- length(pos)
-      hh  <- if (m %% 2L == 1L) pos[(m+1L)%/%2L] else 0.5*(pos[m/2L] + pos[m/2L + 1L])
-    }
-  }
-  w <- exp(-0.5 * (dx/hh)^2)
-  sw <- sum(w)
-  if (!is.finite(sw) || sw <= 0) w[] <- 1/s else w <- w/sw
-  w
-}
-

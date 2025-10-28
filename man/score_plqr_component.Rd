@@ -2,7 +2,7 @@
 % Please edit documentation in R/score-plqr.R
 \name{score_plqr_component}
 \alias{score_plqr_component}
-\title{PLQR diagnostic score: one component of the orthogonal moment (no fitting)}
+\title{PLQR diagnostic score (component j), pure score (no weights, no fitting)}
 \usage{
 score_plqr_component(
   x0,
@@ -10,38 +10,40 @@ score_plqr_component(
   D_cols,
   q_col,
   mD_cols,
-  tau = 0.5,
-  j = 1L,
   beta,
-  localizer = c("dnn1", "dnnk", "kernel"),
-  k = 5L,
-  h = NULL
+  j = 1L,
+  tau = 0.5,
+  s,
+  k = 1L
 )
 }
 \arguments{
-\item{x0}{numeric length-p target point.}
+\item{x0}{numeric length-p target point (checked for dimension only; not used).}
 
 \item{x_cols}{names/indices of X columns in \code{data}.}
 
 \item{D_cols}{names/indices of D columns in \code{data} (length p_d).}
 
-\item{q_col}{name of oracle q_tau(X) column in \code{data}.}
+\item{q_col}{name of \code{q_tau(X)} column in \code{data}.}
 
-\item{mD_cols}{names of oracle m_D(X) columns, same length/order as D_cols.}
+\item{mD_cols}{names/indices of \code{m_D(X)} columns (same length/order as \code{D_cols}).}
+
+\item{beta}{numeric vector of length \code{length(D_cols)} (fixed coefficients).}
+
+\item{j}{integer component index in \code{1:length(D_cols)}.}
 
 \item{tau}{quantile level in (0,1).}
 
-\item{j}{integer component index in 1..length(D_cols) to extract a scalar score.}
+\item{s}{integer kernel order (reported via \code{score_order}; not used internally).}
 
-\item{beta}{numeric length = length(D_cols), fixed coefficients.}
-
-\item{localizer}{"dnn1","dnnk","kernel".}
-
-\item{k}{integer for "dnnk".}
-
-\item{h}{bandwidth for "kernel" (NULL => auto median of positive distances).}
+\item{k}{integer kept for API compatibility (ignored by the pure score).}
+}
+\value{
+\code{ustat_score} with \code{ctx$g} and simple index/sum evals.
 }
 \description{
-For subset S, returns sum_{i in S} w_i(x0) * (tau - 1(Y_i <= D_i^T beta + q(X_i)) * (D_ij - mD_ij)
-using a localizer around x0. No nuisances are fit inside; all columns must be supplied.
+Computes per-observation contributions
+g_i = (tau - 1{ Y_i <= D_i^T beta + q_tau(X_i) }) * (D_{i,j} - m_{D,ij}),
+stores them in \code{ctx$g}, and returns subset sums of \code{g} in \code{eval}/\code{eval_batch}.
+No ordering or L-stat weights here; any aggregation/weights are external.
 }
