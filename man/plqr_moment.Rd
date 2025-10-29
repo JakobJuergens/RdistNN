@@ -33,6 +33,6 @@ This is the vector moment entering the Z-estimation.
 \examples{
 demo <- plqr_demo_data(n = 200, p = 2, p_d = 2, tau = 0.5, seed = 1)
 g <- plqr_moment(df = demo$data, beta = demo$truth$beta_true, tau = 0.5)
-colMeans(g)  # should be near zero at truth
+colMeans(g) # should be near zero at truth
 
 }

@@ -54,8 +54,10 @@
 #' }
 #'
 #' @examples
-#' demo <- plqr_demo_data(n = 300, p = 2, p_d = 1, tau = 0.5,
-#'                        design = "sinusoidal", seed = 1)
+#' demo <- plqr_demo_data(
+#'   n = 300, p = 2, p_d = 1, tau = 0.5,
+#'   design = "sinusoidal", seed = 1
+#' )
 #' head(demo$data)
 #' demo$truth$beta_true
 #' demo$q_x0
@@ -161,7 +163,7 @@ plqr_demo_data <- function(n = 300,
 #' @examples
 #' demo <- plqr_demo_data(n = 200, p = 2, p_d = 2, tau = 0.5, seed = 1)
 #' g <- plqr_moment(df = demo$data, beta = demo$truth$beta_true, tau = 0.5)
-#' colMeans(g)  # should be near zero at truth
+#' colMeans(g) # should be near zero at truth
 #'
 #' @export
 plqr_moment <- function(df, beta, tau) {
