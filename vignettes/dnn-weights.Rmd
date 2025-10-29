@@ -1,0 +1,13 @@
+---
+title: "DNN weights: exact and asymptotic L-statistics"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{DNN weights: exact and asymptotic L-statistics}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+library(RdistNN)
+set.seed(2)
+```

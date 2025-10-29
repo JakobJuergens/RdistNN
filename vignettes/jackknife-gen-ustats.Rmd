@@ -1,19 +1,15 @@
 ---
-title: "jackknife-gen-ustats"
+title: "Jackknife for Hájek-dominated generalized U-statistics (overview)"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{jackknife-gen-ustats}
+  %\VignetteIndexEntry{Jackknife for Hájek-dominated generalized U-statistics (overview)}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+library(RdistNN)
+set.seed(4)
 ```
 
-```{r setup}
-library(RdistNN)
-```

@@ -4,13 +4,14 @@
 \name{RdistNN-package}
 \alias{RdistNN}
 \alias{RdistNN-package}
-\title{RdistNN: Generalized U-Statistics and Z-Estimation with Pluggable Scores}
+\title{RdistNN: Generalized U-Statistics and Conditional Z-Estimation with Pluggable Scores}
 \description{
 Fast, extensible framework for generalized U-statistics and Z-estimation with a pluggable score (kernel) interface. Uses compiled C++ fast paths when available and falls back to batched R evaluation otherwise. Supports complete and incomplete subsampling, batched evaluation, and variance estimation via delete-1 jackknife.
 }
 \seealso{
 Useful links:
 \itemize{
+  \item \url{https://JakobJuergens.github.io/RdistNN}
   \item \url{https://github.com/JakobJuergens/RdistNN}
   \item Report bugs at \url{https://github.com/JakobJuergens/RdistNN/issues}
 }

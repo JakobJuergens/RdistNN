@@ -1,0 +1,15 @@
+---
+title: "Extending RdistNN: custom distances and weight rules"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Extending RdistNN: custom distances and weight rules}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+library(RdistNN)
+set.seed(3)
+```
+
