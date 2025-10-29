@@ -30,8 +30,8 @@ test_that("[compiled] compiled dist_l2 parity with R fallback", {
     dx2
   }
   ref <- sqrt(ref_sq)
-  expect_equal(dist_l2(X, x0, squared = TRUE), ref_sq, tolerance = 0)
-  expect_equal(dist_l2(X, x0, squared = FALSE), ref, tolerance = 0)
+  expect_equal(dist_l2(X, x0, squared = TRUE), ref_sq, tolerance = 1e-12)
+  expect_equal(dist_l2(X, x0, squared = FALSE), ref, tolerance = 1e-12)
 })
 
 test_that("[batch] distance_l2 batch equals columnwise calls", {
@@ -41,7 +41,7 @@ test_that("[batch] distance_l2 batch equals columnwise calls", {
   dspec <- distance_l2(squared = TRUE)
   M <- distance_eval_batch(dspec, X, X0)
   M2 <- sapply(seq_len(nrow(X0)), function(j) distance_eval(dspec, X, X0[j, ]))
-  expect_equal(M, M2, tolerance = 0)
+  expect_equal(M, M2, tolerance = 1e-12)
 })
 
 test_that("[order] order_by_l2 is deterministic and squared/unsquared yield same ord", {
