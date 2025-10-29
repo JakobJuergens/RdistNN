@@ -1,13 +1,12 @@
-# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
-# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+name: test-coverage
+
 on:
   push:
     branches: [main, master]
   pull_request:
 
-name: test-coverage.yaml
-
-permissions: read-all
+permissions:
+  contents: read        # minimal; add pull-requests: write if you want PR comments
 
 jobs:
   test-coverage:
@@ -24,10 +23,13 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::covr, any::xml2
           needs: coverage
+          extra-packages: |
+            any::covr
+            any::xml2
 
-      - name: Test coverage
+      - name: Compute test coverage (Cobertura)
+        shell: Rscript {0}
         run: |
           cov <- covr::package_coverage(
             quiet = FALSE,
@@ -35,26 +37,25 @@ jobs:
             install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package")
           )
           print(cov)
-          covr::to_cobertura(cov)
-        shell: Rscript {0}
+          covr::to_cobertura(cov, filename = "cobertura.xml")
 
-      - uses: codecov/codecov-action@v5
+      # Upload to Codecov (tokenless on public PRs; token for private/main)
+      - name: Upload coverage to Codecov
+        if: ${{ always() && hashFiles('cobertura.xml') != '' }}
+        uses: codecov/codecov-action@v4
         with:
-          # Fail if error if not on PR, or if on PR and token is given
-          fail_ci_if_error: ${{ github.event_name != 'pull_request' || secrets.CODECOV_TOKEN }}
           files: ./cobertura.xml
-          plugins: noop
-          disable_search: true
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ secrets.CODECOV_TOKEN }}               # required for private repos / non-PRs
+          fail_ci_if_error: ${{ github.event_name != 'pull_request' }}
+          verbose: true
 
       - name: Show testthat output
         if: always()
-        run: |
-          ## --------------------------------------------------------------------
-          find '${{ runner.temp }}/package' -name 'testthat.Rout*' -exec cat '{}' \; || true
         shell: bash
+        run: |
+          find '${{ runner.temp }}/package' -name 'testthat.Rout*' -exec cat '{}' \; || true
 
-      - name: Upload test results
+      - name: Upload test logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
