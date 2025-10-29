@@ -39,15 +39,30 @@ jobs:
           print(cov)
           covr::to_cobertura(cov, filename = "cobertura.xml")
 
-      # Upload to Codecov (tokenless on public PRs; token for private/main)
+            # (optional) Fail early if pushing to protected branches w/o token
+      - name: Ensure CODECOV_TOKEN is present on pushes to main/master
+        if: ${{ github.event_name != 'pull_request' && (github.ref_name == 'main' || github.ref_name == 'master') }}
+        run: |
+          if [ -z "${{ secrets.CODECOV_TOKEN }}" ]; then
+            echo "CODECOV_TOKEN is required for uploads from protected branches (main/master)."
+            exit 1
+          fi
+
+      # Upload to Codecov:
+      #  - skip fork PRs (no secrets)
+      #  - tokenless on public PRs from same repo
+      #  - token for pushes (esp. protected branches) or private repos
       - name: Upload coverage to Codecov
-        if: ${{ always() && hashFiles('cobertura.xml') != '' }}
+        if: ${{ always() && hashFiles('cobertura.xml') != '' && (github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork) }}
         uses: codecov/codecov-action@v4
         with:
           files: ./cobertura.xml
-          token: ${{ secrets.CODECOV_TOKEN }}               # required for private repos / non-PRs
+          token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: ${{ github.event_name != 'pull_request' }}
           verbose: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
 
       - name: Show testthat output
         if: always()
