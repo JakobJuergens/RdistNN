@@ -1,4 +1,70 @@
-url: ~
+url: https://JakobJuergens.github.io/RdistNN
 template:
   bootstrap: 5
 
+navbar:
+  structure:
+    left:  [home, reference, articles, news]
+    right: [github]
+  components:
+    github:
+      icon: fa-github
+      href: https://github.com/JakobJuergens/RdistNN
+
+articles:
+- title: Get started
+  contents:
+  - getting-started
+
+reference:
+- title: High-level API
+  contents:
+  - weights_matrix
+  - weights_dnn
+  - weights_dnn_exact
+  - weights_dnn_asymp
+
+- title: Distances & distance registry
+  contents:
+  - distance_l2
+  - distance_l1
+  - order_by_l2
+  - order_by_l1
+  - new_distance
+  - distance_eval
+  - distance_eval_batch
+  - register_distance
+  - get_distance
+  - list_distances
+
+- title: Rank-weights (L-statistic)
+  contents:
+  - new_rank_weight
+  - rank_weight_eval
+  - rank_weight_eval_batch
+  - rank_weight_dnn_exact
+  - rank_weight_dnn_asymp
+  - register_rank
+  - get_rank
+  - list_ranks
+
+- title: Distance-weights (kernels on distances)
+  contents:
+  - new_dist_weight
+  - dist_weight_eval
+  - dist_weight_eval_batch
+  - wdist_gaussian_l2
+  - register_wdist
+  - get_wdist
+  - list_wdists
+
+- title: Scores (kernels) & score registry
+  contents:
+  - new_score
+  - score_setup
+  - score_order
+  - score_eval
+  - score_eval_batch
+  - register_score
+  - get_score
+  - list_scores

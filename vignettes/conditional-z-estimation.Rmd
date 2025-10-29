@@ -1,19 +1,15 @@
 ---
-title: "conditional-z-estimation"
+title: "Conditional Z-Estimation with DNN weights"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{conditional-z-estimation}
+  %\VignetteIndexEntry{Conditional Z-Estimation with DNN weights}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+library(RdistNN)
+set.seed(1)
 ```
 
-```{r setup}
-library(RdistNN)
-```
