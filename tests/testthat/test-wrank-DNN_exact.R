@@ -12,7 +12,9 @@
 
 test_that("[smoke] returns weights of length n that are nonnegative and sum to 1", {
   set.seed(1)
-  n <- 12L; s <- 5L; k <- 3L
+  n <- 12L
+  s <- 5L
+  k <- 3L
   ranks <- sample.int(n)
   out <- dnn_weights_exact_full_from_ranks(ranks, k = k, s = s)
 
@@ -33,46 +35,56 @@ test_that("[edge] s = n gives uniform 1/k on top-k ranks; s = 1 gives uniform we
   # Case 1: s = n ⇒ subset is entire sample; i-th NN in subset is the global i-th NN deterministically.
   # Hence w_rank[j] = 1/k for j <= k, else 0.
   for (k in 1:4) {
-    n <- 7L; s <- n; ranks <- 1:n
+    n <- 7L
+    s <- n
+    ranks <- 1:n
     out <- dnn_weights_exact_full_from_ranks(ranks, k = k, s = s)
-    expect_equal(out$w_rank, c(rep(1/k, k), rep(0, n - k)), tolerance = 0)
+    expect_equal(out$w_rank, c(rep(1 / k, k), rep(0, n - k)), tolerance = 0)
     expect_equal(out$w, out$w_rank, tolerance = 0)
   }
 
   # Case 2: s = 1, k = 1 ⇒ subset picks one item uniformly; that single item is the 1st NN in the subset.
   # Hence w_rank is uniform 1/n.
-  n <- 9L; s <- 1L; k <- 1L; ranks <- sample.int(n)
+  n <- 9L
+  s <- 1L
+  k <- 1L
+  ranks <- sample.int(n)
   out <- dnn_weights_exact_full_from_ranks(ranks, k = k, s = s)
-  expect_equal(out$w_rank, rep(1/n, n), tolerance = 1e-12)     # was tolerance = 0
-  expect_equal(out$w, out$w_rank[ranks], tolerance = 1e-12)    # was tolerance = 0
+  expect_equal(out$w_rank, rep(1 / n, n), tolerance = 1e-12) # was tolerance = 0
+  expect_equal(out$w, out$w_rank[ranks], tolerance = 1e-12) # was tolerance = 0
 })
 
 test_that("[edge] k = 1 matches the simple closed form C(n-j, s-1)/C(n, s)", {
-  n <- 10L; s <- 4L; k <- 1L
+  n <- 10L
+  s <- 4L
+  k <- 1L
   ranks <- 1:n
   out <- dnn_weights_exact_full_from_ranks(ranks, k = k, s = s)
   j <- seq_len(n)
   ref <- ifelse(j <= n - s + 1L,
-                choose(n - j, s - 1L) / choose(n, s),
-                0)
+    choose(n - j, s - 1L) / choose(n, s),
+    0
+  )
   expect_equal(out$w_rank, ref, tolerance = 1e-12)
 })
 
 test_that("[bf] brute-force enumeration over all subsets matches exact weights (small n)", {
   # Enumerate all subsets of size s; each subset gives 1/k mass to the k smallest global ranks present.
-  n <- 8L; s <- 3L; k <- 2L
-  ranks <- 1:n  # using identity simplifies mapping; test invariance separately
+  n <- 8L
+  s <- 3L
+  k <- 2L
+  ranks <- 1:n # using identity simplifies mapping; test invariance separately
 
   # exact
   ex <- dnn_weights_exact_full_from_ranks(ranks, k = k, s = s)$w_rank
 
   # brute-force
-  subs <- utils::combn(n, s)  # each column a subset of indices in data order
+  subs <- utils::combn(n, s) # each column a subset of indices in data order
   acc <- numeric(n)
   for (col in seq_len(ncol(subs))) {
     S <- subs[, col]
     # find the k smallest global ranks in S
-    local_ord <- order(ranks[S])      # positions within S
+    local_ord <- order(ranks[S]) # positions within S
     S_topk <- S[local_ord[seq_len(k)]]
     acc[S_topk] <- acc[S_topk] + 1 / k
   }
@@ -83,7 +95,9 @@ test_that("[bf] brute-force enumeration over all subsets matches exact weights (
 })
 
 test_that("[inv] w_rank depends only on (n,k,s) and not on the particular permutation", {
-  n <- 12L; s <- 5L; k <- 3L
+  n <- 12L
+  s <- 5L
+  k <- 3L
   r1 <- 1:n
   r2 <- rev(r1)
   r3 <- sample.int(n)
@@ -117,7 +131,10 @@ test_that("[errors] input validation triggers appropriate errors", {
 })
 
 test_that("[meta] meta fields are correct", {
-  n <- 9L; s <- 4L; k <- 2L; ranks <- sample.int(n)
+  n <- 9L
+  s <- 4L
+  k <- 2L
+  ranks <- sample.int(n)
   out <- dnn_weights_exact_full_from_ranks(ranks, k, s)
   expect_identical(out$meta$n, n)
   expect_identical(out$meta$k, as.integer(k))

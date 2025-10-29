@@ -23,7 +23,7 @@ test_that("[registry] register/get works and overwrite replaces the object", {
   got <- get_rank("tmp_rank_registry_A")
   expect_s3_class(got, "rank_weight")
   w1 <- rank_weight_eval(got, ranks = 1:5)
-  expect_equal(w1, rep(1/5, 5))
+  expect_equal(w1, rep(1 / 5, 5))
 
   # Overwrite with same name but different rule: all mass on top-1 rank
   rw2 <- new_rank_weight(
@@ -45,7 +45,7 @@ test_that("[registry] register/get works and overwrite replaces the object", {
 test_that("[registry] list_ranks includes the newly registered name and is sorted", {
   rw <- new_rank_weight(
     name = "tmp_rank_registry_B",
-    eval = function(ranks, ctx = NULL) rep(1/length(ranks), length(ranks))
+    eval = function(ranks, ctx = NULL) rep(1 / length(ranks), length(ranks))
   )
   nm <- register_rank(rw)
   on.exit(rm(list = nm, envir = RdistNN:::.rank_registry), add = TRUE)
@@ -58,7 +58,9 @@ test_that("[registry] list_ranks includes the newly registered name and is sorte
 })
 
 test_that("[registry] errors on missing name and non-rank inputs", {
-  expect_error(get_rank("i_do_not_exist"),
-               "No rank_weight registered under 'i_do_not_exist'")
-  expect_error(register_rank(123))  # any error is fine
+  expect_error(
+    get_rank("i_do_not_exist"),
+    "No rank_weight registered under 'i_do_not_exist'"
+  )
+  expect_error(register_rank(123)) # any error is fine
 })

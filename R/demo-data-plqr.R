@@ -7,8 +7,8 @@
   u <- runif(n)
   out <- ifelse(
     u < tau,
-    sigma * ( (1 - tau) * log(u / tau) ),
-    -sigma * ( tau * log((1 - u) / (1 - tau)) )
+    sigma * ((1 - tau) * log(u / tau)),
+    -sigma * (tau * log((1 - u) / (1 - tau)))
   )
   out
 }
@@ -68,15 +68,14 @@ plqr_demo_data <- function(n = 300,
   beta_true <- rep(0.5, p_d)
 
   # Nonparametric quantile component q_tau(X)
-  q_fn <- switch(
-    design,
-    linear     = function(xx) 0.5 * xx[, 1],
+  q_fn <- switch(design,
+    linear = function(xx) 0.5 * xx[, 1],
     sinusoidal = function(xx) 0.5 * sin(xx[, 1]) + 0.25 * (if (ncol(xx) >= 2) xx[, 2]^2 else 0),
-    bump       = {
+    bump = {
       center <- c(0.5, -0.5, rep(0, max(0, p - 2L)))
       function(xx) {
         xx <- as.matrix(xx)
-        d2 <- rowSums( (xx - rep(center, each = nrow(xx)))^2 )
+        d2 <- rowSums((xx - rep(center, each = nrow(xx)))^2)
         0.2 + 0.8 * exp(-0.5 * d2)
       }
     }
@@ -90,9 +89,9 @@ plqr_demo_data <- function(n = 300,
     g <- c(0.6, -0.4, rep(0, max(0, p - 2L))) + (j - 1) * 0.2
     Gamma[, j] <- g[seq_len(p)]
   }
-  mD <- X %*% Gamma                 # n x p_d matrix, oracle E(D given X)
-  V  <- matrix(rnorm(n * p_d, sd = 0.6), n, p_d)
-  D  <- mD + V
+  mD <- X %*% Gamma # n x p_d matrix, oracle E(D given X)
+  V <- matrix(rnorm(n * p_d, sd = 0.6), n, p_d)
+  D <- mD + V
   colnames(D) <- paste0("D", seq_len(p_d))
 
   # Error with tau-quantile zero
@@ -112,7 +111,8 @@ plqr_demo_data <- function(n = 300,
 
   # Ground-truth closures
   mD_fn <- function(xx) {
-    xx <- as.matrix(xx); xx %*% Gamma
+    xx <- as.matrix(xx)
+    xx %*% Gamma
   }
 
   list(
@@ -133,16 +133,16 @@ plqr_demo_data <- function(n = 300,
 #' @param tau Quantile level (must match the data-generating tau).
 #' @return An n x p_d matrix of moment contributions.
 #' @examples
-#' demo <- plqr_demo_data(n=200, p=2, p_d=2, tau=0.5, seed=1)
+#' demo <- plqr_demo_data(n = 200, p = 2, p_d = 2, tau = 0.5, seed = 1)
 #' g <- plqr_moment(df = demo$data, beta = demo$truth$beta_true, tau = 0.5)
-#' colMeans(g)  # should be near zero at truth
+#' colMeans(g) # should be near zero at truth
 #' @export
 plqr_moment <- function(df, beta, tau) {
   p_d <- sum(grepl("^D[0-9]+$", names(df)))
   stopifnot(length(beta) == p_d)
-  Dmat <- as.matrix(df[ paste0("D", seq_len(p_d)) ])
-  mD   <- as.matrix(df[ paste0("mD", seq_len(p_d)) ])
-  rD   <- Dmat - mD
+  Dmat <- as.matrix(df[paste0("D", seq_len(p_d))])
+  mD <- as.matrix(df[paste0("mD", seq_len(p_d))])
+  rD <- Dmat - mD
   thresh <- as.vector(Dmat %*% beta) + df$q_oracle
   ind <- as.numeric(df$Y <= thresh)
   resid <- (tau - ind)

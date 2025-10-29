@@ -14,14 +14,14 @@
 #' @return An object of class `ustat_score`.
 #' @export
 new_score <- function(
-    name,
-    order,
-    setup = NULL,
-    eval = NULL,
-    eval_batch = NULL,
-    ptr = NULL,
-    randomized = FALSE,
-    symmetric  = TRUE
+  name,
+  order,
+  setup = NULL,
+  eval = NULL,
+  eval_batch = NULL,
+  ptr = NULL,
+  randomized = FALSE,
+  symmetric = TRUE
 ) {
   sc <- list(
     name = as.character(name),
@@ -31,7 +31,7 @@ new_score <- function(
     eval_batch = eval_batch,
     ptr = ptr,
     randomized = isTRUE(randomized),
-    symmetric  = isTRUE(symmetric)
+    symmetric = isTRUE(symmetric)
   )
   class(sc) <- "ustat_score"
   validate_score(sc)
@@ -42,12 +42,19 @@ print.ustat_score <- function(x, ...) {
   cat("<ustat_score:", x$name, ">\n", sep = "")
   cat("  order: ", if (is.function(x$order)) "function(n, data, ctx)" else x$order, "\n", sep = "")
   cat("  impl : ",
-      if (!is.null(x$ptr)) "compiled(ptr) "
-      else if (!is.null(x$eval_batch)) "R eval_batch "
-      else if (!is.null(x$eval)) "R eval "
-      else "NONE",
-      if (isTRUE(x$randomized)) "(randomized)" else "",
-      "\n", sep = "")
+    if (!is.null(x$ptr)) {
+      "compiled(ptr) "
+    } else if (!is.null(x$eval_batch)) {
+      "R eval_batch "
+    } else if (!is.null(x$eval)) {
+      "R eval "
+    } else {
+      "NONE"
+    },
+    if (isTRUE(x$randomized)) "(randomized)" else "",
+    "\n",
+    sep = ""
+  )
   invisible(x)
 }
 
@@ -60,10 +67,12 @@ print.ustat_score <- function(x, ...) {
 validate_score <- function(sc) {
   stopifnot(inherits(sc, "ustat_score"))
   if (!nzchar(sc$name)) stop("score name must be non-empty")
-  if (!(.is_scalar_int(sc$order) || .is_fun(sc$order, 1L)))
+  if (!(.is_scalar_int(sc$order) || .is_fun(sc$order, 1L))) {
     stop("order must be integer or function(n, data, ctx)")
-  if (is.null(sc$ptr) && is.null(sc$eval_batch) && is.null(sc$eval))
+  }
+  if (is.null(sc$ptr) && is.null(sc$eval_batch) && is.null(sc$eval)) {
     stop("Provide at least one of: ptr, eval_batch, eval")
+  }
   if (!isTRUE(sc$symmetric)) warning("score marked non-symmetric; engine assumes symmetry")
   sc
 }
@@ -78,7 +87,9 @@ validate_score <- function(sc) {
 score_setup <- function(score, data, ...) UseMethod("score_setup")
 #' @export
 score_setup.ustat_score <- function(score, data, ...) {
-  if (is.null(score$setup)) return(NULL)
+  if (is.null(score$setup)) {
+    return(NULL)
+  }
   score$setup(data, ...)
 }
 
@@ -87,7 +98,9 @@ score_setup.ustat_score <- function(score, data, ...) {
 score_order <- function(score, n, data, ctx = NULL) UseMethod("score_order")
 #' @export
 score_order.ustat_score <- function(score, n, data, ctx = NULL) {
-  if (.is_scalar_int(score$order)) return(as.integer(score$order))
+  if (.is_scalar_int(score$order)) {
+    return(as.integer(score$order))
+  }
   score$order(n, data, ctx)
 }
 
@@ -98,11 +111,13 @@ score_order.ustat_score <- function(score, n, data, ctx = NULL) {
 score_eval <- function(score, idxs, data, ctx = NULL, rng = NULL) UseMethod("score_eval")
 #' @export
 score_eval.ustat_score <- function(score, idxs, data, ctx = NULL, rng = NULL) {
-  if (is.null(score$eval))
+  if (is.null(score$eval)) {
     stop("No R `eval` provided; use compiled `ptr` or R `eval_batch`.")
+  }
   out <- score$eval(idxs, data, ctx, rng)
-  if (!is.numeric(out) || length(out) != 1L || !is.finite(out))
+  if (!is.numeric(out) || length(out) != 1L || !is.finite(out)) {
     stop("score$eval must return a finite scalar numeric.")
+  }
   out
 }
 
@@ -112,11 +127,13 @@ score_eval.ustat_score <- function(score, idxs, data, ctx = NULL, rng = NULL) {
 score_eval_batch <- function(score, subs, data, ctx = NULL, rng = NULL) UseMethod("score_eval_batch")
 #' @export
 score_eval_batch.ustat_score <- function(score, subs, data, ctx = NULL, rng = NULL) {
-  if (is.null(score$eval_batch))
+  if (is.null(score$eval_batch)) {
     stop("No R `eval_batch` provided; use compiled `ptr` or R `eval`.")
+  }
   out <- score$eval_batch(subs, data, ctx, rng)
-  if (!is.numeric(out) || length(out) != nrow(subs) || any(!is.finite(out)))
+  if (!is.numeric(out) || length(out) != nrow(subs) || any(!is.finite(out))) {
     stop("score$eval_batch must return numeric(K) with finite entries.")
+  }
   out
 }
 

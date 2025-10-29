@@ -12,8 +12,9 @@ register_score <- function(score) {
 #' Retrieve a registered score
 #' @export
 get_score <- function(name) {
-  if (!exists(name, envir = .score_registry, inherits = FALSE))
+  if (!exists(name, envir = .score_registry, inherits = FALSE)) {
     stop("No score registered under '", name, "'.")
+  }
   get(name, envir = .score_registry, inherits = FALSE)
 }
 

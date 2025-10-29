@@ -59,16 +59,15 @@ cate_demo_data <- function(n = 200,
   m0_true <- 1 + X[, 1] - X[, 2]
 
   # Treatment effect tau(x)
-  tau_fn <- switch(
-    design,
+  tau_fn <- switch(design,
     simple = function(xx) 0.5 + 0 * xx[, 1],
     hetero = function(xx) 0.5 + 0.5 * sin(xx[, 1]),
-    bump   = {
+    bump = {
       # bump near c(0.5, -0.5), flat elsewhere
       center <- c(0.5, -0.5, rep(0, max(0, ncol(xx) - 2L)))
       function(xx) {
         d2 <- rowSums((xx - rep(center, each = nrow(xx)))^2)
-        0.2 + 0.8 * exp(-0.5 * d2)  # bump width ~ 1
+        0.2 + 0.8 * exp(-0.5 * d2) # bump width ~ 1
       }
     }
   )
@@ -85,12 +84,14 @@ cate_demo_data <- function(n = 200,
   # R-learner pseudo-outcome (oracle nuisances)
   rho <- (D - e_true) * (Y - m_true) / (e_true * (1 - e_true))
 
-  df <- data.frame(X, D = D, Y = Y,
-                   e_oracle = e_true,
-                   m_oracle = m_true,
-                   m0_oracle = m0_true,
-                   tau_oracle = tau_true,
-                   rho_oracle = rho)
+  df <- data.frame(X,
+    D = D, Y = Y,
+    e_oracle = e_true,
+    m_oracle = m_true,
+    m0_oracle = m0_true,
+    tau_oracle = tau_true,
+    rho_oracle = rho
+  )
 
   # Ground-truth closures for convenience
   e_fn <- function(xx) {
@@ -111,8 +112,10 @@ cate_demo_data <- function(n = 200,
   list(
     data = df,
     x0 = as.numeric(x0),
-    truth = list(tau_fn = function(xx) tau_fn(as.matrix(xx)),
-                 e_fn = e_fn, m0_fn = m0_fn, m_fn = m_fn),
+    truth = list(
+      tau_fn = function(xx) tau_fn(as.matrix(xx)),
+      e_fn = e_fn, m0_fn = m0_fn, m_fn = m_fn
+    ),
     tau_x0 = as.numeric(tau_fn(matrix(x0, nrow = 1)))
   )
 }

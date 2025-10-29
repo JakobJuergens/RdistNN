@@ -30,8 +30,9 @@
 #' # W  <- dist_weight_eval_batch(dw, DX)  # 50 x 2, columns sum to 1
 #' @export
 wdist_gaussian_l2 <- function(h, squared = TRUE, normalize = TRUE) {
-  if (!is.numeric(h) || length(h) != 1L || !is.finite(h) || h <= 0)
+  if (!is.numeric(h) || length(h) != 1L || !is.finite(h) || h <= 0) {
     stop("`h` must be a positive finite scalar.")
+  }
 
   name <- sprintf("gaussian_l2(h=%.6g,%s)", h, if (squared) "sq" else "lin")
 
@@ -41,9 +42,9 @@ wdist_gaussian_l2 <- function(h, squared = TRUE, normalize = TRUE) {
     eval_dx = function(dx, ctx = NULL) {
       x <- as.numeric(dx)
       if (squared) {
-        z <- - x / (2 * h * h)           # x = ||·||^2
+        z <- -x / (2 * h * h) # x = ||·||^2
       } else {
-        z <- - (x * x) / (2 * h * h)     # x = ||·||
+        z <- -(x * x) / (2 * h * h) # x = ||·||
       }
       w <- exp(z)
 
@@ -52,7 +53,7 @@ wdist_gaussian_l2 <- function(h, squared = TRUE, normalize = TRUE) {
         if (!is.finite(s) || s <= .Machine$double.xmin) {
           # underflow fallback: 1-NN assignment
           w[] <- 0
-          w[ which.min(x) ] <- 1
+          w[which.min(x)] <- 1
         } else {
           w <- w / s
         }
@@ -63,9 +64,9 @@ wdist_gaussian_l2 <- function(h, squared = TRUE, normalize = TRUE) {
     eval_dx_batch = function(DX, ctx = NULL) {
       M <- as.matrix(DX)
       if (squared) {
-        Z <- - M / (2 * h * h)
+        Z <- -M / (2 * h * h)
       } else {
-        Z <- - (M * M) / (2 * h * h)
+        Z <- -(M * M) / (2 * h * h)
       }
       W <- exp(Z)
 
@@ -77,7 +78,7 @@ wdist_gaussian_l2 <- function(h, squared = TRUE, normalize = TRUE) {
           for (j in which(bad)) {
             wj <- numeric(nrow(W))
             # use the raw distance matrix M for nearest neighbor
-            wj[ which.min(M[, j]) ] <- 1
+            wj[which.min(M[, j])] <- 1
             W[, j] <- wj
           }
           cs <- colSums(W)

@@ -22,7 +22,10 @@
   new_dist_weight(
     name = name,
     eval_dx = function(dx, ctx = NULL) {
-      n <- length(dx); w <- numeric(n); w[pos] <- 1; w
+      n <- length(dx)
+      w <- numeric(n)
+      w[pos] <- 1
+      w
     }
   )
 }
@@ -39,7 +42,7 @@ test_that("[smoke] register_wdist() and get_wdist() round-trip works", {
 
   # behavior sanity: returns proper length and unit-sum weights
   dx <- c(3, 2, 5)
-  w  <- dist_weight_eval(got, dx)
+  w <- dist_weight_eval(got, dx)
   expect_length(w, length(dx))
   expect_equal(sum(w), 1, tolerance = 1e-12)
 })
@@ -52,18 +55,18 @@ test_that("[list] list_wdists() includes registered names and is sorted", {
 
   lst <- list_wdists()
   expect_true(all(c(nm1, nm2) %in% lst))
-  expect_identical(lst, sort(lst))  # list is sorted
+  expect_identical(lst, sort(lst)) # list is sorted
 })
 
 test_that("[overwrite] re-registering the same name overwrites the object", {
   nm <- "wdist_reg_same"
-  register_wdist(.make_uniform_dw(nm))           # old
-  register_wdist(.make_pointmass_dw(nm, pos=2))  # new with same name
+  register_wdist(.make_uniform_dw(nm)) # old
+  register_wdist(.make_pointmass_dw(nm, pos = 2)) # new with same name
 
   got <- get_wdist(nm)
-  dx  <- c(10, 0.1, 5)
-  w   <- dist_weight_eval(got, dx)
-  expect_equal(w, c(0, 1, 0))  # reflects the new definition
+  dx <- c(10, 0.1, 5)
+  w <- dist_weight_eval(got, dx)
+  expect_equal(w, c(0, 1, 0)) # reflects the new definition
 })
 
 test_that("[errors] bad inputs raise informative errors", {
@@ -72,6 +75,7 @@ test_that("[errors] bad inputs raise informative errors", {
 
   # missing name
   expect_error(get_wdist("<<<does_not_exist>>>"),
-               "No dist_weight registered under '<<<does_not_exist>>>'.",
-               fixed = TRUE)
+    "No dist_weight registered under '<<<does_not_exist>>>'.",
+    fixed = TRUE
+  )
 })

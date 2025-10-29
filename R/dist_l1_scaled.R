@@ -5,7 +5,7 @@
 
 # Reuse small helpers if not already defined (avoid duplicate defs across files)
 if (!exists(".col_sd", mode = "function")) {
-  .col_sd  <- function(X) apply(X, 2L, stats::sd)
+  .col_sd <- function(X) apply(X, 2L, stats::sd)
 }
 if (!exists(".col_mad", mode = "function")) {
   .col_mad <- function(X) apply(X, 2L, stats::mad, constant = 1.4826)
@@ -19,13 +19,13 @@ if (!exists(".col_rng", mode = "function")) {
 
 # Pure-R fallback (vectorized)
 .dist_l1_scaled_R <- function(X, x0, inv_s) {
-  X  <- as.matrix(X)
+  X <- as.matrix(X)
   x0 <- as.numeric(x0)
   inv_s <- as.numeric(inv_s)
   if (length(x0) != ncol(X)) stop("x0 length must equal ncol(X).")
   if (length(inv_s) != ncol(X)) stop("inv_s length must equal ncol(X).")
-  dif <- sweep(X,  2L, x0,    "-")
-  dif <- sweep(dif,2L, inv_s, "*")
+  dif <- sweep(X, 2L, x0, "-")
+  dif <- sweep(dif, 2L, inv_s, "*")
   rowSums(abs(dif))
 }
 
@@ -46,7 +46,7 @@ if (!exists(".col_rng", mode = "function")) {
 #' # ctx   <- distance_setup(dspec, X)
 #' # d     <- distance_eval(dspec, X, x0, ctx)
 #' @export
-distance_l1_scaled <- function(rule = c("sd","mad","iqr","range","custom"),
+distance_l1_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
                                scale_vec = NULL,
                                eps = 1e-12) {
   rule <- match.arg(rule)
@@ -58,16 +58,16 @@ distance_l1_scaled <- function(rule = c("sd","mad","iqr","range","custom"),
       X <- as.matrix(data)
       p <- ncol(X)
       s <- switch(rule,
-                  sd    = .col_sd(X),
-                  mad   = .col_mad(X),
-                  iqr   = .col_iqr(X),
-                  range = .col_rng(X),
-                  custom = {
-                    if (is.null(scale_vec)) stop("Provide `scale_vec` when rule='custom'.")
-                    v <- as.numeric(scale_vec)
-                    if (length(v) != p) stop("`scale_vec` must have length p = ncol(data).")
-                    v
-                  }
+        sd = .col_sd(X),
+        mad = .col_mad(X),
+        iqr = .col_iqr(X),
+        range = .col_rng(X),
+        custom = {
+          if (is.null(scale_vec)) stop("Provide `scale_vec` when rule='custom'.")
+          v <- as.numeric(scale_vec)
+          if (length(v) != p) stop("`scale_vec` must have length p = ncol(data).")
+          v
+        }
       )
       s[!is.finite(s) | s < eps] <- eps
       list(inv_s = 1 / s)
@@ -84,7 +84,8 @@ distance_l1_scaled <- function(rule = c("sd","mad","iqr","range","custom"),
       if (exists("rustat_dist_l1_scaled_batch", mode = "function")) {
         return(rustat_dist_l1_scaled_batch(as.matrix(X), as.matrix(X0), as.numeric(inv_s)))
       }
-      X  <- as.matrix(X); X0 <- as.matrix(X0)
+      X <- as.matrix(X)
+      X0 <- as.matrix(X0)
       if (ncol(X0) != ncol(X)) stop("ncol(X0) must match ncol(X).")
       m <- nrow(X0)
       out <- matrix(NA_real_, nrow(X), m)

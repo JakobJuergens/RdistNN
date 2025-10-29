@@ -12,8 +12,9 @@ register_distance <- function(distance) {
 #' Retrieve a registered distance
 #' @export
 get_distance <- function(name) {
-  if (!exists(name, envir = .distance_registry, inherits = FALSE))
+  if (!exists(name, envir = .distance_registry, inherits = FALSE)) {
     stop("No distance registered under '", name, "'.")
+  }
   get(name, envir = .distance_registry, inherits = FALSE)
 }
 
