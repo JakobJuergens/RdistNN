@@ -10,7 +10,7 @@ testthat::local_edition(3)
 # --- helpers ---------------------------------------------------------
 cate_demo <- function(n = 120, p = 2, seed = 1L) {
   set.seed(seed)
-  X   <- matrix(rnorm(n * p), n, p, dimnames = list(NULL, paste0("X", 1:p)))
+  X <- matrix(rnorm(n * p), n, p, dimnames = list(NULL, paste0("X", 1:p)))
   rho <- rnorm(n)
   data.frame(X, rho = rho)
 }
@@ -25,21 +25,30 @@ test_that("[factory] XOR (rho vs rho_col) and basic dimension checks", {
 
   # Must supply exactly one of rho or rho_col
   expect_error(score_cate_rho(x0 = x0, x_cols = 1:3, s = 1, k = 1),
-               "exactly one|mutually exclusive", ignore.case = TRUE)
-  expect_error(score_cate_rho(x0 = x0, x_cols = 1:3, s = 1, k = 1,
-                              rho = df$rho, rho_col = "rho"),
-               "exactly one|mutually exclusive", ignore.case = TRUE)
+    "exactly one|mutually exclusive",
+    ignore.case = TRUE
+  )
+  expect_error(
+    score_cate_rho(
+      x0 = x0, x_cols = 1:3, s = 1, k = 1,
+      rho = df$rho, rho_col = "rho"
+    ),
+    "exactly one|mutually exclusive",
+    ignore.case = TRUE
+  )
 
   # x0 length mismatch (setup-time)
   expect_error(
     score_cate_rho(x0 = rep(0, 4), x_cols = 1:3, s = 1, k = 1, rho = df$rho) |> score_setup(df),
-    "x0 length|ncol", ignore.case = TRUE
+    "x0 length|ncol",
+    ignore.case = TRUE
   )
 
   # rho length mismatch (setup-time)
   expect_error(
     score_cate_rho(x0 = x0, x_cols = 1:3, s = 1, k = 1, rho = df$rho[-1]) |> score_setup(df),
-    "rho length|nrow", ignore.case = TRUE
+    "rho length|nrow",
+    ignore.case = TRUE
   )
 })
 
@@ -47,9 +56,9 @@ test_that("[g] score equals rho_i for singleton subsets (R path)", {
   df <- cate_demo(n = 50, p = 2, seed = 2)
   x0 <- colMeans(df[, 1:2, drop = FALSE])
 
-  sc  <- score_cate_rho(x0 = x0, x_cols = 1:2, s = 1, k = 1, rho = df$rho)
+  sc <- score_cate_rho(x0 = x0, x_cols = 1:2, s = 1, k = 1, rho = df$rho)
   ctx <- score_setup(sc, df)
-  ctx$ptr_ctx <- NULL  # force R fallback
+  ctx$ptr_ctx <- NULL # force R fallback
 
   subs <- .singletons(nrow(df))
   vals <- score_eval_batch(sc, subs, df, ctx)
@@ -64,11 +73,12 @@ test_that("[compiled] compiled equals R for singleton subsets (if available)", {
   df <- cate_demo(n = 60, p = 2, seed = 3)
   x0 <- colMeans(df[, 1:2, drop = FALSE])
 
-  sc   <- score_cate_rho(x0 = x0, x_cols = 1:2, s = 1, k = 1, rho = df$rho)
-  ctxC <- score_setup(sc, df)             # compiled (if ptr available)
-  ctxR <- ctxC; ctxR$ptr_ctx <- NULL      # R path
+  sc <- score_cate_rho(x0 = x0, x_cols = 1:2, s = 1, k = 1, rho = df$rho)
+  ctxC <- score_setup(sc, df) # compiled (if ptr available)
+  ctxR <- ctxC
+  ctxR$ptr_ctx <- NULL # R path
 
-  subs   <- .singletons(nrow(df))
+  subs <- .singletons(nrow(df))
   vals_C <- score_eval_batch(sc, subs, df, ctxC)
   vals_R <- score_eval_batch(sc, subs, df, ctxR)
 
@@ -80,7 +90,7 @@ test_that("[inputs] non-finite rho triggers an error on evaluation", {
   df$rho[7] <- NA_real_
   x0 <- colMeans(df[, 1:2, drop = FALSE])
 
-  sc  <- score_cate_rho(x0 = x0, x_cols = 1:2, s = 1, k = 1, rho_col = "rho")
+  sc <- score_cate_rho(x0 = x0, x_cols = 1:2, s = 1, k = 1, rho_col = "rho")
   ctx <- score_setup(sc, df)
   ctx$ptr_ctx <- NULL
 

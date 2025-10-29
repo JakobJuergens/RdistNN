@@ -24,22 +24,27 @@ test_that("[smoke] can construct a minimal rank_weight and print it", {
 
 test_that("[validate] errors on empty name or missing implementation", {
   f <- function(ranks, ctx = NULL) rep(0, length(ranks))
-  expect_error(new_rank_weight(name = "", eval = f),
-               "rank-weight name must be non-empty")
-  expect_error(new_rank_weight(name = "noimpl"),
-               "Provide at least one of: ptr, eval, eval_batch")
+  expect_error(
+    new_rank_weight(name = "", eval = f),
+    "rank-weight name must be non-empty"
+  )
+  expect_error(
+    new_rank_weight(name = "noimpl"),
+    "Provide at least one of: ptr, eval, eval_batch"
+  )
 })
 
 test_that("[setup] context from rank_weight_setup is threaded into eval and eval_batch", {
-  used_ctx_eval  <- FALSE
+  used_ctx_eval <- FALSE
   used_ctx_batch <- FALSE
 
   rw <- new_rank_weight(
     name = "ctx_rw",
     setup = function(data, scale = 2) list(scale = scale),
-    eval  = function(ranks, ctx = NULL) {
-      used_ctx_eval  <<- isTRUE(ctx$scale == 3)
-      w <- rep(0, length(ranks)); w[ranks <= 1] <- 1 # put mass on top-1
+    eval = function(ranks, ctx = NULL) {
+      used_ctx_eval <<- isTRUE(ctx$scale == 3)
+      w <- rep(0, length(ranks))
+      w[ranks <= 1] <- 1 # put mass on top-1
       w * ctx$scale # scale, will be renormalized here for testing purposes
     },
     eval_batch = function(R, ctx = NULL) {
@@ -68,7 +73,9 @@ test_that("[engine] rank_weight_eval enforces numeric(n) finite; rank_weight_eva
   rw_ok <- new_rank_weight(
     name = "ok",
     eval = function(ranks, ctx = NULL) {
-      w <- rep(0, length(ranks)); w[ranks <= 2] <- 0.5; w
+      w <- rep(0, length(ranks))
+      w[ranks <= 2] <- 0.5
+      w
     }
   )
   n <- 6L
@@ -83,8 +90,10 @@ test_that("[engine] rank_weight_eval enforces numeric(n) finite; rank_weight_eva
     name = "bad_len",
     eval = function(ranks, ctx = NULL) rep(1, length(ranks) + 1L)
   )
-  expect_error(rank_weight_eval(rw_bad_len, ranks),
-               "must return numeric\\(length\\(ranks\\)\\) with finite entries")
+  expect_error(
+    rank_weight_eval(rw_bad_len, ranks),
+    "must return numeric\\(length\\(ranks\\)\\) with finite entries"
+  )
 
   # good eval_batch
   rw_b_ok <- new_rank_weight(
@@ -106,33 +115,40 @@ test_that("[engine] rank_weight_eval enforces numeric(n) finite; rank_weight_eva
     name = "badb",
     eval_batch = function(R, ctx = NULL) matrix(1, nrow(R) + 1L, ncol(R))
   )
-  expect_error(rank_weight_eval_batch(rw_b_bad, R),
-               "must return a finite numeric matrix of size nrow\\(R\\) x ncol\\(R\\)")
+  expect_error(
+    rank_weight_eval_batch(rw_b_bad, R),
+    "must return a finite numeric matrix of size nrow\\(R\\) x ncol\\(R\\)"
+  )
 })
 
 test_that("[engine] path errors when respective R fallback is absent", {
-  n <- 5L; ranks <- sample.int(n)
+  n <- 5L
+  ranks <- sample.int(n)
   R <- cbind(sample.int(n), sample.int(n))
 
   rw_only_batch <- new_rank_weight(
     name = "only_batch",
     eval_batch = function(R, ctx = NULL) matrix(0, nrow(R), ncol(R))
   )
-  expect_error(rank_weight_eval(rw_only_batch, ranks),
-               "No R `eval` provided; use compiled `ptr` or R `eval_batch`\\.")
+  expect_error(
+    rank_weight_eval(rw_only_batch, ranks),
+    "No R `eval` provided; use compiled `ptr` or R `eval_batch`\\."
+  )
 
   rw_only_eval <- new_rank_weight(
     name = "only_eval",
     eval = function(ranks, ctx = NULL) rep(0, length(ranks))
   )
-  expect_error(rank_weight_eval_batch(rw_only_eval, R),
-               "No R `eval_batch` provided; use compiled `ptr` or R `eval`\\.")
+  expect_error(
+    rank_weight_eval_batch(rw_only_eval, R),
+    "No R `eval_batch` provided; use compiled `ptr` or R `eval`\\."
+  )
 })
 
 test_that("[inputs] rank vector validation fires via public API", {
   rw <- new_rank_weight(
     name = "v",
-    eval = function(ranks, ctx = NULL) rep(1/length(ranks), length(ranks))
+    eval = function(ranks, ctx = NULL) rep(1 / length(ranks), length(ranks))
   )
   expect_error(rank_weight_eval(rw, integer(0)), "positive length")
   expect_error(rank_weight_eval(rw, c(1L, NA_integer_)), "cannot contain NA")
@@ -142,7 +158,7 @@ test_that("[inputs] rank vector validation fires via public API", {
 test_that("[inputs] rank matrix validation fires via public API", {
   rw <- new_rank_weight(
     name = "m",
-    eval_batch = function(R, ctx = NULL) matrix(1/nrow(R), nrow(R), ncol(R))
+    eval_batch = function(R, ctx = NULL) matrix(1 / nrow(R), nrow(R), ncol(R))
   )
   expect_error(rank_weight_eval_batch(rw, matrix(integer(0), 0, 0)), "positive nrow and ncol")
   R_bad <- cbind(c(1L, 1L, 2L), c(1L, 2L, NA_integer_))
@@ -151,7 +167,7 @@ test_that("[inputs] rank matrix validation fires via public API", {
 
 test_that("[helpers] as_rank_weight wraps a function; is_rank_weight predicate; ord_to_ranks round-trip", {
   # as_rank_weight + predicate
-  f <- function(ranks, ctx = NULL) rep(1/length(ranks), length(ranks))
+  f <- function(ranks, ctx = NULL) rep(1 / length(ranks), length(ranks))
   rw <- as_rank_weight(f, name = "wrapped")
   expect_s3_class(rw, "rank_weight")
   expect_true(is_rank_weight(rw))

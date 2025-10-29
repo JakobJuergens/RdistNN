@@ -13,7 +13,9 @@
 
 test_that("[smoke] returns weights of length n that are nonnegative and sum to 1", {
   set.seed(1)
-  n <- 60L; s <- 12L; k <- 4L
+  n <- 60L
+  s <- 12L
+  k <- 4L
   ranks <- sample.int(n)
   out <- dnn_weights_asymp_full_from_ranks(ranks, k = k, s = s)
 
@@ -30,17 +32,21 @@ test_that("[smoke] returns weights of length n that are nonnegative and sum to 1
 })
 
 test_that("[edge] s = 1, k = 1 yields uniform weights exactly", {
-  n <- 31L; s <- 1L; k <- 1L
+  n <- 31L
+  s <- 1L
+  k <- 1L
   ranks <- sample.int(n)
   out <- dnn_weights_asymp_full_from_ranks(ranks, k = k, s = s)
-  expect_equal(out$w_rank, rep(1/n, n), tolerance = 1e-12)   # was tolerance = 0
-  expect_equal(out$w, out$w_rank[ranks], tolerance = 1e-12)  # was tolerance = 0
+  expect_equal(out$w_rank, rep(1 / n, n), tolerance = 1e-12) # was tolerance = 0
+  expect_equal(out$w, out$w_rank[ranks], tolerance = 1e-12) # was tolerance = 0
 })
 
 
 test_that("[edge] k = 1 produces (near) monotone nonincreasing weights in rank", {
   # With k=1, w_rank[j] are Beta(1, s)-bin increments over equal bins; they should decrease with j.
-  n <- 200L; s <- 15L; k <- 1L
+  n <- 200L
+  s <- 15L
+  k <- 1L
   ranks <- 1:n
   out <- dnn_weights_asymp_full_from_ranks(ranks, k = k, s = s, normalize = FALSE)
   diffs <- diff(out$w_rank)
@@ -50,7 +56,9 @@ test_that("[edge] k = 1 produces (near) monotone nonincreasing weights in rank",
 
 test_that("[approx] asymptotic weights are close to exact weights for moderate n", {
   set.seed(2)
-  n <- 120L; s <- 10L; k <- 3L
+  n <- 120L
+  s <- 10L
+  k <- 3L
   ranks <- 1:n
 
   w_ex <- dnn_weights_exact_full_from_ranks(ranks, k, s)$w_rank
@@ -58,12 +66,14 @@ test_that("[approx] asymptotic weights are close to exact weights for moderate n
 
   # L1 gap should be small for moderate n; loosen if needed in CI
   l1 <- sum(abs(w_ex - w_ap))
-  expect_lt(l1, 0.02)  # ~2% total variation is a reasonable target here
+  expect_lt(l1, 0.02) # ~2% total variation is a reasonable target here
 })
 
 test_that("[inv] w_rank depends only on (n,k,s) and not on permutation; mapping to data order changes accordingly", {
   set.seed(3)
-  n <- 80L; s <- 12L; k <- 4L
+  n <- 80L
+  s <- 12L
+  k <- 4L
   r1 <- 1:n
   r2 <- rev(r1)
   r3 <- sample.int(n)
@@ -83,7 +93,9 @@ test_that("[inv] w_rank depends only on (n,k,s) and not on permutation; mapping 
 
 test_that("[opts] normalize=FALSE is already ~normalized and equals TRUE within tight tolerance", {
   set.seed(4)
-  n <- 90L; s <- 9L; k <- 3L
+  n <- 90L
+  s <- 9L
+  k <- 3L
   ranks <- sample.int(n)
 
   outF <- dnn_weights_asymp_full_from_ranks(ranks, k, s, normalize = FALSE)
@@ -110,7 +122,10 @@ test_that("[errors] input validation triggers appropriate errors", {
 })
 
 test_that("[meta] meta fields are correct", {
-  n <- 55L; s <- 11L; k <- 4L; ranks <- sample.int(n)
+  n <- 55L
+  s <- 11L
+  k <- 4L
+  ranks <- sample.int(n)
   out <- dnn_weights_asymp_full_from_ranks(ranks, k, s)
   expect_identical(out$meta$n, n)
   expect_identical(out$meta$k, as.integer(k))

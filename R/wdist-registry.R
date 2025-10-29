@@ -21,8 +21,9 @@ register_wdist <- function(dw) {
 #' @return A \code{dist_weight} object.
 #' @export
 get_wdist <- function(name) {
-  if (!exists(name, envir = .wdist_registry, inherits = FALSE))
+  if (!exists(name, envir = .wdist_registry, inherits = FALSE)) {
     stop("No dist_weight registered under '", name, "'.")
+  }
   get(name, envir = .wdist_registry, inherits = FALSE)
 }
 

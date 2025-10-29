@@ -54,6 +54,5 @@ test_that("[registry] list_scores includes the newly registered name and is sort
 
 test_that("[registry] errors on missing name and non-score inputs", {
   expect_error(get_score("i_do_not_exist"), "No score registered under 'i_do_not_exist'")
-  expect_error(register_score(123))  # any error is fine
+  expect_error(register_score(123)) # any error is fine
 })
-

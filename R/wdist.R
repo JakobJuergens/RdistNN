@@ -24,12 +24,12 @@
 #' @return An object of class \code{dist_weight}.
 #' @export
 new_dist_weight <- function(
-    name,
-    setup = NULL,
-    eval_dx = NULL,
-    eval_dx_batch = NULL,
-    ptr = NULL,
-    randomized = FALSE
+  name,
+  setup = NULL,
+  eval_dx = NULL,
+  eval_dx_batch = NULL,
+  ptr = NULL,
+  randomized = FALSE
 ) {
   dw <- list(
     name = as.character(name),
@@ -49,8 +49,9 @@ new_dist_weight <- function(
 
 .check_dx_vec <- function(dx) {
   # NEW: forbid matrices/arrays on the single-target path
-  if (!is.null(dim(dx)))
+  if (!is.null(dim(dx))) {
     stop("dx must be a numeric vector; use dist_weight_eval_batch() for matrices.")
+  }
   x <- as.numeric(dx)
   n <- length(x)
   if (n == 0L) stop("dx must have positive length.")
@@ -73,8 +74,9 @@ new_dist_weight <- function(
 validate_dist_weight <- function(dw) {
   stopifnot(inherits(dw, "dist_weight"))
   if (!nzchar(dw$name)) stop("distance-weight name must be non-empty")
-  if (is.null(dw$ptr) && is.null(dw$eval_dx) && is.null(dw$eval_dx_batch))
+  if (is.null(dw$ptr) && is.null(dw$eval_dx) && is.null(dw$eval_dx_batch)) {
     stop("Provide at least one of: ptr, eval_dx, eval_dx_batch")
+  }
   dw
 }
 
@@ -82,12 +84,19 @@ validate_dist_weight <- function(dw) {
 print.dist_weight <- function(x, ...) {
   cat("<dist_weight: ", x$name, ">\n", sep = "")
   cat("  impl : ",
-      if (!is.null(x$ptr))               "compiled(ptr)"
-      else if (!is.null(x$eval_dx_batch)) "R eval_dx_batch"
-      else if (!is.null(x$eval_dx))       "R eval_dx"
-      else                                "NONE",
-      if (isTRUE(x$randomized)) " (randomized)" else "",
-      "\n", sep = "")
+    if (!is.null(x$ptr)) {
+      "compiled(ptr)"
+    } else if (!is.null(x$eval_dx_batch)) {
+      "R eval_dx_batch"
+    } else if (!is.null(x$eval_dx)) {
+      "R eval_dx"
+    } else {
+      "NONE"
+    },
+    if (isTRUE(x$randomized)) " (randomized)" else "",
+    "\n",
+    sep = ""
+  )
   invisible(x)
 }
 
@@ -101,7 +110,9 @@ print.dist_weight <- function(x, ...) {
 dist_weight_setup <- function(dist_weight, data, ...) UseMethod("dist_weight_setup")
 #' @export
 dist_weight_setup.dist_weight <- function(dist_weight, data, ...) {
-  if (is.null(dist_weight$setup)) return(NULL)
+  if (is.null(dist_weight$setup)) {
+    return(NULL)
+  }
   dist_weight$setup(data, ...)
 }
 
@@ -112,12 +123,14 @@ dist_weight_setup.dist_weight <- function(dist_weight, data, ...) {
 dist_weight_eval <- function(dist_weight, dx, ctx = NULL) UseMethod("dist_weight_eval")
 #' @export
 dist_weight_eval.dist_weight <- function(dist_weight, dx, ctx = NULL) {
-  if (is.null(dist_weight$eval_dx))
+  if (is.null(dist_weight$eval_dx)) {
     stop("No R `eval_dx` provided; use compiled `ptr` or R `eval_dx_batch`.")
+  }
   x <- .check_dx_vec(dx)
   w <- dist_weight$eval_dx(x, ctx)
-  if (!is.numeric(w) || length(w) != length(x) || any(!is.finite(w)))
+  if (!is.numeric(w) || length(w) != length(x) || any(!is.finite(w))) {
     stop("dist_weight$eval_dx must return numeric(length(dx)) with finite entries.")
+  }
   w
 }
 
@@ -128,12 +141,14 @@ dist_weight_eval.dist_weight <- function(dist_weight, dx, ctx = NULL) {
 dist_weight_eval_batch <- function(dist_weight, DX, ctx = NULL) UseMethod("dist_weight_eval_batch")
 #' @export
 dist_weight_eval_batch.dist_weight <- function(dist_weight, DX, ctx = NULL) {
-  if (is.null(dist_weight$eval_dx_batch))
+  if (is.null(dist_weight$eval_dx_batch)) {
     stop("No R `eval_dx_batch` provided; use compiled `ptr` or R `eval_dx`.")
+  }
   M <- .check_dx_mat(DX)
   W <- dist_weight$eval_dx_batch(M, ctx)
-  if (!is.matrix(W) || nrow(W) != nrow(M) || ncol(W) != ncol(M) || any(!is.finite(W)))
+  if (!is.matrix(W) || nrow(W) != nrow(M) || ncol(W) != ncol(M) || any(!is.finite(W))) {
     stop("dist_weight$eval_dx_batch must return a finite numeric matrix of size nrow(DX) x ncol(DX).")
+  }
   W
 }
 

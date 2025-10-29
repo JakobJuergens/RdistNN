@@ -34,10 +34,12 @@
 #' }
 #' @examples
 #' set.seed(1)
-#' n <- 10; s <- 4; k <- 2
-#' ranks <- sample.int(n)       # ranks[i] in 1..n
+#' n <- 10
+#' s <- 4
+#' k <- 2
+#' ranks <- sample.int(n) # ranks[i] in 1..n
 #' out <- dnn_weights_exact_full_from_ranks(ranks, k = k, s = s)
-#' sum(out$w)      # 1
+#' sum(out$w) # 1
 #' sum(out$w_rank) # 1
 #' @export
 dnn_weights_exact_full_from_ranks <- function(ranks, k, s) {
@@ -50,10 +52,12 @@ dnn_weights_exact_full_from_ranks <- function(ranks, k, s) {
   if (!setequal(ranks, seq_len(n))) stop("`ranks` must be a permutation of 1..n.")
 
   # ---- validate k, s ----
-  if (!is.numeric(s) || length(s) != 1L || !is.finite(s) || s < 1L || s > n || as.integer(s) != s)
+  if (!is.numeric(s) || length(s) != 1L || !is.finite(s) || s < 1L || s > n || as.integer(s) != s) {
     stop("`s` must be an integer with 1 <= s <= n.")
-  if (!is.numeric(k) || length(k) != 1L || !is.finite(k) || k < 1L || as.integer(k) != k)
+  }
+  if (!is.numeric(k) || length(k) != 1L || !is.finite(k) || k < 1L || as.integer(k) != k) {
     stop("`k` must be a positive integer.")
+  }
   if (k > s) stop("`k` must satisfy k <= s in the full U-statistic setting.")
 
   # ---- exact rank-weights via hypergeometric law ----

@@ -2,7 +2,7 @@
 
 # Pure-R fallback (vectorized, stable)
 .dist_l2_R <- function(X, x0, squared = TRUE) {
-  X  <- as.matrix(X)
+  X <- as.matrix(X)
   x0 <- as.numeric(x0)
   if (length(x0) != ncol(X)) stop("x0 length must equal ncol(X).")
   dx2 <- rowSums((X - matrix(x0, nrow(X), ncol(X), byrow = TRUE))^2)
@@ -28,7 +28,8 @@ dist_l2 <- function(X, x0, squared = TRUE) {
 #' @return list(dx = numeric n, ord = integer n) with deterministic tie-breaking
 #' @export
 order_by_l2 <- function(X, x0, squared = TRUE) {
-  X  <- as.matrix(X); x0 <- as.numeric(x0)
+  X <- as.matrix(X)
+  x0 <- as.numeric(x0)
   if (exists("rustat_order_by_l2", mode = "function")) {
     return(rustat_order_by_l2(X, x0, isTRUE(squared)))
   }
@@ -56,7 +57,8 @@ distance_l2 <- function(squared = TRUE) {
     },
     # simple R fast-path for multiple targets; loops over columns of X0
     eval_batch = function(X, X0, ctx = NULL) {
-      X  <- as.matrix(X); X0 <- as.matrix(X0)
+      X <- as.matrix(X)
+      X0 <- as.matrix(X0)
       if (ncol(X0) != ncol(X)) stop("ncol(X0) must match ncol(X).")
       m <- nrow(X0)
       out <- matrix(NA_real_, nrow(X), m)

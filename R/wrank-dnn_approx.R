@@ -34,10 +34,12 @@
 #' }
 #' @examples
 #' set.seed(1)
-#' n <- 50; s <- 10; k <- 3
+#' n <- 50
+#' s <- 10
+#' k <- 3
 #' ranks <- sample.int(n)
 #' out <- dnn_weights_asymp_full_from_ranks(ranks, k = k, s = s)
-#' sum(out$w)      # 1
+#' sum(out$w) # 1
 #' sum(out$w_rank) # 1
 #' @export
 dnn_weights_asymp_full_from_ranks <- function(ranks, k, s, normalize = TRUE) {
@@ -50,14 +52,16 @@ dnn_weights_asymp_full_from_ranks <- function(ranks, k, s, normalize = TRUE) {
   if (!setequal(ranks, seq_len(n))) stop("`ranks` must be a permutation of 1..n.")
 
   # ---- validate k, s ----
-  if (!is.numeric(s) || length(s) != 1L || !is.finite(s) || s < 1L || s > n || as.integer(s) != s)
+  if (!is.numeric(s) || length(s) != 1L || !is.finite(s) || s < 1L || s > n || as.integer(s) != s) {
     stop("`s` must be an integer with 1 <= s <= n.")
-  if (!is.numeric(k) || length(k) != 1L || !is.finite(k) || k < 1L || as.integer(k) != k)
+  }
+  if (!is.numeric(k) || length(k) != 1L || !is.finite(k) || k < 1L || as.integer(k) != k) {
     stop("`k` must be a positive integer.")
+  }
   if (k > s) stop("`k` must satisfy k <= s in the full U-statistic setting.")
 
   # ---- asymptotic Beta-increment weights over the j/n grid ----
-  j  <- seq_len(n)
+  j <- seq_len(n)
   ii <- seq_len(k)
   # n x k matrix of CDF increments on intervals ((j-1)/n, j/n]
   inc <- outer(
@@ -79,9 +83,11 @@ dnn_weights_asymp_full_from_ranks <- function(ranks, k, s, normalize = TRUE) {
   w <- w_rank[ranks]
 
   list(
-    w      = w,
+    w = w,
     w_rank = w_rank,
-    meta   = list(n = n, k = as.integer(k), s = as.integer(s),
-                  approx = "beta(OrderStat)")
+    meta = list(
+      n = n, k = as.integer(k), s = as.integer(s),
+      approx = "beta(OrderStat)"
+    )
   )
 }

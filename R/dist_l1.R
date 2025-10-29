@@ -2,7 +2,7 @@
 
 # Pure-R fallback (vectorized)
 .dist_l1_R <- function(X, x0) {
-  X  <- as.matrix(X)
+  X <- as.matrix(X)
   x0 <- as.numeric(x0)
   if (length(x0) != ncol(X)) stop("x0 length must equal ncol(X).")
   rowSums(abs(X - matrix(x0, nrow(X), ncol(X), byrow = TRUE)))
@@ -26,12 +26,13 @@ dist_l1 <- function(X, x0) {
 #' @return list(dx = numeric n, ord = integer n) with deterministic tie-breaking
 #' @export
 order_by_l1 <- function(X, x0) {
-  X  <- as.matrix(X); x0 <- as.numeric(x0)
+  X <- as.matrix(X)
+  x0 <- as.numeric(x0)
   if (exists("rustat_order_by_l1", mode = "function")) {
     return(rustat_order_by_l1(X, x0))
   }
-  dx  <- .dist_l1_R(X, x0)
-  ord <- order(dx, seq_along(dx))  # tie-break by index
+  dx <- .dist_l1_R(X, x0)
+  ord <- order(dx, seq_along(dx)) # tie-break by index
   list(dx = dx, ord = as.integer(ord))
 }
 
@@ -49,10 +50,11 @@ distance_l1 <- function() {
   new_distance(
     name = "l1",
     eval = function(X, x0, ctx = NULL) {
-      dist_l1(X, x0)  # compiled if available; R otherwise
+      dist_l1(X, x0) # compiled if available; R otherwise
     },
     eval_batch = function(X, X0, ctx = NULL) {
-      X  <- as.matrix(X); X0 <- as.matrix(X0)
+      X <- as.matrix(X)
+      X0 <- as.matrix(X0)
       if (ncol(X0) != ncol(X)) stop("ncol(X0) must match ncol(X).")
       m <- nrow(X0)
       out <- matrix(NA_real_, nrow(X), m)

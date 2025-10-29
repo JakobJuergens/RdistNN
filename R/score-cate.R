@@ -16,8 +16,8 @@
 #'         `eval_batch` only index/sum `g` (no weights).
 #' @export
 score_cate_rho <- function(
-    x0, x_cols, s, k = 1L,
-    rho_col = NULL, rho = NULL
+  x0, x_cols, s, k = 1L,
+  rho_col = NULL, rho = NULL
 ) {
   # XOR: exactly one of rho_col or rho
   if (is.null(rho_col) == is.null(rho)) {
@@ -31,7 +31,7 @@ score_cate_rho <- function(
   }
 
   new_score(
-    name  = "cate_rho_purescore",
+    name = "cate_rho_purescore",
     order = function(n, data, ctx) as.integer(s),
 
     # in score_cate_rho(...)
@@ -41,7 +41,7 @@ score_cate_rho <- function(
       r <- if (!is.null(rho_col)) as.numeric(data[[rho_col]]) else as.numeric(rho)
 
       if (length(x0) != ncol(X)) stop("x0 length must equal ncol(X).", call. = FALSE)
-      if (length(r)  != nrow(X)) stop("rho length must equal nrow(data).", call. = FALSE)
+      if (length(r) != nrow(X)) stop("rho length must equal nrow(data).", call. = FALSE)
 
       # DO NOT check finiteness here (tests expect failure at evaluation)
       list(g = r, n = nrow(X), p = ncol(X), s = as.integer(s))
@@ -58,10 +58,8 @@ score_cate_rho <- function(
       if (any(!is.finite(gi))) stop("Non-finite g encountered.", call. = FALSE)
       rowSums(matrix(gi[subs], nrow = nrow(subs)))
     },
-
-
     randomized = FALSE,
-    symmetric  = TRUE,
-    ptr        = NULL           # no compiled pointer in the pure-score layer
+    symmetric = TRUE,
+    ptr = NULL # no compiled pointer in the pure-score layer
   )
 }

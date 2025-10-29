@@ -15,12 +15,12 @@
 #' @return An object of class `dnn_distance`.
 #' @export
 new_distance <- function(
-    name,
-    setup = NULL,
-    eval = NULL,
-    eval_batch = NULL,
-    ptr = NULL,
-    randomized = FALSE
+  name,
+  setup = NULL,
+  eval = NULL,
+  eval_batch = NULL,
+  ptr = NULL,
+  randomized = FALSE
 ) {
   dist <- list(
     name = as.character(name),
@@ -42,8 +42,9 @@ new_distance <- function(
 validate_distance <- function(dist) {
   stopifnot(inherits(dist, "dnn_distance"))
   if (!nzchar(dist$name)) stop("distance name must be non-empty")
-  if (is.null(dist$ptr) && is.null(dist$eval) && is.null(dist$eval_batch))
+  if (is.null(dist$ptr) && is.null(dist$eval) && is.null(dist$eval_batch)) {
     stop("Provide at least one of: ptr, eval, eval_batch")
+  }
   dist
 }
 
@@ -51,12 +52,19 @@ validate_distance <- function(dist) {
 print.dnn_distance <- function(x, ...) {
   cat("<dnn_distance: ", x$name, ">\n", sep = "")
   cat("  impl : ",
-      if (!is.null(x$ptr))        "compiled(ptr)"
-      else if (!is.null(x$eval_batch)) "R eval_batch"
-      else if (!is.null(x$eval))  "R eval"
-      else                        "NONE",
-      if (isTRUE(x$randomized)) " (randomized)" else "",
-      "\n", sep = "")
+    if (!is.null(x$ptr)) {
+      "compiled(ptr)"
+    } else if (!is.null(x$eval_batch)) {
+      "R eval_batch"
+    } else if (!is.null(x$eval)) {
+      "R eval"
+    } else {
+      "NONE"
+    },
+    if (isTRUE(x$randomized)) " (randomized)" else "",
+    "\n",
+    sep = ""
+  )
   invisible(x)
 }
 
@@ -71,7 +79,9 @@ print.dnn_distance <- function(x, ...) {
 distance_setup <- function(distance, data, ...) UseMethod("distance_setup")
 #' @export
 distance_setup.dnn_distance <- function(distance, data, ...) {
-  if (is.null(distance$setup)) return(NULL)
+  if (is.null(distance$setup)) {
+    return(NULL)
+  }
   distance$setup(data, ...)
 }
 
@@ -84,15 +94,17 @@ distance_setup.dnn_distance <- function(distance, data, ...) {
 distance_eval <- function(distance, X, x0, ctx = NULL) UseMethod("distance_eval")
 #' @export
 distance_eval.dnn_distance <- function(distance, X, x0, ctx = NULL) {
-  if (is.null(distance$eval))
+  if (is.null(distance$eval)) {
     stop("No R `eval` provided; use compiled `ptr` or R `eval_batch`.")
-  X  <- as.matrix(X)
+  }
+  X <- as.matrix(X)
   x0 <- as.numeric(x0)
   if (ncol(X) == 0L) stop("X must have at least one column.")
   if (length(x0) != ncol(X)) stop("x0 length must equal ncol(X).")
   out <- distance$eval(X, x0, ctx)
-  if (!is.numeric(out) || length(out) != nrow(X) || any(!is.finite(out)))
+  if (!is.numeric(out) || length(out) != nrow(X) || any(!is.finite(out))) {
     stop("distance$eval must return numeric(nrow(X)) with finite entries.")
+  }
   out
 }
 
@@ -103,15 +115,17 @@ distance_eval.dnn_distance <- function(distance, X, x0, ctx = NULL) {
 distance_eval_batch <- function(distance, X, X0, ctx = NULL) UseMethod("distance_eval_batch")
 #' @export
 distance_eval_batch.dnn_distance <- function(distance, X, X0, ctx = NULL) {
-  if (is.null(distance$eval_batch))
+  if (is.null(distance$eval_batch)) {
     stop("No R `eval_batch` provided; use compiled `ptr` or R `eval`.")
-  X  <- as.matrix(X)
+  }
+  X <- as.matrix(X)
   X0 <- as.matrix(X0)
   if (ncol(X) == 0L) stop("X must have at least one column.")
   if (ncol(X0) != ncol(X)) stop("ncol(X0) must match ncol(X).")
   out <- distance$eval_batch(X, X0, ctx)
-  if (!is.matrix(out) || nrow(out) != nrow(X) || ncol(out) != nrow(X0) || any(!is.finite(out)))
+  if (!is.matrix(out) || nrow(out) != nrow(X) || ncol(out) != nrow(X0) || any(!is.finite(out))) {
     stop("distance$eval_batch must return a finite numeric matrix of size nrow(X) x nrow(X0).")
+  }
   out
 }
 

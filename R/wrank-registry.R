@@ -13,8 +13,9 @@ register_rank <- function(rw) {
 #' Retrieve a registered rank_weight
 #' @export
 get_rank <- function(name) {
-  if (!exists(name, envir = .rank_registry, inherits = FALSE))
+  if (!exists(name, envir = .rank_registry, inherits = FALSE)) {
     stop("No rank_weight registered under '", name, "'.")
+  }
   get(name, envir = .rank_registry, inherits = FALSE)
 }
 

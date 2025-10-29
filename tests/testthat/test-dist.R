@@ -26,13 +26,14 @@ test_that("[setup] context from distance_setup is threaded into eval", {
   d <- new_distance(
     name = "ctx_check",
     setup = function(data, flag = TRUE) list(flag = flag),
-    eval  = function(X, x0, ctx = NULL) {
+    eval = function(X, x0, ctx = NULL) {
       stopifnot(is.list(ctx), isTRUE(ctx$flag))
       called <<- TRUE
       rep(0, nrow(X))
     }
   )
-  X  <- matrix(0, 3, 2); x0 <- c(1, 1)
+  X <- matrix(0, 3, 2)
+  x0 <- c(1, 1)
   ctx <- distance_setup(d, X, flag = TRUE)
   out <- distance_eval(d, X, x0, ctx)
   expect_true(called)
@@ -47,7 +48,7 @@ test_that("[engine] distance_eval returns numeric(n) finite; input checks fire",
       sqrt(dx2)
     }
   )
-  X  <- matrix(rnorm(12), 6, 2)
+  X <- matrix(rnorm(12), 6, 2)
   x0 <- rnorm(2)
   out <- distance_eval(d, X, x0)
   expect_type(out, "double")
@@ -61,17 +62,18 @@ test_that("[engine] distance_eval returns numeric(n) finite; input checks fire",
 
 test_that("[batch] distance_eval_batch shape & parity with columnwise eval", {
   dev <- function(X, x0, ctx = NULL) rowSums(abs(X - matrix(x0, nrow(X), ncol(X), TRUE)))
-  db  <- function(X, X0, ctx = NULL) {
-    X  <- as.matrix(X); X0 <- as.matrix(X0)
+  db <- function(X, X0, ctx = NULL) {
+    X <- as.matrix(X)
+    X0 <- as.matrix(X0)
     out <- matrix(NA_real_, nrow(X), nrow(X0))
     for (j in seq_len(nrow(X0))) out[, j] <- dev(X, X0[j, ], ctx)
     out
   }
   d <- new_distance(name = "abs_sum_batch", eval = dev, eval_batch = db)
 
-  X  <- matrix(rnorm(20), 10, 2)
+  X <- matrix(rnorm(20), 10, 2)
   X0 <- matrix(rnorm(6), 3, 2)
-  M  <- distance_eval_batch(d, X, X0)
+  M <- distance_eval_batch(d, X, X0)
 
   expect_s3_class(d, "dnn_distance")
   expect_true(is.matrix(M))

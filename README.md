@@ -44,14 +44,14 @@ features to be present yet.
 library(RdistNN)
 
 set.seed(1)
-n  <- 500
-x  <- runif(n)
-y  <- sin(2*pi*x) + rnorm(n, sd = 0.2)
-X  <- matrix(x, ncol = 1)
+n <- 500
+x <- runif(n)
+y <- sin(2 * pi * x) + rnorm(n, sd = 0.2)
+X <- matrix(x, ncol = 1)
 x0 <- 0.4
 
 # Nearest-neighbor weight vector at x0 using k = 1 (DNN-1)
-w1 <- dnn1(x0, X)           # length n, nonnegative, sums to 1
+w1 <- dnn1(x0, X) # length n, nonnegative, sums to 1
 
 # Or k-NN weights (k ≥ 1); when k = 1 this should equal dnn1()
 wk <- dnnk(x0, X, k = 5)
@@ -68,7 +68,7 @@ library(RdistNN)
 
 # Suppose you have (Y, D, X, Z), a target quantile tau, and a component index j.
 tau <- 0.5
-j   <- 1L
+j <- 1L
 
 # Factory returns a function you can map over subsets / batches
 sc <- score_plqr_component(tau = tau, j = j)
