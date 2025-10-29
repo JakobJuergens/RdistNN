@@ -17,45 +17,53 @@ cate_demo_data(
 \arguments{
 \item{n}{Integer sample size.}
 
-\item{p}{Integer feature dimension (>= 2).}
+\item{p}{Integer feature dimension (recommend \eqn{p \ge 2}).}
 
-\item{design}{One of "simple", "hetero", "bump" for tau(x).}
+\item{design}{Character; one of \code{"simple"}, \code{"hetero"}, \code{"bump"} for \eqn{\tau(x)}.}
 
-\item{sigma}{Noise standard deviation in Y.}
+\item{sigma}{Noise standard deviation in \eqn{Y}.}
 
-\item{clip}{Propensity clipping in (0, 0.5); applies to e(x).}
+\item{clip}{Propensity clipping in \eqn{(0,\,0.5)}; applied to \eqn{e(x)}.}
 
 \item{seed}{Optional integer seed for reproducibility.}
 
-\item{x0}{Optional numeric length-p target point for convenience;
-defaults to the zero vector.}
+\item{x0}{Optional numeric length-\eqn{p} target point (defaults to the zero vector).}
 }
 \value{
 A list with:
 \itemize{
-\item \code{data}: data.frame with columns X1..Xp, D, Y,
-e_oracle, m_oracle, m0_oracle, tau_oracle, rho_oracle
-\item \code{x0}: target point used (length p)
+\item \code{data}: a \code{data.frame} with columns \code{X1..Xp}, \code{D}, \code{Y},
+and oracle nuisances \code{e_oracle} \bigl(=\eqn{e(X)}\bigr),
+\code{m_oracle} \bigl(=\eqn{m(X)}\bigr),
+\code{m0_oracle} \bigl(=\eqn{m_{0}(X)}\bigr),
+\code{tau_oracle} \bigl(=\eqn{\tau(X)}\bigr),
+\code{rho_oracle} \bigl(=\eqn{\rho}\bigr).
+\item \code{x0}: the target point used (length \eqn{p}).
 \item \code{truth}: list of closures \code{tau_fn(x)}, \code{e_fn(x)},
-\code{m0_fn(x)}, \code{m_fn(x)} to evaluate ground truth at any x
-\item \code{tau_x0}: the true tau(x0)
+\code{m0_fn(x)}, \code{m_fn(x)} to evaluate ground truth at any \eqn{x}.
+\item \code{tau_x0}: the true \eqn{\tau(x_{0})}.
 }
 }
 \description{
 Generates a small synthetic dataset for experimenting with the CATE score.
-It returns X, D, Y, along with oracle nuisance quantities:
-m(x) = E(Y given X=x) = m0(x) + e(x) * tau(x),
-e(x) = P(D=1|X=x), m0(x) = E(Y given X=x, D=0), tau(x) = treatment effect,
-and the R-learner style pseudo-outcome:
+It returns \eqn{X}, \eqn{D}, \eqn{Y}, along with oracle nuisance quantities:
+\deqn{
+  m(x) \;=\; \mathbb{E}[Y \mid X=x]
+         \;=\; m_{0}(x) \;+\; e(x)\,\tau(x) \, , \qquad
+  e(x) \;=\; \Pr(D=1 \mid X=x) \, ,
+}
+where \eqn{m_{0}(x) = \mathbb{E}[Y \mid X=x, D=0]} and \eqn{\tau(x)} is the
+treatment effect. It also returns the R-learner–style pseudo-outcome
 \deqn{
   \rho \;=\; \frac{(D - e)\,(Y - m)}{e\,\bigl(1 - e\bigr)} \, .
 }
 }
 \details{
-No model fitting is done here. Everything is known from the DGP.
+No model fitting is performed; all quantities come from the DGP.
 }
 \examples{
 demo <- cate_demo_data(n = 200, p = 2, design = "hetero", seed = 1)
 str(demo$data)
 demo$tau_x0
+
 }

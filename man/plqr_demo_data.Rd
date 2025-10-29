@@ -2,7 +2,7 @@
 % Please edit documentation in R/demo-data-plqr.R
 \name{plqr_demo_data}
 \alias{plqr_demo_data}
-\title{Minimal PLQR demo data (oracle nuisances, no internal fitting)}
+\title{Minimal PLQR demo data (oracle nuisances; no internal fitting)}
 \usage{
 plqr_demo_data(
   n = 300,
@@ -16,47 +16,59 @@ plqr_demo_data(
 )
 }
 \arguments{
-\item{n}{Sample size.}
+\item{n}{Integer; sample size.}
 
-\item{p}{Number of features in X (>= 2 recommended).}
+\item{p}{Integer; number of features in \eqn{X} (recommend \eqn{p \ge 2}).}
 
-\item{p_d}{Dimension of D (number of partially linear regressors).}
+\item{p_d}{Integer; dimension of \eqn{D} (number of partially linear regressors).}
 
-\item{tau}{Quantile level in (0,1).}
+\item{tau}{Quantile level in \eqn{(0,1)}.}
 
-\item{sigma}{ALD scale for the regression error (larger means noisier Y).}
+\item{sigma}{Positive ALD scale for the regression error (larger means noisier \eqn{Y}).}
 
-\item{design}{One of "linear", "sinusoidal", "bump" for \eqn{q_\tau(X)}.}
+\item{design}{Character; one of \code{"linear"}, \code{"sinusoidal"}, \code{"bump"} for \eqn{q_{\tau}(X)}.}
 
 \item{seed}{Optional integer seed.}
 
-\item{x0}{Optional target point in R^p for localization (defaults to 0 vector).}
+\item{x0}{Optional target point in \eqn{\mathbb{R}^{p}} for localization (defaults to the zero vector).}
 }
 \value{
 A list with:
 \itemize{
-\item \code{data}: data.frame with columns \code{X1..Xp}, \code{D1..Dp_d}, \code{Y},
-oracle nuisances \code{q_oracle} (== q_tau(X)) and \code{mD1..mDp_d} (== E(D given X),
-and residuals \code{rD1..rDp_d} (== D - mD).
+\item \code{data}: a \code{data.frame} with columns \code{X1..Xp}, \code{D1..Dp_d}, \code{Y};
+oracle nuisances \code{q_oracle} (the value of \eqn{q_{\tau}(X)}),
+\code{mD1..mDp_d} (components of \eqn{m_{D}(X)}),
+and residuals \code{rD1..rDp_d} (components of \eqn{D - m_{D}(X)}).
 \item \code{x0}: the target point used.
-\item \code{truth}: list with \code{beta_true} (length p_d),
-\code{q_fn(x)}, and \code{mD_fn(x)} closures to evaluate ground truth at new X.
-\item \code{q_x0}: the true \eqn{q_\tau(x_0)}.
+\item \code{truth}: a list with \code{beta_true} (length \code{p_d}),
+\code{q_fn(x)} and \code{mD_fn(x)} closures to evaluate ground truth at new \eqn{X}.
+\item \code{q_x0}: the true value \eqn{q_{\tau}(x_{0})}.
 }
 }
 \description{
-Generates data for a partially linear quantile regression model
-deqn{ Q_tau(Y given X, D) = D^T beta_0(tau) + q_tau(X), }
-with user-chosen design for eqn{q_tau}. Errors are Asymmetric Laplace
-so the conditional eqn{tau}-quantile is exactly the right-hand side.
+Generates data for a partially linear quantile regression (PLQR) model
+\deqn{
+  Q_{\tau}(Y \mid X, D) \;=\; D^{\top}\,\beta_{0}(\tau) \;+\; q_{\tau}(X) \, ,
+}
+with a user-chosen design for \eqn{q_{\tau}}. Errors follow an Asymmetric
+Laplace distribution (ALD) at level \eqn{\tau}, so the conditional
+\eqn{\tau}-quantile equals the right-hand side.
 }
 \details{
-Also returns oracle eqn{m_D(X)=E(D given X)} to build the orthogonal PLQR score
-deqn{ psi(W;beta) = (\,tau - 1\{Y le D^T beta + q_tau(X)\}\,)\,(D - m_D(X)). }
+The function also returns the oracle
+\eqn{m_{D}(X) \equiv \mathbb{E}[D \mid X]} to build the orthogonal PLQR score
+\deqn{
+  \psi(W;\beta)
+  \;=\;
+  \Bigl(\tau - \mathbf{1}\{\,Y \le D^{\top}\beta + q_{\tau}(X)\,\}\Bigr)\,
+  \bigl(D - m_{D}(X)\bigr)\, .
+}
 }
 \examples{
-demo <- plqr_demo_data(n = 300, p = 2, p_d = 1, tau = 0.5, design = "sinusoidal", seed = 1)
+demo <- plqr_demo_data(n = 300, p = 2, p_d = 1, tau = 0.5,
+                       design = "sinusoidal", seed = 1)
 head(demo$data)
 demo$truth$beta_true
 demo$q_x0
+
 }

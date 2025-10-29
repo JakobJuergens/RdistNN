@@ -7,22 +7,26 @@
 cate_demo_subsets(n, K = 1000L, s = 8L, seed = NULL)
 }
 \arguments{
-\item{n}{Number of observations.}
+\item{n}{Integer; number of observations.}
 
-\item{K}{Number of subsets to sample.}
+\item{K}{Integer; number of subsets to sample.}
 
-\item{s}{Subset size (order of the kernel).}
+\item{s}{Integer; subset size (order of the kernel).}
 
-\item{seed}{Optional integer seed.}
+\item{seed}{Optional integer seed for reproducibility.}
 }
 \value{
-Integer matrix K x s.
+An integer matrix of size \eqn{K \times s}. Each row contains
+\eqn{s} distinct integers in \eqn{\{1,\ldots,n\}} representing one subset.
 }
 \description{
-Draws K subsets of size s uniformly at random (without replacement within a subset).
-Rows are subsets; entries are 1-based indices in 1..n.
+Draws \eqn{K} subsets of size \eqn{s} uniformly at random from
+\eqn{\{1,\ldots,n\}}. Within each subset, elements are sampled \strong{without}
+replacement (all indices are distinct). Across rows, subsets are sampled
+independently (the same index may reappear in different rows).
 }
 \examples{
 subs <- cate_demo_subsets(n = 200, K = 1000, s = 8, seed = 1)
 dim(subs)
+
 }

@@ -7,13 +7,13 @@
 plqr_demo_subsets(n, K = 1000L, s = 8L, seed = NULL)
 }
 \arguments{
-\item{n}{Number of observations.}
+\item{n}{Integer; number of observations.}
 
-\item{K}{Number of subsets to sample.}
+\item{K}{Integer; number of subsets to sample.}
 
-\item{s}{Subset size (order of the kernel).}
+\item{s}{Integer; subset size (order of the kernel).}
 
-\item{seed}{Optional integer seed.}
+\item{seed}{Optional integer seed for reproducibility.}
 }
 \description{
 Quick helper: sample a batch of subsets (for U-stat / localization experiments)
