@@ -12,7 +12,6 @@ License: GPL (>= 3)
 Depends:
     R (>= 4.1.0)
 Imports:
-    methods,
     stats,
     Rcpp
 LinkingTo:
@@ -26,6 +25,7 @@ Suggests:
     bench,
     knitr,
     rmarkdown,
+    methods,
     testthat (>= 3.0.0)
 SystemRequirements: C++17
 Encoding: UTF-8

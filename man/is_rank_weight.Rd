@@ -2,10 +2,16 @@
 % Please edit documentation in R/wrank.R
 \name{is_rank_weight}
 \alias{is_rank_weight}
-\title{Is object a rank_weight?}
+\title{Is object a \code{rank_weight}?}
 \usage{
 is_rank_weight(x)
 }
+\arguments{
+\item{x}{any object}
+}
+\value{
+logical
+}
 \description{
-Is object a rank_weight?
+Is object a \code{rank_weight}?
 }

@@ -3,6 +3,8 @@
 .rank_registry <- new.env(parent = emptyenv())
 
 #' Register a rank_weight by name
+#' @param rw a \code{rank_weight}
+#' @return registered name (invisibly)
 #' @export
 register_rank <- function(rw) {
   stopifnot(is_rank_weight(rw))
@@ -11,6 +13,8 @@ register_rank <- function(rw) {
 }
 
 #' Retrieve a registered rank_weight
+#' @param name character scalar
+#' @return a \code{rank_weight}
 #' @export
 get_rank <- function(name) {
   if (!exists(name, envir = .rank_registry, inherits = FALSE)) {
@@ -20,5 +24,6 @@ get_rank <- function(name) {
 }
 
 #' List registered rank_weight names
+#' @return character vector of names
 #' @export
 list_ranks <- function() sort(ls(envir = .rank_registry, all.names = FALSE))

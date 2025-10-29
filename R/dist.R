@@ -73,8 +73,9 @@ print.dnn_distance <- function(x, ...) {
 
 #' Set up distance context (precomputation)
 #' @param distance dnn_distance
-#' @param data data.frame/matrix used to derive any scaling/normalization
+#' @param data training data used for scaling/normalization
 #' @param ... passed to distance$setup
+#' @return context object or NULL
 #' @export
 distance_setup <- function(distance, data, ...) UseMethod("distance_setup")
 #' @export
@@ -85,11 +86,12 @@ distance_setup.dnn_distance <- function(distance, data, ...) {
   distance$setup(data, ...)
 }
 
-#' Evaluate distance from X to x0 (R fallback or compiled)
+#' Evaluate distance from X to x0
 #' @param distance dnn_distance
 #' @param X numeric matrix (n x p)
 #' @param x0 numeric length-p vector
-#' @param ctx optional context from distance_setup()
+#' @param ctx optional context
+#' @return numeric(n)
 #' @export
 distance_eval <- function(distance, X, x0, ctx = NULL) UseMethod("distance_eval")
 #' @export
@@ -108,9 +110,12 @@ distance_eval.dnn_distance <- function(distance, X, x0, ctx = NULL) {
   out
 }
 
-#' Evaluate distance from X to many targets X0 (R fast-path or compiled)
-#' @param X0 numeric matrix (m x p); each row is a target
-#' @return numeric matrix (n x m), column j = distances to X0(j,)
+#' Evaluate distances from X to many targets X0
+#' @param distance dnn_distance
+#' @param X numeric matrix (n x p)
+#' @param X0 numeric matrix (m x p)
+#' @param ctx optional context
+#' @return numeric matrix (n x m)
 #' @export
 distance_eval_batch <- function(distance, X, X0, ctx = NULL) UseMethod("distance_eval_batch")
 #' @export
@@ -133,15 +138,22 @@ distance_eval_batch.dnn_distance <- function(distance, X, X0, ctx = NULL) {
 
 #' Coerce a plain function to a distance
 #' @param f function(X, x0, ctx) -> numeric(n)
+#' @param name character scalar used as the distance name (optional)
+#' @return A \code{dnn_distance}
 #' @export
 as_distance <- function(f, name = deparse(substitute(f))) {
   stopifnot(.is_fun(f, 2L))
   new_distance(name = name, eval = f)
 }
 
+#' Is object a \code{dnn_distance}?
+#' @param x any object
+#' @return logical
 #' @export
 is_distance <- function(x) inherits(x, "dnn_distance")
 
-# compiled-pointer predicate the engine can use
+#' Does a distance have a compiled implementation?
+#' @param distance a \code{dnn_distance}
+#' @return logical
 #' @export
 is_compiled_distance <- function(distance) is_distance(distance) && !is.null(distance$ptr)

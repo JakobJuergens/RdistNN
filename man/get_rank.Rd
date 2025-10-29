@@ -6,6 +6,12 @@
 \usage{
 get_rank(name)
 }
+\arguments{
+\item{name}{character scalar}
+}
+\value{
+a \code{rank_weight}
+}
 \description{
 Retrieve a registered rank_weight
 }

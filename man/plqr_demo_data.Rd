@@ -60,8 +60,8 @@ The function also returns the oracle
 \deqn{
   \psi(W;\beta)
   \;=\;
-  \Bigl(\tau - \mathbf{1}\{\,Y \le D^{\top}\beta + q_{\tau}(X)\,\}\Bigr)\,
-  \bigl(D - m_{D}(X)\bigr)\, .
+  (\tau - \mathbf{1}\{\,Y \le D^{\top}\beta + q_{\tau}(X)\,\})\,
+  (D - m_{D}(X))\, .
 }
 }
 \examples{

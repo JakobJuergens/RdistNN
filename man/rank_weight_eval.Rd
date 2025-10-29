@@ -7,7 +7,14 @@
 rank_weight_eval(rank_weight, ranks, ctx = NULL)
 }
 \arguments{
-\item{ranks}{integer permutation 1..n}
+\item{rank_weight}{A \code{rank_weight} specification.}
+
+\item{ranks}{Integer permutation of \code{1..n} (length \code{n}).}
+
+\item{ctx}{Optional context returned by \code{rank_weight_setup()}.}
+}
+\value{
+Numeric vector of length \code{n} (typically sums to 1).
 }
 \description{
 Evaluate weights from ranks (single target)

@@ -2,7 +2,7 @@
 % Please edit documentation in R/dist.R
 \name{distance_eval}
 \alias{distance_eval}
-\title{Evaluate distance from X to x0 (R fallback or compiled)}
+\title{Evaluate distance from X to x0}
 \usage{
 distance_eval(distance, X, x0, ctx = NULL)
 }
@@ -13,8 +13,11 @@ distance_eval(distance, X, x0, ctx = NULL)
 
 \item{x0}{numeric length-p vector}
 
-\item{ctx}{optional context from distance_setup()}
+\item{ctx}{optional context}
+}
+\value{
+numeric(n)
 }
 \description{
-Evaluate distance from X to x0 (R fallback or compiled)
+Evaluate distance from X to x0
 }

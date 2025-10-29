@@ -6,6 +6,12 @@
 \usage{
 get_distance(name)
 }
+\arguments{
+\item{name}{character scalar}
+}
+\value{
+a \code{dnn_distance}
+}
 \description{
 Retrieve a registered distance
 }

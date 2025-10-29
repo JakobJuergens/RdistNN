@@ -9,9 +9,12 @@ distance_setup(distance, data, ...)
 \arguments{
 \item{distance}{dnn_distance}
 
-\item{data}{data.frame/matrix used to derive any scaling/normalization}
+\item{data}{training data used for scaling/normalization}
 
 \item{...}{passed to distance$setup}
+}
+\value{
+context object or NULL
 }
 \description{
 Set up distance context (precomputation)

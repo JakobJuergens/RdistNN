@@ -2,10 +2,16 @@
 % Please edit documentation in R/wdist.R
 \name{is_compiled_dist_weight}
 \alias{is_compiled_dist_weight}
-\title{Compiled-pointer predicate the engine can use}
+\title{Does a dist_weight have a compiled implementation?}
 \usage{
 is_compiled_dist_weight(dw)
 }
+\arguments{
+\item{dw}{a \code{dist_weight}}
+}
+\value{
+logical
+}
 \description{
-Compiled-pointer predicate the engine can use
+Does a dist_weight have a compiled implementation?
 }

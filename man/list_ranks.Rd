@@ -6,6 +6,9 @@
 \usage{
 list_ranks()
 }
+\value{
+character vector of names
+}
 \description{
 List registered rank_weight names
 }

@@ -10,6 +10,11 @@ as_score(f, s, name = deparse(substitute(f)))
 \item{f}{function(idxs, data, ctx, rng) -> scalar}
 
 \item{s}{integer order}
+
+\item{name}{character scalar used as the score name (optional)}
+}
+\value{
+A \code{ustat_score}
 }
 \description{
 Coerce a plain function to a score (simple cases)

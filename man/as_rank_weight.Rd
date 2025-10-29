@@ -8,6 +8,11 @@ as_rank_weight(f, name = deparse(substitute(f)))
 }
 \arguments{
 \item{f}{function(ranks, ctx) -> numeric(n)}
+
+\item{name}{character scalar used as the rank-weight name (optional)}
+}
+\value{
+A \code{rank_weight}
 }
 \description{
 Wrap a plain function into a rank_weight

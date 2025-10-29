@@ -40,7 +40,7 @@
 #'
 #' @examples
 #' demo <- cate_demo_data(n = 200, p = 2, design = "hetero", seed = 1)
-#' sc   <- score_cate_from_rho(
+#' sc   <- score_cate_rho(
 #'           x0 = rep(0, 2), x_cols = paste0("X", 1:2),
 #'           s = 5, k = 1, rho_col = "rho_oracle"
 #'         )

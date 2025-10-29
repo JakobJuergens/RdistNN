@@ -7,9 +7,18 @@
 score_eval(score, idxs, data, ctx = NULL, rng = NULL)
 }
 \arguments{
-\item{idxs}{integer vector of length s}
+\item{score}{ustat_score}
 
-\item{rng}{optional integer or raw key for RNG (deterministic if provided)}
+\item{idxs}{integer vector of length \code{s}}
+
+\item{data}{data.frame/matrix}
+
+\item{ctx}{optional context}
+
+\item{rng}{optional RNG key/seed}
+}
+\value{
+numeric(1)
 }
 \description{
 Evaluate kernel on one subset (R fallback)

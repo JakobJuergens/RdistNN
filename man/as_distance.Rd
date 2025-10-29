@@ -8,6 +8,11 @@ as_distance(f, name = deparse(substitute(f)))
 }
 \arguments{
 \item{f}{function(X, x0, ctx) -> numeric(n)}
+
+\item{name}{character scalar used as the distance name (optional)}
+}
+\value{
+A \code{dnn_distance}
 }
 \description{
 Coerce a plain function to a distance

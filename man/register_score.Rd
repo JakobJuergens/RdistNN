@@ -6,6 +6,12 @@
 \usage{
 register_score(score)
 }
+\arguments{
+\item{score}{a \code{ustat_score}}
+}
+\value{
+registered name (invisibly)
+}
 \description{
 Register a score object by name
 }
