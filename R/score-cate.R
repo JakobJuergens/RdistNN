@@ -1,19 +1,53 @@
-#' CATE score from precomputed pseudo-outcome rho (pure score; no weights)
+#' CATE score from a precomputed pseudo-outcome \eqn{\rho} (pure score; no weights)
 #'
-#' This is a pure-score implementation. It computes the per-observation
-#' contributions \eqn{g_i = \rho_i} and stores them in `ctx$g`.
-#' No ordering, no DNN/kernels, no L-stat weights are touched here.
-#' Any weighting/aggregation happens outside the score layer.
+#' Constructs a **pure-score** kernel for CATE experiments that uses only the
+#' precomputed pseudo-outcome \eqn{\rho}. Per observation \eqn{i}, the stored
+#' contribution is \deqn{g_i \equiv \rho_i\,,} and for a subset
+#' \eqn{S \subset \{1,\ldots,n\}} of size \eqn{s} the kernel evaluates to the
+#' **sum of contributions**
+#' \deqn{h(S) \;=\; \sum_{i \in S} g_i \;=\; \sum_{i \in S} \rho_i\,.}
 #'
-#' @param x0 numeric length-p target point (checked for dimension only; not used here).
-#' @param x_cols names/indices of X columns in `data` (used for dimension checks).
-#' @param s integer subset size (reported as the kernel order; not used internally).
-#' @param k integer (present only for API compatibility; ignored by this pure score).
-#' @param rho_col optional name of a column in `data` holding rho.
-#' @param rho optional numeric vector (length n) of rho; used if `rho_col` is NULL.
+#' This score does **not** perform any nearest-neighbor ordering, kernel
+#' weighting, or L-stat aggregation. Any weighting/averaging of subset
+#' evaluations is handled outside the score layer (e.g., by the rank-/distance-
+#' weight modules). The arguments \code{x0}, \code{x_cols}, \code{s}, \code{k}
+#' are accepted for API consistency and basic dimension checks; only \eqn{\rho}
+#' is used to construct the score.
 #'
-#' @return An `ustat_score` whose setup places `g` in the context; `eval` and
-#'         `eval_batch` only index/sum `g` (no weights).
+#' @param x0 Numeric length-\eqn{p} target point. Used only to check that
+#'   \code{length(x0)} matches \code{length(x_cols)}; it is not used in the
+#'   kernel itself.
+#' @param x_cols Integer or character indices of the \eqn{X} columns in
+#'   \code{data}, used for dimension checks with \code{x0}.
+#' @param s Integer subset size (kernel order). Recorded in the score metadata;
+#'   the pure kernel internally computes \eqn{\sum_{i \in S} \rho_i} for any
+#'   subset \eqn{S} of size \eqn{s}.
+#' @param k Integer included for interface compatibility with other scores; it
+#'   is ignored here.
+#' @param rho_col Optional name of the column in \code{data} that contains the
+#'   pseudo-outcome \eqn{\rho}. If \code{NULL}, supply \code{rho}.
+#' @param rho Optional numeric vector (length \eqn{n}) of \eqn{\rho} values to
+#'   use when \code{rho_col} is \code{NULL}.
+#'
+#' @return An \code{ustat_score} object with:
+#' \itemize{
+#'   \item \code{$name}: a descriptive name,
+#'   \item \code{$order}: the kernel order \eqn{s},
+#'   \item \code{$setup}: stores \code{g <- rho} in the context,
+#'   \item \code{$eval}/\code{$eval_batch}: return \eqn{\sum_{i \in S} g_i}
+#'         for each subset \eqn{S} (no weights applied).
+#' }
+#'
+#' @examples
+#' demo <- cate_demo_data(n = 200, p = 2, design = "hetero", seed = 1)
+#' sc   <- score_cate_from_rho(
+#'           x0 = rep(0, 2), x_cols = paste0("X", 1:2),
+#'           s = 5, k = 1, rho_col = "rho_oracle"
+#'         )
+#' ctx  <- score_setup(sc, demo$data)
+#' subs <- cate_demo_subsets(n = nrow(demo$data), K = 3, s = 5, seed = 1)
+#' score_eval_batch(sc, subs, demo$data, ctx)  # three subset evaluations
+#'
 #' @export
 score_cate_rho <- function(
   x0, x_cols, s, k = 1L,

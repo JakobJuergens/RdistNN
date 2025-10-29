@@ -1,3 +1,5 @@
+# R/score-plqr-component.R
+
 .validate_plqr_factory <- function(D_cols, mD_cols, beta, j, tau, s, k) {
   errs <- character()
 
@@ -37,25 +39,60 @@
   invisible(TRUE)
 }
 
-# R/score-plqr-component.R
-#' PLQR diagnostic score (component j), pure score (no weights, no fitting)
+#' PLQR diagnostic score (component \eqn{j}); pure score (no weights, no fitting)
 #'
-#' Computes per-observation contributions
-#'   g_i = (tau - 1{ Y_i <= D_i^T beta + q_tau(X_i) }) * (D_{i,j} - m_{D,ij}),
-#' stores them in `ctx$g`, and returns subset sums of `g` in `eval`/`eval_batch`.
-#' No ordering or L-stat weights here; any aggregation/weights are external.
+#' Constructs a **pure-score** kernel for PLQR diagnostics that stores the
+#' per-observation contributions
+#' \deqn{
+#'   g_{i}
+#'   \;=\;
+#'   \Bigl(\tau - \mathbf{1}\{\,Y_{i} \le D_{i}^{\top}\beta + q_{\tau}(X_{i})\,\}\Bigr)\,
+#'   \bigl(D_{i,j} - m_{D,ij}(X_{i})\bigr)\,,
+#' }
+#' and returns subset sums \eqn{\sum_{i \in S} g_i} in \code{eval}/\code{eval_batch}.
+#' This score performs **no** nearest-neighbor ordering or L-stat weighting;
+#' any aggregation/weights are handled outside the score layer.
 #'
-#' @param x0 numeric length-p target point (checked for dimension only; not used).
-#' @param x_cols names/indices of X columns in `data`.
-#' @param D_cols names/indices of D columns in `data` (length p_d).
-#' @param q_col name of `q_tau(X)` column in `data`.
-#' @param mD_cols names/indices of `m_D(X)` columns (same length/order as `D_cols`).
-#' @param beta numeric vector of length `length(D_cols)` (fixed coefficients).
-#' @param j integer component index in `1:length(D_cols)`.
-#' @param tau quantile level in (0,1).
-#' @param s integer kernel order (reported via `score_order`; not used internally).
-#' @param k integer kept for API compatibility (ignored by the pure score).
-#' @return `ustat_score` with `ctx$g` and simple index/sum evals.
+#' @param x0 Numeric length-\eqn{p} target point. Used only for basic dimension
+#'   checks against \code{x_cols}; not used in the kernel.
+#' @param x_cols Integer or character indices of the \eqn{X} columns in
+#'   \code{data}; used for dimension checks with \code{x0}.
+#' @param D_cols Integer or character indices of the \eqn{D} columns in
+#'   \code{data} (length \eqn{p_d}).
+#' @param q_col Character; name of the \eqn{q_{\tau}(X)} column in \code{data}.
+#' @param mD_cols Integer or character indices of the \eqn{m_{D}(X)} columns in
+#'   \code{data}; must have the same length and order as \code{D_cols}. The
+#'   \eqn{j}-th column represents \eqn{m_{D,ij}(X)}.
+#' @param beta Numeric vector of length \code{length(D_cols)} giving the fixed
+#'   coefficient vector \eqn{\beta}.
+#' @param j Integer component index in \eqn{1,\ldots,\mathrm{length}(D\_cols)}.
+#' @param tau Quantile level in \eqn{(0,1)}.
+#' @param s Integer kernel order (subset size). Recorded in the score metadata;
+#'   not used internally by this pure score.
+#' @param k Integer kept for API compatibility with other scores; ignored here.
+#'
+#' @return An \code{ustat_score} object whose \code{$setup} stores the vector
+#'   \code{g} of contributions in the context, and whose \code{$eval}/\code{$eval_batch}
+#'   return subset sums of \code{g} (no weights applied).
+#'
+#' @examples
+#' demo <- plqr_demo_data(n = 200, p = 3, p_d = 2, tau = 0.5, seed = 1)
+#' sc <- score_plqr_component(
+#'   x0      = rep(0, 3),
+#'   x_cols  = paste0("X", 1:3),
+#'   D_cols  = paste0("D", 1:2),
+#'   q_col   = "q_oracle",
+#'   mD_cols = paste0("mD", 1:2),
+#'   beta    = demo$truth$beta_true,
+#'   j       = 1L,
+#'   tau     = 0.5,
+#'   s       = 5,   # recorded only
+#'   k       = 1    # ignored here
+#' )
+#' ctx  <- score_setup(sc, demo$data)
+#' subs <- cate_demo_subsets(n = nrow(demo$data), K = 3, s = 5, seed = 1)
+#' score_eval_batch(sc, subs, demo$data, ctx)
+#'
 #' @export
 score_plqr_component <- function(
   x0, x_cols, D_cols, q_col, mD_cols,

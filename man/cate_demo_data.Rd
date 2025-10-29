@@ -47,7 +47,9 @@ It returns X, D, Y, along with oracle nuisance quantities:
 m(x) = E(Y given X=x) = m0(x) + e(x) * tau(x),
 e(x) = P(D=1|X=x), m0(x) = E(Y given X=x, D=0), tau(x) = treatment effect,
 and the R-learner style pseudo-outcome:
-rho = (D - e) * (Y - m) / { e (1 - e) }.
+\deqn{
+  \rho \;=\; \frac{(D - e)\,(Y - m)}{e\,\bigl(1 - e\bigr)} \, .
+}
 }
 \details{
 No model fitting is done here. Everything is known from the DGP.

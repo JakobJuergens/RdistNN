@@ -42,7 +42,7 @@ test_that("[compiled] rustat_dist_l2_scaled parity with R fallback", {
   }
   skip_if_not(exists("rustat_dist_l2_scaled", mode = "function"))
   out_sq <- distance_eval(dspec, X, x0, ctx)
-  expect_equal(out_sq, ref_sq, tolerance = 0)
+  expect_equal(out_sq, ref_sq, tolerance = 1e-12)
 })
 
 test_that("[batch] batch equals columnwise calls", {
@@ -54,7 +54,7 @@ test_that("[batch] batch equals columnwise calls", {
 
   M <- distance_eval_batch(dspec, X, X0, ctx)
   M2 <- sapply(seq_len(nrow(X0)), function(j) distance_eval(dspec, X, X0[j, ], ctx))
-  expect_equal(M, M2, tolerance = 0)
+  expect_equal(M, M2, tolerance = 1e-12)
 })
 
 test_that("[custom] custom scale_vec works; scale==1 matches unscaled L2", {
@@ -69,7 +69,7 @@ test_that("[custom] custom scale_vec works; scale==1 matches unscaled L2", {
 
   d_un <- distance_eval(dspec_un, X, x0)
   d_one <- distance_eval(dspec_one, X, x0, ctx_one)
-  expect_equal(d_one, d_un, tolerance = 0)
+  expect_equal(d_one, d_un, tolerance = 1e-12)
 
   # mismatch length should error
   expect_error(

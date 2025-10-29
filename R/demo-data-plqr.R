@@ -13,39 +13,53 @@
   out
 }
 
-#' Minimal PLQR demo data (oracle nuisances, no internal fitting)
+#' Minimal PLQR demo data (oracle nuisances; no internal fitting)
 #'
-#' Generates data for a partially linear quantile regression model
-#' deqn{ Q_tau(Y given X, D) = D^T beta_0(tau) + q_tau(X), }
-#' with user-chosen design for eqn{q_tau}. Errors are Asymmetric Laplace
-#' so the conditional eqn{tau}-quantile is exactly the right-hand side.
+#' Generates data for a partially linear quantile regression (PLQR) model
+#' \deqn{
+#'   Q_{\tau}(Y \mid X, D) \;=\; D^{\top}\,\beta_{0}(\tau) \;+\; q_{\tau}(X) \, ,
+#' }
+#' with a user-chosen design for \eqn{q_{\tau}}. Errors follow an Asymmetric
+#' Laplace distribution (ALD) at level \eqn{\tau}, so the conditional
+#' \eqn{\tau}-quantile equals the right-hand side.
 #'
-#' Also returns oracle eqn{m_D(X)=E(D given X)} to build the orthogonal PLQR score
-#' deqn{ psi(W;beta) = (\,tau - 1\{Y le D^T beta + q_tau(X)\}\,)\,(D - m_D(X)). }
+#' The function also returns the oracle
+#' \eqn{m_{D}(X) \equiv \mathbb{E}[D \mid X]} to build the orthogonal PLQR score
+#' \deqn{
+#'   \psi(W;\beta)
+#'   \;=\;
+#'   \Bigl(\tau - \mathbf{1}\{\,Y \le D^{\top}\beta + q_{\tau}(X)\,\}\Bigr)\,
+#'   \bigl(D - m_{D}(X)\bigr)\, .
+#' }
 #'
-#' @param n Sample size.
-#' @param p Number of features in X (>= 2 recommended).
-#' @param p_d Dimension of D (number of partially linear regressors).
-#' @param tau Quantile level in (0,1).
-#' @param sigma ALD scale for the regression error (larger means noisier Y).
-#' @param design One of "linear", "sinusoidal", "bump" for \eqn{q_\tau(X)}.
+#' @param n Integer; sample size.
+#' @param p Integer; number of features in \eqn{X} (recommend \eqn{p \ge 2}).
+#' @param p_d Integer; dimension of \eqn{D} (number of partially linear regressors).
+#' @param tau Quantile level in \eqn{(0,1)}.
+#' @param sigma Positive ALD scale for the regression error (larger means noisier \eqn{Y}).
+#' @param design Character; one of \code{"linear"}, \code{"sinusoidal"}, \code{"bump"} for \eqn{q_{\tau}(X)}.
 #' @param seed Optional integer seed.
-#' @param x0 Optional target point in R^p for localization (defaults to 0 vector).
+#' @param x0 Optional target point in \eqn{\mathbb{R}^{p}} for localization (defaults to the zero vector).
+#'
 #' @return A list with:
 #' \itemize{
-#'   \item \code{data}: data.frame with columns \code{X1..Xp}, \code{D1..Dp_d}, \code{Y},
-#'         oracle nuisances \code{q_oracle} (== q_tau(X)) and \code{mD1..mDp_d} (== E(D given X),
-#'         and residuals \code{rD1..rDp_d} (== D - mD).
+#'   \item \code{data}: a \code{data.frame} with columns \code{X1..Xp}, \code{D1..Dp_d}, \code{Y};
+#'         oracle nuisances \code{q_oracle} (the value of \eqn{q_{\tau}(X)}),
+#'         \code{mD1..mDp_d} (components of \eqn{m_{D}(X)}),
+#'         and residuals \code{rD1..rDp_d} (components of \eqn{D - m_{D}(X)}).
 #'   \item \code{x0}: the target point used.
-#'   \item \code{truth}: list with \code{beta_true} (length p_d),
-#'         \code{q_fn(x)}, and \code{mD_fn(x)} closures to evaluate ground truth at new X.
-#'   \item \code{q_x0}: the true \eqn{q_\tau(x_0)}.
+#'   \item \code{truth}: a list with \code{beta_true} (length \code{p_d}),
+#'         \code{q_fn(x)} and \code{mD_fn(x)} closures to evaluate ground truth at new \eqn{X}.
+#'   \item \code{q_x0}: the true value \eqn{q_{\tau}(x_{0})}.
 #' }
+#'
 #' @examples
-#' demo <- plqr_demo_data(n = 300, p = 2, p_d = 1, tau = 0.5, design = "sinusoidal", seed = 1)
+#' demo <- plqr_demo_data(n = 300, p = 2, p_d = 1, tau = 0.5,
+#'                        design = "sinusoidal", seed = 1)
 #' head(demo$data)
 #' demo$truth$beta_true
 #' demo$q_x0
+#'
 #' @export
 plqr_demo_data <- function(n = 300,
                            p = 2,
@@ -123,19 +137,32 @@ plqr_demo_data <- function(n = 300,
   )
 }
 
-#' Orthogonal PLQR moment contributions for a given beta (uses oracle nuisances)
+#' Orthogonal PLQR moment contributions for a given \eqn{\beta} (oracle nuisances)
 #'
-#' For each i, returns eqn{ ( tau - 1\{Y_i le D_i^T beta + q_tau(X_i)\} ) (D_i - m_D(X_i)) }.
+#' Computes, for each observation \eqn{i}, the orthogonal PLQR moment
+#' \deqn{
+#'   \bigl(\tau - \mathbf{1}\{\,Y_{i} \le D_{i}^{\top}\beta + q_{\tau}(X_{i})\,\}\bigr)\,
+#'   \bigl(D_{i} - m_{D}(X_{i})\bigr) \, ,
+#' }
+#' where \eqn{m_{D}(X) = \mathbb{E}[D \mid X]} is provided as an oracle nuisance.
 #' This is the vector moment entering the Z-estimation.
 #'
-#' @param df A data.frame returned by \code{plqr_demo_data()$data}.
-#' @param beta Numeric length-\code{p_d} candidate coefficient vector.
-#' @param tau Quantile level (must match the data-generating tau).
-#' @return An n x p_d matrix of moment contributions.
+#' @param df A \code{data.frame} as returned by \code{plqr_demo_data()$data},
+#'   containing columns \code{Y}, \code{D1..Dp_d}, oracle nuisances
+#'   \code{mD1..mDp_d} (components of \eqn{m_{D}(X)}), and \code{q_oracle}
+#'   (the value of \eqn{q_{\tau}(X)}).
+#' @param beta Numeric length-\code{p_d} candidate coefficient vector \eqn{\beta}.
+#' @param tau Quantile level \eqn{\tau} (should match the data-generating level).
+#'
+#' @return A numeric matrix of size \eqn{n \times p_d} with the moment
+#'   contributions for each observation (rows) and each partially linear
+#'   component (columns).
+#'
 #' @examples
 #' demo <- plqr_demo_data(n = 200, p = 2, p_d = 2, tau = 0.5, seed = 1)
 #' g <- plqr_moment(df = demo$data, beta = demo$truth$beta_true, tau = 0.5)
-#' colMeans(g) # should be near zero at truth
+#' colMeans(g)  # should be near zero at truth
+#'
 #' @export
 plqr_moment <- function(df, beta, tau) {
   p_d <- sum(grepl("^D[0-9]+$", names(df)))

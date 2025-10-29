@@ -3,35 +3,47 @@
 #' Minimal CATE demo data (oracle nuisances + pseudo-outcome)
 #'
 #' Generates a small synthetic dataset for experimenting with the CATE score.
-#' It returns X, D, Y, along with oracle nuisance quantities:
-#'   m(x) = E(Y given X=x) = m0(x) + e(x) * tau(x),
-#'   e(x) = P(D=1|X=x), m0(x) = E(Y given X=x, D=0), tau(x) = treatment effect,
-#' and the R-learner style pseudo-outcome:
-#'   rho = (D - e) * (Y - m) / { e (1 - e) }.
+#' It returns \eqn{X}, \eqn{D}, \eqn{Y}, along with oracle nuisance quantities:
+#' \deqn{
+#'   m(x) \;=\; \mathbb{E}[Y \mid X=x]
+#'          \;=\; m_{0}(x) \;+\; e(x)\,\tau(x) \, , \qquad
+#'   e(x) \;=\; \Pr(D=1 \mid X=x) \, ,
+#' }
+#' where \eqn{m_{0}(x) = \mathbb{E}[Y \mid X=x, D=0]} and \eqn{\tau(x)} is the
+#' treatment effect. It also returns the R-learner–style pseudo-outcome
+#' \deqn{
+#'   \rho \;=\; \frac{(D - e)\,(Y - m)}{e\,\bigl(1 - e\bigr)} \, .
+#' }
 #'
-#' No model fitting is done here. Everything is known from the DGP.
+#' No model fitting is performed; all quantities come from the DGP.
 #'
 #' @param n Integer sample size.
-#' @param p Integer feature dimension (>= 2).
-#' @param design One of "simple", "hetero", "bump" for tau(x).
-#' @param sigma Noise standard deviation in Y.
-#' @param clip Propensity clipping in (0, 0.5); applies to e(x).
+#' @param p Integer feature dimension (recommend \eqn{p \ge 2}).
+#' @param design Character; one of \code{"simple"}, \code{"hetero"}, \code{"bump"} for \eqn{\tau(x)}.
+#' @param sigma Noise standard deviation in \eqn{Y}.
+#' @param clip Propensity clipping in \eqn{(0,\,0.5)}; applied to \eqn{e(x)}.
 #' @param seed Optional integer seed for reproducibility.
-#' @param x0 Optional numeric length-p target point for convenience;
-#'   defaults to the zero vector.
+#' @param x0 Optional numeric length-\eqn{p} target point (defaults to the zero vector).
+#'
 #' @return A list with:
 #' \itemize{
-#'   \item \code{data}: data.frame with columns X1..Xp, D, Y,
-#'         e_oracle, m_oracle, m0_oracle, tau_oracle, rho_oracle
-#'   \item \code{x0}: target point used (length p)
+#'   \item \code{data}: a \code{data.frame} with columns \code{X1..Xp}, \code{D}, \code{Y},
+#'         and oracle nuisances \code{e_oracle} \bigl(=\eqn{e(X)}\bigr),
+#'         \code{m_oracle} \bigl(=\eqn{m(X)}\bigr),
+#'         \code{m0_oracle} \bigl(=\eqn{m_{0}(X)}\bigr),
+#'         \code{tau_oracle} \bigl(=\eqn{\tau(X)}\bigr),
+#'         \code{rho_oracle} \bigl(=\eqn{\rho}\bigr).
+#'   \item \code{x0}: the target point used (length \eqn{p}).
 #'   \item \code{truth}: list of closures \code{tau_fn(x)}, \code{e_fn(x)},
-#'         \code{m0_fn(x)}, \code{m_fn(x)} to evaluate ground truth at any x
-#'   \item \code{tau_x0}: the true tau(x0)
+#'         \code{m0_fn(x)}, \code{m_fn(x)} to evaluate ground truth at any \eqn{x}.
+#'   \item \code{tau_x0}: the true \eqn{\tau(x_{0})}.
 #' }
+#'
 #' @examples
 #' demo <- cate_demo_data(n = 200, p = 2, design = "hetero", seed = 1)
 #' str(demo$data)
 #' demo$tau_x0
+#'
 #' @export
 cate_demo_data <- function(n = 200,
                            p = 2,
@@ -122,17 +134,23 @@ cate_demo_data <- function(n = 200,
 
 #' Quick helper: sample a batch of subsets (for U-stat experiments)
 #'
-#' Draws K subsets of size s uniformly at random (without replacement within a subset).
-#' Rows are subsets; entries are 1-based indices in 1..n.
+#' Draws \eqn{K} subsets of size \eqn{s} uniformly at random from
+#' \eqn{\{1,\ldots,n\}}. Within each subset, elements are sampled **without**
+#' replacement (all indices are distinct). Across rows, subsets are sampled
+#' independently (the same index may reappear in different rows).
 #'
-#' @param n Number of observations.
-#' @param K Number of subsets to sample.
-#' @param s Subset size (order of the kernel).
-#' @param seed Optional integer seed.
-#' @return Integer matrix K x s.
+#' @param n Integer; number of observations.
+#' @param K Integer; number of subsets to sample.
+#' @param s Integer; subset size (order of the kernel).
+#' @param seed Optional integer seed for reproducibility.
+#'
+#' @return An integer matrix of size \eqn{K \times s}. Each row contains
+#' \eqn{s} distinct integers in \eqn{\{1,\ldots,n\}} representing one subset.
+#'
 #' @examples
 #' subs <- cate_demo_subsets(n = 200, K = 1000, s = 8, seed = 1)
 #' dim(subs)
+#'
 #' @export
 cate_demo_subsets <- function(n, K = 1000L, s = 8L, seed = NULL) {
   stopifnot(s >= 1L, s <= n, K >= 1L)
