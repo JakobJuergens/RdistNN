@@ -49,16 +49,17 @@ validate_distance <- function(dist) {
 
 #' @export
 print.dnn_distance <- function(x, ...) {
-  cat("<dnn_distance:", x$name, ">\n", sep = "")
+  cat("<dnn_distance: ", x$name, ">\n", sep = "")
   cat("  impl : ",
-      if (!is.null(x$ptr)) "compiled(ptr) "
-      else if (!is.null(x$eval_batch)) "R eval_batch "
-      else if (!is.null(x$eval)) "R eval "
-      else "NONE",
+      if (!is.null(x$ptr))        "compiled(ptr)"
+      else if (!is.null(x$eval_batch)) "R eval_batch"
+      else if (!is.null(x$eval))  "R eval"
+      else                        "NONE",
       if (isTRUE(x$randomized)) " (randomized)" else "",
       "\n", sep = "")
   invisible(x)
 }
+
 
 # ---------- S3 generics (parallel to score.*) ----------
 
