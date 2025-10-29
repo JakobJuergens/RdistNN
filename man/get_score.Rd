@@ -6,6 +6,12 @@
 \usage{
 get_score(name)
 }
+\arguments{
+\item{name}{character scalar}
+}
+\value{
+a \code{ustat_score}
+}
 \description{
 Retrieve a registered score
 }

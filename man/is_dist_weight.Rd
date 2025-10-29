@@ -2,10 +2,18 @@
 % Please edit documentation in R/wdist.R
 \name{is_dist_weight}
 \alias{is_dist_weight}
-\title{Is object a dist_weight?}
+\title{Is object a dist_weight?
+Is object a \code{dist_weight}?}
 \usage{
 is_dist_weight(x)
 }
+\arguments{
+\item{x}{any object}
+}
+\value{
+logical
+}
 \description{
 Is object a dist_weight?
+Is object a \code{dist_weight}?
 }

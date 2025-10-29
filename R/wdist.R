@@ -116,9 +116,11 @@ dist_weight_setup.dist_weight <- function(dist_weight, data, ...) {
   dist_weight$setup(data, ...)
 }
 
-#' Evaluate distance-weights for one target (R fallback or compiled)
+#' Evaluate distance-weights for one target
+#' @param dist_weight dist_weight
 #' @param dx numeric vector of distances (length n)
-#' @param ctx optional context from dist_weight_setup()
+#' @param ctx optional context
+#' @return numeric(n)
 #' @export
 dist_weight_eval <- function(dist_weight, dx, ctx = NULL) UseMethod("dist_weight_eval")
 #' @export
@@ -134,9 +136,11 @@ dist_weight_eval.dist_weight <- function(dist_weight, dx, ctx = NULL) {
   w
 }
 
-#' Evaluate distance-weights for many targets (R fast-path or compiled)
-#' @param DX numeric matrix (n x m) of distances; column j = distances to target j
-#' @return numeric matrix (n x m), column sums typically 1
+#' Evaluate distance-weights for many targets
+#' @param dist_weight dist_weight
+#' @param DX numeric matrix (n x m) of distances
+#' @param ctx optional context
+#' @return numeric matrix (n x m)
 #' @export
 dist_weight_eval_batch <- function(dist_weight, DX, ctx = NULL) UseMethod("dist_weight_eval_batch")
 #' @export
@@ -156,6 +160,8 @@ dist_weight_eval_batch.dist_weight <- function(dist_weight, DX, ctx = NULL) {
 
 #' Wrap a plain function into a dist_weight (simple cases)
 #' @param f function(dx, ctx) -> numeric(n)
+#' @param name character scalar used as the dist-weight name (optional)
+#' @return A \code{dist_weight}
 #' @export
 as_dist_weight <- function(f, name = deparse(substitute(f))) {
   stopifnot(.is_fun(f, 1L))
@@ -163,9 +169,14 @@ as_dist_weight <- function(f, name = deparse(substitute(f))) {
 }
 
 #' Is object a dist_weight?
+#' Is object a \code{dist_weight}?
+#' @param x any object
+#' @return logical
 #' @export
 is_dist_weight <- function(x) inherits(x, "dist_weight")
 
-#' Compiled-pointer predicate the engine can use
+#' Does a dist_weight have a compiled implementation?
+#' @param dw a \code{dist_weight}
+#' @return logical
 #' @export
 is_compiled_dist_weight <- function(dw) is_dist_weight(dw) && !is.null(dw$ptr)

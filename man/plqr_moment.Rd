@@ -24,8 +24,8 @@ component (columns).
 \description{
 Computes, for each observation \eqn{i}, the orthogonal PLQR moment
 \deqn{
-  \bigl(\tau - \mathbf{1}\{\,Y_{i} \le D_{i}^{\top}\beta + q_{\tau}(X_{i})\,\}\bigr)\,
-  \bigl(D_{i} - m_{D}(X_{i})\bigr) \, ,
+  (\tau - \mathbf{1}\{\,Y_{i} \le D_{i}^{\top}\beta + q_{\tau}(X_{i})\,\})\,
+  (D_{i} - m_{D}(X_{i})) \, ,
 }
 where \eqn{m_{D}(X) = \mathbb{E}[D \mid X]} is provided as an oracle nuisance.
 This is the vector moment entering the Z-estimation.

@@ -7,7 +7,18 @@
 score_eval_batch(score, subs, data, ctx = NULL, rng = NULL)
 }
 \arguments{
-\item{subs}{integer matrix with nrow=K, ncol=s (each row is a subset)}
+\item{score}{ustat_score}
+
+\item{subs}{integer matrix with nrow=K, ncol=s}
+
+\item{data}{data.frame/matrix}
+
+\item{ctx}{optional context}
+
+\item{rng}{optional RNG key/seed}
+}
+\value{
+numeric vector of length \code{K}
 }
 \description{
 Evaluate kernel on many subsets (R fast-path)

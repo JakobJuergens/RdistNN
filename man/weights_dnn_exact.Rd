@@ -15,6 +15,26 @@ weights_dnn_exact(
   return = c("W")
 )
 }
+\arguments{
+\item{X}{numeric matrix (n x p)}
+
+\item{X0}{numeric matrix (m x p); mutually exclusive with \code{x0}}
+
+\item{x0}{numeric length-p single target (convenience for m=1)}
+
+\item{distance}{distance spec or registered name (e.g., "l2")}
+
+\item{k}{integer; neighbors used in each s-subset (\code{1 <= k <= s})}
+
+\item{s}{integer; U-statistic order / subset size}
+
+\item{ctx}{optional context}
+
+\item{return}{character vector of extras to include; any of \code{c("W","ord","ranks","dx")}}
+}
+\value{
+a \code{weights_result} with \code{W} and metadata
+}
 \description{
 DNN weights (exact full-U), distance-based ranking
 }

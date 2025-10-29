@@ -6,6 +6,12 @@
 \usage{
 register_distance(distance)
 }
+\arguments{
+\item{distance}{a \code{dnn_distance}}
+}
+\value{
+registered name (invisibly)
+}
 \description{
 Register a distance object by name
 }

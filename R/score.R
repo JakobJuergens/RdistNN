@@ -83,6 +83,7 @@ validate_score <- function(sc) {
 #' @param score ustat_score
 #' @param data data.frame/matrix
 #' @param ... passed to score$setup
+#' @return context object or NULL
 #' @export
 score_setup <- function(score, data, ...) UseMethod("score_setup")
 #' @export
@@ -93,7 +94,12 @@ score_setup.ustat_score <- function(score, data, ...) {
   score$setup(data, ...)
 }
 
-#' Resolve kernel order s
+#' Resolve kernel order \code{s}
+#' @param score ustat_score
+#' @param n integer sample size
+#' @param data data used by the score (for dynamic orders)
+#' @param ctx optional context
+#' @return integer order \code{s}
 #' @export
 score_order <- function(score, n, data, ctx = NULL) UseMethod("score_order")
 #' @export
@@ -105,8 +111,12 @@ score_order.ustat_score <- function(score, n, data, ctx = NULL) {
 }
 
 #' Evaluate kernel on one subset (R fallback)
-#' @param idxs integer vector of length s
-#' @param rng optional integer or raw key for RNG (deterministic if provided)
+#' @param score ustat_score
+#' @param idxs integer vector of length \code{s}
+#' @param data data.frame/matrix
+#' @param ctx optional context
+#' @param rng optional RNG key/seed
+#' @return numeric(1)
 #' @export
 score_eval <- function(score, idxs, data, ctx = NULL, rng = NULL) UseMethod("score_eval")
 #' @export
@@ -122,7 +132,12 @@ score_eval.ustat_score <- function(score, idxs, data, ctx = NULL, rng = NULL) {
 }
 
 #' Evaluate kernel on many subsets (R fast-path)
-#' @param subs integer matrix with nrow=K, ncol=s (each row is a subset)
+#' @param score ustat_score
+#' @param subs integer matrix with nrow=K, ncol=s
+#' @param data data.frame/matrix
+#' @param ctx optional context
+#' @param rng optional RNG key/seed
+#' @return numeric vector of length \code{K}
 #' @export
 score_eval_batch <- function(score, subs, data, ctx = NULL, rng = NULL) UseMethod("score_eval_batch")
 #' @export
@@ -142,15 +157,22 @@ score_eval_batch.ustat_score <- function(score, subs, data, ctx = NULL, rng = NU
 #' Coerce a plain function to a score (simple cases)
 #' @param f function(idxs, data, ctx, rng) -> scalar
 #' @param s integer order
+#' @param name character scalar used as the score name (optional)
+#' @return A \code{ustat_score}
 #' @export
 as_score <- function(f, s, name = deparse(substitute(f))) {
   stopifnot(.is_fun(f, 2L), .is_scalar_int(s))
   new_score(name = name, order = as.integer(s), eval = f)
 }
 
+#' Is object a \code{ustat_score}?
+#' @param x any object
+#' @return logical
 #' @export
 is_score <- function(x) inherits(x, "ustat_score")
 
-# compiled-pointer predicate the engine can use
+#' Does a score have a compiled implementation?
+#' @param score a \code{ustat_score}
+#' @return logical
 #' @export
 is_compiled <- function(score) is_score(score) && !is.null(score$ptr)

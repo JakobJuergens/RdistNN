@@ -6,6 +6,9 @@
 \usage{
 list_scores()
 }
+\value{
+character vector of names
+}
 \description{
 List registered scores
 }

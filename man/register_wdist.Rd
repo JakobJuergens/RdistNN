@@ -7,10 +7,10 @@
 register_wdist(dw)
 }
 \arguments{
-\item{dw}{A \code{dist_weight} object (see \code{new_dist_weight()}).}
+\item{dw}{a \code{dist_weight}}
 }
 \value{
-The registered name (invisible).
+registered name (invisibly)
 }
 \description{
 Register a dist_weight by name

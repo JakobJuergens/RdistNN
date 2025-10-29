@@ -2,16 +2,20 @@
 % Please edit documentation in R/wdist.R
 \name{dist_weight_eval_batch}
 \alias{dist_weight_eval_batch}
-\title{Evaluate distance-weights for many targets (R fast-path or compiled)}
+\title{Evaluate distance-weights for many targets}
 \usage{
 dist_weight_eval_batch(dist_weight, DX, ctx = NULL)
 }
 \arguments{
-\item{DX}{numeric matrix (n x m) of distances; column j = distances to target j}
+\item{dist_weight}{dist_weight}
+
+\item{DX}{numeric matrix (n x m) of distances}
+
+\item{ctx}{optional context}
 }
 \value{
-numeric matrix (n x m), column sums typically 1
+numeric matrix (n x m)
 }
 \description{
-Evaluate distance-weights for many targets (R fast-path or compiled)
+Evaluate distance-weights for many targets
 }

@@ -8,6 +8,11 @@ as_dist_weight(f, name = deparse(substitute(f)))
 }
 \arguments{
 \item{f}{function(dx, ctx) -> numeric(n)}
+
+\item{name}{character scalar used as the dist-weight name (optional)}
+}
+\value{
+A \code{dist_weight}
 }
 \description{
 Wrap a plain function into a dist_weight (simple cases)

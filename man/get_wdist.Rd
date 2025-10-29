@@ -7,10 +7,10 @@
 get_wdist(name)
 }
 \arguments{
-\item{name}{Character scalar (registered name).}
+\item{name}{character scalar}
 }
 \value{
-A \code{dist_weight} object.
+a \code{dist_weight}
 }
 \description{
 Retrieve a registered dist_weight

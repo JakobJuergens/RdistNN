@@ -2,10 +2,22 @@
 % Please edit documentation in R/score.R
 \name{score_order}
 \alias{score_order}
-\title{Resolve kernel order s}
+\title{Resolve kernel order \code{s}}
 \usage{
 score_order(score, n, data, ctx = NULL)
 }
+\arguments{
+\item{score}{ustat_score}
+
+\item{n}{integer sample size}
+
+\item{data}{data used by the score (for dynamic orders)}
+
+\item{ctx}{optional context}
+}
+\value{
+integer order \code{s}
+}
 \description{
-Resolve kernel order s
+Resolve kernel order \code{s}
 }

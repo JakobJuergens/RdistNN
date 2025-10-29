@@ -12,7 +12,7 @@
 #' where \eqn{m_{0}(x) = \mathbb{E}[Y \mid X=x, D=0]} and \eqn{\tau(x)} is the
 #' treatment effect. It also returns the R-learner–style pseudo-outcome
 #' \deqn{
-#'   \rho \;=\; \frac{(D - e)\,(Y - m)}{e\,\bigl(1 - e\bigr)} \, .
+#'   \rho \;=\; \frac{(D - e)\,(Y - m)}{e\,(1 - e)} \, .
 #' }
 #'
 #' No model fitting is performed; all quantities come from the DGP.
@@ -28,11 +28,11 @@
 #' @return A list with:
 #' \itemize{
 #'   \item \code{data}: a \code{data.frame} with columns \code{X1..Xp}, \code{D}, \code{Y},
-#'         and oracle nuisances \code{e_oracle} \bigl(=\eqn{e(X)}\bigr),
-#'         \code{m_oracle} \bigl(=\eqn{m(X)}\bigr),
-#'         \code{m0_oracle} \bigl(=\eqn{m_{0}(X)}\bigr),
-#'         \code{tau_oracle} \bigl(=\eqn{\tau(X)}\bigr),
-#'         \code{rho_oracle} \bigl(=\eqn{\rho}\bigr).
+#'         and oracle nuisances \code{e_oracle} (=\eqn{e(X)}),
+#'         \code{m_oracle} (=\eqn{m(X)}),
+#'         \code{m0_oracle} (=\eqn{m_{0}(X)}),
+#'         \code{tau_oracle} (=\eqn{\tau(X)}),
+#'         \code{rho_oracle} (=\eqn{\rho}).
 #'   \item \code{x0}: the target point used (length \eqn{p}).
 #'   \item \code{truth}: list of closures \code{tau_fn(x)}, \code{e_fn(x)},
 #'         \code{m0_fn(x)}, \code{m_fn(x)} to evaluate ground truth at any \eqn{x}.

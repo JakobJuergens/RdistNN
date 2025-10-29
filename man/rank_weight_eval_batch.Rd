@@ -7,10 +7,14 @@
 rank_weight_eval_batch(rank_weight, R, ctx = NULL)
 }
 \arguments{
-\item{R}{integer matrix (n x m), each column a permutation 1..n}
+\item{rank_weight}{A \code{rank_weight} specification.}
+
+\item{R}{Integer matrix \code{(n x m)}, each column a permutation of \code{1..n}.}
+
+\item{ctx}{Optional context returned by \code{rank_weight_setup()}.}
 }
 \value{
-matrix (n x m)
+Numeric matrix \code{(n x m)} (each column typically sums to 1).
 }
 \description{
 Evaluate weights from ranks (many targets)

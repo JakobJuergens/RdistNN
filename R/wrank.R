@@ -91,6 +91,11 @@ print.rank_weight <- function(x, ...) {
 
 # Generics ---------------------------------------------------------------------
 
+#' Set up rank-weight context (precomputation)
+#' @param rank_weight rank_weight
+#' @param data data used by setup (if any)
+#' @param ... passed to rank_weight$setup
+#' @return context object or NULL
 #' @export
 rank_weight_setup <- function(rank_weight, data, ...) UseMethod("rank_weight_setup")
 #' @export
@@ -102,7 +107,10 @@ rank_weight_setup.rank_weight <- function(rank_weight, data, ...) {
 }
 
 #' Evaluate weights from ranks (single target)
-#' @param ranks integer permutation 1..n
+#' @param rank_weight A \code{rank_weight} specification.
+#' @param ranks Integer permutation of \code{1..n} (length \code{n}).
+#' @param ctx Optional context returned by \code{rank_weight_setup()}.
+#' @return Numeric vector of length \code{n} (typically sums to 1).
 #' @export
 rank_weight_eval <- function(rank_weight, ranks, ctx = NULL) UseMethod("rank_weight_eval")
 #' @export
@@ -119,8 +127,10 @@ rank_weight_eval.rank_weight <- function(rank_weight, ranks, ctx = NULL) {
 }
 
 #' Evaluate weights from ranks (many targets)
-#' @param R integer matrix (n x m), each column a permutation 1..n
-#' @return matrix (n x m)
+#' @param rank_weight A \code{rank_weight} specification.
+#' @param R Integer matrix \code{(n x m)}, each column a permutation of \code{1..n}.
+#' @param ctx Optional context returned by \code{rank_weight_setup()}.
+#' @return Numeric matrix \code{(n x m)} (each column typically sums to 1).
 #' @export
 rank_weight_eval_batch <- function(rank_weight, R, ctx = NULL) UseMethod("rank_weight_eval_batch")
 #' @export
@@ -141,13 +151,17 @@ rank_weight_eval_batch.rank_weight <- function(rank_weight, R, ctx = NULL) {
 
 #' Wrap a plain function into a rank_weight
 #' @param f function(ranks, ctx) -> numeric(n)
+#' @param name character scalar used as the rank-weight name (optional)
+#' @return A \code{rank_weight}
 #' @export
 as_rank_weight <- function(f, name = deparse(substitute(f))) {
   stopifnot(.is_fun(f, 1L))
   new_rank_weight(name = name, eval = f)
 }
 
-#' Is object a rank_weight?
+#' Is object a \code{rank_weight}?
+#' @param x any object
+#' @return logical
 #' @export
 is_rank_weight <- function(x) inherits(x, "rank_weight")
 

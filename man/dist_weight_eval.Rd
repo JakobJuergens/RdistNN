@@ -2,15 +2,20 @@
 % Please edit documentation in R/wdist.R
 \name{dist_weight_eval}
 \alias{dist_weight_eval}
-\title{Evaluate distance-weights for one target (R fallback or compiled)}
+\title{Evaluate distance-weights for one target}
 \usage{
 dist_weight_eval(dist_weight, dx, ctx = NULL)
 }
 \arguments{
+\item{dist_weight}{dist_weight}
+
 \item{dx}{numeric vector of distances (length n)}
 
-\item{ctx}{optional context from dist_weight_setup()}
+\item{ctx}{optional context}
+}
+\value{
+numeric(n)
 }
 \description{
-Evaluate distance-weights for one target (R fallback or compiled)
+Evaluate distance-weights for one target
 }

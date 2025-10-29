@@ -224,6 +224,15 @@ print.weights_result <- function(x, ...) {
 # constructors and distance ranker. Users who want "just DNN" can call these.
 
 #' DNN weights (exact full-U), distance-based ranking
+#' @param X numeric matrix (n x p)
+#' @param X0 numeric matrix (m x p); mutually exclusive with \code{x0}
+#' @param x0 numeric length-p single target (convenience for m=1)
+#' @param distance distance spec or registered name (e.g., "l2")
+#' @param k integer; neighbors used in each s-subset (\code{1 <= k <= s})
+#' @param s integer; U-statistic order / subset size
+#' @param ctx optional context
+#' @param return character vector of extras to include; any of \code{c("W","ord","ranks","dx")}
+#' @return a \code{weights_result} with \code{W} and metadata
 #' @export
 weights_dnn_exact <- function(X, X0 = NULL, x0 = NULL, distance = "l2", k, s, ctx = NULL, return = c("W")) {
   weights_matrix(
@@ -236,6 +245,8 @@ weights_dnn_exact <- function(X, X0 = NULL, x0 = NULL, distance = "l2", k, s, ct
 }
 
 #' DNN weights (asymptotic full-U), distance-based ranking
+#' @inheritParams weights_dnn_exact
+#' @param normalize logical; renormalize columns to sum 1
 #' @export
 weights_dnn_asymp <- function(X, X0 = NULL, x0 = NULL, distance = "l2", k, s, normalize = TRUE, ctx = NULL, return = c("W")) {
   weights_matrix(
@@ -248,6 +259,8 @@ weights_dnn_asymp <- function(X, X0 = NULL, x0 = NULL, distance = "l2", k, s, no
 }
 
 #' DNN weights (choose method), distance-based ranking
+#' @inheritParams weights_dnn_asymp
+#' @param method one of \code{"exact"} or \code{"asymp"}
 #' @export
 weights_dnn <- function(X, X0 = NULL, x0 = NULL, distance = "l2", k, s, method = c("exact", "asymp"), normalize = TRUE, ctx = NULL, return = c("W")) {
   method <- match.arg(method)

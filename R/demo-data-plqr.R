@@ -28,8 +28,8 @@
 #' \deqn{
 #'   \psi(W;\beta)
 #'   \;=\;
-#'   \Bigl(\tau - \mathbf{1}\{\,Y \le D^{\top}\beta + q_{\tau}(X)\,\}\Bigr)\,
-#'   \bigl(D - m_{D}(X)\bigr)\, .
+#'   (\tau - \mathbf{1}\{\,Y \le D^{\top}\beta + q_{\tau}(X)\,\})\,
+#'   (D - m_{D}(X))\, .
 #' }
 #'
 #' @param n Integer; sample size.
@@ -141,8 +141,8 @@ plqr_demo_data <- function(n = 300,
 #'
 #' Computes, for each observation \eqn{i}, the orthogonal PLQR moment
 #' \deqn{
-#'   \bigl(\tau - \mathbf{1}\{\,Y_{i} \le D_{i}^{\top}\beta + q_{\tau}(X_{i})\,\}\bigr)\,
-#'   \bigl(D_{i} - m_{D}(X_{i})\bigr) \, ,
+#'   (\tau - \mathbf{1}\{\,Y_{i} \le D_{i}^{\top}\beta + q_{\tau}(X_{i})\,\})\,
+#'   (D_{i} - m_{D}(X_{i})) \, ,
 #' }
 #' where \eqn{m_{D}(X) = \mathbb{E}[D \mid X]} is provided as an oracle nuisance.
 #' This is the vector moment entering the Z-estimation.

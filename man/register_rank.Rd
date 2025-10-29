@@ -6,6 +6,12 @@
 \usage{
 register_rank(rw)
 }
+\arguments{
+\item{rw}{a \code{rank_weight}}
+}
+\value{
+registered name (invisibly)
+}
 \description{
 Register a rank_weight by name
 }

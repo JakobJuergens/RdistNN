@@ -7,7 +7,7 @@
 list_wdists()
 }
 \value{
-Character vector (sorted)
+character vector of names
 }
 \description{
 List registered dist_weight names

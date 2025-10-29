@@ -6,6 +6,9 @@
 \usage{
 list_distances()
 }
+\value{
+character vector of names
+}
 \description{
 List registered distances
 }

@@ -2,16 +2,22 @@
 % Please edit documentation in R/dist.R
 \name{distance_eval_batch}
 \alias{distance_eval_batch}
-\title{Evaluate distance from X to many targets X0 (R fast-path or compiled)}
+\title{Evaluate distances from X to many targets X0}
 \usage{
 distance_eval_batch(distance, X, X0, ctx = NULL)
 }
 \arguments{
-\item{X0}{numeric matrix (m x p); each row is a target}
+\item{distance}{dnn_distance}
+
+\item{X}{numeric matrix (n x p)}
+
+\item{X0}{numeric matrix (m x p)}
+
+\item{ctx}{optional context}
 }
 \value{
-numeric matrix (n x m), column j = distances to X0(j,)
+numeric matrix (n x m)
 }
 \description{
-Evaluate distance from X to many targets X0 (R fast-path or compiled)
+Evaluate distances from X to many targets X0
 }

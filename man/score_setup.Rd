@@ -13,6 +13,9 @@ score_setup(score, data, ...)
 
 \item{...}{passed to score$setup}
 }
+\value{
+context object or NULL
+}
 \description{
 Set up score context (precomputation)
 }
