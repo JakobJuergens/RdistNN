@@ -11,9 +11,9 @@
 using namespace Rcpp;
 
 // Core compute: L2 or squared L2 distances row-wise
-static inline void dist_l2_core(const NumericMatrix& X,
-                                const NumericVector& x0,
-                                std::vector<double>& out,
+static inline void dist_l2_core(const NumericMatrix &X,
+                                const NumericVector &x0,
+                                std::vector<double> &out,
                                 const bool squared)
 {
   const int n = X.nrow(), p = X.ncol();
@@ -21,9 +21,11 @@ static inline void dist_l2_core(const NumericMatrix& X,
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (n >= 1024)
 #endif
-  for (int i = 0; i < n; ++i) {
+  for (int i = 0; i < n; ++i)
+  {
     double acc = 0.0;
-    for (int j = 0; j < p; ++j) {
+    for (int j = 0; j < p; ++j)
+    {
       const double zij = X(i, j) - x0[j];
       acc += zij * zij;
     }
@@ -32,8 +34,10 @@ static inline void dist_l2_core(const NumericMatrix& X,
 }
 
 // [[Rcpp::export]]
-NumericVector rustat_dist_l2(NumericMatrix X, NumericVector x0, bool squared = false) {
-  if (x0.size() != X.ncol()) Rcpp::stop("x0 length must equal ncol(X).");
+NumericVector rustat_dist_l2(NumericMatrix X, NumericVector x0, bool squared = false)
+{
+  if (x0.size() != X.ncol())
+    Rcpp::stop("x0 length must equal ncol(X).");
   const int n = X.nrow();
   std::vector<double> buf(n);
   dist_l2_core(X, x0, buf, squared);
@@ -41,8 +45,10 @@ NumericVector rustat_dist_l2(NumericMatrix X, NumericVector x0, bool squared = f
 }
 
 // [[Rcpp::export]]
-Rcpp::List rustat_order_by_l2(NumericMatrix X, NumericVector x0, bool squared = false) {
-  if (x0.size() != X.ncol()) Rcpp::stop("x0 length must equal ncol(X).");
+Rcpp::List rustat_order_by_l2(NumericMatrix X, NumericVector x0, bool squared = false)
+{
+  if (x0.size() != X.ncol())
+    Rcpp::stop("x0 length must equal ncol(X).");
   const int n = X.nrow();
   std::vector<double> dx(n);
   dist_l2_core(X, x0, dx, squared);
@@ -50,16 +56,19 @@ Rcpp::List rustat_order_by_l2(NumericMatrix X, NumericVector x0, bool squared = 
   // order by (distance, index) — deterministic ties
   std::vector<int> ord(n);
   std::iota(ord.begin(), ord.end(), 0);
-  std::sort(ord.begin(), ord.end(), [&](int a, int b){
-    if (dx[a] < dx[b]) return true;
-    if (dx[a] > dx[b]) return false;
-    return a < b; // tie-break by index
-  });
+  std::sort(ord.begin(), ord.end(), [&](int a, int b)
+            {
+              if (dx[a] < dx[b])
+                return true;
+              if (dx[a] > dx[b])
+                return false;
+              return a < b; // tie-break by index
+            });
 
   IntegerVector ord1(n);
-  for (int i = 0; i < n; ++i) ord1[i] = ord[i] + 1;
+  for (int i = 0; i < n; ++i)
+    ord1[i] = ord[i] + 1;
   return Rcpp::List::create(
-    Rcpp::_["dx"]  = NumericVector(dx.begin(), dx.end()),
-    Rcpp::_["ord"] = ord1
-  );
+      Rcpp::_["dx"] = NumericVector(dx.begin(), dx.end()),
+      Rcpp::_["ord"] = ord1);
 }
