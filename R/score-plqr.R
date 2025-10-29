@@ -86,10 +86,10 @@
 #'   beta    = demo$truth$beta_true,
 #'   j       = 1L,
 #'   tau     = 0.5,
-#'   s       = 5,   # recorded only
-#'   k       = 1    # ignored here
+#'   s       = 5, # recorded only
+#'   k       = 1 # ignored here
 #' )
-#' ctx  <- score_setup(sc, demo$data)
+#' ctx <- score_setup(sc, demo$data)
 #' subs <- cate_demo_subsets(n = nrow(demo$data), K = 3, s = 5, seed = 1)
 #' score_eval_batch(sc, subs, demo$data, ctx)
 #'

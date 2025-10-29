@@ -1,70 +1,115 @@
 url: https://JakobJuergens.github.io/RdistNN
+
 template:
   bootstrap: 5
 
 navbar:
   structure:
-    left:  [home, reference, articles, news]
+    left:  [home, reference]
     right: [github]
   components:
     github:
       icon: fa-github
       href: https://github.com/JakobJuergens/RdistNN
+      aria-label: GitHub
 
-articles:
-- title: Get started
-  contents:
-  - getting-started
+# Remove this whole block for now since those vignettes don't exist yet.
+# You can re-add later when you actually have vignettes.
+# articles:
+#   - title: Getting started
+#     contents:
+#       - articles/getting-started
+#   - title: Theory & details
+#     contents:
+#       - articles/conditional-z-estimation
+#       - articles/dnn-weights
+#       - articles/extending
+#       - articles/jackknife-gen-ustats
 
 reference:
-- title: High-level API
-  contents:
-  - weights_matrix
-  - weights_dnn
-  - weights_dnn_exact
-  - weights_dnn_asymp
+  - title: Top-level weighting API
+    desc: General matrix builder + DNN convenience wrappers.
+    contents:
+      - weights_matrix
+      - weights_dnn
+      - weights_dnn_exact
+      - weights_dnn_asymp
 
-- title: Distances & distance registry
-  contents:
-  - distance_l2
-  - distance_l1
-  - order_by_l2
-  - order_by_l1
-  - new_distance
-  - distance_eval
-  - distance_eval_batch
-  - register_distance
-  - get_distance
-  - list_distances
+  - title: Scores (U-stat kernels)
+    desc: S3 spec, helpers, generics, registries, and built-in score topics.
+    contents:
+      - new_score
+      - score_setup
+      - score_order
+      - score_eval
+      - score_eval_batch
+      - as_score
+      - is_score
+      - is_compiled
+      - register_score
+      - get_score
+      - list_scores
+      - starts_with("score_")      # e.g. score_cate_rho / score_cate_from_rho, score_plqr_component
 
-- title: Rank-weights (L-statistic)
-  contents:
-  - new_rank_weight
-  - rank_weight_eval
-  - rank_weight_eval_batch
-  - rank_weight_dnn_exact
-  - rank_weight_dnn_asymp
-  - register_rank
-  - get_rank
-  - list_ranks
+  - title: Distances (rankers)
+    desc: S3 spec, helpers, generics, registries, and built-in distances.
+    contents:
+      - new_distance
+      - distance_setup
+      - distance_eval
+      - distance_eval_batch
+      - as_distance
+      - is_distance
+      - is_compiled_distance
+      - register_distance
+      - get_distance
+      - list_distances
+      - distance_l2
+      - distance_l1
+      - distance_l2_scaled
+      - distance_l1_scaled
+      - dist_l2
+      - dist_l1
+      - order_by_l2
+      - order_by_l1
 
-- title: Distance-weights (kernels on distances)
-  contents:
-  - new_dist_weight
-  - dist_weight_eval
-  - dist_weight_eval_batch
-  - wdist_gaussian_l2
-  - register_wdist
-  - get_wdist
-  - list_wdists
+  - title: Rank → Weight mappings
+    desc: S3 spec for converting ranks to weights, plus DNN rank-weights.
+    contents:
+      - new_rank_weight
+      - rank_weight_setup
+      - rank_weight_eval
+      - rank_weight_eval_batch
+      - as_rank_weight
+      - is_rank_weight
+      - register_rank
+      - get_rank
+      - list_ranks
+      - rank_weight_dnn_exact
+      - rank_weight_dnn_asymp
+      - dnn_weights_exact_full_from_ranks
+      - dnn_weights_asymp_full_from_ranks
 
-- title: Scores (kernels) & score registry
-  contents:
-  - new_score
-  - score_setup
-  - score_order
-  - score_eval
-  - score_eval_batch
-  - register_score
-  - get_score
-  - list_scores
+  - title: Distance → Weight mappings
+    desc: S3 spec for converting distances to weights.
+    contents:
+      - new_dist_weight
+      - dist_weight_setup
+      - dist_weight_eval
+      - dist_weight_eval_batch
+      - as_dist_weight
+      - is_dist_weight
+      - is_compiled_dist_weight
+      - register_wdist
+      - get_wdist
+      - list_wdists
+      - wdist_gaussian_l2
+
+  - title: Demo data & utilities
+    contents:
+      - cate_demo_data
+      - cate_demo_subsets
+      - plqr_demo_data
+      - plqr_demo_subsets
+      - plqr_moment
+      - ord_to_ranks
