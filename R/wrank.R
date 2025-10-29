@@ -141,7 +141,7 @@ is_rank_weight <- function(x) inherits(x, "rank_weight")
 
 #' Convert an index order to ranks (inverse permutation)
 #' @param ord integer vector (1..n) giving increasing order
-#' @return integer ranks vector r where r[i] = rank of i
+#' @return integer ranks vector r where r(i) = rank of i
 #' @export
 ord_to_ranks <- function(ord) {
   ord <- as.integer(ord)
