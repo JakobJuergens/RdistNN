@@ -7,6 +7,7 @@
 #include <vector>
 #include <algorithm>
 #include <numeric>
+#include <cmath> // std::sqrt
 using namespace Rcpp;
 
 // Core compute: L2 or squared L2 distances row-wise
@@ -46,7 +47,7 @@ Rcpp::List rustat_order_by_l2(NumericMatrix X, NumericVector x0, bool squared = 
   std::vector<double> dx(n);
   dist_l2_core(X, x0, dx, squared);
 
-  // order by (distance, index) — deterministic ties (like R's order)
+  // order by (distance, index) — deterministic ties
   std::vector<int> ord(n);
   std::iota(ord.begin(), ord.end(), 0);
   std::sort(ord.begin(), ord.end(), [&](int a, int b){
@@ -58,7 +59,7 @@ Rcpp::List rustat_order_by_l2(NumericMatrix X, NumericVector x0, bool squared = 
   IntegerVector ord1(n);
   for (int i = 0; i < n; ++i) ord1[i] = ord[i] + 1;
   return Rcpp::List::create(
-    Rcpp::_["dx"]   = NumericVector(dx.begin(), dx.end()),
-    Rcpp::_["ord"]  = ord1
+    Rcpp::_["dx"]  = NumericVector(dx.begin(), dx.end()),
+    Rcpp::_["ord"] = ord1
   );
 }

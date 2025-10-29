@@ -4,7 +4,7 @@
 \alias{order_by_l2}
 \title{Order rows by L2 distance to a point (C++ with R fallback)}
 \usage{
-order_by_l2(X, x0, squared = FALSE)
+order_by_l2(X, x0, squared = TRUE)
 }
 \arguments{
 \item{X}{numeric matrix (n x p)}

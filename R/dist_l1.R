@@ -34,3 +34,30 @@ order_by_l1 <- function(X, x0) {
   ord <- order(dx, seq_along(dx))  # tie-break by index
   list(dx = dx, ord = as.integer(ord))
 }
+
+# ----------------- dnn_distance integration -----------------
+
+#' L1 distance spec (plug-in) for the DNN engine
+#'
+#' Returns a `dnn_distance` that computes row-wise L1 (Manhattan)
+#' distances from `X` to a target `x0`. Also provides a simple
+#' R `eval_batch` for multiple targets `X0`.
+#'
+#' @return a `dnn_distance` object
+#' @export
+distance_l1 <- function() {
+  new_distance(
+    name = "l1",
+    eval = function(X, x0, ctx = NULL) {
+      dist_l1(X, x0)  # compiled if available; R otherwise
+    },
+    eval_batch = function(X, X0, ctx = NULL) {
+      X  <- as.matrix(X); X0 <- as.matrix(X0)
+      if (ncol(X0) != ncol(X)) stop("ncol(X0) must match ncol(X).")
+      m <- nrow(X0)
+      out <- matrix(NA_real_, nrow(X), m)
+      for (j in seq_len(m)) out[, j] <- dist_l1(X, X0[j, ])
+      out
+    }
+  )
+}

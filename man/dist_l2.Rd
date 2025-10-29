@@ -4,7 +4,7 @@
 \alias{dist_l2}
 \title{Fast L2 distance to a point (C++ with R fallback)}
 \usage{
-dist_l2(X, x0, squared = FALSE)
+dist_l2(X, x0, squared = TRUE)
 }
 \arguments{
 \item{X}{numeric matrix (n x p)}
