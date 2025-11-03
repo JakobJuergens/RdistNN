@@ -8,7 +8,9 @@
 # Usage from shell:
 #   Rscript inst/bench/run_bench.R cate n=5000 reps=10
 
-rdistnn_bench <- function(which = c("cate", "plqr"), ...) {
+rdistnn_bench <- function(
+    which = c("cate", "plqr", "jackknife", "jk", "dist_l1", "l1", "dist_l2", "l2"), ...)
+  {
   which <- match.arg(which)
   # Ensure utils are available when sourced directly
   if (!exists("rdistnn_bench_require")) {
@@ -23,6 +25,18 @@ rdistnn_bench <- function(which = c("cate", "plqr"), ...) {
          plqr = {
            source(file.path("inst", "bench", "bench_plqr.R"), local = TRUE)
            rdistnn_bench_plqr(...)
+         },
+         jackknife = , jk = {
+           source(file.path("inst", "bench", "bench_jackknife.R"), local = TRUE)
+           rdistnn_bench_jackknife(...)
+         },
+         dist_l2 = , l2 = {
+           source(file.path("inst", "bench", "bench_dist_l2.R"), local = TRUE)
+           rdistnn_bench_dist_l2(...)
+         },
+         dist_l1 = , l1 = {
+           source(file.path("inst", "bench", "bench_dist_l1.R"), local = TRUE)
+           rdistnn_bench_dist_l1(...)
          }
   )
 }

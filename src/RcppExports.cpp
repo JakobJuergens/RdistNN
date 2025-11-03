@@ -114,6 +114,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rustat_jackknife_fast_rank
+Rcpp::List rustat_jackknife_fast_rank(const IntegerMatrix& ranks, const NumericVector& a, const NumericMatrix& PHI, const bool normalize);
+RcppExport SEXP _RdistNN_rustat_jackknife_fast_rank(SEXP ranksSEXP, SEXP aSEXP, SEXP PHISEXP, SEXP normalizeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const IntegerMatrix& >::type ranks(ranksSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type a(aSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type PHI(PHISEXP);
+    Rcpp::traits::input_parameter< const bool >::type normalize(normalizeSEXP);
+    rcpp_result_gen = Rcpp::wrap(rustat_jackknife_fast_rank(ranks, a, PHI, normalize));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rustat_cate_ctx_create
 SEXP rustat_cate_ctx_create(NumericVector rho);
 RcppExport SEXP _RdistNN_rustat_cate_ctx_create(SEXP rhoSEXP) {
@@ -209,6 +223,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_RdistNN_rustat_order_by_l2", (DL_FUNC) &_RdistNN_rustat_order_by_l2, 3},
     {"_RdistNN_rustat_dist_l2_scaled", (DL_FUNC) &_RdistNN_rustat_dist_l2_scaled, 4},
     {"_RdistNN_rustat_dist_l2_scaled_batch", (DL_FUNC) &_RdistNN_rustat_dist_l2_scaled_batch, 4},
+    {"_RdistNN_rustat_jackknife_fast_rank", (DL_FUNC) &_RdistNN_rustat_jackknife_fast_rank, 4},
     {"_RdistNN_rustat_cate_ctx_create", (DL_FUNC) &_RdistNN_rustat_cate_ctx_create, 1},
     {"_RdistNN_rustat_cate_g_all", (DL_FUNC) &_RdistNN_rustat_cate_g_all, 1},
     {"_RdistNN_rustat_cate_g_indexed", (DL_FUNC) &_RdistNN_rustat_cate_g_indexed, 2},

@@ -33,6 +33,23 @@ rustat_dist_l2_scaled_batch <- function(X, X0, inv_s, squared = FALSE) {
     .Call(`_RdistNN_rustat_dist_l2_scaled_batch`, X, X0, inv_s, squared)
 }
 
+#' Fast delete-one jackknife for rank-weighted functionals (matrix phi)
+#'
+#' @param ranks IntegerMatrix (T x (s+1)): for each target t, ranks(t,k) is the
+#'   1-based index of the k-th neighbor, k=1..s+1.
+#' @param a NumericVector length s: L-stat coefficients a_1..a_s.
+#' @param PHI NumericMatrix (n_ref x q): row j is the q-vector phi(j).
+#' @param normalize bool: divide by sum(a) if true.
+#'
+#' @return List with components:
+#'   - theta0: numeric length-q
+#'   - theta_loo: numeric matrix (n_ref x q)
+#'   - info: list(s, T, q, normalize)
+#' @export
+rustat_jackknife_fast_rank <- function(ranks, a, PHI, normalize = TRUE) {
+    .Call(`_RdistNN_rustat_jackknife_fast_rank`, ranks, a, PHI, normalize)
+}
+
 rustat_cate_ctx_create <- function(rho) {
     .Call(`_RdistNN_rustat_cate_ctx_create`, rho)
 }
