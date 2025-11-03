@@ -127,14 +127,14 @@ jackknife_fast_rank <- function(ranks, a, phi, normalize = TRUE) {
     delta <- rep(0.0, q)
     for (row in seq_len(nrow(lst))) {
       t <- lst[row, 1L]
-      r <- lst[row, 2L]        # already scalar 1..s+1 here
+      r <- lst[row, 2L] # already scalar 1..s+1 here
       if (r > s) next
 
-      base  <- S_t_divZ[t, ]
+      base <- S_t_divZ[t, ]
       term1 <- (a[r] / Z) * y_tk[t, r, ]
       term2 <- if (s >= 2L && r <= s - 1L) pre_t[t, r, ] / Z else rep(0.0, q)
       term3 <- (a[s] / Z) * y_tk[t, s + 1L, ]
-      Snew  <- base - term1 + term2 + term3
+      Snew <- base - term1 + term2 + term3
       delta <- delta + (Snew - base)
     }
     theta_loo[i, ] <- theta0 + delta / Tn

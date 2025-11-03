@@ -24,7 +24,6 @@ inline int idx3(int t, int k, int q, int T, int S, int Q)
 //'   - theta0: numeric length-q
 //'   - theta_loo: numeric matrix (n_ref x q)
 //'   - info: list(s, T, q, normalize)
-//' @export
 // [[Rcpp::export]]
 Rcpp::List rustat_jackknife_fast_rank(const IntegerMatrix &ranks,
                                       const NumericVector &a,

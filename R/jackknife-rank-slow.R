@@ -99,10 +99,10 @@ jackknife_slow_rank <- function(ranks, a, phi, normalize = TRUE) {
       # look only within first s+1 neighbors
       pos <- which(ranks[t, 1L:(s + 1L)] == i)
       if (length(pos) == 0L) next
-      r <- pos[1L]           # ensure scalar
-      if (r > s) next        # present only at s+1 -> no effect
+      r <- pos[1L] # ensure scalar
+      if (r > s) next # present only at s+1 -> no effect
 
-      base  <- S_t_divZ[t, ]
+      base <- S_t_divZ[t, ]
       term1 <- (a[r] / Z) * y_tk[t, r, ]
 
       # shift block sum (scale by 1/Z to match base scale)
@@ -110,10 +110,12 @@ jackknife_slow_rank <- function(ranks, a, phi, normalize = TRUE) {
         acc <- rep(0.0, q)
         for (k in r:(s - 1L)) acc <- acc + (a[k + 1L] - a[k]) * y_tk[t, k + 1L, ]
         acc / Z
-      } else rep(0.0, q)
+      } else {
+        rep(0.0, q)
+      }
 
       term3 <- (a[s] / Z) * y_tk[t, s + 1L, ]
-      Snew  <- base - term1 + term2 + term3
+      Snew <- base - term1 + term2 + term3
       delta <- delta + (Snew - base)
     }
     theta_loo[i, ] <- theta0 + delta / Tn
