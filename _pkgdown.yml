@@ -105,6 +105,12 @@ reference:
       - list_wdists
       - wdist_gaussian_l2
 
+  - title: Jackknife (leave-one-out)
+    desc: Fast C++ path with auto fallback, slow oracle, and DNN wrappers.
+    contents:
+      - jackknife_fast_rank
+      - jackknife_slow_rank
+
   - title: Demo data & utilities
     contents:
       - cate_demo_data
