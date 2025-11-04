@@ -2,24 +2,25 @@
 % Please edit documentation in R/score-npr.R
 \name{score_np_y}
 \alias{score_np_y}
-\title{Nonparametric regression score from observed outcome \eqn{Y} (pure score; no weights)}
+\title{Nonparametric regression \strong{singleton} score from observed outcome \eqn{Y}
+(order-1 pure score; no weights)}
 \usage{
-score_np_y(x0, x_cols, s, k = 1L, y_col = NULL, y = NULL)
+score_np_y(x0, x_cols, s = 1, k = 1L, y_col = NULL, y = NULL)
 }
 \arguments{
 \item{x0}{Numeric length-\eqn{p} target point. Used only to check that
-\code{length(x0)} matches \code{length(x_cols)}; it is not used in the kernel itself.}
+\code{length(x0)} matches \code{length(x_cols)}; it is not used in the kernel.}
 
-\item{x_cols}{Integer or character indices of the \eqn{X} columns in \code{data}, used
-for dimension checks with \code{x0}.}
+\item{x_cols}{Integer or character indices of the \eqn{X} columns in \code{data},
+used for dimension checks with \code{x0}.}
 
-\item{s}{Integer subset size (kernel order). Recorded in the score metadata; the pure
-kernel internally computes \eqn{\sum_{i \in S} Y_i} for any subset \eqn{S} of size \eqn{s}.}
+\item{s}{Intended subset size (kernel order). \strong{Must be 1}; otherwise an error
+is thrown.}
 
-\item{k}{Integer included for interface compatibility with other scores; it is ignored here.}
+\item{k}{Integer included for interface compatibility with other scores; ignored.}
 
-\item{y_col}{Optional name of the column in \code{data} that contains the response \eqn{Y}.
-If \code{NULL}, supply \code{y}.}
+\item{y_col}{Optional name of the column in \code{data} that contains the response
+\eqn{Y}. If \code{NULL}, supply \code{y}.}
 
 \item{y}{Optional numeric vector (length \eqn{n}) of \eqn{Y} values to use when
 \code{y_col} is \code{NULL}.}
@@ -28,40 +29,38 @@ If \code{NULL}, supply \code{y}.}
 An \code{ustat_score} object with:
 \itemize{
 \item \code{$name}: a descriptive name,
-\item \code{$order}: the kernel order \eqn{s},
+\item \code{$order}: always \code{1L},
 \item \code{$setup}: stores \code{g <- Y} in the context,
-\item \code{$eval}/\code{$eval_batch}: return \eqn{\sum_{i \in S} g_i}
-for each subset \eqn{S} (no weights applied).
+\item \code{$eval}/\code{$eval_batch}: return \eqn{Y_i} for each singleton subset.
 }
 }
 \description{
-Constructs a \strong{pure-score} kernel for nonparametric regression that uses only the
-observed response \eqn{Y}. Per observation \eqn{i}, the stored contribution is
-\deqn{g_i \equiv Y_i\,,} and for a subset \eqn{S \subset \{1,\ldots,n\}} of size \eqn{s}
-the kernel evaluates to the \strong{sum of contributions}
-\deqn{h(S) \;=\; \sum_{i \in S} g_i \;=\; \sum_{i \in S} Y_i\,.}
+Constructs a \strong{pure-score} kernel for nonparametric regression that uses only
+the observed response \eqn{Y}. For a singleton subset \eqn{S=\{i\}} the kernel
+returns exactly \eqn{h(S) = Y_i}. This score is \strong{order-1 only} (s = 1).
+It performs no nearest-neighbor ordering, kernel weighting, or L-stat
+aggregation. Any weighting/averaging of subset evaluations is handled outside
+the score layer (e.g., by rank-/distance-weight modules).
 }
 \details{
-This score does \strong{not} perform any nearest-neighbor ordering, kernel weighting,
-or L-stat aggregation. Any weighting/averaging of subset evaluations is handled
-outside the score layer (e.g., by the rank-/distance-weight modules).
-The arguments \code{x0}, \code{x_cols}, \code{s}, \code{k} are accepted for API consistency
-and basic dimension checks; only \eqn{Y} is used to construct the score.
+The arguments \code{x0}, \code{x_cols}, \code{s}, \code{k} are accepted for API
+consistency and basic dimension checks; only \eqn{Y} is used to construct the
+score. This factory \strong{enforces} \code{s = 1}.
 }
 \examples{
 set.seed(1)
-n <- 50; p <- 2; s <- 5
+n <- 50; p <- 2
 dat <- data.frame(X1 = rnorm(n), X2 = rnorm(n))
 dat$Y <- with(dat, X1 - 2*X2 + rnorm(n))
 
-sc <- score_np_y(
+sc  <- score_np_y(
   x0 = c(0, 0),
   x_cols = c("X1", "X2"),
-  s = s, k = 1,
+  s = 1L, k = 1L,
   y_col = "Y"
 )
 ctx  <- score_setup(sc, dat)
-subs <- matrix(sample.int(n, s*3, replace = FALSE), nrow = 3, byrow = TRUE)
-score_eval_batch(sc, subs, dat, ctx) # three subset evaluations (sums of Y)
+subs <- matrix(seq_len(n), ncol = 1L)  # singleton subsets
+score_eval_batch(sc, subs, dat, ctx)   # returns dat$Y
 
 }
