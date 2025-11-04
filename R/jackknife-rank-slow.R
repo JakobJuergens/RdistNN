@@ -108,7 +108,7 @@ jackknife_slow_rank <- function(ranks, a, phi, normalize = TRUE) {
       # shift block sum (scale by 1/Z to match base scale)
       term2 <- if (s >= 2L && r <= s - 1L) {
         acc <- rep(0.0, q)
-        for (k in r:(s - 1L)) acc <- acc + (a[k + 1L] - a[k]) * y_tk[t, k + 1L, ]
+        for (k in r:(s - 1L)) acc <- acc - (a[k + 1L] - a[k]) * y_tk[t, k + 1L, ]
         acc / Z
       } else {
         rep(0.0, q)
