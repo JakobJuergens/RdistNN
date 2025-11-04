@@ -9,3 +9,5 @@
 ^codecov\.yml$
 ^\.lintr$
 ^archives$
+^tools$
+^bench$
