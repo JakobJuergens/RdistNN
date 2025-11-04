@@ -16,3 +16,18 @@ test_that("[registry] list_distances includes built-ins and custom registration 
   got <- get_distance("tmp_d")
   expect_s3_class(got, "dnn_distance")
 })
+
+# tests/testthat/test-zzz-autoreg.R
+testthat::local_edition(3)
+
+test_that("[onLoad] scaled distances are auto-registered when available", {
+  skip_if_not(exists("list_distances", mode = "function"))
+  ds <- list_distances()
+
+  if (exists("distance_l1_scaled", mode = "function")) {
+    expect_true(any(grepl("^l1_scaled\\[(sd|mad)\\]$", ds)))
+  }
+  if (exists("distance_l2_scaled", mode = "function")) {
+    expect_true(any(grepl("^l2_scaled\\[(sd|mad)\\]_sq$", ds)))
+  }
+})

@@ -20,11 +20,19 @@ utils::globalVariables(c("xx"))
     try(register_distance(distance_l2(squared = TRUE)), silent = TRUE)
     # L1 (Manhattan)
     try(register_distance(distance_l1()), silent = TRUE)
+    # Normalized L2
 
-    # If you have a zero-arg scaled L2 spec, you can also register it here:
+    # Scaled / normalized variants — safe to auto-register because scaling
+    # is learned from data later in distance_setup().
     if (exists("distance_l2_scaled", mode = "function")) {
-      # Example: will compute scaling in distance_setup()
-      try(register_distance(distance_l2_scaled()), silent = TRUE)
+      # Default (sd) with squared distances pairs nicely with Gaussian kernels
+      try(register_distance(distance_l2_scaled(rule = "sd", squared = TRUE)), silent = TRUE)
+      # A robust default many folks like
+      try(register_distance(distance_l2_scaled(rule = "mad", squared = TRUE)), silent = TRUE)
+    }
+    if (exists("distance_l1_scaled", mode = "function")) {
+      try(register_distance(distance_l1_scaled(rule = "sd")),  silent = TRUE)
+      try(register_distance(distance_l1_scaled(rule = "mad")), silent = TRUE)
     }
   }
 
