@@ -24,16 +24,18 @@ static inline void dist_l1_core(const NumericMatrix &X,
                                 std::vector<double> &out)
 {
   const int n = X.nrow(), p = X.ncol();
-  const double* Xp  = REAL(X);
-  const double* x0p = REAL(x0);
+  const double *Xp = REAL(X);
+  const double *x0p = REAL(x0);
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (n >= 1024)
 #endif
-  for (int i = 0; i < n; ++i) {
+  for (int i = 0; i < n; ++i)
+  {
     double acc = 0.0;
     // column-major: element (i,j) is Xp[i + j*n]
-    for (int j = 0; j < p; ++j) {
+    for (int j = 0; j < p; ++j)
+    {
       acc += std::fabs(Xp[i + j * n] - x0p[j]);
     }
     out[i] = acc;
@@ -71,13 +73,13 @@ Rcpp::List rustat_order_by_l1(NumericMatrix X, NumericVector x0)
 
   // Fast stable argsort (radix path for finite, nonnegative distances)
   std::vector<int> ord0(n);
-  rustat::argsort_indices(dx.data(), n, ord0.data());  // 0-based
+  rustat::argsort_indices(dx.data(), n, ord0.data()); // 0-based
 
   IntegerVector ord(n);
-  for (int i = 0; i < n; ++i) ord[i] = ord0[i] + 1;     // 1-based for R
+  for (int i = 0; i < n; ++i)
+    ord[i] = ord0[i] + 1; // 1-based for R
 
   return List::create(
-    _["dx"]  = NumericVector(dx.begin(), dx.end()),
-    _["ord"] = ord
-  );
+      _["dx"] = NumericVector(dx.begin(), dx.end()),
+      _["ord"] = ord);
 }

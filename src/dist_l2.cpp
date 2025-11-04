@@ -28,9 +28,11 @@ static inline void dist_l2_core(const NumericMatrix &X,
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (n >= 1024)
 #endif
-  for (int i = 0; i < n; ++i) {
+  for (int i = 0; i < n; ++i)
+  {
     double acc = 0.0;
-    for (int j = 0; j < p; ++j) {
+    for (int j = 0; j < p; ++j)
+    {
       const double zij = X(i, j) - x0[j];
       acc += zij * zij;
     }
@@ -69,13 +71,13 @@ Rcpp::List rustat_order_by_l2(NumericMatrix X, NumericVector x0, bool squared = 
 
   // Fast stable argsort via rustat::argsort_indices (radix for nonneg finite)
   std::vector<int> ord0(n);
-  rustat::argsort_indices(dx.data(), n, ord0.data());  // 0-based indices
+  rustat::argsort_indices(dx.data(), n, ord0.data()); // 0-based indices
 
   IntegerVector ord(n);
-  for (int i = 0; i < n; ++i) ord[i] = ord0[i] + 1;     // 1-based for R
+  for (int i = 0; i < n; ++i)
+    ord[i] = ord0[i] + 1; // 1-based for R
 
   return List::create(
-    _["dx"]  = NumericVector(dx.begin(), dx.end()),
-    _["ord"] = ord
-  );
+      _["dx"] = NumericVector(dx.begin(), dx.end()),
+      _["ord"] = ord);
 }
