@@ -55,7 +55,7 @@ Rcpp::List rustat_jackknife_fast_rank(const IntegerMatrix &ranks,
   // Precompute dk[k] = a_{k+1} - a_k for k=0..s-2
   std::vector<double> dk(std::max(1, s - 1), 0.0);
   for (int k = 0; k <= s - 2; ++k)
-    dk[k] = a[k + 1] - a[k];
+    dk[k] = a[k] - a[k + 1];
 
   // Storage:
   // y_tk: (T x s x q) neighbors 1..s

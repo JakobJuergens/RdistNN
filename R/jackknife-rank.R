@@ -96,7 +96,7 @@ jackknife_fast_rank <- function(ranks, a, phi, normalize = TRUE) {
     for (t in seq_len(Tn)) {
       acc <- rep(0.0, q)
       for (r in (s - 1L):1L) {
-        acc <- acc + (a[r + 1L] - a[r]) * y_tk[t, r + 1L, ]
+        acc <- acc + (a[r] - a[r + 1L]) * y_tk[t, r + 1L, ]
         pre_t[t, r, ] <- acc
       }
     }
