@@ -33,7 +33,7 @@ jobs:
 
           # Collect inputs that exist
           paths=()
-          for d in R src tests inst/bench; do
+          for d in R src tests inst/include tools/bench; do
             [[ -d "$d" ]] && paths+=("$d/")
           done
           for f in DESCRIPTION NAMESPACE README.md README.Rmd; do
@@ -41,7 +41,7 @@ jobs:
           done
 
           if [[ ${#paths[@]} -eq 0 ]]; then
-            echo "No inputs found (R/, src/, tests/, inst/bench/, DESCRIPTION, NAMESPACE, README*)."
+            echo "No inputs found (R/, src/, tests/, inst/include, tools/bench, DESCRIPTION, NAMESPACE, README*)."
             echo "skip=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
