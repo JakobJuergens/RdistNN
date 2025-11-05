@@ -9,17 +9,14 @@ plqr_moment(df, beta, tau)
 \arguments{
 \item{df}{A \code{data.frame} as returned by \code{plqr_demo_data()$data},
 containing columns \code{Y}, \code{D1..Dp_d}, oracle nuisances
-\code{mD1..mDp_d} (components of \eqn{m_{D}(X)}), and \code{q_oracle}
-(the value of \eqn{q_{\tau}(X)}).}
+\code{mD1..mDp_d}, and \code{q_oracle}.}
 
-\item{beta}{Numeric length-\code{p_d} candidate coefficient vector \eqn{\beta}.}
+\item{beta}{Numeric length-\code{p_d} coefficient vector \eqn{\beta}.}
 
 \item{tau}{Quantile level \eqn{\tau} (should match the data-generating level).}
 }
 \value{
-A numeric matrix of size \eqn{n \times p_d} with the moment
-contributions for each observation (rows) and each partially linear
-component (columns).
+A numeric matrix of size \eqn{n \times p_d}.
 }
 \description{
 Computes, for each observation \eqn{i}, the orthogonal PLQR moment
@@ -29,10 +26,4 @@ Computes, for each observation \eqn{i}, the orthogonal PLQR moment
 }
 where \eqn{m_{D}(X) = \mathbb{E}[D \mid X]} is provided as an oracle nuisance.
 This is the vector moment entering the Z-estimation.
-}
-\examples{
-demo <- plqr_demo_data(n = 200, p = 2, p_d = 2, tau = 0.5, seed = 1)
-g <- plqr_moment(df = demo$data, beta = demo$truth$beta_true, tau = 0.5)
-colMeans(g) # should be near zero at truth
-
 }

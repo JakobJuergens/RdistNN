@@ -11,7 +11,10 @@ cate_demo_data(
   sigma = 0.5,
   clip = 0.001,
   seed = NULL,
-  x0 = NULL
+  x0 = NULL,
+  inject = NULL,
+  inject_col = "rho_oracle",
+  idx_inject = 3L
 )
 }
 \arguments{
@@ -28,6 +31,16 @@ cate_demo_data(
 \item{seed}{Optional integer seed for reproducibility.}
 
 \item{x0}{Optional numeric length-\eqn{p} target point (defaults to the zero vector).}
+
+\item{inject}{Optional, one of \code{NULL}, \code{"na"}, \code{"inf"}; if provided,
+inject a single non-finite value into one of the returned columns (see \code{inject_col})
+at row \code{idx_inject}; useful for testing runtime guards.}
+
+\item{inject_col}{Character; which column to corrupt when \code{inject} is not \code{NULL}.
+One of \code{"Y"}, \code{"rho_oracle"}, \code{"e_oracle"}, \code{"m_oracle"},
+\code{"m0_oracle"}, \code{"tau_oracle"}. Default \code{"rho_oracle"}.}
+
+\item{idx_inject}{Integer index to corrupt (default 3).}
 }
 \value{
 A list with:

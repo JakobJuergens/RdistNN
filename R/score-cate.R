@@ -90,7 +90,15 @@ score_cate_rho <- function(
     eval_batch = function(subs, data, ctx, rng) {
       gi <- ctx$g
       if (any(!is.finite(gi))) stop("Non-finite g encountered.", call. = FALSE)
-      rowSums(matrix(gi[subs], nrow = nrow(subs)))
+      if (!is.matrix(subs)) subs <- as.matrix(subs)
+      if (nrow(subs) == 0L) {
+        return(numeric(0L))
+      }
+
+      if (exists("rustat_subset_row_sums_g", mode = "function")) {
+        return(rustat_subset_row_sums_g(subs, gi))
+      }
+      rowSums(matrix(gi[subs], nrow = nrow(subs), ncol = ncol(subs)))
     },
     randomized = FALSE,
     symmetric = TRUE,

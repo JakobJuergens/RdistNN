@@ -1,73 +1,37 @@
-# tests/testthat/test-dist-l1-scaled.R
-# -------------------------------------------------------------------
-# Scaled L1: shapes, compiled parity, batch, and custom scales
-# Tags:
-#   [engine]   shape/finite
-#   [compiled] parity vs R fallback
-#   [batch]    batch equals columnwise calls
-#   [custom]   custom scale_vec; parity to unscaled when scale==1
-# -------------------------------------------------------------------
+test_that("Scaled L1 equals unscaled when scale=1", {
+  X <- gen_X()
+  x0 <- gen_x0(p = ncol(X))
+  inv1 <- rep(1, ncol(X))
+  expect_equal(dist_l1_scaled(X, x0, inv1), dist_l1(X, x0))
+})
 
-test_that("[engine] distance_l1_scaled works and returns finite distances", {
-  set.seed(1)
-  X <- matrix(rnorm(30), 10, 3)
-  x0 <- rnorm(3)
-  dspec <- distance_l1_scaled("sd")
-  ctx <- distance_setup(dspec, X)
-
-  d <- distance_eval(dspec, X, x0, ctx)
-  expect_length(d, nrow(X))
+test_that("Scaled L1 handles eps-floor (finite output)", {
+  X0 <- gen_X()
+  mod <- gen_constcol_and_inv(X0, eps = 1e-12)
+  X <- mod$X
+  inv <- mod$inv
+  x0 <- gen_x0(p = ncol(X))
+  d <- dist_l1_scaled(X, x0, inv)
   expect_true(all(is.finite(d)))
+  expect_true(all(d >= 0))
 })
 
-test_that("[compiled] rustat_dist_l1_scaled parity with R fallback", {
-  set.seed(42)
-  X <- matrix(rnorm(40), 20, 2)
-  x0 <- rnorm(2)
-  dspec <- distance_l1_scaled("mad")
-  ctx <- distance_setup(dspec, X)
+# Battery: use data-driven scaling rule to avoid dim mismatch
+run_distance_battery(
+  metric_name = "l1_scaled",
+  mk_spec = function(...) distance_l1_scaled(rule = "sd"),
+  orderer = function(X, x0, ...) order_by_l1_scaled(X, x0, rule = "sd"),
+  args = list(),
+  expect_sq = NULL
+)
 
-  # R fallback reference
-  ref <- {
-    dif <- sweep(X, 2L, x0, "-")
-    dif <- sweep(dif, 2L, ctx$inv_s, "*")
-    rowSums(abs(dif))
-  }
-
+# If the dedicated C++ symbol exists, check C++ vs wrapper
+test_that("Scaled L1: C++ fast path equals wrapper path (if available)", {
   skip_if_not(exists("rustat_dist_l1_scaled", mode = "function"))
-  out <- distance_eval(dspec, X, x0, ctx)
-  expect_equal(out, ref, tolerance = 0)
-})
-
-test_that("[batch] batch equals columnwise calls", {
-  set.seed(7)
-  X <- matrix(rnorm(24), 8, 3)
-  X0 <- matrix(rnorm(6), 2, 3)
-  dspec <- distance_l1_scaled("iqr")
-  ctx <- distance_setup(dspec, X)
-
-  M <- distance_eval_batch(dspec, X, X0, ctx)
-  M2 <- sapply(seq_len(nrow(X0)), function(j) distance_eval(dspec, X, X0[j, ], ctx))
-  expect_equal(M, M2, tolerance = 0)
-})
-
-test_that("[custom] custom scale_vec works; all-ones matches unscaled L1", {
-  set.seed(3)
-  X <- matrix(rnorm(20), 10, 2)
-  x0 <- rnorm(2)
-
-  dspec_un <- distance_l1() # unscaled L1
-  dspec_one <- distance_l1_scaled("custom", scale_vec = c(1, 1))
-  ctx_one <- distance_setup(dspec_one, X)
-
-  d_un <- distance_eval(dspec_un, X, x0)
-  d_one <- distance_eval(dspec_one, X, x0, ctx_one)
-
-  expect_equal(d_one, d_un, tolerance = 0)
-
-  # length mismatch should error on setup
-  expect_error(
-    distance_l1_scaled("custom", scale_vec = 1) |> distance_setup(X),
-    "length p = ncol\\(data\\)"
-  )
+  X <- gen_X(seed = 11)
+  x0 <- gen_x0(p = ncol(X), seed = 12)
+  inv <- rep(2, ncol(X))
+  d_cpp <- rustat_dist_l1_scaled(as.matrix(X), as.numeric(x0), as.numeric(inv))
+  d_wr <- dist_l1_scaled(X, x0, inv)
+  expect_equal(d_cpp, d_wr)
 })

@@ -138,18 +138,28 @@ score_plqr_component <- function(
       }
 
       # ---- pure-score payload: compute g and stash it ----
-      thr <- as.vector(D %*% as.numeric(beta)) + qx
-      resid <- (as.numeric(tau) - as.numeric(Y <= thr))
-      g <- resid * (D[, j] - mD[, j])
+      # ---- compute g ----
+      g <- NULL
+      ptr_ctx <- NULL
+      if (exists("rustat_plqr_ctx_new", mode = "function") &&
+        exists("rustat_plqr_g_all", mode = "function")) {
+        # compiled context + fast per-row g
+        ptr_ctx <- rustat_plqr_ctx_new(D, mD, Y, qx, as.numeric(beta), as.numeric(tau))
+        g <- as.numeric(rustat_plqr_g_all(ptr_ctx))
+      } else {
+        # R fallback (your current code)
+        thr <- as.vector(D %*% as.numeric(beta)) + qx
+        resid <- (as.numeric(tau) - as.numeric(Y <= thr))
+        g <- resid * (D[, j] - mD[, j])
+      }
 
       if (!all(is.finite(g))) stop("Computed g contains non-finite values.", call. = FALSE)
 
       list(
         g = as.numeric(g),
-        n = n, p = ncol(X),
+        n = nrow(X), p = ncol(X),
         s = as.integer(s), j = as.integer(j),
-        # compiled path intentionally omitted in pure layer
-        ptr_ctx = NULL
+        ptr_ctx = ptr_ctx # may be NULL if R fallback
       )
     },
 
@@ -164,12 +174,16 @@ score_plqr_component <- function(
     eval_batch = function(subs, data, ctx, rng) {
       gi <- ctx$g
       if (any(!is.finite(gi))) stop("Non-finite g encountered.", call. = FALSE)
-      K <- nrow(subs)
-      if (K == 0L) {
+      if (!is.matrix(subs)) subs <- as.matrix(subs)
+      if (nrow(subs) == 0L) {
         return(numeric(0L))
       }
-      mat <- matrix(gi[subs], nrow = K, ncol = ncol(subs))
-      rowSums(mat)
+
+      if (exists("rustat_subset_row_sums_g", mode = "function")) {
+        return(rustat_subset_row_sums_g(subs, gi))
+      }
+      # R fallback (as before)
+      rowSums(matrix(gi[subs], nrow = nrow(subs), ncol = ncol(subs)))
     },
     randomized = FALSE,
     symmetric = TRUE,

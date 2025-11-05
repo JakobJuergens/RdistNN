@@ -274,6 +274,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rustat_subset_row_sums_g
+NumericVector rustat_subset_row_sums_g(IntegerMatrix subs, NumericVector g);
+RcppExport SEXP _RdistNN_rustat_subset_row_sums_g(SEXP subsSEXP, SEXP gSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type subs(subsSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type g(gSEXP);
+    rcpp_result_gen = Rcpp::wrap(rustat_subset_row_sums_g(subs, g));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_RdistNN_rustat_dist_l1", (DL_FUNC) &_RdistNN_rustat_dist_l1, 2},
@@ -297,6 +309,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_RdistNN_rustat_plqr_ctx_set_beta", (DL_FUNC) &_RdistNN_rustat_plqr_ctx_set_beta, 2},
     {"_RdistNN_rustat_plqr_g_all", (DL_FUNC) &_RdistNN_rustat_plqr_g_all, 1},
     {"_RdistNN_rustat_plqr_g_indexed", (DL_FUNC) &_RdistNN_rustat_plqr_g_indexed, 2},
+    {"_RdistNN_rustat_subset_row_sums_g", (DL_FUNC) &_RdistNN_rustat_subset_row_sums_g, 2},
     {NULL, NULL, 0}
 };
 

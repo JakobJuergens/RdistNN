@@ -89,7 +89,14 @@ score_np_y <- function(
     eval_batch = function(subs, data, ctx, rng) {
       if (any(!is.finite(ctx$g))) stop("Non-finite g encountered.", call. = FALSE)
       if (!is.matrix(subs) || ncol(subs) != 1L) {
-        stop("`score_np_y` expects `subs` to be an n x 1 matrix of indices (singleton subsets).", call. = FALSE)
+        stop("`score_np_y` expects `subs` to be an n x 1 matrix (singleton subsets).", call. = FALSE)
+      }
+      if (nrow(subs) == 0L) {
+        return(numeric(0L))
+      }
+
+      if (exists("rustat_subset_row_sums_g", mode = "function")) {
+        return(rustat_subset_row_sums_g(subs, ctx$g))
       }
       as.numeric(ctx$g[subs[, 1L]])
     },

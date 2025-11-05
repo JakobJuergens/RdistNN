@@ -2,17 +2,10 @@
 % Please edit documentation in R/dist_l2.R
 \name{distance_l2}
 \alias{distance_l2}
-\title{L2 distance spec (plug-in) for the DNN engine}
+\title{L2 distance spec (single-point + batched)}
 \usage{
-distance_l2(squared = TRUE)
-}
-\arguments{
-\item{squared}{logical; if TRUE use squared L2 (default). Ordering is identical,
-and squared avoids a sqrt, so it is a good default for k-NN and kernels.}
-}
-\value{
-a \code{dnn_distance} object
+distance_l2(squared = FALSE)
 }
 \description{
-L2 distance spec (plug-in) for the DNN engine
+L2 distance spec (single-point + batched)
 }

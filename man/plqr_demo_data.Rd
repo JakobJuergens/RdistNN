@@ -12,7 +12,10 @@ plqr_demo_data(
   sigma = 0.5,
   design = c("linear", "sinusoidal", "bump"),
   seed = NULL,
-  x0 = NULL
+  x0 = NULL,
+  inject = NULL,
+  inject_col = c("Y", "q_oracle", "D1", "mD1", "rD1")[1],
+  idx_inject = 3L
 )
 }
 \arguments{
@@ -31,6 +34,15 @@ plqr_demo_data(
 \item{seed}{Optional integer seed.}
 
 \item{x0}{Optional target point in \eqn{\mathbb{R}^{p}} for localization (defaults to the zero vector).}
+
+\item{inject}{Optional, one of \code{NULL}, \code{"na"}, \code{"inf"}; if provided,
+inject a single non-finite into \code{inject_col} at row \code{idx_inject}.
+Useful for testing runtime guards.}
+
+\item{inject_col}{Character; which column to corrupt when \code{inject} is not \code{NULL}.
+One of \code{"Y"}, \code{"q_oracle"}, \code{"D1"}, \code{"mD1"}, \code{"rD1"} (extend as needed).}
+
+\item{idx_inject}{Integer row index to corrupt (default 3).}
 }
 \value{
 A list with:

@@ -6,14 +6,6 @@
 \usage{
 dist_l1(X, x0)
 }
-\arguments{
-\item{X}{numeric matrix (n x p)}
-
-\item{x0}{numeric length-p point}
-}
-\value{
-numeric vector of length n with L1 distances
-}
 \description{
 Fast L1 (Manhattan) distance to a point (C++ with R fallback)
 }

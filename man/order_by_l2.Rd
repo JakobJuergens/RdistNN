@@ -2,20 +2,10 @@
 % Please edit documentation in R/dist_l2.R
 \name{order_by_l2}
 \alias{order_by_l2}
-\title{Order rows by L2 distance to a point (C++ with R fallback)}
+\title{Order rows by L2 distance to a point (deterministic ties)}
 \usage{
-order_by_l2(X, x0, squared = TRUE)
-}
-\arguments{
-\item{X}{numeric matrix (n x p)}
-
-\item{x0}{numeric length-p point}
-
-\item{squared}{logical; use squared L2 for ordering if TRUE (same order as L2)}
-}
-\value{
-list(dx = numeric n, ord = integer n) with deterministic tie-breaking
+order_by_l2(X, x0, squared = FALSE)
 }
 \description{
-Order rows by L2 distance to a point (C++ with R fallback)
+Order rows by L2 distance to a point (deterministic ties)
 }

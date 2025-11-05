@@ -2,15 +2,10 @@
 % Please edit documentation in R/dist_l1.R
 \name{distance_l1}
 \alias{distance_l1}
-\title{L1 distance spec (plug-in) for the DNN engine}
+\title{L1 distance spec (single-point + batched)}
 \usage{
 distance_l1()
 }
-\value{
-a \code{dnn_distance} object
-}
 \description{
-Returns a \code{dnn_distance} that computes row-wise L1 (Manhattan)
-distances from \code{X} to a target \code{x0}. Also provides a simple
-R \code{eval_batch} for multiple targets \code{X0}.
+L1 distance spec (single-point + batched)
 }
