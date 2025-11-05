@@ -2,17 +2,10 @@
 % Please edit documentation in R/dist_l2.R
 \name{dist_l2}
 \alias{dist_l2}
-\title{Fast L2 distance to a point (C++ with R fallback)}
+\title{Fast L2 distance (or squared L2) to a point (C++ with R fallback)}
 \usage{
-dist_l2(X, x0, squared = TRUE)
-}
-\arguments{
-\item{X}{numeric matrix (n x p)}
-
-\item{x0}{numeric length-p point}
-
-\item{squared}{logical; return squared L2 if TRUE}
+dist_l2(X, x0, squared = FALSE)
 }
 \description{
-Fast L2 distance to a point (C++ with R fallback)
+Fast L2 distance (or squared L2) to a point (C++ with R fallback)
 }

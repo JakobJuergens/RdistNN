@@ -2,18 +2,10 @@
 % Please edit documentation in R/dist_l1.R
 \name{order_by_l1}
 \alias{order_by_l1}
-\title{Order rows by L1 distance (C++ with R fallback)}
+\title{Order rows by L1 distance to a point (deterministic ties)}
 \usage{
 order_by_l1(X, x0)
 }
-\arguments{
-\item{X}{numeric matrix (n x p)}
-
-\item{x0}{numeric length-p point}
-}
-\value{
-list(dx = numeric n, ord = integer n) with deterministic tie-breaking
-}
 \description{
-Order rows by L1 distance (C++ with R fallback)
+Order rows by L1 distance to a point (deterministic ties)
 }
