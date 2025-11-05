@@ -2,7 +2,7 @@
 % Please edit documentation in R/dist_l1.R
 \name{distance_l1_scaled}
 \alias{distance_l1_scaled}
-\title{Scaled L1 spec: compute inv_s once; reuse unscaled eval/batch after scaling}
+\title{Scaled L1 distance spec (one-time setup + eval/batch)}
 \usage{
 distance_l1_scaled(
   rule = c("sd", "mad", "iqr", "range", "custom"),
@@ -10,6 +10,18 @@ distance_l1_scaled(
   eps = 1e-12
 )
 }
+\arguments{
+\item{rule}{Scaling rule: \code{"sd"}, \code{"mad"}, \code{"iqr"}, \code{"range"}, or \code{"custom"}.}
+
+\item{scale_vec}{Optional numeric vector of length \eqn{p} for
+\code{rule = "custom"}.}
+
+\item{eps}{Small positive number to avoid division by zero in scaling.}
+}
+\value{
+A list with \code{name}, \code{setup()}, \code{eval()}, and \code{eval_batch()}.
+}
 \description{
-Scaled L1 spec: compute inv_s once; reuse unscaled eval/batch after scaling
+Builder that computes per-column scales once (\code{setup(X)}) and reuses them in
+\code{eval()} / \code{eval_batch()}. Uses \code{rustat_dist_l1_scaled_batch()} if present.
 }

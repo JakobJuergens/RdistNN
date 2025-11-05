@@ -2,7 +2,7 @@
 % Please edit documentation in R/dist_l2.R
 \name{distance_l2_scaled}
 \alias{distance_l2_scaled}
-\title{Scaled L2 spec (squared optional): reuse unscaled spec after scaling}
+\title{Scaled L2 distance spec (one-time setup + eval/batch)}
 \usage{
 distance_l2_scaled(
   rule = c("sd", "mad", "iqr", "range", "custom"),
@@ -11,6 +11,20 @@ distance_l2_scaled(
   squared = FALSE
 )
 }
+\arguments{
+\item{rule}{Scaling rule: \code{"sd"}, \code{"mad"}, \code{"iqr"}, \code{"range"}, or \code{"custom"}.}
+
+\item{scale_vec}{Optional numeric vector of length \eqn{p} for
+\code{rule = "custom"}.}
+
+\item{eps}{Small positive number to avoid division by zero in scaling.}
+
+\item{squared}{Logical; if \code{TRUE}, return squared distances.}
+}
+\value{
+A list with \code{name}, \code{setup()}, \code{eval()}, and \code{eval_batch()}.
+}
 \description{
-Scaled L2 spec (squared optional): reuse unscaled spec after scaling
+Builder that computes per-column scales once (\code{setup(X)}) and reuses them in
+\code{eval()} / \code{eval_batch()}. Uses \code{rustat_dist_l2_scaled_batch()} if present.
 }

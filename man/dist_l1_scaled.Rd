@@ -2,10 +2,23 @@
 % Please edit documentation in R/dist_l1.R
 \name{dist_l1_scaled}
 \alias{dist_l1_scaled}
-\title{Scaled L1 distance (C++ fast path if present, else reuse unscaled after scaling)}
+\title{Scaled L1 distance (per-coordinate scaling)}
 \usage{
 dist_l1_scaled(X, x0, inv_s)
 }
+\arguments{
+\item{X}{Numeric matrix \eqn{n \times p}. Each row is an observation.}
+
+\item{x0}{Numeric vector of length \eqn{p}. The query point.}
+
+\item{inv_s}{Numeric vector of length \eqn{p} with elementwise scales
+(often the reciprocals of column scale estimates).}
+}
+\value{
+Numeric vector of length \eqn{n}.
+}
 \description{
-Scaled L1 distance (C++ fast path if present, else reuse unscaled after scaling)
+Computes \eqn{\|(X_{i,\cdot} - x_0) \odot \mathrm{inv\_s}\|_1} for each row.
+If \code{rustat_dist_l1_scaled()} exists it is used; else inputs are rescaled
+in R and passed to \code{\link[=dist_l1]{dist_l1()}}.
 }

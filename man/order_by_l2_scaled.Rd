@@ -2,7 +2,7 @@
 % Please edit documentation in R/dist_l2.R
 \name{order_by_l2_scaled}
 \alias{order_by_l2_scaled}
-\title{Order rows by scaled L2 (deterministic ties) via unscaled orderer after scaling}
+\title{Order rows by scaled L2 (stable ties)}
 \usage{
 order_by_l2_scaled(
   X,
@@ -13,6 +13,25 @@ order_by_l2_scaled(
   squared = FALSE
 )
 }
+\arguments{
+\item{X}{Numeric matrix \eqn{n \times p}.}
+
+\item{x0}{Numeric vector of length \eqn{p}.}
+
+\item{rule}{Scaling rule: \code{"sd"}, \code{"mad"}, \code{"iqr"}, \code{"range"}, or \code{"custom"}.}
+
+\item{scale_vec}{Optional numeric vector of length \eqn{p} for
+\code{rule = "custom"}.}
+
+\item{eps}{Small positive number to avoid division by zero in scaling.}
+
+\item{squared}{Logical; if \code{TRUE}, return squared distances.}
+}
+\value{
+A list with \code{dx} and \code{ord}.
+}
 \description{
-Order rows by scaled L2 (deterministic ties) via unscaled orderer after scaling
+Computes per-column scales (or uses \code{scale_vec} for \code{"custom"}), then prefers
+compiled \code{rustat_order_by_l2_scaled()} if available. Otherwise computes
+distances via \code{\link[=dist_l2_scaled]{dist_l2_scaled()}} and orders deterministically.
 }

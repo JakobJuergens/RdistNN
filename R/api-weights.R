@@ -9,6 +9,17 @@
 `%||%` <- function(a, b) if (is.null(a)) b else a
 
 # deterministic tie-breaker (distance, then index)
+
+# internal type check
+is_dist_weight <- function(x) {
+  is.list(x) && is.function(x$eval) && is.function(x$eval_batch)
+}
+
+# internal thin wrapper (kept for consistency; used by weights_matrix)
+dist_weight_eval_batch <- function(dw, D, ctx = NULL) {
+  dw$eval_batch(D, ctx)
+}
+
 .order_with_ties <- function(dx) order(dx, seq_along(dx))
 
 # ---- resolvers ---------------------------------------------------------------

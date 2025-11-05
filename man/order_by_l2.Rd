@@ -2,10 +2,20 @@
 % Please edit documentation in R/dist_l2.R
 \name{order_by_l2}
 \alias{order_by_l2}
-\title{Order rows by L2 distance to a point (deterministic ties)}
+\title{Order rows by L2 distance to a point (stable ties)}
 \usage{
 order_by_l2(X, x0, squared = FALSE)
 }
+\arguments{
+\item{X}{Numeric matrix \eqn{n \times p}.}
+
+\item{x0}{Numeric vector of length \eqn{p}.}
+
+\item{squared}{Logical; if \code{TRUE}, return squared distances.}
+}
+\value{
+A list with \code{dx} and \code{ord}.
+}
 \description{
-Order rows by L2 distance to a point (deterministic ties)
+Order rows by L2 distance to a point (stable ties)
 }

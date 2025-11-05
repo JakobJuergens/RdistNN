@@ -22,18 +22,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// rustat_order_by_l1
-Rcpp::List rustat_order_by_l1(NumericMatrix X, NumericVector x0);
-RcppExport SEXP _RdistNN_rustat_order_by_l1(SEXP XSEXP, SEXP x0SEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type x0(x0SEXP);
-    rcpp_result_gen = Rcpp::wrap(rustat_order_by_l1(X, x0));
-    return rcpp_result_gen;
-END_RCPP
-}
 // rustat_dist_l1_scaled
 NumericVector rustat_dist_l1_scaled(NumericMatrix X, NumericVector x0, NumericVector inv_s);
 RcppExport SEXP _RdistNN_rustat_dist_l1_scaled(SEXP XSEXP, SEXP x0SEXP, SEXP inv_sSEXP) {
@@ -47,6 +35,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rustat_dist_l1_batch
+NumericMatrix rustat_dist_l1_batch(NumericMatrix X, NumericMatrix X0);
+RcppExport SEXP _RdistNN_rustat_dist_l1_batch(SEXP XSEXP, SEXP X0SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type X0(X0SEXP);
+    rcpp_result_gen = Rcpp::wrap(rustat_dist_l1_batch(X, X0));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rustat_dist_l1_scaled_batch
 NumericMatrix rustat_dist_l1_scaled_batch(NumericMatrix X, NumericMatrix X0, NumericVector inv_s);
 RcppExport SEXP _RdistNN_rustat_dist_l1_scaled_batch(SEXP XSEXP, SEXP X0SEXP, SEXP inv_sSEXP) {
@@ -57,6 +57,18 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericMatrix >::type X0(X0SEXP);
     Rcpp::traits::input_parameter< NumericVector >::type inv_s(inv_sSEXP);
     rcpp_result_gen = Rcpp::wrap(rustat_dist_l1_scaled_batch(X, X0, inv_s));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rustat_order_by_l1
+Rcpp::List rustat_order_by_l1(NumericMatrix X, NumericVector x0);
+RcppExport SEXP _RdistNN_rustat_order_by_l1(SEXP XSEXP, SEXP x0SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type x0(x0SEXP);
+    rcpp_result_gen = Rcpp::wrap(rustat_order_by_l1(X, x0));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -86,19 +98,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// rustat_order_by_l2
-Rcpp::List rustat_order_by_l2(NumericMatrix X, NumericVector x0, bool squared);
-RcppExport SEXP _RdistNN_rustat_order_by_l2(SEXP XSEXP, SEXP x0SEXP, SEXP squaredSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type x0(x0SEXP);
-    Rcpp::traits::input_parameter< bool >::type squared(squaredSEXP);
-    rcpp_result_gen = Rcpp::wrap(rustat_order_by_l2(X, x0, squared));
-    return rcpp_result_gen;
-END_RCPP
-}
 // rustat_dist_l2_scaled
 NumericVector rustat_dist_l2_scaled(NumericMatrix X, NumericVector x0, NumericVector inv_s, bool squared);
 RcppExport SEXP _RdistNN_rustat_dist_l2_scaled(SEXP XSEXP, SEXP x0SEXP, SEXP inv_sSEXP, SEXP squaredSEXP) {
@@ -113,6 +112,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rustat_dist_l2_batch
+NumericMatrix rustat_dist_l2_batch(NumericMatrix X, NumericMatrix X0, bool squared);
+RcppExport SEXP _RdistNN_rustat_dist_l2_batch(SEXP XSEXP, SEXP X0SEXP, SEXP squaredSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type X0(X0SEXP);
+    Rcpp::traits::input_parameter< bool >::type squared(squaredSEXP);
+    rcpp_result_gen = Rcpp::wrap(rustat_dist_l2_batch(X, X0, squared));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rustat_dist_l2_scaled_batch
 NumericMatrix rustat_dist_l2_scaled_batch(NumericMatrix X, NumericMatrix X0, NumericVector inv_s, bool squared);
 RcppExport SEXP _RdistNN_rustat_dist_l2_scaled_batch(SEXP XSEXP, SEXP X0SEXP, SEXP inv_sSEXP, SEXP squaredSEXP) {
@@ -124,6 +136,19 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type inv_s(inv_sSEXP);
     Rcpp::traits::input_parameter< bool >::type squared(squaredSEXP);
     rcpp_result_gen = Rcpp::wrap(rustat_dist_l2_scaled_batch(X, X0, inv_s, squared));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rustat_order_by_l2
+Rcpp::List rustat_order_by_l2(NumericMatrix X, NumericVector x0, bool squared);
+RcppExport SEXP _RdistNN_rustat_order_by_l2(SEXP XSEXP, SEXP x0SEXP, SEXP squaredSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type x0(x0SEXP);
+    Rcpp::traits::input_parameter< bool >::type squared(squaredSEXP);
+    rcpp_result_gen = Rcpp::wrap(rustat_order_by_l2(X, x0, squared));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -289,14 +314,16 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_RdistNN_rustat_dist_l1", (DL_FUNC) &_RdistNN_rustat_dist_l1, 2},
-    {"_RdistNN_rustat_order_by_l1", (DL_FUNC) &_RdistNN_rustat_order_by_l1, 2},
     {"_RdistNN_rustat_dist_l1_scaled", (DL_FUNC) &_RdistNN_rustat_dist_l1_scaled, 3},
+    {"_RdistNN_rustat_dist_l1_batch", (DL_FUNC) &_RdistNN_rustat_dist_l1_batch, 2},
     {"_RdistNN_rustat_dist_l1_scaled_batch", (DL_FUNC) &_RdistNN_rustat_dist_l1_scaled_batch, 3},
+    {"_RdistNN_rustat_order_by_l1", (DL_FUNC) &_RdistNN_rustat_order_by_l1, 2},
     {"_RdistNN_rustat_order_by_l1_scaled", (DL_FUNC) &_RdistNN_rustat_order_by_l1_scaled, 3},
     {"_RdistNN_rustat_dist_l2", (DL_FUNC) &_RdistNN_rustat_dist_l2, 3},
-    {"_RdistNN_rustat_order_by_l2", (DL_FUNC) &_RdistNN_rustat_order_by_l2, 3},
     {"_RdistNN_rustat_dist_l2_scaled", (DL_FUNC) &_RdistNN_rustat_dist_l2_scaled, 4},
+    {"_RdistNN_rustat_dist_l2_batch", (DL_FUNC) &_RdistNN_rustat_dist_l2_batch, 3},
     {"_RdistNN_rustat_dist_l2_scaled_batch", (DL_FUNC) &_RdistNN_rustat_dist_l2_scaled_batch, 4},
+    {"_RdistNN_rustat_order_by_l2", (DL_FUNC) &_RdistNN_rustat_order_by_l2, 3},
     {"_RdistNN_rustat_order_by_l2_scaled", (DL_FUNC) &_RdistNN_rustat_order_by_l2_scaled, 4},
     {"_RdistNN_rustat_argsort_dist", (DL_FUNC) &_RdistNN_rustat_argsort_dist, 1},
     {"_RdistNN_rustat_ranks_from_dist", (DL_FUNC) &_RdistNN_rustat_ranks_from_dist, 1},
