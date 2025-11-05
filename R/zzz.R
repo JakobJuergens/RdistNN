@@ -4,7 +4,6 @@
 #' @keywords internal
 #' @useDynLib RdistNN, .registration = TRUE
 #' @importFrom Rcpp evalCpp
-NULL
 
 .onLoad <- function(libname, pkgname) {
   ns <- asNamespace(pkgname)
