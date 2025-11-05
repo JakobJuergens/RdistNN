@@ -54,26 +54,26 @@ np_demo_data <- function(n = 200,
 
   # Oracle regression m(x)
   m_fn <- switch(design,
-                 linear = function(xx) {
-                   xx <- as.matrix(xx)
-                   0.5 * xx[, 1] + if (ncol(xx) >= 2) -0.25 * xx[, 2] else 0
-                 },
-                 sinusoidal = function(xx) {
-                   xx <- as.matrix(xx)
-                   0.5 * sin(xx[, 1]) + if (ncol(xx) >= 2) 0.25 * xx[, 2]^2 else 0
-                 },
-                 bump = {
-                   center <- c(0.5, -0.5, rep(0, max(0, p - 2L)))
-                   function(xx) {
-                     xx <- as.matrix(xx)
-                     d2 <- rowSums((xx - rep(center, each = nrow(xx)))^2)
-                     0.2 + 0.8 * exp(-0.5 * d2)
-                   }
-                 },
-                 constant = function(xx) {
-                   xx <- as.matrix(xx)
-                   rep(2, nrow(xx))
-                 }
+    linear = function(xx) {
+      xx <- as.matrix(xx)
+      0.5 * xx[, 1] + if (ncol(xx) >= 2) -0.25 * xx[, 2] else 0
+    },
+    sinusoidal = function(xx) {
+      xx <- as.matrix(xx)
+      0.5 * sin(xx[, 1]) + if (ncol(xx) >= 2) 0.25 * xx[, 2]^2 else 0
+    },
+    bump = {
+      center <- c(0.5, -0.5, rep(0, max(0, p - 2L)))
+      function(xx) {
+        xx <- as.matrix(xx)
+        d2 <- rowSums((xx - rep(center, each = nrow(xx)))^2)
+        0.2 + 0.8 * exp(-0.5 * d2)
+      }
+    },
+    constant = function(xx) {
+      xx <- as.matrix(xx)
+      rep(2, nrow(xx))
+    }
   )
 
   mX <- m_fn(X)
@@ -83,7 +83,7 @@ np_demo_data <- function(n = 200,
   # Optional injection of non-finites (for guard tests)
   if (!is.null(inject)) {
     stopifnot(idx_inject >= 1L, idx_inject <= n)
-    if (identical(inject, "na"))  Y[idx_inject] <- NA_real_
+    if (identical(inject, "na")) Y[idx_inject] <- NA_real_
     if (identical(inject, "inf")) Y[idx_inject] <- Inf
   }
 
@@ -123,7 +123,8 @@ np_demo_subsets <- function(n, K = 1000L, s = 1L, seed = NULL) {
 #' @noRd
 np_y_demo_sets <- function(n = 8L, p = 3L) {
   stopifnot(is.numeric(n), n >= 6L, is.numeric(p), p >= 1L)
-  n <- as.integer(n); p <- as.integer(p)
+  n <- as.integer(n)
+  p <- as.integer(p)
 
   # Deterministic X for exact-equality expectations
   X <- as.data.frame(
@@ -137,15 +138,15 @@ np_y_demo_sets <- function(n = 8L, p = 3L) {
   coeff <- (-1)^(seq_len(p)) * seq_len(p)
   mX <- as.numeric(as.matrix(X) %*% coeff) + seq_len(n)
   Y_const <- rep(5, n)
-  Y_int   <- as.integer(round(mX))
+  Y_int <- as.integer(round(mX))
 
   # Subset matrices for batch eval tests
-  subs_all      <- matrix(seq_len(n), ncol = 1L)
-  subs_empty    <- matrix(integer(0), ncol = 1L)
+  subs_all <- matrix(seq_len(n), ncol = 1L)
+  subs_empty <- matrix(integer(0), ncol = 1L)
   subs_bad_ncol <- cbind(seq_len(n), rev(seq_len(n)))
 
   # Helpers
-  x0_ok  <- rep(0, p)
+  x0_ok <- rep(0, p)
   x0_bad <- rep(0, p + 1L)
 
   make_case <- function(data, x0, x_cols, s = 1L, k = 1L, y_col = "Y", y = NULL) {

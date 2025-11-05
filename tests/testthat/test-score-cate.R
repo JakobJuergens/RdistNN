@@ -12,11 +12,15 @@ testthat::local_edition(3)
 # robust batch evaluator that survives partially-linked compiled helpers
 .eval_batch_safe <- function(sc, subs, df, ctx) {
   out_try <- try(score_eval_batch(sc, subs, df, ctx), silent = TRUE)
-  if (!inherits(out_try, "try-error")) return(out_try)
+  if (!inherits(out_try, "try-error")) {
+    return(out_try)
+  }
   # If compiled path blows up (e.g. symbol exists but .Call not loaded),
   # compute in pure R using ctx$g as the ground truth definition.
   subs <- if (!is.matrix(subs)) as.matrix(subs) else subs
-  if (nrow(subs) == 0L) return(numeric(0L))
+  if (nrow(subs) == 0L) {
+    return(numeric(0L))
+  }
   gi <- ctx$g
   rowSums(matrix(gi[subs], nrow = nrow(subs), ncol = ncol(subs)))
 }
@@ -40,40 +44,47 @@ testthat::local_edition(3)
 }
 
 .get_cate_fx <- function(...) {
-  if (exists("cate_demo_sets", mode = "function")) cate_demo_sets(...)
-  else list(ok_simple = .cate_minigen(...))
+  if (exists("cate_demo_sets", mode = "function")) {
+    cate_demo_sets(...)
+  } else {
+    list(ok_simple = .cate_minigen(...))
+  }
 }
 
 # --- tests -----------------------------------------------------------
 
 test_that("[factory] XOR (rho vs rho_col), positive s and k, and setup dimension checks", {
-  fx  <- .get_cate_fx(n = 50, p = 3)
-  scn <- fx[[1L]]  # either ok_simple or the first scenario
+  fx <- .get_cate_fx(n = 50, p = 3)
+  scn <- fx[[1L]] # either ok_simple or the first scenario
   rho_col <- scn$cols$rho
 
   # Must supply exactly one of rho or rho_col
   expect_error(
     score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 1L, k = 1L),
-    "exactly one|mutually exclusive", ignore.case = TRUE
+    "exactly one|mutually exclusive",
+    ignore.case = TRUE
   )
   expect_error(
     score_cate_rho(
       x0 = scn$x0, x_cols = scn$x_cols, s = 1L, k = 1L,
       rho = scn$data[[rho_col]], rho_col = rho_col
     ),
-    "exactly one|mutually exclusive", ignore.case = TRUE
+    "exactly one|mutually exclusive",
+    ignore.case = TRUE
   )
 
   # s must be positive integer (no enforcement to s == 1)
   expect_error(
     score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 0L, k = 1L, rho_col = rho_col),
-    "`s` must be a positive integer\\.", ignore.case = FALSE
+    "`s` must be a positive integer\\.",
+    ignore.case = FALSE
   )
 
   # k must be positive integer
   expect_error(
     score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 1L, k = 0L, rho_col = rho_col),
-    "`k` must be a positive integer\\.", ignore.case = FALSE
+    "`k` must be a positive integer\\.",
+    ignore.case = FALSE
   )
 
   # x0 length mismatch (setup-time)
@@ -81,38 +92,42 @@ test_that("[factory] XOR (rho vs rho_col), positive s and k, and setup dimension
     x0 = rep(0, length(scn$x_cols) + 1L), x_cols = scn$x_cols, s = 1L, k = 1L, rho_col = rho_col
   )
   expect_error(score_setup(sc_badx0, scn$data),
-               "x0 length must equal ncol\\(X\\)\\.", ignore.case = FALSE)
+    "x0 length must equal ncol\\(X\\)\\.",
+    ignore.case = FALSE
+  )
 
   # rho length mismatch (setup-time) via external vector
   sc_bad_r <- score_cate_rho(
     x0 = scn$x0, x_cols = scn$x_cols, s = 1L, k = 1L, rho = scn$data[[rho_col]][-1]
   )
   expect_error(score_setup(sc_bad_r, scn$data),
-               "rho length must equal nrow\\(data\\)\\.", ignore.case = FALSE)
+    "rho length must equal nrow\\(data\\)\\.",
+    ignore.case = FALSE
+  )
 })
 
 test_that("[order] reported order equals chosen s (test s = 1 and s = 5)", {
-  fx  <- .get_cate_fx(n = 40, p = 2)
+  fx <- .get_cate_fx(n = 40, p = 2)
   scn <- fx[[1L]]
   rho_col <- scn$cols$rho
 
   for (ss in c(1L, 5L)) {
-    sc  <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = ss, k = 1L, rho_col = rho_col)
+    sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = ss, k = 1L, rho_col = rho_col)
     ctx <- score_setup(sc, scn$data)
     expect_identical(sc$order(nrow(scn$data), scn$data, ctx), as.integer(ss))
   }
 })
 
 test_that("[eval] singletons return exactly rho_i (rho_col path) with robust batch fallback", {
-  fx  <- .get_cate_fx(n = 55, p = 2)
+  fx <- .get_cate_fx(n = 55, p = 2)
   scn <- fx[[1L]]
   rho_col <- scn$cols$rho
 
-  sc  <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 1L, k = 1L, rho_col = rho_col)
+  sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 1L, k = 1L, rho_col = rho_col)
   ctx <- score_setup(sc, scn$data)
 
   subs1 <- matrix(seq_len(nrow(scn$data)), ncol = 1L)
-  vals  <- .eval_batch_safe(sc, subs1, scn$data, ctx)
+  vals <- .eval_batch_safe(sc, subs1, scn$data, ctx)
   expect_equal(vals, scn$data[[rho_col]], tolerance = 0)
 
   for (i in c(1L, 17L, nrow(scn$data))) {
@@ -124,44 +139,44 @@ test_that("[eval] singletons return exactly rho_i (rho_col path) with robust bat
 })
 
 test_that("[eval] general subsets (multi-column) sum per-row rho", {
-  fx  <- .get_cate_fx(n = 60, p = 2)
+  fx <- .get_cate_fx(n = 60, p = 2)
   scn <- fx[[1L]]
   rho_col <- scn$cols$rho
 
   # Use s=2 behavior (but eval/eval_batch just sum over provided columns)
-  sc  <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 2L, k = 1L, rho_col = rho_col)
+  sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 2L, k = 1L, rho_col = rho_col)
   ctx <- score_setup(sc, scn$data)
 
   subs2 <- if (!is.null(scn$subs_2col)) scn$subs_2col else cbind(seq_len(nrow(scn$data)), rev(seq_len(nrow(scn$data))))
-  vals  <- .eval_batch_safe(sc, subs2, scn$data, ctx)
+  vals <- .eval_batch_safe(sc, subs2, scn$data, ctx)
 
   # direct R row sums of rho over those columns
-  rho  <- scn$data[[rho_col]]
-  gR   <- rowSums(matrix(rho[subs2], nrow = nrow(subs2), ncol = ncol(subs2)))
+  rho <- scn$data[[rho_col]]
+  gR <- rowSums(matrix(rho[subs2], nrow = nrow(subs2), ncol = ncol(subs2)))
   expect_equal(vals, gR, tolerance = 0)
 
   # Also check that passing a vector (coerced to matrix) works
-  idx  <- seq_len(nrow(scn$data))
-  out1 <- .eval_batch_safe(sc, idx, scn$data, ctx)   # treated as 1-col matrix
+  idx <- seq_len(nrow(scn$data))
+  out1 <- .eval_batch_safe(sc, idx, scn$data, ctx) # treated as 1-col matrix
   expect_equal(out1, rho[idx], tolerance = 0)
 })
 
 test_that("[inputs] integer x_cols indexing works", {
-  fx  <- .get_cate_fx(n = 48, p = 3)
+  fx <- .get_cate_fx(n = 48, p = 3)
   scn <- fx[[1L]]
   rho_col <- scn$cols$rho
 
-  sc  <- score_cate_rho(x0 = scn$x0, x_cols = seq_along(scn$x_cols), s = 1L, k = 1L, rho_col = rho_col)
+  sc <- score_cate_rho(x0 = scn$x0, x_cols = seq_along(scn$x_cols), s = 1L, k = 1L, rho_col = rho_col)
   ctx <- score_setup(sc, scn$data)
 
   subs1 <- matrix(seq_len(nrow(scn$data)), ncol = 1L)
-  vals  <- .eval_batch_safe(sc, subs1, scn$data, ctx)
+  vals <- .eval_batch_safe(sc, subs1, scn$data, ctx)
   expect_equal(vals, scn$data[[rho_col]], tolerance = 0)
 })
 
 # tests/testthat/test-score-cate.R  (replace the whole [non-finite] block)
 test_that("[non-finite] any non-finite rho triggers an error on evaluation", {
-  fx  <- .get_cate_fx(n = 42, p = 2)
+  fx <- .get_cate_fx(n = 42, p = 2)
   scn <- fx[[1L]]
   rho_col <- scn$cols$rho
 
@@ -170,7 +185,7 @@ test_that("[non-finite] any non-finite rho triggers an error on evaluation", {
   df_bad[[rho_col]][2] <- NA_real_
   df_bad[[rho_col]][5] <- Inf
 
-  sc  <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 3L, k = 1L, rho_col = rho_col)
+  sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 3L, k = 1L, rho_col = rho_col)
   ctx <- score_setup(sc, df_bad)
 
   # eval(): must target a bad index to trigger the per-subset guard
@@ -183,7 +198,7 @@ test_that("[non-finite] any non-finite rho triggers an error on evaluation", {
 
 
 test_that("[object] basic shape/flags", {
-  fx  <- .get_cate_fx(n = 28, p = 2)
+  fx <- .get_cate_fx(n = 28, p = 2)
   scn <- fx[[1L]]
   rho <- scn$data[[scn$cols$rho]]
 
@@ -196,23 +211,25 @@ test_that("[object] basic shape/flags", {
 })
 
 test_that("[parity] compiled batch (if actually callable) equals direct row sums", {
-  fx  <- .get_cate_fx(n = 50, p = 2)
+  fx <- .get_cate_fx(n = 50, p = 2)
   scn <- fx[[1L]]
   rho_col <- scn$cols$rho
 
-  sc  <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 3L, k = 1L, rho_col = rho_col)
+  sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 3L, k = 1L, rho_col = rho_col)
   ctx <- score_setup(sc, scn$data)
 
   # try compiled; if the shared object isn't actually loaded, skip
-  subs <- cbind(seq_len(nrow(scn$data)),
-                rev(seq_len(nrow(scn$data))),
-                sample(seq_len(nrow(scn$data))))
+  subs <- cbind(
+    seq_len(nrow(scn$data)),
+    rev(seq_len(nrow(scn$data))),
+    sample(seq_len(nrow(scn$data)))
+  )
   out_try <- try(score_eval_batch(sc, subs, scn$data, ctx), silent = TRUE)
   if (inherits(out_try, "try-error")) {
     testthat::skip("Compiled helper not available at runtime; skipping parity check.")
   } else {
-    rho  <- scn$data[[rho_col]]
-    gR   <- rowSums(matrix(rho[subs], nrow = nrow(subs), ncol = ncol(subs)))
+    rho <- scn$data[[rho_col]]
+    gR <- rowSums(matrix(rho[subs], nrow = nrow(subs), ncol = ncol(subs)))
     expect_equal(out_try, gR, tolerance = 0)
   }
 })

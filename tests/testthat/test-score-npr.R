@@ -21,7 +21,9 @@ reg_demo <- function(n = 120, p = 2, seed = 1L) {
 # Use compiled batch path if it actually works; otherwise R fallback via eval().
 .eval_batch_safe <- function(sc, subs, df, ctx) {
   out_try <- try(score_eval_batch(sc, subs, df, ctx), silent = TRUE)
-  if (!inherits(out_try, "try-error")) return(out_try)
+  if (!inherits(out_try, "try-error")) {
+    return(out_try)
+  }
   # Fallback: per-row eval (R path)
   vapply(seq_len(nrow(subs)), function(r) score_eval(sc, subs[r, 1L], df, ctx), numeric(1))
 }
@@ -91,7 +93,7 @@ test_that("[eval] singleton returns exactly Y_i (y_col path) with robust batch f
   df <- reg_demo(n = 50, p = 2, seed = 3)
   x0 <- colMeans(df[, 1:2, drop = FALSE])
 
-  sc  <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, k = 1L, y_col = "Y")
+  sc <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, k = 1L, y_col = "Y")
   ctx <- score_setup(sc, df)
 
   subs <- .singletons(nrow(df))
@@ -110,11 +112,11 @@ test_that("[eval] singleton returns exactly Y_i (external y path)", {
   df <- reg_demo(n = 35, p = 2, seed = 4)
   x0 <- colMeans(df[, 1:2, drop = FALSE])
 
-  sc  <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, k = 1L, y = df$Y)
+  sc <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, k = 1L, y = df$Y)
   ctx <- score_setup(sc, df)
 
   subs <- .singletons(nrow(df))
-  out  <- .eval_batch_safe(sc, subs, df, ctx)
+  out <- .eval_batch_safe(sc, subs, df, ctx)
   expect_equal(out, df$Y, tolerance = 0)
 })
 
@@ -122,11 +124,11 @@ test_that("[inputs] integer x_cols indexing works", {
   df <- reg_demo(n = 24, p = 3, seed = 5)
   x0 <- colMeans(df[, 1:3, drop = FALSE])
 
-  sc  <- score_np_y(x0 = x0, x_cols = 1:3, s = 1L, k = 1L, y_col = "Y")
+  sc <- score_np_y(x0 = x0, x_cols = 1:3, s = 1L, k = 1L, y_col = "Y")
   ctx <- score_setup(sc, df)
 
   subs <- .singletons(nrow(df))
-  out  <- .eval_batch_safe(sc, subs, df, ctx)
+  out <- .eval_batch_safe(sc, subs, df, ctx)
   expect_equal(out, df$Y, tolerance = 0)
 })
 
@@ -134,7 +136,7 @@ test_that("[eval] errors for non-singleton usage", {
   df <- reg_demo(n = 12, p = 2, seed = 6)
   x0 <- colMeans(df[, 1:2, drop = FALSE])
 
-  sc  <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, k = 1L, y_col = "Y")
+  sc <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, k = 1L, y_col = "Y")
   ctx <- score_setup(sc, df)
 
   # eval() with >1 index
@@ -165,7 +167,7 @@ test_that("[inputs] non-finite Y triggers an error on evaluation", {
   df$Y[7] <- NA_real_
   x0 <- colMeans(df[, 1:2, drop = FALSE])
 
-  sc  <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, k = 1L, y_col = "Y")
+  sc <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, k = 1L, y_col = "Y")
   ctx <- score_setup(sc, df)
 
   # Single eval at the bad row should fail
@@ -178,25 +180,29 @@ test_that("[inputs] non-finite Y triggers an error on evaluation", {
 
 test_that("[sanity] singleton: constant and linear Y return exactly Y_i", {
   # constant Y
-  n <- 20; p <- 2; c0 <- 3.25
+  n <- 20
+  p <- 2
+  c0 <- 3.25
   set.seed(101)
-  X  <- matrix(rnorm(n * p), n, p, dimnames = list(NULL, paste0("X", 1:p)))
+  X <- matrix(rnorm(n * p), n, p, dimnames = list(NULL, paste0("X", 1:p)))
   df <- data.frame(X, Y = rep(c0, n))
   x0 <- colMeans(df[, 1:2, drop = FALSE])
 
-  sc  <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, k = 1L, y_col = "Y")
+  sc <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, k = 1L, y_col = "Y")
   ctx <- score_setup(sc, df)
   subs <- .singletons(n)
   expect_equal(.eval_batch_safe(sc, subs, df, ctx), df$Y, tolerance = 0)
 
   # linear Y in index
-  n <- 25; a <- -1.0; b <- 0.75
+  n <- 25
+  a <- -1.0
+  b <- 0.75
   set.seed(202)
-  X2  <- matrix(rnorm(n * p), n, p, dimnames = list(NULL, paste0("X", 1:p)))
+  X2 <- matrix(rnorm(n * p), n, p, dimnames = list(NULL, paste0("X", 1:p)))
   df2 <- data.frame(X2, Y = a + b * seq_len(n))
   x02 <- colMeans(df2[, 1:2, drop = FALSE])
 
-  sc2  <- score_np_y(x0 = x02, x_cols = 1:2, s = 1L, k = 1L, y_col = "Y")
+  sc2 <- score_np_y(x0 = x02, x_cols = 1:2, s = 1L, k = 1L, y_col = "Y")
   ctx2 <- score_setup(sc2, df2)
   subs2 <- .singletons(n)
   expect_equal(.eval_batch_safe(sc2, subs2, df2, ctx2), df2$Y, tolerance = 0)
@@ -218,7 +224,7 @@ test_that("[parity] compiled batch (if actually callable) equals direct R indexi
   df <- reg_demo(n = 45, p = 2, seed = 9)
   x0 <- colMeans(df[, 1:2, drop = FALSE])
 
-  sc  <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, k = 1L, y_col = "Y")
+  sc <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, k = 1L, y_col = "Y")
   ctx <- score_setup(sc, df)
   subs <- .singletons(nrow(df))
 
@@ -227,7 +233,7 @@ test_that("[parity] compiled batch (if actually callable) equals direct R indexi
   if (inherits(out_compiled_try, "try-error")) {
     testthat::skip("Compiled helper not available at runtime; skipping parity check.")
   } else {
-    out_R <- df$Y  # direct R indexing is the ground truth for singleton score
+    out_R <- df$Y # direct R indexing is the ground truth for singleton score
     expect_equal(out_compiled_try, out_R, tolerance = 0)
   }
 })

@@ -87,17 +87,23 @@ cate_demo_data <- function(n = 200,
 
   # Treatment effect tau(x)
   tau_fn <- switch(design,
-                   simple = function(xx) { xx <- as.matrix(xx); 0.5 + 0 * xx[, 1] },
-                   hetero = function(xx) { xx <- as.matrix(xx); 0.5 + 0.5 * sin(xx[, 1]) },
-                   bump = {
-                     # bump near c(0.5, -0.5), flat elsewhere
-                     function(xx) {
-                       xx <- as.matrix(xx)
-                       center <- c(0.5, -0.5, rep(0, max(0, ncol(xx) - 2L)))
-                       d2 <- rowSums((xx - rep(center, each = nrow(xx)))^2)
-                       0.2 + 0.8 * exp(-0.5 * d2) # bump width ~ 1
-                     }
-                   }
+    simple = function(xx) {
+      xx <- as.matrix(xx)
+      0.5 + 0 * xx[, 1]
+    },
+    hetero = function(xx) {
+      xx <- as.matrix(xx)
+      0.5 + 0.5 * sin(xx[, 1])
+    },
+    bump = {
+      # bump near c(0.5, -0.5), flat elsewhere
+      function(xx) {
+        xx <- as.matrix(xx)
+        center <- c(0.5, -0.5, rep(0, max(0, ncol(xx) - 2L)))
+        d2 <- rowSums((xx - rep(center, each = nrow(xx)))^2)
+        0.2 + 0.8 * exp(-0.5 * d2) # bump width ~ 1
+      }
+    }
   )
   tau_true <- tau_fn(X)
 
@@ -113,19 +119,19 @@ cate_demo_data <- function(n = 200,
   rho <- (D - e_true) * (Y - m_true) / (e_true * (1 - e_true))
 
   df <- data.frame(X,
-                   D = D, Y = as.numeric(Y),
-                   e_oracle = as.numeric(e_true),
-                   m_oracle = as.numeric(m_true),
-                   m0_oracle = as.numeric(m0_true),
-                   tau_oracle = as.numeric(tau_true),
-                   rho_oracle = as.numeric(rho)
+    D = D, Y = as.numeric(Y),
+    e_oracle = as.numeric(e_true),
+    m_oracle = as.numeric(m_true),
+    m0_oracle = as.numeric(m0_true),
+    tau_oracle = as.numeric(tau_true),
+    rho_oracle = as.numeric(rho)
   )
 
   # Optional injection of non-finites for guard testing
   if (!is.null(inject)) {
     stopifnot(idx_inject >= 1L, idx_inject <= n)
-    stopifnot(inject_col %in% c("Y","rho_oracle","e_oracle","m_oracle","m0_oracle","tau_oracle"))
-    if (identical(inject, "na"))  df[[inject_col]][idx_inject] <- NA_real_
+    stopifnot(inject_col %in% c("Y", "rho_oracle", "e_oracle", "m_oracle", "m0_oracle", "tau_oracle"))
+    if (identical(inject, "na")) df[[inject_col]][idx_inject] <- NA_real_
     if (identical(inject, "inf")) df[[inject_col]][idx_inject] <- Inf
   }
 
@@ -209,11 +215,12 @@ cate_demo_subsets <- function(n, K = 1000L, s = 8L, seed = NULL) {
 #' @noRd
 cate_demo_sets <- function(n = 80L, p = 2L) {
   stopifnot(is.numeric(n), n >= 6L, is.numeric(p), p >= 2L)
-  n <- as.integer(n); p <- as.integer(p)
+  n <- as.integer(n)
+  p <- as.integer(p)
 
   # Common subset matrices
-  subs_all      <- matrix(seq_len(n), ncol = 1L)
-  subs_empty    <- matrix(integer(0), ncol = 1L)
+  subs_all <- matrix(seq_len(n), ncol = 1L)
+  subs_empty <- matrix(integer(0), ncol = 1L)
   subs_bad_ncol <- cbind(seq_len(n), rev(seq_len(n)))
 
   # Column map (standardized across tests)
@@ -244,37 +251,45 @@ cate_demo_sets <- function(n = 80L, p = 2L) {
   }
 
   # --- SUCCESS CASES (seeded for determinism) ---
-  ok_simple <- cate_demo_data(n = n, p = p, design = "simple",  sigma = 0.4, clip = 1e-3, seed = 1)
-  ok_hetero <- cate_demo_data(n = n, p = p, design = "hetero",  sigma = 0.4, clip = 1e-3, seed = 2)
-  ok_bump   <- cate_demo_data(n = n, p = p, design = "bump",    sigma = 0.4, clip = 1e-3, seed = 3)
-  ok_clean  <- cate_demo_data(n = n, p = p, design = "simple",  sigma = 0.0, clip = 1e-3, seed = 4) # noiseless Y
+  ok_simple <- cate_demo_data(n = n, p = p, design = "simple", sigma = 0.4, clip = 1e-3, seed = 1)
+  ok_hetero <- cate_demo_data(n = n, p = p, design = "hetero", sigma = 0.4, clip = 1e-3, seed = 2)
+  ok_bump <- cate_demo_data(n = n, p = p, design = "bump", sigma = 0.4, clip = 1e-3, seed = 3)
+  ok_clean <- cate_demo_data(n = n, p = p, design = "simple", sigma = 0.0, clip = 1e-3, seed = 4) # noiseless Y
 
   # --- EDGE / FAILURE CASES (non-finites injected) ---
-  nf_rho_na  <- cate_demo_data(n = n, p = p, design = "hetero", sigma = 0.3, clip = 1e-3, seed = 5,
-                               inject = "na",  inject_col = "rho_oracle", idx_inject = 3L)
-  nf_rho_inf <- cate_demo_data(n = n, p = p, design = "hetero", sigma = 0.3, clip = 1e-3, seed = 6,
-                               inject = "inf", inject_col = "rho_oracle", idx_inject = 2L)
-  nf_Y_na    <- cate_demo_data(n = n, p = p, design = "simple", sigma = 0.3, clip = 1e-3, seed = 7,
-                               inject = "na",  inject_col = "Y", idx_inject = 4L)
-  nf_e_inf   <- cate_demo_data(n = n, p = p, design = "simple", sigma = 0.3, clip = 1e-3, seed = 8,
-                               inject = "inf", inject_col = "e_oracle", idx_inject = 5L)
+  nf_rho_na <- cate_demo_data(
+    n = n, p = p, design = "hetero", sigma = 0.3, clip = 1e-3, seed = 5,
+    inject = "na", inject_col = "rho_oracle", idx_inject = 3L
+  )
+  nf_rho_inf <- cate_demo_data(
+    n = n, p = p, design = "hetero", sigma = 0.3, clip = 1e-3, seed = 6,
+    inject = "inf", inject_col = "rho_oracle", idx_inject = 2L
+  )
+  nf_Y_na <- cate_demo_data(
+    n = n, p = p, design = "simple", sigma = 0.3, clip = 1e-3, seed = 7,
+    inject = "na", inject_col = "Y", idx_inject = 4L
+  )
+  nf_e_inf <- cate_demo_data(
+    n = n, p = p, design = "simple", sigma = 0.3, clip = 1e-3, seed = 8,
+    inject = "inf", inject_col = "e_oracle", idx_inject = 5L
+  )
 
   # Bad x0 dimension
-  x0_ok  <- rep(0, p)
+  x0_ok <- rep(0, p)
   x0_bad <- rep(0, p + 1L)
 
   list(
     # ---- OK ----
-    ok_simple  = make_case(ok_simple$data,  x0_ok,  cols$X, s = 1L, k = 1L),
-    ok_hetero  = make_case(ok_hetero$data,  x0_ok,  cols$X, s = 1L, k = 1L),
-    ok_bump    = make_case(ok_bump$data,    x0_ok,  cols$X, s = 1L, k = 1L),
-    ok_clean   = make_case(ok_clean$data,   x0_ok,  cols$X, s = 1L, k = 1L),
+    ok_simple = make_case(ok_simple$data, x0_ok, cols$X, s = 1L, k = 1L),
+    ok_hetero = make_case(ok_hetero$data, x0_ok, cols$X, s = 1L, k = 1L),
+    ok_bump = make_case(ok_bump$data, x0_ok, cols$X, s = 1L, k = 1L),
+    ok_clean = make_case(ok_clean$data, x0_ok, cols$X, s = 1L, k = 1L),
 
     # ---- Non-finites (expect_error at eval/setup depending on your guards) ----
-    nonfinite_rho_na  = make_case(nf_rho_na$data,   x0_ok,  cols$X),
-    nonfinite_rho_inf = make_case(nf_rho_inf$data,  x0_ok,  cols$X),
-    nonfinite_Y_na    = make_case(nf_Y_na$data,     x0_ok,  cols$X),
-    nonfinite_e_inf   = make_case(nf_e_inf$data,    x0_ok,  cols$X),
+    nonfinite_rho_na = make_case(nf_rho_na$data, x0_ok, cols$X),
+    nonfinite_rho_inf = make_case(nf_rho_inf$data, x0_ok, cols$X),
+    nonfinite_Y_na = make_case(nf_Y_na$data, x0_ok, cols$X),
+    nonfinite_e_inf = make_case(nf_e_inf$data, x0_ok, cols$X),
 
     # ---- Dimension / shape guards ----
     bad_x0_dim = make_case(ok_simple$data, x0_bad, cols$X),
