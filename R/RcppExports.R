@@ -2,90 +2,90 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 rustat_dist_l1 <- function(X, x0) {
-    .Call('_RdistNN_rustat_dist_l1', PACKAGE = 'RdistNN', X, x0)
+    .Call(`_RdistNN_rustat_dist_l1`, X, x0)
 }
 
 rustat_order_by_l1 <- function(X, x0) {
-    .Call('_RdistNN_rustat_order_by_l1', PACKAGE = 'RdistNN', X, x0)
+    .Call(`_RdistNN_rustat_order_by_l1`, X, x0)
 }
 
 rustat_dist_l1_scaled <- function(X, x0, inv_s) {
-    .Call('_RdistNN_rustat_dist_l1_scaled', PACKAGE = 'RdistNN', X, x0, inv_s)
+    .Call(`_RdistNN_rustat_dist_l1_scaled`, X, x0, inv_s)
 }
 
 rustat_dist_l1_scaled_batch <- function(X, X0, inv_s) {
-    .Call('_RdistNN_rustat_dist_l1_scaled_batch', PACKAGE = 'RdistNN', X, X0, inv_s)
+    .Call(`_RdistNN_rustat_dist_l1_scaled_batch`, X, X0, inv_s)
 }
 
 rustat_order_by_l1_scaled <- function(X, x0, inv_s) {
-    .Call('_RdistNN_rustat_order_by_l1_scaled', PACKAGE = 'RdistNN', X, x0, inv_s)
+    .Call(`_RdistNN_rustat_order_by_l1_scaled`, X, x0, inv_s)
 }
 
 rustat_dist_l2 <- function(X, x0, squared = FALSE) {
-    .Call('_RdistNN_rustat_dist_l2', PACKAGE = 'RdistNN', X, x0, squared)
+    .Call(`_RdistNN_rustat_dist_l2`, X, x0, squared)
 }
 
 rustat_order_by_l2 <- function(X, x0, squared = FALSE) {
-    .Call('_RdistNN_rustat_order_by_l2', PACKAGE = 'RdistNN', X, x0, squared)
+    .Call(`_RdistNN_rustat_order_by_l2`, X, x0, squared)
 }
 
 rustat_dist_l2_scaled <- function(X, x0, inv_s, squared = FALSE) {
-    .Call('_RdistNN_rustat_dist_l2_scaled', PACKAGE = 'RdistNN', X, x0, inv_s, squared)
+    .Call(`_RdistNN_rustat_dist_l2_scaled`, X, x0, inv_s, squared)
 }
 
 rustat_dist_l2_scaled_batch <- function(X, X0, inv_s, squared = FALSE) {
-    .Call('_RdistNN_rustat_dist_l2_scaled_batch', PACKAGE = 'RdistNN', X, X0, inv_s, squared)
+    .Call(`_RdistNN_rustat_dist_l2_scaled_batch`, X, X0, inv_s, squared)
 }
 
 rustat_order_by_l2_scaled <- function(X, x0, inv_s, squared = FALSE) {
-    .Call('_RdistNN_rustat_order_by_l2_scaled', PACKAGE = 'RdistNN', X, x0, inv_s, squared)
+    .Call(`_RdistNN_rustat_order_by_l2_scaled`, X, x0, inv_s, squared)
 }
 
 rustat_argsort_dist <- function(d) {
-    .Call('_RdistNN_rustat_argsort_dist', PACKAGE = 'RdistNN', d)
+    .Call(`_RdistNN_rustat_argsort_dist`, d)
 }
 
 rustat_ranks_from_dist <- function(d) {
-    .Call('_RdistNN_rustat_ranks_from_dist', PACKAGE = 'RdistNN', d)
+    .Call(`_RdistNN_rustat_ranks_from_dist`, d)
 }
 
 rustat_topk_dist <- function(d, k) {
-    .Call('_RdistNN_rustat_topk_dist', PACKAGE = 'RdistNN', d, k)
+    .Call(`_RdistNN_rustat_topk_dist`, d, k)
 }
 
 rustat_jackknife_fast_rank <- function(ranks, a, PHI, normalize = TRUE) {
-    .Call('_RdistNN_rustat_jackknife_fast_rank', PACKAGE = 'RdistNN', ranks, a, PHI, normalize)
+    .Call(`_RdistNN_rustat_jackknife_fast_rank`, ranks, a, PHI, normalize)
 }
 
 rustat_cate_ctx_create <- function(rho) {
-    .Call('_RdistNN_rustat_cate_ctx_create', PACKAGE = 'RdistNN', rho)
+    .Call(`_RdistNN_rustat_cate_ctx_create`, rho)
 }
 
 rustat_cate_g_all <- function(ctx_) {
-    .Call('_RdistNN_rustat_cate_g_all', PACKAGE = 'RdistNN', ctx_)
+    .Call(`_RdistNN_rustat_cate_g_all`, ctx_)
 }
 
 rustat_cate_g_indexed <- function(idxs, ctx_) {
-    .Call('_RdistNN_rustat_cate_g_indexed', PACKAGE = 'RdistNN', idxs, ctx_)
+    .Call(`_RdistNN_rustat_cate_g_indexed`, idxs, ctx_)
 }
 
 rustat_plqr_ctx_create <- function(Y, D, qx, mD, beta, tau, j) {
-    .Call('_RdistNN_rustat_plqr_ctx_create', PACKAGE = 'RdistNN', Y, D, qx, mD, beta, tau, j)
+    .Call(`_RdistNN_rustat_plqr_ctx_create`, Y, D, qx, mD, beta, tau, j)
 }
 
 rustat_plqr_ctx_set_beta <- function(ctx_, beta) {
-    invisible(.Call('_RdistNN_rustat_plqr_ctx_set_beta', PACKAGE = 'RdistNN', ctx_, beta))
+    invisible(.Call(`_RdistNN_rustat_plqr_ctx_set_beta`, ctx_, beta))
 }
 
 rustat_plqr_g_all <- function(ctx_) {
-    .Call('_RdistNN_rustat_plqr_g_all', PACKAGE = 'RdistNN', ctx_)
+    .Call(`_RdistNN_rustat_plqr_g_all`, ctx_)
 }
 
 rustat_plqr_g_indexed <- function(idxs, ctx_) {
-    .Call('_RdistNN_rustat_plqr_g_indexed', PACKAGE = 'RdistNN', idxs, ctx_)
+    .Call(`_RdistNN_rustat_plqr_g_indexed`, idxs, ctx_)
 }
 
 rustat_subset_row_sums_g <- function(subs, g) {
-    .Call('_RdistNN_rustat_subset_row_sums_g', PACKAGE = 'RdistNN', subs, g)
+    .Call(`_RdistNN_rustat_subset_row_sums_g`, subs, g)
 }
 

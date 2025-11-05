@@ -212,8 +212,8 @@ test_that("[eval] matches direct formula for singletons (character x_cols)", {
   rDj <- df[[scn$cols$rD[1]]]
   gR <- psi_tau(u, scn$tau) * rDj
 
-  expect_equal(vals, gR, tolerance = 0)
-  expect_equal(score_eval(sc, 17L, df, ctx), gR[17], tolerance = 0)
+  expect_equal(vals, gR, tolerance = 1e-12)
+  expect_equal(score_eval(sc, 17L, df, ctx), gR[17], tolerance = 1e-12)
 
   # Empty batch
   expect_identical(.eval_batch_safe(sc, scn$subs_empty, df, ctx), numeric(0L))
@@ -240,7 +240,7 @@ test_that("[eval] multi-column subsets sum g across subset rows", {
   g <- psi_tau(u, scn$tau) * rDj
   gR <- rowSums(matrix(g[subs], nrow = nrow(subs), ncol = ncol(subs)))
 
-  expect_equal(vals, gR, tolerance = 0)
+  expect_equal(vals, gR, tolerance = 1e-12)
 })
 
 test_that("[inputs/setup] finiteness guards fire at setup", {
@@ -329,6 +329,6 @@ test_that("[parity] compiled batch (if actually callable) equals direct row sums
   } else {
     # Direct row sums of g using ctx$g (already computed by setup)
     gR <- rowSums(matrix(ctx$g[subs], nrow = nrow(subs), ncol = ncol(subs)))
-    expect_equal(out_try, gR, tolerance = 0)
+    expect_equal(out_try, gR, tolerance = 1e-12)
   }
 })

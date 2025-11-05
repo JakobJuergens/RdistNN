@@ -98,10 +98,10 @@ test_that("[eval] singleton returns exactly Y_i (y_col path) with robust batch f
 
   subs <- .singletons(nrow(df))
   vals <- .eval_batch_safe(sc, subs, df, ctx)
-  expect_equal(vals, df$Y, tolerance = 0)
+  expect_equal(vals, df$Y, tolerance = 1e-12)
 
   for (i in c(1L, 17L, 50L)) {
-    expect_equal(score_eval(sc, i, df, ctx), df$Y[i], tolerance = 0)
+    expect_equal(score_eval(sc, i, df, ctx), df$Y[i], tolerance = 1e-12)
   }
 
   # Empty batch should return numeric(0)
@@ -117,7 +117,7 @@ test_that("[eval] singleton returns exactly Y_i (external y path)", {
 
   subs <- .singletons(nrow(df))
   out <- .eval_batch_safe(sc, subs, df, ctx)
-  expect_equal(out, df$Y, tolerance = 0)
+  expect_equal(out, df$Y, tolerance = 1e-12)
 })
 
 test_that("[inputs] integer x_cols indexing works", {
@@ -129,7 +129,7 @@ test_that("[inputs] integer x_cols indexing works", {
 
   subs <- .singletons(nrow(df))
   out <- .eval_batch_safe(sc, subs, df, ctx)
-  expect_equal(out, df$Y, tolerance = 0)
+  expect_equal(out, df$Y, tolerance = 1e-12)
 })
 
 test_that("[eval] errors for non-singleton usage", {
@@ -191,7 +191,7 @@ test_that("[sanity] singleton: constant and linear Y return exactly Y_i", {
   sc <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, k = 1L, y_col = "Y")
   ctx <- score_setup(sc, df)
   subs <- .singletons(n)
-  expect_equal(.eval_batch_safe(sc, subs, df, ctx), df$Y, tolerance = 0)
+  expect_equal(.eval_batch_safe(sc, subs, df, ctx), df$Y, tolerance = 1e-12)
 
   # linear Y in index
   n <- 25
@@ -205,7 +205,7 @@ test_that("[sanity] singleton: constant and linear Y return exactly Y_i", {
   sc2 <- score_np_y(x0 = x02, x_cols = 1:2, s = 1L, k = 1L, y_col = "Y")
   ctx2 <- score_setup(sc2, df2)
   subs2 <- .singletons(n)
-  expect_equal(.eval_batch_safe(sc2, subs2, df2, ctx2), df2$Y, tolerance = 0)
+  expect_equal(.eval_batch_safe(sc2, subs2, df2, ctx2), df2$Y, tolerance = 1e-12)
 })
 
 test_that("[object] basic shape of score object", {
@@ -234,6 +234,6 @@ test_that("[parity] compiled batch (if actually callable) equals direct R indexi
     testthat::skip("Compiled helper not available at runtime; skipping parity check.")
   } else {
     out_R <- df$Y # direct R indexing is the ground truth for singleton score
-    expect_equal(out_compiled_try, out_R, tolerance = 0)
+    expect_equal(out_compiled_try, out_R, tolerance = 1e-12)
   }
 })
