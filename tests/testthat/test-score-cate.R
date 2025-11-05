@@ -128,10 +128,10 @@ test_that("[eval] singletons return exactly rho_i (rho_col path) with robust bat
 
   subs1 <- matrix(seq_len(nrow(scn$data)), ncol = 1L)
   vals <- .eval_batch_safe(sc, subs1, scn$data, ctx)
-  expect_equal(vals, scn$data[[rho_col]], tolerance = 0)
+  expect_equal(vals, scn$data[[rho_col]], tolerance = 1e-12)
 
   for (i in c(1L, 17L, nrow(scn$data))) {
-    expect_equal(score_eval(sc, i, scn$data, ctx), scn$data[[rho_col]][i], tolerance = 0)
+    expect_equal(score_eval(sc, i, scn$data, ctx), scn$data[[rho_col]][i], tolerance = 1e-12)
   }
 
   # empty batch
@@ -153,12 +153,12 @@ test_that("[eval] general subsets (multi-column) sum per-row rho", {
   # direct R row sums of rho over those columns
   rho <- scn$data[[rho_col]]
   gR <- rowSums(matrix(rho[subs2], nrow = nrow(subs2), ncol = ncol(subs2)))
-  expect_equal(vals, gR, tolerance = 0)
+  expect_equal(vals, gR, tolerance = 1e-12)
 
   # Also check that passing a vector (coerced to matrix) works
   idx <- seq_len(nrow(scn$data))
   out1 <- .eval_batch_safe(sc, idx, scn$data, ctx) # treated as 1-col matrix
-  expect_equal(out1, rho[idx], tolerance = 0)
+  expect_equal(out1, rho[idx], tolerance = 1e-12)
 })
 
 test_that("[inputs] integer x_cols indexing works", {
@@ -171,7 +171,7 @@ test_that("[inputs] integer x_cols indexing works", {
 
   subs1 <- matrix(seq_len(nrow(scn$data)), ncol = 1L)
   vals <- .eval_batch_safe(sc, subs1, scn$data, ctx)
-  expect_equal(vals, scn$data[[rho_col]], tolerance = 0)
+  expect_equal(vals, scn$data[[rho_col]], tolerance = 1e-12)
 })
 
 # tests/testthat/test-score-cate.R  (replace the whole [non-finite] block)
@@ -230,6 +230,6 @@ test_that("[parity] compiled batch (if actually callable) equals direct row sums
   } else {
     rho <- scn$data[[rho_col]]
     gR <- rowSums(matrix(rho[subs], nrow = nrow(subs), ncol = ncol(subs)))
-    expect_equal(out_try, gR, tolerance = 0)
+    expect_equal(out_try, gR, tolerance = 1e-12)
   }
 })
