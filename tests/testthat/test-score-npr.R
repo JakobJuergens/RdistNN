@@ -66,7 +66,7 @@ test_that("[order] reported order is 1", {
   df <- reg_demo(n = 10, p = 2, seed = 2)
   x0 <- colMeans(df[, 1:2, drop = FALSE])
 
-  sc  <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, k = 1L, y_col = "Y")
+  sc <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, k = 1L, y_col = "Y")
   ctx <- score_setup(sc, df)
   # The score object exposes order() as a function(n, data, ctx)
   expect_identical(sc$order(nrow(df), df, ctx), 1L)
@@ -76,9 +76,9 @@ test_that("[eval] singleton returns exactly Y_i (R path), with spot checks", {
   df <- reg_demo(n = 50, p = 2, seed = 3)
   x0 <- colMeans(df[, 1:2, drop = FALSE])
 
-  sc  <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, k = 1L, y = df$Y)
+  sc <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, k = 1L, y = df$Y)
   ctx <- score_setup(sc, df)
-  ctx$ptr_ctx <- NULL  # force R path if framework supports compiled pointers
+  ctx$ptr_ctx <- NULL # force R path if framework supports compiled pointers
 
   subs <- .singletons(nrow(df))
   vals <- score_eval_batch(sc, subs, df, ctx)
@@ -93,7 +93,7 @@ test_that("[eval] errors for non-singleton usage", {
   df <- reg_demo(n = 12, p = 2, seed = 4)
   x0 <- colMeans(df[, 1:2, drop = FALSE])
 
-  sc  <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, k = 1L, y_col = "Y")
+  sc <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, k = 1L, y_col = "Y")
   ctx <- score_setup(sc, df)
   ctx$ptr_ctx <- NULL
 
@@ -125,7 +125,7 @@ test_that("[inputs] non-finite Y triggers an error on evaluation", {
   df$Y[7] <- NA_real_
   x0 <- colMeans(df[, 1:2, drop = FALSE])
 
-  sc  <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, k = 1L, y_col = "Y")
+  sc <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, k = 1L, y_col = "Y")
   ctx <- score_setup(sc, df)
   ctx$ptr_ctx <- NULL
 
@@ -138,26 +138,32 @@ test_that("[inputs] non-finite Y triggers an error on evaluation", {
 
 test_that("[sanity] singleton: constant and linear Y return exactly Y_i", {
   # constant
-  n <- 20; p <- 2; c0 <- 3.25
+  n <- 20
+  p <- 2
+  c0 <- 3.25
   set.seed(101)
-  X  <- matrix(rnorm(n * p), n, p, dimnames = list(NULL, paste0("X", 1:p)))
+  X <- matrix(rnorm(n * p), n, p, dimnames = list(NULL, paste0("X", 1:p)))
   df <- data.frame(X, Y = rep(c0, n))
   x0 <- colMeans(df[, 1:2, drop = FALSE])
 
-  sc  <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, k = 1L, y_col = "Y")
-  ctx <- score_setup(sc, df); ctx$ptr_ctx <- NULL
+  sc <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, k = 1L, y_col = "Y")
+  ctx <- score_setup(sc, df)
+  ctx$ptr_ctx <- NULL
   subs <- .singletons(n)
   expect_equal(score_eval_batch(sc, subs, df, ctx), df$Y, tolerance = 0)
 
   # linear
-  n <- 25; a <- -1.0; b <- 0.75
+  n <- 25
+  a <- -1.0
+  b <- 0.75
   set.seed(202)
   X2 <- matrix(rnorm(n * p), n, p, dimnames = list(NULL, paste0("X", 1:p)))
   df2 <- data.frame(X2, Y = a + b * seq_len(n))
   x02 <- colMeans(df2[, 1:2, drop = FALSE])
 
-  sc2  <- score_np_y(x0 = x02, x_cols = 1:2, s = 1L, k = 1L, y_col = "Y")
-  ctx2 <- score_setup(sc2, df2); ctx2$ptr_ctx <- NULL
+  sc2 <- score_np_y(x0 = x02, x_cols = 1:2, s = 1L, k = 1L, y_col = "Y")
+  ctx2 <- score_setup(sc2, df2)
+  ctx2$ptr_ctx <- NULL
   subs2 <- .singletons(n)
   expect_equal(score_eval_batch(sc2, subs2, df2, ctx2), df2$Y, tolerance = 0)
 })

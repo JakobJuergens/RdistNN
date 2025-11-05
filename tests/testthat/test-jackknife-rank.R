@@ -141,10 +141,12 @@ test_that("[compiled] averages over T, not hits[i]", {
 test_that("[golden-matrix] small matrix-phi case matches fixed values", {
   # Setup: s=2, T=2, n_ref=5, q=1, normalize=TRUE
   # ranks: row t=1: (2,4 | 5); row t=2: (1,3 | 2)
-  ranks <- rbind(c(2L, 4L, 5L),
-                 c(1L, 3L, 2L))
-  a <- c(1, 3)        # Z = 4
-  PHI <- matrix(1:5, nrow = 5, ncol = 1)  # phi(j) = j
+  ranks <- rbind(
+    c(2L, 4L, 5L),
+    c(1L, 3L, 2L)
+  )
+  a <- c(1, 3) # Z = 4
+  PHI <- matrix(1:5, nrow = 5, ncol = 1) # phi(j) = j
 
   out <- jackknife_fast_rank(ranks, a, PHI, normalize = TRUE)
 
@@ -163,9 +165,11 @@ test_that("[golden-matrix] small matrix-phi case matches fixed values", {
 test_that("[golden-fun] small function-phi (t-dependent) matches fixed values", {
   # Setup: s=2, T=2, n_ref=4, q=2, normalize=TRUE
   # ranks: row t=1: (2,3 | 4); row t=2: (1,4 | 2)
-  ranks <- rbind(c(2L, 3L, 4L),
-                 c(1L, 4L, 2L))
-  a <- c(2, 1)        # Z = 3
+  ranks <- rbind(
+    c(2L, 3L, 4L),
+    c(1L, 4L, 2L)
+  )
+  a <- c(2, 1) # Z = 3
 
   # t-dependent phi: phi(j,t) = (j, j + t)
   phi_fun <- function(j, t) c(j, j + t)
@@ -174,7 +178,7 @@ test_that("[golden-fun] small function-phi (t-dependent) matches fixed values", 
 
   # Hand-computed:
   # theta0 = (13/6, 11/3)
-  theta0_exp <- c(13/6, 11/3)
+  theta0_exp <- c(13 / 6, 11 / 3)
 
   # theta_loo rows (i=1..4):
   # i=1: (17/6, 13/3)
@@ -182,10 +186,10 @@ test_that("[golden-fun] small function-phi (t-dependent) matches fixed values", 
   # i=3: ( 7/3, 23/6)
   # i=4: (11/6, 10/3)
   theta_loo_exp <- rbind(
-    c(17/6, 13/3),
-    c( 8/3, 25/6),
-    c( 7/3, 23/6),
-    c(11/6, 10/3)
+    c(17 / 6, 13 / 3),
+    c(8 / 3, 25 / 6),
+    c(7 / 3, 23 / 6),
+    c(11 / 6, 10 / 3)
   )
 
   expect_equal(as.numeric(out$theta0), theta0_exp, tolerance = 1e-12)
