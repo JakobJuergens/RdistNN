@@ -78,7 +78,7 @@ sc <- score_plqr_component(
   s       = 5,
   k       = 1
 )
-ctx  <- score_setup(sc, demo$data)
+ctx <- score_setup(sc, demo$data)
 subs <- cate_demo_subsets(n = nrow(demo$data), K = 3, s = 5, seed = 1)
 score_eval_batch(sc, subs, demo$data, ctx)
 \dontshow{\}) # examplesIf}

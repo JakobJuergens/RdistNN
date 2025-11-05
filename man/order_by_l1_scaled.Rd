@@ -38,7 +38,7 @@ distances via \code{\link[=dist_l1_scaled]{dist_l1_scaled()}} and orders with a 
 }
 \examples{
 set.seed(6)
-X  <- matrix(rnorm(10), 5, 2)
+X <- matrix(rnorm(10), 5, 2)
 x0 <- c(0, 0)
 order_by_l1_scaled(X, x0, rule = "sd")
 

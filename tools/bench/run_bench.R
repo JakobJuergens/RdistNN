@@ -1,12 +1,12 @@
-# inst/bench/run_bench.R
+# tools/bench/run_bench.R
 # Usage from R:
 #   devtools::load_all()
-#   source("inst/bench/run_bench.R")
+#   source("tools/bench/run_bench.R")
 #   rdistnn_bench("cate", n = 5000)
 #   rdistnn_bench("plqr", reps = 10)
 #
 # Usage from shell:
-#   Rscript inst/bench/run_bench.R cate n=5000 reps=10
+#   Rscript tools/bench/run_bench.R cate n=5000 reps=10
 
 rdistnn_bench <- function(
     which = c("cate", "plqr", "jackknife", "jk", "dist_l1", "l1", "dist_l2", "l2"), ...)
@@ -14,28 +14,28 @@ rdistnn_bench <- function(
   which <- match.arg(which)
   # Ensure utils are available when sourced directly
   if (!exists("rdistnn_bench_require")) {
-    source(file.path("inst", "bench", "utils-bench.R"), local = TRUE)
+    source(file.path("tools", "bench", "utils-bench.R"), local = TRUE)
   }
 
   switch(which,
          cate = {
-           source(file.path("inst", "bench", "bench_cate.R"), local = TRUE)
+           source(file.path("tools", "bench", "bench_cate.R"), local = TRUE)
            rdistnn_bench_cate(...)
          },
          plqr = {
-           source(file.path("inst", "bench", "bench_plqr.R"), local = TRUE)
+           source(file.path("tools", "bench", "bench_plqr.R"), local = TRUE)
            rdistnn_bench_plqr(...)
          },
          jackknife = , jk = {
-           source(file.path("inst", "bench", "bench_jackknife.R"), local = TRUE)
+           source(file.path("tools", "bench", "bench_jackknife.R"), local = TRUE)
            rdistnn_bench_jackknife(...)
          },
          dist_l2 = , l2 = {
-           source(file.path("inst", "bench", "bench_dist_l2.R"), local = TRUE)
+           source(file.path("tools", "bench", "bench_dist_l2.R"), local = TRUE)
            rdistnn_bench_dist_l2(...)
          },
          dist_l1 = , l1 = {
-           source(file.path("inst", "bench", "bench_dist_l1.R"), local = TRUE)
+           source(file.path("tools", "bench", "bench_dist_l1.R"), local = TRUE)
            rdistnn_bench_dist_l1(...)
          }
   )

@@ -26,8 +26,8 @@ when available; otherwise R fallbacks are used.
 
 \examples{
 set.seed(3)
-X  <- matrix(rnorm(12), 4, 3)
-X0 <- matrix(rnorm(6),  2, 3)
+X <- matrix(rnorm(12), 4, 3)
+X0 <- matrix(rnorm(6), 2, 3)
 dspec <- distance_l1()
 dspec$eval(X, X0[1, ])
 dspec$eval_batch(X, X0)
