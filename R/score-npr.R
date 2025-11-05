@@ -34,24 +34,25 @@
 #'
 #' @examples
 #' set.seed(1)
-#' n <- 50; p <- 2
+#' n <- 50
+#' p <- 2
 #' dat <- data.frame(X1 = rnorm(n), X2 = rnorm(n))
-#' dat$Y <- with(dat, X1 - 2*X2 + rnorm(n))
+#' dat$Y <- with(dat, X1 - 2 * X2 + rnorm(n))
 #'
-#' sc  <- score_np_y(
+#' sc <- score_np_y(
 #'   x0 = c(0, 0),
 #'   x_cols = c("X1", "X2"),
 #'   s = 1L, k = 1L,
 #'   y_col = "Y"
 #' )
-#' ctx  <- score_setup(sc, dat)
-#' subs <- matrix(seq_len(n), ncol = 1L)  # singleton subsets
-#' score_eval_batch(sc, subs, dat, ctx)   # returns dat$Y
+#' ctx <- score_setup(sc, dat)
+#' subs <- matrix(seq_len(n), ncol = 1L) # singleton subsets
+#' score_eval_batch(sc, subs, dat, ctx) # returns dat$Y
 #'
 #' @export
 score_np_y <- function(
-    x0, x_cols, s = 1, k = 1L,
-    y_col = NULL, y = NULL
+  x0, x_cols, s = 1, k = 1L,
+  y_col = NULL, y = NULL
 ) {
   # XOR: exactly one of y_col or y
   if (is.null(y_col) == is.null(y)) {
@@ -66,11 +67,10 @@ score_np_y <- function(
   }
 
   new_score(
-    name  = "np_y_singleton_purescore",
+    name = "np_y_singleton_purescore",
     order = function(n, data, ctx) 1L,
-
     setup = function(data, ...) {
-      X  <- as.matrix(data[, x_cols, drop = FALSE])
+      X <- as.matrix(data[, x_cols, drop = FALSE])
       yy <- if (!is.null(y_col)) as.numeric(data[[y_col]]) else as.numeric(y)
 
       if (length(x0) != ncol(X)) stop("x0 length must equal ncol(X).", call. = FALSE)
@@ -86,7 +86,6 @@ score_np_y <- function(
       if (length(idxs) != 1L) stop("`score_np_y` expects a singleton subset in `eval()`.", call. = FALSE)
       as.numeric(ctx$g[as.integer(idxs[1L])])
     },
-
     eval_batch = function(subs, data, ctx, rng) {
       if (any(!is.finite(ctx$g))) stop("Non-finite g encountered.", call. = FALSE)
       if (!is.matrix(subs) || ncol(subs) != 1L) {
@@ -94,9 +93,8 @@ score_np_y <- function(
       }
       as.numeric(ctx$g[subs[, 1L]])
     },
-
     randomized = FALSE,
-    symmetric  = TRUE,
-    ptr        = NULL # pure-score layer has no compiled pointer
+    symmetric = TRUE,
+    ptr = NULL # pure-score layer has no compiled pointer
   )
 }

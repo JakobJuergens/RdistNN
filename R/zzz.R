@@ -31,7 +31,7 @@ utils::globalVariables(c("xx"))
       try(register_distance(distance_l2_scaled(rule = "mad", squared = TRUE)), silent = TRUE)
     }
     if (exists("distance_l1_scaled", mode = "function")) {
-      try(register_distance(distance_l1_scaled(rule = "sd")),  silent = TRUE)
+      try(register_distance(distance_l1_scaled(rule = "sd")), silent = TRUE)
       try(register_distance(distance_l1_scaled(rule = "mad")), silent = TRUE)
     }
   }
