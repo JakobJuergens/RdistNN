@@ -24,7 +24,9 @@ it is used; otherwise \code{order(dx, seq_along(dx))} provides a deterministic
 tie-break.
 }
 \examples{
-set.seed(2); X <- matrix(rnorm(10), 5, 2); x0 <- c(0,0)
+set.seed(2)
+X <- matrix(rnorm(10), 5, 2)
+x0 <- c(0, 0)
 order_by_l1(X, x0)
 
 }

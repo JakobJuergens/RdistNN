@@ -4,7 +4,8 @@
 
 #' @noRd
 .dist_l2_R <- function(X, x0, squared = FALSE) {
-  X  <- as.matrix(X); x0 <- as.numeric(x0)
+  X <- as.matrix(X)
+  x0 <- as.numeric(x0)
   if (length(x0) != ncol(X)) stop("x0 length must equal ncol(X).")
   Z <- X - matrix(x0, nrow(X), ncol(X), byrow = TRUE)
   s2 <- rowSums(Z * Z)
@@ -23,11 +24,14 @@
 #' @export
 dist_l2 <- function(X, x0, squared = FALSE) {
   .assert_no_na(X, x0)
-  X  <- as.matrix(X); x0 <- as.numeric(x0)
+  X <- as.matrix(X)
+  x0 <- as.numeric(x0)
   if (length(x0) != ncol(X)) stop("x0 length must equal ncol(X).")
 
   cpp <- get0("rustat_dist_l2", mode = "function")
-  if (!is.null(cpp)) return(cpp(X, x0, isTRUE(squared)))
+  if (!is.null(cpp)) {
+    return(cpp(X, x0, isTRUE(squared)))
+  }
   .dist_l2_R(X, x0, squared)
 }
 
@@ -39,12 +43,15 @@ dist_l2 <- function(X, x0, squared = FALSE) {
 #' @export
 order_by_l2 <- function(X, x0, squared = FALSE) {
   .assert_no_na(X, x0)
-  X  <- as.matrix(X); x0 <- as.numeric(x0)
+  X <- as.matrix(X)
+  x0 <- as.numeric(x0)
 
   cpp <- get0("rustat_order_by_l2", mode = "function")
-  if (!is.null(cpp)) return(cpp(X, x0, isTRUE(squared)))
+  if (!is.null(cpp)) {
+    return(cpp(X, x0, isTRUE(squared)))
+  }
 
-  dx  <- dist_l2(X, x0, squared)
+  dx <- dist_l2(X, x0, squared)
   ord <- order(dx, seq_along(dx))
   list(dx = dx, ord = as.integer(ord))
 }
@@ -70,12 +77,16 @@ distance_l2 <- function(squared = FALSE) {
     name = if (isTRUE(squared)) "l2_sq" else "l2",
     eval = function(X, x0, ctx = NULL) dist_l2(X, x0, squared),
     eval_batch = function(X, X0, ctx = NULL) {
-      X  <- as.matrix(X); X0 <- as.matrix(X0)
-      .assert_no_na(X); .assert_no_na(X0)
+      X <- as.matrix(X)
+      X0 <- as.matrix(X0)
+      .assert_no_na(X)
+      .assert_no_na(X0)
       if (ncol(X0) != ncol(X)) stop("ncol(X0) must match ncol(X).")
 
       cpp <- get0("rustat_dist_l2_batch", mode = "function")
-      if (!is.null(cpp)) return(cpp(X, X0, isTRUE(squared)))
+      if (!is.null(cpp)) {
+        return(cpp(X, X0, isTRUE(squared)))
+      }
 
       m <- nrow(X0)
       out <- matrix(NA_real_, nrow(X), m)
@@ -96,15 +107,19 @@ distance_l2 <- function(squared = FALSE) {
 #' @export
 dist_l2_scaled <- function(X, x0, inv_s, squared = FALSE) {
   .assert_no_na(X, x0)
-  X  <- as.matrix(X); x0 <- as.numeric(x0); inv_s <- as.numeric(inv_s)
+  X <- as.matrix(X)
+  x0 <- as.numeric(x0)
+  inv_s <- as.numeric(inv_s)
   if (length(x0) != ncol(X) || length(inv_s) != ncol(X)) {
     stop("x0 and inv_s must be length p == ncol(X).")
   }
 
   cpp <- get0("rustat_dist_l2_scaled", mode = "function")
-  if (!is.null(cpp)) return(cpp(X, x0, inv_s, isTRUE(squared)))
+  if (!is.null(cpp)) {
+    return(cpp(X, x0, inv_s, isTRUE(squared)))
+  }
 
-  Xs  <- .scale_cols(X, inv_s)
+  Xs <- .scale_cols(X, inv_s)
   x0s <- x0 * inv_s
   dist_l2(Xs, x0s, squared = squared)
 }
@@ -138,27 +153,35 @@ distance_l2_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
     },
     eval = function(X, x0, ctx) {
       .assert_no_na(X, x0)
-      inv_s <- if (!is.null(ctx) && !is.null(ctx$inv_s)) ctx$inv_s else
+      inv_s <- if (!is.null(ctx) && !is.null(ctx$inv_s)) {
+        ctx$inv_s
+      } else {
         .compute_inv_scale(X, rule, scale_vec, eps)
+      }
 
       cpp <- get0("rustat_dist_l2_scaled", mode = "function")
-      if (!is.null(cpp)) return(cpp(as.matrix(X), as.numeric(x0), as.numeric(inv_s), isTRUE(squared)))
+      if (!is.null(cpp)) {
+        return(cpp(as.matrix(X), as.numeric(x0), as.numeric(inv_s), isTRUE(squared)))
+      }
 
-      Xs  <- if (!is.null(ctx) && !is.null(ctx$Xs)) ctx$Xs else .scale_cols(as.matrix(X), inv_s)
+      Xs <- if (!is.null(ctx) && !is.null(ctx$Xs)) ctx$Xs else .scale_cols(as.matrix(X), inv_s)
       x0s <- as.numeric(x0) * as.numeric(inv_s)
       base$eval(Xs, x0s, NULL)
     },
     eval_batch = function(X, X0, ctx) {
-      .assert_no_na(X); .assert_no_na(X0)
+      .assert_no_na(X)
+      .assert_no_na(X0)
       if (is.null(ctx) || is.null(ctx$inv_s)) {
         inv_s <- .compute_inv_scale(X, rule, scale_vec, eps)
         ctx <- list(inv_s = inv_s)
       }
 
       cpp <- get0("rustat_dist_l2_scaled_batch", mode = "function")
-      if (!is.null(cpp)) return(cpp(as.matrix(X), as.matrix(X0), as.numeric(ctx$inv_s), isTRUE(squared)))
+      if (!is.null(cpp)) {
+        return(cpp(as.matrix(X), as.matrix(X0), as.numeric(ctx$inv_s), isTRUE(squared)))
+      }
 
-      Xs  <- if (!is.null(ctx$Xs)) ctx$Xs else .scale_cols(as.matrix(X), ctx$inv_s)
+      Xs <- if (!is.null(ctx$Xs)) ctx$Xs else .scale_cols(as.matrix(X), ctx$inv_s)
       X0s <- .scale_cols(as.matrix(X0), ctx$inv_s)
       base$eval_batch(Xs, X0s, NULL)
     }
@@ -183,7 +206,8 @@ order_by_l2_scaled <- function(X, x0,
                                scale_vec = NULL, eps = 1e-12,
                                squared = FALSE) {
   .assert_no_na(X, x0)
-  X  <- as.matrix(X); x0 <- as.numeric(x0)
+  X <- as.matrix(X)
+  x0 <- as.numeric(x0)
   rule <- match.arg(rule)
 
   inv_s <- if (rule == "custom") {
@@ -193,9 +217,11 @@ order_by_l2_scaled <- function(X, x0,
   }
 
   cpp <- get0("rustat_order_by_l2_scaled", mode = "function")
-  if (!is.null(cpp)) return(cpp(X, x0, as.numeric(inv_s), isTRUE(squared)))
+  if (!is.null(cpp)) {
+    return(cpp(X, x0, as.numeric(inv_s), isTRUE(squared)))
+  }
 
-  dx  <- dist_l2_scaled(X, x0, inv_s, squared)
+  dx <- dist_l2_scaled(X, x0, inv_s, squared)
   ord <- order(dx, seq_along(dx))
   list(dx = dx, ord = as.integer(ord))
 }

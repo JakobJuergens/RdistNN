@@ -9,17 +9,6 @@
 `%||%` <- function(a, b) if (is.null(a)) b else a
 
 # deterministic tie-breaker (distance, then index)
-
-# internal type check
-is_dist_weight <- function(x) {
-  is.list(x) && is.function(x$eval) && is.function(x$eval_batch)
-}
-
-# internal thin wrapper (kept for consistency; used by weights_matrix)
-dist_weight_eval_batch <- function(dw, D, ctx = NULL) {
-  dw$eval_batch(D, ctx)
-}
-
 .order_with_ties <- function(dx) order(dx, seq_along(dx))
 
 # ---- resolvers ---------------------------------------------------------------
@@ -117,18 +106,29 @@ dist_weight_eval_batch <- function(dw, D, ctx = NULL) {
 
 # Accept a rank_weight or a dist_weight (or a zero-arg factory returning one)
 .resolve_weight <- function(weight) {
+  # Accept a rank_weight spec
   if (is_rank_weight(weight)) {
     return(list(kind = "rank", spec = weight))
   }
-  if (is_dist_weight(weight)) {
-    return(list(kind = "dist", spec = weight))
-  }
+  # Accept a zero-arg factory that returns a rank_weight
   if (is.function(weight)) {
     w <- weight()
-    return(.resolve_weight(w))
+    if (!is_rank_weight(w)) {
+      stop("Zero-arg weight() factory must return a rank_weight.", call. = FALSE)
+    }
+    return(list(kind = "rank", spec = w))
   }
-  stop("`weight` must be a rank_weight or dist_weight (or a zero-arg factory returning one).")
+
+  # Clear error messages / deprecation for any dist-weight-like inputs
+  if (inherits(weight, "dist_weight") ||
+      (is.list(weight) && identical(weight$.__kind, "dist_weight")) ||
+      (is.list(weight) && (is.function(weight$eval) || is.function(weight$eval_batch)))) {
+    stop("dist_weight support has been removed from RdistNN. Please use a rank_weight.", call. = FALSE)
+  }
+
+  stop("`weight` must be a rank_weight (or a zero-arg factory returning one).", call. = FALSE)
 }
+
 
 # ---- main general API --------------------------------------------------------
 
@@ -146,7 +146,7 @@ dist_weight_eval_batch <- function(dw, D, ctx = NULL) {
 #'   - a `dnn_distance` spec, a registered distance name (e.g., "l2","l1"),
 #'   - a function `(X, X0, ctx) ->` list with `$ranks`/`$ord`/`$dx`, or an `n x m` ranks matrix,
 #'   - precomputed object: list with `$ranks`, `$ord`, or `$dx`, or a ranks matrix.
-#' @param weight a `rank_weight` **or** `dist_weight` spec (or zero-arg factory).
+#' @param weight a `rank_weight` spec (or zero-arg factory returning one).
 #'   Back-compat: you may also pass `rank_weight=`; it will be used if `weight` is NULL.
 #' @param rank_weight (deprecated alias) rank_weight spec or zero-arg factory.
 #' @param ctx optional context for rankers that support `setup`.
@@ -188,21 +188,13 @@ weights_matrix <- function(
   wt_res <- .resolve_weight(wt_in)
 
   # evaluate weights
-  W <- switch(wt_res$kind,
-    "rank" = {
-      if (is.null(rk$ranks)) {
-        stop("rank_weight provided but no ranks available from `ranking`.")
-      }
-      rank_weight_eval_batch(wt_res$spec, rk$ranks)
-    },
-    "dist" = {
-      if (is.null(rk$dx)) {
-        stop("dist_weight provided but `ranking` did not supply distances `dx`.")
-      }
-      dist_weight_eval_batch(wt_res$spec, rk$dx)
-    },
-    stop("Internal: unknown weight kind.")
-  )
+  W <- {
+    # rank-only path
+    if (is.null(rk$ranks)) {
+      stop("rank_weight provided but no ranks available from `ranking`.", call. = FALSE)
+    }
+    rank_weight_eval_batch(wt_res$spec, rk$ranks)
+  }
 
   out <- list(
     W = W,
