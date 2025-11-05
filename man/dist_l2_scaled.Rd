@@ -2,10 +2,22 @@
 % Please edit documentation in R/dist_l2.R
 \name{dist_l2_scaled}
 \alias{dist_l2_scaled}
-\title{Scaled L2 distance (or squared) — C++ fast path if present, else reuse unscaled}
+\title{Scaled L2 distance (per-coordinate scaling)}
 \usage{
 dist_l2_scaled(X, x0, inv_s, squared = FALSE)
 }
+\arguments{
+\item{X}{Numeric matrix \eqn{n \times p}.}
+
+\item{x0}{Numeric vector of length \eqn{p}.}
+
+\item{inv_s}{Numeric vector of length \eqn{p} with elementwise scales.}
+
+\item{squared}{Logical; if \code{TRUE}, return squared distances.}
+}
+\value{
+Numeric vector of length \eqn{n}.
+}
 \description{
-Scaled L2 distance (or squared) — C++ fast path if present, else reuse unscaled
+Computes \eqn{\|(X_{i,\cdot} - x_0) \odot \mathrm{inv\_s}\|_2} (or squared).
 }

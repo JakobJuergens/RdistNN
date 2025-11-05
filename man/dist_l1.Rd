@@ -2,10 +2,30 @@
 % Please edit documentation in R/dist_l1.R
 \name{dist_l1}
 \alias{dist_l1}
-\title{Fast L1 (Manhattan) distance to a point (C++ with R fallback)}
+\title{Fast L1 (Manhattan) distance to a single query point}
 \usage{
 dist_l1(X, x0)
 }
+\arguments{
+\item{X}{Numeric matrix \eqn{n \times p}. Each row is an observation.}
+
+\item{x0}{Numeric vector of length \eqn{p}. The query point.}
+}
+\value{
+Numeric vector of length \eqn{n} with L1 distances.
+}
 \description{
-Fast L1 (Manhattan) distance to a point (C++ with R fallback)
+Computes \eqn{d_i = \|X_{i,\cdot} - x_0\|_1} for each row \eqn{i=1,\dots,n}.
+If the compiled symbol \code{rustat_dist_l1()} is registered (via Rcpp), it is
+used; otherwise a vectorised R fallback is used.
+}
+\examples{
+set.seed(1)
+X  <- matrix(rnorm(12), 4, 3)
+x0 <- c(0, 1, -1)
+dist_l1(X, x0)
+
+}
+\seealso{
+\code{\link[=dist_l2]{dist_l2()}}, \code{\link[=dist_l1_scaled]{dist_l1_scaled()}}, \code{\link[=distance_l1]{distance_l1()}}, \code{\link[=order_by_l1]{order_by_l1()}}
 }

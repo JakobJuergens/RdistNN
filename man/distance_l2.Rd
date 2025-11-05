@@ -2,10 +2,27 @@
 % Please edit documentation in R/dist_l2.R
 \name{distance_l2}
 \alias{distance_l2}
-\title{L2 distance spec (single-point + batched)}
+\title{L2 distance spec (single and batched evaluation)}
 \usage{
 distance_l2(squared = FALSE)
 }
-\description{
-L2 distance spec (single-point + batched)
+\arguments{
+\item{squared}{Logical; if \code{TRUE}, return squared distances.}
 }
+\value{
+A list with:
+\itemize{
+\item \code{name}: \code{"l2"} or \code{"l2_sq"}
+\item \code{eval(X, x0, ctx=NULL)}
+\item \code{eval_batch(X, X0, ctx=NULL)}
+}
+}
+\description{
+Returns a spec with \code{eval()} and \code{eval_batch()} closures for L2 distances.
+Uses compiled paths when present.
+}
+\section{Batch evaluation}{
+
+\code{eval_batch(X, X0)} expects an \eqn{m \times p} matrix of queries \code{X0}.
+}
+

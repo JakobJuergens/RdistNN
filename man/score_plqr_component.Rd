@@ -64,6 +64,7 @@ This score performs \strong{no} nearest-neighbor ordering or L-stat weighting;
 any aggregation/weights are handled outside the score layer.
 }
 \examples{
+\dontshow{if (TRUE) withAutoprint(\{ # examplesIf}
 demo <- plqr_demo_data(n = 200, p = 3, p_d = 2, tau = 0.5, seed = 1)
 sc <- score_plqr_component(
   x0      = rep(0, 3),
@@ -74,11 +75,11 @@ sc <- score_plqr_component(
   beta    = demo$truth$beta_true,
   j       = 1L,
   tau     = 0.5,
-  s       = 5, # recorded only
-  k       = 1 # ignored here
+  s       = 5,
+  k       = 1
 )
-ctx <- score_setup(sc, demo$data)
+ctx  <- score_setup(sc, demo$data)
 subs <- cate_demo_subsets(n = nrow(demo$data), K = 3, s = 5, seed = 1)
 score_eval_batch(sc, subs, demo$data, ctx)
-
+\dontshow{\}) # examplesIf}
 }

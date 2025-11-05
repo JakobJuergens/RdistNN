@@ -75,7 +75,7 @@
 #'   \code{g} of contributions in the context, and whose \code{$eval}/\code{$eval_batch}
 #'   return subset sums of \code{g} (no weights applied).
 #'
-#' @examples
+#' @examplesIf TRUE
 #' demo <- plqr_demo_data(n = 200, p = 3, p_d = 2, tau = 0.5, seed = 1)
 #' sc <- score_plqr_component(
 #'   x0      = rep(0, 3),
@@ -86,39 +86,39 @@
 #'   beta    = demo$truth$beta_true,
 #'   j       = 1L,
 #'   tau     = 0.5,
-#'   s       = 5, # recorded only
-#'   k       = 1 # ignored here
+#'   s       = 5,
+#'   k       = 1
 #' )
-#' ctx <- score_setup(sc, demo$data)
+#' ctx  <- score_setup(sc, demo$data)
 #' subs <- cate_demo_subsets(n = nrow(demo$data), K = 3, s = 5, seed = 1)
 #' score_eval_batch(sc, subs, demo$data, ctx)
 #'
 #' @export
 score_plqr_component <- function(
-  x0, x_cols, D_cols, q_col, mD_cols,
-  beta, j = 1L, tau = 0.5,
-  s, k = 1L
+    x0, x_cols, D_cols, q_col, mD_cols,
+    beta, j = 1L, tau = 0.5,
+    s, k = 1L
 ) {
-  # ---- factory-time checks (order matters for tests) ----
+  # ---- factory-time checks ----
   .validate_plqr_factory(D_cols, mD_cols, beta, j, tau, s, k)
 
   new_score(
     name = paste0("plqr_comp_j", as.integer(j), "_purescore"),
     order = function(n, data, ctx) as.integer(s),
     setup = function(data, ...) {
-      X <- as.matrix(data[, x_cols, drop = FALSE])
-      D <- as.matrix(data[, D_cols, drop = FALSE])
+      X  <- as.matrix(data[, x_cols,  drop = FALSE])
+      D  <- as.matrix(data[, D_cols,  drop = FALSE])
       mD <- as.matrix(data[, mD_cols, drop = FALSE])
       qx <- as.numeric(data[[q_col]])
-      Y <- as.numeric(data$Y)
+      Y  <- as.numeric(data$Y)
 
       # data-time checks
       if (length(x0) != ncol(X)) stop("x0 length must equal ncol(X).", call. = FALSE)
-      if (!all(is.finite(X))) stop("X must be finite.", call. = FALSE)
-      if (!all(is.finite(D))) stop("D must be finite.", call. = FALSE)
-      if (!all(is.finite(mD))) stop("m_D(X) must be finite.", call. = FALSE)
+      if (!all(is.finite(X)))  stop("X must be finite.",        call. = FALSE)
+      if (!all(is.finite(D)))  stop("D must be finite.",        call. = FALSE)
+      if (!all(is.finite(mD))) stop("m_D(X) must be finite.",   call. = FALSE)
       if (!all(is.finite(qx))) stop("q_tau(X) must be finite.", call. = FALSE)
-      if (!all(is.finite(Y))) stop("Y must be finite.", call. = FALSE)
+      if (!all(is.finite(Y)))  stop("Y must be finite.",        call. = FALSE)
 
       n <- nrow(X)
       if (any(c(nrow(D), nrow(mD)) != n) || length(qx) != n || length(Y) != n) {
@@ -128,29 +128,33 @@ score_plqr_component <- function(
         stop("D and m_D(X) must have the same number of columns.", call. = FALSE)
       }
       if (length(beta) != ncol(D)) {
-        stop(sprintf(
-          "`beta` length (%d) must equal ncol(D) (%d).",
-          length(beta), ncol(D)
-        ), call. = FALSE)
+        stop(sprintf("`beta` length (%d) must equal ncol(D) (%d).", length(beta), ncol(D)), call. = FALSE)
       }
       if (!(j >= 1L && j <= ncol(D))) {
         stop(sprintf("`j` must be in 1..ncol(D) (=%d).", ncol(D)), call. = FALSE)
       }
 
-      # ---- pure-score payload: compute g and stash it ----
-      # ---- compute g ----
+      # ---- compute and stash g ----
       g <- NULL
       ptr_ctx <- NULL
-      if (exists("rustat_plqr_ctx_new", mode = "function") &&
-        exists("rustat_plqr_g_all", mode = "function")) {
-        # compiled context + fast per-row g
-        ptr_ctx <- rustat_plqr_ctx_new(D, mD, Y, qx, as.numeric(beta), as.numeric(tau))
+      if (exists("rustat_plqr_ctx_create", mode = "function") &&
+          exists("rustat_plqr_g_all",      mode = "function")) {
+        # CORRECT argument order + include j
+        ptr_ctx <- rustat_plqr_ctx_create(
+          Y,            # NumericVector
+          D,            # NumericMatrix
+          qx,           # NumericVector
+          mD,           # NumericMatrix
+          as.numeric(beta),
+          as.numeric(tau),
+          as.integer(j)
+        )
         g <- as.numeric(rustat_plqr_g_all(ptr_ctx))
       } else {
-        # R fallback (your current code)
-        thr <- as.vector(D %*% as.numeric(beta)) + qx
+        # R fallback
+        thr   <- as.vector(D %*% as.numeric(beta)) + qx
         resid <- (as.numeric(tau) - as.numeric(Y <= thr))
-        g <- resid * (D[, j] - mD[, j])
+        g     <- resid * (D[, j] - mD[, j])
       }
 
       if (!all(is.finite(g))) stop("Computed g contains non-finite values.", call. = FALSE)
@@ -159,34 +163,29 @@ score_plqr_component <- function(
         g = as.numeric(g),
         n = nrow(X), p = ncol(X),
         s = as.integer(s), j = as.integer(j),
-        ptr_ctx = ptr_ctx # may be NULL if R fallback
+        ptr_ctx = ptr_ctx
       )
     },
 
-    # R fallback: one subset → sum of g over that subset
     eval = function(idxs, data, ctx, rng) {
       gi <- ctx$g[idxs]
       if (any(!is.finite(gi))) stop("Non-finite g encountered.", call. = FALSE)
       as.numeric(sum(gi))
     },
 
-    # R fast path: many subsets → rowwise sums of g[subs]
     eval_batch = function(subs, data, ctx, rng) {
       gi <- ctx$g
       if (any(!is.finite(gi))) stop("Non-finite g encountered.", call. = FALSE)
       if (!is.matrix(subs)) subs <- as.matrix(subs)
-      if (nrow(subs) == 0L) {
-        return(numeric(0L))
-      }
+      if (nrow(subs) == 0L) return(numeric(0L))
 
       if (exists("rustat_subset_row_sums_g", mode = "function")) {
         return(rustat_subset_row_sums_g(subs, gi))
       }
-      # R fallback (as before)
       rowSums(matrix(gi[subs], nrow = nrow(subs), ncol = ncol(subs)))
     },
     randomized = FALSE,
-    symmetric = TRUE,
-    ptr = NULL
+    symmetric  = TRUE,
+    ptr        = NULL
   )
 }
