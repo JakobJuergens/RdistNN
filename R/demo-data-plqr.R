@@ -98,19 +98,22 @@ plqr_demo_data <- function(n = 300,
 
   # Nonparametric quantile component q_tau(X)
   q_fn <- switch(design,
-                 linear = function(xx) { xx <- as.matrix(xx); 0.5 * xx[, 1] },
-                 sinusoidal = function(xx) {
-                   xx <- as.matrix(xx)
-                   0.5 * sin(xx[, 1]) + if (ncol(xx) >= 2) 0.25 * xx[, 2]^2 else 0
-                 },
-                 bump = {
-                   center <- c(0.5, -0.5, rep(0, max(0, p - 2L)))
-                   function(xx) {
-                     xx <- as.matrix(xx)
-                     d2 <- rowSums((xx - rep(center, each = nrow(xx)))^2)
-                     0.2 + 0.8 * exp(-0.5 * d2)
-                   }
-                 }
+    linear = function(xx) {
+      xx <- as.matrix(xx)
+      0.5 * xx[, 1]
+    },
+    sinusoidal = function(xx) {
+      xx <- as.matrix(xx)
+      0.5 * sin(xx[, 1]) + if (ncol(xx) >= 2) 0.25 * xx[, 2]^2 else 0
+    },
+    bump = {
+      center <- c(0.5, -0.5, rep(0, max(0, p - 2L)))
+      function(xx) {
+        xx <- as.matrix(xx)
+        d2 <- rowSums((xx - rep(center, each = nrow(xx)))^2)
+        0.2 + 0.8 * exp(-0.5 * d2)
+      }
+    }
   )
   qX <- q_fn(X)
 
@@ -121,9 +124,9 @@ plqr_demo_data <- function(n = 300,
     g <- c(0.6, -0.4, rep(0, max(0, p - 2L))) + (j - 1) * 0.2
     Gamma[, j] <- g[seq_len(p)]
   }
-  mD <- X %*% Gamma              # n x p_d
-  V  <- matrix(rnorm(n * p_d, sd = 0.6), n, p_d)
-  D  <- mD + V
+  mD <- X %*% Gamma # n x p_d
+  V <- matrix(rnorm(n * p_d, sd = 0.6), n, p_d)
+  D <- mD + V
   colnames(D) <- paste0("D", seq_len(p_d))
 
   # Error with tau-quantile zero
@@ -142,11 +145,13 @@ plqr_demo_data <- function(n = 300,
   # Optional injection of non-finites for guard testing
   if (!is.null(inject)) {
     stopifnot(idx_inject >= 1L, idx_inject <= n)
-    stopifnot(inject_col %in% c("Y", "q_oracle",
-                                paste0("D", seq_len(p_d)[1]),
-                                paste0("mD", seq_len(p_d)[1]),
-                                paste0("rD", seq_len(p_d)[1])))
-    if (identical(inject, "na"))  df[[inject_col]][idx_inject] <- NA_real_
+    stopifnot(inject_col %in% c(
+      "Y", "q_oracle",
+      paste0("D", seq_len(p_d)[1]),
+      paste0("mD", seq_len(p_d)[1]),
+      paste0("rD", seq_len(p_d)[1])
+    ))
+    if (identical(inject, "na")) df[[inject_col]][idx_inject] <- NA_real_
     if (identical(inject, "inf")) df[[inject_col]][idx_inject] <- Inf
   }
 
@@ -190,11 +195,11 @@ plqr_moment <- function(df, beta, tau) {
   p_d <- sum(grepl("^D[0-9]+$", names(df)))
   stopifnot(length(beta) == p_d)
   Dmat <- as.matrix(df[paste0("D", seq_len(p_d))])
-  mD   <- as.matrix(df[paste0("mD", seq_len(p_d))])
-  rD   <- Dmat - mD
+  mD <- as.matrix(df[paste0("mD", seq_len(p_d))])
+  rD <- Dmat - mD
   thresh <- as.vector(Dmat %*% beta) + df$q_oracle
-  ind    <- as.numeric(df$Y <= thresh)
-  resid  <- (tau - ind)
+  ind <- as.numeric(df$Y <= thresh)
+  resid <- (tau - ind)
   rD * resid
 }
 
@@ -235,11 +240,13 @@ plqr_demo_subsets <- function(n, K = 1000L, s = 8L, seed = NULL) {
 #' @noRd
 plqr_demo_sets <- function(n = 120L, p = 2L, p_d = 2L) {
   stopifnot(is.numeric(n), n >= 10L, is.numeric(p), p >= 1L, is.numeric(p_d), p_d >= 1L)
-  n <- as.integer(n); p <- as.integer(p); p_d <- as.integer(p_d)
+  n <- as.integer(n)
+  p <- as.integer(p)
+  p_d <- as.integer(p_d)
 
   # Subset matrices
-  subs_all      <- matrix(seq_len(n), ncol = 1L)
-  subs_empty    <- matrix(integer(0), ncol = 1L)
+  subs_all <- matrix(seq_len(n), ncol = 1L)
+  subs_empty <- matrix(integer(0), ncol = 1L)
   subs_bad_ncol <- cbind(seq_len(n), rev(seq_len(n)))
 
   X_names <- paste0("X", seq_len(p))
@@ -266,27 +273,35 @@ plqr_demo_sets <- function(n = 120L, p = 2L, p_d = 2L) {
   }
 
   # --- SUCCESS CASES (seeded; include a noiseless design for exact checks) ---
-  ok_lin   <- plqr_demo_data(n, p, p_d, tau = 0.5, sigma = 0.5, design = "linear",     seed = 1)
+  ok_lin <- plqr_demo_data(n, p, p_d, tau = 0.5, sigma = 0.5, design = "linear", seed = 1)
   attr(ok_lin, "tau") <- 0.5
-  ok_sin   <- plqr_demo_data(n, p, p_d, tau = 0.5, sigma = 0.4, design = "sinusoidal", seed = 2)
+  ok_sin <- plqr_demo_data(n, p, p_d, tau = 0.5, sigma = 0.4, design = "sinusoidal", seed = 2)
   attr(ok_sin, "tau") <- 0.5
-  ok_bump  <- plqr_demo_data(n, p, p_d, tau = 0.5, sigma = 0.6, design = "bump",       seed = 3)
+  ok_bump <- plqr_demo_data(n, p, p_d, tau = 0.5, sigma = 0.6, design = "bump", seed = 3)
   attr(ok_bump, "tau") <- 0.5
-  ok_clean <- plqr_demo_data(n, p, p_d, tau = 0.5, sigma = 1e-8, design = "linear",    seed = 4)
+  ok_clean <- plqr_demo_data(n, p, p_d, tau = 0.5, sigma = 1e-8, design = "linear", seed = 4)
   attr(ok_clean, "tau") <- 0.5
 
   # --- EDGE / FAILURE CASES (non-finites injected) ---
-  nf_Y_na  <- plqr_demo_data(n, p, p_d, tau = 0.5, sigma = 0.5, design = "linear",
-                             seed = 5, inject = "na",  inject_col = "Y",        idx_inject = 3L)
+  nf_Y_na <- plqr_demo_data(n, p, p_d,
+    tau = 0.5, sigma = 0.5, design = "linear",
+    seed = 5, inject = "na", inject_col = "Y", idx_inject = 3L
+  )
   attr(nf_Y_na, "tau") <- 0.5
-  nf_q_inf <- plqr_demo_data(n, p, p_d, tau = 0.5, sigma = 0.5, design = "sinusoidal",
-                             seed = 6, inject = "inf", inject_col = "q_oracle", idx_inject = 2L)
+  nf_q_inf <- plqr_demo_data(n, p, p_d,
+    tau = 0.5, sigma = 0.5, design = "sinusoidal",
+    seed = 6, inject = "inf", inject_col = "q_oracle", idx_inject = 2L
+  )
   attr(nf_q_inf, "tau") <- 0.5
-  nf_mD_na <- plqr_demo_data(n, p, p_d, tau = 0.5, sigma = 0.5, design = "bump",
-                             seed = 7, inject = "na",  inject_col = "mD1",     idx_inject = 4L)
+  nf_mD_na <- plqr_demo_data(n, p, p_d,
+    tau = 0.5, sigma = 0.5, design = "bump",
+    seed = 7, inject = "na", inject_col = "mD1", idx_inject = 4L
+  )
   attr(nf_mD_na, "tau") <- 0.5
-  nf_rD_inf <- plqr_demo_data(n, p, p_d, tau = 0.5, sigma = 0.5, design = "linear",
-                              seed = 8, inject = "inf", inject_col = "rD1",    idx_inject = 5L)
+  nf_rD_inf <- plqr_demo_data(n, p, p_d,
+    tau = 0.5, sigma = 0.5, design = "linear",
+    seed = 8, inject = "inf", inject_col = "rD1", idx_inject = 5L
+  )
   attr(nf_rD_inf, "tau") <- 0.5
 
   # Bad x0 dimension scenario (use ok_lin data)
@@ -294,17 +309,15 @@ plqr_demo_sets <- function(n = 120L, p = 2L, p_d = 2L) {
   bad_x0$x0 <- rep(0, p + 1L)
 
   list(
-    ok_linear   = make_case(ok_lin),
+    ok_linear = make_case(ok_lin),
     ok_sinusoid = make_case(ok_sin),
-    ok_bump     = make_case(ok_bump),
-    ok_clean    = make_case(ok_clean),
-
-    nonfinite_Y_na   = make_case(nf_Y_na),
-    nonfinite_q_inf  = make_case(nf_q_inf),
-    nonfinite_mD_na  = make_case(nf_mD_na),
+    ok_bump = make_case(ok_bump),
+    ok_clean = make_case(ok_clean),
+    nonfinite_Y_na = make_case(nf_Y_na),
+    nonfinite_q_inf = make_case(nf_q_inf),
+    nonfinite_mD_na = make_case(nf_mD_na),
     nonfinite_rD_inf = make_case(nf_rD_inf),
-
-    bad_x0_dim   = list(
+    bad_x0_dim = list(
       data = bad_x0$data,
       x0 = bad_x0$x0,
       x_cols = X_names,
