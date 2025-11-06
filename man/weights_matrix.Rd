@@ -29,7 +29,7 @@ weights_matrix(
 \item precomputed object: list with \verb{$ranks}, \verb{$ord}, or \verb{$dx}, or a ranks matrix.
 }}
 
-\item{weight}{a \code{rank_weight} \strong{or} \code{dist_weight} spec (or zero-arg factory).
+\item{weight}{a \code{rank_weight} spec (or zero-arg factory returning one).
 Back-compat: you may also pass \verb{rank_weight=}; it will be used if \code{weight} is NULL.}
 
 \item{rank_weight}{(deprecated alias) rank_weight spec or zero-arg factory.}

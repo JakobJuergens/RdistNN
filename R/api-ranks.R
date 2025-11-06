@@ -20,21 +20,34 @@ is_rank_weight <- function(x) {
     (is.list(x) && identical(x$.__kind, "rank_weight"))
 }
 
+# -----------------------------------------------------------------------------
+.as_fun_accepts_ctx <- function(fun) {
+  fmls <- formals(fun)
+  if (is.null(fmls)) {
+    return(FALSE)
+  }
+  # Accept either explicitly named 'ctx' or any >= 2-arg signature
+  "ctx" %in% names(fmls) || length(fmls) >= 2L
+}
+
 #' Wrap a function as a rank_weight spec
 #'
-#' @param fun Function `(ranks, ctx) -> numeric(n)`.
+#' @param fun Function `(ranks, ctx) -> numeric(n)` OR just `(ranks) -> numeric(n)`.
 #' @param name Character name.
 #' @return A rank-weight spec (list) with fields `name`, `eval`.
 #' @export
 as_rank_weight <- function(fun, name = "user_rank_weight") {
   stopifnot(is.function(fun))
+  takes_ctx <- .as_fun_accepts_ctx(fun)
+
   spec <- list(
     name = name,
     eval = function(ranks, ctx = NULL) {
       r <- .rank_check_vec(ranks)
-      w <- fun(r, ctx)
-      if (!is.numeric(w) || length(w) != length(r) || any(!is.finite(w)))
+      w <- if (takes_ctx) fun(r, ctx) else fun(r)
+      if (!is.numeric(w) || length(w) != length(r) || any(!is.finite(w))) {
         stop("Rank-weight function must return finite numeric length(ranks).", call. = FALSE)
+      }
       as.numeric(w)
     }
   )
@@ -137,7 +150,7 @@ rank_weight_eval <- function(spec, ranks, ctx = NULL) {
     # Prefer batch path whenever available (robust to accidental/legacy evals)
     R1 <- matrix(r, nrow = length(r), ncol = 1L)
     W1 <- rank_weight_eval_batch(spec, R1, ctx)
-    w  <- W1[, 1L]
+    w <- W1[, 1L]
   } else if (is.function(spec$eval)) {
     w <- spec$eval(r, ctx)
   } else {
@@ -172,7 +185,7 @@ rank_weight_eval_batch <- function(spec, R, ctx = NULL) {
   }
 
   if (!is.matrix(W) || any(!is.finite(W)) ||
-      nrow(W) != nrow(RR) || ncol(W) != ncol(RR)) {
+    nrow(W) != nrow(RR) || ncol(W) != ncol(RR)) {
     stop("rank_weight$eval_batch must return an nrow(R) x ncol(R) finite matrix.", call. = FALSE)
   }
   W

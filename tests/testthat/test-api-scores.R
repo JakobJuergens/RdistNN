@@ -24,7 +24,7 @@ test_that("constructors and predicates: new_score / as_score / is_score / is_com
   sc3 <- new_score(
     name = "sc3",
     order = 2L,
-    ptr = TRUE  # any non-NULL marks compiled
+    ptr = TRUE # any non-NULL marks compiled
   )
   expect_true(is_compiled(sc3))
   expect_output(print(sc3), "compiled\\(ptr\\)")
@@ -40,14 +40,17 @@ test_that("setup and dynamic order resolution work", {
   calls <- list(setup = 0L)
 
   sc <- new_score(
-    name  = "dyn",
+    name = "dyn",
     order = function(n, data, ctx) if (n >= 5) 3L else 2L,
-    setup = function(data, ...) { calls$setup <<- calls$setup + 1L; list(ok = TRUE) },
-    eval  = function(idxs, data, ctx, rng) sum(data[idxs])
+    setup = function(data, ...) {
+      calls$setup <<- calls$setup + 1L
+      list(ok = TRUE)
+    },
+    eval = function(idxs, data, ctx, rng) sum(data[idxs])
   )
 
   data <- 1:6
-  ctx  <- score_setup(sc, data)
+  ctx <- score_setup(sc, data)
   expect_equal(calls$setup, 1L)
   expect_true(is.list(ctx))
   expect_equal(score_order(sc, length(data), data, ctx), 3L)
@@ -56,7 +59,8 @@ test_that("setup and dynamic order resolution work", {
 
 test_that("eval prefers eval_batch when available; batch-only score routes single subset through batch", {
   set.seed(1)
-  n <- 8L; s <- 3L
+  n <- 8L
+  s <- 3L
   y <- rnorm(n)
 
   calls <- list(batch = 0L, scalar = 0L)
@@ -80,13 +84,14 @@ test_that("eval prefers eval_batch when available; batch-only score routes singl
   # Many subsets
   subs <- rbind(c(1L, 4L, 5L), c(2L, 3L, 8L), c(6L, 7L, 5L))
   val2 <- score_eval_batch(sc_batch_only, subs, y, NULL)
-  expect_equal(val2, c(sum(y[c(1,4,5)]), sum(y[c(2,3,8)]), sum(y[c(6,7,5)])))
+  expect_equal(val2, c(sum(y[c(1, 4, 5)]), sum(y[c(2, 3, 8)]), sum(y[c(6, 7, 5)])))
   expect_equal(calls$batch, 2L)
 })
 
 test_that("batch fallback uses scalar eval row-wise when eval_batch is missing", {
   set.seed(2)
-  n <- 7L; s <- 2L
+  n <- 7L
+  s <- 2L
   y <- rnorm(n)
 
   calls <- list(batch = 0L, scalar = 0L)
@@ -101,29 +106,37 @@ test_that("batch fallback uses scalar eval row-wise when eval_batch is missing",
   )
 
   subs <- rbind(c(1L, 2L), c(3L, 4L), c(6L, 7L))
-  out  <- score_eval_batch(sc_eval_only, subs, y, NULL)
+  out <- score_eval_batch(sc_eval_only, subs, y, NULL)
   expect_equal(out, c(sum(y[1:2]^2), sum(y[3:4]^2), sum(y[6:7]^2)))
   expect_equal(calls$scalar, nrow(subs))
 
   # Single subset via score_eval still works (uses eval directly here)
-  expect_equal(score_eval(sc_eval_only, c(5L, 7L), y, NULL), sum(y[c(5,7)]^2))
+  expect_equal(score_eval(sc_eval_only, c(5L, 7L), y, NULL), sum(y[c(5, 7)]^2))
 })
 
 test_that("subset validation in batch: shape, bounds, and empties are caught", {
-  n <- 6L; s <- 3L; y <- rep(1, n)
+  n <- 6L
+  s <- 3L
+  y <- rep(1, n)
   sc <- new_score(name = "v", order = s, eval = function(i, d, c, r) sum(d[i]))
 
   # wrong number of columns
-  expect_error(score_eval_batch(sc, matrix(1L, nrow = 2L, ncol = s - 1L), y, NULL),
-               "must have 3 columns")
+  expect_error(
+    score_eval_batch(sc, matrix(1L, nrow = 2L, ncol = s - 1L), y, NULL),
+    "must have 3 columns"
+  )
 
   # out-of-bounds indices
-  expect_error(score_eval_batch(sc, matrix(c(1L, 2L, n + 1L), 1L, s, byrow = TRUE), y, NULL),
-               "indices must lie in 1..n")
+  expect_error(
+    score_eval_batch(sc, matrix(c(1L, 2L, n + 1L), 1L, s, byrow = TRUE), y, NULL),
+    "indices must lie in 1..n"
+  )
 
   # empty
-  expect_error(score_eval_batch(sc, matrix(integer(), 0L, s), y, NULL),
-               "must have at least one row")
+  expect_error(
+    score_eval_batch(sc, matrix(integer(), 0L, s), y, NULL),
+    "must have at least one row"
+  )
 })
 
 test_that("registry: register_score() single-arg and (name, score), get_score(), list_scores(), score_names()", {
@@ -147,7 +160,7 @@ test_that("registry: register_score() single-arg and (name, score), get_score(),
 
   # listing
   nn <- list_scores()
-  expect_true("scA"  %in% nn)
+  expect_true("scA" %in% nn)
   expect_true("altB" %in% nn)
   expect_true(all(score_names() %in% list_scores()))
 })
@@ -175,16 +188,20 @@ test_that("return shape and finiteness checks are enforced", {
     order = 2L,
     eval_batch = function(subs, data, ctx, rng) rep(0, nrow(subs) + 1L)
   )
-  expect_error(score_eval_batch(sc_bad_len, matrix(c(1L, 2L), 1L, 2L), y, NULL),
-               "must return numeric\\(K\\)")
+  expect_error(
+    score_eval_batch(sc_bad_len, matrix(c(1L, 2L), 1L, 2L), y, NULL),
+    "must return numeric\\(K\\)"
+  )
 
   sc_bad_inf <- new_score(
     name = "bad_inf",
     order = 2L,
     eval = function(idxs, data, ctx, rng) Inf
   )
-  expect_error(score_eval(sc_bad_inf, c(1L, 2L), y, NULL),
-               "must return a finite scalar")
+  expect_error(
+    score_eval(sc_bad_inf, c(1L, 2L), y, NULL),
+    "must return a finite scalar"
+  )
 })
 
 test_that("randomized flag is carried through (print only smoke test)", {
