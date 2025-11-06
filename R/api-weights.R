@@ -121,8 +121,8 @@
 
   # Clear error messages / deprecation for any dist-weight-like inputs
   if (inherits(weight, "dist_weight") ||
-      (is.list(weight) && identical(weight$.__kind, "dist_weight")) ||
-      (is.list(weight) && (is.function(weight$eval) || is.function(weight$eval_batch)))) {
+    (is.list(weight) && identical(weight$.__kind, "dist_weight")) ||
+    (is.list(weight) && (is.function(weight$eval) || is.function(weight$eval_batch)))) {
     stop("dist_weight support has been removed from RdistNN. Please use a rank_weight.", call. = FALSE)
   }
 

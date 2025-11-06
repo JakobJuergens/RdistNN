@@ -17,17 +17,17 @@
 .score_check_idxs <- function(idxs, n, s) {
   idxs <- as.integer(idxs)
   if (length(idxs) != s) stop(sprintf("`idxs` must have %d elements (order s).", s), call. = FALSE)
-  if (anyNA(idxs))       stop("`idxs` cannot contain NA.", call. = FALSE)
-  if (any(idxs < 1L | idxs > n)) stop("`idxs` must lie in 1..n.", call. = FALSE)  # <- normalized
+  if (anyNA(idxs)) stop("`idxs` cannot contain NA.", call. = FALSE)
+  if (any(idxs < 1L | idxs > n)) stop("`idxs` must lie in 1..n.", call. = FALSE) # <- normalized
   idxs
 }
 .score_check_subs <- function(subs, n, s) {
   if (!is.matrix(subs)) subs <- as.matrix(subs)
-  if (ncol(subs) != s)  stop(sprintf("`subs` must have %d columns (order s).", s), call. = FALSE)
+  if (ncol(subs) != s) stop(sprintf("`subs` must have %d columns (order s).", s), call. = FALSE)
   if (nrow(subs) == 0L) stop("`subs` must have at least one row.", call. = FALSE)
   if (!is.integer(subs)) storage.mode(subs) <- "integer"
   if (any(!is.finite(subs))) stop("`subs` contains non-finite entries.", call. = FALSE)
-  if (any(subs < 1L | subs > n)) stop("`subs` indices must lie in 1..n.", call. = FALSE)  # <- normalized
+  if (any(subs < 1L | subs > n)) stop("`subs` indices must lie in 1..n.", call. = FALSE) # <- normalized
   subs
 }
 
@@ -49,14 +49,14 @@
 #' @return An object of class `ustat_score`.
 #' @export
 new_score <- function(
-    name,
-    order,
-    setup = NULL,
-    eval = NULL,
-    eval_batch = NULL,
-    ptr = NULL,
-    randomized = FALSE,
-    symmetric = TRUE
+  name,
+  order,
+  setup = NULL,
+  eval = NULL,
+  eval_batch = NULL,
+  ptr = NULL,
+  randomized = FALSE,
+  symmetric = TRUE
 ) {
   sc <- list(
     name = as.character(name),
@@ -122,12 +122,19 @@ print.ustat_score <- function(x, ...) {
   cat("<ustat_score: ", x$name, ">\n", sep = "")
   cat("  order: ", if (is.function(x$order)) "function(n, data, ctx)" else x$order, "\n", sep = "")
   cat("  impl : ",
-      if (!is.null(x$ptr))       "compiled(ptr) "
-      else if (!is.null(x$eval_batch)) "R eval_batch "
-      else if (!is.null(x$eval)) "R eval "
-      else                       "NONE ",
-      if (isTRUE(x$randomized)) "(randomized)" else "",
-      "\n", sep = "")
+    if (!is.null(x$ptr)) {
+      "compiled(ptr) "
+    } else if (!is.null(x$eval_batch)) {
+      "R eval_batch "
+    } else if (!is.null(x$eval)) {
+      "R eval "
+    } else {
+      "NONE "
+    },
+    if (isTRUE(x$randomized)) "(randomized)" else "",
+    "\n",
+    sep = ""
+  )
   invisible(x)
 }
 
@@ -142,7 +149,9 @@ print.ustat_score <- function(x, ...) {
 score_setup <- function(score, data, ...) UseMethod("score_setup")
 #' @export
 score_setup.ustat_score <- function(score, data, ...) {
-  if (is.null(score$setup)) return(NULL)
+  if (is.null(score$setup)) {
+    return(NULL)
+  }
   score$setup(data, ...)
 }
 
@@ -156,7 +165,9 @@ score_setup.ustat_score <- function(score, data, ...) {
 score_order <- function(score, n, data, ctx = NULL) UseMethod("score_order")
 #' @export
 score_order.ustat_score <- function(score, n, data, ctx = NULL) {
-  if (.is_scalar_int(score$order)) return(as.integer(score$order))
+  if (.is_scalar_int(score$order)) {
+    return(as.integer(score$order))
+  }
   as.integer(score$order(n, data, ctx))
 }
 
@@ -228,7 +239,7 @@ score_eval_batch.ustat_score <- function(score, subs, data, ctx = NULL, rng = NU
   n <- .score_n(data)
   s <- score_order(score, n, data, ctx)
   SS <- .score_check_subs(subs, n, s)
-  K  <- nrow(SS)
+  K <- nrow(SS)
   ans <- numeric(K)
   for (k in seq_len(K)) {
     ans[k] <- score_eval(score, SS[k, ], data, ctx, rng)

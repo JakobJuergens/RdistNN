@@ -88,7 +88,7 @@ test_that("distance_eval_batch() calls setup() exactly once (eval-only fallback)
 
 test_that("distance_eval() falls back to eval_batch when only eval_batch exists", {
   spec <- list(
-    name       = "batch_only",
+    name = "batch_only",
     eval_batch = function(X, X0, ctx) {
       # squared L2, returns n x m
       vapply(seq_len(nrow(X0)), function(j) {
@@ -98,20 +98,17 @@ test_that("distance_eval() falls back to eval_batch when only eval_batch exists"
   )
   class(spec) <- "dnn_distance"
 
-  X  <- matrix(1:12, 4, 3)
+  X <- matrix(1:12, 4, 3)
   x0 <- c(0, 1, 2)
 
-  d <- distance_eval(spec, X, x0)  # falls back to eval_batch internally
+  d <- distance_eval(spec, X, x0) # falls back to eval_batch internally
   expect_length(d, nrow(X))
 
   D <- distance_eval_batch(spec, X, matrix(x0, nrow = 1L), ctx = NULL)
   expect_equal(as.numeric(D[, 1L]), d)
-
 })
 
 test_that("distance_eval honors provided ctx (no auto-setup)", {
-
-
   cnt <- new.env(parent = emptyenv())
   cnt$setup <- 0L
   spec <- list(
@@ -162,4 +159,56 @@ test_that("registry specs actually evaluate after registration", {
   x0 <- c(1, 1)
   d <- distance_eval(spec, X, x0)
   expect_equal(d, c(2, 0, 2, 4))
+})
+
+test_that("distance_eval errors on x0 length mismatch", {
+  spec <- as_distance(function(X, x0, ctx) rowSums((X - matrix(x0, nrow(X), ncol(X), TRUE))^2),
+    name = "quad"
+  )
+  X <- matrix(0, 4, 3)
+  x0 <- c(1, 2) # wrong p
+  expect_error(distance_eval(spec, X, x0), "x0 length must equal ncol\\(X\\)")
+})
+
+test_that("distance_eval rejects non-finite outputs", {
+  spec <- as_distance(function(X, x0, ctx) rep(NaN, nrow(X)), name = "bad_nonfinite")
+  X <- matrix(0, 3, 2)
+  x0 <- c(0, 0)
+  expect_error(distance_eval(spec, X, x0), "must return numeric length nrow\\(X\\) with finite entries")
+})
+
+test_that("distance_eval_batch respects provided ctx (no setup) in eval-only fallback", {
+  env <- new.env(parent = emptyenv())
+  env$count <- 0L
+  spec <- list(
+    name = "eval_only_ctx_passthrough",
+    setup = function(X) {
+      env$count <- env$count + 1L
+      list(scale = 9)
+    },
+    eval = function(X, x0, ctx) {
+      stopifnot(is.list(ctx), !is.null(ctx$scale))
+      rowSums((X - matrix(x0, nrow(X), ncol(X), TRUE))^2) * ctx$scale
+    }
+  )
+  class(spec) <- "dnn_distance"
+
+  X <- matrix(1:12, 4, 3)
+  X0 <- matrix(c(0, 0, 0, 1, 1, 1), 2, 3, byrow = TRUE)
+
+  dctx <- list(scale = 2)
+  D <- distance_eval_batch(spec, X, X0, ctx = dctx)
+  expect_equal(dim(D), c(4L, 2L))
+  expect_true(all(D[, 1] == rowSums((X - 0)^2) * 2))
+  expect_equal(env$count, 0L) # setup not called because ctx was provided
+})
+
+test_that("distance_names() returns sorted registry names", {
+  nmA <- paste0("zA_", sample.int(1e6, 1))
+  nmB <- paste0("aB_", sample.int(1e6, 1))
+  register_distance(nmA, function(X, x0, ctx) rowSums(abs(X - matrix(x0, nrow(X), ncol(X), TRUE))))
+  register_distance(nmB, function(X, x0, ctx) rowSums((X - matrix(x0, nrow(X), ncol(X), TRUE))^2))
+  dn <- distance_names()
+  expect_true(all(sort(dn) == dn))
+  expect_true(all(c(nmA, nmB) %in% dn))
 })
