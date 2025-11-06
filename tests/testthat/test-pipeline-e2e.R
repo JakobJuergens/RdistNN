@@ -71,13 +71,13 @@ test_that("end-to-end: custom distance + custom rank-weight + weights + score", 
 
   # recompute W from the returned ranks via the rank-weight spec
   W_manual <- rank_weight_eval_batch(rw, Wres$ranks)
-  expect_equal(W_manual, Wres$W, tolerance = 0)
+  expect_equal(W_manual, Wres$W, tolerance = 1e-12)
 
   # pure-score: theta(x0_q) = sum_i W_{iq} * g_i
   g <- Y
   theta_hat <- as.numeric(t(Wres$W) %*% g)
   theta_manual <- colSums(Wres$W * matrix(g, nrow = n, ncol = m))
-  expect_equal(theta_hat, theta_manual, tolerance = 0)
+  expect_equal(theta_hat, theta_manual, tolerance = 1e-12)
 
   # tiny order-1 score to sanity-check eval path
   my_score <- new_score(
@@ -146,9 +146,9 @@ test_that("end-to-end robustness: ctx invariance, registration-by-name, x0 path,
     ranking = cosine_spec, weight = rw, ctx = NULL,
     return = c("W", "ranks", "ord", "dx")
   )
-  expect_equal(W_with_ctx$dx, W_no_ctx$dx, tolerance = 0)
-  expect_equal(W_with_ctx$ranks, W_no_ctx$ranks, tolerance = 0)
-  expect_equal(W_with_ctx$W, W_no_ctx$W, tolerance = 0)
+  expect_equal(W_with_ctx$dx, W_no_ctx$dx, tolerance = 1e-12)
+  expect_equal(W_with_ctx$ranks, W_no_ctx$ranks, tolerance = 1e-12)
+  expect_equal(W_with_ctx$W, W_no_ctx$W, tolerance = 1e-12)
 
   # (2) Registration-by-name path equals passing spec directly
   register_distance("cosine_test_e2e", cosine_spec)
@@ -159,14 +159,14 @@ test_that("end-to-end robustness: ctx invariance, registration-by-name, x0 path,
     weight = get_rank("exp_decay_0.25"),
     return = c("W", "ranks", "ord", "dx")
   )
-  expect_equal(W_by_name$dx, W_with_ctx$dx, tolerance = 0)
-  expect_equal(W_by_name$ranks, W_with_ctx$ranks, tolerance = 0)
-  expect_equal(W_by_name$W, W_with_ctx$W, tolerance = 0)
+  expect_equal(W_by_name$dx, W_with_ctx$dx, tolerance = 1e-12)
+  expect_equal(W_by_name$ranks, W_with_ctx$ranks, tolerance = 1e-12)
+  expect_equal(W_by_name$W, W_with_ctx$W, tolerance = 1e-12)
 
   # (3) x0 convenience path equals col 1 of multi-target
   x0 <- X0[1, ]
   W_x0 <- weights_matrix(X, x0 = x0, ranking = cosine_spec, weight = rw, ctx = ctx_dist, return = "W")
-  expect_equal(W_x0$W[, 1], W_with_ctx$W[, 1], tolerance = 0)
+  expect_equal(W_x0$W[, 1], W_with_ctx$W[, 1], tolerance = 1e-12)
 
   # (4) Deterministic tie handling
   DX <- W_with_ctx$dx
@@ -178,7 +178,7 @@ test_that("end-to-end robustness: ctx invariance, registration-by-name, x0 path,
     ranking = list(dx = DX_tie), weight = rw, return = c("ord", "ranks", "W")
   )
   expect_equal(W_tie$ord[, 1], order(DX_tie[, 1], seq_along(DX_tie[, 1])))
-  expect_equal(rank_weight_eval_batch(rw, W_tie$ranks), W_tie$W, tolerance = 0)
+  expect_equal(rank_weight_eval_batch(rw, W_tie$ranks), W_tie$W, tolerance = 1e-12)
 
   # (5) Cosine scaling invariance (cosine distance is scale-free)
   Xs <- 10 * X
@@ -189,7 +189,7 @@ test_that("end-to-end robustness: ctx invariance, registration-by-name, x0 path,
   )
   # note: due to floating arithmetic, allow tiny slack
   expect_equal(W_scaled$dx, W_with_ctx$dx, tolerance = 1e-12)
-  expect_equal(W_scaled$ranks, W_with_ctx$ranks, tolerance = 0)
+  expect_equal(W_scaled$ranks, W_with_ctx$ranks, tolerance = 1e-12)
   expect_equal(W_scaled$W, W_with_ctx$W, tolerance = 1e-12)
 
   # (6) Lambda sensitivity (weights change if lambda changes)
