@@ -7,7 +7,7 @@
 as_rank_weight(fun, name = "user_rank_weight")
 }
 \arguments{
-\item{fun}{Function \verb{(ranks, ctx) -> numeric(n)}.}
+\item{fun}{Function \verb{(ranks, ctx) -> numeric(n)} OR just \code{(ranks) -> numeric(n)}.}
 
 \item{name}{Character name.}
 }
