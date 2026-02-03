@@ -2,15 +2,9 @@
   errs <- character()
 
   # scalar/basic
-  if (!is.numeric(tau) || length(tau) != 1L || !(tau > 0 && tau < 1)) {
-    errs <- c(errs, "`tau` must be a numeric scalar in (0,1).")
-  }
-  if (!is.numeric(s) || length(s) != 1L || s < 1L) {
-    errs <- c(errs, "`s` must be a positive integer.")
-  }
-  if (!is.numeric(k) || length(k) != 1L || k < 1L) {
-    errs <- c(errs, "`k` must be a positive integer.")
-  }
+  tryCatch(.validate_scalar_prob(tau, arg = "tau"), error = function(e) errs <<- c(errs, conditionMessage(e)))
+  tryCatch(.validate_scalar_int(s, arg = "s", min = 1L), error = function(e) errs <<- c(errs, conditionMessage(e)))
+  tryCatch(.validate_scalar_int(k, arg = "k", min = 1L), error = function(e) errs <<- c(errs, conditionMessage(e)))
 
   # shapes by interface (no data needed)
   if (length(D_cols) < 1L) {
@@ -111,7 +105,7 @@ score_plqr_component <- function(
       Y <- as.numeric(data$Y)
 
       # data-time checks
-      if (length(x0) != ncol(X)) stop("x0 length must equal ncol(X).", call. = FALSE)
+      .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X")
       if (!all(is.finite(X))) stop("X must be finite.", call. = FALSE)
       if (!all(is.finite(D))) stop("D must be finite.", call. = FALSE)
       if (!all(is.finite(mD))) stop("m_D(X) must be finite.", call. = FALSE)

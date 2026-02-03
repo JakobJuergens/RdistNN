@@ -56,15 +56,13 @@ score_np_y <- function(
 ) {
   # XOR: exactly one of y_col or y
   if (is.null(y_col) == is.null(y)) {
-    stop("Provide exactly one of 'y_col' or 'y' (mutually exclusive).")
+    .abort_bad_state("Provide exactly one of 'y_col' or 'y' (mutually exclusive).")
   }
   # Enforce singleton score
   if (!is.numeric(s) || length(s) != 1L || s != 1L) {
     stop("`score_np_y` is a singleton (order-1) score: require `s = 1`.", call. = FALSE)
   }
-  if (!is.numeric(k) || length(k) != 1L || k < 1L) {
-    stop("`k` must be a positive integer.", call. = FALSE)
-  }
+  k <- .validate_scalar_int(k, arg = "k", min = 1L)
 
   new_score(
     name = "np_y_singleton_purescore",
@@ -73,8 +71,8 @@ score_np_y <- function(
       X <- as.matrix(data[, x_cols, drop = FALSE])
       yy <- if (!is.null(y_col)) as.numeric(data[[y_col]]) else as.numeric(y)
 
-      if (length(x0) != ncol(X)) stop("x0 length must equal ncol(X).", call. = FALSE)
-      if (length(yy) != nrow(X)) stop("y length must equal nrow(data).", call. = FALSE)
+      .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X")
+      yy <- .validate_vector_nrow(yy, nrow(X), arg = "y", ref = "data")
 
       # Do NOT check finiteness here (fail at evaluation time per convention)
       list(g = yy, n = nrow(X), p = ncol(X), s = 1L)
