@@ -91,7 +91,9 @@ new_rank_weight <- function(name, eval = NULL, eval_batch = NULL, setup = NULL) 
 #' rank_weight_eval(rw, c(3L, 1L, 2L))
 #' @export
 as_rank_weight <- function(fun, name = "user_rank_weight") {
-  stopifnot(is.function(fun))
+  if (!is.function(fun)) {
+    .abort_bad_arg("fun", "must be a function")
+  }
   takes_ctx <- .as_fun_accepts_ctx(fun)
 
   new_rank_weight(
@@ -135,7 +137,9 @@ register_rank <- function(name, spec = NULL) {
     }
   } else {
     # new form: register_rank(name, spec)
-    stopifnot(is.character(name), length(name) == 1L)
+    if (!is.character(name) || length(name) != 1L) {
+      .abort_bad_arg("name", "must be a character scalar")
+    }
     if (is.function(spec)) spec <- as_rank_weight(spec, name = name)
     if (is.list(spec) && (is.null(spec$name) || !nzchar(as.character(spec$name)))) {
       spec$name <- name
@@ -155,7 +159,9 @@ register_rank <- function(name, spec = NULL) {
 #' is_rank_weight(get_rank("tmp_rank_get"))
 #' @export
 get_rank <- function(name) {
-  stopifnot(is.character(name), length(name) == 1L)
+  if (!is.character(name) || length(name) != 1L) {
+    .abort_bad_arg("name", "must be a character scalar")
+  }
   if (!exists(name, envir = .rank_registry, inherits = FALSE)) {
     known <- ls(.rank_registry, all.names = FALSE)
     stop(sprintf("Unknown rank_weight '%s'. Known: %s", name, paste(known, collapse = ", ")), call. = FALSE)
@@ -188,21 +194,10 @@ list_rank_weights <- function() rank_names()
 
 # internal validators used by the evaluators
 .rank_check_vec <- function(ranks) {
-  r <- as.integer(ranks)
-  n <- length(r)
-  if (n == 0L) stop("`ranks` must have positive length.", call. = FALSE)
-  if (anyNA(r)) stop("`ranks` cannot contain NA.", call. = FALSE)
-  if (!setequal(r, seq_len(n))) stop("`ranks` must be a permutation of 1..n.", call. = FALSE)
-  r
+  .validate_permutation_vector(ranks, arg = "ranks")
 }
 .rank_check_mat <- function(rank_matrix) {
-  rank_matrix <- as.matrix(rank_matrix)
-  if (!is.integer(rank_matrix)) storage.mode(rank_matrix) <- "integer"
-  if (nrow(rank_matrix) == 0L || ncol(rank_matrix) == 0L) {
-    stop("`R` must have positive nrow and ncol.", call. = FALSE)
-  }
-  for (j in seq_len(ncol(rank_matrix))) .rank_check_vec(rank_matrix[, j])
-  rank_matrix
+  .validate_permutation_matrix(rank_matrix, arg = "R", col_arg = "ranks")
 }
 
 #' Evaluate rank-weight for a single target

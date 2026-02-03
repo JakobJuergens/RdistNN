@@ -20,20 +20,10 @@
 }
 
 .score_check_idxs <- function(idxs, n, s) {
-  idxs <- as.integer(idxs)
-  if (length(idxs) != s) stop(sprintf("`idxs` must have %d elements (order s).", s), call. = FALSE)
-  if (anyNA(idxs)) stop("`idxs` cannot contain NA.", call. = FALSE)
-  if (any(idxs < 1L | idxs > n)) stop("`idxs` must lie in 1..n.", call. = FALSE) # <- normalized
-  idxs
+  .validate_score_idxs(idxs, n, s)
 }
 .score_check_subs <- function(subs, n, s) {
-  if (!is.matrix(subs)) subs <- as.matrix(subs)
-  if (ncol(subs) != s) stop(sprintf("`subs` must have %d columns (order s).", s), call. = FALSE)
-  if (nrow(subs) == 0L) stop("`subs` must have at least one row.", call. = FALSE)
-  if (!is.integer(subs)) storage.mode(subs) <- "integer"
-  if (any(!is.finite(subs))) stop("`subs` contains non-finite entries.", call. = FALSE)
-  if (any(subs < 1L | subs > n)) stop("`subs` indices must lie in 1..n.", call. = FALSE) # <- normalized
-  subs
+  .validate_score_subs(subs, n, s)
 }
 
 # --- constructors & predicates ------------------------------------------------
@@ -95,7 +85,12 @@ new_score <- function(
 #' score_eval(sc, c(1L, 3L), c(2, 4, 6), NULL)
 #' @export
 as_score <- function(f, s, name = deparse(substitute(f))) {
-  stopifnot(.is_fun(f, 2L), .is_scalar_int(s))
+  if (!.is_fun(f, 2L)) {
+    .abort_bad_arg("f", "must be a function with at least 2 arguments")
+  }
+  if (!.is_scalar_int(s)) {
+    .abort_bad_arg("s", "must be an integer scalar")
+  }
   new_score(
     name = name,
     order = as.integer(s),
@@ -127,7 +122,9 @@ is_compiled <- function(score) is_score(score) && !is.null(score$ptr)
 
 #' @noRd
 validate_score <- function(sc) {
-  stopifnot(inherits(sc, "ustat_score"))
+  if (!inherits(sc, "ustat_score")) {
+    .abort_bad_arg("sc", "must inherit from class 'ustat_score'")
+  }
   if (!nzchar(sc$name)) stop("score name must be non-empty", call. = FALSE)
   if (!(.is_scalar_int(sc$order) || .is_fun(sc$order, 1L))) {
     stop("`order` must be integer or function(n, data, ctx).", call. = FALSE)
@@ -317,11 +314,18 @@ register_score <- function(name, score = NULL) {
   if (missing(score)) {
     # Legacy: register_score(score)
     score <- name
-    stopifnot(is_score(score), nzchar(score$name))
+    if (!is_score(score) || !nzchar(score$name)) {
+      .abort_bad_arg("score", "must be a score object with a non-empty `$name`")
+    }
     nm <- score$name
   } else {
     # New: register_score(name, score)
-    stopifnot(is.character(name), length(name) == 1L, is_score(score))
+    if (!is.character(name) || length(name) != 1L) {
+      .abort_bad_arg("name", "must be a character scalar")
+    }
+    if (!is_score(score)) {
+      .abort_bad_arg("score", "must be a `ustat_score` object")
+    }
     if (is.null(score$name) || !nzchar(score$name)) score$name <- name
     nm <- name
   }

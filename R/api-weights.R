@@ -22,7 +22,10 @@
   if (is.function(distance)) {
     return(as_distance(distance, name = "user_distance"))
   }
-  stop("`distance` must be a dnn_distance, a registered name, or a function(X, x0, ctx)->numeric(n).")
+  .abort_bad_arg(
+    "distance",
+    "must be a dnn_distance, a registered name, or a function(X, x0, ctx)->numeric(n)"
+  )
 }
 
 # Accept a variety of "ranking" providers and return ranks (and optionally ord, dx)
@@ -45,20 +48,24 @@
   }
   make_from_ord <- function(order_matrix) {
     if (!is.integer(order_matrix)) storage.mode(order_matrix) <- "integer"
-    if (nrow(order_matrix) != n || ncol(order_matrix) != m) stop("`ord` must be n x m.")
+    if (nrow(order_matrix) != n || ncol(order_matrix) != m) {
+      .abort_bad_arg("ord", "must be n x m")
+    }
     for (j in seq_len(m)) {
       o <- order_matrix[, j]
-      if (!setequal(o, seq_len(n))) stop("Each column of `ord` must be a permutation of 1..n.")
+      if (!setequal(o, seq_len(n))) .abort_bad_state("Each column of `ord` must be a permutation of 1..n.")
     }
     rank_matrix <- apply(order_matrix, 2L, ord_to_ranks)
     list(ranks = rank_matrix, ord = order_matrix, dx = NULL)
   }
   make_from_ranks <- function(rank_matrix) {
     if (!is.integer(rank_matrix)) storage.mode(rank_matrix) <- "integer"
-    if (nrow(rank_matrix) != n || ncol(rank_matrix) != m) stop("`ranks` must be n x m.")
+    if (nrow(rank_matrix) != n || ncol(rank_matrix) != m) {
+      .abort_bad_arg("ranks", "must be n x m")
+    }
     for (j in seq_len(m)) {
       r <- rank_matrix[, j]
-      if (!setequal(r, seq_len(n))) stop("Each column of `ranks` must be a permutation of 1..n.")
+      if (!setequal(r, seq_len(n))) .abort_bad_state("Each column of `ranks` must be a permutation of 1..n.")
     }
     list(ranks = rank_matrix, ord = NULL, dx = NULL)
   }
@@ -91,7 +98,7 @@
     if (!is.null(ranking$dx)) {
       return(make_from_dx(ranking$dx))
     }
-    stop("`ranking` list must contain one of: $ranks, $ord, or $dx.")
+    .abort_bad_state("`ranking` list must contain one of: $ranks, $ord, or $dx.")
   }
 
   # 4) Matrix -> assume it is a ranks matrix
@@ -99,7 +106,7 @@
     return(make_from_ranks(ranking))
   }
 
-  stop(
+  .abort_bad_state(
     paste(
       "Unsupported `ranking` type. Provide a distance spec/name, a",
       "ranks/ord/dx matrix/list, or a function(X, X0, ctx)->{ranks|ord|dx}."
@@ -177,16 +184,18 @@ weights_matrix <- function(
   return = c("W")
 ) {
   # shapes
-  x_mat <- as.matrix(X)
-  if (!is.null(X0) && !is.null(x0)) stop("Provide either `X0` or `x0`, not both.")
+  x_mat <- .validate_matrix_nonempty(X, arg = "X")
+  if (!is.null(X0) && !is.null(x0)) .abort_bad_state("Provide either `X0` or `x0`, not both.")
   if (is.null(X0)) {
-    if (is.null(x0)) stop("Provide `X0` (m x p) or a single `x0` (length p).")
-    x0_mat <- matrix(as.numeric(x0), nrow = 1L)
+    if (is.null(x0)) .abort_bad_state("Provide `X0` (m x p) or a single `x0` (length p).")
+    x0_vec <- .validate_target_vector(x0, ncol(x_mat), x0_arg = "x0", x_arg = "X")
+    x0_mat <- matrix(x0_vec, nrow = 1L)
   } else {
     x0_mat <- as.matrix(X0)
+    if (ncol(x0_mat) == 0L) .abort_bad_state("`X` and `X0` must have at least one column.")
+    x0_mat <- .validate_ncol_relation(x_mat, x0_mat, y_arg = "X0", x_arg = "X", relation = "equal")
   }
-  if (ncol(x_mat) == 0L || ncol(x0_mat) == 0L) stop("`X` and `X0` must have at least one column.")
-  if (ncol(x_mat) != ncol(x0_mat)) stop("ncol(X0) must equal ncol(X).")
+  if (ncol(x0_mat) == 0L) .abort_bad_state("`X` and `X0` must have at least one column.")
 
   n <- nrow(x_mat)
   p <- ncol(x_mat)

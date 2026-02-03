@@ -55,14 +55,10 @@ score_cate_rho <- function(
 ) {
   # XOR: exactly one of rho_col or rho
   if (is.null(rho_col) == is.null(rho)) {
-    stop("Provide exactly one of 'rho_col' or 'rho' (mutually exclusive).")
+    .abort_bad_state("Provide exactly one of 'rho_col' or 'rho' (mutually exclusive).")
   }
-  if (!is.numeric(s) || length(s) != 1L || s < 1L) {
-    stop("`s` must be a positive integer.", call. = FALSE)
-  }
-  if (!is.numeric(k) || length(k) != 1L || k < 1L) {
-    stop("`k` must be a positive integer.", call. = FALSE)
-  }
+  s <- .validate_scalar_int(s, arg = "s", min = 1L)
+  k <- .validate_scalar_int(k, arg = "k", min = 1L)
 
   new_score(
     name = "cate_rho_purescore",
@@ -74,8 +70,8 @@ score_cate_rho <- function(
       X <- as.matrix(data[, x_cols, drop = FALSE])
       r <- if (!is.null(rho_col)) as.numeric(data[[rho_col]]) else as.numeric(rho)
 
-      if (length(x0) != ncol(X)) stop("x0 length must equal ncol(X).", call. = FALSE)
-      if (length(r) != nrow(X)) stop("rho length must equal nrow(data).", call. = FALSE)
+      .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X")
+      r <- .validate_vector_nrow(r, nrow(X), arg = "rho", ref = "data")
 
       # DO NOT check finiteness here (tests expect failure at evaluation)
       list(g = r, n = nrow(X), p = ncol(X), s = as.integer(s))

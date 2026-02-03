@@ -98,14 +98,14 @@ new_distance <- function(name, eval = NULL, eval_batch = NULL, setup = NULL) {
 #' distance_eval(spec, x_mat, c(0, 0, 0))
 #' @export
 as_distance <- function(fun, name = "user_distance") {
-  stopifnot(is.function(fun))
+  if (!is.function(fun)) {
+    .abort_bad_arg("fun", "must be a function")
+  }
   new_distance(
     name = name,
     eval = function(X, x0, ctx = NULL) {
-      x_mat <- as.matrix(X)
-      x0_vec <- as.numeric(x0)
-      if (ncol(x_mat) == 0L) stop("X must have at least one column.", call. = FALSE)
-      if (length(x0_vec) != ncol(x_mat)) stop("x0 length must equal ncol(X).", call. = FALSE)
+      x_mat <- .validate_matrix_nonempty(X, arg = "X")
+      x0_vec <- .validate_target_vector(x0, ncol(x_mat), x0_arg = "x0", x_arg = "X")
 
       d <- .distance_call_user(fun, x_mat, x0_vec, ctx)
       .distance_validate_output_vec(d, nrow(x_mat))
@@ -145,7 +145,9 @@ register_distance <- function(name, spec = NULL) {
       stop("Legacy register_distance(spec): spec must have a non-empty $name.", call. = FALSE)
     }
   } else {
-    stopifnot(is.character(name), length(name) == 1L)
+    if (!is.character(name) || length(name) != 1L) {
+      .abort_bad_arg("name", "must be a character scalar")
+    }
     if (is.function(spec)) spec <- as_distance(spec, name = name)
     if (is.list(spec) && (is.null(spec$name) || !nzchar(as.character(spec$name)))) {
       spec$name <- name
@@ -165,7 +167,9 @@ register_distance <- function(name, spec = NULL) {
 #' is_distance(d)
 #' @export
 get_distance <- function(name) {
-  stopifnot(is.character(name), length(name) == 1L)
+  if (!is.character(name) || length(name) != 1L) {
+    .abort_bad_arg("name", "must be a character scalar")
+  }
   if (!exists(name, envir = .dist_registry, inherits = FALSE)) {
     known <- ls(.dist_registry, all.names = FALSE)
     stop(sprintf(
@@ -209,10 +213,8 @@ list_distances <- function() distance_names()
 #' @export
 distance_eval <- function(spec, X, x0, ctx = NULL) {
   if (!is_distance(spec)) stop("`spec` must be a distance.", call. = FALSE)
-  x_mat <- as.matrix(X)
-  x0_vec <- as.numeric(x0)
-  if (ncol(x_mat) == 0L) stop("X must have at least one column.", call. = FALSE)
-  if (length(x0_vec) != ncol(x_mat)) stop("x0 length must equal ncol(X).", call. = FALSE)
+  x_mat <- .validate_matrix_nonempty(X, arg = "X")
+  x0_vec <- .validate_target_vector(x0, ncol(x_mat), x0_arg = "x0", x_arg = "X")
   if (is.null(ctx) && is.function(spec$setup)) ctx <- spec$setup(x_mat)
 
   has_eval <- .distance_has_eval(spec)
@@ -253,10 +255,8 @@ distance_eval <- function(spec, X, x0, ctx = NULL) {
 #' @export
 distance_eval_batch <- function(spec, X, X0, ctx = NULL) {
   if (!is_distance(spec)) stop("`spec` must be a distance.", call. = FALSE)
-  x_mat <- as.matrix(X)
-  x0_mat <- as.matrix(X0)
-  if (ncol(x_mat) == 0L) stop("X must have at least one column.", call. = FALSE)
-  if (ncol(x_mat) != ncol(x0_mat)) stop("ncol(X0) must match ncol(X).", call. = FALSE)
+  x_mat <- .validate_matrix_nonempty(X, arg = "X")
+  x0_mat <- .validate_ncol_relation(x_mat, X0, y_arg = "X0", x_arg = "X", relation = "match")
 
   if (is.null(ctx) && is.function(spec$setup)) ctx <- spec$setup(x_mat)
 

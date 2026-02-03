@@ -60,40 +60,37 @@ cate_dnn <- function(
 
   # Dispatch: data-frame API vs matrix API.
   if (!is.null(data)) {
-    stopifnot(is.data.frame(data))
-    x_mat <- as.matrix(data[, x_cols, drop = FALSE])
+    if (!is.data.frame(data)) {
+      .abort_bad_arg("data", "must be a data.frame")
+    }
+    x_mat <- .validate_matrix_nonempty(data[, x_cols, drop = FALSE], arg = "X")
     n <- nrow(x_mat)
     p <- ncol(x_mat)
 
     if (!is.null(pseudo_outcome)) {
-      psi <- as.numeric(pseudo_outcome)
-      if (length(psi) != n) stop("`pseudo_outcome` length must equal nrow(X).", call. = FALSE)
+      psi <- .validate_vector_nrow(pseudo_outcome, n, arg = "`pseudo_outcome`", ref = "X")
       m <- e <- NULL
     } else {
       # Need y,t and nuisance m,e to build ψ
       if (is.null(y_col) || is.null(t_col) || is.null(m_col) || is.null(e_col)) {
         stop("With `data=`, provide `pseudo_outcome` OR {y_col, t_col, m_col, e_col}.", call. = FALSE)
       }
-      y_vec <- as.numeric(data[[y_col]])
-      t_vec <- as.numeric(data[[t_col]])
-      if (any(!t_vec %in% c(0, 1))) stop("`t_col` must be binary in {0,1}.", call. = FALSE)
-      m <- as.numeric(data[[m_col]])
-      e <- as.numeric(data[[e_col]])
-      if (length(y_vec) != n || length(t_vec) != n || length(m) != n || length(e) != n) {
-        stop("y_col/t_col/m_col/e_col must all have length n.", call. = FALSE)
-      }
+      y_vec <- .validate_vector_nrow(data[[y_col]], n, arg = "y_col", ref = "X")
+      t_vec <- .validate_vector_nrow(data[[t_col]], n, arg = "t_col", ref = "X")
+      t_vec <- .validate_binary01(t_vec, arg = "t_col")
+      m <- .validate_vector_nrow(data[[m_col]], n, arg = "m_col", ref = "X")
+      e <- .validate_vector_nrow(data[[e_col]], n, arg = "e_col", ref = "X")
       den <- pmax(e * (1 - e), 1e-8)
       psi <- (y_vec - m) * (t_vec - e) / den
     }
   } else {
     # matrix API
     if (is.null(X)) stop("Provide either `data` ... or matrix interface via `X`.", call. = FALSE)
-    x_mat <- as.matrix(X)
+    x_mat <- .validate_matrix_nonempty(X, arg = "X")
     n <- nrow(x_mat)
     p <- ncol(x_mat)
     if (is.null(pseudo_outcome)) stop("Matrix API requires `pseudo_outcome`.", call. = FALSE)
-    psi <- as.numeric(pseudo_outcome)
-    if (length(psi) != n) stop("`pseudo_outcome` length must equal nrow(X).", call. = FALSE)
+    psi <- .validate_vector_nrow(pseudo_outcome, n, arg = "`pseudo_outcome`", ref = "X")
     m <- e <- NULL
   }
 
@@ -101,11 +98,11 @@ cate_dnn <- function(
   if (!is.null(X0) && !is.null(x0)) stop("Provide either `X0` or `x0`, not both.", call. = FALSE)
   if (is.null(X0)) {
     if (is.null(x0)) stop("Provide `X0` (m x p) or a single `x0` (length p).", call. = FALSE)
-    x0_mat <- matrix(as.numeric(x0), nrow = 1L)
+    x0_vec <- .validate_target_vector(x0, p, x0_arg = "x0", x_arg = "X")
+    x0_mat <- matrix(x0_vec, nrow = 1L)
   } else {
-    x0_mat <- as.matrix(X0)
+    x0_mat <- .validate_ncol_relation(x_mat, X0, y_arg = "X0", x_arg = "X", relation = "equal")
   }
-  if (ncol(x0_mat) != p) stop("ncol(X0) must equal ncol(X).", call. = FALSE)
 
   # Weights (rank-only DNN).
   keep_extras <- intersect(return, c("ranks", "ord", "dx"))

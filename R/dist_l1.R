@@ -4,8 +4,7 @@
 #' @noRd
 .dist_l1_R <- function(X, x0) {
   X <- as.matrix(X)
-  x0 <- as.numeric(x0)
-  if (length(x0) != ncol(X)) stop("x0 length must equal ncol(X).")
+  x0 <- .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X")
   rowSums(abs(X - matrix(x0, nrow(X), ncol(X), byrow = TRUE)))
 }
 
@@ -32,8 +31,7 @@
 dist_l1 <- function(X, x0) {
   .assert_no_na(X, x0)
   X <- as.matrix(X)
-  x0 <- as.numeric(x0)
-  if (length(x0) != ncol(X)) stop("x0 length must equal ncol(X).")
+  x0 <- .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X")
 
   cpp <- get0("rustat_dist_l1", mode = "function")
   if (!is.null(cpp)) {
@@ -113,7 +111,7 @@ distance_l1 <- function() {
       X0 <- as.matrix(X0)
       .assert_no_na(X)
       .assert_no_na(X0)
-      if (ncol(X0) != ncol(X)) stop("ncol(X0) must match ncol(X).")
+      X0 <- .validate_ncol_relation(X, X0, y_arg = "X0", x_arg = "X", relation = "match")
 
       cpp <- get0("rustat_dist_l1_batch", mode = "function")
       if (!is.null(cpp)) {
@@ -147,11 +145,9 @@ distance_l1 <- function() {
 dist_l1_scaled <- function(X, x0, inv_s) {
   .assert_no_na(X, x0)
   X <- as.matrix(X)
-  x0 <- as.numeric(x0)
-  inv_s <- as.numeric(inv_s)
-  if (length(x0) != ncol(X) || length(inv_s) != ncol(X)) {
-    stop("x0 and inv_s must be length p == ncol(X).")
-  }
+  validated <- .validate_x0_inv_s(x0, inv_s, ncol(X), x_arg = "X")
+  x0 <- validated$x0
+  inv_s <- validated$inv_s
 
   cpp <- get0("rustat_dist_l1_scaled", mode = "function")
   if (!is.null(cpp)) {
@@ -196,36 +192,46 @@ distance_l1_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
     },
     eval = function(X, x0, ctx) {
       .assert_no_na(X, x0)
+      X <- as.matrix(X)
       inv_s <- if (!is.null(ctx) && !is.null(ctx$inv_s)) {
         ctx$inv_s
       } else {
         .compute_inv_scale(X, rule, scale_vec, eps)
       }
+      validated <- .validate_x0_inv_s(x0, inv_s, ncol(X), x_arg = "X")
+      x0 <- validated$x0
+      inv_s <- validated$inv_s
 
       cpp <- get0("rustat_dist_l1_scaled", mode = "function")
       if (!is.null(cpp)) {
-        return(cpp(as.matrix(X), as.numeric(x0), as.numeric(inv_s)))
+        return(cpp(X, x0, inv_s))
       }
 
-      Xs <- if (!is.null(ctx) && !is.null(ctx$Xs)) ctx$Xs else .scale_cols(as.matrix(X), inv_s)
-      x0s <- as.numeric(x0) * as.numeric(inv_s)
+      Xs <- if (!is.null(ctx) && !is.null(ctx$Xs)) ctx$Xs else .scale_cols(X, inv_s)
+      x0s <- x0 * inv_s
       base$eval(Xs, x0s, NULL)
     },
     eval_batch = function(X, X0, ctx) {
       .assert_no_na(X)
       .assert_no_na(X0)
+      X <- as.matrix(X)
+      X0 <- .validate_ncol_relation(X, X0, y_arg = "X0", x_arg = "X", relation = "match")
       if (is.null(ctx) || is.null(ctx$inv_s)) {
         inv_s <- .compute_inv_scale(X, rule, scale_vec, eps)
         ctx <- list(inv_s = inv_s)
       }
+      inv_s <- as.numeric(ctx$inv_s)
+      if (length(inv_s) != ncol(X)) {
+        stop("inv_s length must equal ncol(X).", call. = FALSE)
+      }
 
       cpp <- get0("rustat_dist_l1_scaled_batch", mode = "function")
       if (!is.null(cpp)) {
-        return(cpp(as.matrix(X), as.matrix(X0), as.numeric(ctx$inv_s)))
+        return(cpp(X, X0, inv_s))
       }
 
-      Xs <- if (!is.null(ctx$Xs)) ctx$Xs else .scale_cols(as.matrix(X), ctx$inv_s)
-      X0s <- .scale_cols(as.matrix(X0), ctx$inv_s)
+      Xs <- if (!is.null(ctx$Xs)) ctx$Xs else .scale_cols(X, inv_s)
+      X0s <- .scale_cols(X0, inv_s)
       base$eval_batch(Xs, X0s, NULL)
     }
   )
