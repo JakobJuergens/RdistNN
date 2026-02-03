@@ -19,3 +19,8 @@ Accepts \strong{either} \verb{(name, spec)} or legacy single-arg form \code{(spe
 \code{spec$name} is used as the key. If \code{spec} is a function, it is wrapped with
 \code{\link[=as_rank_weight]{as_rank_weight()}}.
 }
+\examples{
+nm <- "tmp_rank_demo"
+register_rank(nm, function(ranks) rep(1 / length(ranks), length(ranks)))
+nm \%in\% rank_names()
+}

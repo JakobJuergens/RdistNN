@@ -12,18 +12,24 @@
   }
 }
 
+.coerce_inv_s <- function(scale_vec, p, eps) {
+  inv_s <- as.numeric(scale_vec)
+  if (length(inv_s) != p) stop("scale_vec must be length p when rule = 'custom'.", call. = FALSE)
+  1 / pmax(abs(inv_s), eps)
+}
+
 .compute_inv_scale <- function(X, rule = c("sd", "mad", "iqr", "range", "custom"),
                                scale_vec = NULL, eps = 1e-12) {
   rule <- match.arg(rule)
+  if (identical(rule, "custom")) {
+    return(.coerce_inv_s(scale_vec, ncol(X), eps))
+  }
+
   s <- switch(rule,
     sd = .col_sd(X),
     mad = .col_mad(X),
     iqr = .col_iqr(X),
-    range = .col_rng(X),
-    custom = {
-      if (is.null(scale_vec)) stop("scale_vec must be supplied for rule='custom'.")
-      as.numeric(scale_vec)
-    }
+    range = .col_rng(X)
   )
   if (length(s) != ncol(X)) stop("Scale vector length must match ncol(X).")
   s <- pmax(s, eps)

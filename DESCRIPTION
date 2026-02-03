@@ -23,6 +23,8 @@ Suggests:
     nloptr,
     quantreg,
     bench,
+    lintr,
+    styler,
     knitr,
     rmarkdown,
     methods,

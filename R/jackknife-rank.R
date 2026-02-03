@@ -24,6 +24,16 @@
 #'   - `theta0`: numeric length-q baseline aggregate,
 #'   - `theta_loo`: numeric matrix (n_ref x q) of delete-one aggregates,
 #'   - `info`: list(s, T, q, normalize).
+#' @examples
+#' set.seed(1)
+#' n <- 20
+#' p <- 2
+#' X <- matrix(rnorm(n * p), n, p)
+#' ranks <- cbind(matrix(sample.int(n, n * 3, replace = TRUE), n, 3), sample.int(n, n, replace = TRUE))
+#' a <- c(1, 1, 1)
+#' phi <- cbind(rnorm(n))
+#' out <- jackknife_fast_rank(ranks, a, phi, normalize = TRUE)
+#' str(out$theta0)
 #' @export
 jackknife_fast_rank <- function(ranks, a, phi, normalize = TRUE) {
   ranks <- as.matrix(ranks)

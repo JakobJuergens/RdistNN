@@ -22,3 +22,8 @@ Numeric vector length \code{n}.
 \description{
 Evaluate a distance spec at a single target
 }
+\examples{
+X <- matrix(rnorm(12), 4, 3)
+x0 <- c(0, 0, 0)
+distance_eval(distance_l2(), X, x0)
+}

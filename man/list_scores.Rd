@@ -12,3 +12,6 @@ character vector of names
 \description{
 List registered scores
 }
+\examples{
+head(list_scores(), 3)
+}

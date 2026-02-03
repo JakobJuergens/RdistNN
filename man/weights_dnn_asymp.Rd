@@ -38,3 +38,10 @@ weights_dnn_asymp(
 \description{
 DNN weights (asymptotic full-U), distance-based ranking
 }
+\examples{
+set.seed(1)
+X <- matrix(rnorm(20), 10, 2)
+X0 <- matrix(rnorm(4), 2, 2)
+out <- weights_dnn_asymp(X, X0, k = 2L, s = 3L, normalize = TRUE)
+dim(out$W)
+}

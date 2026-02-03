@@ -15,3 +15,6 @@ logical
 \description{
 Does a score have a compiled implementation?
 }
+\examples{
+is_compiled(new_score("r_only", order = 1L, eval = function(idxs, data, ctx, rng) data[idxs]))
+}

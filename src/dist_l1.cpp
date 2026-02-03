@@ -1,5 +1,5 @@
 // src/dist_l1.cpp
-// [[Rcpp::plugins(cpp11)]]
+// [[Rcpp::plugins(cpp17)]]
 // [[Rcpp::depends(Rcpp)]]
 #include <Rcpp.h>
 #include "fast_order.hpp"

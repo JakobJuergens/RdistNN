@@ -9,14 +9,6 @@
   R
 }
 
-# Small helper to build a random ranks matrix (each col a permutation 1..n)
-.rand_ranks_mat <- function(n, m) {
-  R <- matrix(NA_integer_, n, m)
-  set.seed(123)
-  for (j in seq_len(m)) R[, j] <- sample.int(n, n, replace = FALSE)
-  R
-}
-
 test_that("is_rank_weight() and as_rank_weight() basics", {
   skip_if_not(exists("is_rank_weight"), "is_rank_weight() not found")
   skip_if_not(exists("as_rank_weight"), "as_rank_weight() not found")
@@ -38,6 +30,20 @@ test_that("is_rank_weight() and as_rank_weight() basics", {
   expect_length(w, n)
   expect_true(all(is.finite(w)))
   expect_equal(sum(w), 1, tolerance = 1e-12)
+})
+
+test_that("new_rank_weight() builds validated specs", {
+  rw <- new_rank_weight(
+    name = "uniform_new",
+    eval = function(ranks, ctx = NULL) rep(1 / length(ranks), length(ranks))
+  )
+  expect_true(is_rank_weight(rw))
+  expect_equal(rw$name, "uniform_new")
+
+  expect_error(
+    new_rank_weight(name = "bad_new_rank"),
+    "must provide at least one of `eval` or `eval_batch`"
+  )
 })
 
 test_that("rank_weight_eval() and rank_weight_eval_batch() work (eval only path)", {
@@ -153,6 +159,13 @@ test_that("register_rank(), get_rank(), rank_names()/list_ranks() work (new + le
 
   # Unknown name errors list known entries
   expect_error(get_rank("__no_such_rank__"), "Unknown rank_weight")
+})
+
+test_that("list_rank_weights() aliases rank_names()", {
+  expect_equal(
+    getFromNamespace("list_rank_weights", "RdistNN")(),
+    rank_names()
+  )
 })
 
 test_that("input validation: bad ranks and bad specs produce clear errors", {
@@ -373,4 +386,31 @@ test_that("is_rank_weight recognizes list specs flagged with __kind", {
   rw_list$.__kind <- "rank_weight"
   class(rw_list) <- c("rank_weight", class(rw_list))
   expect_true(is_rank_weight(rw_list))
+})
+
+test_that("register_rank validates malformed specs and normalizes named list specs", {
+  # malformed spec: missing eval and eval_batch
+  expect_error(
+    register_rank("bad_rank_spec", list(name = "bad_rank_spec")),
+    "must provide at least one of `eval` or `eval_batch`"
+  )
+
+  # malformed legacy call: no $name
+  expect_error(
+    register_rank(list(eval = function(r, ctx = NULL) rep(1, length(r)))),
+    "must have a non-empty \\$name"
+  )
+
+  # named list spec in two-arg form should be normalized to rank_weight
+  nm <- paste0("rw_list_", as.integer(runif(1, 3e6, 4e6)))
+  spec <- list(
+    eval = function(r, ctx = NULL) {
+      w <- 1 / as.numeric(r)
+      w / sum(w)
+    }
+  )
+  register_rank(nm, spec)
+  got <- get_rank(nm)
+  expect_true(is_rank_weight(got))
+  expect_equal(got$name, nm)
 })

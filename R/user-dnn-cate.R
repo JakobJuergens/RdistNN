@@ -29,6 +29,18 @@
 #'   plus `"psi"`, `"nuisance"`, `"ess"`, `"neighbors"`, `"loo"`.
 #'
 #' @return A `cate_result` with fields `tau`, optional `se`, `meta`, and requested extras.
+#' @examples
+#' set.seed(1)
+#' n <- 50
+#' X <- matrix(rnorm(n * 2), n, 2)
+#' X0 <- matrix(rnorm(6), 3, 2)
+#' psi <- rnorm(n)
+#' out <- cate_dnn(
+#'   X = X, X0 = X0, pseudo_outcome = psi,
+#'   distance = "l2", method = "exact", k = 2L, s = 3L,
+#'   se = FALSE, return = c("W", "tau")
+#' )
+#' out$tau
 #' @export
 cate_dnn <- function(
   data = NULL,

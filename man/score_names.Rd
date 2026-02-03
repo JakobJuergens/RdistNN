@@ -12,3 +12,6 @@ character vector of names
 \description{
 Back-compat alias for \code{\link[=list_scores]{list_scores()}}
 }
+\examples{
+identical(score_names(), list_scores())
+}

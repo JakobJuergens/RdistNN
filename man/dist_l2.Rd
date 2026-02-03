@@ -19,3 +19,7 @@ Numeric vector of length \eqn{n}.
 \description{
 Computes \eqn{d_i = \|X_{i,\cdot} - x_0\|_2} for each row.
 }
+\examples{
+X <- matrix(rnorm(12), 4, 3)
+dist_l2(X, c(0, 0, 0))
+}

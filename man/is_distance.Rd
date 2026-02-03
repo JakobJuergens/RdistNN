@@ -17,3 +17,7 @@ A distance spec is a list with \code{eval(X, x0, ctx)} and/or
 \code{eval_batch(X, X0, ctx)}. It may optionally define \code{setup(X)} to precompute
 a context (e.g., scaling).
 }
+\examples{
+is_distance(distance_l2())
+is_distance(list(eval = function(X, x0, ctx) rep(0, nrow(X))))
+}

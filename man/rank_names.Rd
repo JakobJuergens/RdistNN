@@ -12,3 +12,6 @@ Character vector.
 \description{
 List registered rank_weight names
 }
+\examples{
+head(rank_names(), 3)
+}

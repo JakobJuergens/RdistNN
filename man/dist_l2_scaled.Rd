@@ -21,3 +21,7 @@ Numeric vector of length \eqn{n}.
 \description{
 Computes \eqn{\|(X_{i,\cdot} - x_0) \odot \mathrm{inv\_s}\|_2} (or squared).
 }
+\examples{
+X <- matrix(rnorm(12), 4, 3)
+dist_l2_scaled(X, c(0, 0, 0), inv_s = c(1, 2, 0.5))
+}

@@ -1,4 +1,5 @@
 // src/score_plqr.cpp
+// [[Rcpp::plugins(cpp17)]]
 // [[Rcpp::depends(Rcpp)]]
 #include <Rcpp.h>
 #ifdef _OPENMP
@@ -101,6 +102,7 @@ NumericVector rustat_plqr_g_indexed(IntegerVector idxs, SEXP ctx_)
   const int p_d = ctx->p_d;
   const int j0 = ctx->j - 1;
   NumericVector g(m);
+  int first_bad_index = -1;
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (m >= 1024)
@@ -108,8 +110,16 @@ NumericVector rustat_plqr_g_indexed(IntegerVector idxs, SEXP ctx_)
   for (int t = 0; t < m; ++t)
   {
     const int i = idxs[t] - 1;
-    if (i < 0 || i >= ctx->n)
-      Rcpp::stop("Index out of bounds in plqr_g_indexed.");
+    if (i < 0 || i >= ctx->n) {
+#ifdef _OPENMP
+#pragma omp critical(rustat_plqr_g_indexed_error)
+#endif
+      {
+        if (first_bad_index < 0) first_bad_index = i + 1;
+      }
+      g[t] = NA_REAL;
+      continue;
+    }
     double db = 0.0;
     for (int pd = 0; pd < p_d; ++pd)
       db += ctx->D(i, pd) * ctx->beta[pd];
@@ -118,6 +128,9 @@ NumericVector rustat_plqr_g_indexed(IntegerVector idxs, SEXP ctx_)
     const double resid = ctx->tau - ind;
     const double rDj = ctx->D(i, j0) - ctx->mD(i, j0);
     g[t] = resid * rDj;
+  }
+  if (first_bad_index >= 0) {
+    Rcpp::stop("Index out of bounds in plqr_g_indexed.");
   }
   return g;
 }

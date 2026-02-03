@@ -190,6 +190,9 @@ plqr_demo_data <- function(n = 300,
 #' @param tau Quantile level \eqn{\tau} (should match the data-generating level).
 #'
 #' @return A numeric matrix of size \eqn{n \times p_d}.
+#' @examples
+#' demo <- plqr_demo_data(n = 100, p = 2, p_d = 2, tau = 0.5, seed = 1)
+#' plqr_moment(demo$data, beta = demo$truth$beta_true, tau = 0.5)
 #' @export
 plqr_moment <- function(df, beta, tau) {
   p_d <- sum(grepl("^D[0-9]+$", names(df)))
@@ -205,6 +208,8 @@ plqr_moment <- function(df, beta, tau) {
 
 #' Quick helper: sample a batch of subsets (for U-stat / localization experiments)
 #' @inheritParams cate_demo_subsets
+#' @examples
+#' plqr_demo_subsets(n = 10, K = 4, s = 3, seed = 1)
 #' @export
 plqr_demo_subsets <- function(n, K = 1000L, s = 8L, seed = NULL) {
   stopifnot(s >= 1L, s <= n, K >= 1L)

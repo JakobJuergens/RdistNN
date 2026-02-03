@@ -8,6 +8,13 @@
 # minimal internal helpers (no extra deps)
 .is_scalar_int <- function(x) is.numeric(x) && length(x) == 1L && is.finite(x) && as.integer(x) == x
 .is_fun <- function(f, n = 0L) is.function(f) && (length(formals(f)) >= n)
+.call_with_supported_args <- function(fun, args) {
+  fmls <- tryCatch(names(formals(fun)), error = function(e) character())
+  if ("..." %in% fmls) {
+    return(do.call(fun, args))
+  }
+  do.call(fun, args[intersect(names(args), fmls)])
+}
 
 # derive n from data (matrix/data.frame/vector)
 .score_n <- function(data) {
@@ -47,6 +54,13 @@
 #' @param randomized Logical: does the kernel draw randomness?
 #' @param symmetric Logical: permutation symmetry (engine assumes TRUE).
 #' @return An object of class `ustat_score`.
+#' @examples
+#' sc <- new_score(
+#'   name = "sum2",
+#'   order = 2L,
+#'   eval = function(idxs, data, ctx, rng) sum(data[idxs])
+#' )
+#' is_score(sc)
 #' @export
 new_score <- function(
   name,
@@ -78,21 +92,38 @@ new_score <- function(
 #' @param s integer order
 #' @param name character scalar used as the score name (optional)
 #' @return A \code{ustat_score}
+#' @examples
+#' sc <- as_score(function(idxs, data) prod(data[idxs]), s = 2L, name = "prod2")
+#' score_eval(sc, c(1L, 3L), c(2, 4, 6), NULL)
 #' @export
 as_score <- function(f, s, name = deparse(substitute(f))) {
   stopifnot(.is_fun(f, 2L), .is_scalar_int(s))
-  new_score(name = name, order = as.integer(s), eval = f)
+  new_score(
+    name = name,
+    order = as.integer(s),
+    eval = function(idxs, data, ctx, rng) {
+      .call_with_supported_args(
+        f,
+        list(idxs = idxs, data = data, ctx = ctx, rng = rng)
+      )
+    }
+  )
 }
 
 #' Is object a \code{ustat_score}?
 #' @param x any object
 #' @return logical
+#' @examples
+#' sc <- as_score(function(idxs, data) sum(data[idxs]), s = 2L)
+#' is_score(sc)
 #' @export
 is_score <- function(x) inherits(x, "ustat_score")
 
 #' Does a score have a compiled implementation?
 #' @param score a \code{ustat_score}
 #' @return logical
+#' @examples
+#' is_compiled(new_score("r_only", order = 1L, eval = function(idxs, data, ctx, rng) data[idxs]))
 #' @export
 is_compiled <- function(score) is_score(score) && !is.null(score$ptr)
 
@@ -111,9 +142,6 @@ validate_score <- function(sc) {
   }
   sc
 }
-
-# Optional parity helper (export if you like)
-score_names <- function() list_scores()
 
 # --- pretty printing ----------------------------------------------------------
 
@@ -145,6 +173,15 @@ print.ustat_score <- function(x, ...) {
 #' @param data data.frame/matrix
 #' @param ... passed to score$setup
 #' @return context object or NULL
+#' @examples
+#' sc <- new_score(
+#'   name = "ctx_sum",
+#'   order = 1L,
+#'   setup = function(data, ...) list(offset = 1),
+#'   eval = function(idxs, data, ctx, rng) data[idxs] + ctx$offset
+#' )
+#' ctx <- score_setup(sc, 1:3)
+#' score_eval(sc, 2L, 1:3, ctx)
 #' @export
 score_setup <- function(score, data, ...) UseMethod("score_setup")
 #' @export
@@ -161,6 +198,13 @@ score_setup.ustat_score <- function(score, data, ...) {
 #' @param data data used by the score (for dynamic orders)
 #' @param ctx optional context
 #' @return integer order \code{s}
+#' @examples
+#' sc <- new_score(
+#'   name = "dyn",
+#'   order = function(n, data, ctx) if (n > 5) 3L else 2L,
+#'   eval = function(idxs, data, ctx, rng) sum(data[idxs])
+#' )
+#' score_order(sc, 4L, 1:4, NULL)
 #' @export
 score_order <- function(score, n, data, ctx = NULL) UseMethod("score_order")
 #' @export
@@ -175,8 +219,8 @@ score_order.ustat_score <- function(score, n, data, ctx = NULL) {
 
 #' Evaluate kernel on one subset
 #'
-#' For maximum robustness, this prefers the batch path when available and
-#' otherwise falls back to the scalar path.
+#' For maximum robustness, this prefers the scalar `eval()` path when available
+#' and otherwise falls back to `eval_batch()` for a single-row batch.
 #'
 #' @param score ustat_score
 #' @param idxs integer vector of length \code{s}
@@ -184,6 +228,9 @@ score_order.ustat_score <- function(score, n, data, ctx = NULL) {
 #' @param ctx optional context
 #' @param rng optional RNG key/seed
 #' @return numeric(1)
+#' @examples
+#' sc <- as_score(function(idxs, data) sum(data[idxs]), s = 2L)
+#' score_eval(sc, c(1L, 2L), c(3, 4, 5), NULL)
 #' @export
 score_eval <- function(score, idxs, data, ctx = NULL, rng = NULL) UseMethod("score_eval")
 #' @export
@@ -217,6 +264,10 @@ score_eval.ustat_score <- function(score, idxs, data, ctx = NULL, rng = NULL) {
 #' @param ctx optional context
 #' @param rng optional RNG key/seed
 #' @return numeric vector of length \code{K}
+#' @examples
+#' sc <- as_score(function(idxs, data) sum(data[idxs]), s = 2L)
+#' subs <- rbind(c(1L, 2L), c(2L, 3L))
+#' score_eval_batch(sc, subs, c(3, 4, 5), NULL)
 #' @export
 score_eval_batch <- function(score, subs, data, ctx = NULL, rng = NULL) UseMethod("score_eval_batch")
 #' @export
@@ -259,9 +310,13 @@ score_eval_batch.ustat_score <- function(score, subs, data, ctx = NULL, rng = NU
 #' @param name Character scalar **or** a score object (legacy single-arg form).
 #' @param score Optional `ustat_score` when using the two-arg form.
 #' @return Invisibly, the registered name.
+#' @examples
+#' sc <- as_score(function(idxs, data) sum(data[idxs]), s = 2L, name = "tmp_score_demo")
+#' register_score(sc)
+#' "tmp_score_demo" %in% list_scores()
 #' @export
 register_score <- function(name, score = NULL) {
-  if (is.null(score)) {
+  if (missing(score)) {
     # Legacy: register_score(score)
     score <- name
     stopifnot(is_score(score), nzchar(score$name))
@@ -279,6 +334,11 @@ register_score <- function(name, score = NULL) {
 #' Retrieve a registered score
 #' @param name character scalar
 #' @return a \code{ustat_score}
+#' @examples
+#' sc0 <- as_score(function(idxs, data) sum(data[idxs]), s = 2L, name = "tmp_score_get")
+#' register_score(sc0)
+#' sc <- get_score("tmp_score_get")
+#' is_score(sc)
 #' @export
 get_score <- function(name) {
   if (!exists(name, envir = .score_registry, inherits = FALSE)) {
@@ -289,10 +349,14 @@ get_score <- function(name) {
 
 #' List registered scores
 #' @return character vector of names
+#' @examples
+#' head(list_scores(), 3)
 #' @export
 list_scores <- function() sort(ls(envir = .score_registry, all.names = FALSE))
 
 #' Back-compat alias for [list_scores()]
 #' @return character vector of names
+#' @examples
+#' identical(score_names(), list_scores())
 #' @export
 score_names <- function() list_scores()

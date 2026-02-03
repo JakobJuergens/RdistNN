@@ -39,3 +39,11 @@ An object of class \code{ustat_score}.
 A score (kernel) is a symmetric function evaluated on s-sized subsets.
 Provide either \code{ptr} (compiled fast path), or an R \code{eval_batch}, or an R \code{eval}.
 }
+\examples{
+sc <- new_score(
+  name = "sum2",
+  order = 2L,
+  eval = function(idxs, data, ctx, rng) sum(data[idxs])
+)
+is_score(sc)
+}

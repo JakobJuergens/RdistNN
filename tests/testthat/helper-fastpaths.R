@@ -5,9 +5,14 @@
 }
 
 .has_plqr_ctx_syms <- function() {
-  exists("rustat_plqr_ctx_new", mode = "function") &&
+  has_ctx_fun <- exists("rustat_plqr_ctx_create", mode = "function") ||
+    exists("rustat_plqr_ctx_new", mode = "function")
+  has_ctx_sym <- isTRUE(is.loaded("_RdistNN_rustat_plqr_ctx_create", PACKAGE = "RdistNN")) ||
+    isTRUE(is.loaded("_RdistNN_rustat_plqr_ctx_new", PACKAGE = "RdistNN"))
+
+  has_ctx_fun &&
     exists("rustat_plqr_g_all", mode = "function") &&
-    isTRUE(is.loaded("_RdistNN_rustat_plqr_ctx_new", PACKAGE = "RdistNN")) &&
+    has_ctx_sym &&
     isTRUE(is.loaded("_RdistNN_rustat_plqr_g_all", PACKAGE = "RdistNN"))
 }
 

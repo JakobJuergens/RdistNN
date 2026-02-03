@@ -15,3 +15,6 @@ Integer ranks vector \code{r} where \code{r[i]} is the rank of item \code{i}.
 \description{
 Convert an index order to ranks (inverse permutation)
 }
+\examples{
+ord_to_ranks(c(3L, 1L, 2L))
+}

@@ -142,6 +142,9 @@ distance_l1 <- function() {
 #'   (often the reciprocals of column scale estimates).
 #'
 #' @return Numeric vector of length \eqn{n}.
+#' @examples
+#' X <- matrix(rnorm(12), 4, 3)
+#' dist_l1_scaled(X, c(0, 0, 0), inv_s = c(1, 2, 0.5))
 #' @export
 dist_l1_scaled <- function(X, x0, inv_s) {
   .assert_no_na(X, x0)
@@ -174,6 +177,12 @@ dist_l1_scaled <- function(X, x0, inv_s) {
 #' @param eps Small positive number to avoid division by zero in scaling.
 #'
 #' @return A list with `name`, `setup()`, `eval()`, and `eval_batch()`.
+#' @examples
+#' X <- matrix(rnorm(12), 4, 3)
+#' X0 <- matrix(rnorm(6), 2, 3)
+#' dspec <- distance_l1_scaled(rule = "sd")
+#' ctx <- dspec$setup(X)
+#' dspec$eval_batch(X, X0, ctx)
 #' @export
 distance_l1_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
                                scale_vec = NULL, eps = 1e-12) {
@@ -272,13 +281,4 @@ order_by_l1_scaled <- function(X, x0,
   dx <- dist_l1_scaled(X, x0, inv_s)
   ord <- order(dx, seq_along(dx))
   list(dx = dx, ord = as.integer(ord))
-}
-
-# --- internal helper ----------------------------------------------------------
-#' @noRd
-.coerce_inv_s <- function(scale_vec, p, eps) {
-  inv_s <- as.numeric(scale_vec)
-  if (length(inv_s) != p) stop("scale_vec must be length p when rule = 'custom'.")
-  inv_s <- 1 / pmax(abs(inv_s), eps)
-  inv_s
 }

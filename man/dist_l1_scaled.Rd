@@ -22,3 +22,7 @@ Computes \eqn{\|(X_{i,\cdot} - x_0) \odot \mathrm{inv\_s}\|_1} for each row.
 If \code{rustat_dist_l1_scaled()} exists it is used; else inputs are rescaled
 in R and passed to \code{\link[=dist_l1]{dist_l1()}}.
 }
+\examples{
+X <- matrix(rnorm(12), 4, 3)
+dist_l1_scaled(X, c(0, 0, 0), inv_s = c(1, 2, 0.5))
+}

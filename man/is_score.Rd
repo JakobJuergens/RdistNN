@@ -15,3 +15,7 @@ logical
 \description{
 Is object a \code{ustat_score}?
 }
+\examples{
+sc <- as_score(function(idxs, data) sum(data[idxs]), s = 2L)
+is_score(sc)
+}

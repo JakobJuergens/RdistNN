@@ -19,3 +19,7 @@ A list with \code{dx} and \code{ord}.
 \description{
 Order rows by L2 distance to a point (stable ties)
 }
+\examples{
+X <- matrix(rnorm(10), 5, 2)
+order_by_l2(X, c(0, 0))
+}

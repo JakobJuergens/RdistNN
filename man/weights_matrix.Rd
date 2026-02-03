@@ -49,6 +49,16 @@ An object of class \code{weights_result} with components:
 \description{
 This is the general, ranker-agnostic top-layer. It consumes a \emph{ranking provider}
 (distance, custom function, or precomputed ranks/orders/distances) and a weighting
-rule (either a \code{rank_weight} or a \code{dist_weight}), then returns the weight matrix
-\code{W} (n x m).
+rule (\code{rank_weight}), then returns the weight matrix \code{W} (n x m).
+}
+\examples{
+set.seed(1)
+X <- matrix(rnorm(20), 10, 2)
+X0 <- matrix(rnorm(6), 3, 2)
+rw <- as_rank_weight(function(r) {
+  w <- 1 / as.numeric(r)
+  w / sum(w)
+}, name = "inv_rank")
+out <- weights_matrix(X, X0, ranking = "l2", weight = rw, return = c("W", "ranks"))
+dim(out$W)
 }

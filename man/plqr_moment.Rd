@@ -27,3 +27,7 @@ Computes, for each observation \eqn{i}, the orthogonal PLQR moment
 where \eqn{m_{D}(X) = \mathbb{E}[D \mid X]} is provided as an oracle nuisance.
 This is the vector moment entering the Z-estimation.
 }
+\examples{
+demo <- plqr_demo_data(n = 100, p = 2, p_d = 2, tau = 0.5, seed = 1)
+plqr_moment(demo$data, beta = demo$truth$beta_true, tau = 0.5)
+}
