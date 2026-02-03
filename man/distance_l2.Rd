@@ -26,3 +26,9 @@ Uses compiled paths when present.
 \code{eval_batch(X, X0)} expects an \eqn{m \times p} matrix of queries \code{X0}.
 }
 
+\examples{
+X <- matrix(rnorm(12), 4, 3)
+X0 <- matrix(rnorm(6), 2, 3)
+dspec <- distance_l2()
+dspec$eval_batch(X, X0)
+}

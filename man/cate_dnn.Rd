@@ -71,3 +71,16 @@ both \code{m_col} and \code{e_col} to build the pseudo-outcome internally.
 \item \code{X}, \code{X0}/\code{x0}, and \code{pseudo_outcome}.
 }
 }
+\examples{
+set.seed(1)
+n <- 50
+X <- matrix(rnorm(n * 2), n, 2)
+X0 <- matrix(rnorm(6), 3, 2)
+psi <- rnorm(n)
+out <- cate_dnn(
+  X = X, X0 = X0, pseudo_outcome = psi,
+  distance = "l2", method = "exact", k = 2L, s = 3L,
+  se = FALSE, return = c("W", "tau")
+)
+out$tau
+}

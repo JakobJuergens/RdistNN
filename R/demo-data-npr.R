@@ -99,6 +99,8 @@ np_demo_data <- function(n = 200,
 
 #' Quick helper: sample a batch of subsets (singleton by default)
 #' @inheritParams cate_demo_subsets
+#' @examples
+#' np_demo_subsets(n = 10, K = 4, s = 1, seed = 1)
 #' @export
 np_demo_subsets <- function(n, K = 1000L, s = 1L, seed = NULL) {
   stopifnot(s >= 1L, s <= n, K >= 1L)

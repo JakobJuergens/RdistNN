@@ -38,3 +38,10 @@ a \code{weights_result} with \code{W} and metadata
 \description{
 DNN weights (exact full-U), distance-based ranking
 }
+\examples{
+set.seed(1)
+X <- matrix(rnorm(20), 10, 2)
+X0 <- matrix(rnorm(6), 3, 2)
+out <- weights_dnn_exact(X, X0, distance = "l2", k = 2L, s = 3L, return = "W")
+dim(out$W)
+}

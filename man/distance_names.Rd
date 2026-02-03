@@ -12,3 +12,6 @@ Character vector of names.
 \description{
 List registered distances
 }
+\examples{
+head(distance_names(), 3)
+}

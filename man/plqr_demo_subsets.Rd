@@ -18,3 +18,6 @@ plqr_demo_subsets(n, K = 1000L, s = 8L, seed = NULL)
 \description{
 Quick helper: sample a batch of subsets (for U-stat / localization experiments)
 }
+\examples{
+plqr_demo_subsets(n = 10, K = 4, s = 3, seed = 1)
+}

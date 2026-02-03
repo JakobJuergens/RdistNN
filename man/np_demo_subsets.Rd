@@ -18,3 +18,6 @@ np_demo_subsets(n, K = 1000L, s = 1L, seed = NULL)
 \description{
 Quick helper: sample a batch of subsets (singleton by default)
 }
+\examples{
+np_demo_subsets(n = 10, K = 4, s = 1, seed = 1)
+}

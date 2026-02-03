@@ -1,5 +1,5 @@
 // src/fast_order.cpp
-// [[Rcpp::plugins(cpp11)]]
+// [[Rcpp::plugins(cpp17)]]
 #include "fast_order.hpp"
 #include <Rcpp.h>
 #include <vector>

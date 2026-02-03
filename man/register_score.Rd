@@ -18,3 +18,8 @@ Invisibly, the registered name.
 Accepts \strong{either} \code{(score)} where \code{score$name} is used as key,
 or \verb{(name, score)} where \code{name} overrides/sets \code{score$name}.
 }
+\examples{
+sc <- as_score(function(idxs, data) sum(data[idxs]), s = 2L, name = "tmp_score_demo")
+register_score(sc)
+"tmp_score_demo" \%in\% list_scores()
+}

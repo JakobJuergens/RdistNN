@@ -1,6 +1,6 @@
 # R/api_weights.R
 # -----------------------------------------------------------------------------
-# High-level API: from {X, X0/x0} + RANKING + (rank_weight | dist_weight) -> W
+# High-level API: from {X, X0/x0} + RANKING + rank_weight -> W
 # Modular, user-friendly, ranker-agnostic. Works with distances, custom rankers,
 # or precomputed ranks/orders/distances. DNN wrappers provided below.
 # -----------------------------------------------------------------------------
@@ -104,7 +104,7 @@
   stop("Unsupported `ranking` type. Provide a distance spec/name, a ranks/ord/dx matrix/list, or a function(X, X0, ctx)->{ranks|ord|dx}.")
 }
 
-# Accept a rank_weight or a dist_weight (or a zero-arg factory returning one)
+# Accept a rank_weight (or a zero-arg factory returning one)
 .resolve_weight <- function(weight) {
   # Accept a rank_weight spec
   if (is_rank_weight(weight)) {
@@ -136,8 +136,7 @@
 #'
 #' This is the general, ranker-agnostic top-layer. It consumes a *ranking provider*
 #' (distance, custom function, or precomputed ranks/orders/distances) and a weighting
-#' rule (either a `rank_weight` or a `dist_weight`), then returns the weight matrix
-#' `W` (n x m).
+#' rule (`rank_weight`), then returns the weight matrix `W` (n x m).
 #'
 #' @param X  numeric matrix (n x p), reference data.
 #' @param X0 numeric matrix (m x p), target points (rows). If missing, use `x0`.
@@ -155,6 +154,16 @@
 #'   - `W`   : numeric matrix n x m (columns typically sum to 1),
 #'   - optional: `ord`, `ranks`, `dx`,
 #'   - `meta`: list with `n, m, p, weight_kind, weight_name`.
+#' @examples
+#' set.seed(1)
+#' X <- matrix(rnorm(20), 10, 2)
+#' X0 <- matrix(rnorm(6), 3, 2)
+#' rw <- as_rank_weight(function(r) {
+#'   w <- 1 / as.numeric(r)
+#'   w / sum(w)
+#' }, name = "inv_rank")
+#' out <- weights_matrix(X, X0, ranking = "l2", weight = rw, return = c("W", "ranks"))
+#' dim(out$W)
 #' @export
 weights_matrix <- function(
   X, X0 = NULL, x0 = NULL,
@@ -236,10 +245,16 @@ print.weights_result <- function(x, ...) {
 #' @param ctx optional context
 #' @param return character vector of extras to include; any of \code{c("W","ord","ranks","dx")}
 #' @return a \code{weights_result} with \code{W} and metadata
+#' @examples
+#' set.seed(1)
+#' X <- matrix(rnorm(20), 10, 2)
+#' X0 <- matrix(rnorm(6), 3, 2)
+#' out <- weights_dnn_exact(X, X0, distance = "l2", k = 2L, s = 3L, return = "W")
+#' dim(out$W)
 #' @export
 weights_dnn_exact <- function(X, X0 = NULL, x0 = NULL, distance = "l2", k, s, ctx = NULL, return = c("W")) {
   weights_matrix(
-    X, X0, x0,
+    X = X, X0 = X0, x0 = x0,
     ranking = distance,
     weight = rank_weight_dnn_exact(k = as.integer(k), s = as.integer(s)),
     ctx = ctx,
@@ -250,10 +265,16 @@ weights_dnn_exact <- function(X, X0 = NULL, x0 = NULL, distance = "l2", k, s, ct
 #' DNN weights (asymptotic full-U), distance-based ranking
 #' @inheritParams weights_dnn_exact
 #' @param normalize logical; renormalize columns to sum 1
+#' @examples
+#' set.seed(1)
+#' X <- matrix(rnorm(20), 10, 2)
+#' X0 <- matrix(rnorm(4), 2, 2)
+#' out <- weights_dnn_asymp(X, X0, k = 2L, s = 3L, normalize = TRUE)
+#' dim(out$W)
 #' @export
 weights_dnn_asymp <- function(X, X0 = NULL, x0 = NULL, distance = "l2", k, s, normalize = TRUE, ctx = NULL, return = c("W")) {
   weights_matrix(
-    X, X0, x0,
+    X = X, X0 = X0, x0 = x0,
     ranking = distance,
     weight = rank_weight_dnn_asymp(k = as.integer(k), s = as.integer(s), normalize = normalize),
     ctx = ctx,
@@ -264,12 +285,31 @@ weights_dnn_asymp <- function(X, X0 = NULL, x0 = NULL, distance = "l2", k, s, no
 #' DNN weights (choose method), distance-based ranking
 #' @inheritParams weights_dnn_asymp
 #' @param method one of \code{"exact"} or \code{"asymp"}
+#' @examples
+#' set.seed(1)
+#' X <- matrix(rnorm(20), 10, 2)
+#' x0 <- c(0, 0)
+#' out <- weights_dnn(X, x0 = x0, k = 2L, s = 3L, method = "exact")
+#' dim(out$W)
 #' @export
 weights_dnn <- function(X, X0 = NULL, x0 = NULL, distance = "l2", k, s, method = c("exact", "asymp"), normalize = TRUE, ctx = NULL, return = c("W")) {
   method <- match.arg(method)
   if (method == "exact") {
-    weights_dnn_exact(X, X0, x0, distance, k, s, ctx, return)
+    weights_dnn_exact(
+      X = X, X0 = X0, x0 = x0,
+      distance = distance,
+      k = k, s = s,
+      ctx = ctx,
+      return = return
+    )
   } else {
-    weights_dnn_asymp(X, X0, x0, distance, k, s, normalize, ctx, return)
+    weights_dnn_asymp(
+      X = X, X0 = X0, x0 = x0,
+      distance = distance,
+      k = k, s = s,
+      normalize = normalize,
+      ctx = ctx,
+      return = return
+    )
   }
 }

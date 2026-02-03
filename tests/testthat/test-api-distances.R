@@ -36,6 +36,20 @@ test_that("as_distance() wraps a function and is_distance() recognizes it", {
   expect_equal(D[, 1], d)
 })
 
+test_that("new_distance() builds validated specs", {
+  spec <- new_distance(
+    name = "new_quad",
+    eval = function(X, x0, ctx = NULL) rowSums((X - matrix(x0, nrow(X), ncol(X), TRUE))^2)
+  )
+  expect_true(is_distance(spec))
+  expect_equal(spec$name, "new_quad")
+
+  expect_error(
+    new_distance(name = "bad_new"),
+    "must provide at least one of `eval` or `eval_batch`"
+  )
+})
+
 test_that("register_distance()/get_distance()/distance_names() work", {
   # Register a simple absolute-distance spec under a fresh name
   nm <- paste0("abs_", sample.int(1e6, 1))
@@ -57,6 +71,37 @@ test_that("register_distance()/get_distance()/distance_names() work", {
 
   # Unknown name errors
   expect_error(get_distance("__definitely_missing__"), "Unknown distance")
+})
+
+test_that("register_distance() supports legacy single-arg form and list_distances alias", {
+  nm <- paste0("legacy_", sample.int(1e6, 1))
+  spec <- list(
+    name = nm,
+    eval = function(X, x0, ctx = NULL) {
+      rowSums((X - matrix(x0, nrow(X), ncol(X), byrow = TRUE))^2)
+    }
+  )
+  class(spec) <- "dnn_distance"
+
+  invisible(register_distance(spec))
+  got <- get_distance(nm)
+  expect_true(is_distance(got))
+  expect_equal(got$name, nm)
+
+  expect_true(nm %in% distance_names())
+  expect_true(nm %in% getFromNamespace("list_distances", "RdistNN")())
+})
+
+test_that("as_distance() accepts user functions with or without ctx argument", {
+  X <- matrix(1:12, nrow = 4)
+  x0 <- c(0, 0, 0)
+
+  spec_ctx <- as_distance(function(X, x0, ctx) rowSums((X - matrix(x0, nrow(X), ncol(X), TRUE))^2))
+  spec_no_ctx <- as_distance(function(X, x0) rowSums((X - matrix(x0, nrow(X), ncol(X), TRUE))^2))
+
+  d1 <- distance_eval(spec_ctx, X, x0)
+  d2 <- distance_eval(spec_no_ctx, X, x0)
+  expect_equal(d1, d2)
 })
 
 test_that("distance_eval_batch() calls setup() exactly once (eval-only fallback)", {
@@ -211,4 +256,69 @@ test_that("distance_names() returns sorted registry names", {
   dn <- distance_names()
   expect_true(all(sort(dn) == dn))
   expect_true(all(c(nmA, nmB) %in% dn))
+})
+
+test_that("distance eval_batch path validates shape and finiteness", {
+  X <- matrix(1:12, nrow = 4)
+  X0 <- matrix(c(0, 0, 0, 1, 1, 1), nrow = 2, byrow = TRUE)
+
+  bad_shape <- list(
+    name = "bad_shape",
+    eval_batch = function(X, X0, ctx) rep(0, nrow(X) * nrow(X0))
+  )
+  class(bad_shape) <- "dnn_distance"
+  expect_error(
+    distance_eval_batch(bad_shape, X, X0),
+    "must return a finite numeric matrix with shape nrow\\(X\\) x nrow\\(X0\\)"
+  )
+
+  bad_finite <- list(
+    name = "bad_finite",
+    eval_batch = function(X, X0, ctx) {
+      out <- matrix(0, nrow(X), nrow(X0))
+      out[1, 1] <- Inf
+      out
+    }
+  )
+  class(bad_finite) <- "dnn_distance"
+  expect_error(
+    distance_eval_batch(bad_finite, X, X0),
+    "must return a finite numeric matrix with shape nrow\\(X\\) x nrow\\(X0\\)"
+  )
+})
+
+test_that("register_distance validates malformed specs and named list specs", {
+  # malformed: no eval and no eval_batch
+  expect_error(
+    register_distance(list(name = "bad_no_eval")),
+    "must provide at least one of `eval` or `eval_batch`"
+  )
+
+  # malformed legacy call: missing/empty name
+  expect_error(
+    register_distance(list(eval = function(X, x0, ctx) rowSums(X))),
+    "must have a non-empty \\$name"
+  )
+
+  # named list spec in two-arg form is accepted and normalized
+  nm <- paste0("list_spec_", sample.int(1e6, 1))
+  spec <- list(
+    eval = function(X, x0, ctx = NULL) rowSums((X - matrix(x0, nrow(X), ncol(X), TRUE))^2)
+  )
+  register_distance(nm, spec)
+  got <- get_distance(nm)
+  expect_true(inherits(got, "dnn_distance"))
+  expect_equal(got$name, nm)
+})
+
+test_that("distance_eval_batch errors when eval looks like batch but eval_batch is absent", {
+  spec <- list(
+    name = "ambiguous_eval",
+    eval = function(X, X0, ctx = NULL) matrix(0, nrow(X), nrow(X0))
+  )
+  class(spec) <- "dnn_distance"
+
+  X <- matrix(1:12, nrow = 4)
+  X0 <- matrix(c(0, 0, 0, 1, 1, 1), nrow = 2, byrow = TRUE)
+  expect_error(distance_eval_batch(spec, X, X0), "No R `eval_batch` or `eval` provided")
 })

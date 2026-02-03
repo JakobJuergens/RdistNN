@@ -15,3 +15,7 @@ A distance spec.
 \description{
 Retrieve a registered distance spec
 }
+\examples{
+d <- get_distance("l2")
+is_distance(d)
+}

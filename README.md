@@ -50,11 +50,11 @@ y <- sin(2 * pi * x) + rnorm(n, sd = 0.2)
 X <- matrix(x, ncol = 1)
 x0 <- 0.4
 
-# Nearest-neighbor weight vector at x0 using k = 1 (DNN-1)
-w1 <- dnn1(x0, X) # length n, nonnegative, sums to 1
+# Exact DNN weights at x0 using k = 1, s = 1
+w1 <- weights_dnn_exact(X, x0 = x0, distance = "l2", k = 1L, s = 1L)$W[, 1]
 
-# Or k-NN weights (k ≥ 1); when k = 1 this should equal dnn1()
-wk <- dnnk(x0, X, k = 5)
+# Or use k = 5 with subset order s = 5
+wk <- weights_dnn_exact(X, x0 = x0, distance = "l2", k = 5L, s = 5L)$W[, 1]
 
 # Local average at x0
 mu_hat <- sum(wk * y)
@@ -66,15 +66,22 @@ mu_hat
 ``` r
 library(RdistNN)
 
-# Suppose you have (Y, D, X, Z), a target quantile tau, and a component index j.
-tau <- 0.5
-j <- 1L
-
-# Factory returns a function you can map over subsets / batches
-sc <- score_plqr_component(tau = tau, j = j)
-
-# Minimal illustration:
-# sc(data = list(Y = Y, D = D, X = X, Z = Z), beta = beta_init)
+demo <- plqr_demo_data(n = 200, p = 2, p_d = 2, tau = 0.5, seed = 1)
+sc <- score_plqr_component(
+  x0 = rep(0, 2),
+  x_cols = c("X1", "X2"),
+  D_cols = c("D1", "D2"),
+  q_col = "q_oracle",
+  mD_cols = c("mD1", "mD2"),
+  beta = demo$truth$beta_true,
+  j = 1L,
+  tau = 0.5,
+  s = 3L,
+  k = 1L
+)
+ctx <- score_setup(sc, demo$data)
+subs <- plqr_demo_subsets(nrow(demo$data), K = 5, s = 3L, seed = 1)
+score_eval_batch(sc, subs, demo$data, ctx)
 ```
 
 ## Design notes

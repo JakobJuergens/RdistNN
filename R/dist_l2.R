@@ -21,6 +21,9 @@
 #' @param x0 Numeric vector of length \eqn{p}.
 #' @param squared Logical; if `TRUE`, return squared distances.
 #' @return Numeric vector of length \eqn{n}.
+#' @examples
+#' X <- matrix(rnorm(12), 4, 3)
+#' dist_l2(X, c(0, 0, 0))
 #' @export
 dist_l2 <- function(X, x0, squared = FALSE) {
   .assert_no_na(X, x0)
@@ -40,6 +43,9 @@ dist_l2 <- function(X, x0, squared = FALSE) {
 #'
 #' @inheritParams dist_l2
 #' @return A list with `dx` and `ord`.
+#' @examples
+#' X <- matrix(rnorm(10), 5, 2)
+#' order_by_l2(X, c(0, 0))
 #' @export
 order_by_l2 <- function(X, x0, squared = FALSE) {
   .assert_no_na(X, x0)
@@ -71,6 +77,11 @@ order_by_l2 <- function(X, x0, squared = FALSE) {
 #' @section Batch evaluation:
 #' `eval_batch(X, X0)` expects an \eqn{m \times p} matrix of queries `X0`.
 #'
+#' @examples
+#' X <- matrix(rnorm(12), 4, 3)
+#' X0 <- matrix(rnorm(6), 2, 3)
+#' dspec <- distance_l2()
+#' dspec$eval_batch(X, X0)
 #' @export
 distance_l2 <- function(squared = FALSE) {
   list(
@@ -104,6 +115,9 @@ distance_l2 <- function(squared = FALSE) {
 #' @inheritParams dist_l2
 #' @param inv_s Numeric vector of length \eqn{p} with elementwise scales.
 #' @return Numeric vector of length \eqn{n}.
+#' @examples
+#' X <- matrix(rnorm(12), 4, 3)
+#' dist_l2_scaled(X, c(0, 0, 0), inv_s = c(1, 2, 0.5))
 #' @export
 dist_l2_scaled <- function(X, x0, inv_s, squared = FALSE) {
   .assert_no_na(X, x0)
@@ -137,6 +151,12 @@ dist_l2_scaled <- function(X, x0, inv_s, squared = FALSE) {
 #' @param squared Logical; if `TRUE`, return squared distances.
 #'
 #' @return A list with `name`, `setup()`, `eval()`, and `eval_batch()`.
+#' @examples
+#' X <- matrix(rnorm(12), 4, 3)
+#' X0 <- matrix(rnorm(6), 2, 3)
+#' dspec <- distance_l2_scaled(rule = "sd")
+#' ctx <- dspec$setup(X)
+#' dspec$eval_batch(X, X0, ctx)
 #' @export
 distance_l2_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
                                scale_vec = NULL, eps = 1e-12,
@@ -200,6 +220,9 @@ distance_l2_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
 #' @inheritParams distance_l2_scaled
 #'
 #' @return A list with `dx` and `ord`.
+#' @examples
+#' X <- matrix(rnorm(10), 5, 2)
+#' order_by_l2_scaled(X, c(0, 0), rule = "sd")
 #' @export
 order_by_l2_scaled <- function(X, x0,
                                rule = c("sd", "mad", "iqr", "range", "custom"),
@@ -224,13 +247,4 @@ order_by_l2_scaled <- function(X, x0,
   dx <- dist_l2_scaled(X, x0, inv_s, squared)
   ord <- order(dx, seq_along(dx))
   list(dx = dx, ord = as.integer(ord))
-}
-
-# --- internal helper ----------------------------------------------------------
-#' @noRd
-.coerce_inv_s <- function(scale_vec, p, eps) {
-  inv_s <- as.numeric(scale_vec)
-  if (length(inv_s) != p) stop("scale_vec must be length p when rule = 'custom'.")
-  inv_s <- 1 / pmax(abs(inv_s), eps)
-  inv_s
 }

@@ -9,3 +9,6 @@ list_ranks()
 \description{
 Back-compat alias for \code{\link[=rank_names]{rank_names()}}
 }
+\examples{
+identical(rank_names(), list_ranks())
+}

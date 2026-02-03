@@ -25,3 +25,10 @@ A list with \code{name}, \code{setup()}, \code{eval()}, and \code{eval_batch()}.
 Builder that computes per-column scales once (\code{setup(X)}) and reuses them in
 \code{eval()} / \code{eval_batch()}. Uses \code{rustat_dist_l1_scaled_batch()} if present.
 }
+\examples{
+X <- matrix(rnorm(12), 4, 3)
+X0 <- matrix(rnorm(6), 2, 3)
+dspec <- distance_l1_scaled(rule = "sd")
+ctx <- dspec$setup(X)
+dspec$eval_batch(X, X0, ctx)
+}

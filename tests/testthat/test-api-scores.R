@@ -20,6 +20,16 @@ test_that("constructors and predicates: new_score / as_score / is_score / is_com
   expect_false(is_compiled(sc2))
   expect_output(print(sc2), "<ustat_score: sc2>")
 
+  # as_score wrapper also accepts short signatures (idxs, data)
+  sc2_short <- as_score(function(idxs, data) sum(data[idxs]), s = 2L, name = "sc2_short")
+  expect_equal(score_eval(sc2_short, c(1L, 3L), 1:5, NULL), 4)
+  subs <- matrix(c(1L, 2L, 2L, 5L), nrow = 2L, byrow = TRUE)
+  expect_equal(score_eval_batch(sc2_short, subs, 1:5, NULL), c(3, 7))
+
+  # as_score wrapper accepts variadic signatures and forwards only supported args
+  sc2_dots <- as_score(function(idxs, data, ...) sum(data[idxs]) + 1, s = 2L, name = "sc2_dots")
+  expect_equal(score_eval(sc2_dots, c(2L, 4L), 1:5, NULL), 7)
+
   # pretend "compiled"
   sc3 <- new_score(
     name = "sc3",

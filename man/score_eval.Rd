@@ -21,6 +21,10 @@ score_eval(score, idxs, data, ctx = NULL, rng = NULL)
 numeric(1)
 }
 \description{
-For maximum robustness, this prefers the batch path when available and
-otherwise falls back to the scalar path.
+For maximum robustness, this prefers the scalar \code{eval()} path when available
+and otherwise falls back to \code{eval_batch()} for a single-row batch.
+}
+\examples{
+sc <- as_score(function(idxs, data) sum(data[idxs]), s = 2L)
+score_eval(sc, c(1L, 2L), c(3, 4, 5), NULL)
 }

@@ -13,6 +13,9 @@
 #' @param k Integer; 1 <= k <= s
 #' @param s Integer; U-statistic order
 #' @return rank_weight spec (list)
+#' @examples
+#' rw <- rank_weight_dnn_exact(k = 2, s = 3)
+#' rank_weight_eval(rw, c(2L, 1L, 3L, 4L))
 #' @export
 rank_weight_dnn_exact <- function(k, s) {
   k <- as.integer(k)
@@ -50,6 +53,9 @@ rank_weight_dnn_exact <- function(k, s) {
 #' @inheritParams rank_weight_dnn_exact
 #' @param normalize logical; renormalize to sum 1 (default TRUE)
 #' @return rank_weight spec (list)
+#' @examples
+#' rw <- rank_weight_dnn_asymp(k = 2, s = 3, normalize = TRUE)
+#' rank_weight_eval(rw, c(2L, 1L, 3L, 4L))
 #' @export
 rank_weight_dnn_asymp <- function(k, s, normalize = TRUE) {
   k <- as.integer(k)

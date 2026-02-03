@@ -35,3 +35,7 @@ Computes per-column scales (or uses \code{scale_vec} for \code{"custom"}), then 
 compiled \code{rustat_order_by_l2_scaled()} if available. Otherwise computes
 distances via \code{\link[=dist_l2_scaled]{dist_l2_scaled()}} and orders deterministically.
 }
+\examples{
+X <- matrix(rnorm(10), 5, 2)
+order_by_l2_scaled(X, c(0, 0), rule = "sd")
+}

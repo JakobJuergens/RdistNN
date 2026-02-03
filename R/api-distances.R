@@ -5,6 +5,43 @@
 .dist_registry <- new.env(parent = emptyenv())
 
 # --- type + adapters ----------------------------------------------------------
+.distance_has_eval <- function(spec) !is.null(spec$eval) && is.function(spec$eval)
+.distance_has_eval_batch <- function(spec) !is.null(spec$eval_batch) && is.function(spec$eval_batch)
+.distance_eval_is_single <- function(fun) {
+  fmls <- tryCatch(names(formals(fun)), error = function(e) character())
+  length(fmls) > 0L && ("x0" %in% fmls) && !("X0" %in% fmls)
+}
+.distance_call_user <- function(fun, X, x0, ctx) {
+  args <- list(X = X, x0 = x0, ctx = ctx)
+  fmls <- tryCatch(names(formals(fun)), error = function(e) character())
+  if ("..." %in% fmls) {
+    return(do.call(fun, args))
+  }
+  do.call(fun, args[intersect(names(args), fmls)])
+}
+.distance_validate_output_vec <- function(d, n, src = "Distance function") {
+  if (!is.numeric(d) || length(d) != n || any(!is.finite(d))) {
+    stop(sprintf("%s must return numeric length nrow(X) with finite entries.", src), call. = FALSE)
+  }
+  as.numeric(d)
+}
+.distance_validate_output_mat <- function(D, n, m, src = "Distance function") {
+  if (!is.matrix(D) || !is.numeric(D) || nrow(D) != n || ncol(D) != m || any(!is.finite(D))) {
+    stop(sprintf("%s must return a finite numeric matrix with shape nrow(X) x nrow(X0).", src), call. = FALSE)
+  }
+  D
+}
+.distance_validate_spec <- function(spec) {
+  if (!is.list(spec)) stop("`spec` must be a list.", call. = FALSE)
+  if (!(.distance_has_eval(spec) || .distance_has_eval_batch(spec))) {
+    stop("Distance spec must provide at least one of `eval` or `eval_batch`.", call. = FALSE)
+  }
+  if (is.null(spec$name) || !nzchar(as.character(spec$name))) {
+    spec$name <- "unnamed_distance"
+  }
+  class(spec) <- union("dnn_distance", class(spec))
+  spec
+}
 
 #' Is this a distance spec?
 #'
@@ -14,10 +51,36 @@
 #'
 #' @param x Any R object.
 #' @return Logical.
+#' @examples
+#' is_distance(distance_l2())
+#' is_distance(list(eval = function(X, x0, ctx) rep(0, nrow(X))))
 #' @export
 is_distance <- function(x) {
   inherits(x, "dnn_distance") ||
     (is.list(x) && (is.function(x$eval) || is.function(x$eval_batch)))
+}
+
+#' Construct a distance spec
+#'
+#' @param name Character scalar.
+#' @param eval Optional function `(X, x0, ctx) -> numeric(n)`.
+#' @param eval_batch Optional function `(X, X0, ctx) -> numeric(n x m)`.
+#' @param setup Optional function `(X) -> ctx`.
+#' @return A validated `dnn_distance` spec.
+#' @examples
+#' spec <- new_distance(
+#'   name = "sq_l2",
+#'   eval = function(X, x0, ctx = NULL) rowSums((X - matrix(x0, nrow(X), ncol(X), TRUE))^2)
+#' )
+#' is_distance(spec)
+#' @export
+new_distance <- function(name, eval = NULL, eval_batch = NULL, setup = NULL) {
+  .distance_validate_spec(list(
+    name = as.character(name),
+    eval = eval,
+    eval_batch = eval_batch,
+    setup = setup
+  ))
 }
 
 #' Wrap a function as a distance spec
@@ -25,10 +88,14 @@ is_distance <- function(x) {
 #' @param fun Function `(X, x0, ctx) -> numeric(n)`.
 #' @param name Character name for the spec.
 #' @return A distance spec with class `dnn_distance`.
+#' @examples
+#' spec <- as_distance(function(X, x0, ctx = NULL) rowSums(abs(X - matrix(x0, nrow(X), ncol(X), TRUE))))
+#' X <- matrix(1:9, nrow = 3)
+#' distance_eval(spec, X, c(0, 0, 0))
 #' @export
 as_distance <- function(fun, name = "user_distance") {
   stopifnot(is.function(fun))
-  spec <- list(
+  new_distance(
     name = name,
     eval = function(X, x0, ctx = NULL) {
       X <- as.matrix(X)
@@ -36,31 +103,46 @@ as_distance <- function(fun, name = "user_distance") {
       if (ncol(X) == 0L) stop("X must have at least one column.", call. = FALSE)
       if (length(x0) != ncol(X)) stop("x0 length must equal ncol(X).", call. = FALSE)
 
-      d <- fun(X, x0, ctx)
-      if (!is.numeric(d) || length(d) != nrow(X) || any(!is.finite(d))) {
-        stop("Distance function must return numeric length nrow(X) with finite entries.", call. = FALSE)
-      }
-      as.numeric(d)
+      d <- .distance_call_user(fun, X, x0, ctx)
+      .distance_validate_output_vec(d, nrow(X))
     }
   )
-  class(spec) <- union("dnn_distance", class(spec))
-  spec
 }
 
 # --- registry -----------------------------------------------------------------
 
 #' Register a distance spec under a name
 #'
-#' @param name Character scalar.
+#' Accepts either `(name, spec)` or legacy single-argument form `(spec)`,
+#' where `spec$name` is used as the key.
+#'
+#' @param name Character scalar, or a spec in legacy single-argument form.
 #' @param spec Either a distance spec or a function `(X, x0, ctx) -> numeric(n)`.
 #' @return (Invisibly) the registered spec.
+#' @examples
+#' nm <- "tmp_l1_demo"
+#' register_distance(nm, function(X, x0, ctx = NULL) rowSums(abs(X - matrix(x0, nrow(X), ncol(X), TRUE))))
+#' nm %in% distance_names()
 #' @export
-register_distance <- function(name, spec) {
-  stopifnot(is.character(name), length(name) == 1L)
-  if (is.function(spec)) spec <- as_distance(spec, name = name)
-  if (!is_distance(spec)) stop("`spec` is not a distance.", call. = FALSE)
-  if (is.null(spec$name)) spec$name <- name
-  class(spec) <- union("dnn_distance", class(spec))
+register_distance <- function(name, spec = NULL) {
+  if (missing(spec)) {
+    spec <- name
+    if (is.function(spec)) {
+      name <- "user_distance"
+      spec <- as_distance(spec, name = name)
+    } else if (is.list(spec) && is.character(spec$name) && length(spec$name) == 1L) {
+      name <- spec$name
+    } else {
+      stop("Legacy register_distance(spec): spec must have a non-empty $name.", call. = FALSE)
+    }
+  } else {
+    stopifnot(is.character(name), length(name) == 1L)
+    if (is.function(spec)) spec <- as_distance(spec, name = name)
+    if (is.list(spec) && (is.null(spec$name) || !nzchar(as.character(spec$name)))) {
+      spec$name <- name
+    }
+  }
+  spec <- .distance_validate_spec(spec)
   assign(name, spec, envir = .dist_registry)
   invisible(spec)
 }
@@ -69,6 +151,9 @@ register_distance <- function(name, spec) {
 #'
 #' @param name Character scalar.
 #' @return A distance spec.
+#' @examples
+#' d <- get_distance("l2")
+#' is_distance(d)
 #' @export
 get_distance <- function(name) {
   stopifnot(is.character(name), length(name) == 1L)
@@ -84,10 +169,19 @@ get_distance <- function(name) {
 
 #' List registered distances
 #' @return Character vector of names.
+#' @examples
+#' head(distance_names(), 3)
 #' @export
 distance_names <- function() {
   sort(ls(.dist_registry, all.names = FALSE))
 }
+
+#' Back-compat alias for [distance_names()]
+#' @return Character vector of names.
+#' @examples
+#' identical(distance_names(), list_distances())
+#' @export
+list_distances <- function() distance_names()
 
 # --- evaluators ---------------------------------------------------------------
 
@@ -99,6 +193,10 @@ distance_names <- function() {
 #' @param ctx Optional context; if `NULL` and `spec$setup` exists, it will be
 #'   called as `spec$setup(X)` to create a context.
 #' @return Numeric vector length `n`.
+#' @examples
+#' X <- matrix(rnorm(12), 4, 3)
+#' x0 <- c(0, 0, 0)
+#' distance_eval(distance_l2(), X, x0)
 #' @export
 distance_eval <- function(spec, X, x0, ctx = NULL) {
   if (!is_distance(spec)) stop("`spec` must be a distance.", call. = FALSE)
@@ -108,22 +206,24 @@ distance_eval <- function(spec, X, x0, ctx = NULL) {
   if (length(x0) != ncol(X)) stop("x0 length must equal ncol(X).", call. = FALSE)
   if (is.null(ctx) && is.function(spec$setup)) ctx <- spec$setup(X)
 
-  has_eval <- !is.null(spec$eval) && is.function(spec$eval)
-  has_batch <- !is.null(spec$eval_batch) && is.function(spec$eval_batch)
+  has_eval <- .distance_has_eval(spec)
+  has_batch <- .distance_has_eval_batch(spec)
 
   # Use eval() only if it clearly looks like (X, x0, ctx) and not a batch shape
-  if (has_eval) {
-    fmls <- tryCatch(names(formals(spec$eval)), error = function(e) character())
-    single_ok <- length(fmls) > 0L && ("x0" %in% fmls) && !("X0" %in% fmls)
-    if (single_ok) {
-      return(spec$eval(X, x0, ctx))
-    }
-    # else: fall through and try batch
+  if (has_eval && .distance_eval_is_single(spec$eval)) {
+    out <- spec$eval(X, x0, ctx)
+    return(.distance_validate_output_vec(out, nrow(X)))
   }
 
   if (has_batch) {
     D <- spec$eval_batch(X, matrix(x0, nrow = 1L), ctx)
+    D <- .distance_validate_output_mat(D, nrow(X), 1L, src = "distance eval_batch")
     return(as.numeric(D[, 1L]))
+  }
+
+  if (has_eval) {
+    out <- spec$eval(X, x0, ctx)
+    return(.distance_validate_output_vec(out, nrow(X)))
   }
 
   stop("No R `eval` or `eval_batch` provided.", call. = FALSE)
@@ -137,6 +237,10 @@ distance_eval <- function(spec, X, x0, ctx = NULL) {
 #' @param ctx Optional context; if `NULL` and `spec$setup` exists, it will be
 #'   called as `spec$setup(X)` to create a context.
 #' @return Numeric matrix \(n  x  m\).
+#' @examples
+#' X <- matrix(rnorm(12), 4, 3)
+#' X0 <- matrix(rnorm(6), 2, 3)
+#' distance_eval_batch(distance_l2(), X, X0)
 #' @export
 distance_eval_batch <- function(spec, X, X0, ctx = NULL) {
   if (!is_distance(spec)) stop("`spec` must be a distance.", call. = FALSE)
@@ -147,23 +251,25 @@ distance_eval_batch <- function(spec, X, X0, ctx = NULL) {
 
   if (is.null(ctx) && is.function(spec$setup)) ctx <- spec$setup(X)
 
-  has_eval <- !is.null(spec$eval) && is.function(spec$eval)
-  has_batch <- !is.null(spec$eval_batch) && is.function(spec$eval_batch)
+  has_eval <- .distance_has_eval(spec)
+  has_batch <- .distance_has_eval_batch(spec)
+  n <- nrow(X)
+  m <- nrow(X0)
 
   if (has_batch) {
-    return(spec$eval_batch(X, X0, ctx))
+    out <- spec$eval_batch(X, X0, ctx)
+    return(.distance_validate_output_mat(out, n, m, src = "distance eval_batch"))
   }
 
   if (has_eval) {
     # Only loop if eval looks like (X, x0, ctx); otherwise, we don't know how to call it
-    fmls <- tryCatch(names(formals(spec$eval)), error = function(e) character())
-    single_ok <- length(fmls) > 0L && ("x0" %in% fmls) && !("X0" %in% fmls)
-    if (!single_ok) {
+    if (!.distance_eval_is_single(spec$eval)) {
       stop("No R `eval_batch` or `eval` provided.", call. = FALSE)
     }
-    m <- nrow(X0)
-    out <- matrix(NA_real_, nrow(X), m)
-    for (j in seq_len(m)) out[, j] <- spec$eval(X, X0[j, ], ctx)
+    out <- matrix(NA_real_, n, m)
+    for (j in seq_len(m)) {
+      out[, j] <- .distance_validate_output_vec(spec$eval(X, X0[j, ], ctx), n, src = "distance eval")
+    }
     return(out)
   }
 

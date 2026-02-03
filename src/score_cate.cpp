@@ -1,4 +1,5 @@
 // src/score_cate.cpp
+// [[Rcpp::plugins(cpp17)]]
 // [[Rcpp::depends(Rcpp)]]
 #include <Rcpp.h>
 #ifdef _OPENMP
@@ -43,6 +44,7 @@ NumericVector rustat_cate_g_indexed(IntegerVector idxs, SEXP ctx_)
   XPtr<CateCtx> ctx(ctx_);
   const int m = idxs.size();
   NumericVector out(m);
+  int first_bad_index = -1;
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (m >= 1024)
@@ -50,9 +52,20 @@ NumericVector rustat_cate_g_indexed(IntegerVector idxs, SEXP ctx_)
   for (int t = 0; t < m; ++t)
   {
     const int i = idxs[t] - 1; // 1-based -> 0-based
-    if (i < 0 || i >= ctx->n)
-      Rcpp::stop("Index out of bounds in cate_g_indexed.");
+    if (i < 0 || i >= ctx->n) {
+#ifdef _OPENMP
+#pragma omp critical(rustat_cate_g_indexed_error)
+#endif
+      {
+        if (first_bad_index < 0) first_bad_index = i + 1;
+      }
+      out[t] = NA_REAL;
+      continue;
+    }
     out[t] = ctx->rho[i];
+  }
+  if (first_bad_index >= 0) {
+    Rcpp::stop("Index out of bounds in cate_g_indexed.");
   }
   return out;
 }

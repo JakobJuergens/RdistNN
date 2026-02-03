@@ -22,3 +22,8 @@ Numeric matrix \(n  x  m\).
 \description{
 Evaluate a distance spec for many targets (batch)
 }
+\examples{
+X <- matrix(rnorm(12), 4, 3)
+X0 <- matrix(rnorm(6), 2, 3)
+distance_eval_batch(distance_l2(), X, X0)
+}

@@ -19,3 +19,7 @@ Numeric vector of length \code{n}.
 \description{
 Evaluate rank-weight for a single target
 }
+\examples{
+rw <- as_rank_weight(function(r) rep(1 / length(r), length(r)))
+rank_weight_eval(rw, c(2L, 1L, 3L))
+}

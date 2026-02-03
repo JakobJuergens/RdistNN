@@ -17,3 +17,8 @@ A distance spec with class \code{dnn_distance}.
 \description{
 Wrap a function as a distance spec
 }
+\examples{
+spec <- as_distance(function(X, x0, ctx = NULL) rowSums(abs(X - matrix(x0, nrow(X), ncol(X), TRUE))))
+X <- matrix(1:9, nrow = 3)
+distance_eval(spec, X, c(0, 0, 0))
+}
