@@ -53,12 +53,12 @@ rule (\code{rank_weight}), then returns the weight matrix \code{W} (n x m).
 }
 \examples{
 set.seed(1)
-X <- matrix(rnorm(20), 10, 2)
-X0 <- matrix(rnorm(6), 3, 2)
+x_mat <- matrix(rnorm(20), 10, 2)
+x0_mat <- matrix(rnorm(6), 3, 2)
 rw <- as_rank_weight(function(r) {
   w <- 1 / as.numeric(r)
   w / sum(w)
 }, name = "inv_rank")
-out <- weights_matrix(X, X0, ranking = "l2", weight = rw, return = c("W", "ranks"))
+out <- weights_matrix(x_mat, x0_mat, ranking = "l2", weight = rw, return = c("W", "ranks"))
 dim(out$W)
 }

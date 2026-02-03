@@ -1,6 +1,3 @@
-# R/utils-scale.R
-# -----------------------------------------------------------------------------
-
 .col_sd <- function(X) apply(X, 2L, stats::sd)
 .col_mad <- function(X) apply(X, 2L, stats::mad, constant = 1.4826)
 .col_iqr <- function(X) apply(X, 2L, stats::IQR)

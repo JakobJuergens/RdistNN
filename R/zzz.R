@@ -1,5 +1,3 @@
-# R/zzz.R
-
 #' Internal hooks
 #' @keywords internal
 #' @useDynLib RdistNN, .registration = TRUE

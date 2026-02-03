@@ -25,11 +25,11 @@
   }
   as.numeric(d)
 }
-.distance_validate_output_mat <- function(D, n, m, src = "Distance function") {
-  if (!is.matrix(D) || !is.numeric(D) || nrow(D) != n || ncol(D) != m || any(!is.finite(D))) {
+.distance_validate_output_mat <- function(d_mat, n, m, src = "Distance function") {
+  if (!is.matrix(d_mat) || !is.numeric(d_mat) || nrow(d_mat) != n || ncol(d_mat) != m || any(!is.finite(d_mat))) {
     stop(sprintf("%s must return a finite numeric matrix with shape nrow(X) x nrow(X0).", src), call. = FALSE)
   }
-  D
+  d_mat
 }
 .distance_validate_spec <- function(spec) {
   if (!is.list(spec)) stop("`spec` must be a list.", call. = FALSE)
@@ -90,21 +90,21 @@ new_distance <- function(name, eval = NULL, eval_batch = NULL, setup = NULL) {
 #' @return A distance spec with class `dnn_distance`.
 #' @examples
 #' spec <- as_distance(function(X, x0, ctx = NULL) rowSums(abs(X - matrix(x0, nrow(X), ncol(X), TRUE))))
-#' X <- matrix(1:9, nrow = 3)
-#' distance_eval(spec, X, c(0, 0, 0))
+#' x_mat <- matrix(1:9, nrow = 3)
+#' distance_eval(spec, x_mat, c(0, 0, 0))
 #' @export
 as_distance <- function(fun, name = "user_distance") {
   stopifnot(is.function(fun))
   new_distance(
     name = name,
     eval = function(X, x0, ctx = NULL) {
-      X <- as.matrix(X)
-      x0 <- as.numeric(x0)
-      if (ncol(X) == 0L) stop("X must have at least one column.", call. = FALSE)
-      if (length(x0) != ncol(X)) stop("x0 length must equal ncol(X).", call. = FALSE)
+      x_mat <- as.matrix(X)
+      x0_vec <- as.numeric(x0)
+      if (ncol(x_mat) == 0L) stop("X must have at least one column.", call. = FALSE)
+      if (length(x0_vec) != ncol(x_mat)) stop("x0 length must equal ncol(X).", call. = FALSE)
 
-      d <- .distance_call_user(fun, X, x0, ctx)
-      .distance_validate_output_vec(d, nrow(X))
+      d <- .distance_call_user(fun, x_mat, x0_vec, ctx)
+      .distance_validate_output_vec(d, nrow(x_mat))
     }
   )
 }
@@ -194,36 +194,36 @@ list_distances <- function() distance_names()
 #'   called as `spec$setup(X)` to create a context.
 #' @return Numeric vector length `n`.
 #' @examples
-#' X <- matrix(rnorm(12), 4, 3)
-#' x0 <- c(0, 0, 0)
-#' distance_eval(distance_l2(), X, x0)
+#' x_mat <- matrix(rnorm(12), 4, 3)
+#' x0_vec <- c(0, 0, 0)
+#' distance_eval(distance_l2(), x_mat, x0_vec)
 #' @export
 distance_eval <- function(spec, X, x0, ctx = NULL) {
   if (!is_distance(spec)) stop("`spec` must be a distance.", call. = FALSE)
-  X <- as.matrix(X)
-  x0 <- as.numeric(x0)
-  if (ncol(X) == 0L) stop("X must have at least one column.", call. = FALSE)
-  if (length(x0) != ncol(X)) stop("x0 length must equal ncol(X).", call. = FALSE)
-  if (is.null(ctx) && is.function(spec$setup)) ctx <- spec$setup(X)
+  x_mat <- as.matrix(X)
+  x0_vec <- as.numeric(x0)
+  if (ncol(x_mat) == 0L) stop("X must have at least one column.", call. = FALSE)
+  if (length(x0_vec) != ncol(x_mat)) stop("x0 length must equal ncol(X).", call. = FALSE)
+  if (is.null(ctx) && is.function(spec$setup)) ctx <- spec$setup(x_mat)
 
   has_eval <- .distance_has_eval(spec)
   has_batch <- .distance_has_eval_batch(spec)
 
   # Use eval() only if it clearly looks like (X, x0, ctx) and not a batch shape
   if (has_eval && .distance_eval_is_single(spec$eval)) {
-    out <- spec$eval(X, x0, ctx)
-    return(.distance_validate_output_vec(out, nrow(X)))
+    out <- spec$eval(x_mat, x0_vec, ctx)
+    return(.distance_validate_output_vec(out, nrow(x_mat)))
   }
 
   if (has_batch) {
-    D <- spec$eval_batch(X, matrix(x0, nrow = 1L), ctx)
-    D <- .distance_validate_output_mat(D, nrow(X), 1L, src = "distance eval_batch")
-    return(as.numeric(D[, 1L]))
+    d_mat <- spec$eval_batch(x_mat, matrix(x0_vec, nrow = 1L), ctx)
+    d_mat <- .distance_validate_output_mat(d_mat, nrow(x_mat), 1L, src = "distance eval_batch")
+    return(as.numeric(d_mat[, 1L]))
   }
 
   if (has_eval) {
-    out <- spec$eval(X, x0, ctx)
-    return(.distance_validate_output_vec(out, nrow(X)))
+    out <- spec$eval(x_mat, x0_vec, ctx)
+    return(.distance_validate_output_vec(out, nrow(x_mat)))
   }
 
   stop("No R `eval` or `eval_batch` provided.", call. = FALSE)
@@ -238,26 +238,26 @@ distance_eval <- function(spec, X, x0, ctx = NULL) {
 #'   called as `spec$setup(X)` to create a context.
 #' @return Numeric matrix \(n  x  m\).
 #' @examples
-#' X <- matrix(rnorm(12), 4, 3)
-#' X0 <- matrix(rnorm(6), 2, 3)
-#' distance_eval_batch(distance_l2(), X, X0)
+#' x_mat <- matrix(rnorm(12), 4, 3)
+#' x0_mat <- matrix(rnorm(6), 2, 3)
+#' distance_eval_batch(distance_l2(), x_mat, x0_mat)
 #' @export
 distance_eval_batch <- function(spec, X, X0, ctx = NULL) {
   if (!is_distance(spec)) stop("`spec` must be a distance.", call. = FALSE)
-  X <- as.matrix(X)
-  X0 <- as.matrix(X0)
-  if (ncol(X) == 0L) stop("X must have at least one column.", call. = FALSE)
-  if (ncol(X) != ncol(X0)) stop("ncol(X0) must match ncol(X).", call. = FALSE)
+  x_mat <- as.matrix(X)
+  x0_mat <- as.matrix(X0)
+  if (ncol(x_mat) == 0L) stop("X must have at least one column.", call. = FALSE)
+  if (ncol(x_mat) != ncol(x0_mat)) stop("ncol(X0) must match ncol(X).", call. = FALSE)
 
-  if (is.null(ctx) && is.function(spec$setup)) ctx <- spec$setup(X)
+  if (is.null(ctx) && is.function(spec$setup)) ctx <- spec$setup(x_mat)
 
   has_eval <- .distance_has_eval(spec)
   has_batch <- .distance_has_eval_batch(spec)
-  n <- nrow(X)
-  m <- nrow(X0)
+  n <- nrow(x_mat)
+  m <- nrow(x0_mat)
 
   if (has_batch) {
-    out <- spec$eval_batch(X, X0, ctx)
+    out <- spec$eval_batch(x_mat, x0_mat, ctx)
     return(.distance_validate_output_mat(out, n, m, src = "distance eval_batch"))
   }
 
@@ -268,7 +268,7 @@ distance_eval_batch <- function(spec, X, X0, ctx = NULL) {
     }
     out <- matrix(NA_real_, n, m)
     for (j in seq_len(m)) {
-      out[, j] <- .distance_validate_output_vec(spec$eval(X, X0[j, ], ctx), n, src = "distance eval")
+      out[, j] <- .distance_validate_output_vec(spec$eval(x_mat, x0_mat[j, ], ctx), n, src = "distance eval")
     }
     return(out)
   }

@@ -1,5 +1,3 @@
-# R/dist_l2.R
-# -----------------------------------------------------------------------------
 # L2 (Euclidean) distances: fast C++ path with robust R fallbacks.
 
 #' @noRd

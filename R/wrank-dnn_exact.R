@@ -1,5 +1,3 @@
-# R/weights_dnn_exact_full.R
-# -------------------------------------------------------------------
 # Exact DNN L-statistic weights (FULL U-statistic, WOR) from ranks
 #
 # Assumes: we average over ALL subsets of size s without replacement.

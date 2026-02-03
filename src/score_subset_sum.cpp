@@ -28,7 +28,8 @@ NumericVector rustat_subset_row_sums_g(IntegerMatrix subs, NumericVector g) {
 #pragma omp critical(rustat_subset_row_sums_g_error)
 #endif
         {
-          if (first_bad_index < 0) first_bad_index = i + 1;
+          if (first_bad_index < 0)
+            first_bad_index = i + 1;
         }
         acc = NA_REAL;
         break;

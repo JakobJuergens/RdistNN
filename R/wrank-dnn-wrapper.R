@@ -1,5 +1,3 @@
-# R/wrank-DNN-wrapper.R
-# ------------------------------------------------------------------------------
 # Rank-weight wrappers for DNN weights compatible with the new rank API.
 # These return a rank_weight spec (list) with fields:
 #   name, eval(ranks, ctx), eval_batch(R, ctx),

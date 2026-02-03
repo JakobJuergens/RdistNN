@@ -14,7 +14,7 @@ Logical.
 }
 \description{
 A rank-weight spec is a list with \code{eval(ranks, ctx)} and/or
-\code{eval_batch(R, ctx)}, where \code{R} is an n x m rank matrix (each column a
+\code{eval_batch(rank_matrix, ctx)}, where \code{rank_matrix} is an n x m rank matrix (each column a
 permutation of 1..n). Optionally it may define \code{setup(data)}.
 }
 \examples{

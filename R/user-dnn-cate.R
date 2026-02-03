@@ -1,5 +1,3 @@
-# R/cate-dnn.R
-# -----------------------------------------------------------------------------
 # DNN-based CATE wrapper (rank-weighted local DR learner)
 
 #' CATE via DNN rank weights (orthogonalized local averaging)
@@ -25,18 +23,18 @@
 #' @param se logical; compute jackknife SEs (fast path if available).
 #' @param jackknife one of `"fast"`, `"loo"`, `"none"`.
 #' @param ctx optional context forwarded to distance/ranking.
-#' @param return extras from `weights_dnn()`: any of `c("W","ranks","ord","dx")`,
-#'   plus `"psi"`, `"nuisance"`, `"ess"`, `"neighbors"`, `"loo"`.
+#' @param return extras from `weights_dnn()`: any of
+#'   `c("W","ranks","ord","dx","psi","nuisance","ess","neighbors")`.
 #'
 #' @return A `cate_result` with fields `tau`, optional `se`, `meta`, and requested extras.
 #' @examples
 #' set.seed(1)
 #' n <- 50
-#' X <- matrix(rnorm(n * 2), n, 2)
-#' X0 <- matrix(rnorm(6), 3, 2)
+#' x_mat <- matrix(rnorm(n * 2), n, 2)
+#' x0_mat <- matrix(rnorm(6), 3, 2)
 #' psi <- rnorm(n)
 #' out <- cate_dnn(
-#'   X = X, X0 = X0, pseudo_outcome = psi,
+#'   X = x_mat, X0 = x0_mat, pseudo_outcome = psi,
 #'   distance = "l2", method = "exact", k = 2L, s = 3L,
 #'   se = FALSE, return = c("W", "tau")
 #' )
@@ -60,12 +58,12 @@ cate_dnn <- function(
   method <- match.arg(method)
   jackknife <- match.arg(jackknife)
 
-  # ---- Dispatch: data-frame API vs matrix API --------------------------------
+  # Dispatch: data-frame API vs matrix API.
   if (!is.null(data)) {
     stopifnot(is.data.frame(data))
-    X <- as.matrix(data[, x_cols, drop = FALSE])
-    n <- nrow(X)
-    p <- ncol(X)
+    x_mat <- as.matrix(data[, x_cols, drop = FALSE])
+    n <- nrow(x_mat)
+    p <- ncol(x_mat)
 
     if (!is.null(pseudo_outcome)) {
       psi <- as.numeric(pseudo_outcome)
@@ -76,23 +74,23 @@ cate_dnn <- function(
       if (is.null(y_col) || is.null(t_col) || is.null(m_col) || is.null(e_col)) {
         stop("With `data=`, provide `pseudo_outcome` OR {y_col, t_col, m_col, e_col}.", call. = FALSE)
       }
-      Y <- as.numeric(data[[y_col]])
-      Tt <- as.numeric(data[[t_col]])
-      if (any(!Tt %in% c(0, 1))) stop("`t_col` must be binary in {0,1}.", call. = FALSE)
+      y_vec <- as.numeric(data[[y_col]])
+      t_vec <- as.numeric(data[[t_col]])
+      if (any(!t_vec %in% c(0, 1))) stop("`t_col` must be binary in {0,1}.", call. = FALSE)
       m <- as.numeric(data[[m_col]])
       e <- as.numeric(data[[e_col]])
-      if (length(Y) != n || length(Tt) != n || length(m) != n || length(e) != n) {
+      if (length(y_vec) != n || length(t_vec) != n || length(m) != n || length(e) != n) {
         stop("y_col/t_col/m_col/e_col must all have length n.", call. = FALSE)
       }
       den <- pmax(e * (1 - e), 1e-8)
-      psi <- (Y - m) * (Tt - e) / den
+      psi <- (y_vec - m) * (t_vec - e) / den
     }
   } else {
     # matrix API
     if (is.null(X)) stop("Provide either `data` ... or matrix interface via `X`.", call. = FALSE)
-    X <- as.matrix(X)
-    n <- nrow(X)
-    p <- ncol(X)
+    x_mat <- as.matrix(X)
+    n <- nrow(x_mat)
+    p <- ncol(x_mat)
     if (is.null(pseudo_outcome)) stop("Matrix API requires `pseudo_outcome`.", call. = FALSE)
     psi <- as.numeric(pseudo_outcome)
     if (length(psi) != n) stop("`pseudo_outcome` length must equal nrow(X).", call. = FALSE)
@@ -103,68 +101,33 @@ cate_dnn <- function(
   if (!is.null(X0) && !is.null(x0)) stop("Provide either `X0` or `x0`, not both.", call. = FALSE)
   if (is.null(X0)) {
     if (is.null(x0)) stop("Provide `X0` (m x p) or a single `x0` (length p).", call. = FALSE)
-    X0 <- matrix(as.numeric(x0), nrow = 1L)
+    x0_mat <- matrix(as.numeric(x0), nrow = 1L)
   } else {
-    X0 <- as.matrix(X0)
+    x0_mat <- as.matrix(X0)
   }
-  if (ncol(X0) != p) stop("ncol(X0) must equal ncol(X).", call. = FALSE)
+  if (ncol(x0_mat) != p) stop("ncol(X0) must equal ncol(X).", call. = FALSE)
 
-  # ---- Weights (rank-only DNN) -----------------------------------------------
+  # Weights (rank-only DNN).
   keep_extras <- intersect(return, c("ranks", "ord", "dx"))
   wt <- weights_dnn(
-    X = X, X0 = X0,
+    X = x_mat, X0 = x0_mat,
     distance = distance,
     k = as.integer(k), s = as.integer(s),
     method = method, normalize = normalize, ctx = ctx,
     return = unique(c("W", keep_extras))
   )
-  W <- wt$W
-  m_out <- ncol(W)
+  weight_matrix <- wt$W
+  m_out <- ncol(weight_matrix)
 
-  # ---- Point estimates --------------------------------------------------------
-  tau <- as.numeric(crossprod(psi, W)) # length m_out
-
-  # ---- Jackknife SEs ----------------------------------------------------------
+  # Point estimates.
+  tau <- as.numeric(crossprod(psi, weight_matrix)) # length m_out
   se_hat <- NULL
-  # if (isTRUE(se) && m_out > 0L) {
-  #   se_try_fast <- function() {
-  #     if (!exists("jackknife_fast_rank", mode = "function")) return(NULL)
-  #     R <- wt$ranks
-  #     if (is.null(R)) return(NULL)
-  #     out <- try(jackknife_fast_rank(R, matrix(psi, ncol = 1L)), silent = TRUE)
-  #     if (inherits(out, "try-error")) return(NULL)
-  #     if (!is.null(out$theta0) && !is.null(out$theta_loo)) {
-  #       theta0 <- as.numeric(out$theta0)
-  #       loo    <- out$theta_loo
-  #       if (is.matrix(loo) && length(theta0) == m_out) {
-  #         v <- (n - 1) / n * colSums((loo - matrix(theta0, n, m_out, byrow = TRUE))^2)
-  #         return(sqrt(pmax(v, 0)))
-  #       }
-  #     }
-  #     NULL
-  #   }
-  #
-  #   se_hat <- se_try_fast()
-  #   if (is.null(se_hat) && jackknife != "none") {
-  #     # LOO fallback
-  #     loo <- matrix(NA_real_, n, m_out)
-  #     for (i in seq_len(n)) {
-  #       Xi   <- X[-i, , drop = FALSE]
-  #       psii <- psi[-i]
-  #       Wi <- weights_dnn(
-  #         X = Xi, X0 = X0, distance = distance,
-  #         k = as.integer(k), s = as.integer(s),
-  #         method = method, normalize = normalize, ctx = ctx,
-  #         return = "W"
-  #       )
-  #       loo[i, ] <- as.numeric(crossprod(psii, Wi$W))
-  #     }
-  #     v <- (n - 1) / n * colSums((loo - matrix(tau, n, m_out, byrow = TRUE))^2)
-  #     se_hat <- sqrt(pmax(v, 0))
-  #   }
-  # }
+  if (isTRUE(se) && jackknife != "none") {
+    # Placeholder for a future jackknife implementation.
+    se_hat <- NULL
+  }
 
-  # ---- Assemble ---------------------------------------------------------------
+  # Assemble output.
   distance_name <- if (is.character(distance)) {
     distance
   } else if (is.list(distance) && !is.null(distance$name)) {
@@ -182,7 +145,7 @@ cate_dnn <- function(
       method = method, distance = distance_name
     )
   )
-  if ("W" %in% return) out$W <- W
+  if ("W" %in% return) out$W <- weight_matrix
   if ("ranks" %in% return && !is.null(wt$ranks)) out$ranks <- wt$ranks
   if ("ord" %in% return && !is.null(wt$ord)) out$ord <- wt$ord
   if ("dx" %in% return && !is.null(wt$dx)) out$dx <- wt$dx
@@ -191,17 +154,16 @@ cate_dnn <- function(
     out$nuisance <- list(m = m, e = e)
   }
   if ("ess" %in% return) {
-    out$ess <- 1 / colSums(W^2)
+    out$ess <- 1 / colSums(weight_matrix^2)
   }
   if ("neighbors" %in% return) {
-    k_eff <- max(1L, min(nrow(W), as.integer(k)))
+    k_eff <- max(1L, min(nrow(weight_matrix), as.integer(k)))
     if (!is.null(wt$ord)) {
       out$neighbors <- wt$ord[seq_len(k_eff), , drop = FALSE]
     } else if (!is.null(wt$ranks)) {
       out$neighbors <- apply(wt$ranks, 2L, function(r) order(r)[seq_len(k_eff)])
     }
   }
-  if (exists("loo", inherits = FALSE) && "loo" %in% return) out$loo <- loo
 
   class(out) <- "cate_result"
   out

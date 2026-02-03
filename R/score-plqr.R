@@ -1,5 +1,3 @@
-# R/score-plqr-component.R
-
 .validate_plqr_factory <- function(D_cols, mD_cols, beta, j, tau, s, k) {
   errs <- character()
 

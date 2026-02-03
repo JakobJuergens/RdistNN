@@ -1,5 +1,3 @@
-# R/demo-data-np-y.R
-# -------------------------------------------------------------------
 # Minimal nonparametric regression demo data (Y-only / singleton score)
 # + ready-made multi-scenario generator for tests
 # -------------------------------------------------------------------

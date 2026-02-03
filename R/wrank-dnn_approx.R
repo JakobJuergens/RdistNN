@@ -1,5 +1,3 @@
-# R/weights_dnn_asymp_full.R
-# -------------------------------------------------------------------
 # Asymptotic DNN L-statistic weights (FULL U-statistic, WOR) from ranks
 #
 # Assumes: averaging over ALL subsets of size s without replacement.

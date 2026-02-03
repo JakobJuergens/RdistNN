@@ -5,8 +5,7 @@ using namespace Rcpp;
 
 // Helpers ---------------------------------------------------------------
 
-inline int idx3(int t, int k, int q, int T, int S, int Q)
-{
+inline int idx3(int t, int k, int q, int T, int S, int Q) {
   // Flatten (t,k,q) with 0-based indices into [0, T*S*Q)
   // Layout: (((t)*S + k)*Q + q)
   return (((t)*S) + k) * Q + q;
@@ -14,11 +13,8 @@ inline int idx3(int t, int k, int q, int T, int S, int Q)
 
 // Fast delete-one jackknife for rank-weighted functionals (matrix phi)
 // [[Rcpp::export]]
-Rcpp::List rustat_jackknife_fast_rank(const IntegerMatrix &ranks,
-                                      const NumericVector &a,
-                                      const NumericMatrix &PHI,
-                                      const bool normalize = true)
-{
+Rcpp::List rustat_jackknife_fast_rank(const IntegerMatrix &ranks, const NumericVector &a,
+                                      const NumericMatrix &PHI, const bool normalize = true) {
   const int T = ranks.nrow();
   const int K = ranks.ncol(); // must be >= s+1
   const int s = a.size();
@@ -29,15 +25,12 @@ Rcpp::List rustat_jackknife_fast_rank(const IntegerMatrix &ranks,
 
   // Z = sum(a) or 1
   double Z = 0.0;
-  if (normalize)
-  {
+  if (normalize) {
     for (int k = 0; k < s; ++k)
       Z += a[k];
     if (Z == 0.0)
       stop("sum(a) == 0 with normalize=TRUE.");
-  }
-  else
-  {
+  } else {
     Z = 1.0;
   }
 
@@ -56,16 +49,13 @@ Rcpp::List rustat_jackknife_fast_rank(const IntegerMatrix &ranks,
   NumericMatrix S_t_divZ(T, q);
 
   // Build y_tk, y_s1, and S_t_divZ
-  for (int t = 0; t < T; ++t)
-  {
+  for (int t = 0; t < T; ++t) {
     // neighbors 1..s
-    for (int k = 0; k < s; ++k)
-    {
+    for (int k = 0; k < s; ++k) {
       int j = ranks(t, k) - 1; // 0-based
       if (j < 0 || j >= n_ref)
         stop("ranks indices out of range.");
-      for (int qq = 0; qq < q; ++qq)
-      {
+      for (int qq = 0; qq < q; ++qq) {
         double v = PHI(j, qq);
         y_tk[idx3(t, k, qq, T, s, q)] = v;
         S_t_divZ(t, qq) += a[k] * v;
@@ -75,8 +65,7 @@ Rcpp::List rustat_jackknife_fast_rank(const IntegerMatrix &ranks,
     int jtail = ranks(t, s) - 1;
     if (jtail < 0 || jtail >= n_ref)
       stop("ranks indices out of range.");
-    for (int qq = 0; qq < q; ++qq)
-    {
+    for (int qq = 0; qq < q; ++qq) {
       y_s1(t, qq) = PHI(jtail, qq);
     }
     // divide baseline by Z
@@ -86,8 +75,7 @@ Rcpp::List rustat_jackknife_fast_rank(const IntegerMatrix &ranks,
 
   // theta0 = mean_t S_t_divZ[t,]
   NumericVector theta0(q);
-  for (int t = 0; t < T; ++t)
-  {
+  for (int t = 0; t < T; ++t) {
     for (int qq = 0; qq < q; ++qq)
       theta0[qq] += S_t_divZ(t, qq);
   }
@@ -97,18 +85,14 @@ Rcpp::List rustat_jackknife_fast_rank(const IntegerMatrix &ranks,
   // Precompute pre_t[t][r] = sum_{k=r}^{s-1} (a_{k+1}-a_k) * y_{t,k+1}
   // We store only for r=0..s-2; r=s-1 has zero.
   std::vector<double> pre_t((size_t)T * std::max(1, s - 1) * q, 0.0);
-  if (s >= 2)
-  {
-    for (int t = 0; t < T; ++t)
-    {
+  if (s >= 2) {
+    for (int t = 0; t < T; ++t) {
       // backward accumulation over k
       // acc = sum_{k=q}^{s-1} dk[k] * y_{t,k+1}
       // We'll fill for each r=q (0..s-2)
-      for (int r = s - 2; r >= 0; --r)
-      {
+      for (int r = s - 2; r >= 0; --r) {
         // pre_t[t, r] = pre_t[t, r+1] + dk[r] * y_{t, r+1}
-        for (int qq = 0; qq < q; ++qq)
-        {
+        for (int qq = 0; qq < q; ++qq) {
           double prev = (r == s - 2) ? 0.0 : pre_t[(size_t)t * (s - 1) * q + (r + 1) * q + qq];
           double add = dk[r] * y_tk[idx3(t, r + 1, qq, T, s, q)];
           pre_t[(size_t)t * (s - 1) * q + r * q + qq] = prev + add;
@@ -119,10 +103,8 @@ Rcpp::List rustat_jackknife_fast_rank(const IntegerMatrix &ranks,
 
   // Build adjacency i -> list of (t,r) where r in 1..s+1
   std::vector<std::vector<std::pair<int, int>>> adj(n_ref);
-  for (int t = 0; t < T; ++t)
-  {
-    for (int k = 0; k < s + 1; ++k)
-    {
+  for (int t = 0; t < T; ++t) {
+    for (int k = 0; k < s + 1; ++k) {
       int i = ranks(t, k) - 1;
       if (i < 0 || i >= n_ref)
         stop("ranks indices out of range.");
@@ -132,8 +114,7 @@ Rcpp::List rustat_jackknife_fast_rank(const IntegerMatrix &ranks,
 
   // Output: theta_loo (n_ref x q), initialize to theta0
   NumericMatrix theta_loo(n_ref, q);
-  for (int i = 0; i < n_ref; ++i)
-  {
+  for (int i = 0; i < n_ref; ++i) {
     for (int qq = 0; qq < q; ++qq)
       theta_loo(i, qq) = theta0[qq];
   }
@@ -143,24 +124,20 @@ Rcpp::List rustat_jackknife_fast_rank(const IntegerMatrix &ranks,
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-  for (int i = 0; i < n_ref; ++i)
-  {
+  for (int i = 0; i < n_ref; ++i) {
     std::vector<double> delta(q, 0.0);
     const auto &lst = adj[i];
-    for (size_t m = 0; m < lst.size(); ++m)
-    {
+    for (size_t m = 0; m < lst.size(); ++m) {
       int t = lst[m].first;
       int r = lst[m].second; // 1..s+1
       if (r > s)
         continue; // only affects if within support
       // base = S_t_divZ[t,]
-      for (int qq = 0; qq < q; ++qq)
-      {
+      for (int qq = 0; qq < q; ++qq) {
         double base = S_t_divZ(t, qq);
         double term1 = (a[r - 1] / Z) * y_tk[idx3(t, r - 1, qq, T, s, q)];
         double term2 = 0.0;
-        if (s >= 2 && r <= s - 1)
-        {
+        if (s >= 2 && r <= s - 1) {
           term2 = pre_t[(size_t)t * (s - 1) * q + (r - 1) * q + qq] / Z;
         }
         double term3 = (a[s - 1] / Z) * y_s1(t, qq);
@@ -168,15 +145,12 @@ Rcpp::List rustat_jackknife_fast_rank(const IntegerMatrix &ranks,
         delta[qq] += (Snew - base);
       }
     }
-    for (int qq = 0; qq < q; ++qq)
-    {
+    for (int qq = 0; qq < q; ++qq) {
       theta_loo(i, qq) = theta0[qq] + delta[qq] / (double)T;
     }
   }
 
-  return Rcpp::List::create(
-      _["theta0"] = theta0,
-      _["theta_loo"] = theta_loo,
-      _["info"] = Rcpp::List::create(
-          _["s"] = s, _["T"] = T, _["q"] = q, _["normalize"] = normalize));
+  return Rcpp::List::create(_["theta0"] = theta0, _["theta_loo"] = theta_loo,
+                            _["info"] = Rcpp::List::create(_["s"] = s, _["T"] = T, _["q"] = q,
+                                                           _["normalize"] = normalize));
 }

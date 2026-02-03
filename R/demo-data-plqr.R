@@ -1,5 +1,3 @@
-# R/demo-data-plqr.R
-# -------------------------------------------------------------------
 # PLQR demo data (oracle nuisances; no internal fitting)
 # + test-friendly injection hooks
 # + multi-scenario generator for unit tests
