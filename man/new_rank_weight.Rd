@@ -11,7 +11,7 @@ new_rank_weight(name, eval = NULL, eval_batch = NULL, setup = NULL)
 
 \item{eval}{Optional function \verb{(ranks, ctx) -> numeric(n)}.}
 
-\item{eval_batch}{Optional function \verb{(R, ctx) -> numeric(n x m)}.}
+\item{eval_batch}{Optional function \verb{(rank_matrix, ctx) -> numeric(n x m)}.}
 
 \item{setup}{Optional function to build context.}
 }

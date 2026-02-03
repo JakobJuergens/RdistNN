@@ -1,5 +1,3 @@
-# R/api_weights.R
-# -----------------------------------------------------------------------------
 # High-level API: from {X, X0/x0} + RANKING + rank_weight -> W
 # Modular, user-friendly, ranker-agnostic. Works with distances, custom rankers,
 # or precomputed ranks/orders/distances. DNN wrappers provided below.
@@ -35,51 +33,51 @@
 #   • an integer matrix ranks (n x m) directly
 # Notes: n = nrow(X), m = nrow(X0). Each column is one target.
 .resolve_ranking <- function(ranking, X, X0, ctx = NULL) {
-  X <- as.matrix(X)
-  X0 <- as.matrix(X0)
-  n <- nrow(X)
-  m <- nrow(X0)
+  x_mat <- as.matrix(X)
+  x0_mat <- as.matrix(X0)
+  n <- nrow(x_mat)
+  m <- nrow(x0_mat)
 
-  make_from_dx <- function(DX) {
-    ORD <- apply(DX, 2L, .order_with_ties) # n x m
-    RKS <- apply(ORD, 2L, ord_to_ranks) # n x m
-    list(ranks = RKS, ord = ORD, dx = DX)
+  make_from_dx <- function(dist_matrix) {
+    order_matrix <- apply(dist_matrix, 2L, .order_with_ties) # n x m
+    rank_matrix <- apply(order_matrix, 2L, ord_to_ranks) # n x m
+    list(ranks = rank_matrix, ord = order_matrix, dx = dist_matrix)
   }
-  make_from_ord <- function(ORD) {
-    if (!is.integer(ORD)) storage.mode(ORD) <- "integer"
-    if (nrow(ORD) != n || ncol(ORD) != m) stop("`ord` must be n x m.")
+  make_from_ord <- function(order_matrix) {
+    if (!is.integer(order_matrix)) storage.mode(order_matrix) <- "integer"
+    if (nrow(order_matrix) != n || ncol(order_matrix) != m) stop("`ord` must be n x m.")
     for (j in seq_len(m)) {
-      o <- ORD[, j]
+      o <- order_matrix[, j]
       if (!setequal(o, seq_len(n))) stop("Each column of `ord` must be a permutation of 1..n.")
     }
-    RKS <- apply(ORD, 2L, ord_to_ranks)
-    list(ranks = RKS, ord = ORD, dx = NULL)
+    rank_matrix <- apply(order_matrix, 2L, ord_to_ranks)
+    list(ranks = rank_matrix, ord = order_matrix, dx = NULL)
   }
-  make_from_ranks <- function(RKS) {
-    if (!is.integer(RKS)) storage.mode(RKS) <- "integer"
-    if (nrow(RKS) != n || ncol(RKS) != m) stop("`ranks` must be n x m.")
+  make_from_ranks <- function(rank_matrix) {
+    if (!is.integer(rank_matrix)) storage.mode(rank_matrix) <- "integer"
+    if (nrow(rank_matrix) != n || ncol(rank_matrix) != m) stop("`ranks` must be n x m.")
     for (j in seq_len(m)) {
-      r <- RKS[, j]
+      r <- rank_matrix[, j]
       if (!setequal(r, seq_len(n))) stop("Each column of `ranks` must be a permutation of 1..n.")
     }
-    list(ranks = RKS, ord = NULL, dx = NULL)
+    list(ranks = rank_matrix, ord = NULL, dx = NULL)
   }
 
   # 1) Distance spec / name -> compute distances
   if (is_distance(ranking) || is.character(ranking)) {
     dist_spec <- .resolve_distance(ranking)
-    DX <- if (!is.null(dist_spec$eval_batch)) {
-      distance_eval_batch(dist_spec, X, X0, ctx) # n x m
+    dist_matrix <- if (!is.null(dist_spec$eval_batch)) {
+      distance_eval_batch(dist_spec, x_mat, x0_mat, ctx) # n x m
     } else {
-      vapply(seq_len(m), function(j) distance_eval(dist_spec, X, X0[j, ], ctx), numeric(n))
+      vapply(seq_len(m), function(j) distance_eval(dist_spec, x_mat, x0_mat[j, ], ctx), numeric(n))
     }
-    return(make_from_dx(DX))
+    return(make_from_dx(dist_matrix))
   }
 
   # 2) Function -> run it and recurse on its output
   if (is.function(ranking)) {
-    obj <- ranking(X, X0, ctx)
-    return(.resolve_ranking(obj, X, X0, ctx))
+    obj <- ranking(x_mat, x0_mat, ctx)
+    return(.resolve_ranking(obj, x_mat, x0_mat, ctx))
   }
 
   # 3) List: respect whichever of ranks/ord/dx it provides
@@ -101,7 +99,12 @@
     return(make_from_ranks(ranking))
   }
 
-  stop("Unsupported `ranking` type. Provide a distance spec/name, a ranks/ord/dx matrix/list, or a function(X, X0, ctx)->{ranks|ord|dx}.")
+  stop(
+    paste(
+      "Unsupported `ranking` type. Provide a distance spec/name, a",
+      "ranks/ord/dx matrix/list, or a function(X, X0, ctx)->{ranks|ord|dx}."
+    )
+  )
 }
 
 # Accept a rank_weight (or a zero-arg factory returning one)
@@ -156,13 +159,13 @@
 #'   - `meta`: list with `n, m, p, weight_kind, weight_name`.
 #' @examples
 #' set.seed(1)
-#' X <- matrix(rnorm(20), 10, 2)
-#' X0 <- matrix(rnorm(6), 3, 2)
+#' x_mat <- matrix(rnorm(20), 10, 2)
+#' x0_mat <- matrix(rnorm(6), 3, 2)
 #' rw <- as_rank_weight(function(r) {
 #'   w <- 1 / as.numeric(r)
 #'   w / sum(w)
 #' }, name = "inv_rank")
-#' out <- weights_matrix(X, X0, ranking = "l2", weight = rw, return = c("W", "ranks"))
+#' out <- weights_matrix(x_mat, x0_mat, ranking = "l2", weight = rw, return = c("W", "ranks"))
 #' dim(out$W)
 #' @export
 weights_matrix <- function(
@@ -174,48 +177,48 @@ weights_matrix <- function(
   return = c("W")
 ) {
   # shapes
-  X <- as.matrix(X)
+  x_mat <- as.matrix(X)
   if (!is.null(X0) && !is.null(x0)) stop("Provide either `X0` or `x0`, not both.")
   if (is.null(X0)) {
     if (is.null(x0)) stop("Provide `X0` (m x p) or a single `x0` (length p).")
-    X0 <- matrix(as.numeric(x0), nrow = 1L)
+    x0_mat <- matrix(as.numeric(x0), nrow = 1L)
   } else {
-    X0 <- as.matrix(X0)
+    x0_mat <- as.matrix(X0)
   }
-  if (ncol(X) == 0L || ncol(X0) == 0L) stop("`X` and `X0` must have at least one column.")
-  if (ncol(X) != ncol(X0)) stop("ncol(X0) must equal ncol(X).")
+  if (ncol(x_mat) == 0L || ncol(x0_mat) == 0L) stop("`X` and `X0` must have at least one column.")
+  if (ncol(x_mat) != ncol(x0_mat)) stop("ncol(X0) must equal ncol(X).")
 
-  n <- nrow(X)
-  p <- ncol(X)
-  m <- nrow(X0)
+  n <- nrow(x_mat)
+  p <- ncol(x_mat)
+  m <- nrow(x0_mat)
 
   # ranking -> ranks (and ord/dx if computable)
-  rk <- .resolve_ranking(ranking, X, X0, ctx)
+  ranking_result <- .resolve_ranking(ranking, x_mat, x0_mat, ctx)
 
   # resolve weight spec (rank- or distance-based)
   wt_in <- weight %||% rank_weight
   wt_res <- .resolve_weight(wt_in)
 
   # evaluate weights
-  W <- {
+  weight_matrix <- {
     # rank-only path
-    if (is.null(rk$ranks)) {
+    if (is.null(ranking_result$ranks)) {
       stop("rank_weight provided but no ranks available from `ranking`.", call. = FALSE)
     }
-    rank_weight_eval_batch(wt_res$spec, rk$ranks)
+    rank_weight_eval_batch(wt_res$spec, ranking_result$ranks)
   }
 
   out <- list(
-    W = W,
+    W = weight_matrix,
     meta = list(
       n = n, m = m, p = p,
       weight_kind = wt_res$kind,
       weight_name = wt_res$spec$name
     )
   )
-  if ("ord" %in% return && !is.null(rk$ord)) out$ord <- rk$ord
-  if ("ranks" %in% return && !is.null(rk$ranks)) out$ranks <- rk$ranks
-  if ("dx" %in% return && !is.null(rk$dx)) out$dx <- rk$dx
+  if ("ord" %in% return && !is.null(ranking_result$ord)) out$ord <- ranking_result$ord
+  if ("ranks" %in% return && !is.null(ranking_result$ranks)) out$ranks <- ranking_result$ranks
+  if ("dx" %in% return && !is.null(ranking_result$dx)) out$dx <- ranking_result$dx
   class(out) <- "weights_result"
   out
 }
@@ -247,12 +250,15 @@ print.weights_result <- function(x, ...) {
 #' @return a \code{weights_result} with \code{W} and metadata
 #' @examples
 #' set.seed(1)
-#' X <- matrix(rnorm(20), 10, 2)
-#' X0 <- matrix(rnorm(6), 3, 2)
-#' out <- weights_dnn_exact(X, X0, distance = "l2", k = 2L, s = 3L, return = "W")
+#' x_mat <- matrix(rnorm(20), 10, 2)
+#' x0_mat <- matrix(rnorm(6), 3, 2)
+#' out <- weights_dnn_exact(x_mat, x0_mat, distance = "l2", k = 2L, s = 3L, return = "W")
 #' dim(out$W)
 #' @export
-weights_dnn_exact <- function(X, X0 = NULL, x0 = NULL, distance = "l2", k, s, ctx = NULL, return = c("W")) {
+weights_dnn_exact <- function(
+  X, X0 = NULL, x0 = NULL, distance = "l2", k, s,
+  ctx = NULL, return = c("W")
+) {
   weights_matrix(
     X = X, X0 = X0, x0 = x0,
     ranking = distance,
@@ -267,12 +273,15 @@ weights_dnn_exact <- function(X, X0 = NULL, x0 = NULL, distance = "l2", k, s, ct
 #' @param normalize logical; renormalize columns to sum 1
 #' @examples
 #' set.seed(1)
-#' X <- matrix(rnorm(20), 10, 2)
-#' X0 <- matrix(rnorm(4), 2, 2)
-#' out <- weights_dnn_asymp(X, X0, k = 2L, s = 3L, normalize = TRUE)
+#' x_mat <- matrix(rnorm(20), 10, 2)
+#' x0_mat <- matrix(rnorm(4), 2, 2)
+#' out <- weights_dnn_asymp(x_mat, x0_mat, k = 2L, s = 3L, normalize = TRUE)
 #' dim(out$W)
 #' @export
-weights_dnn_asymp <- function(X, X0 = NULL, x0 = NULL, distance = "l2", k, s, normalize = TRUE, ctx = NULL, return = c("W")) {
+weights_dnn_asymp <- function(
+  X, X0 = NULL, x0 = NULL, distance = "l2", k, s,
+  normalize = TRUE, ctx = NULL, return = c("W")
+) {
   weights_matrix(
     X = X, X0 = X0, x0 = x0,
     ranking = distance,
@@ -287,12 +296,16 @@ weights_dnn_asymp <- function(X, X0 = NULL, x0 = NULL, distance = "l2", k, s, no
 #' @param method one of \code{"exact"} or \code{"asymp"}
 #' @examples
 #' set.seed(1)
-#' X <- matrix(rnorm(20), 10, 2)
+#' x_mat <- matrix(rnorm(20), 10, 2)
 #' x0 <- c(0, 0)
-#' out <- weights_dnn(X, x0 = x0, k = 2L, s = 3L, method = "exact")
+#' out <- weights_dnn(x_mat, x0 = x0, k = 2L, s = 3L, method = "exact")
 #' dim(out$W)
 #' @export
-weights_dnn <- function(X, X0 = NULL, x0 = NULL, distance = "l2", k, s, method = c("exact", "asymp"), normalize = TRUE, ctx = NULL, return = c("W")) {
+weights_dnn <- function(
+  X, X0 = NULL, x0 = NULL, distance = "l2", k, s,
+  method = c("exact", "asymp"), normalize = TRUE, ctx = NULL,
+  return = c("W")
+) {
   method <- match.arg(method)
   if (method == "exact") {
     weights_dnn_exact(

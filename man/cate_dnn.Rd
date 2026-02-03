@@ -55,8 +55,8 @@ cate_dnn(
 
 \item{ctx}{optional context forwarded to distance/ranking.}
 
-\item{return}{extras from \code{weights_dnn()}: any of \code{c("W","ranks","ord","dx")},
-plus \code{"psi"}, \code{"nuisance"}, \code{"ess"}, \code{"neighbors"}, \code{"loo"}.}
+\item{return}{extras from \code{weights_dnn()}: any of
+\code{c("W","ranks","ord","dx","psi","nuisance","ess","neighbors")}.}
 }
 \value{
 A \code{cate_result} with fields \code{tau}, optional \code{se}, \code{meta}, and requested extras.
@@ -74,11 +74,11 @@ both \code{m_col} and \code{e_col} to build the pseudo-outcome internally.
 \examples{
 set.seed(1)
 n <- 50
-X <- matrix(rnorm(n * 2), n, 2)
-X0 <- matrix(rnorm(6), 3, 2)
+x_mat <- matrix(rnorm(n * 2), n, 2)
+x0_mat <- matrix(rnorm(6), 3, 2)
 psi <- rnorm(n)
 out <- cate_dnn(
-  X = X, X0 = X0, pseudo_outcome = psi,
+  X = x_mat, X0 = x0_mat, pseudo_outcome = psi,
   distance = "l2", method = "exact", k = 2L, s = 3L,
   se = FALSE, return = c("W", "tau")
 )

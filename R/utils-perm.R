@@ -1,6 +1,3 @@
-# R/permutation-utils.R
-# -----------------------------------------------------------------------------
-
 #' Convert an index order to ranks (inverse permutation)
 #'
 #' @param ord Integer vector (values `1..n`) giving increasing order.

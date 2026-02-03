@@ -55,14 +55,13 @@ reference:
     desc: S3 spec, helpers, generics, registries, and built-in distances.
     contents:
       - new_distance
-      - distance_setup
       - distance_eval
       - distance_eval_batch
       - as_distance
       - is_distance
-      - is_compiled_distance
       - register_distance
       - get_distance
+      - distance_names
       - list_distances
       - distance_l2
       - distance_l1
@@ -77,33 +76,19 @@ reference:
     desc: S3 spec for converting ranks to weights, plus DNN rank-weights.
     contents:
       - new_rank_weight
-      - rank_weight_setup
       - rank_weight_eval
       - rank_weight_eval_batch
       - as_rank_weight
       - is_rank_weight
       - register_rank
       - get_rank
+      - rank_names
       - list_ranks
+      - list_rank_weights
       - rank_weight_dnn_exact
       - rank_weight_dnn_asymp
       - dnn_weights_exact_full_from_ranks
       - dnn_weights_asymp_full_from_ranks
-
-  - title: Distance → Weight mappings
-    desc: S3 spec for converting distances to weights.
-    contents:
-      - new_dist_weight
-      - dist_weight_setup
-      - dist_weight_eval
-      - dist_weight_eval_batch
-      - as_dist_weight
-      - is_dist_weight
-      - is_compiled_dist_weight
-      - register_wdist
-      - get_wdist
-      - list_wdists
-      - wdist_gaussian_l2
 
   - title: Jackknife (leave-one-out)
     desc: Fast C++ path with auto fallback, slow oracle, and DNN wrappers.

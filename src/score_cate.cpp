@@ -8,16 +8,14 @@
 using namespace Rcpp;
 
 // Context for CATE: per-row contribution g_i = rho_i
-struct CateCtx
-{
+struct CateCtx {
   NumericVector rho; // length n (pseudo-outcome)
   int n;
 };
 
 // Create a context external pointer (weights/ordering handled elsewhere)
 // [[Rcpp::export]]
-SEXP rustat_cate_ctx_create(NumericVector rho)
-{
+SEXP rustat_cate_ctx_create(NumericVector rho) {
   if (rho.size() <= 0)
     stop("rho must be non-empty.");
   XPtr<CateCtx> ctx(new CateCtx(), true);
@@ -29,8 +27,7 @@ SEXP rustat_cate_ctx_create(NumericVector rho)
 // Return ALL per-row contributions g (parallel-friendly read only)
 // For CATE, g == rho, so we can just return the underlying vector.
 // [[Rcpp::export]]
-NumericVector rustat_cate_g_all(SEXP ctx_)
-{
+NumericVector rustat_cate_g_all(SEXP ctx_) {
   XPtr<CateCtx> ctx(ctx_);
   // Returning the SEXP is fine; it's read-only on C++ side.
   return ctx->rho;
@@ -39,8 +36,7 @@ NumericVector rustat_cate_g_all(SEXP ctx_)
 // Return g on a set of indices (1-based from R) — filled in parallel
 // Useful if you later want to do block processing.
 // [[Rcpp::export]]
-NumericVector rustat_cate_g_indexed(IntegerVector idxs, SEXP ctx_)
-{
+NumericVector rustat_cate_g_indexed(IntegerVector idxs, SEXP ctx_) {
   XPtr<CateCtx> ctx(ctx_);
   const int m = idxs.size();
   NumericVector out(m);
@@ -49,15 +45,15 @@ NumericVector rustat_cate_g_indexed(IntegerVector idxs, SEXP ctx_)
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (m >= 1024)
 #endif
-  for (int t = 0; t < m; ++t)
-  {
+  for (int t = 0; t < m; ++t) {
     const int i = idxs[t] - 1; // 1-based -> 0-based
     if (i < 0 || i >= ctx->n) {
 #ifdef _OPENMP
 #pragma omp critical(rustat_cate_g_indexed_error)
 #endif
       {
-        if (first_bad_index < 0) first_bad_index = i + 1;
+        if (first_bad_index < 0)
+          first_bad_index = i + 1;
       }
       out[t] = NA_REAL;
       continue;

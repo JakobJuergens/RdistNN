@@ -1,5 +1,3 @@
-# R/rank-api.R
-# -----------------------------------------------------------------------------
 # Lightweight rank-weight API + tiny registry (non-S3), consistent with distance API
 
 .rank_registry <- new.env(parent = emptyenv())
@@ -9,7 +7,7 @@
 #' Is this a rank_weight spec?
 #'
 #' A rank-weight spec is a list with `eval(ranks, ctx)` and/or
-#' `eval_batch(R, ctx)`, where `R` is an n x m rank matrix (each column a
+#' `eval_batch(rank_matrix, ctx)`, where `rank_matrix` is an n x m rank matrix (each column a
 #' permutation of 1..n). Optionally it may define `setup(data)`.
 #'
 #' @param x Any object.
@@ -26,7 +24,7 @@ is_rank_weight <- function(x) {
 #'
 #' @param name Character scalar.
 #' @param eval Optional function `(ranks, ctx) -> numeric(n)`.
-#' @param eval_batch Optional function `(R, ctx) -> numeric(n x m)`.
+#' @param eval_batch Optional function `(rank_matrix, ctx) -> numeric(n x m)`.
 #' @param setup Optional function to build context.
 #' @return A validated `rank_weight` specification.
 #' @examples
@@ -197,12 +195,14 @@ list_rank_weights <- function() rank_names()
   if (!setequal(r, seq_len(n))) stop("`ranks` must be a permutation of 1..n.", call. = FALSE)
   r
 }
-.rank_check_mat <- function(R) {
-  R <- as.matrix(R)
-  if (!is.integer(R)) storage.mode(R) <- "integer"
-  if (nrow(R) == 0L || ncol(R) == 0L) stop("`R` must have positive nrow and ncol.", call. = FALSE)
-  for (j in seq_len(ncol(R))) .rank_check_vec(R[, j])
-  R
+.rank_check_mat <- function(rank_matrix) {
+  rank_matrix <- as.matrix(rank_matrix)
+  if (!is.integer(rank_matrix)) storage.mode(rank_matrix) <- "integer"
+  if (nrow(rank_matrix) == 0L || ncol(rank_matrix) == 0L) {
+    stop("`R` must have positive nrow and ncol.", call. = FALSE)
+  }
+  for (j in seq_len(ncol(rank_matrix))) .rank_check_vec(rank_matrix[, j])
+  rank_matrix
 }
 
 #' Evaluate rank-weight for a single target
@@ -221,9 +221,9 @@ rank_weight_eval <- function(spec, ranks, ctx = NULL) {
 
   if (is.function(spec$eval_batch)) {
     # Prefer batch path whenever available (robust to accidental/legacy evals)
-    R1 <- matrix(r, nrow = length(r), ncol = 1L)
-    W1 <- rank_weight_eval_batch(spec, R1, ctx)
-    w <- W1[, 1L]
+    rank_matrix_one <- matrix(r, nrow = length(r), ncol = 1L)
+    weight_matrix_one <- rank_weight_eval_batch(spec, rank_matrix_one, ctx)
+    w <- weight_matrix_one[, 1L]
   } else if (is.function(spec$eval)) {
     w <- spec$eval(r, ctx)
   } else {
@@ -244,26 +244,28 @@ rank_weight_eval <- function(spec, ranks, ctx = NULL) {
 #' @return Numeric matrix (n x m).
 #' @examples
 #' rw <- as_rank_weight(function(r) rep(1 / length(r), length(r)))
-#' R <- cbind(c(1L, 2L, 3L), c(2L, 1L, 3L))
-#' rank_weight_eval_batch(rw, R)
+#' rank_matrix <- cbind(c(1L, 2L, 3L), c(2L, 1L, 3L))
+#' rank_weight_eval_batch(rw, rank_matrix)
 #' @export
 rank_weight_eval_batch <- function(spec, R, ctx = NULL) {
   if (!is_rank_weight(spec)) stop("`spec` must be a rank_weight.", call. = FALSE)
-  RR <- .rank_check_mat(R)
+  rank_matrix <- .rank_check_mat(R)
 
   if (is.function(spec$eval_batch)) {
-    W <- spec$eval_batch(RR, ctx)
+    weight_matrix <- spec$eval_batch(rank_matrix, ctx)
   } else if (is.function(spec$eval)) {
     # Fallback: apply eval to each column; coerce to matrix if m == 1
-    W <- apply(RR, 2L, function(r) spec$eval(r, ctx))
-    if (!is.matrix(W)) W <- matrix(W, nrow = nrow(RR), ncol = 1L)
+    weight_matrix <- apply(rank_matrix, 2L, function(r) spec$eval(r, ctx))
+    if (!is.matrix(weight_matrix)) {
+      weight_matrix <- matrix(weight_matrix, nrow = nrow(rank_matrix), ncol = 1L)
+    }
   } else {
     stop("rank_weight spec has neither eval nor eval_batch.", call. = FALSE)
   }
 
-  if (!is.matrix(W) || any(!is.finite(W)) ||
-    nrow(W) != nrow(RR) || ncol(W) != ncol(RR)) {
+  if (!is.matrix(weight_matrix) || any(!is.finite(weight_matrix)) ||
+    nrow(weight_matrix) != nrow(rank_matrix) || ncol(weight_matrix) != ncol(rank_matrix)) {
     stop("rank_weight$eval_batch must return an nrow(R) x ncol(R) finite matrix.", call. = FALSE)
   }
-  W
+  weight_matrix
 }

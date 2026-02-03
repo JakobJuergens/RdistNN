@@ -1,5 +1,3 @@
-# R/score-api.R
-# -----------------------------------------------------------------------------
 # Lightweight score (kernel) API mirroring the rank/distance style,
 # while preserving the S3 class "ustat_score" and your current engine.
 
@@ -279,8 +277,8 @@ score_eval_batch.ustat_score <- function(score, subs, data, ctx = NULL, rng = NU
 
   if (is.function(score$eval_batch)) {
     out <- score$eval_batch(subs, data, ctx, rng)
-    K <- if (is.matrix(subs)) nrow(subs) else length(subs)
-    if (!is.numeric(out) || length(out) != K || any(!is.finite(out))) {
+    n_subsets <- if (is.matrix(subs)) nrow(subs) else length(subs)
+    if (!is.numeric(out) || length(out) != n_subsets || any(!is.finite(out))) {
       stop("score$eval_batch must return numeric(K) with finite entries.", call. = FALSE)
     }
     return(as.numeric(out))
@@ -289,11 +287,11 @@ score_eval_batch.ustat_score <- function(score, subs, data, ctx = NULL, rng = NU
   # Fallback: validate inputs and loop through scalar eval
   n <- .score_n(data)
   s <- score_order(score, n, data, ctx)
-  SS <- .score_check_subs(subs, n, s)
-  K <- nrow(SS)
-  ans <- numeric(K)
-  for (k in seq_len(K)) {
-    ans[k] <- score_eval(score, SS[k, ], data, ctx, rng)
+  subsets_matrix <- .score_check_subs(subs, n, s)
+  n_subsets <- nrow(subsets_matrix)
+  ans <- numeric(n_subsets)
+  for (k in seq_len(n_subsets)) {
+    ans[k] <- score_eval(score, subsets_matrix[k, ], data, ctx, rng)
   }
   ans
 }

@@ -1,5 +1,3 @@
-# R/demo-data-cate.R
-# -------------------------------------------------------------------
 # Minimal CATE demo data (oracle nuisances + pseudo-outcome)
 # + test-friendly injection hooks
 # + multi-scenario generator for unit tests

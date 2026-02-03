@@ -1,5 +1,3 @@
-# R/dist_l1.R
-# -----------------------------------------------------------------------------
 # L1 (Manhattan) distances: fast C++ path with robust R fallbacks.
 
 # --- internal R fallback ------------------------------------------------------
