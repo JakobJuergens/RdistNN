@@ -89,7 +89,11 @@ new_distance <- function(name, eval = NULL, eval_batch = NULL, setup = NULL) {
 #' @param name Character name for the spec.
 #' @return A distance spec with class `dnn_distance`.
 #' @examples
-#' spec <- as_distance(function(X, x0, ctx = NULL) rowSums(abs(X - matrix(x0, nrow(X), ncol(X), TRUE))))
+#' spec <- as_distance(
+#'   function(X, x0, ctx = NULL) {
+#'     rowSums(abs(X - matrix(x0, nrow(X), ncol(X), TRUE)))
+#'   }
+#' )
 #' x_mat <- matrix(1:9, nrow = 3)
 #' distance_eval(spec, x_mat, c(0, 0, 0))
 #' @export
@@ -121,7 +125,12 @@ as_distance <- function(fun, name = "user_distance") {
 #' @return (Invisibly) the registered spec.
 #' @examples
 #' nm <- "tmp_l1_demo"
-#' register_distance(nm, function(X, x0, ctx = NULL) rowSums(abs(X - matrix(x0, nrow(X), ncol(X), TRUE))))
+#' register_distance(
+#'   nm,
+#'   function(X, x0, ctx = NULL) {
+#'     rowSums(abs(X - matrix(x0, nrow(X), ncol(X), TRUE)))
+#'   }
+#' )
 #' nm %in% distance_names()
 #' @export
 register_distance <- function(name, spec = NULL) {

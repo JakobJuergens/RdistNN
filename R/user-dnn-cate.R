@@ -179,13 +179,13 @@ print.cate_result <- function(x, ...) {
   )
   if (!is.null(x$se)) {
     cat("  est   : tau[1:min(5,m)] = ",
-      paste0(round(head(x$tau, 5), 4), collapse = ", "),
+      paste0(round(utils::head(x$tau, 5), 4), collapse = ", "),
       "  (SEs available)\n",
       sep = ""
     )
   } else {
     cat("  est   : tau[1:min(5,m)] = ",
-      paste0(round(head(x$tau, 5), 4), collapse = ", "),
+      paste0(round(utils::head(x$tau, 5), 4), collapse = ", "),
       "  (SEs not requested)\n",
       sep = ""
     )

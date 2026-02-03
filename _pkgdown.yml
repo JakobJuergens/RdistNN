@@ -30,6 +30,7 @@ reference:
   - title: Top-level weighting API
     desc: General matrix builder + DNN convenience wrappers.
     contents:
+      - cate_dnn
       - weights_matrix
       - weights_dnn
       - weights_dnn_exact
@@ -69,8 +70,12 @@ reference:
       - distance_l1_scaled
       - dist_l2
       - dist_l1
+      - dist_l2_scaled
+      - dist_l1_scaled
       - order_by_l2
       - order_by_l1
+      - order_by_l2_scaled
+      - order_by_l1_scaled
 
   - title: Rank → Weight mappings
     desc: S3 spec for converting ranks to weights, plus DNN rank-weights.
@@ -100,6 +105,8 @@ reference:
     contents:
       - cate_demo_data
       - cate_demo_subsets
+      - np_demo_data
+      - np_demo_subsets
       - plqr_demo_data
       - plqr_demo_subsets
       - plqr_moment

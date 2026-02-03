@@ -20,6 +20,11 @@ where \code{spec$name} is used as the key.
 }
 \examples{
 nm <- "tmp_l1_demo"
-register_distance(nm, function(X, x0, ctx = NULL) rowSums(abs(X - matrix(x0, nrow(X), ncol(X), TRUE))))
+register_distance(
+  nm,
+  function(X, x0, ctx = NULL) {
+    rowSums(abs(X - matrix(x0, nrow(X), ncol(X), TRUE)))
+  }
+)
 nm \%in\% distance_names()
 }
