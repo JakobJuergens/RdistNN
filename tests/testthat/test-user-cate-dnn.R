@@ -267,6 +267,198 @@ test_that("metadata fields are stable and informative", {
   expect_true(is.character(out$meta$distance))
 })
 
+# ---- data-frame API: nuisance-column paths -----------------------------------
+
+# Helper: build a minimal data.frame with oracle nuisances for data-frame API tests.
+# Returns list(df, x_cols, X0, true_psi_aipw, true_psi_robinson).
+.make_df_data <- function(n = 60L, p = 2L, m = 5L, seed = 7L) {
+  set.seed(seed)
+  demo <- cate_demo_data(n = n, p = p, design = "hetero", sigma = 0.3, seed = seed)
+  df <- demo$data
+  # m1 = E[Y(1)|X] = m0 + tau (not stored by demo, compute here)
+  df$m1_oracle <- df$m0_oracle + df$tau_oracle
+  x_cols <- paste0("X", seq_len(p))
+  X0 <- matrix(rnorm(m * p), m, p)
+  # Manual pseudo-outcomes for cross-checking
+  Y  <- df$Y
+  T_ <- df$D   # treatment column is "D" in demo data
+  m0 <- df$m0_oracle
+  m1 <- df$m1_oracle
+  e  <- df$e_oracle
+  m  <- df$m_oracle
+  den <- pmax(e * (1 - e), 1e-8)
+  psi_aipw     <- (T_ * (Y - m1) - (1 - T_) * (Y - m0)) / den + (m1 - m0)
+  psi_robinson <- (Y - m) * (T_ - e) / den
+  list(df = df, x_cols = x_cols, X0 = X0,
+       psi_aipw = psi_aipw, psi_robinson = psi_robinson)
+}
+
+test_that("data-frame AIPW path: psi matches manual formula", {
+  d <- .make_df_data()
+  out <- cate_dnn(
+    data    = d$df,
+    x_cols  = d$x_cols,
+    y_col   = "Y",
+    t_col   = "D",
+    m0_col  = "m0_oracle",
+    m1_col  = "m1_oracle",
+    e_col   = "e_oracle",
+    X0      = d$X0,
+    k = 3L, s = 5L, method = "exact", se = FALSE,
+    return  = c("W", "psi")
+  )
+
+  # Pseudo-outcome stored in out$psi must equal manual AIPW formula
+  expect_equal(out$psi, d$psi_aipw, tolerance = 1e-12)
+
+  # tau must equal W-weighted pseudo-outcome
+  tau_manual <- as.numeric(crossprod(out$psi, out$W))
+  expect_equal(out$tau, tau_manual, tolerance = 1e-12)
+
+  # Shape checks
+  expect_length(out$tau, nrow(d$X0))
+})
+
+test_that("data-frame Robinson path: psi matches manual formula", {
+  d <- .make_df_data()
+  out <- cate_dnn(
+    data   = d$df,
+    x_cols = d$x_cols,
+    y_col  = "Y",
+    t_col  = "D",
+    m_col  = "m_oracle",
+    e_col  = "e_oracle",
+    X0     = d$X0,
+    k = 3L, s = 5L, method = "exact", se = FALSE,
+    return = c("W", "psi")
+  )
+
+  # Pseudo-outcome must equal manual Robinson formula
+  expect_equal(out$psi, d$psi_robinson, tolerance = 1e-12)
+  # Also matches the rho_oracle column produced by the demo generator
+  expect_equal(out$psi, as.numeric(d$df$rho_oracle), tolerance = 1e-12)
+
+  # tau = W^T psi
+  tau_manual <- as.numeric(crossprod(out$psi, out$W))
+  expect_equal(out$tau, tau_manual, tolerance = 1e-12)
+})
+
+test_that("AIPW and Robinson paths produce different psi (and tau) on the same data", {
+  d <- .make_df_data(seed = 11L)
+  run <- function(use_aipw) {
+    if (use_aipw) {
+      cate_dnn(data = d$df, x_cols = d$x_cols,
+               y_col = "Y", t_col = "D",
+               m0_col = "m0_oracle", m1_col = "m1_oracle", e_col = "e_oracle",
+               X0 = d$X0, k = 2L, s = 4L, se = FALSE, return = "psi")
+    } else {
+      cate_dnn(data = d$df, x_cols = d$x_cols,
+               y_col = "Y", t_col = "D",
+               m_col = "m_oracle", e_col = "e_oracle",
+               X0 = d$X0, k = 2L, s = 4L, se = FALSE, return = "psi")
+    }
+  }
+  out_a <- run(TRUE)
+  out_r <- run(FALSE)
+  # Verify both psi vectors are finite
+  expect_true(all(is.finite(out_a$psi)))
+  expect_true(all(is.finite(out_r$psi)))
+  # The two formulas use different nuisance inputs and differ numerically
+  expect_false(isTRUE(all.equal(out_a$psi, out_r$psi)))
+})
+
+test_that("nuisance return slot: AIPW path returns m0/m1/e; Robinson path returns m/e", {
+  d <- .make_df_data(seed = 13L)
+
+  out_a <- cate_dnn(
+    data = d$df, x_cols = d$x_cols,
+    y_col = "Y", t_col = "D",
+    m0_col = "m0_oracle", m1_col = "m1_oracle", e_col = "e_oracle",
+    X0 = d$X0, k = 2L, s = 3L, se = FALSE,
+    return = "nuisance"
+  )
+  expect_true(!is.null(out_a$nuisance))
+  expect_setequal(names(out_a$nuisance), c("m0", "m1", "e"))
+  expect_equal(out_a$nuisance$m0, as.numeric(d$df$m0_oracle), tolerance = 1e-12)
+  expect_equal(out_a$nuisance$m1, as.numeric(d$df$m1_oracle), tolerance = 1e-12)
+  expect_equal(out_a$nuisance$e,  as.numeric(d$df$e_oracle),  tolerance = 1e-12)
+
+  out_r <- cate_dnn(
+    data = d$df, x_cols = d$x_cols,
+    y_col = "Y", t_col = "D",
+    m_col = "m_oracle", e_col = "e_oracle",
+    X0 = d$X0, k = 2L, s = 3L, se = FALSE,
+    return = "nuisance"
+  )
+  expect_true(!is.null(out_r$nuisance))
+  expect_setequal(names(out_r$nuisance), c("m", "e"))
+  expect_equal(out_r$nuisance$m, as.numeric(d$df$m_oracle), tolerance = 1e-12)
+  expect_equal(out_r$nuisance$e, as.numeric(d$df$e_oracle),  tolerance = 1e-12)
+})
+
+test_that("ESS equals 1/colSums(W^2) exactly", {
+  set.seed(99)
+  n <- 30; p <- 2; m <- 4
+  X   <- matrix(rnorm(n * p), n, p)
+  X0  <- matrix(rnorm(m * p), m, p)
+  psi <- rnorm(n)
+  out <- cate_dnn(
+    X = X, X0 = X0, pseudo_outcome = psi,
+    distance = "l2", k = 2L, s = 4L, method = "exact", se = FALSE,
+    return = c("W", "ess")
+  )
+  expect_equal(out$ess, 1 / colSums(out$W^2), tolerance = 1e-12)
+})
+
+test_that("data-frame API errors: conflicting / missing outcome model columns", {
+  d <- .make_df_data(seed = 17L)
+
+  # Both m_col AND m0_col+m1_col provided -> error
+  expect_error(
+    cate_dnn(
+      data = d$df, x_cols = d$x_cols, y_col = "Y", t_col = "D",
+      m_col = "m_oracle", m0_col = "m0_oracle", m1_col = "m1_oracle",
+      e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
+    ),
+    regexp = "not both", ignore.case = TRUE
+  )
+
+  # Neither m_col nor m0_col/m1_col (but y/t/e present) -> error
+  expect_error(
+    cate_dnn(
+      data = d$df, x_cols = d$x_cols, y_col = "Y", t_col = "D",
+      e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
+    ),
+    regexp = "pseudo_outcome", ignore.case = TRUE
+  )
+
+  # Only m0_col without m1_col -> treated as "neither" -> same error
+  expect_error(
+    cate_dnn(
+      data = d$df, x_cols = d$x_cols, y_col = "Y", t_col = "D",
+      m0_col = "m0_oracle", e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
+    ),
+    regexp = "pseudo_outcome", ignore.case = TRUE
+  )
+
+  # Only m1_col without m0_col -> treated as "neither" -> same error
+  expect_error(
+    cate_dnn(
+      data = d$df, x_cols = d$x_cols, y_col = "Y", t_col = "D",
+      m1_col = "m1_oracle", e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
+    ),
+    regexp = "pseudo_outcome", ignore.case = TRUE
+  )
+
+  # y_col missing when nuisance columns are given -> error
+  expect_error(
+    cate_dnn(
+      data = d$df, x_cols = d$x_cols, t_col = "D",
+      m_col = "m_oracle", e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
+    )
+  )
+})
+
 test_that("deterministic ties in distances lead to deterministic ordering and stable tau", {
   skip_if_not(
     all(vapply(

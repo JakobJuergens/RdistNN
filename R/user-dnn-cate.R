@@ -4,14 +4,20 @@
 #'
 #' Two equivalent interfaces are supported:
 #' **(A) data-frame API** (recommended):
-#'   - `data`, `x_cols`, `y_col`, `t_col`, and either `pseudo_outcome` **or**
-#'     both `m_col` and `e_col` to build the pseudo-outcome internally.
+#'   - `data`, `x_cols`, `y_col`, `t_col`, `e_col`, and either `pseudo_outcome`
+#'     **or** outcome model columns to build the pseudo-outcome internally:
+#'     - `m0_col` + `m1_col` for the full AIPW pseudo-outcome (preferred), or
+#'     - `m_col` alone for the Robinson-form pseudo-outcome.
 #' **(B) matrix API** (back-compat):
 #'   - `X`, `X0`/`x0`, and `pseudo_outcome`.
 #'
 #' @param data data.frame with at least X columns (and optionally Y,T,m,e).
 #' @param x_cols names/indices of covariate columns in `data` (data-frame API).
-#' @param y_col,t_col,m_col,e_col column names/indices (data-frame API).
+#' @param y_col,t_col,e_col column names/indices (data-frame API).
+#' @param m0_col,m1_col column names for E[Y(0)|X] and E[Y(1)|X] (preferred;
+#'   enables the full doubly-robust AIPW pseudo-outcome from the paper).
+#' @param m_col column name for a single outcome model (Robinson form; alternative
+#'   to `m0_col`/`m1_col` when only E[Y|X] is available).
 #' @param pseudo_outcome numeric length n; if provided, Y/T/m/e are not required.
 #' @param X numeric n x p (matrix API).
 #' @param X0 numeric m x p matrix of targets; mutually exclusive with `x0`.
@@ -43,6 +49,7 @@
 cate_dnn <- function(
   data = NULL,
   x_cols = NULL, y_col = NULL, t_col = NULL,
+  m0_col = NULL, m1_col = NULL,
   m_col = NULL, e_col = NULL,
   pseudo_outcome = NULL,
   X = NULL, X0 = NULL, x0 = NULL, # matrix API (back-compat)
@@ -69,19 +76,46 @@ cate_dnn <- function(
 
     if (!is.null(pseudo_outcome)) {
       psi <- .validate_vector_nrow(pseudo_outcome, n, arg = "`pseudo_outcome`", ref = "X")
-      m <- e <- NULL
+      m0 <- m1 <- m <- e <- NULL
     } else {
-      # Need y,t and nuisance m,e to build ψ
-      if (is.null(y_col) || is.null(t_col) || is.null(m_col) || is.null(e_col)) {
-        stop("With `data=`, provide `pseudo_outcome` OR {y_col, t_col, m_col, e_col}.", call. = FALSE)
+      # Determine which outcome-model interface is used
+      has_aipw <- !is.null(m0_col) && !is.null(m1_col)
+      has_robinson <- !is.null(m_col)
+      if (has_aipw && has_robinson) {
+        stop("Provide either {m0_col, m1_col} (full AIPW) OR m_col (Robinson form), not both.",
+          call. = FALSE)
       }
+      if (!has_aipw && !has_robinson) {
+        stop(
+          "With `data=`, provide `pseudo_outcome` OR outcome model columns:\n",
+          "  - preferred: {y_col, t_col, m0_col, m1_col, e_col} for full AIPW pseudo-outcome\n",
+          "  - alternative: {y_col, t_col, m_col, e_col} for Robinson-form pseudo-outcome",
+          call. = FALSE
+        )
+      }
+      if (is.null(y_col) || is.null(t_col) || is.null(e_col)) {
+        stop("With `data=`, `y_col`, `t_col`, and `e_col` are required.", call. = FALSE)
+      }
+
       y_vec <- .validate_vector_nrow(data[[y_col]], n, arg = "y_col", ref = "X")
       t_vec <- .validate_vector_nrow(data[[t_col]], n, arg = "t_col", ref = "X")
       t_vec <- .validate_binary01(t_vec, arg = "t_col")
-      m <- .validate_vector_nrow(data[[m_col]], n, arg = "m_col", ref = "X")
-      e <- .validate_vector_nrow(data[[e_col]], n, arg = "e_col", ref = "X")
-      den <- pmax(e * (1 - e), 1e-8)
-      psi <- (y_vec - m) * (t_vec - e) / den
+      e     <- .validate_vector_nrow(data[[e_col]], n, arg = "e_col", ref = "X")
+      den   <- pmax(e * (1 - e), 1e-8)
+
+      if (has_aipw) {
+        # Full doubly-robust AIPW pseudo-outcome (paper formula, Algorithm 1 / Eq. 5.1):
+        # φ̂_i = T_i(Y_i - μ̂₁) / (π̂_i(1-π̂_i)) - (1-T_i)(Y_i - μ̂₀) / (π̂_i(1-π̂_i)) + μ̂₁ - μ̂₀
+        m0  <- .validate_vector_nrow(data[[m0_col]], n, arg = "m0_col", ref = "X")
+        m1  <- .validate_vector_nrow(data[[m1_col]], n, arg = "m1_col", ref = "X")
+        m   <- NULL
+        psi <- (t_vec * (y_vec - m1) - (1 - t_vec) * (y_vec - m0)) / den + (m1 - m0)
+      } else {
+        # Robinson-form: (Y - m(X))(T - e) / (e(1-e))
+        m0 <- m1 <- NULL
+        m   <- .validate_vector_nrow(data[[m_col]], n, arg = "m_col", ref = "X")
+        psi <- (y_vec - m) * (t_vec - e) / den
+      }
     }
   } else {
     # matrix API
@@ -91,7 +125,7 @@ cate_dnn <- function(
     p <- ncol(x_mat)
     if (is.null(pseudo_outcome)) stop("Matrix API requires `pseudo_outcome`.", call. = FALSE)
     psi <- .validate_vector_nrow(pseudo_outcome, n, arg = "`pseudo_outcome`", ref = "X")
-    m <- e <- NULL
+    m0 <- m1 <- m <- e <- NULL
   }
 
   # Targets
@@ -147,8 +181,12 @@ cate_dnn <- function(
   if ("ord" %in% return && !is.null(wt$ord)) out$ord <- wt$ord
   if ("dx" %in% return && !is.null(wt$dx)) out$dx <- wt$dx
   if ("psi" %in% return) out$psi <- psi
-  if ("nuisance" %in% return && !is.null(m) && !is.null(e)) {
-    out$nuisance <- list(m = m, e = e)
+  if ("nuisance" %in% return) {
+    if (!is.null(m0) && !is.null(m1) && !is.null(e)) {
+      out$nuisance <- list(m0 = m0, m1 = m1, e = e)
+    } else if (!is.null(m) && !is.null(e)) {
+      out$nuisance <- list(m = m, e = e)
+    }
   }
   if ("ess" %in% return) {
     out$ess <- 1 / colSums(weight_matrix^2)

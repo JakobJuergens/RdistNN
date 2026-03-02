@@ -162,6 +162,65 @@ test_that("[golden-matrix] small matrix-phi case matches fixed values", {
   expect_equal(drop(out$theta_loo[, 1, drop = TRUE]), theta_loo_exp, tolerance = 1e-12)
 })
 
+test_that("[info] output list has correct names and info fields", {
+  set.seed(10)
+  Tn <- 6L; n_ref <- 15L; s <- 3L; q <- 2L
+  ranks <- t(replicate(Tn, sample(n_ref, s + 1L, replace = FALSE)))
+  a <- runif(s)
+  PHI <- cbind(rnorm(n_ref), rnorm(n_ref))
+
+  out <- jackknife_fast_rank(ranks, a, PHI, normalize = TRUE)
+  expect_type(out, "list")
+  expect_named(out, c("theta0", "theta_loo", "info"), ignore.order = TRUE)
+  expect_length(out$theta0, q)
+  expect_identical(dim(out$theta_loo), c(n_ref, q))
+  expect_true(is.list(out$info))
+  expect_identical(out$info$s, s)
+  expect_identical(out$info$T, Tn)
+  expect_identical(out$info$q, q)
+  expect_identical(out$info$normalize, TRUE)
+
+  # normalize = FALSE propagated in info
+  out_f <- jackknife_fast_rank(ranks, a, PHI, normalize = FALSE)
+  expect_identical(out_f$info$normalize, FALSE)
+})
+
+test_that("[errors] K < s+1 raises an error", {
+  set.seed(11)
+  Tn <- 4L; n_ref <- 10L; s <- 3L
+  # Only s cols — need s+1; force R fallback via function phi
+  ranks_short <- t(replicate(Tn, sample(n_ref, s, replace = FALSE)))
+  a <- runif(s)
+  PHI <- cbind(rnorm(n_ref))
+  phi_fn <- function(j, t) PHI[j, ]
+  expect_error(jackknife_fast_rank(ranks_short, a, phi_fn), regexp = "s\\+1")
+})
+
+test_that("[errors] sum(a)=0 with normalize=TRUE raises an error", {
+  set.seed(12)
+  Tn <- 3L; n_ref <- 8L; s <- 2L
+  ranks <- t(replicate(Tn, sample(n_ref, s + 1L, replace = FALSE)))
+  a_zero <- c(1, -1)  # sum = 0
+  PHI <- cbind(rnorm(n_ref))
+  phi_fn <- function(j, t) PHI[j, ]
+  expect_error(jackknife_fast_rank(ranks, a_zero, phi_fn, normalize = TRUE),
+               regexp = "sum\\(a\\)")
+})
+
+test_that("[normalize] normalize=FALSE is a pure rescaling vs normalize=TRUE", {
+  set.seed(14)
+  Tn <- 8L; n_ref <- 20L; s <- 4L
+  ranks <- t(replicate(Tn, sample(n_ref, s + 1L, replace = FALSE)))
+  a <- runif(s) + 0.1
+  PHI <- cbind(rnorm(n_ref), rnorm(n_ref))
+
+  out_t <- jackknife_fast_rank(ranks, a, PHI, normalize = TRUE)
+  out_f <- jackknife_fast_rank(ranks, a, PHI, normalize = FALSE)
+  Z <- sum(a)
+  expect_equal(out_f$theta0,    Z * out_t$theta0,    tolerance = 1e-12)
+  expect_equal(out_f$theta_loo, Z * out_t$theta_loo, tolerance = 1e-12)
+})
+
 test_that("[golden-fun] small function-phi (t-dependent) matches fixed values", {
   # Setup: s=2, T=2, n_ref=4, q=2, normalize=TRUE
   # ranks: row t=1: (2,3 | 4); row t=2: (1,4 | 2)
