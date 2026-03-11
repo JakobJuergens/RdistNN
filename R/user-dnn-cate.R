@@ -35,8 +35,9 @@
 #' @param k,s Integer DNN tuning parameters.
 #' @param normalize Logical; renormalize columns of `W` to sum to 1.
 #' @param se Logical; compute delete-1 jackknife standard errors.
-#' @param jackknife One of `"fast"`, `"loo"`, or `"none"`. Currently `"fast"`
-#'   and `"loo"` call the same delete-1 recomputation engine.
+#' @param jackknife One of `"fast"`, `"loo"`, or `"none"`. `"fast"` (default)
+#'   uses cached full-sample ranks with delete-1 rank updates, `"loo"`
+#'   recomputes leave-one-out weights directly, and `"none"` skips SEs.
 #' @param ctx Optional context passed to distance and ranking components.
 #' @param return Optional extras in addition to the always-returned `tau`, `se`,
 #'   and `meta`. Allowed values:
@@ -147,34 +148,33 @@ cate_dnn <- function(
   }
 
   # Targets
-  if (!is.null(X0) && !is.null(x0)) stop("Provide either `X0` or `x0`, not both.", call. = FALSE)
-  if (is.null(X0)) {
-    if (is.null(x0)) stop("Provide `X0` (m x p) or a single `x0` (length p).", call. = FALSE)
-    x0_vec <- .validate_target_vector(x0, p, x0_arg = "x0", x_arg = "X")
-    x0_mat <- matrix(x0_vec, nrow = 1L)
-  } else {
-    x0_mat <- .validate_ncol_relation(x_mat, X0, y_arg = "X0", x_arg = "X", relation = "equal")
-  }
+  x0_mat <- .dnn_resolve_targets(x_mat, X0 = X0, x0 = x0)
 
   # Weights (rank-only DNN).
-  keep_extras <- intersect(return, c("ranks", "ord", "dx"))
-  wt <- weights_dnn(
-    X = x_mat, X0 = x0_mat,
+  weight_return <- return
+  if (isTRUE(se) && identical(jackknife, "fast")) {
+    # Request ranks once so fast jackknife can reuse them.
+    weight_return <- unique(c(return, "ranks"))
+  }
+  weight_fit <- .dnn_weights_with_extras(
+    x_mat = x_mat,
+    x0_mat = x0_mat,
     distance = distance,
-    k = as.integer(k), s = as.integer(s),
-    method = method, normalize = normalize, ctx = ctx,
-    return = unique(c("W", keep_extras))
+    method = method,
+    k = as.integer(k),
+    s = as.integer(s),
+    normalize = normalize,
+    ctx = ctx,
+    return = weight_return
   )
-  weight_matrix <- wt$W
-  m_out <- ncol(weight_matrix)
+  wt <- weight_fit$wt
+  weight_matrix <- weight_fit$W
+  m_out <- weight_fit$m
 
   # Point estimates.
-  tau <- as.numeric(crossprod(psi, weight_matrix)) # length m_out
+  tau <- as.numeric(.dnn_estimate_from_signal(psi, weight_matrix, n = n, arg = "pseudo_outcome")[1L, ])
   se_hat <- NULL
   if (isTRUE(se) && jackknife != "none") {
-    if (as.integer(s) >= n) {
-      stop("Delete-1 jackknife requires `s < n` so the same order can be used after deletion.", call. = FALSE)
-    }
     se_hat <- .cate_dnn_jackknife_se_loo(
       x_mat = x_mat,
       x0_mat = x0_mat,
@@ -184,32 +184,23 @@ cate_dnn <- function(
       k = as.integer(k),
       s = as.integer(s),
       normalize = normalize,
-      ctx = ctx
+      ctx = ctx,
+      jackknife = jackknife,
+      precomputed_ranks = wt$ranks
     )
   }
 
   # Assemble output.
-  distance_name <- if (is.character(distance)) {
-    distance
-  } else if (is.list(distance) && !is.null(distance$name)) {
-    distance$name
-  } else {
-    "user_distance"
-  }
-
   out <- list(
     tau = tau,
     se = se_hat,
     meta = list(
       n = n, m = m_out, p = p,
       k = as.integer(k), s = as.integer(s),
-      method = method, distance = distance_name
+      method = method, distance = .dnn_distance_name(distance)
     )
   )
-  if ("W" %in% return) out$W <- weight_matrix
-  if ("ranks" %in% return && !is.null(wt$ranks)) out$ranks <- wt$ranks
-  if ("ord" %in% return && !is.null(wt$ord)) out$ord <- wt$ord
-  if ("dx" %in% return && !is.null(wt$dx)) out$dx <- wt$dx
+  out <- .dnn_attach_common_extras(out, return = return, wt = wt, W = weight_matrix, k = k)
   if ("psi" %in% return) out$psi <- psi
   if ("nuisance" %in% return) {
     if (!is.null(m0) && !is.null(m1) && !is.null(e)) {
@@ -218,17 +209,19 @@ cate_dnn <- function(
       out$nuisance <- list(m = m, e = e)
     }
   }
-  if ("ess" %in% return) {
-    out$ess <- 1 / colSums(weight_matrix^2)
-  }
-  if ("neighbors" %in% return) {
-    k_eff <- max(1L, min(nrow(weight_matrix), as.integer(k)))
-    if (!is.null(wt$ord)) {
-      out$neighbors <- wt$ord[seq_len(k_eff), , drop = FALSE]
-    } else if (!is.null(wt$ranks)) {
-      out$neighbors <- apply(wt$ranks, 2L, function(r) order(r)[seq_len(k_eff)])
-    }
-  }
+
+  # Internal fit state used by predict.cate_result().
+  out$.model <- list(
+    x_mat = x_mat,
+    psi = psi,
+    x_cols = if (!is.null(data)) x_cols else NULL,
+    distance = distance,
+    method = method,
+    k = as.integer(k),
+    s = as.integer(s),
+    normalize = normalize,
+    ctx = ctx
+  )
 
   class(out) <- "cate_result"
   out
@@ -238,32 +231,27 @@ cate_dnn <- function(
 # Implements the delete-1 recomputation in Eq. (3.30)-(3.32) of
 # Local_Z_Est_JJuergens.pdf for the scalar (p_alpha = 1) CATE target.
 .cate_dnn_jackknife_se_loo <- function(
-  x_mat, x0_mat, psi, distance, method, k, s, normalize, ctx
+  x_mat, x0_mat, psi, distance, method, k, s, normalize, ctx,
+  jackknife = c("fast", "loo"),
+  precomputed_ranks = NULL
 ) {
-  n <- nrow(x_mat)
-  m <- nrow(x0_mat)
-  tau_loo <- matrix(NA_real_, nrow = n, ncol = m)
-
-  for (i in seq_len(n)) {
-    keep <- (seq_len(n) != i)
-    wt_i <- weights_dnn(
-      X = x_mat[keep, , drop = FALSE],
-      X0 = x0_mat,
+  jackknife <- match.arg(jackknife)
+  as.numeric(
+    .dnn_jackknife_se_loo_matrix(
+      x_mat = x_mat,
+      x0_mat = x0_mat,
+      signal = psi,
       distance = distance,
+      method = method,
       k = k,
       s = s,
-      method = method,
       normalize = normalize,
       ctx = ctx,
-      return = "W"
-    )
-    tau_loo[i, ] <- as.numeric(crossprod(psi[keep], wt_i$W))
-  }
-
-  tau_loo_bar <- colMeans(tau_loo)
-  centered <- sweep(tau_loo, 2L, tau_loo_bar, FUN = "-")
-  var_jk <- ((n - 1) / n) * colSums(centered^2)
-  sqrt(pmax(var_jk, 0))
+      signal_arg = "pseudo_outcome",
+      jackknife = jackknife,
+      precomputed_ranks = precomputed_ranks
+    )[1L, ]
+  )
 }
 
 #' Print a `cate_result` object
@@ -303,19 +291,5 @@ print.cate_result <- function(x, ...) {
       sep = ""
     )
   }
-  invisible(x)
-}
-
-#' Print a `cate_dnn_result` object
-#'
-#' @inheritParams print.cate_result
-#' @return `x`, invisibly.
-#' @export
-print.cate_dnn_result <- function(x, ...) {
-  cat("<cate_dnn_result>\n", sep = "")
-  cat("  data  : n=", x$meta$n, ", p=", x$meta$p, ", m=", x$meta$m, "\n", sep = "")
-  cat("  dnn   : k=", x$meta$k, ", s=", x$meta$s, ", method=", x$meta$method, "\n", sep = "")
-  cat("  rank  : ", x$meta$weight_name, "; distance: ", x$meta$distance_name, "\n", sep = "")
-  cat("  components: ", paste(names(x), collapse = ", "), "\n", sep = "")
   invisible(x)
 }

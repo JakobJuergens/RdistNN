@@ -5,11 +5,13 @@ Authors@R:
     person(given = "Jakob", family = "Juergens", email = "info@jakobjuergens.com", role = c("aut", "cre"))
 Author: Jakob Juergens [aut, cre]
 Maintainer: Jakob Juergens <info@jakobjuergens.com>
-Description: Fast, extensible framework for generalized U-statistics and Z-estimation
-    with a pluggable score (kernel) interface. Uses compiled C++ fast paths when
-    available and falls back to batched R evaluation otherwise. Supports complete
-    and incomplete subsampling, batched evaluation, and variance estimation via
-    delete-1 jackknife.
+Description: Fast, extensible framework for generalized U-statistics and
+    distance-localized Z-estimation with pluggable distance, rank-weight, and
+    score interfaces. Includes user-level wrappers for local nonparametric
+    regression, CATE estimation, and localized PLQR orthogonal moments via DNN
+    rank weights. Uses compiled C++ fast paths when available and falls back to
+    robust batched R evaluation otherwise, with variance estimation via delete-1
+    jackknife.
 License: GPL (>= 3)
 Depends:
     R (>= 4.1.0)

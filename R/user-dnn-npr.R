@@ -1,0 +1,193 @@
+# DNN-based nonparametric regression wrapper (rank-weighted local mean)
+
+#' Nonparametric regression via DNN rank weights
+#'
+#' Estimate a localized nonparametric mean by combining observed outcomes with
+#' DNN-based local weights.
+#'
+#' @details
+#' Two interfaces are supported.
+#'
+#' 1. Data-frame interface (recommended): pass `data`, `x_cols`, and either
+#'    `y_col` or `y` (exactly one).
+#' 2. Matrix interface: pass `X`, one of `X0` or `x0`, and `Y` (or alias `y`).
+#'
+#' @param data Optional data frame containing covariates and outcome columns.
+#' @param x_cols Names or indices of covariate columns in `data`.
+#' @param y_col Name or index of the outcome column in `data`.
+#' @param y Optional numeric outcome vector of length `n`. In the data-frame
+#'   interface, use this instead of `y_col`; in the matrix interface this is an
+#'   alias for `Y`.
+#' @param X Numeric matrix (`n x p`) for the matrix interface.
+#' @param Y Numeric outcome vector of length `n` for the matrix interface.
+#' @param X0 Numeric matrix (`m x p`) of target points; mutually exclusive with
+#'   `x0`.
+#' @param x0 Numeric vector of length `p` for a single target point.
+#' @param distance Distance name or specification (for example `"l2"`).
+#' @param method One of `"exact"` or `"asymp"` for DNN weights.
+#' @param k,s Integer DNN tuning parameters.
+#' @param normalize Logical; renormalize columns of `W` to sum to 1.
+#' @param se Logical; compute delete-1 jackknife standard errors.
+#' @param jackknife One of `"fast"`, `"loo"`, or `"none"`. `"fast"` (default)
+#'   uses cached full-sample ranks with delete-1 rank updates, `"loo"`
+#'   recomputes leave-one-out weights directly, and `"none"` skips SEs.
+#' @param ctx Optional context passed to distance and ranking components.
+#' @param return Optional extras in addition to the always-returned `mu`, `se`,
+#'   and `meta`. Allowed values:
+#'   `c("W", "ranks", "ord", "dx", "y", "ess", "neighbors")`.
+#'
+#' @return An object of class `np_result` with components:
+#'   - `mu`: estimated local mean values at target points;
+#'   - `se`: optional jackknife standard errors;
+#'   - `meta`: metadata (`n`, `m`, `p`, `k`, `s`, `method`, `distance`);
+#'   - optional extras requested via `return`.
+#'
+#' @seealso [weights_dnn()], [np_demo_data()].
+#'
+#' @examples
+#' set.seed(1)
+#' n <- 60
+#' x_mat <- matrix(rnorm(n * 2), n, 2)
+#' y_vec <- x_mat[, 1] - 0.5 * x_mat[, 2] + rnorm(n, sd = 0.3)
+#' out <- np_dnn(
+#'   X = x_mat, x0 = c(0, 0), Y = y_vec,
+#'   distance = "l2", method = "exact", k = 2L, s = 3L,
+#'   se = FALSE, return = c("W", "ess")
+#' )
+#' out$mu
+#' @export
+np_dnn <- function(
+  data = NULL,
+  x_cols = NULL,
+  y_col = NULL,
+  y = NULL,
+  X = NULL,
+  Y = NULL,
+  X0 = NULL,
+  x0 = NULL,
+  distance = "l2",
+  method = c("exact", "asymp"),
+  k = 1L,
+  s = 1L,
+  normalize = TRUE,
+  se = TRUE,
+  jackknife = c("fast", "loo", "none"),
+  ctx = NULL,
+  return = c("W")
+) {
+  method <- match.arg(method)
+  jackknife <- match.arg(jackknife)
+
+  if (!is.null(data)) {
+    if (!is.data.frame(data)) {
+      .abort_bad_arg("data", "must be a data.frame")
+    }
+    if (is.null(x_cols)) {
+      stop("With `data=`, `x_cols` is required.", call. = FALSE)
+    }
+    x_mat <- .validate_matrix_nonempty(data[, x_cols, drop = FALSE], arg = "X")
+    n <- nrow(x_mat)
+    p <- ncol(x_mat)
+
+    if (is.null(y_col) == is.null(y)) {
+      stop("With `data=`, provide exactly one of `y_col` or `y`.", call. = FALSE)
+    }
+    if (!is.null(y_col)) {
+      y_vec <- .validate_vector_nrow(data[[y_col]], n, arg = "y_col", ref = "X")
+    } else {
+      y_vec <- .validate_vector_nrow(y, n, arg = "y", ref = "X")
+    }
+  } else {
+    if (is.null(X)) {
+      stop("Provide either `data` ... or matrix interface via `X`.", call. = FALSE)
+    }
+    x_mat <- .validate_matrix_nonempty(X, arg = "X")
+    n <- nrow(x_mat)
+    p <- ncol(x_mat)
+
+    y_in <- if (!is.null(Y)) Y else y
+    if (is.null(y_in)) {
+      stop("Matrix API requires `Y` (or alias `y`).", call. = FALSE)
+    }
+    y_vec <- .validate_vector_nrow(y_in, n, arg = "Y", ref = "X")
+  }
+
+  x0_mat <- .dnn_resolve_targets(x_mat, X0 = X0, x0 = x0)
+
+  weight_return <- return
+  if (isTRUE(se) && identical(jackknife, "fast")) {
+    # Request ranks once so fast jackknife can reuse them.
+    weight_return <- unique(c(return, "ranks"))
+  }
+  weight_fit <- .dnn_weights_with_extras(
+    x_mat = x_mat,
+    x0_mat = x0_mat,
+    distance = distance,
+    method = method,
+    k = as.integer(k),
+    s = as.integer(s),
+    normalize = normalize,
+    ctx = ctx,
+    return = weight_return
+  )
+  wt <- weight_fit$wt
+  weight_matrix <- weight_fit$W
+  m_out <- weight_fit$m
+
+  mu_hat <- as.numeric(.dnn_estimate_from_signal(y_vec, weight_matrix, n = n, arg = "Y")[1L, ])
+  se_hat <- NULL
+  if (isTRUE(se) && jackknife != "none") {
+    se_hat <- .np_dnn_jackknife_se_loo(
+      x_mat = x_mat,
+      x0_mat = x0_mat,
+      y = y_vec,
+      distance = distance,
+      method = method,
+      k = as.integer(k),
+      s = as.integer(s),
+      normalize = normalize,
+      ctx = ctx,
+      jackknife = jackknife,
+      precomputed_ranks = wt$ranks
+    )
+  }
+
+  out <- list(
+    mu = mu_hat,
+    se = se_hat,
+    meta = list(
+      n = n, m = m_out, p = p,
+      k = as.integer(k), s = as.integer(s),
+      method = method, distance = .dnn_distance_name(distance)
+    )
+  )
+  out <- .dnn_attach_common_extras(out, return = return, wt = wt, W = weight_matrix, k = k)
+  if ("y" %in% return) out$y <- y_vec
+
+  class(out) <- "np_result"
+  out
+}
+
+.np_dnn_jackknife_se_loo <- function(
+  x_mat, x0_mat, y, distance, method, k, s, normalize, ctx,
+  jackknife = c("fast", "loo"),
+  precomputed_ranks = NULL
+) {
+  jackknife <- match.arg(jackknife)
+  as.numeric(
+    .dnn_jackknife_se_loo_matrix(
+      x_mat = x_mat,
+      x0_mat = x0_mat,
+      signal = y,
+      distance = distance,
+      method = method,
+      k = k,
+      s = s,
+      normalize = normalize,
+      ctx = ctx,
+      signal_arg = "Y",
+      jackknife = jackknife,
+      precomputed_ranks = precomputed_ranks
+    )[1L, ]
+  )
+}

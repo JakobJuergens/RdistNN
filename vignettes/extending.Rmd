@@ -13,3 +13,89 @@ library(RdistNN)
 set.seed(3)
 ```
 
+## Overview
+
+`RdistNN` is designed to be extensible:
+
+- Define custom distances with `as_distance()` / `new_distance()`
+- Register distances via `register_distance()`
+- Define custom rank-weight rules with `as_rank_weight()` / `new_rank_weight()`
+- Register rank rules via `register_rank()`
+- Define custom U-stat score kernels with `as_score()` / `new_score()`
+
+## 1) Custom Distance
+
+```{r distance, eval=FALSE}
+# L-infinity distance
+linf <- as_distance(
+  function(X, x0, ctx = NULL) {
+    apply(abs(X - matrix(x0, nrow(X), ncol(X), byrow = TRUE)), 1L, max)
+  },
+  name = "linf"
+)
+
+register_distance("linf", linf)
+distance_names()
+```
+
+## 2) Custom Rank-Weight Rule
+
+```{r rank-weight, eval=FALSE}
+# inverse-rank weights w_r proportional to 1 / r
+rw_inv <- as_rank_weight(
+  function(ranks, ctx = NULL) {
+    w <- 1 / as.numeric(ranks)
+    w / sum(w)
+  },
+  name = "inv_rank"
+)
+
+register_rank("inv_rank", rw_inv)
+rank_names()
+```
+
+## 3) Use Custom Components in `weights_matrix()`
+
+```{r matrix, eval=FALSE}
+n <- 80
+p <- 2
+X <- matrix(rnorm(n * p), n, p)
+X0 <- matrix(rnorm(4 * p), 4, p)
+
+out <- weights_matrix(
+  X = X, X0 = X0,
+  ranking = "linf",
+  weight = get_rank("inv_rank"),
+  return = c("W", "ranks")
+)
+
+dim(out$W)
+```
+
+## 4) Custom Score Kernel
+
+```{r score, eval=FALSE}
+# Order-2 score: average of two selected observations
+sc_avg2 <- as_score(
+  function(idxs, data, ctx = NULL, rng = NULL) {
+    mean(data[idxs])
+  },
+  s = 2L,
+  name = "avg2"
+)
+
+register_score(sc_avg2)
+list_scores()
+
+data_vec <- rnorm(10)
+subs <- rbind(c(1L, 2L), c(4L, 8L), c(3L, 9L))
+score_eval_batch(sc_avg2, subs = subs, data = data_vec)
+```
+
+## 5) Practical Advice
+
+- Keep custom evaluators deterministic unless randomness is required.
+- Return finite numeric outputs with the expected dimensions.
+- Use `return = c("ranks", "ord", "dx")` when debugging custom ranking behavior.
+- Add unit tests for each custom rule before integrating into production workflows.
+

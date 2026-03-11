@@ -13,3 +13,73 @@ library(RdistNN)
 set.seed(4)
 ```
 
+## Overview
+
+`RdistNN` includes two delete-1 jackknife utilities for rank-weighted
+functionals:
+
+- `jackknife_fast_rank()`: optimized implementation (compiled when available)
+- `jackknife_slow_rank()`: reference implementation for validation
+
+Both return:
+
+- `theta0`: baseline aggregate
+- `theta_loo`: all leave-one-out aggregates
+- `info`: metadata (`s`, number of targets, output dimension, normalization)
+
+## Example Setup
+
+```{r setup-example, eval=FALSE}
+n <- 40
+p <- 2
+s <- 3L
+
+X <- matrix(rnorm(n * p), n, p)
+Y <- rnorm(n)
+
+# Build neighbor ranks for each target point (first s+1 neighbors)
+wt <- weights_dnn(
+  X = X, X0 = X,
+  method = "exact",
+  distance = "l2",
+  k = s, s = s,
+  return = "ord"
+)
+ranks <- t(wt$ord[seq_len(s + 1L), , drop = FALSE])  # T x (s+1)
+
+# L-stat coefficients
+a <- rep(1, s)
+
+# Scalar signal represented as n x 1 matrix
+phi <- cbind(Y)
+```
+
+## Fast vs Slow Jackknife
+
+```{r compare, eval=FALSE}
+jk_fast <- jackknife_fast_rank(ranks = ranks, a = a, phi = phi, normalize = TRUE)
+jk_slow <- jackknife_slow_rank(ranks = ranks, a = a, phi = phi, normalize = TRUE)
+
+all.equal(jk_fast$theta0, jk_slow$theta0, tolerance = 1e-12)
+all.equal(jk_fast$theta_loo, jk_slow$theta_loo, tolerance = 1e-12)
+```
+
+## Turning LOO Aggregates into Standard Errors
+
+```{r se, eval=FALSE}
+theta_loo <- jk_fast$theta_loo[, 1]
+theta_bar <- mean(theta_loo)
+n_ref <- length(theta_loo)
+
+var_jk <- ((n_ref - 1) / n_ref) * sum((theta_loo - theta_bar)^2)
+se_jk <- sqrt(var_jk)
+se_jk
+```
+
+## Notes
+
+- `jackknife_fast_rank()` supports both matrix `phi` and function-valued `phi(j, t)`.
+- The slow version is useful for debugging and parity checks in tests.
+- For user-level wrappers (`np_dnn()`, `cate_dnn()`, `plqr_dnn()`), these steps
+  are handled internally when `se = TRUE`.
+
