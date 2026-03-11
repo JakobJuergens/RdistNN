@@ -9,17 +9,19 @@
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
-**RdistNN** is a small, focused toolkit for distance-based
-nearest-neighbor (DNN) kernels and U-statistic building blocks used in
-conditional Z-estimation and partially linear quantile regression
-(PLQR).
+**RdistNN** is a modular toolkit for distance-localized estimation with
+DNN rank weights and generalized U-statistics.
 
-- Fast C++ implementations (with automatic R fallbacks) for core DNN
-  primitives  
-- Deterministic tie handling and permutation-invariance checks  
-- Score factories for PLQR and CATE-style estimators, with tests and CI
+- Core distance/rank/weight primitives (`weights_dnn()`,
+  `weights_matrix()`, custom registries)  
+- User-level wrappers for localized estimation: `np_dnn()`, `cate_dnn()`,
+  and `plqr_dnn()`  
+- Built-in post-estimation methods for CATE (`summary()`, `confint()`,
+  `predict()`)  
+- Fast delete-1 jackknife options (`jackknife = "fast"` and `"loo"`)
+  for standard errors
 
-> Status: early research package. APIs may change.
+> Status: active research package. APIs may continue to evolve.
 
 ## Installation
 
@@ -30,88 +32,141 @@ Install the development version from GitHub:
 pak::pak("JakobJuergens/RdistNN")
 ```
 
-## Quick start
+## Quick Start
 
-Non-evaluating examples that show intended usage without requiring all
-features to be present yet.
-
-### 1) Local mean with DNN weights
+### 1) DNN Weights and Local Means (`np_dnn`)
 
 ``` r
 library(RdistNN)
 
 set.seed(1)
-n <- 500
-x <- runif(n)
-y <- sin(2 * pi * x) + rnorm(n, sd = 0.2)
-X <- matrix(x, ncol = 1)
-x0 <- 0.4
+demo_np <- np_demo_data(n = 250, p = 2, design = "sinusoidal", seed = 1)
 
-# Exact DNN weights at x0 using k = 1, s = 1
-w1 <- weights_dnn_exact(X, x0 = x0, distance = "l2", k = 1L, s = 1L)$W[, 1]
+fit_np <- np_dnn(
+  data = demo_np$data,
+  x_cols = c("X1", "X2"),
+  y_col = "Y",
+  x0 = c(0, 0),
+  distance = "l2",
+  method = "exact",
+  k = 2L, s = 3L,
+  se = TRUE,
+  jackknife = "fast",
+  return = c("W", "ess", "neighbors")
+)
 
-# Or use k = 5 with subset order s = 5
-wk <- weights_dnn_exact(X, x0 = x0, distance = "l2", k = 5L, s = 5L)$W[, 1]
-
-# Local average at x0
-mu_hat <- sum(wk * y)
-mu_hat
+fit_np$mu
+fit_np$se
 ```
 
-### 2) PLQR score components (work in progress)
+### 2) CATE Estimation (`cate_dnn`) and Methods
 
 ``` r
 library(RdistNN)
 
-demo <- plqr_demo_data(n = 200, p = 2, p_d = 2, tau = 0.5, seed = 1)
-sc <- score_plqr_component(
+demo_cate <- cate_demo_data(n = 300, p = 2, design = "hetero", seed = 1)
+df <- demo_cate$data
+df$m1_oracle <- df$m0_oracle + df$tau_oracle
+
+fit_cate <- cate_dnn(
+  data = df,
   x0 = rep(0, 2),
+  x_cols = c("X1", "X2"),
+  y_col = "Y",
+  t_col = "D",
+  m0_col = "m0_oracle",
+  m1_col = "m1_oracle",
+  e_col = "e_oracle",
+  distance = "l2",
+  method = "exact",
+  k = 2L, s = 3L,
+  se = TRUE,
+  jackknife = "fast",
+  return = c("psi", "nuisance")
+)
+
+summary(fit_cate)
+confint(fit_cate)
+predict(fit_cate, x0 = c(0.2, -0.1), interval = "confidence")
+```
+
+### 3) Local PLQR Orthogonal Moments (`plqr_dnn`)
+
+``` r
+library(RdistNN)
+
+demo_plqr <- plqr_demo_data(n = 250, p = 2, p_d = 2, tau = 0.5, seed = 1)
+
+fit_plqr <- plqr_dnn(
+  data = demo_plqr$data,
   x_cols = c("X1", "X2"),
   D_cols = c("D1", "D2"),
   q_col = "q_oracle",
   mD_cols = c("mD1", "mD2"),
-  beta = demo$truth$beta_true,
-  j = 1L,
+  y_col = "Y",
+  beta = demo_plqr$truth$beta_true,
   tau = 0.5,
-  s = 3L,
-  k = 1L
+  x0 = c(0, 0),
+  distance = "l2",
+  method = "exact",
+  k = 2L, s = 3L,
+  se = TRUE,
+  jackknife = "fast",
+  return = c("g", "ess")
 )
-ctx <- score_setup(sc, demo$data)
-subs <- plqr_demo_subsets(nrow(demo$data), K = 5, s = 3L, seed = 1)
-score_eval_batch(sc, subs, demo$data, ctx)
+
+fit_plqr$moment
+fit_plqr$se
 ```
 
-## Design notes
+### 4) Custom Distances and Rank Weights
 
-- **Engine selection.** Uses compiled code when available; otherwise
-  falls back to R. Unit tests check parity.  
+``` r
+library(RdistNN)
 
-- **Determinism.** Tie handling and ordering are fixed so runs are
-  reproducible.  
+register_distance("linf_demo", function(X, x0, ctx = NULL) {
+  apply(abs(X - matrix(x0, nrow(X), ncol(X), byrow = TRUE)), 1L, max)
+})
 
-- **Testing.** `testthat` (edition 3) and GitHub Actions. Run:
+register_rank("inv_rank_demo", function(ranks) {
+  w <- 1 / as.numeric(ranks)
+  w / sum(w)
+})
 
-  ``` r
-  devtools::test()
-  ```
+X <- as.matrix(np_demo_data(n = 80, p = 2, seed = 1)$data[, c("X1", "X2")])
+W <- weights_matrix(
+  X = X,
+  x0 = c(0, 0),
+  ranking = "linf_demo",
+  weight = get_rank("inv_rank_demo"),
+  return = "W"
+)$W
+dim(W)
+```
 
-- **Docs.** Rebuild this file with:
+## Documentation Map
 
-  ``` r
-  devtools::build_readme()
-  ```
+- Start with `vignette("getting-started", package = "RdistNN")`  
+- `vignette("dnn-weights", package = "RdistNN")` for exact/asymptotic DNN
+  weight rules  
+- `vignette("conditional-z-estimation", package = "RdistNN")` for
+  end-to-end estimator workflows  
+- `vignette("extending", package = "RdistNN")` for custom
+  distance/rank/score components  
+- `vignette("jackknife-gen-ustats", package = "RdistNN")` for jackknife
+  background
 
-## Roadmap (short)
+## Development Notes
 
-- DNN / DNN-k kernels with auto-bandwidth helpers  
-- Score factories for CATE and PLQR  
-- Jackknife / IJ helpers for generalized U-statistics  
-- Vignettes with small simulations once the API stabilizes
+- Engine selection is automatic: compiled code is used when available;
+  otherwise robust R fallbacks are used.  
+- Deterministic tie handling is built in for reproducibility.  
+- Tests use `testthat` (edition 3). Run `devtools::test()`.  
+- Rebuild this README from source with `devtools::build_readme()`.
 
-## Getting help
+## Getting Help
 
-Please open an issue with a minimal reproducible example once the public
-API stabilizes. Until then, expect frequent changes.
+Please open an issue with a minimal reproducible example.
 
 ------------------------------------------------------------------------
 

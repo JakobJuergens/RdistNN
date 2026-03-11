@@ -11,6 +11,10 @@
 #' - Compute DNN weights with [weights_dnn()], [weights_dnn_exact()], and
 #'   [weights_dnn_asymp()].
 #' - Estimate local CATE targets with [cate_dnn()].
+#' - Summarize/predict CATE fits with [summary.cate_result()],
+#'   [confint.cate_result()], and [predict.cate_result()].
+#' - Estimate local nonparametric means with [np_dnn()].
+#' - Evaluate local PLQR orthogonal moments with [plqr_dnn()].
 #' - Build custom generalized U-statistics with [new_score()],
 #'   [score_eval_batch()], and [score_diff_path()].
 #' - Estimate uncertainty with [jackknife_fast_rank()] and
@@ -21,11 +25,17 @@
 #' - For extension patterns see `vignette("extending", package = "RdistNN")`.
 #' - For distance/rank weighting details see
 #'   `vignette("dnn-weights", package = "RdistNN")`.
+#' - For estimator workflows see
+#'   `vignette("conditional-z-estimation", package = "RdistNN")`.
+#' - For jackknife details see
+#'   `vignette("jackknife-gen-ustats", package = "RdistNN")`.
 #'
 #' @docType package
 #' @name RdistNN-package
 #' @aliases RdistNN
-#' @seealso [weights_dnn()], [cate_dnn()], [new_score()], [distance_l2()]
+#' @seealso [weights_dnn()], [cate_dnn()], [np_dnn()], [plqr_dnn()],
+#'   [summary.cate_result()], [predict.cate_result()],
+#'   [new_score()], [distance_l2()]
 #' @useDynLib RdistNN, .registration = TRUE
 #' @importFrom stats pbeta plogis rbinom rnorm runif setNames
 "_PACKAGE"

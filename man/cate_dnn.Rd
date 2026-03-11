@@ -65,8 +65,9 @@ columns are not required.}
 
 \item{se}{Logical; compute delete-1 jackknife standard errors.}
 
-\item{jackknife}{One of \code{"fast"}, \code{"loo"}, or \code{"none"}. Currently \code{"fast"}
-and \code{"loo"} call the same delete-1 recomputation engine.}
+\item{jackknife}{One of \code{"fast"}, \code{"loo"}, or \code{"none"}. \code{"fast"} (default)
+uses cached full-sample ranks with delete-1 rank updates, \code{"loo"}
+recomputes leave-one-out weights directly, and \code{"none"} skips SEs.}
 
 \item{ctx}{Optional context passed to distance and ranking components.}
 
