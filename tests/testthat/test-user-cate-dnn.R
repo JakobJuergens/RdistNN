@@ -48,10 +48,10 @@ test_that("basic run: returns tau (and se if requested) with expected shapes", {
   expect_true(is.numeric(out$tau))
   expect_length(out$tau, nrow(dat$X0))
 
-  # se can be NA if a fast jackknife path isn't compiled; allow either finite or all NA
+  # SEs should be finite when delete-1 jackknife is requested
   expect_true(is.null(out$se) || (is.numeric(out$se) && length(out$se) == nrow(dat$X0)))
   if (!is.null(out$se)) {
-    expect_true(all(is.finite(out$se)) || all(is.na(out$se)))
+    expect_true(all(is.finite(out$se)))
   }
 
   # meta sanity
@@ -68,6 +68,132 @@ test_that("basic run: returns tau (and se if requested) with expected shapes", {
     as.numeric(colSums(out$W * matrix(psi, nrow(out$W), ncol(out$W)))),
     as.numeric(out$tau),
     tolerance = 1e-12
+  )
+})
+
+test_that("jackknife modes: none omits SE, loo and fast both return finite SEs", {
+  dat <- .make_data(n = 24, p = 2, m = 3)
+  psi <- dat$Y
+
+  out_none <- cate_dnn(
+    X = dat$X, X0 = dat$X0,
+    pseudo_outcome = psi,
+    distance = "l2", k = 2L, s = 4L, method = "exact",
+    se = TRUE, jackknife = "none"
+  )
+  expect_true(is.null(out_none$se))
+
+  out_loo <- cate_dnn(
+    X = dat$X, X0 = dat$X0,
+    pseudo_outcome = psi,
+    distance = "l2", k = 2L, s = 4L, method = "exact",
+    se = TRUE, jackknife = "loo"
+  )
+  expect_true(is.numeric(out_loo$se))
+  expect_length(out_loo$se, nrow(dat$X0))
+  expect_true(all(is.finite(out_loo$se)))
+  expect_true(all(out_loo$se >= 0))
+
+  out_fast <- cate_dnn(
+    X = dat$X, X0 = dat$X0,
+    pseudo_outcome = psi,
+    distance = "l2", k = 2L, s = 4L, method = "exact",
+    se = TRUE, jackknife = "fast"
+  )
+  expect_true(is.numeric(out_fast$se))
+  expect_length(out_fast$se, nrow(dat$X0))
+  expect_true(all(is.finite(out_fast$se)))
+  expect_equal(out_fast$se, out_loo$se, tolerance = 1e-12)
+})
+
+test_that("delete-1 jackknife requires s < n when se is requested", {
+  n <- 10L
+  p <- 2L
+  X <- matrix(rnorm(n * p), n, p)
+  X0 <- matrix(rnorm(3L * p), 3L, p)
+  psi <- rnorm(n)
+
+  expect_error(
+    cate_dnn(
+      X = X, X0 = X0, pseudo_outcome = psi,
+      distance = "l2", k = 2L, s = n, method = "exact",
+      se = TRUE, jackknife = "loo"
+    ),
+    regexp = "s < n"
+  )
+})
+
+test_that("se = FALSE bypasses delete-1 jackknife feasibility check", {
+  n <- 10L
+  p <- 2L
+  X <- matrix(rnorm(n * p), n, p)
+  X0 <- matrix(rnorm(2L * p), 2L, p)
+  psi <- rnorm(n)
+
+  expect_no_error(
+    cate_dnn(
+      X = X, X0 = X0, pseudo_outcome = psi,
+      distance = "l2", k = 2L, s = n, method = "exact",
+      se = FALSE, jackknife = "loo"
+    )
+  )
+})
+
+test_that("constant pseudo_outcome implies zero jackknife SE", {
+  n <- 18L
+  p <- 2L
+  m <- 4L
+  X <- matrix(rnorm(n * p), n, p)
+  X0 <- matrix(rnorm(m * p), m, p)
+  psi <- rep(3.5, n)
+
+  out <- cate_dnn(
+    X = X, X0 = X0, pseudo_outcome = psi,
+    distance = "l2", k = 2L, s = 4L, method = "exact",
+    se = TRUE, jackknife = "loo", return = "W"
+  )
+
+  expect_true(all(abs(out$tau - 3.5) < 1e-12))
+  expect_true(all(is.finite(out$se)))
+  expect_equal(out$se, rep(0, m), tolerance = 1e-10)
+})
+
+test_that("data-frame API with pseudo_outcome supports jackknife SEs", {
+  dat <- .make_data(n = 26L, p = 3L, m = 4L)
+  df <- data.frame(
+    Y = rnorm(nrow(dat$X)),
+    T = rbinom(nrow(dat$X), 1, 0.5),
+    X1 = dat$X[, 1],
+    X2 = dat$X[, 2],
+    X3 = dat$X[, 3]
+  )
+  psi <- dat$Y
+
+  out <- cate_dnn(
+    data = df, x_cols = c("X1", "X2", "X3"),
+    y_col = "Y", t_col = "T",
+    pseudo_outcome = psi,
+    X0 = dat$X0,
+    distance = "l2", k = 2L, s = 4L, method = "asymp",
+    se = TRUE, jackknife = "loo"
+  )
+
+  expect_true(is.numeric(out$se))
+  expect_length(out$se, nrow(dat$X0))
+  expect_true(all(is.finite(out$se)))
+  expect_true(all(out$se >= 0))
+})
+
+test_that("invalid jackknife argument errors clearly", {
+  dat <- .make_data(n = 20L, p = 2L, m = 3L)
+
+  expect_error(
+    cate_dnn(
+      X = dat$X, X0 = dat$X0, pseudo_outcome = dat$Y,
+      distance = "l2", k = 2L, s = 3L,
+      se = TRUE, jackknife = "bad_option"
+    ),
+    regexp = "one of"
   )
 })
 

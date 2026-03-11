@@ -1,8 +1,10 @@
 Package: RdistNN
 Title: Generalized U-Statistics and Conditional Z-Estimation with Pluggable Scores
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R: 
-    person("Jakob", "Juergens", , "info@jakobjuergens.com", role = c("aut", "cre"))
+    person(given = "Jakob", family = "Juergens", email = "info@jakobjuergens.com", role = c("aut", "cre"))
+Author: Jakob Juergens [aut, cre]
+Maintainer: Jakob Juergens <info@jakobjuergens.com>
 Description: Fast, extensible framework for generalized U-statistics and Z-estimation
     with a pluggable score (kernel) interface. Uses compiled C++ fast paths when
     available and falls back to batched R evaluation otherwise. Supports complete
@@ -35,7 +37,6 @@ Encoding: UTF-8
 ByteCompile: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
-URL: https://JakobJuergens.github.io/RdistNN, https://github.com/JakobJuergens/RdistNN
-BugReports: https://github.com/JakobJuergens/RdistNN/issues
+URL: https://jakobjuergens.github.io/RdistNN/
 Config/testthat/edition: 3
 VignetteBuilder: knitr

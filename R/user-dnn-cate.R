@@ -2,37 +2,55 @@
 
 #' CATE via DNN rank weights (orthogonalized local averaging)
 #'
-#' Two equivalent interfaces are supported:
-#' **(A) data-frame API** (recommended):
-#'   - `data`, `x_cols`, `y_col`, `t_col`, `e_col`, and either `pseudo_outcome`
-#'     **or** outcome model columns to build the pseudo-outcome internally:
-#'     - `m0_col` + `m1_col` for the full AIPW pseudo-outcome (preferred), or
-#'     - `m_col` alone for the Robinson-form pseudo-outcome.
-#' **(B) matrix API** (back-compat):
-#'   - `X`, `X0`/`x0`, and `pseudo_outcome`.
+#' Estimate conditional average treatment effects by combining a pseudo-outcome
+#' with DNN-based local weights.
 #'
-#' @param data data.frame with at least X columns (and optionally Y,T,m,e).
-#' @param x_cols names/indices of covariate columns in `data` (data-frame API).
-#' @param y_col,t_col,e_col column names/indices (data-frame API).
-#' @param m0_col,m1_col column names for E[Y(0)|X] and E[Y(1)|X] (preferred;
-#'   enables the full doubly-robust AIPW pseudo-outcome from the paper).
-#' @param m_col column name for a single outcome model (Robinson form; alternative
-#'   to `m0_col`/`m1_col` when only E[Y|X] is available).
-#' @param pseudo_outcome numeric length n; if provided, Y/T/m/e are not required.
-#' @param X numeric n x p (matrix API).
-#' @param X0 numeric m x p matrix of targets; mutually exclusive with `x0`.
-#' @param x0 numeric length p single target (m = 1).
-#' @param distance distance name or spec (e.g. `"l2"`).
-#' @param method `"exact"` or `"asymp"`.
-#' @param k,s integers for DNN weighting.
-#' @param normalize logical; renormalize columns of W to sum 1.
-#' @param se logical; compute jackknife SEs (fast path if available).
-#' @param jackknife one of `"fast"`, `"loo"`, `"none"`.
-#' @param ctx optional context forwarded to distance/ranking.
-#' @param return extras from `weights_dnn()`: any of
-#'   `c("W","ranks","ord","dx","psi","nuisance","ess","neighbors")`.
+#' @details
+#' Two interfaces are supported.
 #'
-#' @return A `cate_result` with fields `tau`, optional `se`, `meta`, and requested extras.
+#' 1. Data-frame interface (recommended): pass `data` and `x_cols`, then provide
+#'    either `pseudo_outcome` directly or nuisance columns used to construct it.
+#'    For nuisance columns, use either:
+#'    - full AIPW form: `y_col`, `t_col`, `e_col`, `m0_col`, `m1_col`;
+#'    - Robinson form: `y_col`, `t_col`, `e_col`, `m_col`.
+#' 2. Matrix interface (backward compatible): pass `X`, one of `X0` or `x0`,
+#'    and `pseudo_outcome`.
+#'
+#' @param data Data frame with covariates and optional nuisance columns.
+#' @param x_cols Names or indices of covariate columns in `data`.
+#' @param y_col Name or index of the outcome column in `data`.
+#' @param t_col Name or index of the treatment column in `data` (must be 0/1).
+#' @param m0_col Name or index for \eqn{E[Y(0)\mid X]} (full AIPW interface).
+#' @param m1_col Name or index for \eqn{E[Y(1)\mid X]} (full AIPW interface).
+#' @param m_col Name or index for \eqn{E[Y\mid X]} (Robinson interface).
+#' @param e_col Name or index for propensity \eqn{P(T=1\mid X)}.
+#' @param pseudo_outcome Numeric vector of length `n`. If supplied, nuisance
+#'   columns are not required.
+#' @param X Numeric matrix (`n x p`) for the matrix interface.
+#' @param X0 Numeric matrix (`m x p`) of target points; mutually exclusive with
+#'   `x0`.
+#' @param x0 Numeric vector of length `p` for a single target point.
+#' @param distance Distance name or specification (for example `"l2"`).
+#' @param method One of `"exact"` or `"asymp"` for DNN weights.
+#' @param k,s Integer DNN tuning parameters.
+#' @param normalize Logical; renormalize columns of `W` to sum to 1.
+#' @param se Logical; compute delete-1 jackknife standard errors.
+#' @param jackknife One of `"fast"`, `"loo"`, or `"none"`. Currently `"fast"`
+#'   and `"loo"` call the same delete-1 recomputation engine.
+#' @param ctx Optional context passed to distance and ranking components.
+#' @param return Optional extras in addition to the always-returned `tau`, `se`,
+#'   and `meta`. Allowed values:
+#'   `c("W", "ranks", "ord", "dx", "psi", "nuisance", "ess", "neighbors")`.
+#'
+#' @return An object of class `cate_result` with components:
+#'   - `tau`: estimated CATE values at target points;
+#'   - `se`: optional jackknife standard errors;
+#'   - `meta`: metadata (`n`, `m`, `p`, `k`, `s`, `method`, `distance`);
+#'   - optional extras requested via `return`.
+#'
+#' @seealso [weights_dnn()], [weights_matrix()], [score_cate_rho()],
+#'   [cate_demo_data()].
+#'
 #' @examples
 #' set.seed(1)
 #' n <- 50
@@ -42,7 +60,7 @@
 #' out <- cate_dnn(
 #'   X = x_mat, X0 = x0_mat, pseudo_outcome = psi,
 #'   distance = "l2", method = "exact", k = 2L, s = 3L,
-#'   se = FALSE, return = c("W", "tau")
+#'   se = FALSE, return = c("W", "ess")
 #' )
 #' out$tau
 #' @export
@@ -154,8 +172,20 @@ cate_dnn <- function(
   tau <- as.numeric(crossprod(psi, weight_matrix)) # length m_out
   se_hat <- NULL
   if (isTRUE(se) && jackknife != "none") {
-    # Placeholder for a future jackknife implementation.
-    se_hat <- NULL
+    if (as.integer(s) >= n) {
+      stop("Delete-1 jackknife requires `s < n` so the same order can be used after deletion.", call. = FALSE)
+    }
+    se_hat <- .cate_dnn_jackknife_se_loo(
+      x_mat = x_mat,
+      x0_mat = x0_mat,
+      psi = psi,
+      distance = distance,
+      method = method,
+      k = as.integer(k),
+      s = as.integer(s),
+      normalize = normalize,
+      ctx = ctx
+    )
   }
 
   # Assemble output.
@@ -204,6 +234,54 @@ cate_dnn <- function(
   out
 }
 
+# Internal: paper-consistent delete-1 jackknife for cate_dnn().
+# Implements the delete-1 recomputation in Eq. (3.30)-(3.32) of
+# Local_Z_Est_JJuergens.pdf for the scalar (p_alpha = 1) CATE target.
+.cate_dnn_jackknife_se_loo <- function(
+  x_mat, x0_mat, psi, distance, method, k, s, normalize, ctx
+) {
+  n <- nrow(x_mat)
+  m <- nrow(x0_mat)
+  tau_loo <- matrix(NA_real_, nrow = n, ncol = m)
+
+  for (i in seq_len(n)) {
+    keep <- (seq_len(n) != i)
+    wt_i <- weights_dnn(
+      X = x_mat[keep, , drop = FALSE],
+      X0 = x0_mat,
+      distance = distance,
+      k = k,
+      s = s,
+      method = method,
+      normalize = normalize,
+      ctx = ctx,
+      return = "W"
+    )
+    tau_loo[i, ] <- as.numeric(crossprod(psi[keep], wt_i$W))
+  }
+
+  tau_loo_bar <- colMeans(tau_loo)
+  centered <- sweep(tau_loo, 2L, tau_loo_bar, FUN = "-")
+  var_jk <- ((n - 1) / n) * colSums(centered^2)
+  sqrt(pmax(var_jk, 0))
+}
+
+#' Print a `cate_result` object
+#'
+#' @param x An object returned by [cate_dnn()].
+#' @param ... Not used.
+#' @return `x`, invisibly.
+#' @examples
+#' set.seed(1)
+#' n <- 20
+#' x_mat <- matrix(rnorm(n * 2), n, 2)
+#' out <- cate_dnn(
+#'   X = x_mat,
+#'   x0 = c(0, 0),
+#'   pseudo_outcome = rnorm(n),
+#'   se = FALSE
+#' )
+#' print(out)
 #' @export
 print.cate_result <- function(x, ...) {
   cat("<cate_result>\n", sep = "")
@@ -228,7 +306,10 @@ print.cate_result <- function(x, ...) {
   invisible(x)
 }
 
-
+#' Print a `cate_dnn_result` object
+#'
+#' @inheritParams print.cate_result
+#' @return `x`, invisibly.
 #' @export
 print.cate_dnn_result <- function(x, ...) {
   cat("<cate_dnn_result>\n", sep = "")

@@ -10,6 +10,12 @@ new_score(
   setup = NULL,
   eval = NULL,
   eval_batch = NULL,
+  eval_param = NULL,
+  eval_param_batch = NULL,
+  grad = NULL,
+  grad_batch = NULL,
+  fd_step = 1e-06,
+  fd_scheme = "central",
   ptr = NULL,
   randomized = FALSE,
   symmetric = TRUE
@@ -26,6 +32,25 @@ new_score(
 
 \item{eval_batch}{R fast path: function(subs, data, ctx, rng) -> numeric(nrow(subs)).}
 
+\item{eval_param}{Optional parameter-aware scalar evaluator:
+function(idxs, data, theta, ctx, rng) -> numeric(1).}
+
+\item{eval_param_batch}{Optional parameter-aware batch evaluator:
+function(subs, data, theta, ctx, rng) -> numeric(nrow(subs)).}
+
+\item{grad}{Optional analytic scalar gradient:
+function(idxs, data, theta, ctx, rng) -> numeric(length(theta)).}
+
+\item{grad_batch}{Optional analytic batch gradient:
+function(subs, data, theta, ctx, rng) -> matrix(nrow(subs), length(theta)).}
+
+\item{fd_step}{Finite-difference step used by \code{\link[=score_diff_path]{score_diff_path()}} when
+\code{method = "fd"} and no explicit step is supplied.}
+
+\item{fd_scheme}{Finite-difference scheme used by \code{\link[=score_diff_path]{score_diff_path()}} when
+\code{method = "fd"} and no explicit scheme is supplied. One of
+\code{c("central", "forward")}.}
+
 \item{ptr}{External pointer to compiled score (see vignette); if present, used by engine.}
 
 \item{randomized}{Logical: does the kernel draw randomness?}
@@ -39,6 +64,11 @@ An object of class \code{ustat_score}.
 A score (kernel) is a symmetric function evaluated on s-sized subsets.
 Provide either \code{ptr} (compiled fast path), or an R \code{eval_batch}, or an R \code{eval}.
 }
+\details{
+If your score depends on a parameter vector (for example Z-estimation), use
+\code{eval_param}/\code{eval_param_batch} and optionally \code{grad}/\code{grad_batch} to enable
+derivative-aware workflows via \code{\link[=score_diff_path]{score_diff_path()}}.
+}
 \examples{
 sc <- new_score(
   name = "sum2",
@@ -46,4 +76,7 @@ sc <- new_score(
   eval = function(idxs, data, ctx, rng) sum(data[idxs])
 )
 is_score(sc)
+}
+\seealso{
+\code{\link[=as_score]{as_score()}}, \code{\link[=score_eval]{score_eval()}}, \code{\link[=score_eval_batch]{score_eval_batch()}}, \code{\link[=score_diff_path]{score_diff_path()}}
 }

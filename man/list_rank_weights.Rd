@@ -6,6 +6,9 @@
 \usage{
 list_rank_weights()
 }
+\value{
+Character vector.
+}
 \description{
 Back-compat alias for \code{\link[=rank_names]{rank_names()}}
 }

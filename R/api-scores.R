@@ -33,15 +33,33 @@
 #' A score (kernel) is a symmetric function evaluated on s-sized subsets.
 #' Provide either `ptr` (compiled fast path), or an R `eval_batch`, or an R `eval`.
 #'
+#' If your score depends on a parameter vector (for example Z-estimation), use
+#' `eval_param`/`eval_param_batch` and optionally `grad`/`grad_batch` to enable
+#' derivative-aware workflows via [score_diff_path()].
+#'
 #' @param name Character scalar.
 #' @param order Integer order s, or function(n, data, ctx) -> s.
 #' @param setup Optional function(data, ...) -> ctx object (list or externalptr).
 #' @param eval R fallback: function(idxs, data, ctx, rng) -> numeric(1).
 #' @param eval_batch R fast path: function(subs, data, ctx, rng) -> numeric(nrow(subs)).
+#' @param eval_param Optional parameter-aware scalar evaluator:
+#'   function(idxs, data, theta, ctx, rng) -> numeric(1).
+#' @param eval_param_batch Optional parameter-aware batch evaluator:
+#'   function(subs, data, theta, ctx, rng) -> numeric(nrow(subs)).
+#' @param grad Optional analytic scalar gradient:
+#'   function(idxs, data, theta, ctx, rng) -> numeric(length(theta)).
+#' @param grad_batch Optional analytic batch gradient:
+#'   function(subs, data, theta, ctx, rng) -> matrix(nrow(subs), length(theta)).
+#' @param fd_step Finite-difference step used by [score_diff_path()] when
+#'   `method = "fd"` and no explicit step is supplied.
+#' @param fd_scheme Finite-difference scheme used by [score_diff_path()] when
+#'   `method = "fd"` and no explicit scheme is supplied. One of
+#'   `c("central", "forward")`.
 #' @param ptr External pointer to compiled score (see vignette); if present, used by engine.
 #' @param randomized Logical: does the kernel draw randomness?
 #' @param symmetric Logical: permutation symmetry (engine assumes TRUE).
 #' @return An object of class `ustat_score`.
+#' @seealso [as_score()], [score_eval()], [score_eval_batch()], [score_diff_path()]
 #' @examples
 #' sc <- new_score(
 #'   name = "sum2",
@@ -56,16 +74,29 @@ new_score <- function(
   setup = NULL,
   eval = NULL,
   eval_batch = NULL,
+  eval_param = NULL,
+  eval_param_batch = NULL,
+  grad = NULL,
+  grad_batch = NULL,
+  fd_step = 1e-6,
+  fd_scheme = "central",
   ptr = NULL,
   randomized = FALSE,
   symmetric = TRUE
 ) {
+  fd_scheme <- match.arg(fd_scheme, c("central", "forward"))
   sc <- list(
     name = as.character(name),
     order = order,
     setup = setup,
     eval = eval,
     eval_batch = eval_batch,
+    eval_param = eval_param,
+    eval_param_batch = eval_param_batch,
+    grad = grad,
+    grad_batch = grad_batch,
+    fd_step = as.numeric(fd_step),
+    fd_scheme = fd_scheme,
     ptr = ptr,
     randomized = isTRUE(randomized),
     symmetric = isTRUE(symmetric)
@@ -80,6 +111,7 @@ new_score <- function(
 #' @param s integer order
 #' @param name character scalar used as the score name (optional)
 #' @return A \code{ustat_score}
+#' @seealso [new_score()], [score_eval()]
 #' @examples
 #' sc <- as_score(function(idxs, data) prod(data[idxs]), s = 2L, name = "prod2")
 #' score_eval(sc, c(1L, 3L), c(2, 4, 6), NULL)
@@ -129,8 +161,30 @@ validate_score <- function(sc) {
   if (!(.is_scalar_int(sc$order) || .is_fun(sc$order, 1L))) {
     stop("`order` must be integer or function(n, data, ctx).", call. = FALSE)
   }
-  if (is.null(sc$ptr) && is.null(sc$eval_batch) && is.null(sc$eval)) {
-    stop("Provide at least one of: ptr, eval_batch, eval", call. = FALSE)
+  if (!is.null(sc$eval_param) && !is.function(sc$eval_param)) {
+    stop("`eval_param` must be NULL or a function.", call. = FALSE)
+  }
+  if (!is.null(sc$eval_param_batch) && !is.function(sc$eval_param_batch)) {
+    stop("`eval_param_batch` must be NULL or a function.", call. = FALSE)
+  }
+  if (!is.null(sc$grad) && !is.function(sc$grad)) {
+    stop("`grad` must be NULL or a function.", call. = FALSE)
+  }
+  if (!is.null(sc$grad_batch) && !is.function(sc$grad_batch)) {
+    stop("`grad_batch` must be NULL or a function.", call. = FALSE)
+  }
+  if (!is.numeric(sc$fd_step) || length(sc$fd_step) != 1L ||
+    !is.finite(sc$fd_step) || sc$fd_step <= 0) {
+    stop("`fd_step` must be a positive finite scalar.", call. = FALSE)
+  }
+  if (!is.character(sc$fd_scheme) || length(sc$fd_scheme) != 1L ||
+    !(sc$fd_scheme %in% c("central", "forward"))) {
+    stop("`fd_scheme` must be one of: 'central', 'forward'.", call. = FALSE)
+  }
+  if (is.null(sc$ptr) &&
+    is.null(sc$eval_batch) && is.null(sc$eval) &&
+    is.null(sc$eval_param_batch) && is.null(sc$eval_param)) {
+    stop("Provide at least one of: ptr, eval_batch, eval, eval_param_batch, eval_param", call. = FALSE)
   }
   if (!isTRUE(sc$symmetric)) {
     warning("Score marked non-symmetric; engine assumes symmetry.", call. = FALSE)
@@ -140,6 +194,14 @@ validate_score <- function(sc) {
 
 # --- pretty printing ----------------------------------------------------------
 
+#' Print a `ustat_score` object
+#'
+#' @param x A `ustat_score` object.
+#' @param ... Not used.
+#' @return `x`, invisibly.
+#' @examples
+#' sc <- as_score(function(idxs, data) sum(data[idxs]), s = 2L, name = "sum2")
+#' print(sc)
 #' @export
 print.ustat_score <- function(x, ...) {
   cat("<ustat_score: ", x$name, ">\n", sep = "")
@@ -158,6 +220,16 @@ print.ustat_score <- function(x, ...) {
     "\n",
     sep = ""
   )
+  has_analytic <- is.function(x$grad) || is.function(x$grad_batch)
+  has_param_eval <- is.function(x$eval_param) || is.function(x$eval_param_batch)
+  diff_mode <- if (has_analytic) {
+    "analytic"
+  } else if (has_param_eval) {
+    paste0("fd-ready (", x$fd_scheme, ")")
+  } else {
+    "none"
+  }
+  cat("  diff : ", diff_mode, "\n", sep = "")
   invisible(x)
 }
 
