@@ -62,3 +62,6 @@ rw <- as_rank_weight(function(r) {
 out <- weights_matrix(x_mat, x0_mat, ranking = "l2", weight = rw, return = c("W", "ranks"))
 dim(out$W)
 }
+\seealso{
+\code{\link[=weights_dnn]{weights_dnn()}}, \code{\link[=rank_weight_eval_batch]{rank_weight_eval_batch()}}, \code{\link[=distance_eval_batch]{distance_eval_batch()}}
+}

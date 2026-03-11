@@ -2,23 +2,46 @@
 % Please edit documentation in R/RdistNN-package.R
 \docType{package}
 \name{RdistNN-package}
-\alias{RdistNN}
 \alias{RdistNN-package}
-\title{RdistNN: Generalized U-Statistics and Conditional Z-Estimation with Pluggable Scores}
+\alias{RdistNN}
+\title{RdistNN: Distance-Based Building Blocks for Localized U-Statistics}
 \description{
-Fast, extensible framework for generalized U-statistics and Z-estimation with a pluggable score (kernel) interface. Uses compiled C++ fast paths when available and falls back to batched R evaluation otherwise. Supports complete and incomplete subsampling, batched evaluation, and variance estimation via delete-1 jackknife.
-}
-\seealso{
-Useful links:
+\code{RdistNN} provides a modular toolkit for distance-localized estimation based
+on generalized U-statistics. It combines:
 \itemize{
-  \item \url{https://JakobJuergens.github.io/RdistNN}
-  \item \url{https://github.com/JakobJuergens/RdistNN}
-  \item Report bugs at \url{https://github.com/JakobJuergens/RdistNN/issues}
+\item distance specifications (\code{dnn_distance}) for ranking observations around a
+target;
+\item rank-weight specifications (\code{rank_weight}) for converting ranks to weights;
+\item score objects (\code{ustat_score}) for flexible kernel-based moment evaluation.
+}
+}
+\section{Main User Workflows}{
+
+\itemize{
+\item Compute DNN weights with \code{\link[=weights_dnn]{weights_dnn()}}, \code{\link[=weights_dnn_exact]{weights_dnn_exact()}}, and
+\code{\link[=weights_dnn_asymp]{weights_dnn_asymp()}}.
+\item Estimate local CATE targets with \code{\link[=cate_dnn]{cate_dnn()}}.
+\item Build custom generalized U-statistics with \code{\link[=new_score]{new_score()}},
+\code{\link[=score_eval_batch]{score_eval_batch()}}, and \code{\link[=score_diff_path]{score_diff_path()}}.
+\item Estimate uncertainty with \code{\link[=jackknife_fast_rank]{jackknife_fast_rank()}} and
+\code{\link[=jackknife_slow_rank]{jackknife_slow_rank()}}.
+}
 }
 
+\section{Documentation Map}{
+
+\itemize{
+\item Start with \code{vignette("getting-started", package = "RdistNN")}.
+\item For extension patterns see \code{vignette("extending", package = "RdistNN")}.
+\item For distance/rank weighting details see
+\code{vignette("dnn-weights", package = "RdistNN")}.
+}
+}
+
+\seealso{
+\code{\link[=weights_dnn]{weights_dnn()}}, \code{\link[=cate_dnn]{cate_dnn()}}, \code{\link[=new_score]{new_score()}}, \code{\link[=distance_l2]{distance_l2()}}
 }
 \author{
 \strong{Maintainer}: Jakob Juergens \email{info@jakobjuergens.com}
 
 }
-\keyword{internal}

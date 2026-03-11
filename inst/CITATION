@@ -2,6 +2,11 @@
 
 citHeader("To cite RdistNN in publications, please use:")
 
+pkg_ver <- tryCatch(
+  as.character(utils::packageVersion("RdistNN")),
+  error = function(...) "development version"
+)
+
 bibentry(
   bibtype = "Manual",
   title   = "RdistNN: Modular distances and DNN weight engines for U-statistics",
@@ -9,8 +14,8 @@ bibentry(
     person("Jakob", "Juergens")
   ),
   year    = "2025",
-  note    = sprintf("R package version %s", utils::packageVersion("RdistNN")),
-  url     = "https://JakobJuergens.github.io/RdistNN"
+  note    = sprintf("R package version %s", pkg_ver),
+  url     = "https://jakobjuergens.github.io/RdistNN/"
 )
 
 # Optional: working-paper references (use 'Misc' if not in a journal yet)

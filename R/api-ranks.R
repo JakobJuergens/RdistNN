@@ -179,12 +179,14 @@ rank_names <- function() {
 }
 
 #' Back-compat alias for [rank_names()]
+#' @return Character vector.
 #' @examples
 #' identical(rank_names(), list_ranks())
 #' @export
 list_ranks <- function() rank_names()
 
 #' Back-compat alias for [rank_names()]
+#' @return Character vector.
 #' @examples
 #' identical(rank_names(), list_rank_weights())
 #' @export

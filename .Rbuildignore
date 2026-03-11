@@ -1,5 +1,13 @@
 ^RdistNN\.Rproj$
 ^\.Rproj\.user$
+^\.git$
+^\.gitignore$
+^\.claude$
+^\.Rhistory$
+^\.RData$
+^\.Ruserdata$
+^\.\.Rcheck$
+^vign_test$
 ^LICENSE\.md$
 ^README\.Rmd$
 ^\.github$
@@ -13,4 +21,6 @@
 ^tools$
 ^bench$
 ^tools/bench$
+^Jackknife-GenUStat_JJuergens\.pdf$
+^Local_Z_Est_JJuergens\.pdf$
 ^src/.*\.(o|so|dll|dylib)$

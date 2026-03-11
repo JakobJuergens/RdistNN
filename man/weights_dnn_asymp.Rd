@@ -35,6 +35,9 @@ weights_dnn_asymp(
 
 \item{return}{character vector of extras to include; any of \code{c("W","ord","ranks","dx")}}
 }
+\value{
+A \code{weights_result} object (same structure as \code{\link[=weights_dnn_exact]{weights_dnn_exact()}}).
+}
 \description{
 DNN weights (asymptotic full-U), distance-based ranking
 }

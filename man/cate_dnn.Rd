@@ -9,6 +9,8 @@ cate_dnn(
   x_cols = NULL,
   y_col = NULL,
   t_col = NULL,
+  m0_col = NULL,
+  m1_col = NULL,
   m_col = NULL,
   e_col = NULL,
   pseudo_outcome = NULL,
@@ -27,48 +29,76 @@ cate_dnn(
 )
 }
 \arguments{
-\item{data}{data.frame with at least X columns (and optionally Y,T,m,e).}
+\item{data}{Data frame with covariates and optional nuisance columns.}
 
-\item{x_cols}{names/indices of covariate columns in \code{data} (data-frame API).}
+\item{x_cols}{Names or indices of covariate columns in \code{data}.}
 
-\item{y_col, t_col, m_col, e_col}{column names/indices (data-frame API).}
+\item{y_col}{Name or index of the outcome column in \code{data}.}
 
-\item{pseudo_outcome}{numeric length n; if provided, Y/T/m/e are not required.}
+\item{t_col}{Name or index of the treatment column in \code{data} (must be 0/1).}
 
-\item{X}{numeric n x p (matrix API).}
+\item{m0_col}{Name or index for \eqn{E[Y(0)\mid X]} (full AIPW interface).}
 
-\item{X0}{numeric m x p matrix of targets; mutually exclusive with \code{x0}.}
+\item{m1_col}{Name or index for \eqn{E[Y(1)\mid X]} (full AIPW interface).}
 
-\item{x0}{numeric length p single target (m = 1).}
+\item{m_col}{Name or index for \eqn{E[Y\mid X]} (Robinson interface).}
 
-\item{distance}{distance name or spec (e.g. \code{"l2"}).}
+\item{e_col}{Name or index for propensity \eqn{P(T=1\mid X)}.}
 
-\item{method}{\code{"exact"} or \code{"asymp"}.}
+\item{pseudo_outcome}{Numeric vector of length \code{n}. If supplied, nuisance
+columns are not required.}
 
-\item{k, s}{integers for DNN weighting.}
+\item{X}{Numeric matrix (\verb{n x p}) for the matrix interface.}
 
-\item{normalize}{logical; renormalize columns of W to sum 1.}
+\item{X0}{Numeric matrix (\verb{m x p}) of target points; mutually exclusive with
+\code{x0}.}
 
-\item{se}{logical; compute jackknife SEs (fast path if available).}
+\item{x0}{Numeric vector of length \code{p} for a single target point.}
 
-\item{jackknife}{one of \code{"fast"}, \code{"loo"}, \code{"none"}.}
+\item{distance}{Distance name or specification (for example \code{"l2"}).}
 
-\item{ctx}{optional context forwarded to distance/ranking.}
+\item{method}{One of \code{"exact"} or \code{"asymp"} for DNN weights.}
 
-\item{return}{extras from \code{weights_dnn()}: any of
-\code{c("W","ranks","ord","dx","psi","nuisance","ess","neighbors")}.}
+\item{k, s}{Integer DNN tuning parameters.}
+
+\item{normalize}{Logical; renormalize columns of \code{W} to sum to 1.}
+
+\item{se}{Logical; compute delete-1 jackknife standard errors.}
+
+\item{jackknife}{One of \code{"fast"}, \code{"loo"}, or \code{"none"}. Currently \code{"fast"}
+and \code{"loo"} call the same delete-1 recomputation engine.}
+
+\item{ctx}{Optional context passed to distance and ranking components.}
+
+\item{return}{Optional extras in addition to the always-returned \code{tau}, \code{se},
+and \code{meta}. Allowed values:
+\code{c("W", "ranks", "ord", "dx", "psi", "nuisance", "ess", "neighbors")}.}
 }
 \value{
-A \code{cate_result} with fields \code{tau}, optional \code{se}, \code{meta}, and requested extras.
+An object of class \code{cate_result} with components:
+\itemize{
+\item \code{tau}: estimated CATE values at target points;
+\item \code{se}: optional jackknife standard errors;
+\item \code{meta}: metadata (\code{n}, \code{m}, \code{p}, \code{k}, \code{s}, \code{method}, \code{distance});
+\item optional extras requested via \code{return}.
+}
 }
 \description{
-Two equivalent interfaces are supported:
-\strong{(A) data-frame API} (recommended):
+Estimate conditional average treatment effects by combining a pseudo-outcome
+with DNN-based local weights.
+}
+\details{
+Two interfaces are supported.
+\enumerate{
+\item Data-frame interface (recommended): pass \code{data} and \code{x_cols}, then provide
+either \code{pseudo_outcome} directly or nuisance columns used to construct it.
+For nuisance columns, use either:
 \itemize{
-\item \code{data}, \code{x_cols}, \code{y_col}, \code{t_col}, and either \code{pseudo_outcome} \strong{or}
-both \code{m_col} and \code{e_col} to build the pseudo-outcome internally.
-\strong{(B) matrix API} (back-compat):
-\item \code{X}, \code{X0}/\code{x0}, and \code{pseudo_outcome}.
+\item full AIPW form: \code{y_col}, \code{t_col}, \code{e_col}, \code{m0_col}, \code{m1_col};
+\item Robinson form: \code{y_col}, \code{t_col}, \code{e_col}, \code{m_col}.
+}
+\item Matrix interface (backward compatible): pass \code{X}, one of \code{X0} or \code{x0},
+and \code{pseudo_outcome}.
 }
 }
 \examples{
@@ -80,7 +110,11 @@ psi <- rnorm(n)
 out <- cate_dnn(
   X = x_mat, X0 = x0_mat, pseudo_outcome = psi,
   distance = "l2", method = "exact", k = 2L, s = 3L,
-  se = FALSE, return = c("W", "tau")
+  se = FALSE, return = c("W", "ess")
 )
 out$tau
+}
+\seealso{
+\code{\link[=weights_dnn]{weights_dnn()}}, \code{\link[=weights_matrix]{weights_matrix()}}, \code{\link[=score_cate_rho]{score_cate_rho()}},
+\code{\link[=cate_demo_data]{cate_demo_data()}}.
 }

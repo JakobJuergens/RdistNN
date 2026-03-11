@@ -164,6 +164,7 @@
 #'   - `W`   : numeric matrix n x m (columns typically sum to 1),
 #'   - optional: `ord`, `ranks`, `dx`,
 #'   - `meta`: list with `n, m, p, weight_kind, weight_name`.
+#' @seealso [weights_dnn()], [rank_weight_eval_batch()], [distance_eval_batch()]
 #' @examples
 #' set.seed(1)
 #' x_mat <- matrix(rnorm(20), 10, 2)
@@ -232,6 +233,16 @@ weights_matrix <- function(
   out
 }
 
+#' Print a `weights_result` object
+#'
+#' @param x A `weights_result` object created by [weights_matrix()].
+#' @param ... Not used.
+#' @return `x`, invisibly.
+#' @examples
+#' set.seed(1)
+#' x_mat <- matrix(rnorm(20), 10, 2)
+#' out <- weights_dnn_exact(x_mat, x0 = c(0, 0), k = 1L, s = 1L)
+#' print(out)
 #' @export
 print.weights_result <- function(x, ...) {
   m <- x$meta$m
@@ -280,6 +291,7 @@ weights_dnn_exact <- function(
 #' DNN weights (asymptotic full-U), distance-based ranking
 #' @inheritParams weights_dnn_exact
 #' @param normalize logical; renormalize columns to sum 1
+#' @return A `weights_result` object (same structure as [weights_dnn_exact()]).
 #' @examples
 #' set.seed(1)
 #' x_mat <- matrix(rnorm(20), 10, 2)
@@ -303,6 +315,7 @@ weights_dnn_asymp <- function(
 #' DNN weights (choose method), distance-based ranking
 #' @inheritParams weights_dnn_asymp
 #' @param method one of \code{"exact"} or \code{"asymp"}
+#' @return A `weights_result` object.
 #' @examples
 #' set.seed(1)
 #' x_mat <- matrix(rnorm(20), 10, 2)
