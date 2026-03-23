@@ -20,7 +20,7 @@ Imports:
     Rcpp
 LinkingTo:
     Rcpp
-Suggests: 
+Suggests:
     nleqslv,
     minpack.lm,
     optimx,
@@ -33,7 +33,10 @@ Suggests:
     knitr,
     rmarkdown,
     methods,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    grf,
+    future,
+    future.apply
 SystemRequirements: C++17
 Encoding: UTF-8
 ByteCompile: true
