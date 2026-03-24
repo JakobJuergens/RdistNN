@@ -20,7 +20,6 @@ library(RdistNN)
 
 # ── Paper simulation grid ─────────────────────────────────────────────────────
 # Mirrors the design grid in 05b_CATE_Simulation.tex.
-# Extend kx_vals to c(1L, 2L) once p=1 DGPs are finalised.
 
 PAPER_GRID <- list(
   designs     = c("dgp1_linear", "dgp2_nonlinear", "dgp3_sparse_overlap"),
@@ -30,16 +29,24 @@ PAPER_GRID <- list(
   master_seed = 42L,
   k           = 5L,
   s_fn        = function(n, kx) floor(n^((kx + 1L) / (kx + 2L))),
+  # Methods evaluated on every draw.  Add "causal_forest" and "llf" if grf
+  # is installed, or "dnn_crossfit" for the cross-fitting comparison.
+  methods     = c("dnn_oracle", "dnn_crossfit", "local_constant", "ols_interact"),
   alpha       = 0.05,
   sigma       = 0.5,
-  clip        = 1e-3
+  clip        = 1e-3,
+  n_folds     = 5L
 )
 
-# ── Run DNN estimator ─────────────────────────────────────────────────────────
+# ── Run simulation ────────────────────────────────────────────────────────────
 
-cat("=== DNN Z-estimator (oracle nuisances) ===\n")
+cat("Available methods:", paste(sim_cate_methods(), collapse = ", "), "\n\n")
+cat("=== Running simulation ===\n")
+cat("Methods:", paste(PAPER_GRID$methods, collapse = ", "), "\n\n")
 
-raw_dnn <- sim_cate_run(
+# Parallelise across reps (optional):
+#   future::plan(future::multisession)
+raw <- sim_cate_run(
   designs     = PAPER_GRID$designs,
   n_vals      = PAPER_GRID$n_vals,
   kx_vals     = PAPER_GRID$kx_vals,
@@ -47,36 +54,28 @@ raw_dnn <- sim_cate_run(
   master_seed = PAPER_GRID$master_seed,
   k           = PAPER_GRID$k,
   s_fn        = PAPER_GRID$s_fn,
+  methods     = PAPER_GRID$methods,
   alpha       = PAPER_GRID$alpha,
   sigma       = PAPER_GRID$sigma,
   clip        = PAPER_GRID$clip,
+  n_folds     = PAPER_GRID$n_folds,
   verbose     = TRUE
 )
 
-table_dnn <- summarise_sim_results(raw_dnn)
+# ── Summarise ─────────────────────────────────────────────────────────────────
 
-cat("\n=== DNN results ===\n")
-print(table_dnn, digits = 3)
+table_sim <- summarise_sim_results(raw)
 
-# ── Run benchmark estimators (optional) ──────────────────────────────────────
-# Uncomment after implementing benchmarks.R.
-#
-# bench_script <- system.file(
-#   "paper-replication/cate/benchmarks.R", package = "RdistNN"
-# )
-# source(bench_script)
-#
-# raw_bench  <- run_benchmarks(PAPER_GRID)
-# table_comp <- merge(table_dnn, raw_bench, by = c("design", "n", "kx"),
-#                     suffixes = c("_dnn", "_bench"))
+cat("\n=== Simulation results ===\n")
+print(table_sim, digits = 3)
 
 # ── Save results ──────────────────────────────────────────────────────────────
 
 out_dir <- file.path(getwd(), "results")
 if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
 
-saveRDS(raw_dnn,    file.path(out_dir, "sim_cate_raw.rds"))
-write.csv(table_dnn, file.path(out_dir, "sim_cate_table.csv"),
+saveRDS(raw,       file.path(out_dir, "sim_cate_raw.rds"))
+write.csv(table_sim, file.path(out_dir, "sim_cate_table.csv"),
           row.names = FALSE)
 
 cat("\nResults saved to", out_dir, "\n")

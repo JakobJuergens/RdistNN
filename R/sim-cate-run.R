@@ -1,12 +1,13 @@
 # sim-cate-run.R
 # Single-replicate estimator and Monte Carlo harness for the CATE simulation.
 #
-# Implements the proposed DNN Z-estimator with oracle nuisances.
-# Competitor estimators live in inst/paper-replication/cate/benchmarks.R.
-#
 # Public API:
-#   sim_cate_one_rep()  -- one replicate, returns a named numeric vector
+#   sim_cate_one_rep()  -- one replicate: draws data, runs all requested methods,
+#                          returns a data.frame with one row per method
 #   sim_cate_run()      -- full MC grid, returns a data.frame of raw results
+#
+# Available methods are listed by sim_cate_methods() and implemented in
+# sim-cate-benchmarks.R.
 #
 # Parallelism:
 #   sim_cate_run() uses future.apply::future_lapply() when the future.apply
@@ -29,10 +30,10 @@
 
 # ── Single replicate ──────────────────────────────────────────────────────────
 
-#' Run one replicate of the DNN CATE estimator
+#' Run one replicate of CATE estimators
 #'
-#' Draws one dataset from the named DGP (via [sim_cate_data()]), fits the DNN
-#' Z-estimator with oracle nuisances, and returns per-replicate performance
+#' Draws one dataset from the named DGP (via [sim_cate_data()]), then runs each
+#' requested method on the **same** dataset and returns per-replicate performance
 #' metrics aligned with the paper's evaluation criteria.
 #'
 #' @param n Integer sample size.
@@ -40,60 +41,79 @@
 #' @param k Integer DNN neighbour count.
 #' @param s Integer kernel order (undersmoothing parameter).
 #' @param design Character DGP name; passed to [sim_cate_data()].
+#' @param methods Character vector of method names; see [sim_cate_methods()].
+#'   Default: `"dnn_oracle"`.
 #' @param alpha Nominal coverage level (default 0.05).
 #' @param seed Optional integer seed for this replicate.
 #' @param sigma Noise SD forwarded to the DGP.
-#' @param clip Propensity clipping bound forwarded to the DGP.
+#' @param clip Propensity clipping bound forwarded to the DGP and cross-fitting.
+#' @param n_folds Number of cross-fitting folds for the `dnn_crossfit` method.
 #'
-#' @return Named numeric vector with elements `bias`, `sq_err`, `se`,
-#'   `cover` (0/1), `ci_len`, `neff`.
+#' @return A `data.frame` with one row per method and columns
+#'   `method`, `bias`, `sq_err`, `se`, `cover` (0/1), `ci_len`, `neff`.
+#'   Failed methods have `NA` for all metric columns.
 #'
 #' @examples
 #' rep1 <- sim_cate_one_rep(
 #'   n = 200, kx = 2, k = 5, s = 12,
-#'   design = "dgp2_nonlinear", seed = 1
+#'   design = "dgp2_nonlinear",
+#'   methods = c("dnn_oracle", "ols_interact"),
+#'   seed = 1
 #' )
 #' rep1
 #'
 #' @export
 sim_cate_one_rep <- function(n, kx, k, s, design,
-                              alpha = 0.05, seed = NULL,
-                              sigma = 0.5, clip = 1e-3) {
+                              methods   = "dnn_oracle",
+                              alpha     = 0.05,
+                              seed      = NULL,
+                              sigma     = 0.5,
+                              clip      = 1e-3,
+                              n_folds   = 5L) {
   dgp    <- sim_cate_data(design, n = n, kx = kx,
                           sigma = sigma, clip = clip, seed = seed)
-  tau0   <- dgp$tau_x0
-  dat    <- dgp$data
-  x0     <- dgp$x0
   x_cols <- paste0("X", seq_len(kx))
 
-  fit <- cate_dnn(
-    data      = dat,
-    x_cols    = x_cols,
-    y_col     = "Y",
-    t_col     = "D",
-    e_col     = "e_oracle",
-    m0_col    = "m0_oracle",
-    m1_col    = "m1_oracle",
-    x0        = x0,
-    k         = k,
-    s         = s,
-    se        = TRUE,
-    jackknife = "fast",
-    return    = "ess"
-  )
+  na_row <- c(tau_hat = NA_real_, tau0 = NA_real_,
+              bias = NA_real_, sq_err = NA_real_, se = NA_real_,
+              cover = NA_real_, ci_len = NA_real_, neff = NA_real_)
 
-  tau_hat <- fit$tau
-  se_hat  <- fit$se
-  neff    <- fit$ess
-  z       <- stats::qnorm(1 - alpha / 2)
-  covered <- (tau_hat - z * se_hat <= tau0) & (tau0 <= tau_hat + z * se_hat)
+  rows <- lapply(methods, function(meth) {
+    fn  <- .get_sim_method(meth)
+    res <- tryCatch(
+      fn(dgp = dgp, x_cols = x_cols, k = k, s = s, alpha = alpha,
+         n_folds = n_folds, clip = clip),
+      error = function(e) {
+        warning(sprintf("sim_cate_one_rep: method '%s' failed: %s",
+                        meth, conditionMessage(e)), call. = FALSE)
+        NULL
+      }
+    )
+    if (is.null(res)) {
+      na_row
+    } else {
+      # Ensure neff is present even if method omits it
+      if (!"neff" %in% names(res)) res <- c(res, neff = NA_real_)
+      res[names(na_row)]
+    }
+  })
 
-  c(bias   = tau_hat - tau0,
-    sq_err = (tau_hat - tau0)^2,
-    se     = se_hat,
-    cover  = as.numeric(covered),
-    ci_len = 2 * z * se_hat,
-    neff   = neff)
+  do.call(rbind, lapply(seq_along(methods), function(i) {
+    r <- rows[[i]]
+    data.frame(
+      method  = methods[i],
+      tau_hat = r[["tau_hat"]],
+      tau0    = r[["tau0"]],
+      bias    = r[["bias"]],
+      sq_err  = r[["sq_err"]],
+      se      = r[["se"]],
+      cover   = r[["cover"]],
+      ci_len  = r[["ci_len"]],
+      neff    = r[["neff"]],
+      stringsAsFactors = FALSE,
+      row.names = NULL
+    )
+  }))
 }
 
 # ── Monte Carlo grid ──────────────────────────────────────────────────────────
@@ -102,8 +122,10 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
 #'
 #' Expands a grid of DGP designs, sample sizes, and covariate dimensions, then
 #' runs `n_reps` independent Monte Carlo replications for each cell using
-#' [sim_cate_one_rep()].  Returns a tidy data.frame of raw per-replicate
-#' results.  Use [summarise_sim_results()] to aggregate to one row per cell.
+#' [sim_cate_one_rep()].  Each replicate draws one dataset and evaluates **all**
+#' requested `methods` on the same draw, enabling like-for-like comparisons.
+#' Returns a tidy data.frame of raw per-replicate, per-method results.  Use
+#' [summarise_sim_results()] to aggregate to one row per `(method, design, n, kx)`.
 #'
 #' @section Parallelism:
 #' When the `future.apply` package is installed, the rep loop within each cell
@@ -121,9 +143,10 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
 #' `system.file("paper-replication/cate/hpc", package = "RdistNN")`.
 #'
 #' @section Fault tolerance:
-#' Each replicate is wrapped in `tryCatch`.  A failed rep records `NA` for all
-#' metrics and emits a warning; the rest of the run continues unaffected.
-#' [summarise_sim_results()] reports `n_failed` per cell.
+#' Each replicate is wrapped in `tryCatch`.  A total rep failure (e.g. DGP
+#' draw error) records `NA` for all metrics and all methods and emits a warning;
+#' per-method failures are handled inside [sim_cate_one_rep()].
+#' [summarise_sim_results()] reports `n_failed` per `(method, design, n, kx)`.
 #'
 #' @param designs Character vector of DGP names.
 #' @param n_vals Integer vector of sample sizes.
@@ -131,31 +154,38 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
 #' @param n_reps Number of Monte Carlo replications per cell.
 #' @param master_seed Integer seed used to draw the per-replicate seeds.
 #'   Every cell uses the same seed vector so noise realisations are comparable
-#'   across DGPs and sample sizes.
+#'   across DGPs, sample sizes, and methods (fair comparison).
 #' @param k Integer DNN neighbour count.
 #' @param s_fn Function `f(n, kx)` returning the integer kernel order.
 #'   Default satisfies the undersmoothing condition
 #'   \eqn{s \asymp n^{(k_x+1)/(k_x+2)}}.
+#' @param methods Character vector of method names; see [sim_cate_methods()].
+#'   Default: `"dnn_oracle"`.
 #' @param alpha Nominal coverage level.
 #' @param sigma Noise SD forwarded to the DGP.
-#' @param clip Propensity clipping bound forwarded to the DGP.
+#' @param clip Propensity clipping bound forwarded to the DGP and cross-fitting.
+#' @param n_folds Number of cross-fitting folds for the `dnn_crossfit` method.
 #' @param verbose Print one progress line per cell (default `TRUE`).
 #'
-#' @return A `data.frame` with one row per replicate and columns:
-#'   `design`, `n`, `kx`, `s`, `seed`, `bias`, `sq_err`, `se`,
-#'   `cover`, `ci_len`, `neff`.  Failed reps have `NA` for all metric columns.
+#' @return A `data.frame` with one row per replicate-method combination and
+#'   columns: `method`, `design`, `n`, `kx`, `s`, `seed`,
+#'   `bias`, `sq_err`, `se`, `cover`, `ci_len`, `neff`.
+#'   Failed entries have `NA` for all metric columns.
 #'
-#' @seealso [sim_cate_one_rep()], [summarise_sim_results()]
+#' @seealso [sim_cate_one_rep()], [summarise_sim_results()], [sim_cate_methods()]
 #'
 #' @examples
 #' \dontrun{
-#' # Sequential (no extra packages needed):
+#' # Single method (default):
 #' raw <- sim_cate_run(designs = "dgp2_nonlinear", n_vals = 500L, n_reps = 10L)
 #'
-#' # Parallel on a PC:
+#' # Multiple methods on the same draws:
 #' future::plan(future::multisession)
-#' raw <- sim_cate_run(designs = "dgp2_nonlinear", n_vals = 500L, n_reps = 10L)
-#' future::plan(future::sequential)   # reset
+#' raw <- sim_cate_run(
+#'   designs = "dgp2_nonlinear", n_vals = 500L, n_reps = 10L,
+#'   methods = c("dnn_oracle", "dnn_crossfit", "ols_interact", "causal_forest")
+#' )
+#' future::plan(future::sequential)
 #'
 #' summarise_sim_results(raw)
 #' }
@@ -169,9 +199,11 @@ sim_cate_run <- function(
     master_seed = 42L,
     k           = 5L,
     s_fn        = function(n, kx) floor(n^((kx + 1L) / (kx + 2L))),
+    methods     = "dnn_oracle",
     alpha       = 0.05,
     sigma       = 0.5,
     clip        = 1e-3,
+    n_folds     = 5L,
     verbose     = TRUE
 ) {
   # Rep-level parallel map: future_lapply when available, lapply otherwise.
@@ -184,7 +216,7 @@ sim_cate_run <- function(
   }
 
   # All cells use the same seed vector so noise realisations are aligned
-  # across DGPs and sample sizes (fair comparison).
+  # across DGPs, sample sizes, and methods (fair comparison).
   set.seed(master_seed)
   seeds <- sample.int(1e6L, n_reps)
 
@@ -204,13 +236,15 @@ sim_cate_run <- function(
     s  <- s_fn(n, kx)
 
     if (verbose)
-      message(sprintf("  design=%-22s  n=%4d  kx=%d  s=%d", d, n, kx, s))
+      message(sprintf("  design=%-22s  n=%4d  kx=%d  s=%d  methods=[%s]",
+                      d, n, kx, s, paste(methods, collapse = ", ")))
 
     reps <- .lapply(as.list(seeds), function(sd) {
       result <- tryCatch(
         sim_cate_one_rep(n = n, kx = kx, k = k, s = s,
-                         design = d, alpha = alpha,
-                         sigma = sigma, clip = clip, seed = sd),
+                         design = d, methods = methods,
+                         alpha = alpha, sigma = sigma,
+                         clip = clip, seed = sd, n_folds = n_folds),
         error = function(e) {
           warning(sprintf(
             "sim_cate_run: rep seed %d failed [design=%s n=%d kx=%d]: %s",
@@ -221,19 +255,25 @@ sim_cate_run <- function(
       )
 
       if (is.null(result)) {
-        data.frame(design = d, n = n, kx = kx, s = s, seed = sd,
-                   bias = NA_real_, sq_err = NA_real_, se = NA_real_,
-                   cover = NA_real_, ci_len = NA_real_, neff = NA_real_,
-                   stringsAsFactors = FALSE)
+        # Total rep failure: NA rows for every method
+        do.call(rbind, lapply(methods, function(meth) {
+          data.frame(design = d, n = n, kx = kx, s = s, seed = sd,
+                     method = meth, tau_hat = NA_real_, tau0 = NA_real_,
+                     bias = NA_real_, sq_err = NA_real_, se = NA_real_,
+                     cover = NA_real_, ci_len = NA_real_, neff = NA_real_,
+                     stringsAsFactors = FALSE, row.names = NULL)
+        }))
       } else {
-        data.frame(design = d, n = n, kx = kx, s = s, seed = sd,
-                   bias   = result[["bias"]],
-                   sq_err = result[["sq_err"]],
-                   se     = result[["se"]],
-                   cover  = result[["cover"]],
-                   ci_len = result[["ci_len"]],
-                   neff   = result[["neff"]],
-                   stringsAsFactors = FALSE)
+        # Prepend cell identity columns (scalar assignment recycles safely)
+        result$design <- d
+        result$n      <- n
+        result$kx     <- kx
+        result$s      <- s
+        result$seed   <- sd
+        result[, c("design", "n", "kx", "s", "seed", "method",
+                   "tau_hat", "tau0", "bias", "sq_err", "se",
+                   "cover", "ci_len", "neff"),
+               drop = FALSE]
       }
     })
 
