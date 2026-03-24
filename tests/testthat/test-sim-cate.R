@@ -115,7 +115,7 @@ test_that("summarise_sim_results: correct aggregation", {
   expect_s3_class(tab, "data.frame")
   expect_equal(nrow(tab), 1L)
   expect_named(tab,
-    c("design", "n", "kx", "n_reps", "bias", "rmse", "se_mean",
+    c("design", "n", "kx", "n_reps", "n_failed", "bias", "rmse", "se_mean",
       "cover", "ci_len", "neff"))
   expect_equal(tab$n_reps, 4L)
   expect_true(tab$rmse >= 0)

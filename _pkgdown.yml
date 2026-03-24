@@ -27,10 +27,16 @@ navbar:
 #       - articles/jackknife-gen-ustats
 
 reference:
+  - title: Package overview
+    contents:
+      - RdistNN-package
+
   - title: Top-level weighting API
     desc: General matrix builder + DNN convenience wrappers.
     contents:
       - cate_dnn
+      - np_dnn
+      - plqr_dnn
       - weights_matrix
       - weights_dnn
       - weights_dnn_exact
@@ -100,6 +106,29 @@ reference:
     contents:
       - jackknife_fast_rank
       - jackknife_slow_rank
+
+  - title: S3 methods
+    desc: print, summary, confint, and predict methods for package objects.
+    contents:
+      - print.cate_result
+      - print.cate_dnn_result
+      - print.np_result
+      - print.plqr_result
+      - print.score_diff_path
+      - print.summary.cate_result
+      - print.ustat_score
+      - print.weights_result
+      - summary.cate_result
+      - confint.cate_result
+      - predict.cate_result
+
+  - title: Simulation study
+    desc: Data-generating processes and Monte Carlo harness for the paper simulation.
+    contents:
+      - sim_cate_data
+      - sim_cate_one_rep
+      - sim_cate_run
+      - summarise_sim_results
 
   - title: Demo data & utilities
     contents:
