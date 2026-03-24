@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 concurrency:
   group: archive-${{ github.ref }}
@@ -80,5 +81,53 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add archives/source.zip
           git commit -m "chore(archive): update source.zip [skip ci]" || exit 0
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          git push origin "HEAD:$BRANCH"
+
+  save_logs:
+    if: ${{ always() && github.actor != 'github-actions[bot]' }}
+    needs: [zip-and-commit]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download and save job logs
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          LOGS_DIR="GH_logs"
+          mkdir -p "$LOGS_DIR"
+          rm -f "$LOGS_DIR"/*.txt
+          jobs_json=$(gh api \
+            "/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs" \
+            --paginate)
+          echo "$jobs_json" | jq -r '.jobs[] | [.id, .name] | @tsv' \
+          | while IFS=$'\t' read -r job_id job_name; do
+              safe=$(printf '%s' "$job_name" \
+                | sed -E 's|[^A-Za-z0-9._-]+|_|g; s|^_+||; s|_+$||')
+              out="$LOGS_DIR/${safe}.txt"
+              if gh api "/repos/${{ github.repository }}/actions/jobs/${job_id}/logs" \
+                   > "$out" 2>/dev/null; then
+                echo "Saved: $job_name -> $(basename "$out")"
+              else
+                rm -f "$out"
+                echo "No log for: $job_name"
+              fi
+          done
+
+      - name: Commit and push logs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add GH_logs/
+          git commit -m "chore(ci): update GH_logs [skip ci]" || exit 0
           BRANCH=$(git rev-parse --abbrev-ref HEAD)
           git push origin "HEAD:$BRANCH"
