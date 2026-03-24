@@ -60,18 +60,35 @@ test_that("sim_cate_data: kx < 2 is rejected", {
   expect_error(sim_cate_data("dgp1_linear", n = 10L, kx = 1L))
 })
 
-test_that("sim_cate_one_rep: returns correct-length named vector", {
+test_that("sim_cate_one_rep: returns a data.frame with correct structure (single method)", {
   r <- sim_cate_one_rep(
     n = 100L, kx = 2L, k = 3L,
     s = floor(100^(3/4)),
     design = "dgp1_linear", seed = 42L
   )
-  expect_type(r, "double")
-  expect_named(r, c("bias", "sq_err", "se", "cover", "ci_len", "neff"))
-  expect_true(all(is.finite(r)))
-  expect_true(r[["se"]] > 0)
-  expect_true(r[["cover"]] %in% c(0, 1))
-  expect_true(r[["neff"]] > 0)
+  expect_s3_class(r, "data.frame")
+  expect_equal(nrow(r), 1L)
+  expect_true(all(c("method", "tau_hat", "tau0", "bias", "sq_err",
+                    "se", "cover", "ci_len", "neff") %in% names(r)))
+  expect_equal(r$method, "dnn_oracle")
+  expect_true(all(is.finite(unlist(r[, c("tau_hat", "tau0", "bias",
+                                          "sq_err", "se", "cover",
+                                          "ci_len", "neff")]))))
+  expect_true(r$se > 0)
+  expect_true(r$cover %in% c(0, 1))
+  expect_true(r$neff > 0)
+})
+
+test_that("sim_cate_one_rep: returns one row per method when multiple methods given", {
+  r <- sim_cate_one_rep(
+    n = 100L, kx = 2L, k = 3L,
+    s = floor(100^(3/4)),
+    design = "dgp1_linear", seed = 42L,
+    methods = c("dnn_oracle", "ols_interact")
+  )
+  expect_s3_class(r, "data.frame")
+  expect_equal(nrow(r), 2L)
+  expect_equal(r$method, c("dnn_oracle", "ols_interact"))
 })
 
 test_that("sim_cate_one_rep: deterministic with fixed seed", {
@@ -80,6 +97,14 @@ test_that("sim_cate_one_rep: deterministic with fixed seed", {
   r1 <- do.call(sim_cate_one_rep, args)
   r2 <- do.call(sim_cate_one_rep, args)
   expect_equal(r1, r2)
+})
+
+test_that("sim_cate_methods: returns character vector of known methods", {
+  m <- sim_cate_methods()
+  expect_type(m, "character")
+  expect_true(length(m) >= 4L)
+  expect_true(all(c("dnn_oracle", "dnn_crossfit", "local_constant",
+                    "ols_interact") %in% m))
 })
 
 test_that("sim_cate_run: smoke test with 3 reps over a small grid", {
@@ -93,15 +118,33 @@ test_that("sim_cate_run: smoke test with 3 reps over a small grid", {
   )
 
   expect_s3_class(raw, "data.frame")
-  expect_equal(nrow(raw), 6L)    # 2 designs x 1 n x 1 kx x 3 reps
-  expect_true(all(c("design", "n", "kx", "s", "seed",
-                    "bias", "sq_err", "se", "cover", "ci_len", "neff")
-                  %in% names(raw)))
+  # 2 designs x 1 n x 1 kx x 3 reps x 1 method (dnn_oracle) = 6
+  expect_equal(nrow(raw), 6L)
+  expect_true(all(c("method", "design", "n", "kx", "s", "seed",
+                    "tau_hat", "tau0", "bias", "sq_err", "se",
+                    "cover", "ci_len", "neff") %in% names(raw)))
   expect_true(all(is.finite(raw$se)))
   expect_true(all(raw$se > 0))
 })
 
-test_that("summarise_sim_results: correct aggregation", {
+test_that("sim_cate_run: multi-method produces one row per method per rep", {
+  raw <- sim_cate_run(
+    designs     = "dgp1_linear",
+    n_vals      = 100L,
+    kx_vals     = 2L,
+    n_reps      = 2L,
+    master_seed = 1L,
+    methods     = c("dnn_oracle", "ols_interact"),
+    verbose     = FALSE
+  )
+
+  expect_s3_class(raw, "data.frame")
+  # 1 design x 1 n x 1 kx x 2 reps x 2 methods = 4
+  expect_equal(nrow(raw), 4L)
+  expect_true(all(c("dnn_oracle", "ols_interact") %in% raw$method))
+})
+
+test_that("summarise_sim_results: correct aggregation with method column", {
   raw <- sim_cate_run(
     designs     = "dgp1_linear",
     n_vals      = 100L,
@@ -113,13 +156,35 @@ test_that("summarise_sim_results: correct aggregation", {
 
   tab <- summarise_sim_results(raw)
   expect_s3_class(tab, "data.frame")
+  # 1 method x 1 design x 1 n x 1 kx = 1 row
   expect_equal(nrow(tab), 1L)
-  expect_named(tab,
-    c("design", "n", "kx", "n_reps", "n_failed", "bias", "rmse", "se_mean",
-      "cover", "ci_len", "neff"))
+  # tau_hat and tau0 are per-rep; they are NOT aggregated into the summary
+  expect_true(all(c("method", "design", "n", "kx", "n_reps", "n_failed",
+                    "bias", "rmse", "se_mean", "cover", "ci_len", "neff")
+                  %in% names(tab)))
+  expect_false("tau_hat" %in% names(tab))
+  expect_false("tau0"    %in% names(tab))
+  # method column should come first
+  expect_equal(names(tab)[1L], "method")
   expect_equal(tab$n_reps, 4L)
   expect_true(tab$rmse >= 0)
   expect_true(tab$cover >= 0 && tab$cover <= 1)
+})
+
+test_that("summarise_sim_results: multi-method returns one row per method", {
+  raw <- sim_cate_run(
+    designs     = "dgp1_linear",
+    n_vals      = 100L,
+    kx_vals     = 2L,
+    n_reps      = 3L,
+    master_seed = 7L,
+    methods     = c("dnn_oracle", "ols_interact"),
+    verbose     = FALSE
+  )
+
+  tab <- summarise_sim_results(raw)
+  expect_equal(nrow(tab), 2L)
+  expect_true(all(c("dnn_oracle", "ols_interact") %in% tab$method))
 })
 
 test_that("summarise_sim_results: error on missing columns", {
