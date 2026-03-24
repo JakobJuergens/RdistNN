@@ -42,6 +42,6 @@ Encoding: UTF-8
 ByteCompile: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
-URL: https://jakobjuergens.github.io/RdistNN/
+URL: https://JakobJuergens.github.io/RdistNN/
 Config/testthat/edition: 3
 VignetteBuilder: knitr

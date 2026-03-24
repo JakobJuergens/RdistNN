@@ -1,25 +1,26 @@
+---
+output: github_document
+---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+
+
 
 # RdistNN
 
 <!-- badges: start -->
-
-[![Lifecycle:
-experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![R-CMD-check](https://github.com/JakobJuergens/RdistNN/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/JakobJuergens/RdistNN/actions/workflows/R-CMD-check.yaml)
+[![test-coverage](https://github.com/JakobJuergens/RdistNN/actions/workflows/test-coverage.yaml/badge.svg)](https://github.com/JakobJuergens/RdistNN/actions/workflows/test-coverage.yaml)
 <!-- badges: end -->
 
-**RdistNN** is a modular toolkit for distance-localized estimation with
-DNN rank weights and generalized U-statistics.
+**RdistNN** is a modular toolkit for distance-localized estimation with DNN rank weights and generalized U-statistics.
 
-- Core distance/rank/weight primitives (`weights_dnn()`,
-  `weights_matrix()`, custom registries)  
-- User-level wrappers for localized estimation: `np_dnn()`, `cate_dnn()`,
-  and `plqr_dnn()`  
-- Built-in post-estimation methods for CATE (`summary()`, `confint()`,
-  `predict()`)  
-- Fast delete-1 jackknife options (`jackknife = "fast"` and `"loo"`)
-  for standard errors
+- Core distance/rank/weight primitives (`weights_dnn()`, `weights_matrix()`, custom registries)
+- User-level wrappers for localized estimation: `np_dnn()`, `cate_dnn()`, and `plqr_dnn()`
+- Built-in post-estimation methods for CATE (`summary()`, `confint()`, `predict()`)
+- Fast delete-1 jackknife options (`jackknife = "fast"` and `"loo"`) for standard errors
+- Simulation infrastructure for the paper's CATE study: `sim_cate_data()`, `sim_cate_one_rep()`, `sim_cate_run()`, `summarise_sim_results()`
 
 > Status: active research package. APIs may continue to evolve.
 
@@ -27,7 +28,7 @@ DNN rank weights and generalized U-statistics.
 
 Install the development version from GitHub:
 
-``` r
+```r
 # install.packages("pak")
 pak::pak("JakobJuergens/RdistNN")
 ```
@@ -35,6 +36,7 @@ pak::pak("JakobJuergens/RdistNN")
 ## Quick Start
 
 ### 1) DNN Weights and Local Means (`np_dnn`)
+
 
 ``` r
 library(RdistNN)
@@ -60,6 +62,7 @@ fit_np$se
 ```
 
 ### 2) CATE Estimation (`cate_dnn`) and Methods
+
 
 ``` r
 library(RdistNN)
@@ -92,6 +95,7 @@ predict(fit_cate, x0 = c(0.2, -0.1), interval = "confidence")
 
 ### 3) Local PLQR Orthogonal Moments (`plqr_dnn`)
 
+
 ``` r
 library(RdistNN)
 
@@ -119,7 +123,33 @@ fit_plqr$moment
 fit_plqr$se
 ```
 
-### 4) Custom Distances and Rank Weights
+### 4) CATE Simulation Study
+
+
+``` r
+library(RdistNN)
+
+# Draw one dataset from a named DGP (oracle nuisances included)
+dgp <- sim_cate_data("dgp2_nonlinear", n = 300, kx = 2, seed = 1)
+dgp$tau_x0   # true CATE at x0 = (0, 0)
+
+# Run one replicate and get bias / SE / coverage metrics
+r <- sim_cate_one_rep(n = 300, kx = 2, k = 5, s = 12,
+                      design = "dgp2_nonlinear", seed = 1)
+r
+
+# Small Monte Carlo grid (use n_reps = 500 for paper results)
+raw <- sim_cate_run(
+  designs = c("dgp1_linear", "dgp2_nonlinear"),
+  n_vals  = 300L,
+  n_reps  = 5L,
+  verbose = FALSE
+)
+summarise_sim_results(raw)
+```
+
+### 5) Custom Distances and Rank Weights
+
 
 ``` r
 library(RdistNN)
@@ -146,29 +176,24 @@ dim(W)
 
 ## Documentation Map
 
-- Start with `vignette("getting-started", package = "RdistNN")`  
-- `vignette("dnn-weights", package = "RdistNN")` for exact/asymptotic DNN
-  weight rules  
-- `vignette("conditional-z-estimation", package = "RdistNN")` for
-  end-to-end estimator workflows  
-- `vignette("extending", package = "RdistNN")` for custom
-  distance/rank/score components  
-- `vignette("jackknife-gen-ustats", package = "RdistNN")` for jackknife
-  background
+- Start with `vignette("getting-started", package = "RdistNN")`
+- `vignette("dnn-weights", package = "RdistNN")` for exact/asymptotic DNN weight rules
+- `vignette("conditional-z-estimation", package = "RdistNN")` for end-to-end estimator workflows
+- `vignette("extending", package = "RdistNN")` for custom distance/rank/score components
+- `vignette("jackknife-gen-ustats", package = "RdistNN")` for jackknife background
+- `vignette("paper-cate-simulation", package = "RdistNN")` for the paper's CATE simulation infrastructure
 
 ## Development Notes
 
-- Engine selection is automatic: compiled code is used when available;
-  otherwise robust R fallbacks are used.  
-- Deterministic tie handling is built in for reproducibility.  
-- Tests use `testthat` (edition 3). Run `devtools::test()`.  
+- Engine selection is automatic: compiled code is used when available, otherwise robust R fallbacks are used.
+- Deterministic tie handling is built in for reproducibility.
+- Tests use `testthat` (edition 3). Run `devtools::test()`.
 - Rebuild this README from source with `devtools::build_readme()`.
 
 ## Getting Help
 
 Please open an issue with a minimal reproducible example.
 
-------------------------------------------------------------------------
+---
 
-*This package accompanies ongoing work on generalized U-statistics,
-jackknife variance estimation, and distance-based localizers.*
+*This package accompanies ongoing work on generalized U-statistics, jackknife variance estimation, and distance-based localizers.*
