@@ -85,7 +85,7 @@ jobs:
           git push origin "HEAD:$BRANCH"
 
   save_logs:
-    if: ${{ always() && github.actor != 'github-actions[bot]' }}
+    if: ${{ failure() && github.actor != 'github-actions[bot]' }}
     needs: [zip-and-commit]
     runs-on: ubuntu-latest
     timeout-minutes: 10
