@@ -1,0 +1,140 @@
+url: https://JakobJuergens.github.io/RdistNN
+
+template:
+  bootstrap: 5
+
+navbar:
+  structure:
+    left:  [home, reference]
+    right: [github]
+  components:
+    github:
+      icon: fa-github
+      href: https://github.com/JakobJuergens/RdistNN
+      aria-label: GitHub
+
+articles:
+  - title: Getting started
+    contents:
+      - getting-started
+      - extending
+  - title: Theory & details
+    contents:
+      - conditional-z-estimation
+      - dnn-weights
+      - jackknife-gen-ustats
+
+reference:
+  - title: Package overview
+    contents:
+      - RdistNN-package
+
+  - title: Top-level weighting API
+    desc: General matrix builder + DNN convenience wrappers.
+    contents:
+      - cate_dnn
+      - np_dnn
+      - plqr_dnn
+      - weights_matrix
+      - weights_dnn
+      - weights_dnn_exact
+      - weights_dnn_asymp
+
+  - title: Scores (U-stat kernels)
+    desc: S3 spec, helpers, generics, registries, and built-in score topics.
+    contents:
+      - new_score
+      - score_setup
+      - score_order
+      - score_eval
+      - score_eval_batch
+      - as_score
+      - is_score
+      - is_compiled
+      - register_score
+      - get_score
+      - list_scores
+      - starts_with("score_")      # e.g. score_cate_rho / score_cate_from_rho, score_plqr_component
+
+  - title: Distances (rankers)
+    desc: S3 spec, helpers, generics, registries, and built-in distances.
+    contents:
+      - new_distance
+      - distance_eval
+      - distance_eval_batch
+      - as_distance
+      - is_distance
+      - register_distance
+      - get_distance
+      - distance_names
+      - list_distances
+      - distance_l2
+      - distance_l1
+      - distance_l2_scaled
+      - distance_l1_scaled
+      - dist_l2
+      - dist_l1
+      - dist_l2_scaled
+      - dist_l1_scaled
+      - order_by_l2
+      - order_by_l1
+      - order_by_l2_scaled
+      - order_by_l1_scaled
+
+  - title: Rank → Weight mappings
+    desc: S3 spec for converting ranks to weights, plus DNN rank-weights.
+    contents:
+      - new_rank_weight
+      - rank_weight_eval
+      - rank_weight_eval_batch
+      - as_rank_weight
+      - is_rank_weight
+      - register_rank
+      - get_rank
+      - rank_names
+      - list_ranks
+      - list_rank_weights
+      - rank_weight_dnn_exact
+      - rank_weight_dnn_asymp
+      - dnn_weights_exact_full_from_ranks
+      - dnn_weights_asymp_full_from_ranks
+
+  - title: Jackknife (leave-one-out)
+    desc: Fast C++ path with auto fallback, slow oracle, and DNN wrappers.
+    contents:
+      - jackknife_fast_rank
+      - jackknife_slow_rank
+
+  - title: S3 methods
+    desc: print, summary, confint, and predict methods for package objects.
+    contents:
+      - print.cate_result
+      - print.cate_dnn_result
+      - print.np_result
+      - print.plqr_result
+      - print.score_diff_path
+      - print.summary.cate_result
+      - print.ustat_score
+      - print.weights_result
+      - summary.cate_result
+      - confint.cate_result
+      - predict.cate_result
+
+  - title: Simulation study
+    desc: Data-generating processes and Monte Carlo harness for the paper simulation.
+    contents:
+      - sim_cate_data
+      - sim_cate_one_rep
+      - sim_cate_run
+      - summarise_sim_results
+
+  - title: Demo data & utilities
+    contents:
+      - cate_demo_data
+      - cate_demo_subsets
+      - np_demo_data
+      - np_demo_subsets
+      - plqr_demo_data
+      - plqr_demo_subsets
+      - plqr_moment
+      - ord_to_ranks
