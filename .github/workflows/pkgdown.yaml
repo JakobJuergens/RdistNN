@@ -65,7 +65,7 @@ jobs:
           folder: docs
 
   save_logs:
-    if: ${{ needs.pkgdown.result != 'success' && github.actor != 'github-actions[bot]' }}
+    if: ${{ always() && needs.pkgdown.result != 'success' && github.actor != 'github-actions[bot]' }}
     needs: [pkgdown]
     uses: ./.github/workflows/harvest-failure-logs.yml
     with:

@@ -83,7 +83,7 @@ jobs:
           retention-days: 14
 
   save_logs:
-    if: ${{ needs.test-coverage.result != 'success' && github.actor != 'github-actions[bot]' }}
+    if: ${{ always() && needs.test-coverage.result != 'success' && github.actor != 'github-actions[bot]' }}
     needs: [test-coverage]
     uses: ./.github/workflows/harvest-failure-logs.yml
     with:
