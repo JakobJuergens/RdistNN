@@ -120,6 +120,32 @@
   .sim_metric(fit$tau, fit$se, dgp$tau_x0, alpha, neff = fit$ess)
 }
 
+# ── DNN oracle with Mahalanobis distance ─────────────────────────────────────
+# Proposed method with Mahalanobis distance; relevant for dgp5_correlated where
+# the off-diagonal covariance makes L2 neighbourhoods geometrically misaligned.
+# The sample covariance is estimated once from the training data (via the
+# distance_mahalanobis() setup() mechanism) and reused for all evaluations.
+
+.method_dnn_oracle_mahal <- function(dgp, x_cols, k, s, alpha, ...) {
+  fit <- cate_dnn(
+    data      = dgp$data,
+    x_cols    = x_cols,
+    y_col     = "Y",
+    t_col     = "D",
+    e_col     = "e_oracle",
+    m0_col    = "m0_oracle",
+    m1_col    = "m1_oracle",
+    x0        = dgp$x0,
+    k         = k,
+    s         = s,
+    distance  = "mahalanobis",
+    se        = TRUE,
+    jackknife = "fast",
+    return    = "ess"
+  )
+  .sim_metric(fit$tau, fit$se, dgp$tau_x0, alpha, neff = fit$ess)
+}
+
 # ── Local constant (Nadaraya-Watson) ──────────────────────────────────────────
 # Product Gaussian kernel applied to oracle pseudo-outcomes.  Per-variable
 # Silverman bandwidth.  SE via the vectorized delete-1 jackknife.
@@ -256,12 +282,13 @@
 # ── Registry ──────────────────────────────────────────────────────────────────
 
 .SIM_CATE_METHODS <- list(
-  dnn_oracle     = .method_dnn_oracle,
-  dnn_crossfit   = .method_dnn_crossfit,
-  local_constant = .method_local_constant,
-  ols_interact   = .method_ols_interact,
-  causal_forest  = .method_causal_forest,
-  llf            = .method_llf
+  dnn_oracle       = .method_dnn_oracle,
+  dnn_oracle_mahal = .method_dnn_oracle_mahal,
+  dnn_crossfit     = .method_dnn_crossfit,
+  local_constant   = .method_local_constant,
+  ols_interact     = .method_ols_interact,
+  causal_forest    = .method_causal_forest,
+  llf              = .method_llf
 )
 
 .get_sim_method <- function(name) {
@@ -277,14 +304,15 @@
 #' Returns the names of all estimator methods registered for use with
 #' [sim_cate_one_rep()] and [sim_cate_run()].
 #'
-#' | Name              | Description |
-#' |-------------------|-------------|
-#' | `dnn_oracle`      | Proposed DNN Z-estimator, oracle nuisances |
-#' | `dnn_crossfit`    | Proposed DNN Z-estimator, K-fold cross-fitted nuisances |
-#' | `local_constant`  | Nadaraya-Watson smoother on oracle pseudo-outcome |
-#' | `ols_interact`    | OLS with D*X interactions, delta-method SE at x0 |
-#' | `causal_forest`   | GRF causal forest, oracle nuisances (requires **grf**) |
-#' | `llf`             | GRF causal forest with local-linear corrections (requires **grf**) |
+#' | Name                | Description |
+#' |---------------------|-------------|
+#' | `dnn_oracle`        | Proposed DNN Z-estimator, L2 distance, oracle nuisances |
+#' | `dnn_oracle_mahal`  | Proposed DNN Z-estimator, Mahalanobis distance, oracle nuisances; primary comparison for `dgp5_correlated` (shape adaptivity) |
+#' | `dnn_crossfit`      | Proposed DNN Z-estimator, L2 distance, K-fold cross-fitted nuisances |
+#' | `local_constant`    | Nadaraya-Watson smoother on oracle pseudo-outcome |
+#' | `ols_interact`      | OLS with D*X interactions, delta-method SE at x0 |
+#' | `causal_forest`     | GRF causal forest, oracle nuisances (requires **grf**) |
+#' | `llf`               | GRF causal forest with local-linear corrections (requires **grf**) |
 #'
 #' @return Character vector of registered method names.
 #'

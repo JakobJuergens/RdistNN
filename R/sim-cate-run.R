@@ -192,7 +192,8 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
 #'
 #' @export
 sim_cate_run <- function(
-    designs     = c("dgp1_linear", "dgp2_nonlinear", "dgp3_sparse_overlap"),
+    designs     = c("dgp1_linear", "dgp2_nonlinear", "dgp3_sparse_overlap",
+                    "dgp4_clustered", "dgp5_correlated"),
     n_vals      = c(500L, 1000L, 2000L),
     kx_vals     = 2L,
     n_reps      = 500L,
