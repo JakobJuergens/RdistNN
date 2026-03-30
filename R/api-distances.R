@@ -297,4 +297,7 @@ distance_eval_batch <- function(spec, X, X0, ctx = NULL) {
   # Optionally: scaled variants later (kept commented until needed)
   register_distance("l1_scaled_sd", distance_l1_scaled("sd"))
   register_distance("l2_scaled_sd", distance_l2_scaled("sd"))
+
+  # Mahalanobis (full sample covariance; setup-then-eval)
+  register_distance("mahalanobis", distance_mahalanobis())
 }
