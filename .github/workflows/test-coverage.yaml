@@ -6,7 +6,8 @@ on:
   pull_request:
 
 permissions:
-  contents: read        # minimal; add pull-requests: write if you want PR comments
+  contents: write
+  actions: read
 
 jobs:
   test-coverage:
@@ -70,9 +71,25 @@ jobs:
         run: |
           find '${{ runner.temp }}/package' -name 'testthat.Rout*' -exec cat '{}' \; || true
 
-      - name: Upload test logs on failure
+      - name: Upload debug artifact (coverage workspace)
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-test-failures
-          path: ${{ runner.temp }}/package
+          name: debug-test-coverage-workspace
+          path: |
+            ${{ runner.temp }}/package
+            cobertura.xml
+          if-no-files-found: warn
+          retention-days: 14
+
+  save_logs:
+    if: ${{ needs.test-coverage.result != 'success' && github.actor != 'github-actions[bot]' }}
+    needs: [test-coverage]
+    uses: ./.github/workflows/harvest-failure-logs.yml
+    with:
+      logs_dir: GH_logs
+      artifact_pattern: debug-test-coverage-*
+      artifact_subdir: test-coverage
+      harvested_artifact_name: harvested-test-coverage-logs
+      commit_logs: ${{ github.event_name != 'pull_request' }}
+    secrets: inherit

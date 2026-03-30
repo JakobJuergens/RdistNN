@@ -84,50 +84,25 @@ jobs:
           BRANCH=$(git rev-parse --abbrev-ref HEAD)
           git push origin "HEAD:$BRANCH"
 
-  save_logs:
-    if: ${{ failure() && github.actor != 'github-actions[bot]' }}
-    needs: [zip-and-commit]
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Upload debug artifact (snapshot workspace)
+        if: failure()
+        uses: actions/upload-artifact@v4
         with:
-          fetch-depth: 0
+          name: debug-package-snapshot-state
+          path: |
+            _dist
+            archives
+          if-no-files-found: warn
+          retention-days: 14
 
-      - name: Download and save job logs
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          LOGS_DIR="GH_logs"
-          mkdir -p "$LOGS_DIR"
-          rm -f "$LOGS_DIR"/*.txt
-          jobs_json=$(gh api \
-            "/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs" \
-            --paginate)
-          echo "$jobs_json" | jq -r '.jobs[] | [.id, .name] | @tsv' \
-          | while IFS=$'\t' read -r job_id job_name; do
-              safe=$(printf '%s' "$job_name" \
-                | sed -E 's|[^A-Za-z0-9._-]+|_|g; s|^_+||; s|_+$||')
-              out="$LOGS_DIR/${safe}.txt"
-              if gh api "/repos/${{ github.repository }}/actions/jobs/${job_id}/logs" \
-                   > "$out" 2>/dev/null; then
-                echo "Saved: $job_name -> $(basename "$out")"
-              else
-                rm -f "$out"
-                echo "No log for: $job_name"
-              fi
-          done
-
-      - name: Commit and push logs
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add GH_logs/
-          git commit -m "chore(ci): update GH_logs [skip ci]" || exit 0
-          BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          git push origin "HEAD:$BRANCH"
+  save_logs:
+    if: ${{ needs.zip-and-commit.result != 'success' && github.actor != 'github-actions[bot]' }}
+    needs: [zip-and-commit]
+    uses: ./.github/workflows/harvest-failure-logs.yml
+    with:
+      logs_dir: GH_logs
+      artifact_pattern: debug-package-snapshot-*
+      artifact_subdir: package-snapshot
+      harvested_artifact_name: harvested-package-snapshot-logs
+      commit_logs: true
+    secrets: inherit

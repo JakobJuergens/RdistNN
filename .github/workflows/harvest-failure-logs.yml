@@ -1,0 +1,100 @@
+name: harvest-failure-logs
+
+on:
+  workflow_call:
+    inputs:
+      logs_dir:
+        description: Repo-relative directory used to store harvested logs.
+        required: false
+        type: string
+        default: GH_logs
+      artifact_pattern:
+        description: Optional artifact name pattern to download into the logs directory.
+        required: false
+        type: string
+        default: ""
+      artifact_subdir:
+        description: Subdirectory under logs_dir used for downloaded artifacts.
+        required: false
+        type: string
+        default: artifacts
+      harvested_artifact_name:
+        description: Artifact name used when uploading the harvested logs bundle.
+        required: false
+        type: string
+        default: harvested-gh-logs
+      commit_logs:
+        description: Whether to commit harvested logs back to the repository.
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  save_logs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download and save job logs
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LOGS_DIR: ${{ inputs.logs_dir }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$LOGS_DIR"
+          find "$LOGS_DIR" -mindepth 1 -maxdepth 1 ! -name '.gitkeep' -exec rm -rf {} +
+          mkdir -p "$LOGS_DIR/github"
+
+          jobs_json=$(gh api \
+            "/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs" \
+            --paginate)
+
+          echo "$jobs_json" | jq -r '.jobs[] | [.id, .name] | @tsv' \
+          | while IFS=$'\t' read -r job_id job_name; do
+              safe=$(printf '%s' "$job_name" \
+                | sed -E 's|[^A-Za-z0-9._-]+|_|g; s|^_+||; s|_+$||')
+              out="$LOGS_DIR/github/${safe}.txt"
+              if gh api "/repos/${{ github.repository }}/actions/jobs/${job_id}/logs" \
+                   > "$out" 2>/dev/null; then
+                echo "Saved: $job_name -> $(basename "$out")"
+              else
+                rm -f "$out"
+                echo "No log for: $job_name"
+              fi
+          done
+
+      - name: Download debug artifacts
+        if: ${{ inputs.artifact_pattern != '' }}
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ${{ inputs.artifact_pattern }}
+          path: ${{ inputs.logs_dir }}/${{ inputs.artifact_subdir }}
+          merge-multiple: false
+
+      - name: Upload harvested logs artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.harvested_artifact_name }}
+          path: ${{ inputs.logs_dir }}
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Commit logs
+        if: ${{ inputs.commit_logs }}
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: ${{ inputs.logs_dir }}
+          message: "chore(ci): update GH_logs [skip ci]"
+          default_author: github_actions
+          pull: "--rebase --autostash"

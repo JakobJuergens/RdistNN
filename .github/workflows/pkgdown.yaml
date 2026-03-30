@@ -10,7 +10,9 @@ on:
 
 name: pkgdown.yaml
 
-permissions: read-all
+permissions:
+  contents: write
+  actions: read
 
 jobs:
   pkgdown:
@@ -40,6 +42,20 @@ jobs:
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
         shell: Rscript {0}
 
+      - name: Upload debug artifact (pkgdown workspace)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-pkgdown-site
+          path: |
+            docs
+            _pkgdown.yml
+            DESCRIPTION
+            README.md
+            README.Rmd
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Deploy to GitHub pages 🚀
         if: github.event_name != 'pull_request'
         uses: JamesIves/github-pages-deploy-action@v4.5.0
@@ -47,3 +63,15 @@ jobs:
           clean: false
           branch: gh-pages
           folder: docs
+
+  save_logs:
+    if: ${{ needs.pkgdown.result != 'success' && github.actor != 'github-actions[bot]' }}
+    needs: [pkgdown]
+    uses: ./.github/workflows/harvest-failure-logs.yml
+    with:
+      logs_dir: GH_logs
+      artifact_pattern: debug-pkgdown-*
+      artifact_subdir: pkgdown
+      harvested_artifact_name: harvested-pkgdown-logs
+      commit_logs: ${{ github.event_name != 'pull_request' && github.event_name != 'release' }}
+    secrets: inherit
