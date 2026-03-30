@@ -12,6 +12,3 @@ src/*.so
 src/*.dll
 src/*.dylib
 
-# GH_logs: track folder, ignore downloaded log files
-GH_logs/*
-!GH_logs/.gitkeep

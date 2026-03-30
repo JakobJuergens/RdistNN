@@ -16,8 +16,8 @@ navbar:
 articles:
   - title: Getting started
     contents:
-      - articles/getting-started
-      - articles/extending
+      - getting-started
+      - extending
   - title: Theory & details
     contents:
       - articles/conditional-z-estimation
