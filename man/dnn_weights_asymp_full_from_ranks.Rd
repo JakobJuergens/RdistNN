@@ -28,6 +28,11 @@ Compute \strong{asymptotic} DNN (k-NN) weights via the L-statistic representatio
 over the full U-statistic of order \code{s}, using Beta order-statistic
 increments as an approximation to the exact finite-population law.
 }
+\details{
+Unlike the exact finite-population rule, this asymptotic approximation is
+evaluated on the full rank grid \code{1:n} and is therefore typically treated as a
+full-support rank-weight sequence.
+}
 \examples{
 set.seed(1)
 n <- 50

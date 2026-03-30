@@ -158,7 +158,9 @@
 #' @param weight a `rank_weight` spec (or zero-arg factory returning one).
 #'   Back-compat: you may also pass `rank_weight=`; it will be used if `weight` is NULL.
 #' @param rank_weight (deprecated alias) rank_weight spec or zero-arg factory.
-#' @param ctx optional context for rankers that support `setup`.
+#' @param ctx optional shared context passed to ranking and weight evaluators.
+#'   On the ranking side, if `ctx` is `NULL` and a distance spec defines
+#'   `setup(X)`, that setup path is used automatically.
 #' @param return which extras to include besides `W`: any of c("ord","ranks","dx").
 #' @return An object of class `weights_result` with components:
 #'   - `W`   : numeric matrix n x m (columns typically sum to 1),
@@ -215,7 +217,7 @@ weights_matrix <- function(
     if (is.null(ranking_result$ranks)) {
       stop("rank_weight provided but no ranks available from `ranking`.", call. = FALSE)
     }
-    rank_weight_eval_batch(wt_res$spec, ranking_result$ranks)
+    rank_weight_eval_batch(wt_res$spec, ranking_result$ranks, ctx = ctx)
   }
 
   out <- list(
@@ -259,6 +261,12 @@ print.weights_result <- function(x, ...) {
 # constructors and distance ranker. Users who want "just DNN" can call these.
 
 #' DNN weights (exact full-U), distance-based ranking
+#'
+#' Exact DNN weights are derived from the full rank permutation for each target.
+#' They are not constructed by keeping only the first `s` observations. For the
+#' exact finite-population rule, the support in rank order is `j <= n - s + k`;
+#' in particular, for the paper-faithful `k = 1` DNN this becomes `j <= n - s + 1`.
+#'
 #' @param X numeric matrix (n x p)
 #' @param X0 numeric matrix (m x p); mutually exclusive with \code{x0}
 #' @param x0 numeric length-p single target (convenience for m=1)
@@ -289,6 +297,11 @@ weights_dnn_exact <- function(
 }
 
 #' DNN weights (asymptotic full-U), distance-based ranking
+#'
+#' The asymptotic DNN rule is evaluated on the full rank grid and is therefore
+#' typically treated as a full-support approximation rather than as a hard
+#' finite-support cutoff.
+#'
 #' @inheritParams weights_dnn_exact
 #' @param normalize logical; renormalize columns to sum 1
 #' @return A `weights_result` object (same structure as [weights_dnn_exact()]).
@@ -313,6 +326,10 @@ weights_dnn_asymp <- function(
 }
 
 #' DNN weights (choose method), distance-based ranking
+#'
+#' Use `method = "exact"` for the exact finite-population rank-weight rule and
+#' `method = "asymp"` for the asymptotic full-rank approximation.
+#'
 #' @inheritParams weights_dnn_asymp
 #' @param method one of \code{"exact"} or \code{"asymp"}
 #' @return A `weights_result` object.

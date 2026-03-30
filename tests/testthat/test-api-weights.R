@@ -171,6 +171,48 @@ test_that("weights_matrix works with distance-based ranking + rank_weight", {
   expect_equal(res2$ord[, 1], order(DX_tie[, 1], seq_along(DX_tie[, 1])))
 })
 
+test_that("weights_matrix passes ctx through to rank_weight evaluators", {
+  n <- 5
+  p <- 2
+  m <- 2
+  set.seed(24)
+  X <- matrix(rnorm(n * p), n, p)
+  X0 <- matrix(rnorm(m * p), m, p)
+
+  DX <- vapply(seq_len(m), function(j) {
+    rowSums((X - matrix(X0[j, ], n, p, byrow = TRUE))^2)
+  }, numeric(n))
+
+  rw_ctx <- new_rank_weight(
+    name = "exp_ctx",
+    eval_batch = function(R, ctx = NULL) {
+      lambda <- if (is.null(ctx) || is.null(ctx$lambda)) 0.25 else ctx$lambda
+      W <- exp(-lambda * (R - 1L))
+      sweep(W, 2L, colSums(W), "/")
+    }
+  )
+
+  res_lo <- weights_matrix(
+    X = X, X0 = X0,
+    ranking = list(dx = DX),
+    weight = rw_ctx,
+    ctx = list(lambda = 0.10),
+    return = c("W", "ranks")
+  )
+  res_hi <- weights_matrix(
+    X = X, X0 = X0,
+    ranking = list(dx = DX),
+    weight = rw_ctx,
+    ctx = list(lambda = 1.00),
+    return = c("W", "ranks")
+  )
+
+  expect_true(any(abs(res_lo$W - res_hi$W) > 1e-12))
+
+  W_manual <- rank_weight_eval_batch(rw_ctx, res_lo$ranks, ctx = list(lambda = 0.10))
+  expect_equal(res_lo$W, W_manual, tolerance = 1e-12)
+})
+
 test_that("weights_matrix handles x0 vs X0 and basic shape errors", {
   skip_if_not(exists("as_rank_weight"), "as_rank_weight() not found")
 

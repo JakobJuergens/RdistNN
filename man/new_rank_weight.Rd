@@ -13,7 +13,9 @@ new_rank_weight(name, eval = NULL, eval_batch = NULL, setup = NULL)
 
 \item{eval_batch}{Optional function \verb{(rank_matrix, ctx) -> numeric(n x m)}.}
 
-\item{setup}{Optional function to build context.}
+\item{setup}{Optional function to build context. At the top level,
+\code{\link[=weights_matrix]{weights_matrix()}} passes any supplied \code{ctx} through to the rank-weight
+evaluator, but it does not automatically call \code{setup()} for you.}
 }
 \value{
 A validated \code{rank_weight} specification.

@@ -19,6 +19,10 @@
 #' over the full U-statistic of order \code{s}, using Beta order-statistic
 #' increments as an approximation to the exact finite-population law.
 #'
+#' Unlike the exact finite-population rule, this asymptotic approximation is
+#' evaluated on the full rank grid `1:n` and is therefore typically treated as a
+#' full-support rank-weight sequence.
+#'
 #' @param ranks Integer permutation of \code{1:n}; \code{ranks[i]} is the global rank of obs \code{i}.
 #' @param k Integer, number of nearest neighbors used inside each s-subset; must satisfy \code{1 <= k <= s}.
 #' @param s Integer, U-statistic order (subset size); must satisfy \code{1 <= s <= n}.

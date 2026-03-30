@@ -41,6 +41,11 @@ A \code{weights_result} object (same structure as \code{\link[=weights_dnn_exact
 \description{
 DNN weights (asymptotic full-U), distance-based ranking
 }
+\details{
+The asymptotic DNN rule is evaluated on the full rank grid and is therefore
+typically treated as a full-support approximation rather than as a hard
+finite-support cutoff.
+}
 \examples{
 set.seed(1)
 x_mat <- matrix(rnorm(20), 10, 2)

@@ -8,7 +8,8 @@
 #'
 #' A rank-weight spec is a list with `eval(ranks, ctx)` and/or
 #' `eval_batch(rank_matrix, ctx)`, where `rank_matrix` is an n x m rank matrix (each column a
-#' permutation of 1..n). Optionally it may define `setup(data)`.
+#' permutation of 1..n). Optionally it may define `setup(data)` for manual or
+#' wrapper-level context construction.
 #'
 #' @param x Any object.
 #' @return Logical.
@@ -25,7 +26,9 @@ is_rank_weight <- function(x) {
 #' @param name Character scalar.
 #' @param eval Optional function `(ranks, ctx) -> numeric(n)`.
 #' @param eval_batch Optional function `(rank_matrix, ctx) -> numeric(n x m)`.
-#' @param setup Optional function to build context.
+#' @param setup Optional function to build context. At the top level,
+#'   [weights_matrix()] passes any supplied `ctx` through to the rank-weight
+#'   evaluator, but it does not automatically call `setup()` for you.
 #' @return A validated `rank_weight` specification.
 #' @examples
 #' rw <- new_rank_weight(

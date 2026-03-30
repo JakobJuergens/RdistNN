@@ -50,6 +50,11 @@
 #' No nuisance models are fit internally; this wrapper assumes `q_tau(X)` and
 #' `m_D(X)` are supplied.
 #'
+#' As in [weights_dnn()], exact DNN localization uses the full rank permutation
+#' at each target rather than an `s`-nearest-neighbor truncation. The `"fast"`
+#' jackknife option reuses the full-sample rank matrix and updates ranks under
+#' deletion.
+#'
 #' @param data Optional data frame containing covariates, regressors, outcome,
 #'   and nuisance columns.
 #' @param x_cols Names or indices of covariate columns in `data`.

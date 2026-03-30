@@ -12,6 +12,12 @@
 #'    `y_col` or `y` (exactly one).
 #' 2. Matrix interface: pass `X`, one of `X0` or `x0`, and `Y` (or alias `y`).
 #'
+#' For `method = "exact"`, DNN weights are computed from the full rank
+#' permutation at each target. In particular, for the paper-faithful `k = 1`
+#' case the exact support extends through rank `n - s + 1`; this is not an
+#' `s`-nearest-neighbor truncation. The `"fast"` jackknife option reuses the
+#' full-sample rank matrix and updates ranks under deletion.
+#'
 #' @param data Optional data frame containing covariates and outcome columns.
 #' @param x_cols Names or indices of covariate columns in `data`.
 #' @param y_col Name or index of the outcome column in `data`.

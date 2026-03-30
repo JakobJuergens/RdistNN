@@ -22,6 +22,15 @@ set.seed(2)
 
 Use `weights_dnn()` to switch between them with a common interface.
 
+Two support facts matter in practice:
+
+- exact DNN weights are computed from the **full rank permutation** for each
+  target, not by keeping only the first `s` observations;
+- for the exact finite-population rule, support in rank order is `j <= n - s + k`,
+  and in particular `j <= n - s + 1` when `k = 1`;
+- the asymptotic Beta-increment approximation is typically treated as a
+  full-support rank-weight sequence.
+
 ## Basic Usage
 
 ```{r basic, eval=FALSE}

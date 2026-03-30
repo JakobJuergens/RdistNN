@@ -33,9 +33,18 @@ list with:
 }
 \description{
 Computes the baseline aggregate \code{theta0} and all delete-one aggregates
-\code{theta_loo} for rank-weighted L-stat rules with finite support s.
+\code{theta_loo} for generic rank-weighted L-stat rules with finite support \code{s}.
 }
 \details{
+\code{jackknife_fast_rank()} is intended for rules that are fully characterized
+by the first \code{s + 1} ranked observations for each target and a finite
+coefficient vector \code{a_1,\dots,a_s}.
+
+The user-level exact DNN wrappers (\code{np_dnn()}, \code{cate_dnn()},
+\code{plqr_dnn()}) do \strong{not} call this helper directly. Those wrappers keep
+the full rank matrix and reevaluate the DNN rank-weight rule after delete-one
+updates.
+
 \itemize{
 \item If \code{phi} is a numeric \strong{matrix} (n_ref x q) with rows \code{phi[j, ] = phi(j)} and
 the compiled symbol \code{rustat_jackknife_fast_rank()} is available, this calls

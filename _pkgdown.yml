@@ -13,18 +13,16 @@ navbar:
       href: https://github.com/JakobJuergens/RdistNN
       aria-label: GitHub
 
-# Remove this whole block for now since those vignettes don't exist yet.
-# You can re-add later when you actually have vignettes.
-# articles:
-#   - title: Getting started
-#     contents:
-#       - articles/getting-started
-#   - title: Theory & details
-#     contents:
-#       - articles/conditional-z-estimation
-#       - articles/dnn-weights
-#       - articles/extending
-#       - articles/jackknife-gen-ustats
+articles:
+  - title: Getting started
+    contents:
+      - articles/getting-started
+      - articles/extending
+  - title: Theory & details
+    contents:
+      - articles/conditional-z-estimation
+      - articles/dnn-weights
+      - articles/jackknife-gen-ustats
 
 reference:
   - title: Package overview
