@@ -65,7 +65,7 @@ jobs:
           retention-days: 14
 
   save_logs:
-    if: ${{ needs.R-CMD-check.result != 'success' && github.actor != 'github-actions[bot]' }}
+    if: ${{ always() && needs.R-CMD-check.result != 'success' && github.actor != 'github-actions[bot]' }}
     needs: [R-CMD-check]
     uses: ./.github/workflows/harvest-failure-logs.yml
     with:

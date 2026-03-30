@@ -24,3 +24,5 @@
 ^Jackknife-GenUStat_JJuergens\.pdf$
 ^Local_Z_Est_JJuergens\.pdf$
 ^src/.*\.(o|so|dll|dylib)$
+^GH_logs$
+^markdown_notes$

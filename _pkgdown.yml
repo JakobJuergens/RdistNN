@@ -20,9 +20,9 @@ articles:
       - extending
   - title: Theory & details
     contents:
-      - articles/conditional-z-estimation
-      - articles/dnn-weights
-      - articles/jackknife-gen-ustats
+      - conditional-z-estimation
+      - dnn-weights
+      - jackknife-gen-ustats
 
 reference:
   - title: Package overview
