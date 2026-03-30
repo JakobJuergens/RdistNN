@@ -38,7 +38,9 @@
   finite  <- is.finite(tau_hat) && is.finite(se_hat) && se_hat > 0
   covered <- if (finite) {
     (tau_hat - z * se_hat <= tau0) & (tau0 <= tau_hat + z * se_hat)
-  } else NA_real_
+  } else {
+    NA_real_
+  }
   c(tau_hat = as.numeric(tau_hat),
     tau0    = as.numeric(tau0),
     bias    = as.numeric(tau_hat - tau0),
@@ -307,7 +309,7 @@
 #' | Name                | Description |
 #' |---------------------|-------------|
 #' | `dnn_oracle`        | Proposed DNN Z-estimator, L2 distance, oracle nuisances |
-#' | `dnn_oracle_mahal`  | Proposed DNN Z-estimator, Mahalanobis distance, oracle nuisances; primary comparison for `dgp5_correlated` (shape adaptivity) |
+#' | `dnn_oracle_mahal`  | Proposed DNN Z-estimator, Mahalanobis distance, oracle nuisances (`dgp5_correlated`) |
 #' | `dnn_crossfit`      | Proposed DNN Z-estimator, L2 distance, K-fold cross-fitted nuisances |
 #' | `local_constant`    | Nadaraya-Watson smoother on oracle pseudo-outcome |
 #' | `ols_interact`      | OLS with D*X interactions, delta-method SE at x0 |
