@@ -23,6 +23,9 @@ articles:
       - conditional-z-estimation
       - dnn-weights
       - jackknife-gen-ustats
+  - title: Paper replication
+    contents:
+      - paper-cate-simulation
 
 reference:
   - title: Package overview
@@ -126,6 +129,7 @@ reference:
       - sim_cate_data
       - sim_cate_one_rep
       - sim_cate_run
+      - sim_cate_methods
       - summarise_sim_results
 
   - title: Demo data & utilities
