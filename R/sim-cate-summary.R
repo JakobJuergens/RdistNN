@@ -49,7 +49,7 @@ summarise_sim_results <- function(raw) {
                 else             c("design", "n", "kx")
 
   cells <- unique(raw[, group_cols, drop = FALSE])
-  cells <- cells[do.call(order, as.list(cells[, group_cols, drop = FALSE])),
+  cells <- cells[do.call(order, unname(as.list(cells[, group_cols, drop = FALSE]))),
                  , drop = FALSE]
   rownames(cells) <- NULL
 
