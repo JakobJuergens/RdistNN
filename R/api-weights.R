@@ -365,3 +365,142 @@ weights_dnn <- function(
     )
   }
 }
+
+# ---- TDNN convenience wrappers -----------------------------------------------
+# Thin wrappers around weights_matrix() using the TDNN rank_weight constructors.
+# k is fixed to 1 (paper-faithful Demirkaya construction).
+
+#' TDNN weights (exact, k = 1), distance-based ranking
+#'
+#' Computes Demirkaya two-scale DNN (TDNN) weights using the exact rank-weight
+#' table ([tdnn_rank_table_exact()]).  TDNN is a signed linear combination of
+#' two single-scale exact DNN tables at orders `s1` and `s2`; the combination
+#' coefficients are chosen to cancel the leading bias term in the DNN MSE
+#' expansion.
+#'
+#' **Signed weights.** The returned weight matrix `W` can contain negative
+#' entries; columns still sum to 1.  This is by design and reflects the
+#' bias-correction structure of TDNN.
+#'
+#' @param X Numeric matrix (n x p).
+#' @param X0 Numeric matrix (m x p); mutually exclusive with \code{x0}.
+#' @param x0 Numeric length-p single target (convenience for m = 1).
+#' @param distance Distance spec or registered name (e.g., \code{"l2"}).
+#' @param s1 Positive integer; smaller U-statistic order (\code{s1 < s2 <= n}).
+#' @param s2 Positive integer; larger U-statistic order.
+#' @param dim Positive integer; localization dimension.  Defaults to
+#'   \code{ncol(X)} when \code{NULL}.
+#' @param ctx Optional context passed through to distance and rank-weight
+#'   evaluators.
+#' @param return Character vector of extras to include; any of
+#'   \code{c("W", "ord", "ranks", "dx")}.
+#'
+#' @return A \code{weights_result} object (same structure as
+#'   [weights_dnn_exact()]).
+#'
+#' @seealso [weights_tdnn_asymp()], [weights_tdnn()], [rank_weight_tdnn_exact()]
+#'
+#' @examples
+#' set.seed(1)
+#' X  <- matrix(rnorm(30), 15, 2)
+#' x0 <- c(0, 0)
+#' out <- weights_tdnn_exact(X, x0 = x0, s1 = 3L, s2 = 6L)
+#' colSums(out$W)  # 1
+#' any(out$W < 0)  # TRUE
+#' @export
+weights_tdnn_exact <- function(
+  X, X0 = NULL, x0 = NULL, distance = "l2", s1, s2, dim = NULL,
+  ctx = NULL, return = c("W")
+) {
+  if (is.null(dim)) dim <- ncol(X)
+  weights_matrix(
+    X = X, X0 = X0, x0 = x0,
+    ranking = distance,
+    weight  = rank_weight_tdnn_exact(s1 = as.integer(s1),
+                                      s2 = as.integer(s2),
+                                      dim = as.integer(dim)),
+    ctx    = ctx,
+    return = return
+  )
+}
+
+#' TDNN weights (asymptotic, k = 1), distance-based ranking
+#'
+#' Computes Demirkaya two-scale DNN (TDNN) weights using the asymptotic
+#' rank-weight table ([tdnn_rank_table_asymp()]).  Full rank support: all
+#' `n` observations receive non-zero weight (though some are negative).
+#'
+#' @inheritParams weights_tdnn_exact
+#' @param normalize Logical; renormalize rank table columns to sum 1
+#'   (default \code{TRUE}).
+#'
+#' @return A \code{weights_result} object (same structure as
+#'   [weights_dnn_asymp()]).
+#'
+#' @seealso [weights_tdnn_exact()], [weights_tdnn()], [rank_weight_tdnn_asymp()]
+#'
+#' @examples
+#' set.seed(1)
+#' X  <- matrix(rnorm(30), 15, 2)
+#' x0 <- c(0, 0)
+#' out <- weights_tdnn_asymp(X, x0 = x0, s1 = 3L, s2 = 6L)
+#' colSums(out$W)  # 1
+#' @export
+weights_tdnn_asymp <- function(
+  X, X0 = NULL, x0 = NULL, distance = "l2", s1, s2, dim = NULL,
+  normalize = TRUE, ctx = NULL, return = c("W")
+) {
+  if (is.null(dim)) dim <- ncol(X)
+  weights_matrix(
+    X = X, X0 = X0, x0 = x0,
+    ranking = distance,
+    weight  = rank_weight_tdnn_asymp(s1 = as.integer(s1),
+                                      s2 = as.integer(s2),
+                                      dim = as.integer(dim),
+                                      normalize = normalize),
+    ctx    = ctx,
+    return = return
+  )
+}
+
+#' TDNN weights (choose method, k = 1), distance-based ranking
+#'
+#' Unified entry point for TDNN weights.  Use \code{method = "exact"} for
+#' the exact finite-population rank-weight rule ([weights_tdnn_exact()]) and
+#' \code{method = "asymp"} for the asymptotic full-rank approximation
+#' ([weights_tdnn_asymp()]).
+#'
+#' @inheritParams weights_tdnn_asymp
+#' @param method One of \code{"exact"} or \code{"asymp"}.
+#'
+#' @return A \code{weights_result} object.
+#'
+#' @seealso [weights_tdnn_exact()], [weights_tdnn_asymp()]
+#'
+#' @examples
+#' set.seed(1)
+#' X  <- matrix(rnorm(30), 15, 2)
+#' x0 <- c(0, 0)
+#' out <- weights_tdnn(X, x0 = x0, s1 = 3L, s2 = 6L, method = "exact")
+#' colSums(out$W)  # 1
+#' @export
+weights_tdnn <- function(
+  X, X0 = NULL, x0 = NULL, distance = "l2", s1, s2, dim = NULL,
+  method = c("exact", "asymp"), normalize = TRUE, ctx = NULL,
+  return = c("W")
+) {
+  method <- match.arg(method)
+  if (method == "exact") {
+    weights_tdnn_exact(
+      X = X, X0 = X0, x0 = x0, distance = distance,
+      s1 = s1, s2 = s2, dim = dim,
+      ctx = ctx, return = return
+    )
+  } else {
+    weights_tdnn_asymp(
+      X = X, X0 = X0, x0 = x0, distance = distance,
+      s1 = s1, s2 = s2, dim = dim,
+      normalize = normalize, ctx = ctx, return = return
+    )
+  }
+}
