@@ -21,6 +21,13 @@
 #' permutation of ranks \code{ranks}, where \code{ranks[i]} is the global rank
 #' (1 = nearest) of observation \code{i} relative to the target.
 #'
+#' For the exact rule, weights are computed from the full rank permutation, not
+#' by truncating to the first `s` observations. The resulting exact support in
+#' rank order is:
+#'
+#' - `j <= n - s + k` in the general `k`-NN-within-subset case;
+#' - in particular, `j <= n - s + 1` when `k = 1`.
+#'
 #' @param ranks integer permutation of \code{1:n}; \code{ranks[i]} is the rank of obs \code{i}.
 #' @param k integer, number of nearest neighbors used inside each s-subset; must satisfy \code{1 <= k <= s}.
 #' @param s integer, U-statistic order (subset size); must satisfy \code{1 <= s <= n}.

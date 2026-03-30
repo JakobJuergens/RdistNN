@@ -101,6 +101,11 @@ For nuisance columns, use either:
 \item Matrix interface (backward compatible): pass \code{X}, one of \code{X0} or \code{x0},
 and \code{pseudo_outcome}.
 }
+
+As in \code{\link[=weights_dnn]{weights_dnn()}}, exact DNN localization uses the full rank
+permutation at each target rather than an \code{s}-nearest-neighbor truncation.
+The \code{"fast"} jackknife option reuses the full-sample rank matrix and updates
+ranks under deletion.
 }
 \examples{
 set.seed(1)

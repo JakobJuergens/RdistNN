@@ -44,6 +44,10 @@ A \code{weights_result} object.
 \description{
 DNN weights (choose method), distance-based ranking
 }
+\details{
+Use \code{method = "exact"} for the exact finite-population rank-weight rule and
+\code{method = "asymp"} for the asymptotic full-rank approximation.
+}
 \examples{
 set.seed(1)
 x_mat <- matrix(rnorm(20), 10, 2)

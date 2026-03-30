@@ -27,6 +27,14 @@ Both return:
 - `theta_loo`: all leave-one-out aggregates
 - `info`: metadata (`s`, number of targets, output dimension, normalization)
 
+Important distinction:
+
+- `jackknife_fast_rank()` and `jackknife_slow_rank()` are **generic** utilities
+  for compact-support rank-weighted L-stat rules;
+- the user-level exact DNN wrappers do **not** truncate to the first `s`
+  observations. They keep the full rank matrix and reevaluate the DNN
+  rank-weight rule after delete-one updates.
+
 ## Example Setup
 
 ```{r setup-example, eval=FALSE}
@@ -37,7 +45,9 @@ s <- 3L
 X <- matrix(rnorm(n * p), n, p)
 Y <- rnorm(n)
 
-# Build neighbor ranks for each target point (first s+1 neighbors)
+# Toy compact-support example: build only the first s+1 ranked observations
+# for each target point. This illustrates the generic L-stat utilities below;
+# it is not the internal exact-DNN jackknife path used by np_dnn()/cate_dnn()/plqr_dnn().
 wt <- weights_dnn(
   X = X, X0 = X,
   method = "exact",

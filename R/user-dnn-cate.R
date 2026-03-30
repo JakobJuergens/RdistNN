@@ -16,6 +16,11 @@
 #' 2. Matrix interface (backward compatible): pass `X`, one of `X0` or `x0`,
 #'    and `pseudo_outcome`.
 #'
+#' As in [weights_dnn()], exact DNN localization uses the full rank permutation
+#' at each target rather than an `s`-nearest-neighbor truncation. The `"fast"`
+#' jackknife option reuses the full-sample rank matrix and updates ranks under
+#' deletion.
+#'
 #' @param data Data frame with covariates and optional nuisance columns.
 #' @param x_cols Names or indices of covariate columns in `data`.
 #' @param y_col Name or index of the outcome column in `data`.

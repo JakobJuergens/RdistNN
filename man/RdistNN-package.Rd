@@ -36,7 +36,8 @@ target;
 
 \itemize{
 \item Start with \code{vignette("getting-started", package = "RdistNN")}.
-\item For extension patterns see \code{vignette("extending", package = "RdistNN")}.
+\item For step-by-step extension patterns for custom distances, rank weights,
+and scores, see \code{vignette("extending", package = "RdistNN")}.
 \item For distance/rank weighting details see
 \code{vignette("dnn-weights", package = "RdistNN")}.
 \item For estimator workflows see

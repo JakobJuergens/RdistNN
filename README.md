@@ -24,6 +24,10 @@ output: github_document
 
 > Status: active research package. APIs may continue to evolve.
 
+For exact DNN weights, the package works with the full rank permutation at each
+target. In particular, exact single-scale DNN with `k = 1` has support through
+rank `n - s + 1`; it is not an `s`-nearest-neighbor truncation.
+
 ## Installation
 
 Install the development version from GitHub:
@@ -148,7 +152,7 @@ raw <- sim_cate_run(
 summarise_sim_results(raw)
 ```
 
-### 5) Custom Distances and Rank Weights
+### 5) Custom Distances, Rank Weights, and Scores
 
 
 ``` r
@@ -172,7 +176,23 @@ W <- weights_matrix(
   return = "W"
 )$W
 dim(W)
+
+sc_affine <- new_score(
+  name = "affine_order1",
+  order = 1L,
+  eval_param = function(idxs, data, theta, ctx, rng = NULL) {
+    theta[1] * data$Y[idxs] + theta[2]
+  }
+)
+
+path <- score_diff_path(sc_affine, data = data.frame(Y = c(1, 2, 4)), method = "fd")
+path$grad(2L, theta = c(0.5, 1))
 ```
+
+The full extension guide is `vignette("extending", package = "RdistNN")`.
+It covers `setup()` / `eval_batch()` patterns, custom ranking inputs to
+`weights_matrix()`, parameter-aware scores, and debugging with
+`return = c("dx", "ord", "ranks")`.
 
 ## Documentation Map
 

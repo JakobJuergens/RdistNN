@@ -2,7 +2,17 @@
 #' (auto C++ when available, R fallback otherwise)
 #'
 #' Computes the baseline aggregate `theta0` and all delete-one aggregates
-#' `theta_loo` for rank-weighted L-stat rules with finite support s.
+#' `theta_loo` for generic rank-weighted L-stat rules with finite support `s`.
+#'
+#' This utility is for rules that are fully characterized by:
+#'
+#' - the first `s + 1` ranked observations for each target, and
+#' - a finite coefficient vector `a_1, ..., a_s`.
+#'
+#' It is therefore appropriate for compact-support L-statistics. The user-level
+#' DNN wrappers (`np_dnn()`, `cate_dnn()`, `plqr_dnn()`) do **not** call this
+#' helper directly for exact DNN weights. Those wrappers keep the full rank
+#' matrix and reevaluate the DNN rank-weight rule after delete-one updates.
 #'
 #' - If `phi` is a numeric **matrix** (n_ref x q) with rows `phi[j, ] = phi(j)` and
 #'   the compiled symbol `rustat_jackknife_fast_rank()` is available, this calls

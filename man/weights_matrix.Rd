@@ -34,7 +34,9 @@ Back-compat: you may also pass \verb{rank_weight=}; it will be used if \code{wei
 
 \item{rank_weight}{(deprecated alias) rank_weight spec or zero-arg factory.}
 
-\item{ctx}{optional context for rankers that support \code{setup}.}
+\item{ctx}{optional shared context passed to ranking and weight evaluators.
+On the ranking side, if \code{ctx} is \code{NULL} and a distance spec defines
+\code{setup(X)}, that setup path is used automatically.}
 
 \item{return}{which extras to include besides \code{W}: any of c("ord","ranks","dx").}
 }

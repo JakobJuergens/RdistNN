@@ -38,6 +38,14 @@ a \code{weights_result} with \code{W} and metadata
 \description{
 DNN weights (exact full-U), distance-based ranking
 }
+\details{
+Exact DNN weights are derived from the full rank permutation for each target.
+They are not constructed by keeping only the first \code{s} observations.
+
+For the exact finite-population rule, support in rank order is \code{j <= n - s + k};
+in particular, for the paper-faithful \code{k = 1} DNN this becomes
+\code{j <= n - s + 1}.
+}
 \examples{
 set.seed(1)
 x_mat <- matrix(rnorm(20), 10, 2)

@@ -22,7 +22,8 @@
 #'
 #' @section Documentation Map:
 #' - Start with `vignette("getting-started", package = "RdistNN")`.
-#' - For extension patterns see `vignette("extending", package = "RdistNN")`.
+#' - For step-by-step extension patterns for custom distances, rank weights,
+#'   and scores, see `vignette("extending", package = "RdistNN")`.
 #' - For distance/rank weighting details see
 #'   `vignette("dnn-weights", package = "RdistNN")`.
 #' - For estimator workflows see

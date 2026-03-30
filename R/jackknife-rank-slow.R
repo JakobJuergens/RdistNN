@@ -4,6 +4,11 @@
 #' using the provided neighbor ranks. This **does not** recompute ranks
 #' after deletion (useful as a correctness oracle and for testing).
 #'
+#' Like [jackknife_fast_rank()], this helper targets compact-support
+#' finite-rank L-stat rules. It is not the internal engine used by the
+#' user-level exact DNN wrappers, which instead update the full rank matrix
+#' under deletion and reevaluate the DNN rank-weight rule.
+#'
 #' Works with:
 #' - `phi` as a numeric **matrix** (n_ref x q): row `j` equals \eqn{\phi(j)}.
 #' - `phi` as a **function** `function(j, t)` that returns a length-`q` numeric,

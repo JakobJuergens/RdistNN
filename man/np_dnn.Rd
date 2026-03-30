@@ -84,6 +84,12 @@ Two interfaces are supported.
 \code{y_col} or \code{y} (exactly one).
 \item Matrix interface: pass \code{X}, one of \code{X0} or \code{x0}, and \code{Y} (or alias \code{y}).
 }
+
+For \code{method = "exact"}, DNN weights are computed from the full rank
+permutation at each target. In particular, for the paper-faithful \code{k = 1}
+case the exact support extends through rank \code{n - s + 1}; this is not an
+\code{s}-nearest-neighbor truncation. The \code{"fast"} jackknife option reuses
+the full-sample rank matrix and updates ranks under deletion.
 }
 \examples{
 set.seed(1)
