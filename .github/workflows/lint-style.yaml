@@ -5,12 +5,16 @@ on:
     branches: [main, master]
   pull_request:
 
-permissions: read-all
+permissions:
+  contents: write
+  actions: read
 
 jobs:
   r-lint:
     runs-on: ubuntu-latest
     continue-on-error: true
+    outputs:
+      had_failure: ${{ steps.outcome.outputs.had_failure }}
     steps:
       - uses: actions/checkout@v4
 
@@ -24,11 +28,25 @@ jobs:
           extra-packages: any::lintr
 
       - name: Run lintr
+        id: lint
         run: Rscript tools/ci/lint.R TRUE
+
+      - name: Record lint outcome
+        id: outcome
+        if: always()
+        shell: bash
+        run: |
+          if [[ "${{ steps.lint.outcome }}" == "success" ]]; then
+            echo "had_failure=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "had_failure=true" >> "$GITHUB_OUTPUT"
+          fi
 
   cxx-style:
     runs-on: ubuntu-latest
     continue-on-error: true
+    outputs:
+      had_failure: ${{ steps.outcome.outputs.had_failure }}
     steps:
       - uses: actions/checkout@v4
 
@@ -36,4 +54,26 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y clang-format
 
       - name: Check C++ style
+        id: style
         run: bash tools/ci/check_cpp_style.sh
+
+      - name: Record C++ style outcome
+        id: outcome
+        if: always()
+        shell: bash
+        run: |
+          if [[ "${{ steps.style.outcome }}" == "success" ]]; then
+            echo "had_failure=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "had_failure=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  save_logs:
+    if: ${{ github.actor != 'github-actions[bot]' && (needs.r-lint.outputs.had_failure == 'true' || needs.cxx-style.outputs.had_failure == 'true') }}
+    needs: [r-lint, cxx-style]
+    uses: ./.github/workflows/harvest-failure-logs.yml
+    with:
+      logs_dir: GH_logs
+      harvested_artifact_name: harvested-lint-style-logs
+      commit_logs: ${{ github.event_name != 'pull_request' }}
+    secrets: inherit

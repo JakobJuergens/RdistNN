@@ -7,7 +7,9 @@ on:
 
 name: R-CMD-check.yaml
 
-permissions: read-all
+permissions:
+  contents: write
+  actions: read
 
 jobs:
   R-CMD-check:
@@ -49,3 +51,27 @@ jobs:
         with:
           upload-snapshots: true
           build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
+
+      - name: Upload debug artifact (R CMD check state)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-rcmdcheck-${{ matrix.config.os }}-${{ matrix.config.r }}
+          path: |
+            check
+            *.Rcheck/**
+            *.tar.gz
+          if-no-files-found: warn
+          retention-days: 14
+
+  save_logs:
+    if: ${{ needs.R-CMD-check.result != 'success' && github.actor != 'github-actions[bot]' }}
+    needs: [R-CMD-check]
+    uses: ./.github/workflows/harvest-failure-logs.yml
+    with:
+      logs_dir: GH_logs
+      artifact_pattern: debug-rcmdcheck-*
+      artifact_subdir: rcmdcheck
+      harvested_artifact_name: harvested-rcmdcheck-logs
+      commit_logs: ${{ github.event_name != 'pull_request' }}
+    secrets: inherit
