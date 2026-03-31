@@ -1,5 +1,6 @@
 test_that("sim_cate_data: output schema is correct for each design", {
-  designs <- c("dgp1_linear", "dgp2_nonlinear", "dgp3_sparse_overlap")
+  designs <- c("dgp1_linear", "dgp2_nonlinear", "dgp3_sparse_overlap",
+               "dgp4_clustered", "dgp5_correlated")
   expected_cols <- c(
     "X1", "X2", "D", "Y",
     "e_oracle", "m_oracle", "m0_oracle", "m1_oracle",
@@ -190,4 +191,227 @@ test_that("summarise_sim_results: multi-method returns one row per method", {
 test_that("summarise_sim_results: error on missing columns", {
   bad <- data.frame(design = "x", n = 100, kx = 2, bias = 0)
   expect_error(summarise_sim_results(bad), "missing required columns")
+})
+
+# ── DGP 4: clustered covariate design ────────────────────────────────────────
+
+test_that("sim_cate_data dgp4_clustered: propensity is clipped to (clip, 1-clip)", {
+  dgp <- sim_cate_data("dgp4_clustered", n = 200L, kx = 2L, seed = 1L, clip = 0.05)
+  expect_true(all(dgp$data$e_oracle >= 0.05))
+  expect_true(all(dgp$data$e_oracle <= 0.95))
+})
+
+test_that("sim_cate_data dgp4_clustered: m1_oracle = m0_oracle + tau_oracle", {
+  dgp <- sim_cate_data("dgp4_clustered", n = 100L, kx = 2L, seed = 3L)
+  expect_equal(dgp$data$m1_oracle,
+               dgp$data$m0_oracle + dgp$data$tau_oracle,
+               tolerance = 1e-12)
+})
+
+test_that("sim_cate_data dgp4_clustered: mixture creates dense cluster near x0", {
+  # With mix_prob = 0.7 and inner_sd = 0.4, the majority of obs should be near
+  # x0 = (0, 0), giving a bimodal X1 distribution.  We verify the dense inner
+  # cluster exists: at least 50% of obs should have |X1| < 1 (inner cluster has
+  # sd=0.4 so nearly all of them land there, outer is at X1 ≈ 3 by default).
+  dgp <- sim_cate_data("dgp4_clustered", n = 500L, kx = 2L, seed = 7L)
+  prop_near <- mean(abs(dgp$data$X1) < 1)
+  expect_gt(prop_near, 0.5)
+})
+
+test_that("sim_cate_data dgp4_clustered: outer cluster is well separated from x0", {
+  # Outer cluster is centred at (outer_x1=3, 0).  With n large, some fraction of
+  # obs should have X1 > 2.
+  dgp <- sim_cate_data("dgp4_clustered", n = 500L, kx = 2L, seed = 8L)
+  expect_gt(mean(dgp$data$X1 > 2), 0.05)
+})
+
+test_that("sim_cate_data dgp4_clustered: tau_x0 matches tau_fn at x0", {
+  dgp <- sim_cate_data("dgp4_clustered", n = 50L, kx = 2L, seed = 2L)
+  tau_at_x0 <- dgp$truth$tau_fn(matrix(dgp$x0, nrow = 1L))
+  expect_equal(dgp$tau_x0, as.numeric(tau_at_x0), tolerance = 1e-12)
+})
+
+# ── DGP 5: correlated covariate design ───────────────────────────────────────
+
+test_that("sim_cate_data dgp5_correlated: propensity is clipped to (clip, 1-clip)", {
+  dgp <- sim_cate_data("dgp5_correlated", n = 200L, kx = 2L, seed = 1L, clip = 0.05)
+  expect_true(all(dgp$data$e_oracle >= 0.05))
+  expect_true(all(dgp$data$e_oracle <= 0.95))
+})
+
+test_that("sim_cate_data dgp5_correlated: m1_oracle = m0_oracle + tau_oracle", {
+  dgp <- sim_cate_data("dgp5_correlated", n = 100L, kx = 2L, seed = 3L)
+  expect_equal(dgp$data$m1_oracle,
+               dgp$data$m0_oracle + dgp$data$tau_oracle,
+               tolerance = 1e-12)
+})
+
+test_that("sim_cate_data dgp5_correlated: default x0 is (0.75, 0, ...)", {
+  dgp <- sim_cate_data("dgp5_correlated", n = 50L, kx = 2L, seed = 1L)
+  expect_equal(dgp$x0[1L], 0.75, tolerance = 1e-12)
+  expect_equal(dgp$x0[2L], 0.0,  tolerance = 1e-12)
+})
+
+test_that("sim_cate_data dgp5_correlated: X1 and X2 are strongly correlated", {
+  # Design uses rho = 0.85; empirical correlation should be close
+  dgp <- sim_cate_data("dgp5_correlated", n = 2000L, kx = 2L, seed = 10L)
+  r   <- cor(dgp$data$X1, dgp$data$X2)
+  expect_gt(r, 0.75)
+  expect_lt(r, 0.95)
+})
+
+test_that("sim_cate_data dgp5_correlated: tau_x0 matches tau_fn at x0", {
+  dgp <- sim_cate_data("dgp5_correlated", n = 50L, kx = 2L, seed = 2L)
+  tau_at_x0 <- dgp$truth$tau_fn(matrix(dgp$x0, nrow = 1L))
+  expect_equal(dgp$tau_x0, as.numeric(tau_at_x0), tolerance = 1e-12)
+})
+
+# ── Benchmark methods via sim_cate_one_rep ────────────────────────────────────
+
+test_that("sim_cate_one_rep: dnn_crossfit returns finite metrics", {
+  r <- sim_cate_one_rep(
+    n = 120L, kx = 2L, k = 3L,
+    s = floor(120L^(3/4)),
+    design = "dgp2_nonlinear",
+    methods = "dnn_crossfit",
+    seed = 42L
+  )
+  expect_equal(nrow(r), 1L)
+  expect_equal(r$method, "dnn_crossfit")
+  expect_true(is.finite(r$tau_hat))
+  expect_true(r$se > 0)
+  expect_true(r$cover %in% c(0, 1))
+})
+
+test_that("sim_cate_one_rep: local_constant returns finite metrics", {
+  r <- sim_cate_one_rep(
+    n = 120L, kx = 2L, k = 3L,
+    s = floor(120L^(3/4)),
+    design = "dgp2_nonlinear",
+    methods = "local_constant",
+    seed = 42L
+  )
+  expect_equal(nrow(r), 1L)
+  expect_equal(r$method, "local_constant")
+  expect_true(is.finite(r$tau_hat))
+  expect_true(r$se > 0)
+  expect_true(r$cover %in% c(0, 1))
+})
+
+test_that("sim_cate_one_rep: dnn_oracle_mahal returns finite metrics on dgp5_correlated", {
+  r <- sim_cate_one_rep(
+    n = 120L, kx = 2L, k = 3L,
+    s = floor(120L^(3/4)),
+    design = "dgp5_correlated",
+    methods = "dnn_oracle_mahal",
+    seed = 42L
+  )
+  expect_equal(nrow(r), 1L)
+  expect_equal(r$method, "dnn_oracle_mahal")
+  expect_true(is.finite(r$tau_hat))
+  expect_true(r$se > 0)
+  expect_true(r$cover %in% c(0, 1))
+})
+
+test_that("sim_cate_one_rep: all five methods run together without error", {
+  r <- sim_cate_one_rep(
+    n = 100L, kx = 2L, k = 3L,
+    s = floor(100L^(3/4)),
+    design = "dgp2_nonlinear",
+    methods = c("dnn_oracle", "dnn_oracle_mahal", "dnn_crossfit",
+                "local_constant", "ols_interact"),
+    seed = 7L
+  )
+  expect_equal(nrow(r), 5L)
+  expect_equal(r$method,
+               c("dnn_oracle", "dnn_oracle_mahal", "dnn_crossfit",
+                 "local_constant", "ols_interact"))
+  expect_true(all(is.finite(r$tau_hat)))
+  expect_true(all(r$se > 0))
+})
+
+# ── sim_cate_methods registry ─────────────────────────────────────────────────
+
+test_that("sim_cate_methods: includes all five paper methods", {
+  m <- sim_cate_methods()
+  expect_true(all(c("dnn_oracle", "dnn_oracle_mahal", "dnn_crossfit",
+                    "local_constant", "ols_interact") %in% m))
+})
+
+# ── sim_cate_run with all 5 designs ──────────────────────────────────────────
+
+test_that("sim_cate_run: smoke test covers all 5 designs", {
+  raw <- sim_cate_run(
+    designs     = c("dgp1_linear", "dgp2_nonlinear", "dgp3_sparse_overlap",
+                    "dgp4_clustered", "dgp5_correlated"),
+    n_vals      = 100L,
+    kx_vals     = 2L,
+    n_reps      = 2L,
+    master_seed = 1L,
+    verbose     = FALSE
+  )
+  # 5 designs x 1 n x 1 kx x 2 reps x 1 method (default dnn_oracle) = 10
+  expect_equal(nrow(raw), 10L)
+  expect_true(all(c("dgp1_linear", "dgp2_nonlinear", "dgp3_sparse_overlap",
+                    "dgp4_clustered", "dgp5_correlated") %in% raw$design))
+  expect_true(all(is.finite(raw$se)))
+})
+
+test_that("sim_cate_run: dgp4 and dgp5 produce finite results with dnn_oracle_mahal", {
+  raw <- sim_cate_run(
+    designs     = c("dgp4_clustered", "dgp5_correlated"),
+    n_vals      = 100L,
+    kx_vals     = 2L,
+    n_reps      = 2L,
+    master_seed = 2L,
+    methods     = c("dnn_oracle", "dnn_oracle_mahal"),
+    verbose     = FALSE
+  )
+  # 2 designs x 2 reps x 2 methods = 8
+  expect_equal(nrow(raw), 8L)
+  expect_true(all(is.finite(raw$tau_hat)))
+  expect_true(all(raw$se > 0))
+})
+
+# ── summarise_sim_results: n_failed counting ──────────────────────────────────
+
+test_that("summarise_sim_results: n_failed counts NA-metric rows correctly", {
+  # Build a raw data.frame with 2 good reps and 1 failed (NA) rep
+  raw_good <- sim_cate_run(
+    designs     = "dgp1_linear",
+    n_vals      = 100L,
+    kx_vals     = 2L,
+    n_reps      = 2L,
+    master_seed = 1L,
+    verbose     = FALSE
+  )
+  # Inject one NA row (simulates a rep-level failure)
+  na_row        <- raw_good[1L, ]
+  na_row$bias   <- NA_real_
+  na_row$sq_err <- NA_real_
+  na_row$se     <- NA_real_
+  na_row$cover  <- NA_real_
+  na_row$ci_len <- NA_real_
+  raw_with_fail <- rbind(raw_good, na_row)
+
+  tab <- summarise_sim_results(raw_with_fail)
+  expect_equal(nrow(tab), 1L)
+  expect_equal(tab$n_reps,   3L)
+  expect_equal(tab$n_failed, 1L)
+  # Metrics should be computed from the 2 good rows only
+  expect_true(is.finite(tab$bias))
+  expect_true(is.finite(tab$rmse))
+})
+
+test_that("summarise_sim_results: n_failed = 0 when no NAs present", {
+  raw <- sim_cate_run(
+    designs     = "dgp2_nonlinear",
+    n_vals      = 100L,
+    kx_vals     = 2L,
+    n_reps      = 3L,
+    master_seed = 5L,
+    verbose     = FALSE
+  )
+  tab <- summarise_sim_results(raw)
+  expect_equal(tab$n_failed, 0L)
 })
