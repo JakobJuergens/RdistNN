@@ -1,7 +1,7 @@
 # sim-cate-data.R
 # Data-generating processes for the CATE simulation study.
 #
-# Three DGPs from the paper "Robust Inference for Conditional Z-Estimation via
+# Five DGPs from the paper "Robust Inference for Conditional Z-Estimation via
 # Distributional Nearest Neighbors":
 #
 #   dgp1_linear          -- linear tau, logistic propensity; correctly specified
@@ -9,12 +9,17 @@
 #   dgp2_nonlinear       -- sinusoidal tau; same propensity; misspecified for OLS
 #   dgp3_sparse_overlap  -- sinusoidal tau; propensity near 0/1 everywhere
 #                           except a Gaussian neighbourhood of x0
+#   dgp4_clustered       -- sinusoidal tau; two-component mixture covariates
+#                           (dense inner cluster at x0, sparse outer cluster);
+#                           tests density adaptivity
+#   dgp5_correlated      -- curved tau; strongly correlated covariates (rho=0.85);
+#                           x0 = (0.75, 0); tests shape adaptivity
 #
 # All DGPs supply oracle nuisances (e, m0, m1, tau, rho) so that
 # DGP isolation is possible; first-stage estimation error is deferred.
 #
 # Public API: sim_cate_data()   (exported)
-# Internals:  .sim_dgp1(), .sim_dgp2(), .sim_dgp3()   (not exported)
+# Internals:  .sim_dgp1(), ..., .sim_dgp5()   (not exported)
 
 # ── internal helpers ─────────────────────────────────────────────────────────
 

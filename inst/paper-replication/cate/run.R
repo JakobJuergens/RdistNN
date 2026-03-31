@@ -22,16 +22,19 @@ library(RdistNN)
 # Mirrors the design grid in 05b_CATE_Simulation.tex.
 
 PAPER_GRID <- list(
-  designs     = c("dgp1_linear", "dgp2_nonlinear", "dgp3_sparse_overlap"),
+  designs     = c("dgp1_linear", "dgp2_nonlinear", "dgp3_sparse_overlap",
+                  "dgp4_clustered", "dgp5_correlated"),
   n_vals      = c(500L, 1000L, 2000L),
   kx_vals     = 2L,
   n_reps      = 500L,
   master_seed = 42L,
   k           = 5L,
   s_fn        = function(n, kx) floor(n^((kx + 1L) / (kx + 2L))),
-  # Methods evaluated on every draw.  Add "causal_forest" and "llf" if grf
-  # is installed, or "dnn_crossfit" for the cross-fitting comparison.
-  methods     = c("dnn_oracle", "dnn_crossfit", "local_constant", "ols_interact"),
+  # Methods evaluated on every draw.  dnn_oracle_mahal is especially informative
+  # for dgp5_correlated (shape adaptivity).  Add "causal_forest" and "llf" if
+  # grf is installed.
+  methods     = c("dnn_oracle", "dnn_oracle_mahal", "dnn_crossfit",
+                  "local_constant", "ols_interact"),
   alpha       = 0.05,
   sigma       = 0.5,
   clip        = 1e-3,

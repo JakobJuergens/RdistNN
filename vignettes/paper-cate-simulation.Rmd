@@ -31,13 +31,15 @@ system.file("paper-replication/cate/run.R", package = "RdistNN")
 
 ## Data-generating processes
 
-Three DGPs are available via `sim_cate_data()`:
+Five DGPs are available via `sim_cate_data()`:
 
-| Design | `tau(x)` | Propensity | Notes |
-|---|---|---|---|
-| `dgp1_linear` | `0.5 x1 - 0.3 x2` | logistic | correctly specified for OLS-interaction |
-| `dgp2_nonlinear` | `0.5 + 0.5 sin(x1)` | logistic | primary horse-race DGP |
-| `dgp3_sparse_overlap` | same as DGP 2 | near-boundary except at `x0` | stress-tests local ESS adaptation |
+| Design | `tau(x)` | Propensity | Covariate design | Notes |
+|---|---|---|---|---|
+| `dgp1_linear` | `0.5 x1 - 0.3 x2` | logistic | iid N(0,I) | correctly specified for OLS-interaction |
+| `dgp2_nonlinear` | `0.5 + 0.5 sin(x1)` | logistic | iid N(0,I) | primary horse-race DGP |
+| `dgp3_sparse_overlap` | same as DGP 2 | near-boundary except at `x0` | iid N(0,I) | stress-tests local ESS adaptation |
+| `dgp4_clustered` | same as DGP 2 | logistic | mixture: 70% N(0, 0.4²I) + 30% N((3,0),I) | density-adaptivity DGP; DNN shrinks bandwidth at dense `x0` |
+| `dgp5_correlated` | `sin(2x1) + 0.5 x1²` | steeper logistic | N(0,Σ), ρ=0.85; x0=(0.75,0) | shape-adaptivity DGP; `dnn_oracle_mahal` corrects for off-diagonal covariance |
 
 All DGPs return oracle nuisances (`e_oracle`, `m0_oracle`, `m1_oracle`,
 `tau_oracle`, `rho_oracle`) so that first-stage estimation error can be
@@ -130,7 +132,7 @@ Workflow on the cluster:
 
 ```bash
 # 1. Install RdistNN on the cluster, then from your working directory:
-sbatch /path/to/hpc/submit.sh        # submits 9 array tasks (edit --array if grid changes)
+sbatch /path/to/hpc/submit.sh        # submits 15 array tasks (edit --array if grid changes)
 
 # 2. After all tasks complete, merge the per-cell results:
 Rscript /path/to/hpc/merge.R

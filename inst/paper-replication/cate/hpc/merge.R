@@ -27,7 +27,7 @@ if (length(files) == 0L)
        "\nCheck that the SLURM array tasks completed successfully.")
 
 # Warn about any missing cells (expected count = 9 for default grid)
-expected_cells <- 9L   # 3 designs × 3 n_vals × 1 kx_val; update if grid changes
+expected_cells <- 15L  # 5 designs × 3 n_vals × 1 kx_val; update if grid changes
 if (length(files) < expected_cells)
   warning(sprintf("%d of %d expected cell files found.  ",
                   length(files), expected_cells),

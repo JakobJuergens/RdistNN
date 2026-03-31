@@ -4,7 +4,7 @@
 # Each array task runs one (design × n × kx) cell (all n_reps replications).
 # The number of array tasks must equal:
 #   length(designs) × length(n_vals) × length(kx_vals)
-# Default paper grid: 3 × 3 × 1 = 9 cells → --array=1-9
+# Default paper grid: 5 × 3 × 1 = 15 cells → --array=1-15
 #
 # Usage (from the directory where you want results written):
 #   sbatch /path/to/submit.sh
@@ -17,7 +17,7 @@
 
 # ── SLURM directives ──────────────────────────────────────────────────────────
 #SBATCH --job-name=cate_sim
-#SBATCH --array=1-9               # one task per cell; update if grid changes
+#SBATCH --array=1-15              # one task per cell; update if grid changes
 #SBATCH --cpus-per-task=8         # cores for within-task rep parallelism
 #SBATCH --mem=8G                  # memory per task (adjust for large n)
 #SBATCH --time=04:00:00           # wall time per task (adjust as needed)
