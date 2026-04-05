@@ -259,14 +259,14 @@
   kx     <- ncol(X)
   x0_mat <- matrix(dgp$x0, nrow = 1L)
 
+  # ll.lambda / ll.weight.penalty are predict()-time options in grf >= 2.x;
+  # passing them to causal_forest() breaks variance estimation.
   cf <- grf::causal_forest(
-    X                 = X,
-    Y                 = dat$Y,
-    W                 = dat$D,
-    Y.hat             = dat$m_oracle,
-    W.hat             = dat$e_oracle,
-    ll.lambda         = ll_lambda,
-    ll.weight.penalty = FALSE
+    X     = X,
+    Y     = dat$Y,
+    W     = dat$D,
+    Y.hat = dat$m_oracle,
+    W.hat = dat$e_oracle
   )
   pred <- stats::predict(
     cf,
