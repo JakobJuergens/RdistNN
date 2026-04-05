@@ -56,9 +56,9 @@ test_that("[scalars] .tdnn_scalars produces w1+w2=1 and correct signs", {
   for (params in list(c(2, 4, 2), c(3, 9, 3), c(5, 10, 1))) {
     s1 <- params[1]; s2 <- params[2]; d <- params[3]
     sc <- RdistNN:::.tdnn_scalars(s1, s2, d)
-    expect_equal(sc["w1"] + sc["w2"], 1, tolerance = 1e-14)
-    expect_lt(sc["w1"], 0)
-    expect_gt(sc["w2"], 1)
+    expect_equal(sc[["w1"]] + sc[["w2"]], 1, tolerance = 1e-14)
+    expect_lt(sc[["w1"]], 0)
+    expect_gt(sc[["w2"]], 1)
   }
 })
 
@@ -66,8 +66,8 @@ test_that("[scalars] .tdnn_scalars closed form for s2 = 4*s1, dim = 2", {
   # (s1 / 4s1)^(-2/2) = (1/4)^(-1) = 4
   # w1* = 1/(1-4) = -1/3, w2* = 4/3
   sc <- RdistNN:::.tdnn_scalars(s1 = 2L, s2 = 8L, dim = 2L)
-  expect_equal(sc["w1"], -1 / 3, tolerance = 1e-14)
-  expect_equal(sc["w2"],  4 / 3, tolerance = 1e-14)
+  expect_equal(sc[["w1"]], -1 / 3, tolerance = 1e-14)
+  expect_equal(sc[["w2"]],  4 / 3, tolerance = 1e-14)
 })
 
 # ---- [table] ---------------------------------------------------------
@@ -134,7 +134,7 @@ test_that("[from_ranks] meta fields are correct", {
   expect_identical(out$meta$s2, as.integer(s2))
   expect_identical(out$meta$dim, as.integer(d))
   expect_named(out$meta$scalars, c("w1", "w2"))
-  expect_equal(out$meta$scalars["w1"] + out$meta$scalars["w2"], 1, tolerance = 1e-14)
+  expect_equal(out$meta$scalars[["w1"]] + out$meta$scalars[["w2"]], 1, tolerance = 1e-14)
 })
 
 # ---- [inv] -----------------------------------------------------------
@@ -143,7 +143,8 @@ test_that("[inv] w_rank depends only on (n, s1, s2, dim), not the permutation", 
   n <- 20L; s1 <- 3L; s2 <- 7L; d <- 2L
   r1 <- seq_len(n)
   r2 <- rev(r1)
-  r3 <- sample.int(n, set.seed(4))
+  set.seed(4)
+  r3 <- sample.int(n)
   w1 <- dnn_weights_tdnn_exact_full_from_ranks(r1, s1, s2, d)$w_rank
   w2 <- dnn_weights_tdnn_exact_full_from_ranks(r2, s1, s2, d)$w_rank
   w3 <- dnn_weights_tdnn_exact_full_from_ranks(r3, s1, s2, d)$w_rank
