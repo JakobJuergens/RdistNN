@@ -1,308 +1,308 @@
-﻿2026-04-05T16:34:12.8806900Z Current runner version: '2.333.1'
-2026-04-05T16:34:12.8843598Z ##[group]Runner Image Provisioner
-2026-04-05T16:34:12.8845349Z Hosted Compute Agent
-2026-04-05T16:34:12.8846355Z Version: 20260213.493
-2026-04-05T16:34:12.8847400Z Commit: 5c115507f6dd24b8de37d8bbe0bb4509d0cc0fa3
-2026-04-05T16:34:12.8848719Z Build Date: 2026-02-13T00:28:41Z
-2026-04-05T16:34:12.8849894Z Worker ID: {dbf9033f-7e8b-4fc6-9713-5369fff57cbf}
-2026-04-05T16:34:12.8850960Z Azure Region: westus
-2026-04-05T16:34:12.8851969Z ##[endgroup]
-2026-04-05T16:34:12.8854770Z ##[group]Operating System
-2026-04-05T16:34:12.8855739Z Ubuntu
-2026-04-05T16:34:12.8856547Z 24.04.4
-2026-04-05T16:34:12.8857293Z LTS
-2026-04-05T16:34:12.8858009Z ##[endgroup]
-2026-04-05T16:34:12.8858825Z ##[group]Runner Image
-2026-04-05T16:34:12.8859811Z Image: ubuntu-24.04
-2026-04-05T16:34:12.8860650Z Version: 20260329.72.1
-2026-04-05T16:34:12.8862849Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260329.72/images/ubuntu/Ubuntu2404-Readme.md
-2026-04-05T16:34:12.8865743Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260329.72
-2026-04-05T16:34:12.8867389Z ##[endgroup]
-2026-04-05T16:34:12.8869205Z ##[group]GITHUB_TOKEN Permissions
-2026-04-05T16:34:12.8872045Z Actions: read
-2026-04-05T16:34:12.8873037Z Contents: write
-2026-04-05T16:34:12.8873827Z Metadata: read
-2026-04-05T16:34:12.8874883Z ##[endgroup]
-2026-04-05T16:34:12.8877921Z Secret source: Actions
-2026-04-05T16:34:12.8879099Z Prepare workflow directory
-2026-04-05T16:34:12.9460093Z Prepare all required actions
-2026-04-05T16:34:12.9521597Z Getting action download info
-2026-04-05T16:34:13.4107222Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
-2026-04-05T16:34:13.6714133Z Complete job name: cxx-style
-2026-04-05T16:34:13.7605809Z ##[group]Run actions/checkout@v4
-2026-04-05T16:34:13.7606783Z with:
-2026-04-05T16:34:13.7607256Z   repository: JakobJuergens/RdistNN
-2026-04-05T16:34:13.7608084Z   token: ***
-2026-04-05T16:34:13.7608544Z   ssh-strict: true
-2026-04-05T16:34:13.7608988Z   ssh-user: git
-2026-04-05T16:34:13.7609435Z   persist-credentials: true
-2026-04-05T16:34:13.7609930Z   clean: true
-2026-04-05T16:34:13.7610379Z   sparse-checkout-cone-mode: true
-2026-04-05T16:34:13.7610909Z   fetch-depth: 1
-2026-04-05T16:34:13.7611341Z   fetch-tags: false
-2026-04-05T16:34:13.7611789Z   show-progress: true
-2026-04-05T16:34:13.7612242Z   lfs: false
-2026-04-05T16:34:13.7612657Z   submodules: false
-2026-04-05T16:34:13.7613099Z   set-safe-directory: true
-2026-04-05T16:34:13.7613825Z ##[endgroup]
-2026-04-05T16:34:13.9012689Z Syncing repository: JakobJuergens/RdistNN
-2026-04-05T16:34:13.9016492Z ##[group]Getting Git version info
-2026-04-05T16:34:13.9017899Z Working directory is '/home/runner/work/RdistNN/RdistNN'
-2026-04-05T16:34:13.9020060Z [command]/usr/bin/git version
-2026-04-05T16:34:13.9024793Z git version 2.53.0
-2026-04-05T16:34:13.9051929Z ##[endgroup]
-2026-04-05T16:34:13.9061590Z Temporarily overriding HOME='/home/runner/work/_temp/0f43b98d-32ed-47c8-bb25-6e70d89b3966' before making global git config changes
-2026-04-05T16:34:13.9064737Z Adding repository directory to the temporary git global config as a safe directory
-2026-04-05T16:34:13.9067071Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/RdistNN/RdistNN
-2026-04-05T16:34:13.9071097Z Deleting the contents of '/home/runner/work/RdistNN/RdistNN'
-2026-04-05T16:34:13.9072885Z ##[group]Initializing the repository
-2026-04-05T16:34:13.9074654Z [command]/usr/bin/git init /home/runner/work/RdistNN/RdistNN
-2026-04-05T16:34:13.9171982Z hint: Using 'master' as the name for the initial branch. This default branch name
-2026-04-05T16:34:13.9175124Z hint: will change to "main" in Git 3.0. To configure the initial branch name
-2026-04-05T16:34:13.9177079Z hint: to use in all of your new repositories, which will suppress this warning,
-2026-04-05T16:34:13.9178544Z hint: call:
-2026-04-05T16:34:13.9179295Z hint:
-2026-04-05T16:34:13.9180246Z hint: 	git config --global init.defaultBranch <name>
-2026-04-05T16:34:13.9181962Z hint:
-2026-04-05T16:34:13.9183090Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
-2026-04-05T16:34:13.9185321Z hint: 'development'. The just-created branch can be renamed via this command:
-2026-04-05T16:34:13.9186779Z hint:
-2026-04-05T16:34:13.9187580Z hint: 	git branch -m <name>
-2026-04-05T16:34:13.9188432Z hint:
-2026-04-05T16:34:13.9189536Z hint: Disable this message with "git config set advice.defaultBranchName false"
-2026-04-05T16:34:13.9191831Z Initialized empty Git repository in /home/runner/work/RdistNN/RdistNN/.git/
-2026-04-05T16:34:13.9196909Z [command]/usr/bin/git remote add origin https://github.com/JakobJuergens/RdistNN
-2026-04-05T16:34:13.9236104Z ##[endgroup]
-2026-04-05T16:34:13.9237511Z ##[group]Disabling automatic garbage collection
-2026-04-05T16:34:13.9240821Z [command]/usr/bin/git config --local gc.auto 0
-2026-04-05T16:34:13.9278097Z ##[endgroup]
-2026-04-05T16:34:13.9279474Z ##[group]Setting up auth
-2026-04-05T16:34:13.9286368Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
-2026-04-05T16:34:13.9323716Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
-2026-04-05T16:34:14.0451486Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
-2026-04-05T16:34:14.0457389Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
-2026-04-05T16:34:14.0462303Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
-2026-04-05T16:34:14.0469058Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
-2026-04-05T16:34:14.0578784Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
-2026-04-05T16:34:14.0620416Z ##[endgroup]
-2026-04-05T16:34:14.0623659Z ##[group]Fetching the repository
-2026-04-05T16:34:14.0633572Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +9187f2da46faef5d8bfcb15cb65a15412a144647:refs/remotes/origin/master
-2026-04-05T16:34:15.3091021Z From https://github.com/JakobJuergens/RdistNN
-2026-04-05T16:34:15.3097643Z  * [new ref]         9187f2da46faef5d8bfcb15cb65a15412a144647 -> origin/master
-2026-04-05T16:34:15.3127939Z ##[endgroup]
-2026-04-05T16:34:15.3129710Z ##[group]Determining the checkout info
-2026-04-05T16:34:15.3132176Z ##[endgroup]
-2026-04-05T16:34:15.3135886Z [command]/usr/bin/git sparse-checkout disable
-2026-04-05T16:34:15.3178876Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
-2026-04-05T16:34:15.3211328Z ##[group]Checking out the ref
-2026-04-05T16:34:15.3218544Z [command]/usr/bin/git checkout --progress --force -B master refs/remotes/origin/master
-2026-04-05T16:34:15.3953948Z Reset branch 'master'
-2026-04-05T16:34:15.3957683Z branch 'master' set up to track 'origin/master'.
-2026-04-05T16:34:15.3974561Z ##[endgroup]
-2026-04-05T16:34:15.4017426Z [command]/usr/bin/git log -1 --format=%H
-2026-04-05T16:34:15.4043228Z 9187f2da46faef5d8bfcb15cb65a15412a144647
-2026-04-05T16:34:15.4295410Z ##[group]Run sudo apt-get update && sudo apt-get install -y clang-format
-2026-04-05T16:34:15.4297679Z [36;1msudo apt-get update && sudo apt-get install -y clang-format[0m
-2026-04-05T16:34:15.4331580Z shell: /usr/bin/bash -e {0}
-2026-04-05T16:34:15.4332672Z ##[endgroup]
-2026-04-05T16:34:15.5518656Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
-2026-04-05T16:34:15.6237955Z Hit:3 https://packages.microsoft.com/repos/azure-cli noble InRelease
-2026-04-05T16:34:15.6249551Z Get:4 https://packages.microsoft.com/ubuntu/24.04/prod noble InRelease [3600 B]
-2026-04-05T16:34:15.6255640Z Hit:2 http://azure.archive.ubuntu.com/ubuntu noble InRelease
-2026-04-05T16:34:15.6270273Z Get:5 http://azure.archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
-2026-04-05T16:34:15.6339344Z Get:6 http://azure.archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
-2026-04-05T16:34:15.6346443Z Get:7 http://azure.archive.ubuntu.com/ubuntu noble-security InRelease [126 kB]
-2026-04-05T16:34:15.8117720Z Get:8 https://packages.microsoft.com/ubuntu/24.04/prod noble/main armhf Packages [11.4 kB]
-2026-04-05T16:34:15.8345899Z Get:9 https://packages.microsoft.com/ubuntu/24.04/prod noble/main amd64 Packages [113 kB]
-2026-04-05T16:34:15.8374958Z Get:10 https://packages.microsoft.com/ubuntu/24.04/prod noble/main arm64 Packages [89.3 kB]
-2026-04-05T16:34:15.9490254Z Get:11 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1875 kB]
-2026-04-05T16:34:15.9622009Z Get:12 http://azure.archive.ubuntu.com/ubuntu noble-updates/main Translation-en [342 kB]
-2026-04-05T16:34:15.9647307Z Get:13 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Components [177 kB]
-2026-04-05T16:34:15.9669719Z Get:14 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 c-n-f Metadata [16.9 kB]
-2026-04-05T16:34:15.9680591Z Get:15 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [1663 kB]
-2026-04-05T16:34:15.9813433Z Get:16 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe Translation-en [322 kB]
-2026-04-05T16:34:15.9849607Z Get:17 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Components [386 kB]
-2026-04-05T16:34:15.9888335Z Get:18 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 c-n-f Metadata [34.2 kB]
-2026-04-05T16:34:15.9905828Z Get:19 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [2894 kB]
-2026-04-05T16:34:16.0375687Z Get:20 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted Translation-en [671 kB]
-2026-04-05T16:34:16.0886688Z Get:21 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Components [212 B]
-2026-04-05T16:34:16.0923665Z Get:22 http://azure.archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Components [940 B]
-2026-04-05T16:34:16.0933737Z Get:23 http://azure.archive.ubuntu.com/ubuntu noble-backports/main amd64 Components [7364 B]
-2026-04-05T16:34:16.0942042Z Get:24 http://azure.archive.ubuntu.com/ubuntu noble-backports/universe amd64 Components [13.2 kB]
-2026-04-05T16:34:16.1011482Z Get:25 http://azure.archive.ubuntu.com/ubuntu noble-backports/restricted amd64 Components [212 B]
-2026-04-05T16:34:16.1067172Z Get:26 http://azure.archive.ubuntu.com/ubuntu noble-backports/multiverse amd64 Components [212 B]
-2026-04-05T16:34:16.1208824Z Get:27 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Packages [1576 kB]
-2026-04-05T16:34:16.1265169Z Get:28 http://azure.archive.ubuntu.com/ubuntu noble-security/main Translation-en [252 kB]
-2026-04-05T16:34:16.1322235Z Get:29 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Components [21.5 kB]
-2026-04-05T16:34:16.1330528Z Get:30 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 c-n-f Metadata [10.7 kB]
-2026-04-05T16:34:16.1353315Z Get:31 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Packages [1167 kB]
-2026-04-05T16:34:16.1498575Z Get:32 http://azure.archive.ubuntu.com/ubuntu noble-security/universe Translation-en [225 kB]
-2026-04-05T16:34:16.1528101Z Get:33 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Components [74.3 kB]
-2026-04-05T16:34:16.1539511Z Get:34 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 c-n-f Metadata [22.8 kB]
-2026-04-05T16:34:16.1978263Z Get:35 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [2757 kB]
-2026-04-05T16:34:16.2114982Z Get:36 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted Translation-en [642 kB]
-2026-04-05T16:34:16.2159320Z Get:37 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted amd64 Components [212 B]
-2026-04-05T16:34:16.2172917Z Get:38 http://azure.archive.ubuntu.com/ubuntu noble-security/multiverse amd64 Components [208 B]
-2026-04-05T16:34:25.7551988Z Fetched 15.7 MB in 2s (6947 kB/s)
-2026-04-05T16:34:26.5811860Z Reading package lists...
-2026-04-05T16:34:26.6178879Z Reading package lists...
-2026-04-05T16:34:26.8243780Z Building dependency tree...
-2026-04-05T16:34:26.8252016Z Reading state information...
-2026-04-05T16:34:27.0433048Z The following NEW packages will be installed:
-2026-04-05T16:34:27.0443723Z   clang-format
-2026-04-05T16:34:27.0641978Z 0 upgraded, 1 newly installed, 0 to remove and 82 not upgraded.
-2026-04-05T16:34:27.0644028Z Need to get 5970 B of archives.
-2026-04-05T16:34:27.0645773Z After this operation, 29.7 kB of additional disk space will be used.
-2026-04-05T16:34:27.0646480Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
-2026-04-05T16:34:27.1426826Z Get:2 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 clang-format amd64 1:18.0-59~exp2 [5970 B]
-2026-04-05T16:34:27.4115272Z Fetched 5970 B in 0s (65.9 kB/s)
-2026-04-05T16:34:27.4363016Z Selecting previously unselected package clang-format:amd64.
-2026-04-05T16:34:27.4695083Z (Reading database ... 
-2026-04-05T16:34:27.4696656Z (Reading database ... 5%
-2026-04-05T16:34:27.4697045Z (Reading database ... 10%
-2026-04-05T16:34:27.4697627Z (Reading database ... 15%
-2026-04-05T16:34:27.4698135Z (Reading database ... 20%
-2026-04-05T16:34:27.4698723Z (Reading database ... 25%
-2026-04-05T16:34:27.4699086Z (Reading database ... 30%
-2026-04-05T16:34:27.4699317Z (Reading database ... 35%
-2026-04-05T16:34:27.4699542Z (Reading database ... 40%
-2026-04-05T16:34:27.4699761Z (Reading database ... 45%
-2026-04-05T16:34:27.4699968Z (Reading database ... 50%
-2026-04-05T16:34:27.4813180Z (Reading database ... 55%
-2026-04-05T16:34:27.6229085Z (Reading database ... 60%
-2026-04-05T16:34:27.8050260Z (Reading database ... 65%
-2026-04-05T16:34:28.0118394Z (Reading database ... 70%
-2026-04-05T16:34:28.1678631Z (Reading database ... 75%
-2026-04-05T16:34:28.3587861Z (Reading database ... 80%
-2026-04-05T16:34:28.5611835Z (Reading database ... 85%
-2026-04-05T16:34:28.7651577Z (Reading database ... 90%
-2026-04-05T16:34:28.9076808Z (Reading database ... 95%
-2026-04-05T16:34:28.9079462Z (Reading database ... 100%
-2026-04-05T16:34:28.9081879Z (Reading database ... 220446 files and directories currently installed.)
-2026-04-05T16:34:28.9127084Z Preparing to unpack .../clang-format_1%3a18.0-59~exp2_amd64.deb ...
-2026-04-05T16:34:28.9165758Z Unpacking clang-format:amd64 (1:18.0-59~exp2) ...
-2026-04-05T16:34:29.0027453Z Setting up clang-format:amd64 (1:18.0-59~exp2) ...
-2026-04-05T16:34:29.0058550Z Processing triggers for man-db (2.12.0-4build2) ...
-2026-04-05T16:34:29.0129088Z Not building database; man-db/auto-update is not 'true'.
-2026-04-05T16:34:29.6508714Z 
-2026-04-05T16:34:29.6510883Z Running kernel seems to be up-to-date.
-2026-04-05T16:34:29.6514136Z 
-2026-04-05T16:34:29.6514644Z No services need to be restarted.
-2026-04-05T16:34:29.6514938Z 
-2026-04-05T16:34:29.6515080Z No containers need to be restarted.
-2026-04-05T16:34:29.6515389Z 
-2026-04-05T16:34:29.6515573Z No user sessions are running outdated binaries.
-2026-04-05T16:34:29.6515900Z 
-2026-04-05T16:34:29.6516203Z No VM guests are running outdated hypervisor (qemu) binaries on this host.
-2026-04-05T16:34:30.7795663Z ##[group]Run bash tools/ci/check_cpp_style.sh
-2026-04-05T16:34:30.7796062Z [36;1mbash tools/ci/check_cpp_style.sh[0m
-2026-04-05T16:34:30.7822605Z shell: /usr/bin/bash -e {0}
-2026-04-05T16:34:30.7822852Z ##[endgroup]
-2026-04-05T16:34:32.0703385Z src/jackknife_rank_full.cpp:50:39: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0710301Z Rcpp::List rustat_jackknife_rank_full(
-2026-04-05T16:34:32.0710759Z                                       ^
-2026-04-05T16:34:32.0711504Z src/jackknife_rank_full.cpp:51:24: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0712317Z     const IntegerMatrix& ranks,
-2026-04-05T16:34:32.0712688Z                        ^
-2026-04-05T16:34:32.0713367Z src/jackknife_rank_full.cpp:51:25: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0714869Z     const IntegerMatrix& ranks,
-2026-04-05T16:34:32.0716681Z                         ^
-2026-04-05T16:34:32.0718323Z src/jackknife_rank_full.cpp:51:32: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0719650Z     const IntegerMatrix& ranks,
-2026-04-05T16:34:32.0720795Z                                ^
-2026-04-05T16:34:32.0722747Z src/jackknife_rank_full.cpp:52:24: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0723591Z     const NumericMatrix& PHI,
-2026-04-05T16:34:32.0723966Z                        ^
-2026-04-05T16:34:32.0725015Z src/jackknife_rank_full.cpp:52:25: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0725794Z     const NumericMatrix& PHI,
-2026-04-05T16:34:32.0726159Z                         ^
-2026-04-05T16:34:32.0726833Z src/jackknife_rank_full.cpp:52:30: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0727636Z     const NumericMatrix& PHI,
-2026-04-05T16:34:32.0728022Z                              ^
-2026-04-05T16:34:32.0728736Z src/jackknife_rank_full.cpp:53:24: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0729533Z     const NumericVector& wn,
-2026-04-05T16:34:32.0729900Z                        ^
-2026-04-05T16:34:32.0730576Z src/jackknife_rank_full.cpp:53:25: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0731375Z     const NumericVector& wn,
-2026-04-05T16:34:32.0731743Z                         ^
-2026-04-05T16:34:32.0732442Z src/jackknife_rank_full.cpp:53:29: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0733213Z     const NumericVector& wn,
-2026-04-05T16:34:32.0733576Z                             ^
-2026-04-05T16:34:32.0734535Z src/jackknife_rank_full.cpp:54:24: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0735344Z     const NumericVector& wnm1
-2026-04-05T16:34:32.0735708Z                        ^
-2026-04-05T16:34:32.0736391Z src/jackknife_rank_full.cpp:54:25: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0737203Z     const NumericVector& wnm1
-2026-04-05T16:34:32.0737564Z                         ^
-2026-04-05T16:34:32.0738249Z src/jackknife_rank_full.cpp:54:30: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0739046Z     const NumericVector& wnm1
-2026-04-05T16:34:32.0739423Z                              ^
-2026-04-05T16:34:32.0740126Z src/jackknife_rank_full.cpp:71:32: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0740959Z       int r0 = ranks(i, t) - 1;   // 0-based rank
-2026-04-05T16:34:32.0741431Z                                ^
-2026-04-05T16:34:32.0742142Z src/jackknife_rank_full.cpp:82:19: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0742965Z   std::vector<int>    ord(n);
-2026-04-05T16:34:32.0743308Z                   ^
-2026-04-05T16:34:32.0744523Z src/jackknife_rank_full.cpp:83:28: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0745555Z   std::vector<double> P(n);   // P[r0]: prefix sum for 0-based rank r0
-2026-04-05T16:34:32.0746128Z                            ^
-2026-04-05T16:34:32.0746841Z src/jackknife_rank_full.cpp:84:28: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0747801Z   std::vector<double> S(n);   // S[r0]: shifted suffix sum for 0-based rank r0
-2026-04-05T16:34:32.0748417Z                            ^
-2026-04-05T16:34:32.0749122Z src/jackknife_rank_full.cpp:91:58: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0750007Z     std::sort(ord.begin(), ord.end(), [&](int a, int b) {
-2026-04-05T16:34:32.0750600Z                                                          ^
-2026-04-05T16:34:32.0751376Z src/jackknife_rank_full.cpp:92:40: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0752339Z       return ranks(a, t) < ranks(b, t);
-2026-04-05T16:34:32.0752745Z                                        ^
-2026-04-05T16:34:32.0753468Z src/jackknife_rank_full.cpp:126:34: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0754569Z         int ri = ranks(i, t) - 1;   // 0-based rank
-2026-04-05T16:34:32.0755070Z                                  ^
-2026-04-05T16:34:32.0755805Z src/jackknife_rank_full.cpp:129:18: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0756657Z       (void)base;  // suppress unused-variable warning
-2026-04-05T16:34:32.0757153Z                  ^
-2026-04-05T16:34:32.0757816Z src/jackknife_rank_full.cpp:135:23: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0758630Z   return List::create(
-2026-04-05T16:34:32.0758977Z                       ^
-2026-04-05T16:34:32.0759790Z src/jackknife_rank_full.cpp:136:16: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0760604Z     _["theta0"]    = theta0,
-2026-04-05T16:34:32.0760947Z                ^
-2026-04-05T16:34:32.0761616Z src/jackknife_rank_full.cpp:136:29: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0762399Z     _["theta0"]    = theta0,
-2026-04-05T16:34:32.0762753Z                             ^
-2026-04-05T16:34:32.0763462Z src/jackknife_rank_full.cpp:137:26: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0765514Z     _["theta_loo"] = loo,
-2026-04-05T16:34:32.0765877Z                          ^
-2026-04-05T16:34:32.0766557Z src/jackknife_rank_full.cpp:138:14: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0767465Z     _["info"]      = List::create(_["n"] = n, _["m"] = m, _["q"] = q)
-2026-04-05T16:34:32.0767962Z              ^
-2026-04-05T16:34:32.0768604Z src/jackknife_rank_full.cpp:138:70: error: code should be clang-formatted [-Wclang-format-violations]
-2026-04-05T16:34:32.0769492Z     _["info"]      = List::create(_["n"] = n, _["m"] = m, _["q"] = q)
-2026-04-05T16:34:32.0770068Z                                                                      ^
-2026-04-05T16:34:32.1063558Z ##[error]Process completed with exit code 1.
-2026-04-05T16:34:32.1137820Z ##[group]Run if [[ "failure" == "success" ]]; then
-2026-04-05T16:34:32.1138182Z [36;1mif [[ "failure" == "success" ]]; then[0m
-2026-04-05T16:34:32.1138497Z [36;1m  echo "had_failure=false" >> "$GITHUB_OUTPUT"[0m
-2026-04-05T16:34:32.1138774Z [36;1melse[0m
-2026-04-05T16:34:32.1138997Z [36;1m  echo "had_failure=true" >> "$GITHUB_OUTPUT"[0m
-2026-04-05T16:34:32.1139266Z [36;1mfi[0m
-2026-04-05T16:34:32.1166627Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
-2026-04-05T16:34:32.1166955Z ##[endgroup]
-2026-04-05T16:34:32.1387191Z Post job cleanup.
-2026-04-05T16:34:32.2401216Z [command]/usr/bin/git version
-2026-04-05T16:34:32.2443284Z git version 2.53.0
-2026-04-05T16:34:32.2492805Z Temporarily overriding HOME='/home/runner/work/_temp/d567bd88-0b12-4af1-a1f7-c3ca3250ab7b' before making global git config changes
-2026-04-05T16:34:32.2496542Z Adding repository directory to the temporary git global config as a safe directory
-2026-04-05T16:34:32.2501268Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/RdistNN/RdistNN
-2026-04-05T16:34:32.2552200Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
-2026-04-05T16:34:32.2595323Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
-2026-04-05T16:34:32.2921668Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
-2026-04-05T16:34:32.2968473Z http.https://github.com/.extraheader
-2026-04-05T16:34:32.2997942Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
-2026-04-05T16:34:32.3062027Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
-2026-04-05T16:34:32.3430883Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
-2026-04-05T16:34:32.3489908Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
-2026-04-05T16:34:32.3858269Z Evaluate and set job outputs
-2026-04-05T16:34:32.3863415Z Set output 'had_failure'
-2026-04-05T16:34:32.3865673Z Cleaning up orphan processes
-2026-04-05T16:34:32.4132528Z ##[warning]Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+﻿2026-04-05T16:56:45.5933578Z Current runner version: '2.333.1'
+2026-04-05T16:56:45.5969033Z ##[group]Runner Image Provisioner
+2026-04-05T16:56:45.5970270Z Hosted Compute Agent
+2026-04-05T16:56:45.5971229Z Version: 20260213.493
+2026-04-05T16:56:45.5972350Z Commit: 5c115507f6dd24b8de37d8bbe0bb4509d0cc0fa3
+2026-04-05T16:56:45.5973602Z Build Date: 2026-02-13T00:28:41Z
+2026-04-05T16:56:45.5974749Z Worker ID: {d275cded-9c8f-4462-99e3-263276c0189a}
+2026-04-05T16:56:45.5975810Z Azure Region: eastus
+2026-04-05T16:56:45.5976807Z ##[endgroup]
+2026-04-05T16:56:45.5979844Z ##[group]Operating System
+2026-04-05T16:56:45.5980784Z Ubuntu
+2026-04-05T16:56:45.5981638Z 24.04.4
+2026-04-05T16:56:45.5982371Z LTS
+2026-04-05T16:56:45.5983056Z ##[endgroup]
+2026-04-05T16:56:45.5983931Z ##[group]Runner Image
+2026-04-05T16:56:45.5984791Z Image: ubuntu-24.04
+2026-04-05T16:56:45.5985510Z Version: 20260329.72.1
+2026-04-05T16:56:45.5988620Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260329.72/images/ubuntu/Ubuntu2404-Readme.md
+2026-04-05T16:56:45.5991169Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260329.72
+2026-04-05T16:56:45.5992937Z ##[endgroup]
+2026-04-05T16:56:45.5994812Z ##[group]GITHUB_TOKEN Permissions
+2026-04-05T16:56:45.5997775Z Actions: read
+2026-04-05T16:56:45.5999008Z Contents: write
+2026-04-05T16:56:45.5999824Z Metadata: read
+2026-04-05T16:56:45.6000745Z ##[endgroup]
+2026-04-05T16:56:45.6003846Z Secret source: Actions
+2026-04-05T16:56:45.6005351Z Prepare workflow directory
+2026-04-05T16:56:45.7156863Z Prepare all required actions
+2026-04-05T16:56:45.7787239Z Getting action download info
+2026-04-05T16:56:45.9784355Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2026-04-05T16:56:46.2465978Z Complete job name: cxx-style
+2026-04-05T16:56:46.3260848Z ##[group]Run actions/checkout@v4
+2026-04-05T16:56:46.3261703Z with:
+2026-04-05T16:56:46.3262113Z   repository: JakobJuergens/RdistNN
+2026-04-05T16:56:46.3262807Z   token: ***
+2026-04-05T16:56:46.3263214Z   ssh-strict: true
+2026-04-05T16:56:46.3263615Z   ssh-user: git
+2026-04-05T16:56:46.3264014Z   persist-credentials: true
+2026-04-05T16:56:46.3264464Z   clean: true
+2026-04-05T16:56:46.3264865Z   sparse-checkout-cone-mode: true
+2026-04-05T16:56:46.3265331Z   fetch-depth: 1
+2026-04-05T16:56:46.3265716Z   fetch-tags: false
+2026-04-05T16:56:46.3266120Z   show-progress: true
+2026-04-05T16:56:46.3266528Z   lfs: false
+2026-04-05T16:56:46.3266888Z   submodules: false
+2026-04-05T16:56:46.3267292Z   set-safe-directory: true
+2026-04-05T16:56:46.3267921Z ##[endgroup]
+2026-04-05T16:56:46.4441952Z Syncing repository: JakobJuergens/RdistNN
+2026-04-05T16:56:46.4443683Z ##[group]Getting Git version info
+2026-04-05T16:56:46.4444375Z Working directory is '/home/runner/work/RdistNN/RdistNN'
+2026-04-05T16:56:46.4446660Z [command]/usr/bin/git version
+2026-04-05T16:56:46.4483634Z git version 2.53.0
+2026-04-05T16:56:46.4516075Z ##[endgroup]
+2026-04-05T16:56:46.4530845Z Temporarily overriding HOME='/home/runner/work/_temp/8a34e46e-1fd7-46cf-a8d2-2e0be3a35503' before making global git config changes
+2026-04-05T16:56:46.4534510Z Adding repository directory to the temporary git global config as a safe directory
+2026-04-05T16:56:46.4549299Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/RdistNN/RdistNN
+2026-04-05T16:56:46.4708793Z Deleting the contents of '/home/runner/work/RdistNN/RdistNN'
+2026-04-05T16:56:46.4709897Z ##[group]Initializing the repository
+2026-04-05T16:56:46.4710552Z [command]/usr/bin/git init /home/runner/work/RdistNN/RdistNN
+2026-04-05T16:56:46.5730610Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-04-05T16:56:46.5738449Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-04-05T16:56:46.5740035Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-04-05T16:56:46.5741223Z hint: call:
+2026-04-05T16:56:46.5741803Z hint:
+2026-04-05T16:56:46.5742571Z hint: 	git config --global init.defaultBranch <name>
+2026-04-05T16:56:46.5744031Z hint:
+2026-04-05T16:56:46.5744914Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-04-05T16:56:46.5746531Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-04-05T16:56:46.5748440Z hint:
+2026-04-05T16:56:46.5749154Z hint: 	git branch -m <name>
+2026-04-05T16:56:46.5750220Z hint:
+2026-04-05T16:56:46.5751225Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-04-05T16:56:46.5752803Z Initialized empty Git repository in /home/runner/work/RdistNN/RdistNN/.git/
+2026-04-05T16:56:46.5755420Z [command]/usr/bin/git remote add origin https://github.com/JakobJuergens/RdistNN
+2026-04-05T16:56:46.5757897Z ##[endgroup]
+2026-04-05T16:56:46.5759432Z ##[group]Disabling automatic garbage collection
+2026-04-05T16:56:46.5760498Z [command]/usr/bin/git config --local gc.auto 0
+2026-04-05T16:56:46.5762728Z ##[endgroup]
+2026-04-05T16:56:46.5763859Z ##[group]Setting up auth
+2026-04-05T16:56:46.5765007Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-04-05T16:56:46.5768812Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-04-05T16:56:46.5772505Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-04-05T16:56:46.5776541Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-04-05T16:56:46.5807255Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-04-05T16:56:46.5840631Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-04-05T16:56:46.6246801Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-04-05T16:56:46.6249158Z ##[endgroup]
+2026-04-05T16:56:46.6250241Z ##[group]Fetching the repository
+2026-04-05T16:56:46.6252367Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +cba0b9021f0bb95a93344462c6412ad5799dc457:refs/remotes/origin/master
+2026-04-05T16:56:47.5126368Z From https://github.com/JakobJuergens/RdistNN
+2026-04-05T16:56:47.5151427Z  * [new ref]         cba0b9021f0bb95a93344462c6412ad5799dc457 -> origin/master
+2026-04-05T16:56:47.5166582Z ##[endgroup]
+2026-04-05T16:56:47.5172944Z ##[group]Determining the checkout info
+2026-04-05T16:56:47.5174428Z ##[endgroup]
+2026-04-05T16:56:47.5185699Z [command]/usr/bin/git sparse-checkout disable
+2026-04-05T16:56:47.5255078Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-04-05T16:56:47.5299872Z ##[group]Checking out the ref
+2026-04-05T16:56:47.5310054Z [command]/usr/bin/git checkout --progress --force -B master refs/remotes/origin/master
+2026-04-05T16:56:47.6032809Z Reset branch 'master'
+2026-04-05T16:56:47.6037428Z branch 'master' set up to track 'origin/master'.
+2026-04-05T16:56:47.6052021Z ##[endgroup]
+2026-04-05T16:56:47.6088731Z [command]/usr/bin/git log -1 --format=%H
+2026-04-05T16:56:47.6112620Z cba0b9021f0bb95a93344462c6412ad5799dc457
+2026-04-05T16:56:47.6339877Z ##[group]Run sudo apt-get update && sudo apt-get install -y clang-format
+2026-04-05T16:56:47.6342171Z [36;1msudo apt-get update && sudo apt-get install -y clang-format[0m
+2026-04-05T16:56:47.6374032Z shell: /usr/bin/bash -e {0}
+2026-04-05T16:56:47.6375174Z ##[endgroup]
+2026-04-05T16:56:47.7287680Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+2026-04-05T16:56:47.8102110Z Hit:6 https://packages.microsoft.com/repos/azure-cli noble InRelease
+2026-04-05T16:56:47.8106935Z Get:7 https://packages.microsoft.com/ubuntu/24.04/prod noble InRelease [3600 B]
+2026-04-05T16:56:47.8433421Z Hit:2 http://azure.archive.ubuntu.com/ubuntu noble InRelease
+2026-04-05T16:56:47.8513333Z Get:3 http://azure.archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+2026-04-05T16:56:47.8602482Z Get:4 http://azure.archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+2026-04-05T16:56:47.8660214Z Get:5 http://azure.archive.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+2026-04-05T16:56:48.0440811Z Get:8 https://packages.microsoft.com/ubuntu/24.04/prod noble/main armhf Packages [11.4 kB]
+2026-04-05T16:56:48.1550455Z Get:9 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1875 kB]
+2026-04-05T16:56:48.1688813Z Get:10 http://azure.archive.ubuntu.com/ubuntu noble-updates/main Translation-en [342 kB]
+2026-04-05T16:56:48.1720007Z Get:11 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Components [177 kB]
+2026-04-05T16:56:48.1743623Z Get:12 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 c-n-f Metadata [16.9 kB]
+2026-04-05T16:56:48.1754477Z Get:13 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [1663 kB]
+2026-04-05T16:56:48.1918559Z Get:14 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe Translation-en [322 kB]
+2026-04-05T16:56:48.1989797Z Get:15 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Components [386 kB]
+2026-04-05T16:56:48.2000077Z Get:16 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 c-n-f Metadata [34.2 kB]
+2026-04-05T16:56:48.2027123Z Get:17 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [2894 kB]
+2026-04-05T16:56:48.2279415Z Get:18 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted Translation-en [671 kB]
+2026-04-05T16:56:48.2705498Z Get:21 https://packages.microsoft.com/ubuntu/24.04/prod noble/main amd64 Packages [113 kB]
+2026-04-05T16:56:48.2717794Z Get:22 https://packages.microsoft.com/ubuntu/24.04/prod noble/main arm64 Packages [89.3 kB]
+2026-04-05T16:56:48.2971764Z Get:19 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Components [212 B]
+2026-04-05T16:56:48.2999369Z Get:20 http://azure.archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Components [940 B]
+2026-04-05T16:56:48.3017605Z Get:23 http://azure.archive.ubuntu.com/ubuntu noble-backports/main amd64 Components [7364 B]
+2026-04-05T16:56:48.3027537Z Get:24 http://azure.archive.ubuntu.com/ubuntu noble-backports/universe amd64 Components [13.2 kB]
+2026-04-05T16:56:48.3042529Z Get:25 http://azure.archive.ubuntu.com/ubuntu noble-backports/restricted amd64 Components [212 B]
+2026-04-05T16:56:48.3061466Z Get:26 http://azure.archive.ubuntu.com/ubuntu noble-backports/multiverse amd64 Components [212 B]
+2026-04-05T16:56:48.4063276Z Get:27 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Packages [1576 kB]
+2026-04-05T16:56:48.4262052Z Get:28 http://azure.archive.ubuntu.com/ubuntu noble-security/main Translation-en [252 kB]
+2026-04-05T16:56:48.4312171Z Get:29 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Components [21.5 kB]
+2026-04-05T16:56:48.4351075Z Get:30 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 c-n-f Metadata [10.7 kB]
+2026-04-05T16:56:48.4409196Z Get:31 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Packages [1167 kB]
+2026-04-05T16:56:48.4534765Z Get:32 http://azure.archive.ubuntu.com/ubuntu noble-security/universe Translation-en [225 kB]
+2026-04-05T16:56:48.4553131Z Get:33 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Components [74.3 kB]
+2026-04-05T16:56:48.4587489Z Get:34 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 c-n-f Metadata [22.8 kB]
+2026-04-05T16:56:48.5061912Z Get:35 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [2757 kB]
+2026-04-05T16:56:48.5292547Z Get:36 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted Translation-en [642 kB]
+2026-04-05T16:56:48.5340993Z Get:37 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted amd64 Components [212 B]
+2026-04-05T16:56:48.5358472Z Get:38 http://azure.archive.ubuntu.com/ubuntu noble-security/multiverse amd64 Components [208 B]
+2026-04-05T16:56:57.4126583Z Fetched 15.7 MB in 2s (7290 kB/s)
+2026-04-05T16:56:58.1661790Z Reading package lists...
+2026-04-05T16:56:58.1979207Z Reading package lists...
+2026-04-05T16:56:58.3676507Z Building dependency tree...
+2026-04-05T16:56:58.3680687Z Reading state information...
+2026-04-05T16:56:58.5329948Z The following NEW packages will be installed:
+2026-04-05T16:56:58.5339633Z   clang-format
+2026-04-05T16:56:58.5521123Z 0 upgraded, 1 newly installed, 0 to remove and 82 not upgraded.
+2026-04-05T16:56:58.5526594Z Need to get 5970 B of archives.
+2026-04-05T16:56:58.5527238Z After this operation, 29.7 kB of additional disk space will be used.
+2026-04-05T16:56:58.5527965Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+2026-04-05T16:56:58.5782389Z Get:2 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 clang-format amd64 1:18.0-59~exp2 [5970 B]
+2026-04-05T16:56:58.8216692Z Fetched 5970 B in 0s (163 kB/s)
+2026-04-05T16:56:58.8465359Z Selecting previously unselected package clang-format:amd64.
+2026-04-05T16:56:58.8819719Z (Reading database ... 
+2026-04-05T16:56:58.8821440Z (Reading database ... 5%
+2026-04-05T16:56:58.8822593Z (Reading database ... 10%
+2026-04-05T16:56:58.8823491Z (Reading database ... 15%
+2026-04-05T16:56:58.8824537Z (Reading database ... 20%
+2026-04-05T16:56:58.8825662Z (Reading database ... 25%
+2026-04-05T16:56:58.8825987Z (Reading database ... 30%
+2026-04-05T16:56:58.8826254Z (Reading database ... 35%
+2026-04-05T16:56:58.8826497Z (Reading database ... 40%
+2026-04-05T16:56:58.8826932Z (Reading database ... 45%
+2026-04-05T16:56:58.8827470Z (Reading database ... 50%
+2026-04-05T16:56:58.8945780Z (Reading database ... 55%
+2026-04-05T16:56:59.0561358Z (Reading database ... 60%
+2026-04-05T16:56:59.2058439Z (Reading database ... 65%
+2026-04-05T16:56:59.4141086Z (Reading database ... 70%
+2026-04-05T16:56:59.5740512Z (Reading database ... 75%
+2026-04-05T16:56:59.8307214Z (Reading database ... 80%
+2026-04-05T16:56:59.9895627Z (Reading database ... 85%
+2026-04-05T16:57:00.1972784Z (Reading database ... 90%
+2026-04-05T16:57:00.3424181Z (Reading database ... 95%
+2026-04-05T16:57:00.3426122Z (Reading database ... 100%
+2026-04-05T16:57:00.3427060Z (Reading database ... 220446 files and directories currently installed.)
+2026-04-05T16:57:00.3474480Z Preparing to unpack .../clang-format_1%3a18.0-59~exp2_amd64.deb ...
+2026-04-05T16:57:00.3503224Z Unpacking clang-format:amd64 (1:18.0-59~exp2) ...
+2026-04-05T16:57:00.4459098Z Setting up clang-format:amd64 (1:18.0-59~exp2) ...
+2026-04-05T16:57:00.4507868Z Processing triggers for man-db (2.12.0-4build2) ...
+2026-04-05T16:57:00.4530717Z Not building database; man-db/auto-update is not 'true'.
+2026-04-05T16:57:01.0890568Z 
+2026-04-05T16:57:01.0891311Z Running kernel seems to be up-to-date.
+2026-04-05T16:57:01.0892571Z 
+2026-04-05T16:57:01.0896226Z No services need to be restarted.
+2026-04-05T16:57:01.0897393Z 
+2026-04-05T16:57:01.0910082Z No containers need to be restarted.
+2026-04-05T16:57:01.0911780Z 
+2026-04-05T16:57:01.0913218Z No user sessions are running outdated binaries.
+2026-04-05T16:57:01.0914839Z 
+2026-04-05T16:57:01.0916420Z No VM guests are running outdated hypervisor (qemu) binaries on this host.
+2026-04-05T16:57:02.0963534Z ##[group]Run bash tools/ci/check_cpp_style.sh
+2026-04-05T16:57:02.0963925Z [36;1mbash tools/ci/check_cpp_style.sh[0m
+2026-04-05T16:57:02.0992676Z shell: /usr/bin/bash -e {0}
+2026-04-05T16:57:02.0992945Z ##[endgroup]
+2026-04-05T16:57:04.2742933Z src/jackknife_rank_full.cpp:50:39: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2759725Z Rcpp::List rustat_jackknife_rank_full(
+2026-04-05T16:57:04.2760330Z                                       ^
+2026-04-05T16:57:04.2761108Z src/jackknife_rank_full.cpp:51:24: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2761934Z     const IntegerMatrix& ranks,
+2026-04-05T16:57:04.2762327Z                        ^
+2026-04-05T16:57:04.2763022Z src/jackknife_rank_full.cpp:51:25: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2764166Z     const IntegerMatrix& ranks,
+2026-04-05T16:57:04.2764538Z                         ^
+2026-04-05T16:57:04.2765271Z src/jackknife_rank_full.cpp:51:32: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2766059Z     const IntegerMatrix& ranks,
+2026-04-05T16:57:04.2766426Z                                ^
+2026-04-05T16:57:04.2767142Z src/jackknife_rank_full.cpp:52:24: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2767946Z     const NumericMatrix& PHI,
+2026-04-05T16:57:04.2768812Z                        ^
+2026-04-05T16:57:04.2769505Z src/jackknife_rank_full.cpp:52:25: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2770304Z     const NumericMatrix& PHI,
+2026-04-05T16:57:04.2770665Z                         ^
+2026-04-05T16:57:04.2771355Z src/jackknife_rank_full.cpp:52:30: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2772168Z     const NumericMatrix& PHI,
+2026-04-05T16:57:04.2772531Z                              ^
+2026-04-05T16:57:04.2773220Z src/jackknife_rank_full.cpp:53:24: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2773998Z     const NumericVector& wn,
+2026-04-05T16:57:04.2774352Z                        ^
+2026-04-05T16:57:04.2775010Z src/jackknife_rank_full.cpp:53:25: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2775797Z     const NumericVector& wn,
+2026-04-05T16:57:04.2776145Z                         ^
+2026-04-05T16:57:04.2776821Z src/jackknife_rank_full.cpp:53:29: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2777598Z     const NumericVector& wn,
+2026-04-05T16:57:04.2777963Z                             ^
+2026-04-05T16:57:04.2778909Z src/jackknife_rank_full.cpp:54:24: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2779713Z     const NumericVector& wnm1
+2026-04-05T16:57:04.2780081Z                        ^
+2026-04-05T16:57:04.2780757Z src/jackknife_rank_full.cpp:54:25: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2781533Z     const NumericVector& wnm1
+2026-04-05T16:57:04.2781868Z                         ^
+2026-04-05T16:57:04.2782510Z src/jackknife_rank_full.cpp:54:30: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2783244Z     const NumericVector& wnm1
+2026-04-05T16:57:04.2783585Z                              ^
+2026-04-05T16:57:04.2784249Z src/jackknife_rank_full.cpp:71:32: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2785068Z       int r0 = ranks(i, t) - 1;   // 0-based rank
+2026-04-05T16:57:04.2785512Z                                ^
+2026-04-05T16:57:04.2786204Z src/jackknife_rank_full.cpp:82:19: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2787056Z   std::vector<int>    ord(n);
+2026-04-05T16:57:04.2787408Z                   ^
+2026-04-05T16:57:04.2788704Z src/jackknife_rank_full.cpp:83:28: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2789813Z   std::vector<double> P(n);   // P[r0]: prefix sum for 0-based rank r0
+2026-04-05T16:57:04.2790394Z                            ^
+2026-04-05T16:57:04.2791112Z src/jackknife_rank_full.cpp:84:28: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2792088Z   std::vector<double> S(n);   // S[r0]: shifted suffix sum for 0-based rank r0
+2026-04-05T16:57:04.2792683Z                            ^
+2026-04-05T16:57:04.2793381Z src/jackknife_rank_full.cpp:91:58: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2794276Z     std::sort(ord.begin(), ord.end(), [&](int a, int b) {
+2026-04-05T16:57:04.2794814Z                                                          ^
+2026-04-05T16:57:04.2795604Z src/jackknife_rank_full.cpp:92:40: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2796590Z       return ranks(a, t) < ranks(b, t);
+2026-04-05T16:57:04.2797010Z                                        ^
+2026-04-05T16:57:04.2797758Z src/jackknife_rank_full.cpp:126:34: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2798820Z         int ri = ranks(i, t) - 1;   // 0-based rank
+2026-04-05T16:57:04.2799271Z                                  ^
+2026-04-05T16:57:04.2800049Z src/jackknife_rank_full.cpp:129:18: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2800903Z       (void)base;  // suppress unused-variable warning
+2026-04-05T16:57:04.2801375Z                  ^
+2026-04-05T16:57:04.2802036Z src/jackknife_rank_full.cpp:135:23: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2802854Z   return List::create(
+2026-04-05T16:57:04.2803191Z                       ^
+2026-04-05T16:57:04.2803943Z src/jackknife_rank_full.cpp:136:16: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2804732Z     _["theta0"]    = theta0,
+2026-04-05T16:57:04.2805075Z                ^
+2026-04-05T16:57:04.2805744Z src/jackknife_rank_full.cpp:136:29: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2806530Z     _["theta0"]    = theta0,
+2026-04-05T16:57:04.2806887Z                             ^
+2026-04-05T16:57:04.2807605Z src/jackknife_rank_full.cpp:137:26: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2808625Z     _["theta_loo"] = loo,
+2026-04-05T16:57:04.2808970Z                          ^
+2026-04-05T16:57:04.2809631Z src/jackknife_rank_full.cpp:138:14: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2810531Z     _["info"]      = List::create(_["n"] = n, _["m"] = m, _["q"] = q)
+2026-04-05T16:57:04.2811019Z              ^
+2026-04-05T16:57:04.2811658Z src/jackknife_rank_full.cpp:138:70: error: code should be clang-formatted [-Wclang-format-violations]
+2026-04-05T16:57:04.2812543Z     _["info"]      = List::create(_["n"] = n, _["m"] = m, _["q"] = q)
+2026-04-05T16:57:04.2813107Z                                                                      ^
+2026-04-05T16:57:04.3152278Z ##[error]Process completed with exit code 1.
+2026-04-05T16:57:04.3223409Z ##[group]Run if [[ "failure" == "success" ]]; then
+2026-04-05T16:57:04.3223775Z [36;1mif [[ "failure" == "success" ]]; then[0m
+2026-04-05T16:57:04.3224093Z [36;1m  echo "had_failure=false" >> "$GITHUB_OUTPUT"[0m
+2026-04-05T16:57:04.3224364Z [36;1melse[0m
+2026-04-05T16:57:04.3224581Z [36;1m  echo "had_failure=true" >> "$GITHUB_OUTPUT"[0m
+2026-04-05T16:57:04.3224845Z [36;1mfi[0m
+2026-04-05T16:57:04.3252208Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-04-05T16:57:04.3252541Z ##[endgroup]
+2026-04-05T16:57:04.3455867Z Post job cleanup.
+2026-04-05T16:57:04.4403455Z [command]/usr/bin/git version
+2026-04-05T16:57:04.4443309Z git version 2.53.0
+2026-04-05T16:57:04.4489525Z Temporarily overriding HOME='/home/runner/work/_temp/0ce7ab97-eb46-4841-86ab-9035dff557d7' before making global git config changes
+2026-04-05T16:57:04.4491877Z Adding repository directory to the temporary git global config as a safe directory
+2026-04-05T16:57:04.4496061Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/RdistNN/RdistNN
+2026-04-05T16:57:04.4541020Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-04-05T16:57:04.4581088Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-04-05T16:57:04.4837044Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-04-05T16:57:04.4889356Z http.https://github.com/.extraheader
+2026-04-05T16:57:04.4916715Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-04-05T16:57:04.4970194Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-04-05T16:57:04.5347774Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-04-05T16:57:04.5385065Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-04-05T16:57:04.5723149Z Evaluate and set job outputs
+2026-04-05T16:57:04.5729239Z Set output 'had_failure'
+2026-04-05T16:57:04.5731090Z Cleaning up orphan processes
+2026-04-05T16:57:04.5992917Z ##[warning]Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
