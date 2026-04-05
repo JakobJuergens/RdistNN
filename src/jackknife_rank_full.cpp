@@ -47,12 +47,10 @@ using namespace Rcpp;
 //   info      : List(n, m, q)
 //
 // [[Rcpp::export]]
-Rcpp::List rustat_jackknife_rank_full(
-    const IntegerMatrix& ranks,
-    const NumericMatrix& PHI,
-    const NumericVector& wn,
-    const NumericVector& wnm1
-) {
+Rcpp::List rustat_jackknife_rank_full(const IntegerMatrix& ranks,
+                                      const NumericMatrix& PHI,
+                                      const NumericVector& wn,
+                                      const NumericVector& wnm1) {
   const int n = ranks.nrow();
   const int m = ranks.ncol();
   const int q = PHI.ncol();
@@ -68,7 +66,7 @@ Rcpp::List rustat_jackknife_rank_full(
   NumericMatrix theta0(q, m);
   for (int t = 0; t < m; ++t) {
     for (int i = 0; i < n; ++i) {
-      int r0 = ranks(i, t) - 1;   // 0-based rank
+      int r0 = ranks(i, t) - 1; // 0-based rank
       double wt = wn[r0];
       for (int qq = 0; qq < q; ++qq)
         theta0(qq, t) += wt * PHI(i, qq);
@@ -79,18 +77,16 @@ Rcpp::List rustat_jackknife_rank_full(
   NumericVector loo((R_xlen_t)n * q * m);
 
   // Per-target working buffers (reused across targets and signal dims)
-  std::vector<int>    ord(n);
-  std::vector<double> P(n);   // P[r0]: prefix sum for 0-based rank r0
-  std::vector<double> S(n);   // S[r0]: shifted suffix sum for 0-based rank r0
+  std::vector<int> ord(n);
+  std::vector<double> P(n); // P[r0]: prefix sum for 0-based rank r0
+  std::vector<double> S(n); // S[r0]: shifted suffix sum for 0-based rank r0
 
   for (int t = 0; t < m; ++t) {
 
     // Build ord: ord[r0] = 0-based obs index at 0-based rank r0.
     // Sort observation indices by their rank in column t.
     std::iota(ord.begin(), ord.end(), 0);
-    std::sort(ord.begin(), ord.end(), [&](int a, int b) {
-      return ranks(a, t) < ranks(b, t);
-    });
+    std::sort(ord.begin(), ord.end(), [&](int a, int b) { return ranks(a, t) < ranks(b, t); });
 
     for (int qq = 0; qq < q; ++qq) {
 
@@ -123,18 +119,15 @@ Rcpp::List rustat_jackknife_rank_full(
       // Correct flat index: i + n*qq + n*q*t
       R_xlen_t offset = (R_xlen_t)n * qq + (R_xlen_t)n * q * t;
       for (int i = 0; i < n; ++i) {
-        int ri = ranks(i, t) - 1;   // 0-based rank
+        int ri = ranks(i, t) - 1; // 0-based rank
         loo[offset + i] = P[ri] + S[ri];
       }
-      (void)base;  // suppress unused-variable warning
+      (void)base; // suppress unused-variable warning
     }
   }
 
   loo.attr("dim") = IntegerVector::create(n, q, m);
 
-  return List::create(
-    _["theta0"]    = theta0,
-    _["theta_loo"] = loo,
-    _["info"]      = List::create(_["n"] = n, _["m"] = m, _["q"] = q)
-  );
+  return List::create(_["theta0"] = theta0, _["theta_loo"] = loo,
+                      _["info"] = List::create(_["n"] = n, _["m"] = m, _["q"] = q));
 }
