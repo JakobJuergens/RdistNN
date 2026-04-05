@@ -87,9 +87,8 @@ jobs:
     needs: [test-coverage]
     uses: ./.github/workflows/harvest-failure-logs.yml
     with:
-      logs_dir: GH_logs
+      logs_dir: GH_logs/test-coverage
       artifact_pattern: debug-test-coverage-*
-      artifact_subdir: test-coverage
       harvested_artifact_name: harvested-test-coverage-logs
       commit_logs: ${{ github.event_name != 'pull_request' }}
     secrets: inherit
