@@ -96,13 +96,12 @@ jobs:
           retention-days: 14
 
   save_logs:
-    if: ${{ needs.zip-and-commit.result != 'success' && github.actor != 'github-actions[bot]' }}
+    if: ${{ always() && needs.zip-and-commit.result != 'success' && github.actor != 'github-actions[bot]' }}
     needs: [zip-and-commit]
     uses: ./.github/workflows/harvest-failure-logs.yml
     with:
-      logs_dir: GH_logs
+      logs_dir: GH_logs/package-snapshot
       artifact_pattern: debug-package-snapshot-*
-      artifact_subdir: package-snapshot
       harvested_artifact_name: harvested-package-snapshot-logs
       commit_logs: true
     secrets: inherit

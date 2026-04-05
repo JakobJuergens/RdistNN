@@ -69,9 +69,8 @@ jobs:
     needs: [R-CMD-check]
     uses: ./.github/workflows/harvest-failure-logs.yml
     with:
-      logs_dir: GH_logs
+      logs_dir: GH_logs/rcmdcheck
       artifact_pattern: debug-rcmdcheck-*
-      artifact_subdir: rcmdcheck
       harvested_artifact_name: harvested-rcmdcheck-logs
       commit_logs: ${{ github.event_name != 'pull_request' }}
     secrets: inherit
