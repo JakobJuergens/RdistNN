@@ -1,0 +1,32 @@
+Package: RdistNN
+Title: Generalized U-Statistics and Conditional Z-Estimation with
+        Pluggable Scores
+Version: 0.1.0
+Authors@R: 
+    person(given = "Jakob", family = "Juergens", email = "info@jakobjuergens.com", role = c("aut", "cre"))
+Author: Jakob Juergens [aut, cre]
+Maintainer: Jakob Juergens <info@jakobjuergens.com>
+Description: Fast, extensible framework for generalized U-statistics and
+    distance-localized Z-estimation with pluggable distance, rank-weight, and
+    score interfaces. Includes user-level wrappers for local nonparametric
+    regression, CATE estimation, and localized PLQR orthogonal moments via DNN
+    rank weights. Uses compiled C++ fast paths when available and falls back to
+    robust batched R evaluation otherwise, with variance estimation via delete-1
+    jackknife.
+License: GPL (>= 3)
+Depends: R (>= 4.1.0)
+Imports: stats, Rcpp
+LinkingTo: Rcpp
+Suggests: nleqslv, minpack.lm, optimx, nloptr, quantreg, pkgbuild,
+        bench, lintr, styler, knitr, rmarkdown, methods, testthat (>=
+        3.0.0), grf, future, future.apply
+SystemRequirements: C++17
+Encoding: UTF-8
+ByteCompile: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+URL: https://JakobJuergens.github.io/RdistNN/
+Config/testthat/edition: 3
+VignetteBuilder: knitr
+NeedsCompilation: yes
+Packaged: 2026-04-05 17:56:45 UTC; runner

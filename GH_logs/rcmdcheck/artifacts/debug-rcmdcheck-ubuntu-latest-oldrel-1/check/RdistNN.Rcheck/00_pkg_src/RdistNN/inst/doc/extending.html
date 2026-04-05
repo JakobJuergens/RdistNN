@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Extending RdistNN: custom distances, rank weights, and scores</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Extending RdistNN: custom distances, rank
+weights, and scores</h1>
+
+
+
+<div id="why-the-package-is-modular" class="section level2">
+<h2>Why The Package Is Modular</h2>
+<p><code>RdistNN</code> is built in layers:</p>
+<ul>
+<li>ranking: turn <code>X</code> and <code>x0</code> / <code>X0</code>
+into distances, orders, and ranks;</li>
+<li>weighting: turn ranks into localization weights;</li>
+<li>scoring: evaluate a kernel or estimating function on subsets of the
+data;</li>
+<li>wrappers: combine the pieces into user-facing workflows such as
+<code>np_dnn()</code>, <code>cate_dnn()</code>, or
+<code>plqr_dnn()</code>.</li>
+</ul>
+<p>That separation is deliberate. Most new methods only need to replace
+one layer.</p>
+<p>As a rule of thumb:</p>
+<ul>
+<li>use <code>as_distance()</code>, <code>as_rank_weight()</code>, or
+<code>as_score()</code> for quick scalar prototypes;</li>
+<li>use <code>new_distance()</code>, <code>new_rank_weight()</code>, or
+<code>new_score()</code> when you need explicit batch evaluation,
+reusable setup context, registration, or parameter-aware score
+derivatives.</li>
+</ul>
+</div>
+<div id="choose-the-right-extension-point" class="section level2">
+<h2>Choose The Right Extension Point</h2>
+<ul>
+<li>If you want a different notion of closeness, implement a custom
+distance or a custom ranking provider.</li>
+<li>If you like the ranks but want a different localization profile,
+implement a custom rank-weight rule.</li>
+<li>If the localization stays fixed but the target moment changes,
+implement a custom score.</li>
+<li>If you already have distances, orders, or ranks from another engine,
+pass them directly into <code>weights_matrix()</code> instead of
+rebuilding that layer inside <code>RdistNN</code>.</li>
+</ul>
+</div>
+<div id="custom-distances" class="section level2">
+<h2>1) Custom Distances</h2>
+<div id="quick-prototype-with-as_distance" class="section level3">
+<h3>Quick Prototype With <code>as_distance()</code></h3>
+<p>Use <code>as_distance()</code> when a simple function
+<code>(X, x0, ctx) -&gt; numeric(n)</code> is enough.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co"># L-infinity distance</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>linf <span class="ot">&lt;-</span> <span class="fu">as_distance</span>(</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>  <span class="cf">function</span>(X, x0, <span class="at">ctx =</span> <span class="cn">NULL</span>) {</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>    <span class="fu">apply</span>(<span class="fu">abs</span>(X <span class="sc">-</span> <span class="fu">matrix</span>(x0, <span class="fu">nrow</span>(X), <span class="fu">ncol</span>(X), <span class="at">byrow =</span> <span class="cn">TRUE</span>)), <span class="dv">1</span><span class="dt">L</span>, max)</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>  },</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>  <span class="at">name =</span> <span class="st">&quot;linf&quot;</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>)</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="fu">register_distance</span>(<span class="st">&quot;linf&quot;</span>, linf)</span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="fu">distance_names</span>()</span></code></pre></div>
+<p>You can test the distance directly before registering it:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(<span class="dv">40</span>), <span class="dv">20</span>, <span class="dv">2</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>x0 <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="fu">distance_eval</span>(linf, X, x0)</span></code></pre></div>
+</div>
+<div id="reusable-distance-with-new_distance-setup-and-eval_batch" class="section level3">
+<h3>Reusable Distance With <code>new_distance()</code>,
+<code>setup()</code>, and <code>eval_batch()</code></h3>
+<p>Use <code>new_distance()</code> when you want to precompute context
+once on <code>X</code> and reuse it across many targets.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>scaled_l2 <span class="ot">&lt;-</span> <span class="fu">new_distance</span>(</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="at">name =</span> <span class="st">&quot;scaled_l2_demo&quot;</span>,</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="at">setup =</span> <span class="cf">function</span>(X) {</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>    scale <span class="ot">&lt;-</span> <span class="fu">apply</span>(X, <span class="dv">2</span><span class="dt">L</span>, stats<span class="sc">::</span>sd)</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>    scale[<span class="sc">!</span><span class="fu">is.finite</span>(scale) <span class="sc">|</span> scale <span class="sc">&lt;=</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>    <span class="fu">list</span>(<span class="at">scale =</span> scale)</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  },</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>  <span class="at">eval_batch =</span> <span class="cf">function</span>(X, X0, ctx) {</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>    Xs <span class="ot">&lt;-</span> <span class="fu">sweep</span>(X, <span class="dv">2</span><span class="dt">L</span>, ctx<span class="sc">$</span>scale, <span class="st">&quot;/&quot;</span>)</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>    X0s <span class="ot">&lt;-</span> <span class="fu">sweep</span>(X0, <span class="dv">2</span><span class="dt">L</span>, ctx<span class="sc">$</span>scale, <span class="st">&quot;/&quot;</span>)</span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>    <span class="fu">vapply</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(X0s)), <span class="cf">function</span>(j) {</span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>      <span class="fu">rowSums</span>((Xs <span class="sc">-</span> <span class="fu">matrix</span>(X0s[j, ], <span class="fu">nrow</span>(Xs), <span class="fu">ncol</span>(Xs), <span class="at">byrow =</span> <span class="cn">TRUE</span>))<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>    }, <span class="fu">numeric</span>(<span class="fu">nrow</span>(Xs)))</span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>  }</span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>)</span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a></span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(<span class="dv">80</span>), <span class="dv">40</span>, <span class="dv">2</span>)</span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a>X0 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(<span class="dv">12</span>), <span class="dv">6</span>, <span class="dv">2</span>)</span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a></span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a>ctx_dist <span class="ot">&lt;-</span> scaled_l2<span class="sc">$</span><span class="fu">setup</span>(X)</span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a>D <span class="ot">&lt;-</span> <span class="fu">distance_eval_batch</span>(scaled_l2, X, X0, <span class="at">ctx =</span> ctx_dist)</span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="fu">dim</span>(D)</span></code></pre></div>
+<p>When you call <code>weights_matrix()</code> with a distance spec and
+<code>ctx = NULL</code>, <code>RdistNN</code> automatically uses the
+distance-side <code>setup(X)</code> if it exists.</p>
+</div>
+</div>
+<div id="custom-rank-weight-rules" class="section level2">
+<h2>2) Custom Rank-Weight Rules</h2>
+<p>Rank weights only see integer ranks, not raw distances. Rank
+<code>1</code> means “closest observation,” rank <code>2</code> means
+“second closest,” and so on.</p>
+<p>That separation is useful because you can change the localization
+profile without changing the ranking logic.</p>
+<div id="quick-prototype-with-as_rank_weight" class="section level3">
+<h3>Quick Prototype With <code>as_rank_weight()</code></h3>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>rw_inv <span class="ot">&lt;-</span> <span class="fu">as_rank_weight</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="cf">function</span>(ranks, <span class="at">ctx =</span> <span class="cn">NULL</span>) {</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>    w <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">/</span> <span class="fu">as.numeric</span>(ranks)</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>    w <span class="sc">/</span> <span class="fu">sum</span>(w)</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  },</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">name =</span> <span class="st">&quot;inv_rank&quot;</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>)</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="fu">register_rank</span>(<span class="st">&quot;inv_rank&quot;</span>, rw_inv)</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="fu">rank_names</span>()</span></code></pre></div>
+</div>
+<div id="a-compact-support-rule" class="section level3">
+<h3>A Compact-Support Rule</h3>
+<p>This example keeps only the first <code>m</code> closest observations
+in rank order. That is a generic finite-support rule. It is not the same
+thing as exact DNN.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>make_top_m <span class="ot">&lt;-</span> <span class="cf">function</span>(m) {</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="fu">length</span>(m) <span class="sc">==</span> <span class="dv">1</span><span class="dt">L</span>, m <span class="sc">&gt;=</span> <span class="dv">1</span><span class="dt">L</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="fu">as_rank_weight</span>(</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>    <span class="cf">function</span>(ranks) {</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>      keep <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(ranks <span class="sc">&lt;=</span> m)</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>      keep <span class="sc">/</span> <span class="fu">sum</span>(keep)</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>    },</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>    <span class="at">name =</span> <span class="fu">paste0</span>(<span class="st">&quot;top_&quot;</span>, m)</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>  )</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>}</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>rw_top10 <span class="ot">&lt;-</span> <span class="fu">make_top_m</span>(<span class="dv">10</span><span class="dt">L</span>)</span></code></pre></div>
+</div>
+<div id="batched-rank-weights-and-shared-ctx" class="section level3">
+<h3>Batched Rank Weights and Shared <code>ctx</code></h3>
+<p>For performance, prefer <code>eval_batch()</code> once the prototype
+is stable.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>rw_exp <span class="ot">&lt;-</span> <span class="fu">new_rank_weight</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="at">name =</span> <span class="st">&quot;exp_decay&quot;</span>,</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="at">eval_batch =</span> <span class="cf">function</span>(R, <span class="at">ctx =</span> <span class="cn">NULL</span>) {</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>    lambda <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(ctx) <span class="sc">||</span> <span class="fu">is.null</span>(ctx<span class="sc">$</span>lambda)) <span class="fl">0.25</span> <span class="cf">else</span> ctx<span class="sc">$</span>lambda</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>    W <span class="ot">&lt;-</span> <span class="fu">exp</span>(<span class="sc">-</span>lambda <span class="sc">*</span> (R <span class="sc">-</span> <span class="dv">1</span><span class="dt">L</span>))</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>    <span class="fu">sweep</span>(W, <span class="dv">2</span><span class="dt">L</span>, <span class="fu">colSums</span>(W), <span class="st">&quot;/&quot;</span>)</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  }</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>)</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>R <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="fu">c</span>(<span class="dv">2</span><span class="dt">L</span>, <span class="dv">1</span><span class="dt">L</span>, <span class="dv">3</span><span class="dt">L</span>, <span class="dv">4</span><span class="dt">L</span>, <span class="dv">5</span><span class="dt">L</span>))</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="fu">rank_weight_eval_batch</span>(rw_exp, R, <span class="at">ctx =</span> <span class="fu">list</span>(<span class="at">lambda =</span> <span class="fl">0.5</span>))</span></code></pre></div>
+<p>At the top level, <code>weights_matrix()</code> passes any supplied
+<code>ctx</code> through to both the ranking and weight evaluators. If
+both sides need context, build one shared list.</p>
+<p>Also note one current API detail:
+<code>new_rank_weight(..., setup = ...)</code> is a low-level hook, but
+<code>weights_matrix()</code> does not automatically call
+rank-weight-side <code>setup()</code> for you. In practice, the cleanest
+high-level patterns are:</p>
+<ul>
+<li>close over fixed tuning parameters inside the constructor; or</li>
+<li>build a shared <code>ctx</code> object yourself and pass it into
+<code>weights_matrix()</code>.</li>
+</ul>
+</div>
+</div>
+<div id="put-ranking-and-weighting-together-with-weights_matrix" class="section level2">
+<h2>3) Put Ranking And Weighting Together With
+<code>weights_matrix()</code></h2>
+<p><code>weights_matrix()</code> is the main modular entry point. The
+<code>ranking</code> argument can be:</p>
+<ul>
+<li>a distance spec or registered distance name;</li>
+<li>a function <code>(X, X0, ctx)</code> that returns <code>dx</code>,
+<code>ord</code>, or <code>ranks</code>;</li>
+<li>a precomputed list with <code>dx</code>, <code>ord</code>, or
+<code>ranks</code>;</li>
+<li>a ranks matrix directly.</li>
+</ul>
+<p>That makes it the right place to integrate custom ranking code,
+precomputed distances, or external nearest-neighbor engines.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">80</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="dv">2</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(n <span class="sc">*</span> p), n, p)</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>X0 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(<span class="dv">4</span> <span class="sc">*</span> p), <span class="dv">4</span>, p)</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="co"># If only the distance needs setup, leave ctx = NULL and let the distance</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co"># auto-setup path run.</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>out1 <span class="ot">&lt;-</span> <span class="fu">weights_matrix</span>(</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>  <span class="at">X =</span> X,</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>  <span class="at">X0 =</span> X0,</span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>  <span class="at">ranking =</span> scaled_l2,</span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>  <span class="at">weight =</span> rw_top10,</span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>  <span class="at">return =</span> <span class="fu">c</span>(<span class="st">&quot;W&quot;</span>, <span class="st">&quot;dx&quot;</span>, <span class="st">&quot;ord&quot;</span>, <span class="st">&quot;ranks&quot;</span>)</span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>)</span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a></span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a><span class="co"># If both the distance and the weight need context, build one shared list.</span></span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a>ctx_both <span class="ot">&lt;-</span> <span class="fu">c</span>(scaled_l2<span class="sc">$</span><span class="fu">setup</span>(X), <span class="fu">list</span>(<span class="at">lambda =</span> <span class="fl">0.35</span>))</span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a>out2 <span class="ot">&lt;-</span> <span class="fu">weights_matrix</span>(</span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a>  <span class="at">X =</span> X,</span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a>  <span class="at">X0 =</span> X0,</span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a>  <span class="at">ranking =</span> scaled_l2,</span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a>  <span class="at">weight =</span> rw_exp,</span>
+<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a>  <span class="at">ctx =</span> ctx_both,</span>
+<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a>  <span class="at">return =</span> <span class="fu">c</span>(<span class="st">&quot;W&quot;</span>, <span class="st">&quot;dx&quot;</span>, <span class="st">&quot;ord&quot;</span>, <span class="st">&quot;ranks&quot;</span>)</span>
+<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a>)</span>
+<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a></span>
+<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a><span class="fu">dim</span>(out2<span class="sc">$</span>W)</span></code></pre></div>
+<p>For debugging custom ranking behavior, request the intermediate
+objects:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>out_dbg <span class="ot">&lt;-</span> <span class="fu">weights_matrix</span>(</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="at">X =</span> X,</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="at">X0 =</span> X0,</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="at">ranking =</span> scaled_l2,</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  <span class="at">weight =</span> rw_exp,</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>  <span class="at">ctx =</span> ctx_both,</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>  <span class="at">return =</span> <span class="fu">c</span>(<span class="st">&quot;dx&quot;</span>, <span class="st">&quot;ord&quot;</span>, <span class="st">&quot;ranks&quot;</span>, <span class="st">&quot;W&quot;</span>)</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>)</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="fu">head</span>(out_dbg<span class="sc">$</span>dx[, <span class="dv">1</span>])</span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="fu">head</span>(out_dbg<span class="sc">$</span>ord[, <span class="dv">1</span>])</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="fu">head</span>(out_dbg<span class="sc">$</span>ranks[, <span class="dv">1</span>])</span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="fu">head</span>(out_dbg<span class="sc">$</span>W[, <span class="dv">1</span>])</span></code></pre></div>
+</div>
+<div id="custom-scores" class="section level2">
+<h2>4) Custom Scores</h2>
+<p>The score layer is separate from localization. A score describes what
+happens once a subset of observations has been selected.</p>
+<div id="quick-prototype-with-as_score" class="section level3">
+<h3>Quick Prototype With <code>as_score()</code></h3>
+<p>Use <code>as_score()</code> for a simple kernel with fixed order
+<code>s</code>.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>sc_avg2 <span class="ot">&lt;-</span> <span class="fu">as_score</span>(</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  <span class="cf">function</span>(idxs, data, <span class="at">ctx =</span> <span class="cn">NULL</span>, <span class="at">rng =</span> <span class="cn">NULL</span>) {</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>    <span class="fu">mean</span>(data<span class="sc">$</span>Y[idxs])</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  },</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="at">s =</span> <span class="dv">2</span><span class="dt">L</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>  <span class="at">name =</span> <span class="st">&quot;avg2&quot;</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>)</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="fu">register_score</span>(sc_avg2)</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="fu">list_scores</span>()</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a></span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">Y =</span> <span class="fu">rnorm</span>(<span class="dv">10</span>))</span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>subs <span class="ot">&lt;-</span> <span class="fu">rbind</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="dt">L</span>, <span class="dv">2</span><span class="dt">L</span>), <span class="fu">c</span>(<span class="dv">4</span><span class="dt">L</span>, <span class="dv">8</span><span class="dt">L</span>), <span class="fu">c</span>(<span class="dv">3</span><span class="dt">L</span>, <span class="dv">9</span><span class="dt">L</span>))</span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a><span class="fu">score_eval_batch</span>(sc_avg2, <span class="at">subs =</span> subs, <span class="at">data =</span> df)</span></code></pre></div>
+</div>
+<div id="reusable-score-with-new_score-and-setup" class="section level3">
+<h3>Reusable Score With <code>new_score()</code> and
+<code>setup()</code></h3>
+<p>Use <code>setup()</code> when the score repeatedly accesses the same
+data columns or transformed objects.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>sc_pair_gap <span class="ot">&lt;-</span> <span class="fu">new_score</span>(</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  <span class="at">name =</span> <span class="st">&quot;pair_gap_sq&quot;</span>,</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">order =</span> <span class="dv">2</span><span class="dt">L</span>,</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="at">setup =</span> <span class="cf">function</span>(data, ...) <span class="fu">list</span>(<span class="at">y =</span> <span class="fu">as.numeric</span>(data<span class="sc">$</span>Y)),</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  <span class="at">eval_batch =</span> <span class="cf">function</span>(subs, data, ctx, <span class="at">rng =</span> <span class="cn">NULL</span>) {</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>    (ctx<span class="sc">$</span>y[subs[, <span class="dv">1</span><span class="dt">L</span>]] <span class="sc">-</span> ctx<span class="sc">$</span>y[subs[, <span class="dv">2</span><span class="dt">L</span>]])<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>  }</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>)</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">Y =</span> <span class="fu">rnorm</span>(<span class="dv">10</span>))</span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>ctx_score <span class="ot">&lt;-</span> <span class="fu">score_setup</span>(sc_pair_gap, df)</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>subs <span class="ot">&lt;-</span> <span class="fu">rbind</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="dt">L</span>, <span class="dv">2</span><span class="dt">L</span>), <span class="fu">c</span>(<span class="dv">2</span><span class="dt">L</span>, <span class="dv">5</span><span class="dt">L</span>), <span class="fu">c</span>(<span class="dv">3</span><span class="dt">L</span>, <span class="dv">4</span><span class="dt">L</span>))</span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a><span class="fu">score_eval_batch</span>(sc_pair_gap, subs, <span class="at">data =</span> df, <span class="at">ctx =</span> ctx_score)</span></code></pre></div>
+</div>
+<div id="parameter-aware-scores-and-derivatives-with-score_diff_path" class="section level3">
+<h3>Parameter-Aware Scores And Derivatives With
+<code>score_diff_path()</code></h3>
+<p>If your score depends on a parameter vector, implement
+<code>eval_param</code> or an <code>eval</code> that accepts
+<code>theta</code>, then use <code>score_diff_path()</code> to get
+reusable value and gradient closures.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>sc_affine <span class="ot">&lt;-</span> <span class="fu">new_score</span>(</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  <span class="at">name =</span> <span class="st">&quot;affine_order1&quot;</span>,</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="at">order =</span> <span class="dv">1</span><span class="dt">L</span>,</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  <span class="at">eval_param =</span> <span class="cf">function</span>(idxs, data, theta, ctx, <span class="at">rng =</span> <span class="cn">NULL</span>) {</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>    theta[<span class="dv">1</span>] <span class="sc">*</span> data<span class="sc">$</span>Y[idxs] <span class="sc">+</span> theta[<span class="dv">2</span>]</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>  },</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>  <span class="at">grad =</span> <span class="cf">function</span>(idxs, data, theta, ctx, <span class="at">rng =</span> <span class="cn">NULL</span>) {</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>    <span class="fu">c</span>(data<span class="sc">$</span>Y[idxs], <span class="dv">1</span>)</span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>  }</span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>)</span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a></span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">Y =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">4</span>))</span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a>path <span class="ot">&lt;-</span> <span class="fu">score_diff_path</span>(sc_affine, <span class="at">data =</span> df, <span class="at">method =</span> <span class="st">&quot;auto&quot;</span>)</span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a></span>
+<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a>path<span class="sc">$</span><span class="fu">value</span>(<span class="dv">2</span><span class="dt">L</span>, <span class="at">theta =</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="dv">1</span>))</span>
+<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a>path<span class="sc">$</span><span class="fu">grad</span>(<span class="dv">2</span><span class="dt">L</span>, <span class="at">theta =</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="dv">1</span>))</span></code></pre></div>
+<p>If you do not provide an analytic gradient,
+<code>score_diff_path(..., method = &quot;fd&quot;)</code> uses finite differences
+based on <code>eval_param</code> / <code>eval_param_batch</code>.</p>
+</div>
+</div>
+<div id="a-minimal-custom-estimator-pattern" class="section level2">
+<h2>5) A Minimal Custom Estimator Pattern</h2>
+<p>The modular API is meant to let you assemble your own localized
+estimators without rewriting the whole package. A minimal pattern
+is:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>my_local_mean <span class="ot">&lt;-</span> <span class="cf">function</span>(X, x0, y, <span class="at">ranking =</span> <span class="st">&quot;l2&quot;</span>, weight) {</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>  W <span class="ot">&lt;-</span> <span class="fu">weights_matrix</span>(</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>    <span class="at">X =</span> X,</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>    <span class="at">x0 =</span> x0,</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>    <span class="at">ranking =</span> ranking,</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>    <span class="at">weight =</span> weight,</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>    <span class="at">return =</span> <span class="st">&quot;W&quot;</span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>  )<span class="sc">$</span>W[, <span class="dv">1</span><span class="dt">L</span>]</span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a>  <span class="fu">sum</span>(W <span class="sc">*</span> y)</span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a>}</span></code></pre></div>
+<p>For more complicated estimators, replace the scalar <code>y</code>
+contribution with your own score or estimating equation.</p>
+</div>
+<div id="validation-and-debugging-checklist" class="section level2">
+<h2>6) Validation And Debugging Checklist</h2>
+<ul>
+<li>Start by testing the low-level evaluator directly:
+<code>distance_eval()</code>, <code>distance_eval_batch()</code>,
+<code>rank_weight_eval()</code>, <code>rank_weight_eval_batch()</code>,
+<code>score_eval()</code>, or <code>score_eval_batch()</code>.</li>
+<li>Remember that rank weights receive ranks, not distances. Smaller
+rank means closer observation.</li>
+<li>Prototype with <code>as_*()</code> first. Once the logic is stable,
+move to <code>new_*()</code> with <code>eval_batch()</code> for
+speed.</li>
+<li>Use
+<code>weights_matrix(return = c(&quot;dx&quot;, &quot;ord&quot;, &quot;ranks&quot;, &quot;W&quot;))</code> to
+debug ranking and tie handling before worrying about the downstream
+estimator.</li>
+<li>If both ranking and weighting need context, create it explicitly and
+pass it through <code>ctx</code>.</li>
+<li>For scores, check <code>score_order()</code> and
+<code>score_setup()</code> before wiring the score into root finding,
+optimization, or jackknife code.</li>
+<li>For parameter-aware scores, test <code>score_diff_path()</code> in
+isolation before embedding it in a solver.</li>
+<li>Register names only after the underlying object works directly. The
+registry is a convenience layer, not a debugging tool.</li>
+</ul>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

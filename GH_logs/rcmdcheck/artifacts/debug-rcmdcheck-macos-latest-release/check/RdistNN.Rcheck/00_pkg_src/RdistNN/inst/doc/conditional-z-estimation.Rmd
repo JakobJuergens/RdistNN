@@ -1,0 +1,119 @@
+---
+title: "Conditional Z-Estimation with DNN weights"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Conditional Z-Estimation with DNN weights}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(RdistNN)
+set.seed(1)
+```
+
+## Overview
+
+This vignette shows how DNN localization can be used in three user-level
+estimators:
+
+- `np_dnn()` for localized conditional means
+- `cate_dnn()` for conditional average treatment effects
+- `plqr_dnn()` for localized orthogonal moments in PLQR
+
+Each wrapper supports:
+
+- matrix and data-frame interfaces
+- DNN method choice (`"exact"` or `"asymp"`)
+- delete-1 jackknife SEs (`"fast"`, `"loo"`, `"none"`)
+
+## Local Mean (`np_dnn`)
+
+```{r np, eval=FALSE}
+demo_np <- np_demo_data(n = 250, p = 2, design = "sinusoidal", seed = 1)
+
+fit_np <- np_dnn(
+  data = demo_np$data,
+  x_cols = c("X1", "X2"),
+  y_col = "Y",
+  x0 = c(0, 0),
+  method = "exact",
+  k = 2L, s = 3L,
+  se = TRUE,
+  jackknife = "fast",
+  return = c("W", "ess")
+)
+
+fit_np$mu
+fit_np$se
+```
+
+## CATE (`cate_dnn`)
+
+`cate_dnn()` supports either:
+
+- Full AIPW nuisance inputs (`m0`, `m1`, `e`)
+- Robinson-form nuisance inputs (`m`, `e`)
+- Direct `pseudo_outcome`
+
+```{r cate, eval=FALSE}
+demo_cate <- cate_demo_data(n = 300, p = 2, design = "hetero", seed = 1)
+df <- demo_cate$data
+df$m1_oracle <- df$m0_oracle + df$tau_oracle
+
+fit_cate <- cate_dnn(
+  data = df,
+  x_cols = c("X1", "X2"),
+  y_col = "Y",
+  t_col = "D",
+  m0_col = "m0_oracle",
+  m1_col = "m1_oracle",
+  e_col = "e_oracle",
+  x0 = c(0, 0),
+  method = "exact",
+  k = 2L, s = 3L,
+  se = TRUE,
+  return = c("psi", "nuisance")
+)
+
+summary(fit_cate)
+confint(fit_cate)
+predict(fit_cate, x0 = c(0.2, -0.1), interval = "confidence")
+```
+
+## PLQR Orthogonal Moments (`plqr_dnn`)
+
+```{r plqr, eval=FALSE}
+demo_plqr <- plqr_demo_data(n = 250, p = 2, p_d = 2, tau = 0.5, seed = 1)
+
+fit_plqr <- plqr_dnn(
+  data = demo_plqr$data,
+  x_cols = c("X1", "X2"),
+  D_cols = c("D1", "D2"),
+  q_col = "q_oracle",
+  mD_cols = c("mD1", "mD2"),
+  y_col = "Y",
+  beta = demo_plqr$truth$beta_true,
+  tau = 0.5,
+  x0 = c(0, 0),
+  method = "exact",
+  k = 2L, s = 3L,
+  se = TRUE,
+  return = c("g", "ess")
+)
+
+fit_plqr$moment
+fit_plqr$se
+```
+
+## Notes on Standard Errors
+
+All three wrappers use delete-1 jackknife SEs when `se = TRUE`.
+
+- `"fast"` reuses full-sample ranks and applies rank updates per deletion.
+- `"loo"` recomputes leave-one-out weights directly (reference-equivalent).
+- `"none"` skips SE computation.
+
+`s < n` is required when jackknife SEs are requested.
+

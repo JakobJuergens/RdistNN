@@ -1,0 +1,496 @@
+
+R version 4.4.3 (2025-02-28) -- "Trophy Case"
+Copyright (C) 2025 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> # This file is part of the standard setup for testthat.
+> # It is recommended that you do not modify it.
+> #
+> # Where should you do additional test configuration?
+> # Learn more about the roles of various files in:
+> # * https://r-pkgs.org/testing-design.html#sec-tests-files-overview
+> # * https://testthat.r-lib.org/articles/special-files.html
+> 
+> library(testthat)
+> library(RdistNN)
+> 
+> test_check("RdistNN")
+Saving _problems/test-distance-mahal-43.R
+Saving _problems/test-distance-mahal-52.R
+Saving _problems/test-distance-mahal-66.R
+Saving _problems/test-rank-weight-tdnn-asymp-130.R
+Saving _problems/test-rank-weight-tdnn-exact-59.R
+Saving _problems/test-rank-weight-tdnn-exact-59.R
+Saving _problems/test-rank-weight-tdnn-exact-59.R
+Saving _problems/test-rank-weight-tdnn-exact-69.R
+Saving _problems/test-rank-weight-tdnn-exact-70.R
+Saving _problems/test-rank-weight-tdnn-exact-137.R
+Saving _problems/test-rank-weight-tdnn-exact-146.R
+Saving _problems/test-sim-cate-251.R
+Saving _problems/test-tdnn-jackknife-243.R
+Saving _problems/test-tdnn-jackknife-258.R
+[ FAIL 14 | WARN 14 | SKIP 1 | PASS 1144 ]
+
+══ Skipped tests (1) ═══════════════════════════════════════════════════════════
+• cate_result methods or required helpers not found; skipping file (1):
+  'test-user-cate-methods.R:1:1'
+
+══ Warnings ════════════════════════════════════════════════════════════════════
+── Warning ('test-sim-cate.R:112:3'): sim_cate_run: smoke test with 3 reps over a small grid ──
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (86b16eb7c009a62afe2e5f72183e2ece-1); on 86b16eb7c009a62afe2e5f72183e2ece@runnervm727z3<7259>]
+Backtrace:
+     ▆
+  1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:112:3
+  2. │ └─RdistNN (local) .lapply(...) at RdistNN/R/sim-cate-run.R:243:5
+  3. │   └─future.apply::future_lapply(X, FUN, future.seed = FALSE) at RdistNN/R/sim-cate-run.R:214:5
+  4. │     └─future.apply:::future_xapply(...)
+  5. │       ├─base::tryCatch(...)
+  6. │       │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  7. │       │   ├─base (local) tryCatchOne(...)
+  8. │       │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  9. │       │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+ 10. │       │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 11. │       │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 12. │       ├─base::withCallingHandlers(...)
+ 13. │       └─(function() {...
+ 14. │         ├─future::value(fs)
+ 15. │         └─future:::value.list(fs)
+ 16. │           └─future (local) signalConditionsASAP(...)
+ 17. │             └─future:::signalConditions(...)
+ 18. │               └─base::warning(condition)
+ 19. │                 └─base::withRestarts(...)
+ 20. │                   └─base (local) withOneRestart(expr, restarts[[1L]])
+ 21. │                     └─base (local) doWithOneRestart(return(expr), restart)
+ 22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
+── Warning ('test-sim-cate.R:112:3'): sim_cate_run: smoke test with 3 reps over a small grid ──
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (86b16eb7c009a62afe2e5f72183e2ece-2); on 86b16eb7c009a62afe2e5f72183e2ece@runnervm727z3<7259>]
+Backtrace:
+     ▆
+  1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:112:3
+  2. │ └─RdistNN (local) .lapply(...) at RdistNN/R/sim-cate-run.R:243:5
+  3. │   └─future.apply::future_lapply(X, FUN, future.seed = FALSE) at RdistNN/R/sim-cate-run.R:214:5
+  4. │     └─future.apply:::future_xapply(...)
+  5. │       ├─base::tryCatch(...)
+  6. │       │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  7. │       │   ├─base (local) tryCatchOne(...)
+  8. │       │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  9. │       │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+ 10. │       │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 11. │       │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 12. │       ├─base::withCallingHandlers(...)
+ 13. │       └─(function() {...
+ 14. │         ├─future::value(fs)
+ 15. │         └─future:::value.list(fs)
+ 16. │           └─future (local) signalConditionsASAP(...)
+ 17. │             └─future:::signalConditions(...)
+ 18. │               └─base::warning(condition)
+ 19. │                 └─base::withRestarts(...)
+ 20. │                   └─base (local) withOneRestart(expr, restarts[[1L]])
+ 21. │                     └─base (local) doWithOneRestart(return(expr), restart)
+ 22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
+── Warning ('test-sim-cate.R:132:3'): sim_cate_run: multi-method produces one row per method per rep ──
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (86b16eb7c009a62afe2e5f72183e2ece-3); on 86b16eb7c009a62afe2e5f72183e2ece@runnervm727z3<7259>]
+Backtrace:
+     ▆
+  1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:132:3
+  2. │ └─RdistNN (local) .lapply(...) at RdistNN/R/sim-cate-run.R:243:5
+  3. │   └─future.apply::future_lapply(X, FUN, future.seed = FALSE) at RdistNN/R/sim-cate-run.R:214:5
+  4. │     └─future.apply:::future_xapply(...)
+  5. │       ├─base::tryCatch(...)
+  6. │       │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  7. │       │   ├─base (local) tryCatchOne(...)
+  8. │       │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  9. │       │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+ 10. │       │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 11. │       │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 12. │       ├─base::withCallingHandlers(...)
+ 13. │       └─(function() {...
+ 14. │         ├─future::value(fs)
+ 15. │         └─future:::value.list(fs)
+ 16. │           └─future (local) signalConditionsASAP(...)
+ 17. │             └─future:::signalConditions(...)
+ 18. │               └─base::warning(condition)
+ 19. │                 └─base::withRestarts(...)
+ 20. │                   └─base (local) withOneRestart(expr, restarts[[1L]])
+ 21. │                     └─base (local) doWithOneRestart(return(expr), restart)
+ 22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
+── Warning ('test-sim-cate.R:149:3'): summarise_sim_results: correct aggregation with method column ──
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (86b16eb7c009a62afe2e5f72183e2ece-4); on 86b16eb7c009a62afe2e5f72183e2ece@runnervm727z3<7259>]
+Backtrace:
+     ▆
+  1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:149:3
+  2. │ └─RdistNN (local) .lapply(...) at RdistNN/R/sim-cate-run.R:243:5
+  3. │   └─future.apply::future_lapply(X, FUN, future.seed = FALSE) at RdistNN/R/sim-cate-run.R:214:5
+  4. │     └─future.apply:::future_xapply(...)
+  5. │       ├─base::tryCatch(...)
+  6. │       │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  7. │       │   ├─base (local) tryCatchOne(...)
+  8. │       │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  9. │       │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+ 10. │       │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 11. │       │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 12. │       ├─base::withCallingHandlers(...)
+ 13. │       └─(function() {...
+ 14. │         ├─future::value(fs)
+ 15. │         └─future:::value.list(fs)
+ 16. │           └─future (local) signalConditionsASAP(...)
+ 17. │             └─future:::signalConditions(...)
+ 18. │               └─base::warning(condition)
+ 19. │                 └─base::withRestarts(...)
+ 20. │                   └─base (local) withOneRestart(expr, restarts[[1L]])
+ 21. │                     └─base (local) doWithOneRestart(return(expr), restart)
+ 22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
+── Warning ('test-sim-cate.R:176:3'): summarise_sim_results: multi-method returns one row per method ──
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (86b16eb7c009a62afe2e5f72183e2ece-5); on 86b16eb7c009a62afe2e5f72183e2ece@runnervm727z3<7259>]
+Backtrace:
+     ▆
+  1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:176:3
+  2. │ └─RdistNN (local) .lapply(...) at RdistNN/R/sim-cate-run.R:243:5
+  3. │   └─future.apply::future_lapply(X, FUN, future.seed = FALSE) at RdistNN/R/sim-cate-run.R:214:5
+  4. │     └─future.apply:::future_xapply(...)
+  5. │       ├─base::tryCatch(...)
+  6. │       │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  7. │       │   ├─base (local) tryCatchOne(...)
+  8. │       │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  9. │       │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+ 10. │       │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 11. │       │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 12. │       ├─base::withCallingHandlers(...)
+ 13. │       └─(function() {...
+ 14. │         ├─future::value(fs)
+ 15. │         └─future:::value.list(fs)
+ 16. │           └─future (local) signalConditionsASAP(...)
+ 17. │             └─future:::signalConditions(...)
+ 18. │               └─base::warning(condition)
+ 19. │                 └─base::withRestarts(...)
+ 20. │                   └─base (local) withOneRestart(expr, restarts[[1L]])
+ 21. │                     └─base (local) doWithOneRestart(return(expr), restart)
+ 22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
+── Warning ('test-sim-cate.R:344:3'): sim_cate_run: smoke test covers all 5 designs ──
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (86b16eb7c009a62afe2e5f72183e2ece-6); on 86b16eb7c009a62afe2e5f72183e2ece@runnervm727z3<7259>]
+Backtrace:
+     ▆
+  1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:344:3
+  2. │ └─RdistNN (local) .lapply(...) at RdistNN/R/sim-cate-run.R:243:5
+  3. │   └─future.apply::future_lapply(X, FUN, future.seed = FALSE) at RdistNN/R/sim-cate-run.R:214:5
+  4. │     └─future.apply:::future_xapply(...)
+  5. │       ├─base::tryCatch(...)
+  6. │       │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  7. │       │   ├─base (local) tryCatchOne(...)
+  8. │       │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  9. │       │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+ 10. │       │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 11. │       │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 12. │       ├─base::withCallingHandlers(...)
+ 13. │       └─(function() {...
+ 14. │         ├─future::value(fs)
+ 15. │         └─future:::value.list(fs)
+ 16. │           └─future (local) signalConditionsASAP(...)
+ 17. │             └─future:::signalConditions(...)
+ 18. │               └─base::warning(condition)
+ 19. │                 └─base::withRestarts(...)
+ 20. │                   └─base (local) withOneRestart(expr, restarts[[1L]])
+ 21. │                     └─base (local) doWithOneRestart(return(expr), restart)
+ 22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
+── Warning ('test-sim-cate.R:344:3'): sim_cate_run: smoke test covers all 5 designs ──
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (86b16eb7c009a62afe2e5f72183e2ece-7); on 86b16eb7c009a62afe2e5f72183e2ece@runnervm727z3<7259>]
+Backtrace:
+     ▆
+  1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:344:3
+  2. │ └─RdistNN (local) .lapply(...) at RdistNN/R/sim-cate-run.R:243:5
+  3. │   └─future.apply::future_lapply(X, FUN, future.seed = FALSE) at RdistNN/R/sim-cate-run.R:214:5
+  4. │     └─future.apply:::future_xapply(...)
+  5. │       ├─base::tryCatch(...)
+  6. │       │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  7. │       │   ├─base (local) tryCatchOne(...)
+  8. │       │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  9. │       │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+ 10. │       │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 11. │       │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 12. │       ├─base::withCallingHandlers(...)
+ 13. │       └─(function() {...
+ 14. │         ├─future::value(fs)
+ 15. │         └─future:::value.list(fs)
+ 16. │           └─future (local) signalConditionsASAP(...)
+ 17. │             └─future:::signalConditions(...)
+ 18. │               └─base::warning(condition)
+ 19. │                 └─base::withRestarts(...)
+ 20. │                   └─base (local) withOneRestart(expr, restarts[[1L]])
+ 21. │                     └─base (local) doWithOneRestart(return(expr), restart)
+ 22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
+── Warning ('test-sim-cate.R:344:3'): sim_cate_run: smoke test covers all 5 designs ──
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (86b16eb7c009a62afe2e5f72183e2ece-8); on 86b16eb7c009a62afe2e5f72183e2ece@runnervm727z3<7259>]
+Backtrace:
+     ▆
+  1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:344:3
+  2. │ └─RdistNN (local) .lapply(...) at RdistNN/R/sim-cate-run.R:243:5
+  3. │   └─future.apply::future_lapply(X, FUN, future.seed = FALSE) at RdistNN/R/sim-cate-run.R:214:5
+  4. │     └─future.apply:::future_xapply(...)
+  5. │       ├─base::tryCatch(...)
+  6. │       │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  7. │       │   ├─base (local) tryCatchOne(...)
+  8. │       │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  9. │       │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+ 10. │       │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 11. │       │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 12. │       ├─base::withCallingHandlers(...)
+ 13. │       └─(function() {...
+ 14. │         ├─future::value(fs)
+ 15. │         └─future:::value.list(fs)
+ 16. │           └─future (local) signalConditionsASAP(...)
+ 17. │             └─future:::signalConditions(...)
+ 18. │               └─base::warning(condition)
+ 19. │                 └─base::withRestarts(...)
+ 20. │                   └─base (local) withOneRestart(expr, restarts[[1L]])
+ 21. │                     └─base (local) doWithOneRestart(return(expr), restart)
+ 22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
+── Warning ('test-sim-cate.R:344:3'): sim_cate_run: smoke test covers all 5 designs ──
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (86b16eb7c009a62afe2e5f72183e2ece-9); on 86b16eb7c009a62afe2e5f72183e2ece@runnervm727z3<7259>]
+Backtrace:
+     ▆
+  1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:344:3
+  2. │ └─RdistNN (local) .lapply(...) at RdistNN/R/sim-cate-run.R:243:5
+  3. │   └─future.apply::future_lapply(X, FUN, future.seed = FALSE) at RdistNN/R/sim-cate-run.R:214:5
+  4. │     └─future.apply:::future_xapply(...)
+  5. │       ├─base::tryCatch(...)
+  6. │       │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  7. │       │   ├─base (local) tryCatchOne(...)
+  8. │       │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  9. │       │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+ 10. │       │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 11. │       │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 12. │       ├─base::withCallingHandlers(...)
+ 13. │       └─(function() {...
+ 14. │         ├─future::value(fs)
+ 15. │         └─future:::value.list(fs)
+ 16. │           └─future (local) signalConditionsASAP(...)
+ 17. │             └─future:::signalConditions(...)
+ 18. │               └─base::warning(condition)
+ 19. │                 └─base::withRestarts(...)
+ 20. │                   └─base (local) withOneRestart(expr, restarts[[1L]])
+ 21. │                     └─base (local) doWithOneRestart(return(expr), restart)
+ 22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
+── Warning ('test-sim-cate.R:344:3'): sim_cate_run: smoke test covers all 5 designs ──
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (86b16eb7c009a62afe2e5f72183e2ece-10); on 86b16eb7c009a62afe2e5f72183e2ece@runnervm727z3<7259>]
+Backtrace:
+     ▆
+  1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:344:3
+  2. │ └─RdistNN (local) .lapply(...) at RdistNN/R/sim-cate-run.R:243:5
+  3. │   └─future.apply::future_lapply(X, FUN, future.seed = FALSE) at RdistNN/R/sim-cate-run.R:214:5
+  4. │     └─future.apply:::future_xapply(...)
+  5. │       ├─base::tryCatch(...)
+  6. │       │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  7. │       │   ├─base (local) tryCatchOne(...)
+  8. │       │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  9. │       │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+ 10. │       │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 11. │       │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 12. │       ├─base::withCallingHandlers(...)
+ 13. │       └─(function() {...
+ 14. │         ├─future::value(fs)
+ 15. │         └─future:::value.list(fs)
+ 16. │           └─future (local) signalConditionsASAP(...)
+ 17. │             └─future:::signalConditions(...)
+ 18. │               └─base::warning(condition)
+ 19. │                 └─base::withRestarts(...)
+ 20. │                   └─base (local) withOneRestart(expr, restarts[[1L]])
+ 21. │                     └─base (local) doWithOneRestart(return(expr), restart)
+ 22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
+── Warning ('test-sim-cate.R:361:3'): sim_cate_run: dgp4 and dgp5 produce finite results with dnn_oracle_mahal ──
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (86b16eb7c009a62afe2e5f72183e2ece-11); on 86b16eb7c009a62afe2e5f72183e2ece@runnervm727z3<7259>]
+Backtrace:
+     ▆
+  1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:361:3
+  2. │ └─RdistNN (local) .lapply(...) at RdistNN/R/sim-cate-run.R:243:5
+  3. │   └─future.apply::future_lapply(X, FUN, future.seed = FALSE) at RdistNN/R/sim-cate-run.R:214:5
+  4. │     └─future.apply:::future_xapply(...)
+  5. │       ├─base::tryCatch(...)
+  6. │       │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  7. │       │   ├─base (local) tryCatchOne(...)
+  8. │       │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  9. │       │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+ 10. │       │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 11. │       │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 12. │       ├─base::withCallingHandlers(...)
+ 13. │       └─(function() {...
+ 14. │         ├─future::value(fs)
+ 15. │         └─future:::value.list(fs)
+ 16. │           └─future (local) signalConditionsASAP(...)
+ 17. │             └─future:::signalConditions(...)
+ 18. │               └─base::warning(condition)
+ 19. │                 └─base::withRestarts(...)
+ 20. │                   └─base (local) withOneRestart(expr, restarts[[1L]])
+ 21. │                     └─base (local) doWithOneRestart(return(expr), restart)
+ 22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
+── Warning ('test-sim-cate.R:361:3'): sim_cate_run: dgp4 and dgp5 produce finite results with dnn_oracle_mahal ──
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (86b16eb7c009a62afe2e5f72183e2ece-12); on 86b16eb7c009a62afe2e5f72183e2ece@runnervm727z3<7259>]
+Backtrace:
+     ▆
+  1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:361:3
+  2. │ └─RdistNN (local) .lapply(...) at RdistNN/R/sim-cate-run.R:243:5
+  3. │   └─future.apply::future_lapply(X, FUN, future.seed = FALSE) at RdistNN/R/sim-cate-run.R:214:5
+  4. │     └─future.apply:::future_xapply(...)
+  5. │       ├─base::tryCatch(...)
+  6. │       │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  7. │       │   ├─base (local) tryCatchOne(...)
+  8. │       │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  9. │       │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+ 10. │       │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 11. │       │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 12. │       ├─base::withCallingHandlers(...)
+ 13. │       └─(function() {...
+ 14. │         ├─future::value(fs)
+ 15. │         └─future:::value.list(fs)
+ 16. │           └─future (local) signalConditionsASAP(...)
+ 17. │             └─future:::signalConditions(...)
+ 18. │               └─base::warning(condition)
+ 19. │                 └─base::withRestarts(...)
+ 20. │                   └─base (local) withOneRestart(expr, restarts[[1L]])
+ 21. │                     └─base (local) doWithOneRestart(return(expr), restart)
+ 22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
+── Warning ('test-sim-cate.R:380:3'): summarise_sim_results: n_failed counts NA-metric rows correctly ──
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (86b16eb7c009a62afe2e5f72183e2ece-13); on 86b16eb7c009a62afe2e5f72183e2ece@runnervm727z3<7259>]
+Backtrace:
+     ▆
+  1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:380:3
+  2. │ └─RdistNN (local) .lapply(...) at RdistNN/R/sim-cate-run.R:243:5
+  3. │   └─future.apply::future_lapply(X, FUN, future.seed = FALSE) at RdistNN/R/sim-cate-run.R:214:5
+  4. │     └─future.apply:::future_xapply(...)
+  5. │       ├─base::tryCatch(...)
+  6. │       │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  7. │       │   ├─base (local) tryCatchOne(...)
+  8. │       │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  9. │       │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+ 10. │       │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 11. │       │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 12. │       ├─base::withCallingHandlers(...)
+ 13. │       └─(function() {...
+ 14. │         ├─future::value(fs)
+ 15. │         └─future:::value.list(fs)
+ 16. │           └─future (local) signalConditionsASAP(...)
+ 17. │             └─future:::signalConditions(...)
+ 18. │               └─base::warning(condition)
+ 19. │                 └─base::withRestarts(...)
+ 20. │                   └─base (local) withOneRestart(expr, restarts[[1L]])
+ 21. │                     └─base (local) doWithOneRestart(return(expr), restart)
+ 22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
+── Warning ('test-sim-cate.R:407:3'): summarise_sim_results: n_failed = 0 when no NAs present ──
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (86b16eb7c009a62afe2e5f72183e2ece-14); on 86b16eb7c009a62afe2e5f72183e2ece@runnervm727z3<7259>]
+Backtrace:
+     ▆
+  1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:407:3
+  2. │ └─RdistNN (local) .lapply(...) at RdistNN/R/sim-cate-run.R:243:5
+  3. │   └─future.apply::future_lapply(X, FUN, future.seed = FALSE) at RdistNN/R/sim-cate-run.R:214:5
+  4. │     └─future.apply:::future_xapply(...)
+  5. │       ├─base::tryCatch(...)
+  6. │       │ └─base (local) tryCatchList(expr, classes, parentenv, handlers)
+  7. │       │   ├─base (local) tryCatchOne(...)
+  8. │       │   │ └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+  9. │       │   └─base (local) tryCatchList(expr, names[-nh], parentenv, handlers[-nh])
+ 10. │       │     └─base (local) tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 11. │       │       └─base (local) doTryCatch(return(expr), name, parentenv, handler)
+ 12. │       ├─base::withCallingHandlers(...)
+ 13. │       └─(function() {...
+ 14. │         ├─future::value(fs)
+ 15. │         └─future:::value.list(fs)
+ 16. │           └─future (local) signalConditionsASAP(...)
+ 17. │             └─future:::signalConditions(...)
+ 18. │               └─base::warning(condition)
+ 19. │                 └─base::withRestarts(...)
+ 20. │                   └─base (local) withOneRestart(expr, restarts[[1L]])
+ 21. │                     └─base (local) doWithOneRestart(return(expr), restart)
+ 22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
+
+══ Failed tests ════════════════════════════════════════════════════════════════
+── Failure ('test-distance-mahal.R:43:3'): distance_mahalanobis: known solution with diagonal covariance ──
+Expected `S` to equal `diag(c(4, 1), 2)`.
+Differences:
+actual vs expected
+                    [,1]     [,2]
+- actual[1, ]   5.333333 0.000000
++ expected[1, ] 4.000000 0.000000
+- actual[2, ]   0.000000 1.333333
++ expected[2, ] 0.000000 1.000000
+
+── Failure ('test-distance-mahal.R:52:3'): distance_mahalanobis: known solution with diagonal covariance ──
+Expected `d` to equal `expected`.
+Differences:
+  `actual`: 1.22 1.22 1.22 1.22
+`expected`: 1.41 1.41 1.41 1.41
+
+── Error ('test-distance-mahal.R:66:3'): distance_mahalanobis: correlated design gives different distances than L2 ──
+Error in `eval(code, test_env)`: attempt to apply non-function
+── Failure ('test-rank-weight-tdnn-asymp.R:130:3'): [from_ranks] meta fields are correct ──
+Expected `out$meta$scalars["w1"] + out$meta$scalars["w2"]` to equal 1.
+Differences:
+`names(actual)` is a character vector ('w1')
+`names(expected)` is absent
+
+── Failure ('test-rank-weight-tdnn-exact.R:59:5'): [scalars] .tdnn_scalars produces w1+w2=1 and correct signs ──
+Expected `sc["w1"] + sc["w2"]` to equal 1.
+Differences:
+`names(actual)` is a character vector ('w1')
+`names(expected)` is absent
+
+── Failure ('test-rank-weight-tdnn-exact.R:59:5'): [scalars] .tdnn_scalars produces w1+w2=1 and correct signs ──
+Expected `sc["w1"] + sc["w2"]` to equal 1.
+Differences:
+`names(actual)` is a character vector ('w1')
+`names(expected)` is absent
+
+── Failure ('test-rank-weight-tdnn-exact.R:59:5'): [scalars] .tdnn_scalars produces w1+w2=1 and correct signs ──
+Expected `sc["w1"] + sc["w2"]` to equal 1.
+Differences:
+`names(actual)` is a character vector ('w1')
+`names(expected)` is absent
+
+── Failure ('test-rank-weight-tdnn-exact.R:69:3'): [scalars] .tdnn_scalars closed form for s2 = 4*s1, dim = 2 ──
+Expected `sc["w1"]` to equal `-1/3`.
+Differences:
+`names(actual)` is a character vector ('w1')
+`names(expected)` is absent
+
+── Failure ('test-rank-weight-tdnn-exact.R:70:3'): [scalars] .tdnn_scalars closed form for s2 = 4*s1, dim = 2 ──
+Expected `sc["w2"]` to equal `4/3`.
+Differences:
+`names(actual)` is a character vector ('w2')
+`names(expected)` is absent
+
+── Failure ('test-rank-weight-tdnn-exact.R:137:3'): [from_ranks] meta fields are correct ──
+Expected `out$meta$scalars["w1"] + out$meta$scalars["w2"]` to equal 1.
+Differences:
+`names(actual)` is a character vector ('w1')
+`names(expected)` is absent
+
+── Error ('test-rank-weight-tdnn-exact.R:146:3'): [inv] w_rank depends only on (n, s1, s2, dim), not the permutation ──
+Error in `sample.int(n, set.seed(4))`: invalid 'size' argument
+Backtrace:
+    ▆
+ 1. └─base::sample.int(n, set.seed(4)) at test-rank-weight-tdnn-exact.R:146:3
+── Failure ('test-sim-cate.R:251:3'): sim_cate_data dgp5_correlated: default x0 is (0.75, 0, ...) ──
+Expected `dgp$x0[1L]` to equal 0.75.
+Differences:
+  `actual`: 0.00
+`expected`: 0.75
+
+── Error ('test-tdnn-jackknife.R:243:3'): [s2-guard] s2 >= n is rejected by _loo_matrix ──
+Error in `.make_X0(m, p, seed = 61L)`: could not find function ".make_X0"
+── Error ('test-tdnn-jackknife.R:258:3'): [s2-guard] s2 >= n is rejected by _loo_full ──
+Error in `.make_X0(m, p, seed = 63L)`: could not find function ".make_X0"
+
+[ FAIL 14 | WARN 14 | SKIP 1 | PASS 1144 ]
+Error:
+! Test failures.
+Execution halted

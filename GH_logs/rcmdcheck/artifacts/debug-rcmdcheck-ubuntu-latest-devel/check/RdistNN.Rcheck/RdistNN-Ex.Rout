@@ -1,0 +1,2218 @@
+
+R Under development (unstable) (2026-04-03 r89785) -- "Unsuffered Consequences"
+Copyright (C) 2026 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> pkgname <- "RdistNN"
+> source(file.path(R.home("share"), "R", "examples-header.R"))
+> options(warn = 1)
+> base::assign(".ExTimings", "RdistNN-Ex.timings", pos = 'CheckExEnv')
+> base::cat("name\tuser\tsystem\telapsed\n", file=base::get(".ExTimings", pos = 'CheckExEnv'))
+> base::assign(".format_ptime",
++ function(x) {
++   if(!is.na(x[4L])) x[1L] <- x[1L] + x[4L]
++   if(!is.na(x[5L])) x[2L] <- x[2L] + x[5L]
++   options(OutDec = '.')
++   format(x[1L:3L], digits = 7L)
++ },
++ pos = 'CheckExEnv')
+> 
+> ### * </HEADER>
+> library('RdistNN')
+> 
+> base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
+> base::assign(".old_wd", base::getwd(), pos = 'CheckExEnv')
+> cleanEx()
+> nameEx("as_distance")
+> ### * as_distance
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: as_distance
+> ### Title: Wrap a function as a distance spec
+> ### Aliases: as_distance
+> 
+> ### ** Examples
+> 
+> spec <- as_distance(
++   function(X, x0, ctx = NULL) {
++     rowSums(abs(X - matrix(x0, nrow(X), ncol(X), TRUE)))
++   }
++ )
+> x_mat <- matrix(1:9, nrow = 3)
+> distance_eval(spec, x_mat, c(0, 0, 0))
+[1] 12 15 18
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("as_distance", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("as_rank_weight")
+> ### * as_rank_weight
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: as_rank_weight
+> ### Title: Wrap a function as a rank_weight spec
+> ### Aliases: as_rank_weight
+> 
+> ### ** Examples
+> 
+> rw <- as_rank_weight(function(ranks) {
++   w <- 1 / as.numeric(ranks)
++   w / sum(w)
++ })
+> rank_weight_eval(rw, c(3L, 1L, 2L))
+[1] 0.1818182 0.5454545 0.2727273
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("as_rank_weight", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("as_score")
+> ### * as_score
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: as_score
+> ### Title: Coerce a plain function to a score (simple cases)
+> ### Aliases: as_score
+> 
+> ### ** Examples
+> 
+> sc <- as_score(function(idxs, data) prod(data[idxs]), s = 2L, name = "prod2")
+> score_eval(sc, c(1L, 3L), c(2, 4, 6), NULL)
+[1] 12
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("as_score", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("cate_demo_data")
+> ### * cate_demo_data
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: cate_demo_data
+> ### Title: Minimal CATE demo data (oracle nuisances + pseudo-outcome)
+> ### Aliases: cate_demo_data
+> 
+> ### ** Examples
+> 
+> demo <- cate_demo_data(n = 200, p = 2, design = "hetero", seed = 1)
+> str(demo$data)
+'data.frame':	200 obs. of  9 variables:
+ $ X1        : num  -0.626 0.184 -0.836 1.595 0.33 ...
+ $ X2        : num  0.409 1.689 1.587 -0.331 -2.285 ...
+ $ D         : int  1 0 1 0 1 0 0 0 1 0 ...
+ $ Y         : num  0.21 -0.654 -1.885 2.932 4.772 ...
+ $ e_oracle  : num  0.373 0.32 0.23 0.724 0.787 ...
+ $ m_oracle  : num  0.0414 -0.3159 -1.3926 3.6498 4.1356 ...
+ $ m0_oracle : num  -0.0359 -0.5052 -1.4222 2.9262 3.6147 ...
+ $ tau_oracle: num  0.207 0.591 0.129 1 0.662 ...
+ $ rho_oracle: num  0.451 0.497 -2.144 2.599 0.809 ...
+> demo$tau_x0
+[1] 0.5
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("cate_demo_data", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("cate_demo_subsets")
+> ### * cate_demo_subsets
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: cate_demo_subsets
+> ### Title: Quick helper: sample a batch of subsets (for U-stat experiments)
+> ### Aliases: cate_demo_subsets
+> 
+> ### ** Examples
+> 
+> subs <- cate_demo_subsets(n = 200, K = 1000, s = 8, seed = 1)
+> dim(subs)
+[1] 1000    8
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("cate_demo_subsets", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("cate_dnn")
+> ### * cate_dnn
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: cate_dnn
+> ### Title: CATE via DNN rank weights (orthogonalized local averaging)
+> ### Aliases: cate_dnn
+> 
+> ### ** Examples
+> 
+> set.seed(1)
+> n <- 50
+> x_mat <- matrix(rnorm(n * 2), n, 2)
+> x0_mat <- matrix(rnorm(6), 3, 2)
+> psi <- rnorm(n)
+> out <- cate_dnn(
++   X = x_mat, X0 = x0_mat, pseudo_outcome = psi,
++   distance = "l2", method = "exact", k = 2L, s = 3L,
++   se = FALSE, return = c("W", "ess")
++ )
+> out$tau
+[1] -0.2025481 -0.1586896 -0.2395426
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("cate_dnn", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("confint.cate_result")
+> ### * confint.cate_result
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: confint.cate_result
+> ### Title: Confidence intervals for 'cate_result'
+> ### Aliases: confint.cate_result
+> 
+> ### ** Examples
+> 
+> set.seed(2)
+> n <- 25
+> x_mat <- matrix(rnorm(n * 2), n, 2)
+> out <- cate_dnn(X = x_mat, x0 = c(0, 0), pseudo_outcome = rnorm(n), se = TRUE)
+> confint(out)
+           conf.low conf.high
+target_1 -0.5272745 0.3748924
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("confint.cate_result", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("dist_l1")
+> ### * dist_l1
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: dist_l1
+> ### Title: Fast L1 (Manhattan) distance to a single query point
+> ### Aliases: dist_l1
+> 
+> ### ** Examples
+> 
+> set.seed(1)
+> X <- matrix(rnorm(12), 4, 3)
+> x0 <- c(0, 1, -1)
+> dist_l1(X, x0)
+[1] 2.872727 2.698723 3.859981 3.246799
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("dist_l1", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("dist_l1_scaled")
+> ### * dist_l1_scaled
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: dist_l1_scaled
+> ### Title: Scaled L1 distance (per-coordinate scaling)
+> ### Aliases: dist_l1_scaled
+> 
+> ### ** Examples
+> 
+> X <- matrix(rnorm(12), 4, 3)
+> dist_l1_scaled(X, c(0, 0, 0), inv_s = c(1, 2, 0.5))
+[1] 1.573360 1.977274 2.566377 3.266852
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("dist_l1_scaled", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("dist_l2")
+> ### * dist_l2
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: dist_l2
+> ### Title: Fast L2 (Euclidean) distance to a single query point
+> ### Aliases: dist_l2
+> 
+> ### ** Examples
+> 
+> X <- matrix(rnorm(12), 4, 3)
+> dist_l2(X, c(0, 0, 0))
+[1] 0.9124384 0.8945140 1.7948105 1.8005616
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("dist_l2", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("dist_l2_scaled")
+> ### * dist_l2_scaled
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: dist_l2_scaled
+> ### Title: Scaled L2 distance (per-coordinate scaling)
+> ### Aliases: dist_l2_scaled
+> 
+> ### ** Examples
+> 
+> X <- matrix(rnorm(12), 4, 3)
+> dist_l2_scaled(X, c(0, 0, 0), inv_s = c(1, 2, 0.5))
+[1] 0.9537436 1.6582261 1.4899645 2.1825235
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("dist_l2_scaled", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("distance_eval")
+> ### * distance_eval
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: distance_eval
+> ### Title: Evaluate a distance spec at a single target
+> ### Aliases: distance_eval
+> 
+> ### ** Examples
+> 
+> x_mat <- matrix(rnorm(12), 4, 3)
+> x0_vec <- c(0, 0, 0)
+> distance_eval(distance_l2(), x_mat, x0_vec)
+[1] 0.9124384 0.8945140 1.7948105 1.8005616
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("distance_eval", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("distance_eval_batch")
+> ### * distance_eval_batch
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: distance_eval_batch
+> ### Title: Evaluate a distance spec for many targets (batch)
+> ### Aliases: distance_eval_batch
+> 
+> ### ** Examples
+> 
+> x_mat <- matrix(rnorm(12), 4, 3)
+> x0_mat <- matrix(rnorm(6), 2, 3)
+> distance_eval_batch(distance_l2(), x_mat, x0_mat)
+         [,1]     [,2]
+[1,] 0.991542 1.672781
+[2,] 2.125100 2.813195
+[3,] 1.669451 1.583606
+[4,] 2.286328 3.928913
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("distance_eval_batch", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("distance_l1")
+> ### * distance_l1
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: distance_l1
+> ### Title: L1 distance spec (single and batched evaluation)
+> ### Aliases: distance_l1
+> 
+> ### ** Examples
+> 
+> set.seed(3)
+> X <- matrix(rnorm(12), 4, 3)
+> X0 <- matrix(rnorm(6), 2, 3)
+> dspec <- distance_l1()
+> dspec$eval(X, X0[1, ])
+[1] 0.5551521 2.7661406 1.2500104 1.5785391
+> dspec$eval_batch(X, X0)
+          [,1]      [,2]
+[1,] 0.5551521 2.2886396
+[2,] 2.7661406 2.7985700
+[3,] 1.2500104 0.4957488
+[4,] 1.5785391 3.3120267
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("distance_l1", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("distance_l1_scaled")
+> ### * distance_l1_scaled
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: distance_l1_scaled
+> ### Title: Scaled L1 distance spec (one-time setup + eval/batch)
+> ### Aliases: distance_l1_scaled
+> 
+> ### ** Examples
+> 
+> X <- matrix(rnorm(12), 4, 3)
+> X0 <- matrix(rnorm(6), 2, 3)
+> dspec <- distance_l1_scaled(rule = "sd")
+> ctx <- dspec$setup(X)
+> dspec$eval_batch(X, X0, ctx)
+         [,1]     [,2]
+[1,] 1.947433 2.474897
+[2,] 3.934672 4.967483
+[3,] 3.158172 2.780777
+[4,] 3.113268 5.331204
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("distance_l1_scaled", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("distance_l2")
+> ### * distance_l2
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: distance_l2
+> ### Title: L2 distance spec (single and batched evaluation)
+> ### Aliases: distance_l2
+> 
+> ### ** Examples
+> 
+> X <- matrix(rnorm(12), 4, 3)
+> X0 <- matrix(rnorm(6), 2, 3)
+> dspec <- distance_l2()
+> dspec$eval_batch(X, X0)
+         [,1]     [,2]
+[1,] 0.991542 1.672781
+[2,] 2.125100 2.813195
+[3,] 1.669451 1.583606
+[4,] 2.286328 3.928913
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("distance_l2", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("distance_l2_scaled")
+> ### * distance_l2_scaled
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: distance_l2_scaled
+> ### Title: Scaled L2 distance spec (one-time setup + eval/batch)
+> ### Aliases: distance_l2_scaled
+> 
+> ### ** Examples
+> 
+> X <- matrix(rnorm(12), 4, 3)
+> X0 <- matrix(rnorm(6), 2, 3)
+> dspec <- distance_l2_scaled(rule = "sd")
+> ctx <- dspec$setup(X)
+> dspec$eval_batch(X, X0, ctx)
+         [,1]     [,2]
+[1,] 1.397342 1.616264
+[2,] 2.936835 2.963011
+[3,] 2.247853 1.653914
+[4,] 2.156846 3.712726
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("distance_l2_scaled", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("distance_names")
+> ### * distance_names
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: distance_names
+> ### Title: List registered distances
+> ### Aliases: distance_names
+> 
+> ### ** Examples
+> 
+> head(distance_names(), 3)
+[1] "l1"           "l1_scaled_sd" "l2"          
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("distance_names", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("dnn_weights_asymp_full_from_ranks")
+> ### * dnn_weights_asymp_full_from_ranks
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: dnn_weights_asymp_full_from_ranks
+> ### Title: Asymptotic DNN weights from ranks (full U-statistic, WOR)
+> ### Aliases: dnn_weights_asymp_full_from_ranks
+> 
+> ### ** Examples
+> 
+> set.seed(1)
+> n <- 50
+> s <- 10
+> k <- 3
+> ranks <- sample.int(n)
+> out <- dnn_weights_asymp_full_from_ranks(ranks, k = k, s = s)
+> sum(out$w) # 1
+[1] 1
+> sum(out$w_rank) # 1
+[1] 1
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("dnn_weights_asymp_full_from_ranks", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("dnn_weights_exact_full_from_ranks")
+> ### * dnn_weights_exact_full_from_ranks
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: dnn_weights_exact_full_from_ranks
+> ### Title: Exact DNN weights from ranks (full U-statistic, WOR)
+> ### Aliases: dnn_weights_exact_full_from_ranks
+> 
+> ### ** Examples
+> 
+> set.seed(1)
+> n <- 10
+> s <- 4
+> k <- 2
+> ranks <- sample.int(n) # ranks[i] in 1..n
+> out <- dnn_weights_exact_full_from_ranks(ranks, k = k, s = s)
+> sum(out$w) # 1
+[1] 1
+> sum(out$w_rank) # 1
+[1] 1
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("dnn_weights_exact_full_from_ranks", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("get_distance")
+> ### * get_distance
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: get_distance
+> ### Title: Retrieve a registered distance spec
+> ### Aliases: get_distance
+> 
+> ### ** Examples
+> 
+> d <- get_distance("l2")
+> is_distance(d)
+[1] TRUE
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("get_distance", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("get_rank")
+> ### * get_rank
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: get_rank
+> ### Title: Retrieve a registered rank_weight
+> ### Aliases: get_rank
+> 
+> ### ** Examples
+> 
+> register_rank("tmp_rank_get", function(ranks) rep(1 / length(ranks), length(ranks)))
+> is_rank_weight(get_rank("tmp_rank_get"))
+[1] TRUE
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("get_rank", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("get_score")
+> ### * get_score
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: get_score
+> ### Title: Retrieve a registered score
+> ### Aliases: get_score
+> 
+> ### ** Examples
+> 
+> sc0 <- as_score(function(idxs, data) sum(data[idxs]), s = 2L, name = "tmp_score_get")
+> register_score(sc0)
+> sc <- get_score("tmp_score_get")
+> is_score(sc)
+[1] TRUE
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("get_score", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("is_compiled")
+> ### * is_compiled
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: is_compiled
+> ### Title: Does a score have a compiled implementation?
+> ### Aliases: is_compiled
+> 
+> ### ** Examples
+> 
+> is_compiled(new_score("r_only", order = 1L, eval = function(idxs, data, ctx, rng) data[idxs]))
+[1] FALSE
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("is_compiled", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("is_distance")
+> ### * is_distance
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: is_distance
+> ### Title: Is this a distance spec?
+> ### Aliases: is_distance
+> 
+> ### ** Examples
+> 
+> is_distance(distance_l2())
+[1] TRUE
+> is_distance(list(eval = function(X, x0, ctx) rep(0, nrow(X))))
+[1] TRUE
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("is_distance", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("is_rank_weight")
+> ### * is_rank_weight
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: is_rank_weight
+> ### Title: Is this a rank_weight spec?
+> ### Aliases: is_rank_weight
+> 
+> ### ** Examples
+> 
+> is_rank_weight(rank_weight_dnn_exact(k = 1, s = 1))
+[1] TRUE
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("is_rank_weight", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("is_score")
+> ### * is_score
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: is_score
+> ### Title: Is object a 'ustat_score'?
+> ### Aliases: is_score
+> 
+> ### ** Examples
+> 
+> sc <- as_score(function(idxs, data) sum(data[idxs]), s = 2L)
+> is_score(sc)
+[1] TRUE
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("is_score", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("jackknife_fast_rank")
+> ### * jackknife_fast_rank
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: jackknife_fast_rank
+> ### Title: Fast delete-one jackknife for rank-weighted functionals (auto
+> ###   C++ when available, R fallback otherwise)
+> ### Aliases: jackknife_fast_rank
+> 
+> ### ** Examples
+> 
+> set.seed(1)
+> n <- 20
+> p <- 2
+> X <- matrix(rnorm(n * p), n, p)
+> ranks <- cbind(matrix(sample.int(n, n * 3, replace = TRUE), n, 3), sample.int(n, n, replace = TRUE))
+> a <- c(1, 1, 1)
+> phi <- cbind(rnorm(n))
+> out <- jackknife_fast_rank(ranks, a, phi, normalize = TRUE)
+> str(out$theta0)
+ num -0.311
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("jackknife_fast_rank", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("jackknife_slow_rank")
+> ### * jackknife_slow_rank
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: jackknife_slow_rank
+> ### Title: Slow delete-one jackknife for rank-weighted L-stat rules (fixed
+> ###   ranks)
+> ### Aliases: jackknife_slow_rank
+> 
+> ### ** Examples
+> 
+> set.seed(1)
+> n <- 20
+> p <- 3
+> s <- 4
+> X <- matrix(rnorm(n * p), n, p)
+> # toy ranks: nearest-neighbor indices precomputed elsewhere (T x (s+1))
+> # here we fake something deterministic just for the example
+> ranks <- cbind(matrix(rep(1:s, each = n), n, s), s + 1L)
+> y <- rnorm(n)
+> a <- rep(1, s)
+> out <- jackknife_slow_rank(ranks, a, cbind(y))
+> str(out)
+List of 3
+ $ theta0   : num 0.77
+ $ theta_loo: num [1:20, 1] -0.0162 0.594 0.4118 0.5772 0.77 ...
+ $ info     :List of 4
+  ..$ s        : int 4
+  ..$ T        : int 20
+  ..$ q        : int 1
+  ..$ normalize: logi TRUE
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("jackknife_slow_rank", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("list_distances")
+> ### * list_distances
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: list_distances
+> ### Title: Back-compat alias for 'distance_names()'
+> ### Aliases: list_distances
+> 
+> ### ** Examples
+> 
+> identical(distance_names(), list_distances())
+[1] TRUE
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("list_distances", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("list_rank_weights")
+> ### * list_rank_weights
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: list_rank_weights
+> ### Title: Back-compat alias for 'rank_names()'
+> ### Aliases: list_rank_weights
+> 
+> ### ** Examples
+> 
+> identical(rank_names(), list_rank_weights())
+[1] TRUE
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("list_rank_weights", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("list_ranks")
+> ### * list_ranks
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: list_ranks
+> ### Title: Back-compat alias for 'rank_names()'
+> ### Aliases: list_ranks
+> 
+> ### ** Examples
+> 
+> identical(rank_names(), list_ranks())
+[1] TRUE
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("list_ranks", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("list_scores")
+> ### * list_scores
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: list_scores
+> ### Title: List registered scores
+> ### Aliases: list_scores
+> 
+> ### ** Examples
+> 
+> head(list_scores(), 3)
+[1] "tmp_score_get"
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("list_scores", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("new_distance")
+> ### * new_distance
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: new_distance
+> ### Title: Construct a distance spec
+> ### Aliases: new_distance
+> 
+> ### ** Examples
+> 
+> spec <- new_distance(
++   name = "sq_l2",
++   eval = function(X, x0, ctx = NULL) rowSums((X - matrix(x0, nrow(X), ncol(X), TRUE))^2)
++ )
+> is_distance(spec)
+[1] TRUE
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("new_distance", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("new_rank_weight")
+> ### * new_rank_weight
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: new_rank_weight
+> ### Title: Construct a rank-weight spec
+> ### Aliases: new_rank_weight
+> 
+> ### ** Examples
+> 
+> rw <- new_rank_weight(
++   name = "inv_rank",
++   eval = function(ranks, ctx = NULL) {
++     w <- 1 / as.numeric(ranks)
++     w / sum(w)
++   }
++ )
+> is_rank_weight(rw)
+[1] TRUE
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("new_rank_weight", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("new_score")
+> ### * new_score
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: new_score
+> ### Title: Score specification (S3) for U-stat kernels
+> ### Aliases: new_score
+> 
+> ### ** Examples
+> 
+> sc <- new_score(
++   name = "sum2",
++   order = 2L,
++   eval = function(idxs, data, ctx, rng) sum(data[idxs])
++ )
+> is_score(sc)
+[1] TRUE
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("new_score", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("np_demo_data")
+> ### * np_demo_data
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: np_demo_data
+> ### Title: Minimal nonparametric regression demo data (oracle m and Y only)
+> ### Aliases: np_demo_data
+> 
+> ### ** Examples
+> 
+> demo <- np_demo_data(n = 200, p = 2, design = "sinusoidal", seed = 1)
+> head(demo$data)
+          X1         X2           Y   m_oracle
+1 -0.6264538  0.4094018  0.28598513 -0.2512354
+2  0.1836433  1.6888733  1.75220705  0.8043797
+3 -0.8356286  1.5865884 -0.04304208  0.2584566
+4  1.5952808 -0.3309078  0.33179122  0.5272251
+5  0.3295078 -2.2852355  1.25925301  1.4673640
+6 -0.8204684  2.4976616  1.00601700  1.1938457
+> demo$m_x0
+[1] 0
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("np_demo_data", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("np_demo_subsets")
+> ### * np_demo_subsets
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: np_demo_subsets
+> ### Title: Quick helper: sample a batch of subsets (singleton by default)
+> ### Aliases: np_demo_subsets
+> 
+> ### ** Examples
+> 
+> np_demo_subsets(n = 10, K = 4, s = 1, seed = 1)
+     [,1] [,2] [,3] [,4]
+[1,]    9    4    7    1
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("np_demo_subsets", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("np_dnn")
+> ### * np_dnn
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: np_dnn
+> ### Title: Nonparametric regression via DNN rank weights
+> ### Aliases: np_dnn
+> 
+> ### ** Examples
+> 
+> set.seed(1)
+> n <- 60
+> x_mat <- matrix(rnorm(n * 2), n, 2)
+> y_vec <- x_mat[, 1] - 0.5 * x_mat[, 2] + rnorm(n, sd = 0.3)
+> out <- np_dnn(
++   X = x_mat, x0 = c(0, 0), Y = y_vec,
++   distance = "l2", method = "exact", k = 2L, s = 3L,
++   se = FALSE, return = c("W", "ess")
++ )
+> out$mu
+[1] 0.111872
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("np_dnn", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("ord_to_ranks")
+> ### * ord_to_ranks
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: ord_to_ranks
+> ### Title: Convert an index order to ranks (inverse permutation)
+> ### Aliases: ord_to_ranks
+> 
+> ### ** Examples
+> 
+> ord_to_ranks(c(3L, 1L, 2L))
+[1] 2 3 1
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("ord_to_ranks", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("order_by_l1")
+> ### * order_by_l1
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: order_by_l1
+> ### Title: Order rows by L1 distance to a point (stable ties)
+> ### Aliases: order_by_l1
+> 
+> ### ** Examples
+> 
+> set.seed(2)
+> X <- matrix(rnorm(10), 5, 2)
+> x0 <- c(0, 0)
+> order_by_l1(X, x0)
+$dx
+[1] 1.0293348 0.8928039 1.8275434 3.1148496 0.2190388
+
+$ord
+[1] 5 2 1 3 4
+
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("order_by_l1", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("order_by_l1_scaled")
+> ### * order_by_l1_scaled
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: order_by_l1_scaled
+> ### Title: Order rows by scaled L1 (stable ties)
+> ### Aliases: order_by_l1_scaled
+> 
+> ### ** Examples
+> 
+> set.seed(6)
+> X <- matrix(rnorm(10), 5, 2)
+> x0 <- c(0, 0)
+> order_by_l1_scaled(X, x0, rule = "sd")
+$dx
+[1] 0.7131843 2.1683489 1.7983424 1.9852135 1.1982833
+
+$ord
+[1] 1 5 3 4 2
+
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("order_by_l1_scaled", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("order_by_l2")
+> ### * order_by_l2
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: order_by_l2
+> ### Title: Order rows by L2 distance to a point (stable ties)
+> ### Aliases: order_by_l2
+> 
+> ### ** Examples
+> 
+> X <- matrix(rnorm(10), 5, 2)
+> order_by_l2(X, c(0, 0))
+$dx
+[1] 1.0322852 0.5208761 1.1150778 1.6960086 0.4492632
+
+$ord
+[1] 5 2 1 3 4
+
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("order_by_l2", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("order_by_l2_scaled")
+> ### * order_by_l2_scaled
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: order_by_l2_scaled
+> ### Title: Order rows by scaled L2 (stable ties)
+> ### Aliases: order_by_l2_scaled
+> 
+> ### ** Examples
+> 
+> X <- matrix(rnorm(10), 5, 2)
+> order_by_l2_scaled(X, c(0, 0), rule = "sd")
+$dx
+[1] 1.3891495 0.7534099 1.4052152 1.8699059 0.5709981
+
+$ord
+[1] 5 2 1 3 4
+
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("order_by_l2_scaled", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("plqr_demo_data")
+> ### * plqr_demo_data
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: plqr_demo_data
+> ### Title: Minimal PLQR demo data (oracle nuisances; no internal fitting)
+> ### Aliases: plqr_demo_data
+> 
+> ### ** Examples
+> 
+> demo <- plqr_demo_data(
++   n = 300, p = 2, p_d = 1, tau = 0.5,
++   design = "sinusoidal", seed = 1
++ )
+> head(demo$data)
+          X1         X2         D1          Y    q_oracle        mD1
+1 -0.6264538  0.8936737 -0.9379820 -1.0859139 -0.09347465 -0.7333418
+2  0.1836433 -1.0472981  1.4305600  0.9953984  0.36551477  0.5291053
+3 -0.8356286  1.9713374 -0.9729275  0.1560512  0.60068363 -1.2899121
+4  1.5952808 -0.3836321  1.4359361  1.2727712  0.53664353  1.1106213
+5  0.3295078  1.6541453 -0.5459575  0.6313299  0.84583783 -0.4639535
+6 -0.8204684  1.5122127 -1.7792064 -0.6906623  0.20596416 -1.0971661
+          rD1
+1 -0.20464019
+2  0.90145472
+3  0.31698463
+4  0.32531481
+5 -0.08200401
+6 -0.68204031
+> demo$truth$beta_true
+[1] 0.5
+> demo$q_x0
+[1] 0
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("plqr_demo_data", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("plqr_demo_subsets")
+> ### * plqr_demo_subsets
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: plqr_demo_subsets
+> ### Title: Quick helper: sample a batch of subsets (for U-stat /
+> ###   localization experiments)
+> ### Aliases: plqr_demo_subsets
+> 
+> ### ** Examples
+> 
+> plqr_demo_subsets(n = 10, K = 4, s = 3, seed = 1)
+     [,1] [,2] [,3]
+[1,]    4    7    9
+[2,]    1    2    5
+[3,]    2    3    7
+[4,]    1    3    5
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("plqr_demo_subsets", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("plqr_dnn")
+> ### * plqr_dnn
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: plqr_dnn
+> ### Title: PLQR local orthogonal moments via DNN rank weights
+> ### Aliases: plqr_dnn
+> 
+> ### ** Examples
+> 
+> set.seed(1)
+> demo <- plqr_demo_data(n = 120, p = 2, p_d = 2, tau = 0.5, seed = 1)
+> out <- plqr_dnn(
++   data = demo$data,
++   x_cols = c("X1", "X2"),
++   D_cols = c("D1", "D2"),
++   q_col = "q_oracle",
++   mD_cols = c("mD1", "mD2"),
++   y_col = "Y",
++   beta = demo$truth$beta_true,
++   tau = 0.5,
++   x0 = c(0, 0),
++   method = "exact",
++   k = 2L, s = 3L,
++   se = FALSE
++ )
+> out$moment
+            target_1
+comp_1 -0.0400059349
+comp_2 -0.0003733265
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("plqr_dnn", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("plqr_moment")
+> ### * plqr_moment
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: plqr_moment
+> ### Title: Orthogonal PLQR moment contributions for a given beta (oracle
+> ###   nuisances)
+> ### Aliases: plqr_moment
+> 
+> ### ** Examples
+> 
+> demo <- plqr_demo_data(n = 100, p = 2, p_d = 2, tau = 0.5, seed = 1)
+> plqr_moment(demo$data, beta = demo$truth$beta_true, tau = 0.5)
+                  D1           D2
+  [1,]  0.1228205519  0.268102111
+  [2,] -0.5066619859  0.314189445
+  [3,]  0.4759765300  0.591401216
+  [4,] -0.0992723402 -0.115089632
+  [5,]  0.6855706606 -0.496243591
+  [6,]  0.7492984770  0.453663808
+  [7,] -0.2001198500 -0.024889720
+  [8,]  0.1623982008  0.170166274
+  [9,]  0.0040198569  0.307364544
+ [10,] -0.1530325269 -0.096901951
+ [11,]  0.0493127495 -0.313083738
+ [12,] -0.1262083930 -0.029723546
+ [13,]  0.1200740232  0.136241073
+ [14,] -0.4110623633 -0.196734556
+ [15,] -0.2963514802  0.010776727
+ [16,]  0.4559235076  0.320748438
+ [17,] -0.0926221708 -0.145192479
+ [18,] -0.3759869267 -0.036303033
+ [19,] -0.1926723917  0.388242001
+ [20,] -0.0134127411  0.148293851
+ [21,]  0.5199655220 -0.392370456
+ [22,]  0.0006395579  0.449112303
+ [23,] -0.1890901002  0.244410819
+ [24,] -0.1022905740 -0.560936637
+ [25,] -0.3469717088  0.144608851
+ [26,] -0.5409425724 -0.136840681
+ [27,]  0.0993396109  0.106020086
+ [28,]  0.4816540237 -0.051146841
+ [29,] -0.0591580316  0.259210786
+ [30,]  0.0789526939  0.203769232
+ [31,] -0.2957480101 -0.098130304
+ [32,] -0.8666762015 -0.470724656
+ [33,] -0.1921445108 -0.110235227
+ [34,]  0.1711522908  0.409330479
+ [35,]  0.0179169828  0.100284409
+ [36,] -0.0294536232  0.219825013
+ [37,] -0.1682462186 -0.283975692
+ [38,] -0.3559375916  0.001319611
+ [39,]  0.3290331133 -0.105696692
+ [40,] -0.0016032085 -0.158908653
+ [41,]  0.2121932002  0.221876768
+ [42,] -0.3102323204  0.319037225
+ [43,] -0.0670441245 -0.073863253
+ [44,]  0.2636122839  0.086849810
+ [45,] -0.3488893668  0.679466807
+ [46,]  0.6000494834  0.422655137
+ [47,]  0.1634372220 -0.274805799
+ [48,] -0.0767012127 -0.057383685
+ [49,] -0.0498363110  0.240984965
+ [50,] -0.3061391726 -0.566242339
+ [51,]  0.0408665679  0.442164354
+ [52,]  0.1221502810  0.203180548
+ [53,]  0.0208964439 -0.113988806
+ [54,] -0.0742993025 -0.057839528
+ [55,] -0.2086652420 -0.473367538
+ [56,] -0.3438685072 -0.178870233
+ [57,]  0.7209288645  0.352073082
+ [58,]  0.1718218666 -0.046692760
+ [59,] -0.1124173220  0.575672946
+ [60,]  0.1275803165  0.058577654
+ [61,] -0.2853038423  0.777698301
+ [62,]  0.1167711545 -0.394200650
+ [63,] -0.0852991985 -0.190662900
+ [64,] -0.2572229334  0.128993652
+ [65,] -0.5158881897  0.050795500
+ [66,] -0.0810164703 -0.183665452
+ [67,]  0.1266552029 -0.203502053
+ [68,] -0.3567339885  0.170385592
+ [69,] -0.0993098937 -0.171762781
+ [70,]  0.2819487980  0.408987377
+ [71,]  0.0776797749  0.116616673
+ [72,]  0.1183137505  0.083374240
+ [73,] -0.2555571276 -0.246924336
+ [74,] -0.7947500643  0.020652280
+ [75,] -0.0468035027  0.350298698
+ [76,] -0.3390621802  0.002492704
+ [77,]  0.6867371940 -0.038656620
+ [78,] -0.2223003472  0.043762689
+ [79,] -0.3948735481 -0.049173287
+ [80,]  0.2759411033  0.529065601
+ [81,] -0.1194390466 -0.228775954
+ [82,] -0.1222585738  0.333429324
+ [83,]  0.3972775891 -0.276962086
+ [84,] -0.2103695008  0.049302552
+ [85,]  0.1741842913 -0.346447556
+ [86,] -0.3003216543 -0.016956427
+ [87,] -0.2004535820 -0.638808194
+ [88,]  0.2835554860  0.103453729
+ [89,]  0.1301106449 -0.571486634
+ [90,] -0.3015477653  0.243351046
+ [91,]  0.1170355992 -0.397201296
+ [92,] -0.1129110875 -0.184691055
+ [93,] -0.0732494773 -0.327500687
+ [94,]  0.4278772027 -0.091981458
+ [95,] -0.5335287862  0.033047629
+ [96,] -0.0403342983  0.277293832
+ [97,]  0.2296796997  0.477874126
+ [98,] -0.2865410031 -0.013503179
+ [99,]  0.0151697104  0.214538520
+[100,]  0.0917446259 -0.259566930
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("plqr_moment", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("predict.cate_result")
+> ### * predict.cate_result
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: predict.cate_result
+> ### Title: Predict from a 'cate_result' object at new targets
+> ### Aliases: predict.cate_result
+> 
+> ### ** Examples
+> 
+> set.seed(3)
+> n <- 40
+> x_mat <- matrix(rnorm(n * 2), n, 2)
+> fit <- cate_dnn(X = x_mat, x0 = c(0, 0), pseudo_outcome = rnorm(n), se = TRUE)
+> predict(fit, x0 = c(0.2, -0.1))
+[1] 0.07817989
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("predict.cate_result", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("print.cate_result")
+> ### * print.cate_result
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: print.cate_result
+> ### Title: Print a 'cate_result' object
+> ### Aliases: print.cate_result
+> 
+> ### ** Examples
+> 
+> set.seed(1)
+> n <- 20
+> x_mat <- matrix(rnorm(n * 2), n, 2)
+> out <- cate_dnn(
++   X = x_mat,
++   x0 = c(0, 0),
++   pseudo_outcome = rnorm(n),
++   se = FALSE
++ )
+> print(out)
+<cate_result>
+  data  : n=20, p=2, m=1
+  DNN   : method=exact, k=1, s=1, distance=l2
+  est   : tau[1:min(5,m)] = 0.1388  (SEs not requested)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("print.cate_result", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("print.score_diff_path")
+> ### * print.score_diff_path
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: print.score_diff_path
+> ### Title: Print a 'score_diff_path' object
+> ### Aliases: print.score_diff_path
+> 
+> ### ** Examples
+> 
+> sc <- new_score(
++   name = "order1",
++   order = 1L,
++   eval_param = function(idxs, data, theta, ctx, rng) theta[1] * data[idxs]
++ )
+> print(score_diff_path(sc, data = c(1, 2, 3)))
+<score_diff_path>
+  score : order1
+  grad  : auto
+  fd    : step=1e-06, scheme=central
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("print.score_diff_path", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("print.ustat_score")
+> ### * print.ustat_score
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: print.ustat_score
+> ### Title: Print a 'ustat_score' object
+> ### Aliases: print.ustat_score
+> 
+> ### ** Examples
+> 
+> sc <- as_score(function(idxs, data) sum(data[idxs]), s = 2L, name = "sum2")
+> print(sc)
+<ustat_score: sum2>
+  order: 2
+  impl : R eval 
+  diff : none
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("print.ustat_score", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("print.weights_result")
+> ### * print.weights_result
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: print.weights_result
+> ### Title: Print a 'weights_result' object
+> ### Aliases: print.weights_result
+> 
+> ### ** Examples
+> 
+> set.seed(1)
+> x_mat <- matrix(rnorm(20), 10, 2)
+> out <- weights_dnn_exact(x_mat, x0 = c(0, 0), k = 1L, s = 1L)
+> print(out)
+<weights_result>
+  data  : n=10, p=2, m=1
+  weight: rank (dnn_exact[k=1,s=1])
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("print.weights_result", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("rank_names")
+> ### * rank_names
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: rank_names
+> ### Title: List registered rank_weight names
+> ### Aliases: rank_names
+> 
+> ### ** Examples
+> 
+> head(rank_names(), 3)
+[1] "tmp_rank_get"
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("rank_names", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("rank_weight_dnn_asymp")
+> ### * rank_weight_dnn_asymp
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: rank_weight_dnn_asymp
+> ### Title: Rank-weight: DNN asymptotic (full U, WOR)
+> ### Aliases: rank_weight_dnn_asymp
+> 
+> ### ** Examples
+> 
+> rw <- rank_weight_dnn_asymp(k = 2, s = 3, normalize = TRUE)
+> rank_weight_eval(rw, c(2L, 1L, 3L, 4L))
+[1] 0.3203125 0.3671875 0.2265625 0.0859375
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("rank_weight_dnn_asymp", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("rank_weight_dnn_exact")
+> ### * rank_weight_dnn_exact
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: rank_weight_dnn_exact
+> ### Title: Rank-weight: DNN exact (full U, WOR)
+> ### Aliases: rank_weight_dnn_exact
+> 
+> ### ** Examples
+> 
+> rw <- rank_weight_dnn_exact(k = 2, s = 3)
+> rank_weight_eval(rw, c(2L, 1L, 3L, 4L))
+[1] 0.375 0.375 0.250 0.000
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("rank_weight_dnn_exact", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("rank_weight_eval")
+> ### * rank_weight_eval
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: rank_weight_eval
+> ### Title: Evaluate rank-weight for a single target
+> ### Aliases: rank_weight_eval
+> 
+> ### ** Examples
+> 
+> rw <- as_rank_weight(function(r) rep(1 / length(r), length(r)))
+> rank_weight_eval(rw, c(2L, 1L, 3L))
+[1] 0.3333333 0.3333333 0.3333333
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("rank_weight_eval", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("rank_weight_eval_batch")
+> ### * rank_weight_eval_batch
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: rank_weight_eval_batch
+> ### Title: Evaluate rank-weight for many targets (batch)
+> ### Aliases: rank_weight_eval_batch
+> 
+> ### ** Examples
+> 
+> rw <- as_rank_weight(function(r) rep(1 / length(r), length(r)))
+> rank_matrix <- cbind(c(1L, 2L, 3L), c(2L, 1L, 3L))
+> rank_weight_eval_batch(rw, rank_matrix)
+          [,1]      [,2]
+[1,] 0.3333333 0.3333333
+[2,] 0.3333333 0.3333333
+[3,] 0.3333333 0.3333333
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("rank_weight_eval_batch", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("register_distance")
+> ### * register_distance
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: register_distance
+> ### Title: Register a distance spec under a name
+> ### Aliases: register_distance
+> 
+> ### ** Examples
+> 
+> nm <- "tmp_l1_demo"
+> register_distance(
++   nm,
++   function(X, x0, ctx = NULL) {
++     rowSums(abs(X - matrix(x0, nrow(X), ncol(X), TRUE)))
++   }
++ )
+> nm %in% distance_names()
+[1] TRUE
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("register_distance", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("register_rank")
+> ### * register_rank
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: register_rank
+> ### Title: Register a rank_weight under a name
+> ### Aliases: register_rank
+> 
+> ### ** Examples
+> 
+> nm <- "tmp_rank_demo"
+> register_rank(nm, function(ranks) rep(1 / length(ranks), length(ranks)))
+> nm %in% rank_names()
+[1] TRUE
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("register_rank", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("register_score")
+> ### * register_score
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: register_score
+> ### Title: Register a score
+> ### Aliases: register_score
+> 
+> ### ** Examples
+> 
+> sc <- as_score(function(idxs, data) sum(data[idxs]), s = 2L, name = "tmp_score_demo")
+> register_score(sc)
+> "tmp_score_demo" %in% list_scores()
+[1] TRUE
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("register_score", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("score_cate_rho")
+> ### * score_cate_rho
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: score_cate_rho
+> ### Title: CATE score from a precomputed pseudo-outcome rho (pure score; no
+> ###   weights)
+> ### Aliases: score_cate_rho
+> 
+> ### ** Examples
+> 
+> demo <- cate_demo_data(n = 200, p = 2, design = "hetero", seed = 1)
+> sc <- score_cate_rho(
++   x0 = rep(0, 2), x_cols = paste0("X", 1:2),
++   s = 5, k = 1, rho_col = "rho_oracle"
++ )
+> ctx <- score_setup(sc, demo$data)
+> subs <- cate_demo_subsets(n = nrow(demo$data), K = 3, s = 5, seed = 1)
+> score_eval_batch(sc, subs, demo$data, ctx) # three subset evaluations
+[1] 1.9200414 0.8397658 4.4934999
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("score_cate_rho", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("score_diff_path")
+> ### * score_diff_path
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: score_diff_path
+> ### Title: Build a modular differentiable path for a score
+> ### Aliases: score_diff_path
+> 
+> ### ** Examples
+> 
+> sc <- new_score(
++   name = "affine_order1",
++   order = 1L,
++   eval_param = function(idxs, data, theta, ctx, rng) {
++     theta[1] * data[idxs] + theta[2]
++   }
++ )
+> path <- score_diff_path(sc, data = c(1, 2, 4), method = "fd")
+> path$value(2L, theta = c(0.5, 1))
+[1] 2
+> path$grad(2L, theta = c(0.5, 1))
+[1] 2 1
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("score_diff_path", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("score_eval")
+> ### * score_eval
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: score_eval
+> ### Title: Evaluate kernel on one subset
+> ### Aliases: score_eval
+> 
+> ### ** Examples
+> 
+> sc <- as_score(function(idxs, data) sum(data[idxs]), s = 2L)
+> score_eval(sc, c(1L, 2L), c(3, 4, 5), NULL)
+[1] 7
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("score_eval", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("score_eval_batch")
+> ### * score_eval_batch
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: score_eval_batch
+> ### Title: Evaluate kernel on many subsets (R fast-path)
+> ### Aliases: score_eval_batch
+> 
+> ### ** Examples
+> 
+> sc <- as_score(function(idxs, data) sum(data[idxs]), s = 2L)
+> subs <- rbind(c(1L, 2L), c(2L, 3L))
+> score_eval_batch(sc, subs, c(3, 4, 5), NULL)
+[1] 7 9
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("score_eval_batch", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("score_names")
+> ### * score_names
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: score_names
+> ### Title: Back-compat alias for 'list_scores()'
+> ### Aliases: score_names
+> 
+> ### ** Examples
+> 
+> identical(score_names(), list_scores())
+[1] TRUE
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("score_names", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("score_np_y")
+> ### * score_np_y
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: score_np_y
+> ### Title: Nonparametric regression *singleton* score from observed outcome
+> ###   Y (order-1 pure score; no weights)
+> ### Aliases: score_np_y
+> 
+> ### ** Examples
+> 
+> set.seed(1)
+> n <- 50
+> p <- 2
+> dat <- data.frame(X1 = rnorm(n), X2 = rnorm(n))
+> dat$Y <- with(dat, X1 - 2 * X2 + rnorm(n))
+> 
+> sc <- score_np_y(
++   x0 = c(0, 0),
++   x_cols = c("X1", "X2"),
++   s = 1L, k = 1L,
++   y_col = "Y"
++ )
+> ctx <- score_setup(sc, dat)
+> subs <- matrix(seq_len(n), ncol = 1L) # singleton subsets
+> score_eval_batch(sc, subs, dat, ctx) # returns dat$Y
+ [1] -2.043032249  1.449811984 -2.428789644  4.012035767 -3.191124276
+ [6] -3.013980912  1.938579481  3.736768187 -0.179472545  1.646896901
+[11] -3.927190807  0.006678512 -0.568437067 -2.921400558  2.404096592
+[16] -0.815326137  3.273734126 -2.266386815  1.008902850 -3.928652502
+[21] -0.537999148  3.545067988 -1.361467132 -0.300712963  3.026901807
+[26]  0.073645096  0.657223836 -1.510597259 -1.308493182  1.272713180
+[31]  2.556177458 -0.421324983 -1.437006189  1.474934478 -2.258394071
+[36] -2.617345129 -2.821465755  0.020774546 -0.292107029  0.172081389
+[41] -0.993842960 -1.492513980 -3.288814292 -1.307294502 -4.978342709
+[46] -2.575287009  5.004932925  1.932459373  1.050578487  0.187303465
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("score_np_y", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("score_order")
+> ### * score_order
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: score_order
+> ### Title: Resolve kernel order 's'
+> ### Aliases: score_order
+> 
+> ### ** Examples
+> 
+> sc <- new_score(
++   name = "dyn",
++   order = function(n, data, ctx) if (n > 5) 3L else 2L,
++   eval = function(idxs, data, ctx, rng) sum(data[idxs])
++ )
+> score_order(sc, 4L, 1:4, NULL)
+[1] 2
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("score_order", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("score_plqr_component")
+> ### * score_plqr_component
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: score_plqr_component
+> ### Title: PLQR diagnostic score (component j); pure score (no weights, no
+> ###   fitting)
+> ### Aliases: score_plqr_component
+> 
+> ### ** Examples
+> 
+> ## Don't show: 
+> if (TRUE) withAutoprint({ # examplesIf
++ ## End(Don't show)
++ demo <- plqr_demo_data(n = 200, p = 3, p_d = 2, tau = 0.5, seed = 1)
++ sc <- score_plqr_component(
++   x0      = rep(0, 3),
++   x_cols  = paste0("X", 1:3),
++   D_cols  = paste0("D", 1:2),
++   q_col   = "q_oracle",
++   mD_cols = paste0("mD", 1:2),
++   beta    = demo$truth$beta_true,
++   j       = 1L,
++   tau     = 0.5,
++   s       = 5,
++   k       = 1
++ )
++ ctx <- score_setup(sc, demo$data)
++ subs <- cate_demo_subsets(n = nrow(demo$data), K = 3, s = 5, seed = 1)
++ score_eval_batch(sc, subs, demo$data, ctx)
++ ## Don't show: 
++ }) # examplesIf
+> demo <- plqr_demo_data(n = 200, p = 3, p_d = 2, tau = 0.5, seed = 1)
+> sc <- score_plqr_component(x0 = rep(0, 3), x_cols = paste0("X", 1:3), 
++     D_cols = paste0("D", 1:2), q_col = "q_oracle", mD_cols = paste0("mD", 1:2), beta = demo$truth$beta_true, 
++     j = 1L, tau = 0.5, s = 5, k = 1)
+> ctx <- score_setup(sc, demo$data)
+> subs <- cate_demo_subsets(n = nrow(demo$data), K = 3, s = 5, seed = 1)
+> score_eval_batch(sc, subs, demo$data, ctx)
+[1]  0.6484292 -0.1609615 -0.7863173
+> ## End(Don't show)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("score_plqr_component", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("score_setup")
+> ### * score_setup
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: score_setup
+> ### Title: Set up score context (precomputation)
+> ### Aliases: score_setup
+> 
+> ### ** Examples
+> 
+> sc <- new_score(
++   name = "ctx_sum",
++   order = 1L,
++   setup = function(data, ...) list(offset = 1),
++   eval = function(idxs, data, ctx, rng) data[idxs] + ctx$offset
++ )
+> ctx <- score_setup(sc, 1:3)
+> score_eval(sc, 2L, 1:3, ctx)
+[1] 3
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("score_setup", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("sim_cate_data")
+> ### * sim_cate_data
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: sim_cate_data
+> ### Title: Draw one sample from a named CATE simulation DGP
+> ### Aliases: sim_cate_data
+> 
+> ### ** Examples
+> 
+> dgp <- sim_cate_data("dgp2_nonlinear", n = 200, kx = 2, seed = 1)
+> head(dgp$data)
+          X1         X2 D          Y  e_oracle    m_oracle   m0_oracle
+1 -0.6264538  0.4094018 1  0.2096581 0.3733369  0.04137364 -0.03585565
+2  0.1836433  1.6888733 0 -0.6536643 0.3202518 -0.31586303 -0.50522996
+3 -0.8356286  1.5865884 1 -1.8846973 0.2295050 -1.39257858 -1.42221705
+4  1.5952808 -0.3309078 0  2.9318349 0.7237409  3.64982105  2.92618860
+5  0.3295078 -2.2852355 1  4.7723325 0.7870730  4.13561930  3.61474331
+6 -0.8204684  2.4976616 0 -1.5211462 0.1598876 -2.29666230 -2.31812997
+    m1_oracle tau_oracle rho_oracle
+1  0.17100653  0.2068622  0.4507576
+2  0.08607646  0.5913064  0.4969505
+3 -1.29307618  0.1291409 -2.1442618
+4  3.92603874  0.9998501  2.5989592
+5  4.27653197  0.6617887  0.8089633
+6 -2.18386262  0.1342674 -0.9231098
+> dgp$tau_x0
+[1] 0.5
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("sim_cate_data", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("sim_cate_methods")
+> ### * sim_cate_methods
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: sim_cate_methods
+> ### Title: List available CATE simulation methods
+> ### Aliases: sim_cate_methods
+> 
+> ### ** Examples
+> 
+> sim_cate_methods()
+[1] "dnn_oracle"       "dnn_oracle_mahal" "dnn_crossfit"     "local_constant"  
+[5] "ols_interact"     "causal_forest"    "llf"             
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("sim_cate_methods", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("sim_cate_one_rep")
+> ### * sim_cate_one_rep
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: sim_cate_one_rep
+> ### Title: Run one replicate of CATE estimators
+> ### Aliases: sim_cate_one_rep
+> 
+> ### ** Examples
+> 
+> rep1 <- sim_cate_one_rep(
++   n = 200, kx = 2, k = 5, s = 12,
++   design = "dgp2_nonlinear",
++   methods = c("dnn_oracle", "ols_interact"),
++   seed = 1
++ )
+> rep1
+        method   tau_hat tau0        bias     sq_err         se cover    ci_len
+1   dnn_oracle 0.5844198  0.5  0.08441978 0.00712670 0.20347663     1 0.7976137
+2 ols_interact 0.4340454  0.5 -0.06595460 0.00435001 0.07762367     1 0.3042792
+      neff
+1 101.7345
+2       NA
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("sim_cate_one_rep", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("sim_cate_run")
+> ### * sim_cate_run
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: sim_cate_run
+> ### Title: Run the CATE simulation grid
+> ### Aliases: sim_cate_run
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D # Single method (default):
+> ##D raw <- sim_cate_run(designs = "dgp2_nonlinear", n_vals = 500L, n_reps = 10L)
+> ##D 
+> ##D # Multiple methods on the same draws:
+> ##D raw <- sim_cate_run(
+> ##D   designs = "dgp2_nonlinear", n_vals = 500L, n_reps = 10L,
+> ##D   methods = c("dnn_oracle", "dnn_crossfit", "ols_interact")
+> ##D )
+> ##D summarise_sim_results(raw)
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("sim_cate_run", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("summarise_sim_results")
+> ### * summarise_sim_results
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: summarise_sim_results
+> ### Title: Summarise raw per-replicate CATE simulation results
+> ### Aliases: summarise_sim_results
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D raw <- sim_cate_run(designs = "dgp1_linear", n_vals = 500L, n_reps = 10L)
+> ##D summarise_sim_results(raw)
+> ## End(Not run)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("summarise_sim_results", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("summary.cate_result")
+> ### * summary.cate_result
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: summary.cate_result
+> ### Title: Summarize a 'cate_result' object
+> ### Aliases: summary.cate_result
+> 
+> ### ** Examples
+> 
+> set.seed(1)
+> n <- 30
+> x_mat <- matrix(rnorm(n * 2), n, 2)
+> out <- cate_dnn(X = x_mat, x0 = c(0, 0), pseudo_outcome = rnorm(n))
+> summary(out)
+<summary.cate_result>
+  targets: 1
+         estimate std.error statistic p.value conf.low conf.high
+target_1   0.1103    0.1753     0.629  0.5294  -0.2334    0.4539
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("summary.cate_result", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("weights_dnn")
+> ### * weights_dnn
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: weights_dnn
+> ### Title: DNN weights (choose method), distance-based ranking
+> ### Aliases: weights_dnn
+> 
+> ### ** Examples
+> 
+> set.seed(1)
+> x_mat <- matrix(rnorm(20), 10, 2)
+> x0 <- c(0, 0)
+> out <- weights_dnn(x_mat, x0 = x0, k = 2L, s = 3L, method = "exact")
+> dim(out$W)
+[1] 10  1
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("weights_dnn", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("weights_dnn_asymp")
+> ### * weights_dnn_asymp
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: weights_dnn_asymp
+> ### Title: DNN weights (asymptotic full-U), distance-based ranking
+> ### Aliases: weights_dnn_asymp
+> 
+> ### ** Examples
+> 
+> set.seed(1)
+> x_mat <- matrix(rnorm(20), 10, 2)
+> x0_mat <- matrix(rnorm(4), 2, 2)
+> out <- weights_dnn_asymp(x_mat, x0_mat, k = 2L, s = 3L, normalize = TRUE)
+> dim(out$W)
+[1] 10  2
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("weights_dnn_asymp", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("weights_dnn_exact")
+> ### * weights_dnn_exact
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: weights_dnn_exact
+> ### Title: DNN weights (exact full-U), distance-based ranking
+> ### Aliases: weights_dnn_exact
+> 
+> ### ** Examples
+> 
+> set.seed(1)
+> x_mat <- matrix(rnorm(20), 10, 2)
+> x0_mat <- matrix(rnorm(6), 3, 2)
+> out <- weights_dnn_exact(x_mat, x0_mat, distance = "l2", k = 2L, s = 3L, return = "W")
+> dim(out$W)
+[1] 10  3
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("weights_dnn_exact", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("weights_matrix")
+> ### * weights_matrix
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: weights_matrix
+> ### Title: Compute weight matrix W via an arbitrary ranking + weight
+> ###   mapping
+> ### Aliases: weights_matrix
+> 
+> ### ** Examples
+> 
+> set.seed(1)
+> x_mat <- matrix(rnorm(20), 10, 2)
+> x0_mat <- matrix(rnorm(6), 3, 2)
+> rw <- as_rank_weight(function(r) {
++   w <- 1 / as.numeric(r)
++   w / sum(w)
++ }, name = "inv_rank")
+> out <- weights_matrix(x_mat, x0_mat, ranking = "l2", weight = rw, return = c("W", "ranks"))
+> dim(out$W)
+[1] 10  3
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("weights_matrix", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> ### * <FOOTER>
+> ###
+> cleanEx()
+> options(digits = 7L)
+> base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
+Time elapsed:  2.652 0.103 2.655 0 0 
+> grDevices::dev.off()
+null device 
+          1 
+> ###
+> ### Local variables: ***
+> ### mode: outline-minor ***
+> ### outline-regexp: "\\(> \\)?### [*]+" ***
+> ### End: ***
+> quit('no')

@@ -1,0 +1,29 @@
+* installing *source* package 'RdistNN' ...
+** this is package 'RdistNN' version '0.1.0'
+** using staged installation
+** libs
+using C++ compiler: 'G__~1.EXE (GCC) 14.3.0'
+using C++17
+g++  -std=gnu++17 -I"C:/R/include" -DNDEBUG -I../inst/include -I'D:/a/_temp/Library/Rcpp/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"   -fopenmp   -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c RcppExports.cpp -o RcppExports.o
+g++  -std=gnu++17 -I"C:/R/include" -DNDEBUG -I../inst/include -I'D:/a/_temp/Library/Rcpp/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"   -fopenmp   -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c dist_l1.cpp -o dist_l1.o
+g++  -std=gnu++17 -I"C:/R/include" -DNDEBUG -I../inst/include -I'D:/a/_temp/Library/Rcpp/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"   -fopenmp   -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c dist_l2.cpp -o dist_l2.o
+g++  -std=gnu++17 -I"C:/R/include" -DNDEBUG -I../inst/include -I'D:/a/_temp/Library/Rcpp/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"   -fopenmp   -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c fast_order.cpp -o fast_order.o
+g++  -std=gnu++17 -I"C:/R/include" -DNDEBUG -I../inst/include -I'D:/a/_temp/Library/Rcpp/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"   -fopenmp   -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c jackknife_rank.cpp -o jackknife_rank.o
+g++  -std=gnu++17 -I"C:/R/include" -DNDEBUG -I../inst/include -I'D:/a/_temp/Library/Rcpp/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"   -fopenmp   -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c jackknife_rank_full.cpp -o jackknife_rank_full.o
+g++  -std=gnu++17 -I"C:/R/include" -DNDEBUG -I../inst/include -I'D:/a/_temp/Library/Rcpp/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"   -fopenmp   -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c score_cate.cpp -o score_cate.o
+g++  -std=gnu++17 -I"C:/R/include" -DNDEBUG -I../inst/include -I'D:/a/_temp/Library/Rcpp/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"   -fopenmp   -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c score_plqr.cpp -o score_plqr.o
+g++  -std=gnu++17 -I"C:/R/include" -DNDEBUG -I../inst/include -I'D:/a/_temp/Library/Rcpp/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"   -fopenmp   -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c score_subset_sum.cpp -o score_subset_sum.o
+g++ -shared -s -static-libgcc -o RdistNN.dll tmp.def RcppExports.o dist_l1.o dist_l2.o fast_order.o jackknife_rank.o jackknife_rank_full.o score_cate.o score_plqr.o score_subset_sum.o -fopenmp -LC:/rtools45/x86_64-w64-mingw32.static.posix/lib/x64 -LC:/rtools45/x86_64-w64-mingw32.static.posix/lib -LC:/R/bin/x64 -lR
+installing to D:/a/RdistNN/RdistNN/check/RdistNN.Rcheck/00LOCK-RdistNN/00new/RdistNN/libs/x64
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (RdistNN)

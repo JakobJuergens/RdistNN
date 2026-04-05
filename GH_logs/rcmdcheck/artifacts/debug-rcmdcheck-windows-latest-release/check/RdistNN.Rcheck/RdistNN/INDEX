@@ -1,0 +1,126 @@
+RdistNN-package         RdistNN: Distance-Based Building Blocks for
+                        Localized U-Statistics
+as_distance             Wrap a function as a distance spec
+as_rank_weight          Wrap a function as a rank_weight spec
+as_score                Coerce a plain function to a score (simple
+                        cases)
+cate_demo_data          Minimal CATE demo data (oracle nuisances +
+                        pseudo-outcome)
+cate_demo_subsets       Quick helper: sample a batch of subsets (for
+                        U-stat experiments)
+cate_dnn                CATE via DNN rank weights (orthogonalized local
+                        averaging)
+confint.cate_result     Confidence intervals for 'cate_result'
+dist_l1                 Fast L1 (Manhattan) distance to a single query
+                        point
+dist_l1_scaled          Scaled L1 distance (per-coordinate scaling)
+dist_l2                 Fast L2 (Euclidean) distance to a single query
+                        point
+dist_l2_scaled          Scaled L2 distance (per-coordinate scaling)
+distance_eval           Evaluate a distance spec at a single target
+distance_eval_batch     Evaluate a distance spec for many targets
+                        (batch)
+distance_l1             L1 distance spec (single and batched
+                        evaluation)
+distance_l1_scaled      Scaled L1 distance spec (one-time setup +
+                        eval/batch)
+distance_l2             L2 distance spec (single and batched
+                        evaluation)
+distance_l2_scaled      Scaled L2 distance spec (one-time setup +
+                        eval/batch)
+distance_names          List registered distances
+dnn_weights_asymp_full_from_ranks
+                        Asymptotic DNN weights from ranks (full
+                        U-statistic, WOR)
+dnn_weights_exact_full_from_ranks
+                        Exact DNN weights from ranks (full U-statistic,
+                        WOR)
+get_distance            Retrieve a registered distance spec
+get_rank                Retrieve a registered rank_weight
+get_score               Retrieve a registered score
+is_compiled             Does a score have a compiled implementation?
+is_distance             Is this a distance spec?
+is_rank_weight          Is this a rank_weight spec?
+is_score                Is object a 'ustat_score'?
+jackknife_fast_rank     Fast delete-one jackknife for rank-weighted
+                        functionals (auto C++ when available, R
+                        fallback otherwise)
+jackknife_slow_rank     Slow delete-one jackknife for rank-weighted
+                        L-stat rules (fixed ranks)
+list_distances          Back-compat alias for 'distance_names()'
+list_rank_weights       Back-compat alias for 'rank_names()'
+list_ranks              Back-compat alias for 'rank_names()'
+list_scores             List registered scores
+new_distance            Construct a distance spec
+new_rank_weight         Construct a rank-weight spec
+new_score               Score specification (S3) for U-stat kernels
+np_demo_data            Minimal nonparametric regression demo data
+                        (oracle m and Y only)
+np_demo_subsets         Quick helper: sample a batch of subsets
+                        (singleton by default)
+np_dnn                  Nonparametric regression via DNN rank weights
+ord_to_ranks            Convert an index order to ranks (inverse
+                        permutation)
+order_by_l1             Order rows by L1 distance to a point (stable
+                        ties)
+order_by_l1_scaled      Order rows by scaled L1 (stable ties)
+order_by_l2             Order rows by L2 distance to a point (stable
+                        ties)
+order_by_l2_scaled      Order rows by scaled L2 (stable ties)
+plqr_demo_data          Minimal PLQR demo data (oracle nuisances; no
+                        internal fitting)
+plqr_demo_subsets       Quick helper: sample a batch of subsets (for
+                        U-stat / localization experiments)
+plqr_dnn                PLQR local orthogonal moments via DNN rank
+                        weights
+plqr_moment             Orthogonal PLQR moment contributions for a
+                        given beta (oracle nuisances)
+predict.cate_result     Predict from a 'cate_result' object at new
+                        targets
+print.cate_dnn_result   Print a 'cate_dnn_result' object
+print.cate_result       Print a 'cate_result' object
+print.np_result         Print an 'np_result' object
+print.plqr_result       Print a 'plqr_result' object
+print.score_diff_path   Print a 'score_diff_path' object
+print.summary.cate_result
+                        Print a 'summary.cate_result' object
+print.ustat_score       Print a 'ustat_score' object
+print.weights_result    Print a 'weights_result' object
+rank_names              List registered rank_weight names
+rank_weight_dnn_asymp   Rank-weight: DNN asymptotic (full U, WOR)
+rank_weight_dnn_exact   Rank-weight: DNN exact (full U, WOR)
+rank_weight_eval        Evaluate rank-weight for a single target
+rank_weight_eval_batch
+                        Evaluate rank-weight for many targets (batch)
+register_distance       Register a distance spec under a name
+register_rank           Register a rank_weight under a name
+register_score          Register a score
+score_cate_rho          CATE score from a precomputed pseudo-outcome
+                        rho (pure score; no weights)
+score_diff_path         Build a modular differentiable path for a score
+score_eval              Evaluate kernel on one subset
+score_eval_batch        Evaluate kernel on many subsets (R fast-path)
+score_names             Back-compat alias for 'list_scores()'
+score_np_y              Nonparametric regression *singleton* score from
+                        observed outcome Y (order-1 pure score; no
+                        weights)
+score_order             Resolve kernel order 's'
+score_plqr_component    PLQR diagnostic score (component j); pure score
+                        (no weights, no fitting)
+score_setup             Set up score context (precomputation)
+sim_cate_data           Draw one sample from a named CATE simulation
+                        DGP
+sim_cate_methods        List available CATE simulation methods
+sim_cate_one_rep        Run one replicate of CATE estimators
+sim_cate_run            Run the CATE simulation grid
+summarise_sim_results   Summarise raw per-replicate CATE simulation
+                        results
+summary.cate_result     Summarize a 'cate_result' object
+weights_dnn             DNN weights (choose method), distance-based
+                        ranking
+weights_dnn_asymp       DNN weights (asymptotic full-U), distance-based
+                        ranking
+weights_dnn_exact       DNN weights (exact full-U), distance-based
+                        ranking
+weights_matrix          Compute weight matrix W via an arbitrary
+                        ranking + weight mapping

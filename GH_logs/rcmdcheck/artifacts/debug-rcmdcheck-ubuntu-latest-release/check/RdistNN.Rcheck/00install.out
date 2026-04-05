@@ -1,0 +1,30 @@
+* installing *source* package ‘RdistNN’ ...
+** this is package ‘RdistNN’ version ‘0.1.0’
+** using staged installation
+** libs
+using C++ compiler: ‘g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0’
+using C++17
+g++ -std=gnu++17 -I"/opt/R/4.5.3/lib/R/include" -DNDEBUG -I../inst/include -I'/home/runner/work/_temp/Library/Rcpp/include' -I/usr/local/include   -fopenmp -fpic  -g -O2   -c RcppExports.cpp -o RcppExports.o
+g++ -std=gnu++17 -I"/opt/R/4.5.3/lib/R/include" -DNDEBUG -I../inst/include -I'/home/runner/work/_temp/Library/Rcpp/include' -I/usr/local/include   -fopenmp -fpic  -g -O2   -c dist_l1.cpp -o dist_l1.o
+g++ -std=gnu++17 -I"/opt/R/4.5.3/lib/R/include" -DNDEBUG -I../inst/include -I'/home/runner/work/_temp/Library/Rcpp/include' -I/usr/local/include   -fopenmp -fpic  -g -O2   -c dist_l2.cpp -o dist_l2.o
+g++ -std=gnu++17 -I"/opt/R/4.5.3/lib/R/include" -DNDEBUG -I../inst/include -I'/home/runner/work/_temp/Library/Rcpp/include' -I/usr/local/include   -fopenmp -fpic  -g -O2   -c fast_order.cpp -o fast_order.o
+g++ -std=gnu++17 -I"/opt/R/4.5.3/lib/R/include" -DNDEBUG -I../inst/include -I'/home/runner/work/_temp/Library/Rcpp/include' -I/usr/local/include   -fopenmp -fpic  -g -O2   -c jackknife_rank.cpp -o jackknife_rank.o
+g++ -std=gnu++17 -I"/opt/R/4.5.3/lib/R/include" -DNDEBUG -I../inst/include -I'/home/runner/work/_temp/Library/Rcpp/include' -I/usr/local/include   -fopenmp -fpic  -g -O2   -c jackknife_rank_full.cpp -o jackknife_rank_full.o
+g++ -std=gnu++17 -I"/opt/R/4.5.3/lib/R/include" -DNDEBUG -I../inst/include -I'/home/runner/work/_temp/Library/Rcpp/include' -I/usr/local/include   -fopenmp -fpic  -g -O2   -c score_cate.cpp -o score_cate.o
+g++ -std=gnu++17 -I"/opt/R/4.5.3/lib/R/include" -DNDEBUG -I../inst/include -I'/home/runner/work/_temp/Library/Rcpp/include' -I/usr/local/include   -fopenmp -fpic  -g -O2   -c score_plqr.cpp -o score_plqr.o
+g++ -std=gnu++17 -I"/opt/R/4.5.3/lib/R/include" -DNDEBUG -I../inst/include -I'/home/runner/work/_temp/Library/Rcpp/include' -I/usr/local/include   -fopenmp -fpic  -g -O2   -c score_subset_sum.cpp -o score_subset_sum.o
+g++ -std=gnu++17 -shared -L/opt/R/4.5.3/lib/R/lib -L/usr/local/lib -o RdistNN.so RcppExports.o dist_l1.o dist_l2.o fast_order.o jackknife_rank.o jackknife_rank_full.o score_cate.o score_plqr.o score_subset_sum.o -fopenmp -L/opt/R/4.5.3/lib/R/lib -lR
+installing to /home/runner/work/RdistNN/RdistNN/check/RdistNN.Rcheck/00LOCK-RdistNN/00new/RdistNN/libs
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (RdistNN)
