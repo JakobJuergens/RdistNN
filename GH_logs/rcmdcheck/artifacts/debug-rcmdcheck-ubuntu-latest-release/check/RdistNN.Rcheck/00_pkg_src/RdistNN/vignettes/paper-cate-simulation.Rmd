@@ -1,0 +1,166 @@
+---
+title: "CATE Simulation Study"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{CATE Simulation Study}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment  = "#>"
+)
+library(RdistNN)
+```
+
+## Overview
+
+This vignette documents the simulation infrastructure for the paper
+*"Robust Inference for Conditional Z-Estimation via Distributional Nearest
+Neighbors"* (Juergens). It shows how to use the package-level simulation
+functions on a small synthetic example. The full Monte Carlo run for the paper
+is in `inst/paper-replication/cate/run.R`.
+
+To access that script after installing the package:
+
+```{r replication-path, eval = FALSE}
+system.file("paper-replication/cate/run.R", package = "RdistNN")
+```
+
+## Data-generating processes
+
+Five DGPs are available via `sim_cate_data()`:
+
+| Design | `tau(x)` | Propensity | Covariate design | Notes |
+|---|---|---|---|---|
+| `dgp1_linear` | `0.5 x1 - 0.3 x2` | logistic | iid N(0,I) | correctly specified for OLS-interaction |
+| `dgp2_nonlinear` | `0.5 + 0.5 sin(x1)` | logistic | iid N(0,I) | primary horse-race DGP |
+| `dgp3_sparse_overlap` | same as DGP 2 | near-boundary except at `x0` | iid N(0,I) | stress-tests local ESS adaptation |
+| `dgp4_clustered` | same as DGP 2 | logistic | mixture: 70% N(0, 0.4²I) + 30% N((3,0),I) | density-adaptivity DGP; DNN shrinks bandwidth at dense `x0` |
+| `dgp5_correlated` | `sin(2x1) + 0.5 x1²` | steeper logistic | N(0,Σ), ρ=0.85; x0=(0.75,0) | shape-adaptivity DGP; `dnn_oracle_mahal` corrects for off-diagonal covariance |
+
+All DGPs return oracle nuisances (`e_oracle`, `m0_oracle`, `m1_oracle`,
+`tau_oracle`, `rho_oracle`) so that first-stage estimation error can be
+isolated.
+
+```{r dgp-example}
+dgp <- sim_cate_data("dgp2_nonlinear", n = 300, kx = 2, seed = 42)
+head(dgp$data[, c("X1", "X2", "D", "Y", "tau_oracle", "e_oracle")])
+dgp$tau_x0   # true CATE at x0 = (0, 0)
+```
+
+## Single replicate
+
+`sim_cate_one_rep()` draws one dataset, fits the DNN Z-estimator with oracle
+nuisances, and returns per-replicate metrics:
+
+```{r one-rep}
+r <- sim_cate_one_rep(
+  n      = 300,
+  kx     = 2,
+  k      = 5,
+  s      = floor(300 ^ (3 / 4)),   # undersmoothing: s ~ n^((kx+1)/(kx+2))
+  design = "dgp2_nonlinear",
+  seed   = 1
+)
+r
+```
+
+## Small Monte Carlo run
+
+The following runs 5 replications per cell over a tiny grid to illustrate the
+workflow.  The full paper grid uses `n_reps = 500` and
+`n_vals = c(500, 1000, 2000)`.
+
+```{r small-run}
+raw <- sim_cate_run(
+  designs     = c("dgp1_linear", "dgp2_nonlinear"),
+  n_vals      = 300L,
+  kx_vals     = 2L,
+  n_reps      = 5L,
+  master_seed = 42L,
+  verbose     = FALSE
+)
+head(raw)
+```
+
+`summarise_sim_results()` aggregates raw per-replicate rows to one summary row
+per cell:
+
+```{r summary}
+tab <- summarise_sim_results(raw)
+print(tab, digits = 3)
+```
+
+## Parallel execution
+
+`sim_cate_run()` uses `future.apply::future_lapply()` for the rep loop when
+`future.apply` is installed, and falls back silently to sequential `lapply`
+otherwise.  The execution backend is controlled by calling `future::plan()`
+before the run — no changes to `sim_cate_run()` are needed.
+
+### Personal computer
+
+```{r parallel-pc, eval = FALSE}
+library(future)
+library(future.apply)
+
+plan(multisession)            # use all local cores
+raw <- sim_cate_run(
+  designs = "dgp2_nonlinear",
+  n_vals  = 500L,
+  n_reps  = 50L
+)
+plan(sequential)              # reset when done
+```
+
+### SLURM HPC (array jobs)
+
+For the full paper grid on a cluster, use the HPC scripts in
+`inst/paper-replication/cate/hpc/`.  Each SLURM array task runs one
+`(design, n, kx)` cell (all 500 reps), and uses the cores allocated by
+`--cpus-per-task` for within-task rep parallelism.
+
+```{r hpc-path, eval = FALSE}
+# Locate the HPC scripts after installing the package:
+system.file("paper-replication/cate/hpc", package = "RdistNN")
+```
+
+Workflow on the cluster:
+
+```bash
+# 1. Install RdistNN on the cluster, then from your working directory:
+sbatch /path/to/hpc/submit.sh        # submits 15 array tasks (edit --array if grid changes)
+
+# 2. After all tasks complete, merge the per-cell results:
+Rscript /path/to/hpc/merge.R
+```
+
+Results are written to `./results/` by default.  Override with
+`export SIM_OUTDIR=/your/path` before calling `sbatch` or `merge.R`.
+
+## Full paper replication (single machine)
+
+To run the full simulation sequentially (or with `plan(multisession)`) on
+one machine:
+
+```{r full-run, eval = FALSE}
+source(system.file("paper-replication/cate/run.R", package = "RdistNN"))
+```
+
+Results are written to `./results/sim_cate_raw.rds` and
+`./results/sim_cate_table.csv` in the current working directory.
+
+## Competitor benchmarks
+
+Stub implementations of causal forest, local linear forest, naive OLS, and
+interaction OLS are in
+`inst/paper-replication/cate/benchmarks.R`.  These are not part of the package
+core; they use `requireNamespace()` and require optional packages
+(`grf`, etc.) listed under `Suggests` in `DESCRIPTION`.
+
+```{r benchmarks-path, eval = FALSE}
+system.file("paper-replication/cate/benchmarks.R", package = "RdistNN")
+```

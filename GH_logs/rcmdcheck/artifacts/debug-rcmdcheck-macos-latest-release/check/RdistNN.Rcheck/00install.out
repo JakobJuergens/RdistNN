@@ -1,0 +1,31 @@
+* installing *source* package ‘RdistNN’ ...
+** this is package ‘RdistNN’ version ‘0.1.0’
+** using staged installation
+** libs
+using C++ compiler: ‘Apple clang version 17.0.0 (clang-1700.0.13.5)’
+using C++17
+using SDK: ‘MacOSX15.5.sdk’
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG -I../inst/include -I'/Users/runner/work/_temp/Library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c RcppExports.cpp -o RcppExports.o
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG -I../inst/include -I'/Users/runner/work/_temp/Library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c dist_l1.cpp -o dist_l1.o
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG -I../inst/include -I'/Users/runner/work/_temp/Library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c dist_l2.cpp -o dist_l2.o
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG -I../inst/include -I'/Users/runner/work/_temp/Library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c fast_order.cpp -o fast_order.o
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG -I../inst/include -I'/Users/runner/work/_temp/Library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c jackknife_rank.cpp -o jackknife_rank.o
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG -I../inst/include -I'/Users/runner/work/_temp/Library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c jackknife_rank_full.cpp -o jackknife_rank_full.o
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG -I../inst/include -I'/Users/runner/work/_temp/Library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c score_cate.cpp -o score_cate.o
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG -I../inst/include -I'/Users/runner/work/_temp/Library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c score_plqr.cpp -o score_plqr.o
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG -I../inst/include -I'/Users/runner/work/_temp/Library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -falign-functions=64 -Wall -g -O2   -c score_subset_sum.cpp -o score_subset_sum.o
+clang++ -arch arm64 -std=gnu++17 -dynamiclib -Wl,-headerpad_max_install_names -undefined dynamic_lookup -L/Library/Frameworks/R.framework/Resources/lib -L/opt/R/arm64/lib -o RdistNN.so RcppExports.o dist_l1.o dist_l2.o fast_order.o jackknife_rank.o jackknife_rank_full.o score_cate.o score_plqr.o score_subset_sum.o -F/Library/Frameworks/R.framework/.. -framework R
+installing to /Users/runner/work/RdistNN/RdistNN/check/RdistNN.Rcheck/00LOCK-RdistNN/00new/RdistNN/libs
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (RdistNN)
