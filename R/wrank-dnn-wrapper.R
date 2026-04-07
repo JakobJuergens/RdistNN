@@ -16,8 +16,9 @@
 #' rank_weight_eval(rw, c(2L, 1L, 3L, 4L))
 #' @export
 rank_weight_dnn_exact <- function(k, s) {
-  k <- as.integer(k)
-  s <- as.integer(s)
+  k <- .validate_scalar_int(k, "k")
+  s <- .validate_scalar_int(s, "s")
+  if (k > s) .abort_bad_arg("k", sprintf("must satisfy k <= s (got k=%d, s=%d)", k, s))
 
   eval_one <- function(ranks, ctx = NULL) {
     # ranks is already validated upstream by rank_weight_eval(_batch)
@@ -56,8 +57,9 @@ rank_weight_dnn_exact <- function(k, s) {
 #' rank_weight_eval(rw, c(2L, 1L, 3L, 4L))
 #' @export
 rank_weight_dnn_asymp <- function(k, s, normalize = TRUE) {
-  k <- as.integer(k)
-  s <- as.integer(s)
+  k <- .validate_scalar_int(k, "k")
+  s <- .validate_scalar_int(s, "s")
+  if (k > s) .abort_bad_arg("k", sprintf("must satisfy k <= s (got k=%d, s=%d)", k, s))
   normalize <- isTRUE(normalize)
 
   eval_one <- function(ranks, ctx = NULL) {

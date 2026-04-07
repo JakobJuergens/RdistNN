@@ -54,16 +54,10 @@ dnn_weights_asymp_full_from_ranks <- function(ranks, k, s, normalize = TRUE) {
   if (!setequal(ranks, seq_len(n))) stop("`ranks` must be a permutation of 1..n.", call. = FALSE)
 
   # ---- validate k, s ----
-  if (!is.numeric(s) || length(s) != 1L || !is.finite(s) || s < 1L || s > n || as.integer(s) != s) {
-    stop(sprintf("`s` must be an integer with 1 <= s <= n (n=%d, got s=%s).", n, s), call. = FALSE)
-  }
-  if (!is.numeric(k) || length(k) != 1L || !is.finite(k) || k < 1L || as.integer(k) != k) {
-    stop(sprintf("`k` must be a positive integer (got k=%s).", k), call. = FALSE)
-  }
-  if (k > s) {
-    stop(sprintf("`k` must satisfy k <= s (got k=%d, s=%d).", as.integer(k), as.integer(s)),
-         call. = FALSE)
-  }
+  k <- .validate_scalar_int(k, "k")
+  s <- .validate_scalar_int(s, "s")
+  if (s > n) .abort_bad_arg("s", sprintf("must satisfy s <= n (got s=%d, n=%d)", s, n))
+  if (k > s) .abort_bad_arg("k", sprintf("must satisfy k <= s (got k=%d, s=%d)", k, s))
 
   # ---- asymptotic Beta-increment weights over the j/n grid ----
   j <- seq_len(n)

@@ -182,6 +182,35 @@ test_that("invalid jackknife argument errors clearly", {
   )
 })
 
+test_that("k and s are validated at the cate_dnn entry point", {
+  dat <- .make_data(n = 20L, p = 2L, m = 3L)
+  psi <- dat$Y
+
+  # non-positive
+  expect_error(
+    cate_dnn(X = dat$X, X0 = dat$X0, pseudo_outcome = psi, k = 0L, s = 3L, se = FALSE),
+    "positive integer"
+  )
+  expect_error(
+    cate_dnn(X = dat$X, X0 = dat$X0, pseudo_outcome = psi, k = 1L, s = 0L, se = FALSE),
+    "positive integer"
+  )
+  # cross-parameter constraint
+  expect_error(
+    cate_dnn(X = dat$X, X0 = dat$X0, pseudo_outcome = psi, k = 3L, s = 2L, se = FALSE),
+    "k <= s"
+  )
+  # non-integer scalars (coercion trap)
+  expect_error(
+    cate_dnn(X = dat$X, X0 = dat$X0, pseudo_outcome = psi, k = 1.5, s = 3L, se = FALSE),
+    "integer scalar"
+  )
+  expect_error(
+    cate_dnn(X = dat$X, X0 = dat$X0, pseudo_outcome = psi, k = "foo", s = 3L, se = FALSE),
+    "integer scalar"
+  )
+})
+
 test_that("x0 convenience equals single-row X0 path", {
   dat <- .make_data(n = 20, p = 2, m = 3)
   psi <- dat$Y

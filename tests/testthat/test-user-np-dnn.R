@@ -204,6 +204,35 @@ test_that("input validation catches common misuse", {
     "x_cols",
     ignore.case = TRUE
   )
+  # k and s validation at entry point
+  expect_error(
+    np_dnn(X = d$X, X0 = d$X0, Y = d$y, k = 0L, s = 3L, se = FALSE),
+    "positive integer"
+  )
+  expect_error(
+    np_dnn(X = d$X, X0 = d$X0, Y = d$y, k = 3L, s = 2L, se = FALSE),
+    "k <= s"
+  )
+  expect_error(
+    np_dnn(X = d$X, X0 = d$X0, Y = d$y, k = 1.5, s = 3L, se = FALSE),
+    "integer scalar"
+  )
+  expect_error(
+    np_dnn(X = d$X, X0 = d$X0, Y = d$y, k = "foo", s = 3L, se = FALSE),
+    "integer scalar"
+  )
+})
+
+test_that("np_dnn warns on unknown return values", {
+  d <- .make_np_data(n = 20L, p = 2L, m = 2L)
+  expect_warning(
+    np_dnn(X = d$X, X0 = d$X0, Y = d$y, k = 1L, s = 2L, se = FALSE, return = c("W", "typo")),
+    "Unknown `return` value"
+  )
+  expect_no_warning(
+    np_dnn(X = d$X, X0 = d$X0, Y = d$y, k = 1L, s = 2L, se = FALSE,
+           return = c("W", "ranks", "ord", "dx", "y", "ess", "neighbors"))
+  )
 })
 
 test_that("print.np_result runs without error", {

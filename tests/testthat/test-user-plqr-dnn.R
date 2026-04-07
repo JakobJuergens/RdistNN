@@ -232,6 +232,59 @@ test_that("plqr_dnn validation catches shape and beta issues", {
     "provide `x_cols`, `D_cols`, `q_col`, `mD_cols`, and `y_col`",
     ignore.case = TRUE
   )
+  # k and s validation at entry point
+  expect_error(
+    plqr_dnn(
+      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+      beta = d$beta, tau = d$tau, X0 = d$X0,
+      k = 0L, s = 3L, se = FALSE
+    ),
+    "positive integer"
+  )
+  expect_error(
+    plqr_dnn(
+      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+      beta = d$beta, tau = d$tau, X0 = d$X0,
+      k = 3L, s = 2L, se = FALSE
+    ),
+    "k <= s"
+  )
+  expect_error(
+    plqr_dnn(
+      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+      beta = d$beta, tau = d$tau, X0 = d$X0,
+      k = 1.5, s = 3L, se = FALSE
+    ),
+    "integer scalar"
+  )
+  expect_error(
+    plqr_dnn(
+      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+      beta = d$beta, tau = d$tau, X0 = d$X0,
+      k = "foo", s = 3L, se = FALSE
+    ),
+    "integer scalar"
+  )
+})
+
+test_that("plqr_dnn warns on unknown return values", {
+  d <- .make_plqr_data(n = 35L, p = 2L, p_d = 2L, m = 2L, tau = 0.5)
+  expect_warning(
+    plqr_dnn(
+      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+      beta = d$beta, tau = d$tau, X0 = d$X0,
+      k = 1L, s = 2L, se = FALSE, return = c("W", "typo")
+    ),
+    "Unknown `return` value"
+  )
+  expect_no_warning(
+    plqr_dnn(
+      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+      beta = d$beta, tau = d$tau, X0 = d$X0,
+      k = 1L, s = 2L, se = FALSE,
+      return = c("W", "ranks", "ord", "dx", "g", "ess", "neighbors")
+    )
+  )
 })
 
 test_that("print.plqr_result runs without error", {

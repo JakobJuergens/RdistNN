@@ -204,6 +204,8 @@ weights_matrix <- function(
   p <- ncol(x_mat)
   m <- nrow(x0_mat)
 
+  .warn_unknown_return(return, valid = c("W", "ord", "ranks", "dx"))
+
   # ranking -> ranks (and ord/dx if computable)
   ranking_result <- .resolve_ranking(ranking, x_mat, x0_mat, ctx)
 
@@ -412,7 +414,10 @@ weights_tdnn_exact <- function(
   X, X0 = NULL, x0 = NULL, distance = "l2", s1, s2, dim = NULL,
   ctx = NULL, return = c("W")
 ) {
-  if (is.null(dim)) dim <- ncol(X)
+  if (is.null(dim)) {
+    if (is.null(X)) stop("Provide `dim` explicitly when `X` is NULL.", call. = FALSE)
+    dim <- ncol(as.matrix(X))
+  }
   weights_matrix(
     X = X, X0 = X0, x0 = x0,
     ranking = distance,
@@ -450,7 +455,10 @@ weights_tdnn_asymp <- function(
   X, X0 = NULL, x0 = NULL, distance = "l2", s1, s2, dim = NULL,
   normalize = TRUE, ctx = NULL, return = c("W")
 ) {
-  if (is.null(dim)) dim <- ncol(X)
+  if (is.null(dim)) {
+    if (is.null(X)) stop("Provide `dim` explicitly when `X` is NULL.", call. = FALSE)
+    dim <- ncol(as.matrix(X))
+  }
   weights_matrix(
     X = X, X0 = X0, x0 = x0,
     ranking = distance,

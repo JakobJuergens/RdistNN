@@ -147,6 +147,10 @@ plqr_dnn <- function(
 ) {
   method <- match.arg(method)
   jackknife <- match.arg(jackknife)
+  k <- .validate_scalar_int(k, "k")
+  s <- .validate_scalar_int(s, "s")
+  if (k > s) .abort_bad_arg("k", sprintf("must satisfy k <= s (got k=%d, s=%d)", k, s))
+  .warn_unknown_return(return, valid = c("W", "ranks", "ord", "dx", "g", "ess", "neighbors"))
   tau <- .validate_scalar_prob(tau, arg = "tau")
 
   if (!is.numeric(beta) || length(beta) < 1L || any(!is.finite(beta))) {
@@ -219,8 +223,8 @@ plqr_dnn <- function(
     x0_mat = x0_mat,
     distance = distance,
     method = method,
-    k = as.integer(k),
-    s = as.integer(s),
+    k = k,
+    s = s,
     normalize = normalize,
     ctx = ctx,
     return = weight_return
@@ -242,8 +246,8 @@ plqr_dnn <- function(
       g_mat = g_mat,
       distance = distance,
       method = method,
-      k = as.integer(k),
-      s = as.integer(s),
+      k = k,
+      s = s,
       normalize = normalize,
       ctx = ctx,
       jackknife = jackknife,
@@ -260,7 +264,7 @@ plqr_dnn <- function(
     tau = tau,
     meta = list(
       n = n, m = m_out, p = p, p_d = p_d,
-      k = as.integer(k), s = as.integer(s),
+      k = k, s = s,
       method = method, distance = .dnn_distance_name(distance)
     )
   )

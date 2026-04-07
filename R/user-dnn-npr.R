@@ -83,6 +83,10 @@ np_dnn <- function(
 ) {
   method <- match.arg(method)
   jackknife <- match.arg(jackknife)
+  k <- .validate_scalar_int(k, "k")
+  s <- .validate_scalar_int(s, "s")
+  if (k > s) .abort_bad_arg("k", sprintf("must satisfy k <= s (got k=%d, s=%d)", k, s))
+  .warn_unknown_return(return, valid = c("W", "ranks", "ord", "dx", "y", "ess", "neighbors"))
 
   if (!is.null(data)) {
     if (!is.data.frame(data)) {
@@ -130,8 +134,8 @@ np_dnn <- function(
     x0_mat = x0_mat,
     distance = distance,
     method = method,
-    k = as.integer(k),
-    s = as.integer(s),
+    k = k,
+    s = s,
     normalize = normalize,
     ctx = ctx,
     return = weight_return
@@ -149,8 +153,8 @@ np_dnn <- function(
       y = y_vec,
       distance = distance,
       method = method,
-      k = as.integer(k),
-      s = as.integer(s),
+      k = k,
+      s = s,
       normalize = normalize,
       ctx = ctx,
       jackknife = jackknife,
@@ -163,7 +167,7 @@ np_dnn <- function(
     se = se_hat,
     meta = list(
       n = n, m = m_out, p = p,
-      k = as.integer(k), s = as.integer(s),
+      k = k, s = s,
       method = method, distance = .dnn_distance_name(distance)
     )
   )

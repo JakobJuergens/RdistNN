@@ -65,6 +65,10 @@ rustat_jackknife_fast_rank <- function(ranks, a, PHI, normalize = TRUE) {
     .Call(`_RdistNN_rustat_jackknife_fast_rank`, ranks, a, PHI, normalize)
 }
 
+rustat_jackknife_rank_full <- function(ranks, PHI, wn, wnm1) {
+    .Call(`_RdistNN_rustat_jackknife_rank_full`, ranks, PHI, wn, wnm1)
+}
+
 rustat_cate_ctx_create <- function(rho) {
     .Call(`_RdistNN_rustat_cate_ctx_create`, rho)
 }

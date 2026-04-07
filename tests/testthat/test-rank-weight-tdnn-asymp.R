@@ -168,6 +168,25 @@ test_that("[from_ranks] dnn_weights_tdnn_asymp_full_from_ranks validates inputs"
   expect_error(dnn_weights_tdnn_asymp_full_from_ranks(ranks, 2L, 5L, 0L), "positive integer")
 })
 
+# ── [spec-errors] rank_weight_tdnn_asymp constructor ─────────────────────────
+
+test_that("[spec-errors] rank_weight_tdnn_asymp validates s1, s2, dim at construction time", {
+  # non-positive arguments
+  expect_error(rank_weight_tdnn_asymp(s1 = 0L, s2 = 4L, dim = 2L), "positive integer")
+  expect_error(rank_weight_tdnn_asymp(s1 = 2L, s2 = 0L, dim = 2L), "positive integer")
+  expect_error(rank_weight_tdnn_asymp(s1 = 2L, s2 = 4L, dim = 0L), "positive integer")
+  # s1 >= s2
+  expect_error(rank_weight_tdnn_asymp(s1 = 4L, s2 = 4L, dim = 2L), "s1 < s2")
+  expect_error(rank_weight_tdnn_asymp(s1 = 5L, s2 = 4L, dim = 2L), "s1 < s2")
+  # non-integer scalars (coercion trap)
+  expect_error(rank_weight_tdnn_asymp(s1 = 1.5, s2 = 4L, dim = 2L), "integer scalar")
+  expect_error(rank_weight_tdnn_asymp(s1 = "foo", s2 = 4L, dim = 2L), "integer scalar")
+  expect_error(rank_weight_tdnn_asymp(s1 = 2L, s2 = 3.9, dim = 2L), "integer scalar")
+  expect_error(rank_weight_tdnn_asymp(s1 = 2L, s2 = 4L, dim = 1.5), "integer scalar")
+  # valid call must not error
+  expect_no_error(rank_weight_tdnn_asymp(s1 = 3L, s2 = 6L, dim = 2L))
+})
+
 # ── [spec] ────────────────────────────────────────────────────────────────────
 
 test_that("[spec] rank_weight_tdnn_asymp returns valid rank_weight spec", {
