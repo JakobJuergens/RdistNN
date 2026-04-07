@@ -47,10 +47,8 @@ using namespace Rcpp;
 //   info      : List(n, m, q)
 //
 // [[Rcpp::export]]
-Rcpp::List rustat_jackknife_rank_full(const IntegerMatrix& ranks,
-                                      const NumericMatrix& PHI,
-                                      const NumericVector& wn,
-                                      const NumericVector& wnm1) {
+Rcpp::List rustat_jackknife_rank_full(const IntegerMatrix &ranks, const NumericMatrix &PHI,
+                                      const NumericVector &wn, const NumericVector &wnm1) {
   const int n = ranks.nrow();
   const int m = ranks.ncol();
   const int q = PHI.ncol();
