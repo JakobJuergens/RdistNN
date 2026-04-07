@@ -1,5 +1,18 @@
 # Shared internal helpers for user-level DNN estimators.
 
+# Extract and validate a data-frame column by name.
+# Returns a validated numeric vector of length n, or stops with a clear message
+# naming both the missing column and the columns that ARE present.
+.dnn_col_vec <- function(col, data, n, arg, ref = "data") {
+  if (!col %in% names(data)) {
+    stop(sprintf(
+      "Column '%s' (specified by `%s`) not found in `data`.\nAvailable columns: %s",
+      col, arg, paste(names(data), collapse = ", ")
+    ), call. = FALSE)
+  }
+  .validate_vector_nrow(data[[col]], n, arg = arg, ref = ref)
+}
+
 .dnn_resolve_targets <- function(x_mat, X0 = NULL, x0 = NULL) {
   if (!is.null(X0) && !is.null(x0)) {
     stop("Provide either `X0` or `x0`, not both.", call. = FALSE)
@@ -115,7 +128,10 @@
   jackknife <- match.arg(jackknife)
   n <- nrow(x_mat)
   if (as.integer(s) >= n) {
-    stop("Delete-1 jackknife requires `s < n` so the same order can be used after deletion.", call. = FALSE)
+    stop(sprintf(
+      "Delete-1 jackknife requires s < n (got s=%d, n=%d). Use `se = FALSE` or reduce `s`.",
+      as.integer(s), n
+    ), call. = FALSE)
   }
 
   sig <- .dnn_signal_matrix(signal, n = n, arg = signal_arg)

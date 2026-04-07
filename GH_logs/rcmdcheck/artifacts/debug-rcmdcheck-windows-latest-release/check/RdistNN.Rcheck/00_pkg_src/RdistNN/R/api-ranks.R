@@ -265,7 +265,17 @@ rank_weight_eval_batch <- function(spec, R, ctx = NULL) {
 
   if (!is.matrix(weight_matrix) || any(!is.finite(weight_matrix)) ||
     nrow(weight_matrix) != nrow(rank_matrix) || ncol(weight_matrix) != ncol(rank_matrix)) {
-    stop("rank_weight$eval_batch must return an nrow(R) x ncol(R) finite matrix.", call. = FALSE)
+    got_dim <- if (is.matrix(weight_matrix)) {
+      sprintf("%d x %d", nrow(weight_matrix), ncol(weight_matrix))
+    } else {
+      sprintf("non-matrix (%s)", class(weight_matrix)[1L])
+    }
+    stop(sprintf(
+      "rank_weight$eval_batch must return a finite numeric matrix of shape %d x %d; got %s%s.",
+      nrow(rank_matrix), ncol(rank_matrix), got_dim,
+      if (is.matrix(weight_matrix) && nrow(weight_matrix) == nrow(rank_matrix) &&
+          ncol(weight_matrix) == ncol(rank_matrix)) " (contains non-finite values)" else ""
+    ), call. = FALSE)
   }
   weight_matrix
 }

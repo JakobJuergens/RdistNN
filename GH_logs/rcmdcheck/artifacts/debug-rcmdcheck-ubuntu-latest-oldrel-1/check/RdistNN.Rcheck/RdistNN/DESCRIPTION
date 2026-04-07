@@ -29,5 +29,5 @@ URL: https://JakobJuergens.github.io/RdistNN/
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 NeedsCompilation: yes
-Packaged: 2026-04-05 17:56:25 UTC; runner
-Built: R 4.4.3; x86_64-pc-linux-gnu; 2026-04-05 17:56:27 UTC; unix
+Packaged: 2026-04-07 01:30:30 UTC; runner
+Built: R 4.4.3; x86_64-pc-linux-gnu; 2026-04-07 01:30:33 UTC; unix

@@ -127,7 +127,7 @@ test_that("[from_ranks] meta fields are correct", {
   expect_identical(out$meta$dim, as.integer(d))
   expect_true(out$meta$normalize)
   expect_named(out$meta$scalars, c("w1", "w2"))
-  expect_equal(out$meta$scalars["w1"] + out$meta$scalars["w2"], 1, tolerance = 1e-14)
+  expect_equal(out$meta$scalars[["w1"]] + out$meta$scalars[["w2"]], 1, tolerance = 1e-14)
 })
 
 test_that("[from_ranks] w_rank invariant to rank permutation", {

@@ -81,8 +81,9 @@ order_by_l2 <- function(X, x0, squared = FALSE) {
 #' @export
 distance_l2 <- function(squared = FALSE) {
   list(
-    name = if (isTRUE(squared)) "l2_sq" else "l2",
-    eval = function(X, x0, ctx = NULL) dist_l2(X, x0, squared),
+    name  = if (isTRUE(squared)) "l2_sq" else "l2",
+    setup = function(X) list(),
+    eval  = function(X, x0, ctx = NULL) dist_l2(X, x0, squared),
     eval_batch = function(X, X0, ctx = NULL) {
       X <- as.matrix(X)
       X0 <- as.matrix(X0)

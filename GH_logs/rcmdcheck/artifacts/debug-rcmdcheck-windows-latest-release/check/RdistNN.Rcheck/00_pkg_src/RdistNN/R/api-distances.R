@@ -21,13 +21,23 @@
 }
 .distance_validate_output_vec <- function(d, n, src = "Distance function") {
   if (!is.numeric(d) || length(d) != n || any(!is.finite(d))) {
-    stop(sprintf("%s must return numeric length nrow(X) with finite entries.", src), call. = FALSE)
+    stop(sprintf(
+      "%s must return a finite numeric vector of length n=%d; got %s of length %d%s.",
+      src, n, class(d)[1L], length(d),
+      if (is.numeric(d) && length(d) == n) " (contains non-finite values)" else ""
+    ), call. = FALSE)
   }
   as.numeric(d)
 }
 .distance_validate_output_mat <- function(d_mat, n, m, src = "Distance function") {
   if (!is.matrix(d_mat) || !is.numeric(d_mat) || nrow(d_mat) != n || ncol(d_mat) != m || any(!is.finite(d_mat))) {
-    stop(sprintf("%s must return a finite numeric matrix with shape nrow(X) x nrow(X0).", src), call. = FALSE)
+    got_dim <- if (is.matrix(d_mat)) sprintf("%d x %d", nrow(d_mat), ncol(d_mat)) else sprintf("non-matrix (%s)", class(d_mat)[1L])
+    stop(sprintf(
+      "%s must return a finite numeric matrix of shape %d x %d; got %s%s.",
+      src, n, m, got_dim,
+      if (is.matrix(d_mat) && is.numeric(d_mat) && nrow(d_mat) == n && ncol(d_mat) == m)
+        " (contains non-finite values)" else ""
+    ), call. = FALSE)
   }
   d_mat
 }

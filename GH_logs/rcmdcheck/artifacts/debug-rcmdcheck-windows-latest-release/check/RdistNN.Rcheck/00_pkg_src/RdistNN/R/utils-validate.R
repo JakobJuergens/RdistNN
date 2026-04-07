@@ -92,7 +92,11 @@
   relation <- match.arg(relation)
   y_mat <- as.matrix(y)
   if (ncol(x_mat) != ncol(y_mat)) {
-    .abort_bad_state(sprintf("ncol(%s) must %s ncol(%s).", y_arg, relation, x_arg))
+    .abort_bad_state(sprintf(
+      "ncol(%s) must %s ncol(%s): got ncol(%s)=%d and ncol(%s)=%d.",
+      y_arg, relation, x_arg,
+      y_arg, ncol(y_mat), x_arg, ncol(x_mat)
+    ))
   }
   y_mat
 }

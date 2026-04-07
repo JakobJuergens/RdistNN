@@ -49,21 +49,24 @@
 #' @export
 dnn_weights_exact_full_from_ranks <- function(ranks, k, s) {
   # ---- validate ranks ----
-  if (is.null(ranks)) stop("`ranks` must be provided.")
+  if (is.null(ranks)) stop("`ranks` must be provided.", call. = FALSE)
   if (!is.integer(ranks)) ranks <- as.integer(ranks)
   n <- length(ranks)
-  if (n < 1L) stop("`ranks` must have positive length.")
-  if (anyNA(ranks)) stop("`ranks` cannot contain NA.")
-  if (!setequal(ranks, seq_len(n))) stop("`ranks` must be a permutation of 1..n.")
+  if (n < 1L) stop("`ranks` must have positive length.", call. = FALSE)
+  if (anyNA(ranks)) stop("`ranks` cannot contain NA.", call. = FALSE)
+  if (!setequal(ranks, seq_len(n))) stop("`ranks` must be a permutation of 1..n.", call. = FALSE)
 
   # ---- validate k, s ----
   if (!is.numeric(s) || length(s) != 1L || !is.finite(s) || s < 1L || s > n || as.integer(s) != s) {
-    stop("`s` must be an integer with 1 <= s <= n.")
+    stop(sprintf("`s` must be an integer with 1 <= s <= n (n=%d, got s=%s).", n, s), call. = FALSE)
   }
   if (!is.numeric(k) || length(k) != 1L || !is.finite(k) || k < 1L || as.integer(k) != k) {
-    stop("`k` must be a positive integer.")
+    stop(sprintf("`k` must be a positive integer (got k=%s).", k), call. = FALSE)
   }
-  if (k > s) stop("`k` must satisfy k <= s in the full U-statistic setting.")
+  if (k > s) {
+    stop(sprintf("`k` must satisfy k <= s (got k=%d, s=%d).", as.integer(k), as.integer(s)),
+         call. = FALSE)
+  }
 
   # ---- exact rank-weights via hypergeometric law ----
   # w_rank[j] = (1/k) * sum_{i=1}^k C(j-1, i-1) * C(n-j, s-i) / C(n, s)

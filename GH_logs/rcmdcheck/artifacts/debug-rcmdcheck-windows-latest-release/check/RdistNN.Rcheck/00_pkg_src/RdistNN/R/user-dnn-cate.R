@@ -89,6 +89,18 @@ cate_dnn <- function(
   method <- match.arg(method)
   jackknife <- match.arg(jackknife)
 
+  # Warn immediately on unknown `return` values so the user gets feedback at the
+  # call site rather than silently receiving a result missing the requested field.
+  valid_return <- c("W", "ranks", "ord", "dx", "psi", "nuisance", "ess", "neighbors")
+  unknown_return <- setdiff(return, valid_return)
+  if (length(unknown_return) > 0L) {
+    warning(sprintf(
+      "Unknown `return` value(s) ignored: %s.\nValid options: %s.",
+      paste(unknown_return, collapse = ", "),
+      paste(valid_return, collapse = ", ")
+    ), call. = FALSE)
+  }
+
   # Dispatch: data-frame API vs matrix API.
   if (!is.null(data)) {
     if (!is.data.frame(data)) {
@@ -121,23 +133,23 @@ cate_dnn <- function(
         stop("With `data=`, `y_col`, `t_col`, and `e_col` are required.", call. = FALSE)
       }
 
-      y_vec <- .validate_vector_nrow(data[[y_col]], n, arg = "y_col", ref = "X")
-      t_vec <- .validate_vector_nrow(data[[t_col]], n, arg = "t_col", ref = "X")
+      y_vec <- .dnn_col_vec(y_col,  data, n, arg = "y_col",  ref = "data")
+      t_vec <- .dnn_col_vec(t_col,  data, n, arg = "t_col",  ref = "data")
       t_vec <- .validate_binary01(t_vec, arg = "t_col")
-      e     <- .validate_vector_nrow(data[[e_col]], n, arg = "e_col", ref = "X")
+      e     <- .dnn_col_vec(e_col,  data, n, arg = "e_col",  ref = "data")
       den   <- pmax(e * (1 - e), 1e-8)
 
       if (has_aipw) {
         # Full doubly-robust AIPW pseudo-outcome (paper formula, Algorithm 1 / Eq. 5.1):
         # φ̂_i = T_i(Y_i - μ̂₁) / (π̂_i(1-π̂_i)) - (1-T_i)(Y_i - μ̂₀) / (π̂_i(1-π̂_i)) + μ̂₁ - μ̂₀
-        m0  <- .validate_vector_nrow(data[[m0_col]], n, arg = "m0_col", ref = "X")
-        m1  <- .validate_vector_nrow(data[[m1_col]], n, arg = "m1_col", ref = "X")
+        m0  <- .dnn_col_vec(m0_col, data, n, arg = "m0_col", ref = "data")
+        m1  <- .dnn_col_vec(m1_col, data, n, arg = "m1_col", ref = "data")
         m   <- NULL
         psi <- (t_vec * (y_vec - m1) - (1 - t_vec) * (y_vec - m0)) / den + (m1 - m0)
       } else {
         # Robinson-form: (Y - m(X))(T - e) / (e(1-e))
         m0 <- m1 <- NULL
-        m   <- .validate_vector_nrow(data[[m_col]], n, arg = "m_col", ref = "X")
+        m   <- .dnn_col_vec(m_col,  data, n, arg = "m_col",  ref = "data")
         psi <- (y_vec - m) * (t_vec - e) / den
       }
     }
@@ -150,6 +162,15 @@ cate_dnn <- function(
     if (is.null(pseudo_outcome)) stop("Matrix API requires `pseudo_outcome`.", call. = FALSE)
     psi <- .validate_vector_nrow(pseudo_outcome, n, arg = "`pseudo_outcome`", ref = "X")
     m0 <- m1 <- m <- e <- NULL
+  }
+
+  # Guard the jackknife constraint at the entry point so the user gets a clear
+  # error at their call site rather than deep inside the LOO loop.
+  if (isTRUE(se) && jackknife != "none" && as.integer(s) >= n) {
+    stop(sprintf(
+      "Delete-1 jackknife requires s < n (got s=%d, n=%d). Use `se = FALSE` or reduce `s`.",
+      as.integer(s), n
+    ), call. = FALSE)
   }
 
   # Targets

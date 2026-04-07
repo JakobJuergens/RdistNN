@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2026-04-03 r89785) -- "Unsuffered Consequences"
+R Under development (unstable) (2026-04-05 r89793) -- "Unsuffered Consequences"
 Copyright (C) 2026 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu
 
@@ -27,21 +27,11 @@ Type 'q()' to quit R.
 > library(RdistNN)
 > 
 > test_check("RdistNN")
-Saving _problems/test-distance-mahal-43.R
-Saving _problems/test-distance-mahal-52.R
-Saving _problems/test-distance-mahal-66.R
-Saving _problems/test-rank-weight-tdnn-asymp-130.R
-Saving _problems/test-rank-weight-tdnn-exact-59.R
-Saving _problems/test-rank-weight-tdnn-exact-59.R
-Saving _problems/test-rank-weight-tdnn-exact-59.R
-Saving _problems/test-rank-weight-tdnn-exact-69.R
-Saving _problems/test-rank-weight-tdnn-exact-70.R
-Saving _problems/test-rank-weight-tdnn-exact-137.R
-Saving _problems/test-rank-weight-tdnn-exact-146.R
-Saving _problems/test-sim-cate-251.R
-Saving _problems/test-tdnn-jackknife-243.R
-Saving _problems/test-tdnn-jackknife-258.R
-[ FAIL 14 | WARN 14 | SKIP 1 | PASS 1144 ]
+Saving _problems/test-api-distances-187.R
+Saving _problems/test-api-distances-222.R
+Saving _problems/test-api-distances-273.R
+Saving _problems/test-api-ranks-212.R
+[ FAIL 4 | WARN 14 | SKIP 1 | PASS 1154 ]
 
 ══ Skipped tests (1) ═══════════════════════════════════════════════════════════
 • cate_result methods or required helpers not found; skipping file (1):
@@ -49,7 +39,7 @@ Saving _problems/test-tdnn-jackknife-258.R
 
 ══ Warnings ════════════════════════════════════════════════════════════════════
 ── Warning ('test-sim-cate.R:112:3'): sim_cate_run: smoke test with 3 reps over a small grid ──
-UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (fb72da782c129bfd60cdf873c8fcf8bc-1); on fb72da782c129bfd60cdf873c8fcf8bc@runnervm727z3<7910>]
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (8348d871b264e1990af1bfb0becda494-1); on 8348d871b264e1990af1bfb0becda494@runnervm727z3<7327>]
 Backtrace:
      ▆
   1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:112:3
@@ -75,7 +65,7 @@ Backtrace:
  21. │                     └─base (local) doWithOneRestart(return(expr), restart)
  22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
 ── Warning ('test-sim-cate.R:112:3'): sim_cate_run: smoke test with 3 reps over a small grid ──
-UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (fb72da782c129bfd60cdf873c8fcf8bc-2); on fb72da782c129bfd60cdf873c8fcf8bc@runnervm727z3<7910>]
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (8348d871b264e1990af1bfb0becda494-2); on 8348d871b264e1990af1bfb0becda494@runnervm727z3<7327>]
 Backtrace:
      ▆
   1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:112:3
@@ -101,7 +91,7 @@ Backtrace:
  21. │                     └─base (local) doWithOneRestart(return(expr), restart)
  22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
 ── Warning ('test-sim-cate.R:132:3'): sim_cate_run: multi-method produces one row per method per rep ──
-UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (fb72da782c129bfd60cdf873c8fcf8bc-3); on fb72da782c129bfd60cdf873c8fcf8bc@runnervm727z3<7910>]
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (8348d871b264e1990af1bfb0becda494-3); on 8348d871b264e1990af1bfb0becda494@runnervm727z3<7327>]
 Backtrace:
      ▆
   1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:132:3
@@ -127,7 +117,7 @@ Backtrace:
  21. │                     └─base (local) doWithOneRestart(return(expr), restart)
  22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
 ── Warning ('test-sim-cate.R:149:3'): summarise_sim_results: correct aggregation with method column ──
-UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (fb72da782c129bfd60cdf873c8fcf8bc-4); on fb72da782c129bfd60cdf873c8fcf8bc@runnervm727z3<7910>]
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (8348d871b264e1990af1bfb0becda494-4); on 8348d871b264e1990af1bfb0becda494@runnervm727z3<7327>]
 Backtrace:
      ▆
   1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:149:3
@@ -153,7 +143,7 @@ Backtrace:
  21. │                     └─base (local) doWithOneRestart(return(expr), restart)
  22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
 ── Warning ('test-sim-cate.R:176:3'): summarise_sim_results: multi-method returns one row per method ──
-UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (fb72da782c129bfd60cdf873c8fcf8bc-5); on fb72da782c129bfd60cdf873c8fcf8bc@runnervm727z3<7910>]
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (8348d871b264e1990af1bfb0becda494-5); on 8348d871b264e1990af1bfb0becda494@runnervm727z3<7327>]
 Backtrace:
      ▆
   1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:176:3
@@ -179,7 +169,7 @@ Backtrace:
  21. │                     └─base (local) doWithOneRestart(return(expr), restart)
  22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
 ── Warning ('test-sim-cate.R:344:3'): sim_cate_run: smoke test covers all 5 designs ──
-UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (fb72da782c129bfd60cdf873c8fcf8bc-6); on fb72da782c129bfd60cdf873c8fcf8bc@runnervm727z3<7910>]
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (8348d871b264e1990af1bfb0becda494-6); on 8348d871b264e1990af1bfb0becda494@runnervm727z3<7327>]
 Backtrace:
      ▆
   1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:344:3
@@ -205,7 +195,7 @@ Backtrace:
  21. │                     └─base (local) doWithOneRestart(return(expr), restart)
  22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
 ── Warning ('test-sim-cate.R:344:3'): sim_cate_run: smoke test covers all 5 designs ──
-UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (fb72da782c129bfd60cdf873c8fcf8bc-7); on fb72da782c129bfd60cdf873c8fcf8bc@runnervm727z3<7910>]
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (8348d871b264e1990af1bfb0becda494-7); on 8348d871b264e1990af1bfb0becda494@runnervm727z3<7327>]
 Backtrace:
      ▆
   1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:344:3
@@ -231,7 +221,7 @@ Backtrace:
  21. │                     └─base (local) doWithOneRestart(return(expr), restart)
  22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
 ── Warning ('test-sim-cate.R:344:3'): sim_cate_run: smoke test covers all 5 designs ──
-UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (fb72da782c129bfd60cdf873c8fcf8bc-8); on fb72da782c129bfd60cdf873c8fcf8bc@runnervm727z3<7910>]
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (8348d871b264e1990af1bfb0becda494-8); on 8348d871b264e1990af1bfb0becda494@runnervm727z3<7327>]
 Backtrace:
      ▆
   1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:344:3
@@ -257,7 +247,7 @@ Backtrace:
  21. │                     └─base (local) doWithOneRestart(return(expr), restart)
  22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
 ── Warning ('test-sim-cate.R:344:3'): sim_cate_run: smoke test covers all 5 designs ──
-UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (fb72da782c129bfd60cdf873c8fcf8bc-9); on fb72da782c129bfd60cdf873c8fcf8bc@runnervm727z3<7910>]
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (8348d871b264e1990af1bfb0becda494-9); on 8348d871b264e1990af1bfb0becda494@runnervm727z3<7327>]
 Backtrace:
      ▆
   1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:344:3
@@ -283,7 +273,7 @@ Backtrace:
  21. │                     └─base (local) doWithOneRestart(return(expr), restart)
  22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
 ── Warning ('test-sim-cate.R:344:3'): sim_cate_run: smoke test covers all 5 designs ──
-UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (fb72da782c129bfd60cdf873c8fcf8bc-10); on fb72da782c129bfd60cdf873c8fcf8bc@runnervm727z3<7910>]
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (8348d871b264e1990af1bfb0becda494-10); on 8348d871b264e1990af1bfb0becda494@runnervm727z3<7327>]
 Backtrace:
      ▆
   1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:344:3
@@ -309,7 +299,7 @@ Backtrace:
  21. │                     └─base (local) doWithOneRestart(return(expr), restart)
  22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
 ── Warning ('test-sim-cate.R:361:3'): sim_cate_run: dgp4 and dgp5 produce finite results with dnn_oracle_mahal ──
-UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (fb72da782c129bfd60cdf873c8fcf8bc-11); on fb72da782c129bfd60cdf873c8fcf8bc@runnervm727z3<7910>]
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (8348d871b264e1990af1bfb0becda494-11); on 8348d871b264e1990af1bfb0becda494@runnervm727z3<7327>]
 Backtrace:
      ▆
   1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:361:3
@@ -335,7 +325,7 @@ Backtrace:
  21. │                     └─base (local) doWithOneRestart(return(expr), restart)
  22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
 ── Warning ('test-sim-cate.R:361:3'): sim_cate_run: dgp4 and dgp5 produce finite results with dnn_oracle_mahal ──
-UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (fb72da782c129bfd60cdf873c8fcf8bc-12); on fb72da782c129bfd60cdf873c8fcf8bc@runnervm727z3<7910>]
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (8348d871b264e1990af1bfb0becda494-12); on 8348d871b264e1990af1bfb0becda494@runnervm727z3<7327>]
 Backtrace:
      ▆
   1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:361:3
@@ -361,7 +351,7 @@ Backtrace:
  21. │                     └─base (local) doWithOneRestart(return(expr), restart)
  22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
 ── Warning ('test-sim-cate.R:380:3'): summarise_sim_results: n_failed counts NA-metric rows correctly ──
-UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (fb72da782c129bfd60cdf873c8fcf8bc-13); on fb72da782c129bfd60cdf873c8fcf8bc@runnervm727z3<7910>]
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (8348d871b264e1990af1bfb0becda494-13); on 8348d871b264e1990af1bfb0becda494@runnervm727z3<7327>]
 Backtrace:
      ▆
   1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:380:3
@@ -387,7 +377,7 @@ Backtrace:
  21. │                     └─base (local) doWithOneRestart(return(expr), restart)
  22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
 ── Warning ('test-sim-cate.R:407:3'): summarise_sim_results: n_failed = 0 when no NAs present ──
-UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (fb72da782c129bfd60cdf873c8fcf8bc-14); on fb72da782c129bfd60cdf873c8fcf8bc@runnervm727z3<7910>]
+UNRELIABLE VALUE: One of the 'future.apply' iterations ('future_lapply-1') unexpectedly generated random numbers without declaring so. There is a risk that those random numbers are not statistically sound and the overall results might be invalid. To fix this, specify 'future.seed=TRUE'. This ensures that proper, parallel-safe random numbers are produced via a parallel RNG method. To disable this check, use 'future.seed = NULL', or set option 'future.rng.onMisuse' to "ignore". [future 'future_lapply-1' (8348d871b264e1990af1bfb0becda494-14); on 8348d871b264e1990af1bfb0becda494@runnervm727z3<7327>]
 Backtrace:
      ▆
   1. ├─RdistNN::sim_cate_run(...) at test-sim-cate.R:407:3
@@ -414,83 +404,57 @@ Backtrace:
  22. └─future.apply (local) `<fn>`(`<RngFtrWr>`)
 
 ══ Failed tests ════════════════════════════════════════════════════════════════
-── Failure ('test-distance-mahal.R:43:3'): distance_mahalanobis: known solution with diagonal covariance ──
-Expected `S` to equal `diag(c(4, 1), 2)`.
-Differences:
-actual vs expected
-                    [,1]     [,2]
-- actual[1, ]   5.333333 0.000000
-+ expected[1, ] 4.000000 0.000000
-- actual[2, ]   0.000000 1.333333
-+ expected[2, ] 0.000000 1.000000
-
-── Failure ('test-distance-mahal.R:52:3'): distance_mahalanobis: known solution with diagonal covariance ──
-Expected `d` to equal `expected`.
-Differences:
-  `actual`: 1.22 1.22 1.22 1.22
-`expected`: 1.41 1.41 1.41 1.41
-
-── Error ('test-distance-mahal.R:66:3'): distance_mahalanobis: correlated design gives different distances than L2 ──
-Error in `eval(code, test_env)`: attempt to apply non-function
-── Failure ('test-rank-weight-tdnn-asymp.R:130:3'): [from_ranks] meta fields are correct ──
-Expected `out$meta$scalars["w1"] + out$meta$scalars["w2"]` to equal 1.
-Differences:
-`names(actual)` is a character vector ('w1')
-`names(expected)` is absent
-
-── Failure ('test-rank-weight-tdnn-exact.R:59:5'): [scalars] .tdnn_scalars produces w1+w2=1 and correct signs ──
-Expected `sc["w1"] + sc["w2"]` to equal 1.
-Differences:
-`names(actual)` is a character vector ('w1')
-`names(expected)` is absent
-
-── Failure ('test-rank-weight-tdnn-exact.R:59:5'): [scalars] .tdnn_scalars produces w1+w2=1 and correct signs ──
-Expected `sc["w1"] + sc["w2"]` to equal 1.
-Differences:
-`names(actual)` is a character vector ('w1')
-`names(expected)` is absent
-
-── Failure ('test-rank-weight-tdnn-exact.R:59:5'): [scalars] .tdnn_scalars produces w1+w2=1 and correct signs ──
-Expected `sc["w1"] + sc["w2"]` to equal 1.
-Differences:
-`names(actual)` is a character vector ('w1')
-`names(expected)` is absent
-
-── Failure ('test-rank-weight-tdnn-exact.R:69:3'): [scalars] .tdnn_scalars closed form for s2 = 4*s1, dim = 2 ──
-Expected `sc["w1"]` to equal `-1/3`.
-Differences:
-`names(actual)` is a character vector ('w1')
-`names(expected)` is absent
-
-── Failure ('test-rank-weight-tdnn-exact.R:70:3'): [scalars] .tdnn_scalars closed form for s2 = 4*s1, dim = 2 ──
-Expected `sc["w2"]` to equal `4/3`.
-Differences:
-`names(actual)` is a character vector ('w2')
-`names(expected)` is absent
-
-── Failure ('test-rank-weight-tdnn-exact.R:137:3'): [from_ranks] meta fields are correct ──
-Expected `out$meta$scalars["w1"] + out$meta$scalars["w2"]` to equal 1.
-Differences:
-`names(actual)` is a character vector ('w1')
-`names(expected)` is absent
-
-── Error ('test-rank-weight-tdnn-exact.R:146:3'): [inv] w_rank depends only on (n, s1, s2, dim), not the permutation ──
-Error in `sample.int(n, set.seed(4))`: invalid 'size' argument
+── Error ('test-api-distances.R:187:3'): distance_eval/Batch basic shape checks and errors ──
+Error: Distance function must return a finite numeric vector of length n=3; got numeric of length 1.
 Backtrace:
     ▆
- 1. └─base::sample.int(n, set.seed(4)) at test-rank-weight-tdnn-exact.R:146:3
-── Failure ('test-sim-cate.R:251:3'): sim_cate_data dgp5_correlated: default x0 is (0.75, 0, ...) ──
-Expected `dgp$x0[1L]` to equal 0.75.
-Differences:
-  `actual`: 0.00
-`expected`: 0.75
+ 1. ├─testthat::expect_error(distance_eval(bad, X, x0), "must return numeric length nrow\\(X\\)") at test-api-distances.R:187:3
+ 2. │ └─testthat:::expect_condition_matching_(...) at testthat/R/expect-condition.R:122:5
+ 3. │   └─testthat:::quasi_capture(...) at testthat/R/expect-condition.R:325:3
+ 4. │     ├─testthat (local) .capture(...) at testthat/R/quasi-label.R:72:3
+ 5. │     │ └─base::withCallingHandlers(...) at testthat/R/expect-condition.R:427:3
+ 6. │     └─rlang::eval_bare(quo_get_expr(.quo), quo_get_env(.quo)) at testthat/R/quasi-label.R:72:3
+ 7. └─RdistNN::distance_eval(bad, X, x0) at rlang/R/eval.R:96:3
+ 8.   └─spec$eval(x_mat, x0_vec, ctx) at RdistNN/R/api-distances.R:235:5
+ 9.     └─RdistNN:::.distance_validate_output_vec(d, nrow(x_mat)) at RdistNN/R/api-distances.R:121:7
+── Error ('test-api-distances.R:222:3'): distance_eval rejects non-finite outputs ──
+Error: Distance function must return a finite numeric vector of length n=3; got numeric of length 3 (contains non-finite values).
+Backtrace:
+    ▆
+ 1. ├─testthat::expect_error(distance_eval(spec, X, x0), "must return numeric length nrow\\(X\\) with finite entries") at test-api-distances.R:222:3
+ 2. │ └─testthat:::expect_condition_matching_(...) at testthat/R/expect-condition.R:122:5
+ 3. │   └─testthat:::quasi_capture(...) at testthat/R/expect-condition.R:325:3
+ 4. │     ├─testthat (local) .capture(...) at testthat/R/quasi-label.R:72:3
+ 5. │     │ └─base::withCallingHandlers(...) at testthat/R/expect-condition.R:427:3
+ 6. │     └─rlang::eval_bare(quo_get_expr(.quo), quo_get_env(.quo)) at testthat/R/quasi-label.R:72:3
+ 7. └─RdistNN::distance_eval(spec, X, x0) at rlang/R/eval.R:96:3
+ 8.   └─spec$eval(x_mat, x0_vec, ctx) at RdistNN/R/api-distances.R:235:5
+ 9.     └─RdistNN:::.distance_validate_output_vec(d, nrow(x_mat)) at RdistNN/R/api-distances.R:121:7
+── Error ('test-api-distances.R:270:3'): distance eval_batch path validates shape and finiteness ──
+Error: distance eval_batch must return a finite numeric matrix of shape 4 x 2; got non-matrix (numeric).
+Backtrace:
+    ▆
+ 1. ├─testthat::expect_error(...) at test-api-distances.R:270:3
+ 2. │ └─testthat:::expect_condition_matching_(...) at testthat/R/expect-condition.R:122:5
+ 3. │   └─testthat:::quasi_capture(...) at testthat/R/expect-condition.R:325:3
+ 4. │     ├─testthat (local) .capture(...) at testthat/R/quasi-label.R:72:3
+ 5. │     │ └─base::withCallingHandlers(...) at testthat/R/expect-condition.R:427:3
+ 6. │     └─rlang::eval_bare(quo_get_expr(.quo), quo_get_env(.quo)) at testthat/R/quasi-label.R:72:3
+ 7. └─RdistNN::distance_eval_batch(bad_shape, X, X0) at rlang/R/eval.R:96:3
+ 8.   └─RdistNN:::.distance_validate_output_mat(out, n, m, src = "distance eval_batch") at RdistNN/R/api-distances.R:280:5
+── Error ('test-api-ranks.R:212:3'): input validation: bad ranks and bad specs produce clear errors ──
+Error: rank_weight$eval_batch must return a finite numeric matrix of shape 5 x 2; got 1 x 1.
+Backtrace:
+    ▆
+ 1. ├─testthat::expect_error(...) at test-api-ranks.R:212:3
+ 2. │ └─testthat:::expect_condition_matching_(...) at testthat/R/expect-condition.R:122:5
+ 3. │   └─testthat:::quasi_capture(...) at testthat/R/expect-condition.R:325:3
+ 4. │     ├─testthat (local) .capture(...) at testthat/R/quasi-label.R:72:3
+ 5. │     │ └─base::withCallingHandlers(...) at testthat/R/expect-condition.R:427:3
+ 6. │     └─rlang::eval_bare(quo_get_expr(.quo), quo_get_env(.quo)) at testthat/R/quasi-label.R:72:3
+ 7. └─RdistNN::rank_weight_eval_batch(rw_bad_batch_shape, R) at rlang/R/eval.R:96:3
 
-── Error ('test-tdnn-jackknife.R:243:3'): [s2-guard] s2 >= n is rejected by _loo_matrix ──
-Error in `.make_X0(m, p, seed = 61L)`: could not find function ".make_X0"
-── Error ('test-tdnn-jackknife.R:258:3'): [s2-guard] s2 >= n is rejected by _loo_full ──
-Error in `.make_X0(m, p, seed = 63L)`: could not find function ".make_X0"
-
-[ FAIL 14 | WARN 14 | SKIP 1 | PASS 1144 ]
+[ FAIL 4 | WARN 14 | SKIP 1 | PASS 1154 ]
 Error:
 ! Test failures.
 Execution halted

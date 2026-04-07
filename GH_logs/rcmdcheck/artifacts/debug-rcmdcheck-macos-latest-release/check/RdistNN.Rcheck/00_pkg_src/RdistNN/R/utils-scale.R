@@ -4,8 +4,11 @@
 .col_rng <- function(X) apply(X, 2L, function(z) diff(range(z)))
 
 .assert_no_na <- function(X, x0 = NULL) {
-  if (anyNA(X) || (!is.null(x0) && anyNA(x0))) {
-    stop("NA values are not supported (yet).", call. = FALSE)
+  if (anyNA(X)) {
+    stop("NA values are not supported: `X` contains NA.", call. = FALSE)
+  }
+  if (!is.null(x0) && anyNA(x0)) {
+    stop("NA values are not supported: `x0` contains NA.", call. = FALSE)
   }
 }
 

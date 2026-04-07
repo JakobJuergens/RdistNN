@@ -2209,7 +2209,7 @@ target_1   0.1103    0.1753     0.629  0.5294  -0.2334    0.4539
 > cleanEx()
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  3.25 0.02 3.36 NA NA 
+Time elapsed:  3.39 0.11 3.68 NA NA 
 > grDevices::dev.off()
 null device 
           1 

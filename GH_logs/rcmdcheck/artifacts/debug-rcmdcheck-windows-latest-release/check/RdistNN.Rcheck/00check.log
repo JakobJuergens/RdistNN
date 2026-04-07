@@ -17,7 +17,7 @@
 * checking for executable files ... OK
 * checking for hidden files and directories ... OK
 * checking for portable file names ... OK
-* checking whether package 'RdistNN' can be installed ... [29s] OK
+* checking whether package 'RdistNN' can be installed ... [35s] OK
 * used C++ compiler: 'G__~1.EXE (GCC) 14.3.0'
 * checking C++ specification ... OK
 * checking installed package size ... OK
@@ -42,7 +42,7 @@
 * checking S3 generic/method consistency ... OK
 * checking replacement functions ... OK
 * checking foreign function calls ... OK
-* checking R code for possible problems ... [10s] NOTE
+* checking R code for possible problems ... [12s] NOTE
 jackknife_rank_full: no visible global function definition for
   'rustat_jackknife_rank_full'
   (D:/a/RdistNN/RdistNN/check/RdistNN.Rcheck/00_pkg_src/RdistNN/R/jackknife-rank-full.R:146)
@@ -71,28 +71,28 @@ Undefined global functions or variables:
 * checking files in 'vignettes' ... OK
 * checking examples ... OK
 * checking for unstated dependencies in 'tests' ... OK
-* checking tests ... [17s] ERROR
-  Running 'testthat.R' [17s]
+* checking tests ... [22s] ERROR
+  Running 'testthat.R' [22s]
 Running the tests in 'tests/testthat.R' failed.
 Last 13 lines of output:
-  ── Failure ('test-sim-cate.R:251:3'): sim_cate_data dgp5_correlated: default x0 is (0.75, 0, ...) ──
-  Expected `dgp$x0[1L]` to equal 0.75.
-  Differences:
-    `actual`: 0.00
-  `expected`: 0.75
+  Error: rank_weight$eval_batch must return a finite numeric matrix of shape 5 x 2; got 1 x 1.
+  Backtrace:
+      ▆
+   1. ├─testthat::expect_error(...) at test-api-ranks.R:212:3
+   2. │ └─testthat:::expect_condition_matching_(...)
+   3. │   └─testthat:::quasi_capture(...)
+   4. │     ├─testthat (local) .capture(...)
+   5. │     │ └─base::withCallingHandlers(...)
+   6. │     └─rlang::eval_bare(quo_get_expr(.quo), quo_get_env(.quo))
+   7. └─RdistNN::rank_weight_eval_batch(rw_bad_batch_shape, R)
   
-  ── Error ('test-tdnn-jackknife.R:243:3'): [s2-guard] s2 >= n is rejected by _loo_matrix ──
-  Error in `.make_X0(m, p, seed = 61L)`: could not find function ".make_X0"
-  ── Error ('test-tdnn-jackknife.R:258:3'): [s2-guard] s2 >= n is rejected by _loo_full ──
-  Error in `.make_X0(m, p, seed = 63L)`: could not find function ".make_X0"
-  
-  [ FAIL 14 | WARN 14 | SKIP 1 | PASS 1144 ]
+  [ FAIL 4 | WARN 14 | SKIP 1 | PASS 1154 ]
   Error:
   ! Test failures.
   Execution halted
 * checking for unstated dependencies in vignettes ... OK
 * checking package vignettes ... OK
-* checking re-building of vignette outputs ... [13s] OK
+* checking re-building of vignette outputs ... [16s] OK
 * checking for non-standard things in the check directory ... OK
 * checking for detritus in the temp directory ... OK
 * DONE

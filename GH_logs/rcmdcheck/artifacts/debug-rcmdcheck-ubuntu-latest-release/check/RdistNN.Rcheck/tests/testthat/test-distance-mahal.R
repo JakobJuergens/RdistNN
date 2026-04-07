@@ -34,10 +34,11 @@ test_that("distance_mahalanobis: identity covariance matches L2", {
 })
 
 test_that("distance_mahalanobis: known solution with diagonal covariance", {
-  # X = [[2, 0], [0, 1], [0, 0]], cov manually set via design
-  # Construct X so sample cov is exactly diag(4, 1):
-  #   n=4, X = [[ 2, 1],[ 2,-1],[-2, 1],[-2,-1]] → mean=(0,0), cov = diag(4,1)
-  X <- matrix(c(2, 1, 2, -1, -2, 1, -2, -1), nrow = 4, byrow = TRUE)
+  # Construct X so that stats::cov(X) = diag(c(4, 1), 2) exactly.
+  # stats::cov uses the n-1 (Bessel-corrected) denominator, so we need n=5:
+  #   col1 = [2, 2, -2, -2, 0]: SS = 16, var = 16/4 = 4  ✓
+  #   col2 = [1,-1,  1, -1, 0]: SS =  4, var =  4/4 = 1  ✓
+  X <- matrix(c(2, 1, 2, -1, -2, 1, -2, -1, 0, 0), nrow = 5L, byrow = TRUE)
   # confirm:
   S <- stats::cov(X)
   expect_equal(S, diag(c(4, 1), 2), tolerance = 1e-12)

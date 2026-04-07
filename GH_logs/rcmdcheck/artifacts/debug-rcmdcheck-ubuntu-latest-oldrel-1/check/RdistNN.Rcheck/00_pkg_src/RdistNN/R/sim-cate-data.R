@@ -311,13 +311,21 @@
 sim_cate_data <- function(design, n, kx = 2L, sigma = 0.5, clip = 1e-3,
                            seed = NULL, x0 = NULL, ...) {
   stopifnot(kx >= 2L, clip > 0, clip < 0.5)
-  if (is.null(x0)) x0 <- rep(0, kx)
+  # Each DGP has its own natural default for x0; resolve here so callers that
+  # pass x0 = NULL still get the DGP-appropriate evaluation point rather than a
+  # generic rep(0, kx) that would be wrong for, e.g., dgp5_correlated (x0=(0.75,0)).
   switch(design,
-    dgp1_linear         = .sim_dgp1(n, kx, sigma, clip, seed, x0, ...),
-    dgp2_nonlinear      = .sim_dgp2(n, kx, sigma, clip, seed, x0, ...),
-    dgp3_sparse_overlap = .sim_dgp3(n, kx, sigma, clip, seed, x0, ...),
-    dgp4_clustered      = .sim_dgp4(n, kx, sigma, clip, seed, x0, ...),
-    dgp5_correlated     = .sim_dgp5(n, kx, sigma, clip, seed, x0, ...),
+    dgp1_linear         = .sim_dgp1(n, kx, sigma, clip, seed,
+                            x0 = if (is.null(x0)) rep(0, kx) else x0, ...),
+    dgp2_nonlinear      = .sim_dgp2(n, kx, sigma, clip, seed,
+                            x0 = if (is.null(x0)) rep(0, kx) else x0, ...),
+    dgp3_sparse_overlap = .sim_dgp3(n, kx, sigma, clip, seed,
+                            x0 = if (is.null(x0)) rep(0, kx) else x0, ...),
+    dgp4_clustered      = .sim_dgp4(n, kx, sigma, clip, seed,
+                            x0 = if (is.null(x0)) rep(0, kx) else x0, ...),
+    dgp5_correlated     = .sim_dgp5(n, kx, sigma, clip, seed,
+                            x0 = if (is.null(x0)) c(0.75, rep(0, max(0L, kx - 1L))) else x0,
+                            ...),
     stop("Unknown design: '", design,
          "'. Choose from: dgp1_linear, dgp2_nonlinear, dgp3_sparse_overlap, ",
          "dgp4_clustered, dgp5_correlated.")

@@ -1,12 +1,12 @@
 * using log directory ‘/home/runner/work/RdistNN/RdistNN/check/RdistNN.Rcheck’
-* using R Under development (unstable) (2026-04-03 r89785)
+* using R Under development (unstable) (2026-04-05 r89793)
 * using platform: x86_64-pc-linux-gnu
 * R was compiled by
     gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
     GNU Fortran (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
 * running under: Ubuntu 24.04.4 LTS
 * using session charset: UTF-8
-* current time: 2026-04-05 17:56:45 UTC
+* current time: 2026-04-07 01:30:44 UTC
 * using options ‘--no-manual --as-cran’
 * checking for file ‘RdistNN/DESCRIPTION’ ... OK
 * this is package ‘RdistNN’ version ‘0.1.0’
@@ -19,7 +19,7 @@
 * checking for hidden files and directories ... OK
 * checking for portable file names ... OK
 * checking for sufficient/correct file permissions ... OK
-* checking whether package ‘RdistNN’ can be installed ... [22s/24s] OK
+* checking whether package ‘RdistNN’ can be installed ... [23s/26s] OK
 * used C++ compiler: ‘g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0’
 * checking C++ specification ... INFO
   specified C++17
@@ -78,27 +78,27 @@ Undefined global functions or variables:
 * checking examples ... OK
 * checking for unstated dependencies in ‘tests’ ... OK
 * checking tests ... [13s/12s] ERROR
-  Running ‘testthat.R’ [12s/11s]
+  Running ‘testthat.R’ [12s/12s]
 Running the tests in ‘tests/testthat.R’ failed.
 Last 13 lines of output:
-  ── Failure ('test-sim-cate.R:251:3'): sim_cate_data dgp5_correlated: default x0 is (0.75, 0, ...) ──
-  Expected `dgp$x0[1L]` to equal 0.75.
-  Differences:
-    `actual`: 0.00
-  `expected`: 0.75
+  Error: rank_weight$eval_batch must return a finite numeric matrix of shape 5 x 2; got 1 x 1.
+  Backtrace:
+      ▆
+   1. ├─testthat::expect_error(...) at test-api-ranks.R:212:3
+   2. │ └─testthat:::expect_condition_matching_(...) at testthat/R/expect-condition.R:122:5
+   3. │   └─testthat:::quasi_capture(...) at testthat/R/expect-condition.R:325:3
+   4. │     ├─testthat (local) .capture(...) at testthat/R/quasi-label.R:72:3
+   5. │     │ └─base::withCallingHandlers(...) at testthat/R/expect-condition.R:427:3
+   6. │     └─rlang::eval_bare(quo_get_expr(.quo), quo_get_env(.quo)) at testthat/R/quasi-label.R:72:3
+   7. └─RdistNN::rank_weight_eval_batch(rw_bad_batch_shape, R) at rlang/R/eval.R:96:3
   
-  ── Error ('test-tdnn-jackknife.R:243:3'): [s2-guard] s2 >= n is rejected by _loo_matrix ──
-  Error in `.make_X0(m, p, seed = 61L)`: could not find function ".make_X0"
-  ── Error ('test-tdnn-jackknife.R:258:3'): [s2-guard] s2 >= n is rejected by _loo_full ──
-  Error in `.make_X0(m, p, seed = 63L)`: could not find function ".make_X0"
-  
-  [ FAIL 14 | WARN 14 | SKIP 1 | PASS 1144 ]
+  [ FAIL 4 | WARN 14 | SKIP 1 | PASS 1154 ]
   Error:
   ! Test failures.
   Execution halted
 * checking for unstated dependencies in vignettes ... OK
 * checking package vignettes ... OK
-* checking re-building of vignette outputs ... OK
+* checking re-building of vignette outputs ... [11s/10s] OK
 * checking for non-standard things in the check directory ... OK
 * checking for detritus in the temp directory ... OK
 * DONE
