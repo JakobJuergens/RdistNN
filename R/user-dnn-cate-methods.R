@@ -209,7 +209,10 @@ predict.cate_result <- function(
   }
 
   if (as.integer(model$s) >= nrow(model$x_mat)) {
-    stop("Delete-1 jackknife requires `s < n` for standard-error prediction.", call. = FALSE)
+    stop(sprintf(
+      "Delete-1 jackknife requires s < n (got s=%d, n=%d). Use `se.fit = FALSE` or `interval = 'none'`.",
+      as.integer(model$s), nrow(model$x_mat)
+    ), call. = FALSE)
   }
   se_hat <- .cate_dnn_jackknife_se_loo(
     x_mat = model$x_mat,
