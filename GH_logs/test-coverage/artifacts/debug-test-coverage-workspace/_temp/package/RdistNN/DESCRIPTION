@@ -28,4 +28,4 @@ RoxygenNote: 7.3.3
 URL: https://JakobJuergens.github.io/RdistNN/
 Config/testthat/edition: 3
 VignetteBuilder: knitr
-Built: R 4.5.3; x86_64-pc-linux-gnu; 2026-04-05 17:55:51 UTC; unix
+Built: R 4.5.3; x86_64-pc-linux-gnu; 2026-04-07 01:29:56 UTC; unix
