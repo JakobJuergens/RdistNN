@@ -63,9 +63,20 @@ test_that("[exact] weights_tdnn_exact dim defaults to ncol(X)", {
   n <- 18L; p <- 3L
   X  <- .make_X(n, p, seed = 6L)
   x0 <- rep(0, p)
-  out_default <- weights_tdnn_exact(X, x0 = x0, s1 = 2L, s2 = 6L)
+  out_default  <- weights_tdnn_exact(X, x0 = x0, s1 = 2L, s2 = 6L)
   out_explicit <- weights_tdnn_exact(X, x0 = x0, s1 = 2L, s2 = 6L, dim = p)
   expect_equal(out_default$W, out_explicit$W, tolerance = 0)
+})
+
+test_that("[exact] weights_tdnn_exact with NULL X and NULL dim gives a clear error", {
+  # Before the fix, NULL X with dim = NULL produced integer(0) for dim (via
+  # ncol(NULL) = NULL -> as.integer(NULL) = integer(0)), which cascaded into a
+  # confusing sprintf warning or deferred failure deep in eval_batch.
+  # After the fix, an explicit NULL guard fires immediately.
+  expect_error(
+    weights_tdnn_exact(NULL, x0 = c(0, 0), s1 = 2L, s2 = 6L),
+    "`dim`"
+  )
 })
 
 test_that("[exact] weights_tdnn_exact return='ranks' includes rank matrix", {
@@ -141,6 +152,13 @@ test_that("[asymp] weights_tdnn_asymp dim defaults to ncol(X)", {
   out_default  <- weights_tdnn_asymp(X, x0 = x0, s1 = 2L, s2 = 6L)
   out_explicit <- weights_tdnn_asymp(X, x0 = x0, s1 = 2L, s2 = 6L, dim = p)
   expect_equal(out_default$W, out_explicit$W, tolerance = 0)
+})
+
+test_that("[asymp] weights_tdnn_asymp with NULL X and NULL dim gives a clear error", {
+  expect_error(
+    weights_tdnn_asymp(NULL, x0 = c(0, 0), s1 = 2L, s2 = 6L),
+    "`dim`"
+  )
 })
 
 # ── [dispatch] ────────────────────────────────────────────────────────────────

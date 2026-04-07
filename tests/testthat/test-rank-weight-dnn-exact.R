@@ -126,8 +126,10 @@ test_that("[errors] input validation triggers appropriate errors", {
   ranks <- 1:n
   expect_error(dnn_weights_exact_full_from_ranks(ranks, k = 0, s = 1), "positive integer")
   expect_error(dnn_weights_exact_full_from_ranks(ranks, k = 2, s = 1), "k <= s")
-  expect_error(dnn_weights_exact_full_from_ranks(ranks, k = 1, s = 0), "1 <= s <= n")
-  expect_error(dnn_weights_exact_full_from_ranks(ranks, k = 1, s = n + 1), "1 <= s <= n")
+  # s < 1: caught by .validate_scalar_int as "positive integer"
+  expect_error(dnn_weights_exact_full_from_ranks(ranks, k = 1, s = 0), "positive integer")
+  # s > n: explicit upper-bound check
+  expect_error(dnn_weights_exact_full_from_ranks(ranks, k = 1, s = n + 1), "s <= n")
 })
 
 test_that("[meta] meta fields are correct", {
@@ -139,4 +141,22 @@ test_that("[meta] meta fields are correct", {
   expect_identical(out$meta$n, n)
   expect_identical(out$meta$k, as.integer(k))
   expect_identical(out$meta$s, as.integer(s))
+})
+
+# ---- [spec-errors] rank_weight_dnn_exact constructor -------------------------
+
+test_that("[spec-errors] rank_weight_dnn_exact validates k and s at construction time", {
+  # non-positive k / s
+  expect_error(rank_weight_dnn_exact(k = 0L, s = 3L), "positive integer")
+  expect_error(rank_weight_dnn_exact(k = 2L, s = 0L), "positive integer")
+  # cross-parameter constraint
+  expect_error(rank_weight_dnn_exact(k = 2L, s = 1L), "k <= s")
+  expect_error(rank_weight_dnn_exact(k = 5L, s = 3L), "k <= s")
+  # non-integer scalars (coercion trap)
+  expect_error(rank_weight_dnn_exact(k = 1.5, s = 3L), "integer scalar")
+  expect_error(rank_weight_dnn_exact(k = "foo", s = 3L), "integer scalar")
+  expect_error(rank_weight_dnn_exact(k = 1L, s = 2.9), "integer scalar")
+  expect_error(rank_weight_dnn_exact(k = 1L, s = "bar"), "integer scalar")
+  # valid call must not error
+  expect_no_error(rank_weight_dnn_exact(k = 2L, s = 3L))
 })

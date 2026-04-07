@@ -88,18 +88,11 @@ cate_dnn <- function(
 ) {
   method <- match.arg(method)
   jackknife <- match.arg(jackknife)
+  k <- .validate_scalar_int(k, "k")
+  s <- .validate_scalar_int(s, "s")
+  if (k > s) .abort_bad_arg("k", sprintf("must satisfy k <= s (got k=%d, s=%d)", k, s))
 
-  # Warn immediately on unknown `return` values so the user gets feedback at the
-  # call site rather than silently receiving a result missing the requested field.
-  valid_return <- c("W", "ranks", "ord", "dx", "psi", "nuisance", "ess", "neighbors")
-  unknown_return <- setdiff(return, valid_return)
-  if (length(unknown_return) > 0L) {
-    warning(sprintf(
-      "Unknown `return` value(s) ignored: %s.\nValid options: %s.",
-      paste(unknown_return, collapse = ", "),
-      paste(valid_return, collapse = ", ")
-    ), call. = FALSE)
-  }
+  .warn_unknown_return(return, valid = c("W", "ranks", "ord", "dx", "psi", "nuisance", "ess", "neighbors"))
 
   # Dispatch: data-frame API vs matrix API.
   if (!is.null(data)) {
@@ -166,10 +159,10 @@ cate_dnn <- function(
 
   # Guard the jackknife constraint at the entry point so the user gets a clear
   # error at their call site rather than deep inside the LOO loop.
-  if (isTRUE(se) && jackknife != "none" && as.integer(s) >= n) {
+  if (isTRUE(se) && jackknife != "none" && s >= n) {
     stop(sprintf(
       "Delete-1 jackknife requires s < n (got s=%d, n=%d). Use `se = FALSE` or reduce `s`.",
-      as.integer(s), n
+      s, n
     ), call. = FALSE)
   }
 
@@ -187,8 +180,8 @@ cate_dnn <- function(
     x0_mat = x0_mat,
     distance = distance,
     method = method,
-    k = as.integer(k),
-    s = as.integer(s),
+    k = k,
+    s = s,
     normalize = normalize,
     ctx = ctx,
     return = weight_return
@@ -243,8 +236,8 @@ cate_dnn <- function(
     x_cols = if (!is.null(data)) x_cols else NULL,
     distance = distance,
     method = method,
-    k = as.integer(k),
-    s = as.integer(s),
+    k = k,
+    s = s,
     normalize = normalize,
     ctx = ctx
   )

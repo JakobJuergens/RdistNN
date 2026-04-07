@@ -47,9 +47,10 @@
 #' colSums(W)  # c(1, 1)
 #' @export
 rank_weight_tdnn_exact <- function(s1, s2, dim) {
-  s1  <- as.integer(s1)
-  s2  <- as.integer(s2)
-  dim <- as.integer(dim)
+  s1  <- .validate_scalar_int(s1,  "s1")
+  s2  <- .validate_scalar_int(s2,  "s2")
+  dim <- .validate_scalar_int(dim, "dim")
+  if (s1 >= s2) .abort_bad_arg("s1", sprintf("must satisfy s1 < s2 (got s1=%d, s2=%d)", s1, s2))
 
   # Per-n table cache (keyed by character n; lives inside the spec closure)
   .cache <- new.env(parent = emptyenv())
@@ -107,9 +108,10 @@ rank_weight_tdnn_exact <- function(s1, s2, dim) {
 #' colSums(W)  # c(1, 1)
 #' @export
 rank_weight_tdnn_asymp <- function(s1, s2, dim, normalize = TRUE) {
-  s1        <- as.integer(s1)
-  s2        <- as.integer(s2)
-  dim       <- as.integer(dim)
+  s1        <- .validate_scalar_int(s1,  "s1")
+  s2        <- .validate_scalar_int(s2,  "s2")
+  dim       <- .validate_scalar_int(dim, "dim")
+  if (s1 >= s2) .abort_bad_arg("s1", sprintf("must satisfy s1 < s2 (got s1=%d, s2=%d)", s1, s2))
   normalize <- isTRUE(normalize)
 
   .cache <- new.env(parent = emptyenv())

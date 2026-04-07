@@ -455,6 +455,26 @@ test_that("metadata types and contents are stable", {
   expect_equal(res$meta$weight_name, "geom_0.7_meta")
 })
 
+test_that("weights_matrix warns on unknown return values", {
+  skip_if_not(exists("as_rank_weight"), "as_rank_weight() not found")
+
+  n <- 5L; p <- 2L; m <- 2L
+  set.seed(42)
+  X  <- matrix(rnorm(n * p), n, p)
+  X0 <- matrix(rnorm(m * p), m, p)
+  DX <- vapply(seq_len(m), function(j) rowSums((X - matrix(X0[j, ], n, p, byrow = TRUE))^2), numeric(n))
+  rw <- as_rank_weight(function(r) { w <- 1 / as.numeric(r); w / sum(w) }, name = "inv_rank_ret")
+
+  expect_warning(
+    weights_matrix(X, X0, ranking = list(dx = DX), weight = rw, return = c("W", "typo")),
+    "Unknown `return` value"
+  )
+  # valid values do not warn
+  expect_no_warning(
+    weights_matrix(X, X0, ranking = list(dx = DX), weight = rw, return = c("W", "ranks", "ord", "dx"))
+  )
+})
+
 test_that("error paths: missing weight and unsupported ranking type", {
   n <- 4
   p <- 2

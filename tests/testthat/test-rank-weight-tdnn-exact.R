@@ -196,6 +196,25 @@ test_that("[spec] eval_batch agrees with dnn_weights_tdnn_exact_full_from_ranks"
   expect_equal(W_spec, W_ref, tolerance = 1e-12)
 })
 
+# ---- [spec-errors] rank_weight_tdnn_exact constructor ------------------------
+
+test_that("[spec-errors] rank_weight_tdnn_exact validates s1, s2, dim at construction time", {
+  # non-positive arguments
+  expect_error(rank_weight_tdnn_exact(s1 = 0L, s2 = 4L, dim = 2L), "positive integer")
+  expect_error(rank_weight_tdnn_exact(s1 = 2L, s2 = 0L, dim = 2L), "positive integer")
+  expect_error(rank_weight_tdnn_exact(s1 = 2L, s2 = 4L, dim = 0L), "positive integer")
+  # s1 >= s2
+  expect_error(rank_weight_tdnn_exact(s1 = 4L, s2 = 4L, dim = 2L), "s1 < s2")
+  expect_error(rank_weight_tdnn_exact(s1 = 5L, s2 = 4L, dim = 2L), "s1 < s2")
+  # non-integer scalars (coercion trap)
+  expect_error(rank_weight_tdnn_exact(s1 = 1.5, s2 = 4L, dim = 2L), "integer scalar")
+  expect_error(rank_weight_tdnn_exact(s1 = "foo", s2 = 4L, dim = 2L), "integer scalar")
+  expect_error(rank_weight_tdnn_exact(s1 = 2L, s2 = 3.9, dim = 2L), "integer scalar")
+  expect_error(rank_weight_tdnn_exact(s1 = 2L, s2 = 4L, dim = 1.5), "integer scalar")
+  # valid call must not error
+  expect_no_error(rank_weight_tdnn_exact(s1 = 3L, s2 = 6L, dim = 2L))
+})
+
 # ---- [errors] --------------------------------------------------------
 
 test_that("[errors] tdnn_rank_table_exact validates inputs", {

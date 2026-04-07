@@ -232,6 +232,18 @@
   rank_matrix
 }
 
+.warn_unknown_return <- function(return, valid) {
+  unknown <- setdiff(return, valid)
+  if (length(unknown) > 0L) {
+    warning(sprintf(
+      "Unknown `return` value(s) ignored: %s.\nValid options: %s.",
+      paste(unknown, collapse = ", "),
+      paste(valid, collapse = ", ")
+    ), call. = FALSE)
+  }
+  invisible(NULL)
+}
+
 .validate_score_idxs <- function(idxs, n, s) {
   .validate_subset_indices(idxs, n, s, unique_within_subset = FALSE, allow_empty = FALSE)[1L, ]
 }
