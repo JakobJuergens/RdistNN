@@ -209,7 +209,7 @@ test_that("input validation: bad ranks and bad specs produce clear errors", {
   rw_bad_batch_shape$.__kind <- "rank_weight"
   class(rw_bad_batch_shape) <- c("rank_weight", class(rw_bad_batch_shape))
   R <- .rand_ranks_mat(5L, 2L)
-  expect_error(rank_weight_eval_batch(rw_bad_batch_shape, R), "nrow\\(R\\) x ncol\\(R\\)")
+  expect_error(rank_weight_eval_batch(rw_bad_batch_shape, R), "finite numeric matrix of shape")
 })
 
 test_that("as_rank_weight handles functions without ctx (and ignores provided ctx)", {

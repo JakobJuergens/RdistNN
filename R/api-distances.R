@@ -31,7 +31,11 @@
 }
 .distance_validate_output_mat <- function(d_mat, n, m, src = "Distance function") {
   if (!is.matrix(d_mat) || !is.numeric(d_mat) || nrow(d_mat) != n || ncol(d_mat) != m || any(!is.finite(d_mat))) {
-    got_dim <- if (is.matrix(d_mat)) sprintf("%d x %d", nrow(d_mat), ncol(d_mat)) else sprintf("non-matrix (%s)", class(d_mat)[1L])
+    got_dim <- if (is.matrix(d_mat)) {
+      sprintf("%d x %d", nrow(d_mat), ncol(d_mat))
+    } else {
+      sprintf("non-matrix (%s)", class(d_mat)[1L])
+    }
     stop(sprintf(
       "%s must return a finite numeric matrix of shape %d x %d; got %s%s.",
       src, n, m, got_dim,

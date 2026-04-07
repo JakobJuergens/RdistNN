@@ -184,7 +184,7 @@ test_that("distance_eval/Batch basic shape checks and errors", {
   bad <- as_distance(function(X, x0, ctx) 1, name = "bad_len")
   X <- matrix(0, 3, 2)
   x0 <- c(0, 0)
-  expect_error(distance_eval(bad, X, x0), "must return numeric length nrow\\(X\\)")
+  expect_error(distance_eval(bad, X, x0), "must return a finite numeric vector of length")
 
   # mismatched ncol in batch triggers error
   ok <- as_distance(function(X, x0, ctx) rowSums((X - matrix(x0, nrow(X), ncol(X), TRUE))^2),
@@ -219,7 +219,7 @@ test_that("distance_eval rejects non-finite outputs", {
   spec <- as_distance(function(X, x0, ctx) rep(NaN, nrow(X)), name = "bad_nonfinite")
   X <- matrix(0, 3, 2)
   x0 <- c(0, 0)
-  expect_error(distance_eval(spec, X, x0), "must return numeric length nrow\\(X\\) with finite entries")
+  expect_error(distance_eval(spec, X, x0), "contains non-finite values")
 })
 
 test_that("distance_eval_batch respects provided ctx (no setup) in eval-only fallback", {
@@ -269,7 +269,7 @@ test_that("distance eval_batch path validates shape and finiteness", {
   class(bad_shape) <- "dnn_distance"
   expect_error(
     distance_eval_batch(bad_shape, X, X0),
-    "must return a finite numeric matrix with shape nrow\\(X\\) x nrow\\(X0\\)"
+    "must return a finite numeric matrix of shape"
   )
 
   bad_finite <- list(
@@ -283,7 +283,7 @@ test_that("distance eval_batch path validates shape and finiteness", {
   class(bad_finite) <- "dnn_distance"
   expect_error(
     distance_eval_batch(bad_finite, X, X0),
-    "must return a finite numeric matrix with shape nrow\\(X\\) x nrow\\(X0\\)"
+    "must return a finite numeric matrix of shape"
   )
 })
 
