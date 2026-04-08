@@ -235,7 +235,13 @@ plqr_moment <- function(df, beta, tau) {
     .abort_bad_arg("beta", "cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`)")
   }
   if (length(beta) != p_d) {
-    .abort_bad_arg("beta", sprintf("length must equal number of D-columns (got length(beta)=%d, p_d=%d)", length(beta), p_d))
+    .abort_bad_arg(
+      "beta",
+      sprintf(
+        "length must equal number of D-columns (got length(beta)=%d, p_d=%d)",
+        length(beta), p_d
+      )
+    )
   }
   tau <- .validate_scalar_prob(tau, arg = "tau")
   Dmat <- as.matrix(df[paste0("D", seq_len(p_d))])

@@ -44,7 +44,9 @@
   }
   # normalize (guard numerical drift)
   sw <- sum(w_rank)
-  if (!is.finite(sw) || sw <= 0) stop("Internal error: non-positive total weight in .dnn_rank_table_exact_k1.", call. = FALSE)
+  if (!is.finite(sw) || sw <= 0) {
+    stop("Internal error: non-positive total weight in .dnn_rank_table_exact_k1.", call. = FALSE)
+  }
   if (abs(sw - 1) > 1e-12) w_rank <- w_rank / sw
   w_rank
 }

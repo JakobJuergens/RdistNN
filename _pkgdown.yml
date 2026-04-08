@@ -70,7 +70,6 @@ reference:
       - register_distance
       - get_distance
       - distance_names
-      - list_distances
       - distance_l2
       - distance_l1
       - distance_l2_scaled
@@ -95,8 +94,6 @@ reference:
       - register_rank
       - get_rank
       - rank_names
-      - list_ranks
-      - list_rank_weights
       - rank_weight_dnn_exact
       - rank_weight_dnn_asymp
       - dnn_weights_exact_full_from_ranks
@@ -112,7 +109,6 @@ reference:
     desc: print, summary, confint, and predict methods for package objects.
     contents:
       - print.cate_result
-      - print.cate_dnn_result
       - print.np_result
       - print.plqr_result
       - print.score_diff_path

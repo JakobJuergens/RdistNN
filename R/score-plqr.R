@@ -108,13 +108,21 @@ score_plqr_component <- function(
       # data-time checks
       .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X")
       if (.has_na_only(X)) stop("X cannot contain `NA` values.", call. = FALSE)
-      if (.has_nonfinite_non_na(X)) stop("X cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+      if (.has_nonfinite_non_na(X)) {
+        stop("X cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+      }
       if (.has_na_only(D)) stop("D cannot contain `NA` values.", call. = FALSE)
-      if (.has_nonfinite_non_na(D)) stop("D cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+      if (.has_nonfinite_non_na(D)) {
+        stop("D cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+      }
       if (.has_na_only(mD)) stop("m_D(X) cannot contain `NA` values.", call. = FALSE)
-      if (.has_nonfinite_non_na(mD)) stop("m_D(X) cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+      if (.has_nonfinite_non_na(mD)) {
+        stop("m_D(X) cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+      }
       if (.has_na_only(qx)) stop("q_tau(X) cannot contain `NA` values.", call. = FALSE)
-      if (.has_nonfinite_non_na(qx)) stop("q_tau(X) cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+      if (.has_nonfinite_non_na(qx)) {
+        stop("q_tau(X) cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+      }
       if (.has_na_only(Y)) stop("Y cannot contain `NA` values.", call. = FALSE)
       if (.has_nonfinite_non_na(Y)) stop("Y cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
 
@@ -155,7 +163,9 @@ score_plqr_component <- function(
       }
 
       if (.has_na_only(g)) stop("Computed g contains `NA` values.", call. = FALSE)
-      if (.has_nonfinite_non_na(g)) stop("Computed g contains non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+      if (.has_nonfinite_non_na(g)) {
+        stop("Computed g contains non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+      }
 
       list(
         g = as.numeric(g),
