@@ -66,8 +66,11 @@ jackknife_fast_rank <- function(ranks, a, phi, normalize = TRUE) {
   if (!is.matrix(ranks)) {
     stop("`ranks` must be a matrix.", call. = FALSE)
   }
-  if (anyNA(ranks) || any(!is.finite(ranks))) {
-    stop("`ranks` must be finite and cannot contain NA.", call. = FALSE)
+  if (.has_na_only(ranks)) {
+    stop("`ranks` cannot contain `NA` values.", call. = FALSE)
+  }
+  if (.has_nonfinite_non_na(ranks)) {
+    stop("`ranks` cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
   }
   if (any(ranks != as.integer(ranks))) {
     stop("`ranks` must contain integer indices.", call. = FALSE)

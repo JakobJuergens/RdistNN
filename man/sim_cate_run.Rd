@@ -5,8 +5,8 @@
 \title{Run the CATE simulation grid}
 \usage{
 sim_cate_run(
-  designs = c("dgp1_linear", "dgp2_nonlinear", "dgp3_sparse_overlap",
-              "dgp4_clustered", "dgp5_correlated"),
+  designs = c("dgp1_linear", "dgp2_nonlinear", "dgp3_sparse_overlap", "dgp4_clustered",
+    "dgp5_correlated"),
   n_vals = c(500L, 1000L, 2000L),
   kx_vals = 2L,
   n_reps = 500L,
@@ -16,7 +16,7 @@ sim_cate_run(
   methods = "dnn_oracle",
   alpha = 0.05,
   sigma = 0.5,
-  clip = 1e-3,
+  clip = 0.001,
   n_folds = 5L,
   verbose = TRUE
 )
@@ -40,8 +40,8 @@ across DGPs, sample sizes, and methods (fair comparison).}
 Default satisfies the undersmoothing condition
 \eqn{s \asymp n^{(k_x+1)/(k_x+2)}}.}
 
-\item{methods}{Character vector of method names; see
-\code{\link[=sim_cate_methods]{sim_cate_methods()}}.  Default: \code{"dnn_oracle"}.}
+\item{methods}{Character vector of method names; see \code{\link[=sim_cate_methods]{sim_cate_methods()}}.
+Default: \code{"dnn_oracle"}.}
 
 \item{alpha}{Nominal coverage level.}
 
@@ -55,18 +55,20 @@ Default satisfies the undersmoothing condition
 }
 \value{
 A \code{data.frame} with one row per replicate-method combination and
-  columns: \code{method}, \code{design}, \code{n}, \code{kx}, \code{s},
-  \code{seed}, \code{tau_hat}, \code{tau0}, \code{bias}, \code{sq_err},
-  \code{se}, \code{cover}, \code{ci_len}, \code{neff}.
-  Failed entries have \code{NA} for all metric columns.
+columns: \code{method}, \code{design}, \code{n}, \code{kx}, \code{s}, \code{seed},
+\code{bias}, \code{sq_err}, \code{se}, \code{cover}, \code{ci_len}, \code{neff}.
+Failed entries have \code{NA} for all metric columns.
 }
 \description{
 Expands a grid of DGP designs, sample sizes, and covariate dimensions, then
 runs \code{n_reps} independent Monte Carlo replications for each cell using
-\code{\link[=sim_cate_one_rep]{sim_cate_one_rep()}}.  Returns a tidy data.frame of raw per-replicate
-results.  Use \code{\link[=summarise_sim_results]{summarise_sim_results()}} to aggregate to one row per cell.
+\code{\link[=sim_cate_one_rep]{sim_cate_one_rep()}}.  Each replicate draws one dataset and evaluates \strong{all}
+requested \code{methods} on the same draw, enabling like-for-like comparisons.
+Returns a tidy data.frame of raw per-replicate, per-method results.  Use
+\code{\link[=summarise_sim_results]{summarise_sim_results()}} to aggregate to one row per \verb{(method, design, n, kx)}.
 }
 \section{Parallelism}{
+
 When the \code{future.apply} package is installed, the rep loop within each cell
 is parallelised via \code{future.apply::future_lapply()}.  Control the backend
 by calling \code{future::plan()} before \code{sim_cate_run()}:
@@ -77,14 +79,16 @@ raw <- sim_cate_run(...)
 }\if{html}{\out{</div>}}
 
 Without \code{future.apply} the function falls back silently to sequential
-\code{lapply}.
+\code{lapply}.  For multi-node HPC, see
+\code{system.file("paper-replication/cate/hpc", package = "RdistNN")}.
 }
 
 \section{Fault tolerance}{
-Each replicate is wrapped in \code{tryCatch}.  A total rep failure records
-\code{NA} for all metrics and all methods and emits a warning; per-method
-failures are handled inside \code{\link[=sim_cate_one_rep]{sim_cate_one_rep()}}.
-\code{\link[=summarise_sim_results]{summarise_sim_results()}} reports \code{n_failed} per cell.
+
+Each replicate is wrapped in \code{tryCatch}.  A total rep failure (e.g. DGP
+draw error) records \code{NA} for all metrics and all methods and emits a warning;
+per-method failures are handled inside \code{\link[=sim_cate_one_rep]{sim_cate_one_rep()}}.
+\code{\link[=summarise_sim_results]{summarise_sim_results()}} reports \code{n_failed} per \verb{(method, design, n, kx)}.
 }
 
 \examples{
@@ -93,15 +97,17 @@ failures are handled inside \code{\link[=sim_cate_one_rep]{sim_cate_one_rep()}}.
 raw <- sim_cate_run(designs = "dgp2_nonlinear", n_vals = 500L, n_reps = 10L)
 
 # Multiple methods on the same draws:
+future::plan(future::multisession)
 raw <- sim_cate_run(
   designs = "dgp2_nonlinear", n_vals = 500L, n_reps = 10L,
-  methods = c("dnn_oracle", "dnn_crossfit", "ols_interact")
+  methods = c("dnn_oracle", "dnn_crossfit", "ols_interact", "causal_forest")
 )
+future::plan(future::sequential)
+
 summarise_sim_results(raw)
 }
 
 }
 \seealso{
-\code{\link[=sim_cate_one_rep]{sim_cate_one_rep()}}, \code{\link[=summarise_sim_results]{summarise_sim_results()}},
-\code{\link[=sim_cate_methods]{sim_cate_methods()}}
+\code{\link[=sim_cate_one_rep]{sim_cate_one_rep()}}, \code{\link[=summarise_sim_results]{summarise_sim_results()}}, \code{\link[=sim_cate_methods]{sim_cate_methods()}}
 }

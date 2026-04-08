@@ -17,7 +17,7 @@ Retrieve a registered score
 }
 \examples{
 sc0 <- as_score(function(idxs, data) sum(data[idxs]), s = 2L, name = "tmp_score_get")
-register_score(sc0)
+register_score("tmp_score_get", sc0)
 sc <- get_score("tmp_score_get")
 is_score(sc)
 }

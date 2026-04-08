@@ -13,7 +13,7 @@
 #'    For nuisance columns, use either:
 #'    - full AIPW form: `y_col`, `t_col`, `e_col`, `m0_col`, `m1_col`;
 #'    - Robinson form: `y_col`, `t_col`, `e_col`, `m_col`.
-#' 2. Matrix interface (backward compatible): pass `X`, one of `X0` or `x0`,
+#' 2. Matrix interface: pass `X`, one of `X0` or `x0`,
 #'    and `pseudo_outcome`.
 #'
 #' As in [weights_dnn()], exact DNN localization uses the full rank permutation
@@ -76,7 +76,7 @@ cate_dnn <- function(
   m0_col = NULL, m1_col = NULL,
   m_col = NULL, e_col = NULL,
   pseudo_outcome = NULL,
-  X = NULL, X0 = NULL, x0 = NULL, # matrix API (back-compat)
+  X = NULL, X0 = NULL, x0 = NULL,
   distance = "l2",
   method = c("exact", "asymp"),
   k = 1L, s = 1L,

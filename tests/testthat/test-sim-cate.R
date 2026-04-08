@@ -98,7 +98,11 @@ test_that("sim_cate_data: x0 validation checks length and finiteness", {
   )
   expect_error(
     sim_cate_data("dgp1_linear", n = 10L, kx = 2L, x0 = c(0, NA_real_)),
-    "x0 must be finite"
+    "x0.*NA"
+  )
+  expect_error(
+    sim_cate_data("dgp1_linear", n = 10L, kx = 2L, x0 = c(0, Inf)),
+    "x0.*non-finite"
   )
 })
 
@@ -205,6 +209,39 @@ test_that("sim_cate_run: no future.apply RNG misuse warning", {
   ))
 
   expect_false(any(grepl("UNRELIABLE VALUE|future\\.seed", warns, ignore.case = TRUE)))
+})
+
+test_that("grf-missing benchmark warnings are emitted without call metadata", {
+  skip_if(requireNamespace("grf", quietly = TRUE), "grf installed; missing-package warning path not active")
+
+  m_cf <- getFromNamespace(".method_causal_forest", "RdistNN")
+  m_llf <- getFromNamespace(".method_llf", "RdistNN")
+  dgp <- sim_cate_data("dgp1_linear", n = 40L, kx = 2L, seed = 11L)
+  x_cols <- grep("^X", names(dgp$data), value = TRUE)
+
+  w_cf <- NULL
+  withCallingHandlers(
+    m_cf(dgp, x_cols = x_cols, alpha = 0.05),
+    warning = function(w) {
+      w_cf <<- w
+      invokeRestart("muffleWarning")
+    }
+  )
+  expect_s3_class(w_cf, "warning")
+  expect_match(conditionMessage(w_cf), "grf not available; causal_forest returns NA\\.")
+  expect_null(conditionCall(w_cf))
+
+  w_llf <- NULL
+  withCallingHandlers(
+    m_llf(dgp, x_cols = x_cols, alpha = 0.05),
+    warning = function(w) {
+      w_llf <<- w
+      invokeRestart("muffleWarning")
+    }
+  )
+  expect_s3_class(w_llf, "warning")
+  expect_match(conditionMessage(w_llf), "grf not available; llf returns NA\\.")
+  expect_null(conditionCall(w_llf))
 })
 
 test_that("sim_cate_run: multi-method produces one row per method per rep", {

@@ -5,8 +5,11 @@
     .abort_bad_arg(arg, "must be a non-empty numeric vector")
   }
   theta <- as.numeric(theta)
-  if (any(!is.finite(theta))) {
-    .abort_bad_arg(arg, "must be finite")
+  if (.has_na_only(theta)) {
+    .abort_bad_arg(arg, "cannot contain `NA` values")
+  }
+  if (.has_nonfinite_non_na(theta)) {
+    .abort_bad_arg(arg, "cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`)")
   }
   theta
 }
@@ -14,13 +17,28 @@
 .score_fd_step_vec <- function(fd_step, theta, arg = "fd_step") {
   step <- as.numeric(fd_step)
   if (length(step) == 1L) {
-    if (!is.finite(step) || step <= 0) {
-      .abort_bad_arg(arg, "must be positive and finite")
+    if (.has_na_only(step)) {
+      .abort_bad_arg(arg, "cannot be `NA`")
+    }
+    if (.has_nonfinite_non_na(step)) {
+      .abort_bad_arg(arg, "cannot be non-finite (`Inf`, `-Inf`, or `NaN`)")
+    }
+    if (step <= 0) {
+      .abort_bad_arg(arg, "must be positive")
     }
     return(step * pmax(1, abs(theta)))
   }
-  if (length(step) != length(theta) || any(!is.finite(step)) || any(step <= 0)) {
-    .abort_bad_arg(arg, "must be a positive finite scalar or length(theta) vector")
+  if (length(step) != length(theta)) {
+    .abort_bad_arg(arg, "must be a scalar or length(theta) vector")
+  }
+  if (.has_na_only(step)) {
+    .abort_bad_arg(arg, "cannot contain `NA` values")
+  }
+  if (.has_nonfinite_non_na(step)) {
+    .abort_bad_arg(arg, "cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`)")
+  }
+  if (any(step <= 0)) {
+    .abort_bad_arg(arg, "must contain only positive values")
   }
   step
 }

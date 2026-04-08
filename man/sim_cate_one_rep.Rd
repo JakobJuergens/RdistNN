@@ -4,9 +4,19 @@
 \alias{sim_cate_one_rep}
 \title{Run one replicate of CATE estimators}
 \usage{
-sim_cate_one_rep(n, kx, k, s, design, methods = "dnn_oracle",
-                 alpha = 0.05, seed = NULL, sigma = 0.5,
-                 clip = 1e-3, n_folds = 5L)
+sim_cate_one_rep(
+  n,
+  kx,
+  k,
+  s,
+  design,
+  methods = "dnn_oracle",
+  alpha = 0.05,
+  seed = NULL,
+  sigma = 0.5,
+  clip = 0.001,
+  n_folds = 5L
+)
 }
 \arguments{
 \item{n}{Integer sample size.}
@@ -19,8 +29,8 @@ sim_cate_one_rep(n, kx, k, s, design, methods = "dnn_oracle",
 
 \item{design}{Character DGP name; passed to \code{\link[=sim_cate_data]{sim_cate_data()}}.}
 
-\item{methods}{Character vector of method names; see
-\code{\link[=sim_cate_methods]{sim_cate_methods()}}.  Default: \code{"dnn_oracle"}.}
+\item{methods}{Character vector of method names; see \code{\link[=sim_cate_methods]{sim_cate_methods()}}.
+Default: \code{"dnn_oracle"}.}
 
 \item{alpha}{Nominal coverage level (default 0.05).}
 
@@ -34,9 +44,8 @@ sim_cate_one_rep(n, kx, k, s, design, methods = "dnn_oracle",
 }
 \value{
 A \code{data.frame} with one row per method and columns
-  \code{method}, \code{tau_hat}, \code{tau0}, \code{bias}, \code{sq_err},
-  \code{se}, \code{cover} (0/1), \code{ci_len}, \code{neff}.
-  Failed methods have \code{NA} for all metric columns.
+\code{method}, \code{bias}, \code{sq_err}, \code{se}, \code{cover} (0/1), \code{ci_len}, \code{neff}.
+Failed methods have \code{NA} for all metric columns.
 }
 \description{
 Draws one dataset from the named DGP (via \code{\link[=sim_cate_data]{sim_cate_data()}}), then runs each
@@ -52,8 +61,4 @@ rep1 <- sim_cate_one_rep(
 )
 rep1
 
-}
-\seealso{
-\code{\link[=sim_cate_data]{sim_cate_data()}}, \code{\link[=sim_cate_run]{sim_cate_run()}},
-\code{\link[=sim_cate_methods]{sim_cate_methods()}}
 }

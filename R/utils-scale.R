@@ -31,7 +31,7 @@
     iqr = .col_iqr(X),
     range = .col_rng(X)
   )
-  if (length(s) != ncol(X)) stop("Scale vector length must match ncol(X).")
+  if (length(s) != ncol(X)) stop("Scale vector length must match ncol(X).", call. = FALSE)
   s <- pmax(s, eps)
   1 / s
 }

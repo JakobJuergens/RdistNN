@@ -175,25 +175,40 @@ test_that("[inputs] integer x_cols indexing works", {
 })
 
 # tests/testthat/test-score-cate.R  (replace the whole [non-finite] block)
-test_that("[non-finite] any non-finite rho triggers an error on evaluation", {
+test_that("[invalid g] NA in rho triggers NA-specific errors on evaluation", {
   fx <- .get_cate_fx(n = 42, p = 2)
   scn <- fx[[1L]]
   rho_col <- scn$cols$rho
 
-  # inject NA and Inf at known positions
+  # inject NA at known position
   df_bad <- scn$data
   df_bad[[rho_col]][2] <- NA_real_
-  df_bad[[rho_col]][5] <- Inf
 
   sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 3L, k = 1L, rho_col = rho_col)
   ctx <- score_setup(sc, df_bad)
 
   # eval(): must target a bad index to trigger the per-subset guard
-  expect_error(score_eval(sc, 2L, df_bad, ctx), "Non-finite g encountered\\.", ignore.case = FALSE)
+  expect_error(score_eval(sc, 2L, df_bad, ctx), "g contains `NA` values\\.", ignore.case = FALSE)
 
   # eval_batch(): global guard triggers regardless of subset content
   subs2 <- cbind(1:10, 11:20)
-  expect_error(score_eval_batch(sc, subs2, df_bad, ctx), "Non-finite g encountered\\.", ignore.case = FALSE)
+  expect_error(score_eval_batch(sc, subs2, df_bad, ctx), "g contains `NA` values\\.", ignore.case = FALSE)
+})
+
+test_that("[invalid g] non-finite rho triggers non-finite-specific errors on evaluation", {
+  fx <- .get_cate_fx(n = 42, p = 2)
+  scn <- fx[[1L]]
+  rho_col <- scn$cols$rho
+
+  df_bad <- scn$data
+  df_bad[[rho_col]][5] <- Inf
+
+  sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 3L, k = 1L, rho_col = rho_col)
+  ctx <- score_setup(sc, df_bad)
+
+  expect_error(score_eval(sc, 5L, df_bad, ctx), "g contains non-finite values", ignore.case = FALSE)
+  subs2 <- cbind(1:10, 11:20)
+  expect_error(score_eval_batch(sc, subs2, df_bad, ctx), "g contains non-finite values", ignore.case = FALSE)
 })
 
 

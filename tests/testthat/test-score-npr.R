@@ -162,7 +162,7 @@ test_that("[eval] errors for non-singleton usage", {
   )
 })
 
-test_that("[inputs] non-finite Y triggers an error on evaluation", {
+test_that("[inputs] NA in Y triggers NA-specific error on evaluation", {
   df <- reg_demo(n = 20, p = 2, seed = 7)
   df$Y[7] <- NA_real_
   x0 <- colMeans(df[, 1:2, drop = FALSE])
@@ -171,11 +171,24 @@ test_that("[inputs] non-finite Y triggers an error on evaluation", {
   ctx <- score_setup(sc, df)
 
   # Single eval at the bad row should fail
-  expect_error(score_eval(sc, 7L, df, ctx), "Non-finite g encountered\\.", ignore.case = FALSE)
+  expect_error(score_eval(sc, 7L, df, ctx), "g contains `NA` values\\.", ignore.case = FALSE)
 
   # Batch should also fail — use direct call (not safe wrapper) to assert the error
   subs <- .singletons(nrow(df))
-  expect_error(score_eval_batch(sc, subs, df, ctx), "Non-finite g encountered\\.", ignore.case = FALSE)
+  expect_error(score_eval_batch(sc, subs, df, ctx), "g contains `NA` values\\.", ignore.case = FALSE)
+})
+
+test_that("[inputs] non-finite Y triggers non-finite-specific error on evaluation", {
+  df <- reg_demo(n = 20, p = 2, seed = 7)
+  df$Y[7] <- Inf
+  x0 <- colMeans(df[, 1:2, drop = FALSE])
+
+  sc <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, k = 1L, y_col = "Y")
+  ctx <- score_setup(sc, df)
+
+  expect_error(score_eval(sc, 7L, df, ctx), "g contains non-finite values", ignore.case = FALSE)
+  subs <- .singletons(nrow(df))
+  expect_error(score_eval_batch(sc, subs, df, ctx), "g contains non-finite values", ignore.case = FALSE)
 })
 
 test_that("[sanity] singleton: constant and linear Y return exactly Y_i", {

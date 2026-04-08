@@ -382,7 +382,7 @@ test_that("ranking name path works via distance registry", {
       pmax(D, 0)
     }
   )
-  register_distance(cos_spec)
+  register_distance("cosine_weights_api", cos_spec)
 
   # Rank-weight
   rw <- as_rank_weight(function(r) {
@@ -492,6 +492,14 @@ test_that("error paths: missing weight and unsupported ranking type", {
     "`weight` must be a rank_weight",
     fixed = TRUE
   )
+  msg_missing_weight <- tryCatch(
+    {
+      weights_matrix(X, X0, ranking = list(dx = DX), weight = NULL)
+      NA_character_
+    },
+    error = function(e) e$message
+  )
+  expect_match(msg_missing_weight, "Got:", fixed = TRUE)
 
   # unsupported ranking type
   rw <- as_rank_weight(function(r) {
@@ -503,6 +511,14 @@ test_that("error paths: missing weight and unsupported ranking type", {
     "Unsupported `ranking` type",
     fixed = TRUE
   )
+  msg_bad_ranking <- tryCatch(
+    {
+      weights_matrix(X, X0, ranking = 42L, weight = rw)
+      NA_character_
+    },
+    error = function(e) e$message
+  )
+  expect_match(msg_bad_ranking, "Got:", fixed = TRUE)
 })
 
 test_that("deterministic ties with massive plateaus still stable", {

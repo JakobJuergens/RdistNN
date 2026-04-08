@@ -254,17 +254,17 @@ test_that("[inputs/setup] finiteness guards fire at setup", {
   sc <- score_plqr_component(scn$x0, scn$x_cols, scn$d_cols, scn$cols$q, scn$cols$mD,
     beta = scn$beta_true, j = 1L, tau = scn$tau, s = 1, k = 1
   )
-  expect_error(score_setup(sc, df_bad), "Y must be finite\\.", ignore.case = FALSE)
+  expect_error(score_setup(sc, df_bad), "Y cannot contain `NA` values\\.", ignore.case = FALSE)
 
   # q non-finite
   df_bad <- df
   df_bad[[scn$cols$q]][2] <- Inf
-  expect_error(score_setup(sc, df_bad), "q_tau\\(X\\) must be finite\\.", ignore.case = FALSE)
+  expect_error(score_setup(sc, df_bad), "q_tau\\(X\\) cannot contain non-finite values", ignore.case = FALSE)
 
   # D non-finite
   df_bad <- df
   df_bad[[scn$d_cols[1]]][5] <- NaN
-  expect_error(score_setup(sc, df_bad), "D must be finite\\.", ignore.case = FALSE)
+  expect_error(score_setup(sc, df_bad), "D cannot contain non-finite values", ignore.case = FALSE)
 
   # mD non-finite (need to add mD columns to df for this check)
   # If the demo generator didn't include mD columns in df, emulate via join:
@@ -273,7 +273,7 @@ test_that("[inputs/setup] finiteness guards fire at setup", {
   }
   df_bad <- df
   df_bad[[scn$cols$mD[2]]][7] <- -Inf
-  expect_error(score_setup(sc, df_bad), "m_D\\(X\\) must be finite\\.", ignore.case = FALSE)
+  expect_error(score_setup(sc, df_bad), "m_D\\(X\\) cannot contain non-finite values", ignore.case = FALSE)
 })
 
 test_that("[ratio] where rD_ij != 0, g_i / rD_ij ∈ {tau - 1, tau}", {

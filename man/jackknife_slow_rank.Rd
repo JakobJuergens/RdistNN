@@ -32,10 +32,10 @@ using the provided neighbor ranks. This \strong{does not} recompute ranks
 after deletion (useful as a correctness oracle and for testing).
 }
 \details{
-\code{jackknife_slow_rank()} targets compact-support finite-rank L-stat rules.
-It is not the internal engine used by the user-level exact DNN wrappers, which
-instead update the full rank matrix under deletion and reevaluate the DNN
-rank-weight rule.
+Like \code{\link[=jackknife_fast_rank]{jackknife_fast_rank()}}, this helper targets compact-support
+finite-rank L-stat rules. It is not the internal engine used by the
+user-level exact DNN wrappers, which instead update the full rank matrix
+under deletion and reevaluate the DNN rank-weight rule.
 
 Works with:
 \itemize{

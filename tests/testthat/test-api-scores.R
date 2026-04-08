@@ -147,13 +147,24 @@ test_that("subset validation in batch: shape, bounds, and empties are caught", {
     score_eval_batch(sc, matrix(integer(), 0L, s), y, NULL),
     "must have at least one row"
   )
+
+  # NA vs non-finite are distinct diagnostics
+  expect_error(
+    score_eval_batch(sc, matrix(c(1, 2, NA_real_), 1L, s, byrow = TRUE), y, NULL),
+    "subs.*NA",
+    ignore.case = TRUE
+  )
+  expect_error(
+    score_eval_batch(sc, matrix(c(1, 2, Inf), 1L, s, byrow = TRUE), y, NULL),
+    "subs.*non-finite",
+    ignore.case = TRUE
+  )
 })
 
-test_that("registry: register_score() single-arg and (name, score), get_score(), list_scores(), score_names()", {
+test_that("registry: register_score(name, score), get_score(), and list_scores()", {
   scA <- new_score(name = "scA", order = 2L, eval = function(i, d, c, r) 1)
 
-  # single-arg; uses scA$name
-  nmA <- register_score(scA)
+  nmA <- register_score("scA", scA)
   expect_identical(nmA, "scA")
   gotA <- get_score("scA")
   expect_true(is_score(gotA))
@@ -172,7 +183,20 @@ test_that("registry: register_score() single-arg and (name, score), get_score(),
   nn <- list_scores()
   expect_true("scA" %in% nn)
   expect_true("altB" %in% nn)
-  expect_true(all(score_names() %in% list_scores()))
+})
+
+test_that("get_score diagnostics include argument and expected/got details", {
+  expect_error(get_score(1), "name", ignore.case = TRUE)
+  msg <- tryCatch(
+    {
+      get_score("__missing_score__")
+      NA_character_
+    },
+    error = function(e) e$message
+  )
+  expect_match(msg, "No score registered", ignore.case = TRUE)
+  expect_match(msg, "Expected:", fixed = TRUE)
+  expect_match(msg, "Got:", fixed = TRUE)
 })
 
 test_that("errors when neither eval_batch nor eval are present (and no ptr)", {
@@ -228,7 +252,7 @@ test_that("parameter-aware evaluators and analytic gradients work", {
   sc <- new_score(
     name = "param_linear",
     order = 2L,
-    eval = function(idxs, data, ctx, rng) sum(data[idxs]), # legacy path still present
+    eval = function(idxs, data, ctx, rng) sum(data[idxs]),
     eval_param = function(idxs, data, theta, ctx, rng) {
       theta[1] * sum(data[idxs]) + theta[2]
     },
@@ -324,7 +348,10 @@ test_that("derivative helpers validate theta and finite-difference controls", {
   y <- c(1, 2, 3)
 
   expect_error(score_eval_param(sc, 1L, y, numeric(0)), "non-empty numeric vector")
-  expect_error(score_grad(sc, 1L, y, c(NA_real_), method = "fd"), "finite")
+  expect_error(score_grad(sc, 1L, y, c(NA_real_), method = "fd"), "NA")
+  expect_error(score_grad(sc, 1L, y, c(Inf), method = "fd"), "non-finite")
+  expect_error(score_grad(sc, 1L, y, 1, method = "fd", fd_step = NA_real_), "cannot be `NA`")
+  expect_error(score_grad(sc, 1L, y, 1, method = "fd", fd_step = Inf), "cannot be non-finite")
   expect_error(score_grad(sc, 1L, y, 1, method = "fd", fd_step = -1), "positive")
   expect_no_error(score_grad(sc, 1L, y, c(1, 2), method = "fd", fd_step = c(1e-6)))
   expect_error(score_grad(sc, 1L, y, c(1, 2), method = "fd", fd_step = c(1e-6, -1e-6)), "positive")

@@ -157,34 +157,43 @@ validate_score <- function(sc) {
   if (!inherits(sc, "ustat_score")) {
     .abort_bad_arg("sc", "must inherit from class 'ustat_score'")
   }
-  if (!nzchar(sc$name)) stop("score name must be non-empty", call. = FALSE)
+  if (!nzchar(sc$name)) .abort_bad_arg("name", "must be a non-empty character scalar", quoted = FALSE)
   if (!(.is_scalar_int(sc$order) || .is_fun(sc$order, 1L))) {
-    stop("`order` must be integer or function(n, data, ctx).", call. = FALSE)
+    .abort_bad_arg("order", "must be an integer scalar or function(n, data, ctx)")
   }
   if (!is.null(sc$eval_param) && !is.function(sc$eval_param)) {
-    stop("`eval_param` must be NULL or a function.", call. = FALSE)
+    .abort_bad_arg("eval_param", "must be NULL or a function")
   }
   if (!is.null(sc$eval_param_batch) && !is.function(sc$eval_param_batch)) {
-    stop("`eval_param_batch` must be NULL or a function.", call. = FALSE)
+    .abort_bad_arg("eval_param_batch", "must be NULL or a function")
   }
   if (!is.null(sc$grad) && !is.function(sc$grad)) {
-    stop("`grad` must be NULL or a function.", call. = FALSE)
+    .abort_bad_arg("grad", "must be NULL or a function")
   }
   if (!is.null(sc$grad_batch) && !is.function(sc$grad_batch)) {
-    stop("`grad_batch` must be NULL or a function.", call. = FALSE)
+    .abort_bad_arg("grad_batch", "must be NULL or a function")
   }
   if (!is.numeric(sc$fd_step) || length(sc$fd_step) != 1L ||
     !is.finite(sc$fd_step) || sc$fd_step <= 0) {
-    stop("`fd_step` must be a positive finite scalar.", call. = FALSE)
+    .abort_bad_arg("fd_step", "must be a positive finite scalar")
   }
   if (!is.character(sc$fd_scheme) || length(sc$fd_scheme) != 1L ||
     !(sc$fd_scheme %in% c("central", "forward"))) {
-    stop("`fd_scheme` must be one of: 'central', 'forward'.", call. = FALSE)
+    .abort_bad_arg(
+      "fd_scheme",
+      "must be one of: 'central', 'forward'",
+      expected = "central, forward",
+      actual = paste(sc$fd_scheme, collapse = ", ")
+    )
   }
   if (is.null(sc$ptr) &&
     is.null(sc$eval_batch) && is.null(sc$eval) &&
     is.null(sc$eval_param_batch) && is.null(sc$eval_param)) {
-    stop("Provide at least one of: ptr, eval_batch, eval, eval_param_batch, eval_param", call. = FALSE)
+    .abort_bad_arg(
+      "score",
+      "must provide at least one of: ptr, eval_batch, eval, eval_param_batch, eval_param",
+      quoted = FALSE
+    )
   }
   if (!isTRUE(sc$symmetric)) {
     warning("Score marked non-symmetric; engine assumes symmetry.", call. = FALSE)
@@ -305,7 +314,13 @@ score_eval.ustat_score <- function(score, idxs, data, ctx = NULL, rng = NULL) {
   if (is.function(score$eval)) {
     out <- score$eval(idxs, data, ctx, rng)
     if (!is.numeric(out) || length(out) != 1L || !is.finite(out)) {
-      stop("score$eval must return a finite scalar numeric.", call. = FALSE)
+      .abort_bad_arg(
+        "score$eval",
+        "must return a finite scalar numeric",
+        expected = "finite numeric(1)",
+        actual = sprintf("%s of length %d", class(out)[1L], length(out)),
+        quoted = FALSE
+      )
     }
     return(out)
   }
@@ -314,13 +329,19 @@ score_eval.ustat_score <- function(score, idxs, data, ctx = NULL, rng = NULL) {
     subs1 <- if (is.matrix(idxs)) idxs else matrix(as.integer(idxs), nrow = 1L)
     out <- score$eval_batch(subs1, data, ctx, rng)
     if (!is.numeric(out) || length(out) != 1L || !is.finite(out)) {
-      stop("score$eval_batch must return a finite scalar for a single subset.", call. = FALSE)
+      .abort_bad_arg(
+        "score$eval_batch",
+        "must return a finite scalar for a single subset",
+        expected = "finite numeric(1)",
+        actual = sprintf("%s of length %d", class(out)[1L], length(out)),
+        quoted = FALSE
+      )
     }
     return(as.numeric(out))
   }
 
   # Match test: scalar path complains "eval or eval_batch"
-  stop("No R `eval` or `eval_batch` provided", call. = FALSE)
+  .abort_bad_arg("score", "No R `eval` or `eval_batch` provided", quoted = FALSE)
 }
 
 #' Evaluate kernel on many subsets (R fast-path)
@@ -341,14 +362,20 @@ score_eval_batch <- function(score, subs, data, ctx = NULL, rng = NULL) UseMetho
 score_eval_batch.ustat_score <- function(score, subs, data, ctx = NULL, rng = NULL) {
   # Fail fast with batch-first wording to match test
   if (!is.function(score$eval_batch) && !is.function(score$eval)) {
-    stop("No R `eval_batch` or `eval` provided", call. = FALSE)
+    .abort_bad_arg("score", "No R `eval_batch` or `eval` provided", quoted = FALSE)
   }
 
   if (is.function(score$eval_batch)) {
     out <- score$eval_batch(subs, data, ctx, rng)
     n_subsets <- if (is.matrix(subs)) nrow(subs) else length(subs)
     if (!is.numeric(out) || length(out) != n_subsets || any(!is.finite(out))) {
-      stop("score$eval_batch must return numeric(K) with finite entries.", call. = FALSE)
+      .abort_bad_arg(
+        "score$eval_batch",
+        "must return numeric(K) with finite entries",
+        expected = sprintf("finite numeric vector of length K=%d", n_subsets),
+        actual = sprintf("%s of length %d", class(out)[1L], length(out)),
+        quoted = FALSE
+      )
     }
     return(as.numeric(out))
   }
@@ -371,36 +398,23 @@ score_eval_batch.ustat_score <- function(score, subs, data, ctx = NULL, rng = NU
 
 #' Register a score
 #'
-#' Accepts **either** `(score)` where `score$name` is used as key,
-#' or `(name, score)` where `name` overrides/sets `score$name`.
-#'
-#' @param name Character scalar **or** a score object (legacy single-arg form).
-#' @param score Optional `ustat_score` when using the two-arg form.
+#' @param name Character scalar registry key.
+#' @param score A `ustat_score` object.
 #' @return Invisibly, the registered name.
 #' @examples
 #' sc <- as_score(function(idxs, data) sum(data[idxs]), s = 2L, name = "tmp_score_demo")
-#' register_score(sc)
+#' register_score("tmp_score_demo", sc)
 #' "tmp_score_demo" %in% list_scores()
 #' @export
-register_score <- function(name, score = NULL) {
-  if (missing(score)) {
-    # Legacy: register_score(score)
-    score <- name
-    if (!is_score(score) || !nzchar(score$name)) {
-      .abort_bad_arg("score", "must be a score object with a non-empty `$name`")
-    }
-    nm <- score$name
-  } else {
-    # New: register_score(name, score)
-    if (!is.character(name) || length(name) != 1L) {
-      .abort_bad_arg("name", "must be a character scalar")
-    }
-    if (!is_score(score)) {
-      .abort_bad_arg("score", "must be a `ustat_score` object")
-    }
-    if (is.null(score$name) || !nzchar(score$name)) score$name <- name
-    nm <- name
+register_score <- function(name, score) {
+  if (!is.character(name) || length(name) != 1L || !nzchar(name)) {
+    .abort_bad_arg("name", "must be a non-empty character scalar")
   }
+  if (!is_score(score)) {
+    .abort_bad_arg("score", "must be a `ustat_score` object")
+  }
+  if (is.null(score$name) || !nzchar(score$name)) score$name <- name
+  nm <- name
   assign(nm, score, envir = .score_registry)
   invisible(nm)
 }
@@ -410,13 +424,22 @@ register_score <- function(name, score = NULL) {
 #' @return a \code{ustat_score}
 #' @examples
 #' sc0 <- as_score(function(idxs, data) sum(data[idxs]), s = 2L, name = "tmp_score_get")
-#' register_score(sc0)
+#' register_score("tmp_score_get", sc0)
 #' sc <- get_score("tmp_score_get")
 #' is_score(sc)
 #' @export
 get_score <- function(name) {
+  if (!is.character(name) || length(name) != 1L) {
+    .abort_bad_arg("name", "must be a character scalar")
+  }
   if (!exists(name, envir = .score_registry, inherits = FALSE)) {
-    stop("No score registered under '", name, "'.", call. = FALSE)
+    known <- ls(envir = .score_registry, all.names = FALSE)
+    .abort_bad_arg(
+      "name",
+      "No score registered under requested name",
+      expected = if (length(known) > 0L) paste(known, collapse = ", ") else "<none registered>",
+      actual = as.character(name)
+    )
   }
   get(name, envir = .score_registry, inherits = FALSE)
 }
@@ -427,10 +450,3 @@ get_score <- function(name) {
 #' head(list_scores(), 3)
 #' @export
 list_scores <- function() sort(ls(envir = .score_registry, all.names = FALSE))
-
-#' Back-compat alias for [list_scores()]
-#' @return character vector of names
-#' @examples
-#' identical(score_names(), list_scores())
-#' @export
-score_names <- function() list_scores()

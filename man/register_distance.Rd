@@ -4,10 +4,10 @@
 \alias{register_distance}
 \title{Register a distance spec under a name}
 \usage{
-register_distance(name, spec = NULL)
+register_distance(name, spec)
 }
 \arguments{
-\item{name}{Character scalar, or a spec in legacy single-argument form.}
+\item{name}{Character scalar registry key.}
 
 \item{spec}{Either a distance spec or a function \verb{(X, x0, ctx) -> numeric(n)}.}
 }
@@ -15,8 +15,7 @@ register_distance(name, spec = NULL)
 (Invisibly) the registered spec.
 }
 \description{
-Accepts either \verb{(name, spec)} or legacy single-argument form \code{(spec)},
-where \code{spec$name} is used as the key.
+Register a distance spec under a name
 }
 \examples{
 nm <- "tmp_l1_demo"

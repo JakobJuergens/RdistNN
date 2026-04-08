@@ -84,12 +84,14 @@ score_cate_rho <- function(
     # keep these guards (they make it fail at evaluation time):
     eval = function(idxs, data, ctx, rng) {
       gi <- ctx$g[idxs]
-      if (any(!is.finite(gi))) stop("Non-finite g encountered.", call. = FALSE)
+      if (.has_na_only(gi)) stop("g contains `NA` values.", call. = FALSE)
+      if (.has_nonfinite_non_na(gi)) stop("g contains non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
       as.numeric(sum(gi))
     },
     eval_batch = function(subs, data, ctx, rng) {
       gi <- ctx$g
-      if (any(!is.finite(gi))) stop("Non-finite g encountered.", call. = FALSE)
+      if (.has_na_only(gi)) stop("g contains `NA` values.", call. = FALSE)
+      if (.has_nonfinite_non_na(gi)) stop("g contains non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
       if (!is.matrix(subs)) subs <- as.matrix(subs)
       if (nrow(subs) == 0L) {
         return(numeric(0L))

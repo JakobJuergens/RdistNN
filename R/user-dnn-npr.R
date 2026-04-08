@@ -10,7 +10,7 @@
 #'
 #' 1. Data-frame interface (recommended): pass `data`, `x_cols`, and either
 #'    `y_col` or `y` (exactly one).
-#' 2. Matrix interface: pass `X`, one of `X0` or `x0`, and `Y` (or alias `y`).
+#' 2. Matrix interface: pass `X`, one of `X0` or `x0`, and `Y`.
 #'
 #' For `method = "exact"`, DNN weights are computed from the full rank
 #' permutation at each target. In particular, for the paper-faithful `k = 1`
@@ -22,8 +22,7 @@
 #' @param x_cols Names or indices of covariate columns in `data`.
 #' @param y_col Name or index of the outcome column in `data`.
 #' @param y Optional numeric outcome vector of length `n`. In the data-frame
-#'   interface, use this instead of `y_col`; in the matrix interface this is an
-#'   alias for `Y`.
+#'   interface, use this instead of `y_col`.
 #' @param X Numeric matrix (`n x p`) for the matrix interface.
 #' @param Y Numeric outcome vector of length `n` for the matrix interface.
 #' @param X0 Numeric matrix (`m x p`) of target points; mutually exclusive with
@@ -115,11 +114,13 @@ np_dnn <- function(
     n <- nrow(x_mat)
     p <- ncol(x_mat)
 
-    y_in <- if (!is.null(Y)) Y else y
-    if (is.null(y_in)) {
-      stop("Matrix API requires `Y` (or alias `y`).", call. = FALSE)
+    if (!is.null(y)) {
+      stop("Matrix API uses `Y`; `y` is only supported with `data=`.", call. = FALSE)
     }
-    y_vec <- .validate_vector_nrow(y_in, n, arg = "Y", ref = "X", strict = TRUE)
+    if (is.null(Y)) {
+      stop("Matrix API requires `Y`.", call. = FALSE)
+    }
+    y_vec <- .validate_vector_nrow(Y, n, arg = "Y", ref = "X", strict = TRUE)
   }
 
   x0_mat <- .dnn_resolve_targets(x_mat, X0 = X0, x0 = x0)

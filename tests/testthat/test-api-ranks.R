@@ -127,13 +127,12 @@ test_that("ctx is forwarded to eval / eval_batch", {
   expect_equal(unname(colSums(W2)), rep(1, m), tolerance = 1e-12)
 })
 
-test_that("register_rank(), get_rank(), rank_names()/list_ranks() work (new + legacy)", {
+test_that("register_rank(), get_rank(), and rank_names() work", {
   skip_if_not(exists("register_rank"), "register_rank() not found")
   skip_if_not(exists("get_rank"), "get_rank() not found")
   skip_if_not(exists("rank_names"), "rank_names() not found")
-  skip_if_not(exists("list_ranks"), "list_ranks() not found")
 
-  # New form: (name, spec function)
+  # Register via (name, spec function)
   nm_new <- paste0("rw_new_", as.integer(runif(1, 1e6, 2e6)))
   spec_new <- function(r, ctx = NULL) {
     w <- 1 / as.numeric(r)
@@ -144,28 +143,18 @@ test_that("register_rank(), get_rank(), rank_names()/list_ranks() work (new + le
   expect_true(is_rank_weight(got_new))
   expect_equal(got_new$name, nm_new)
   expect_true(nm_new %in% rank_names())
-  expect_true(nm_new %in% list_ranks())
-
-  # Legacy form: register_rank(spec) where spec has $name
-  nm_legacy <- paste0("rw_legacy_", as.integer(runif(1, 2e6, 3e6)))
-  spec_legacy <- as_rank_weight(function(r, ctx = NULL) {
-    w <- 1 / (as.numeric(r)^2)
-    w / sum(w)
-  }, name = nm_legacy)
-  register_rank(spec_legacy) # legacy one-arg
-  got_legacy <- get_rank(nm_legacy)
-  expect_true(is_rank_weight(got_legacy))
-  expect_equal(got_legacy$name, nm_legacy)
 
   # Unknown name errors list known entries
   expect_error(get_rank("__no_such_rank__"), "Unknown rank_weight")
-})
-
-test_that("list_rank_weights() aliases rank_names()", {
-  expect_equal(
-    getFromNamespace("list_rank_weights", "RdistNN")(),
-    rank_names()
+  msg <- tryCatch(
+    {
+      get_rank("__no_such_rank__")
+      NA_character_
+    },
+    error = function(e) e$message
   )
+  expect_match(msg, "Expected:", fixed = TRUE)
+  expect_match(msg, "Got:", fixed = TRUE)
 })
 
 test_that("input validation: bad ranks and bad specs produce clear errors", {
@@ -395,10 +384,10 @@ test_that("register_rank validates malformed specs and normalizes named list spe
     "must provide at least one of `eval` or `eval_batch`"
   )
 
-  # malformed legacy call: no $name
+  # malformed name in two-arg form
   expect_error(
-    register_rank(list(eval = function(r, ctx = NULL) rep(1, length(r)))),
-    "must have a non-empty \\$name"
+    register_rank("", list(eval = function(r, ctx = NULL) rep(1, length(r)))),
+    "non-empty character scalar"
   )
 
   # named list spec in two-arg form should be normalized to rank_weight

@@ -53,7 +53,12 @@
     }
     for (j in seq_len(m)) {
       o <- order_matrix[, j]
-      if (!setequal(o, seq_len(n))) stop("Each column of `ord` must be a permutation of 1..n.", call. = FALSE)
+      if (!setequal(o, seq_len(n))) {
+        .abort_bad_arg(
+          "ord",
+          sprintf("Each column of `ord` must be a permutation of 1..n (failed at column %d)", j)
+        )
+      }
     }
     rank_matrix <- apply(order_matrix, 2L, ord_to_ranks)
     list(ranks = rank_matrix, ord = order_matrix, dx = NULL)
@@ -65,7 +70,12 @@
     }
     for (j in seq_len(m)) {
       r <- rank_matrix[, j]
-      if (!setequal(r, seq_len(n))) stop("Each column of `ranks` must be a permutation of 1..n.", call. = FALSE)
+      if (!setequal(r, seq_len(n))) {
+        .abort_bad_arg(
+          "ranks",
+          sprintf("Each column of `ranks` must be a permutation of 1..n (failed at column %d)", j)
+        )
+      }
     }
     list(ranks = rank_matrix, ord = NULL, dx = NULL)
   }
@@ -98,7 +108,7 @@
     if (!is.null(ranking$dx)) {
       return(make_from_dx(ranking$dx))
     }
-    stop("`ranking` list must contain one of: $ranks, $ord, or $dx.", call. = FALSE)
+    .abort_bad_arg("ranking", "list must contain one of: $ranks, $ord, or $dx")
   }
 
   # 4) Matrix -> assume it is a ranks matrix
@@ -106,12 +116,13 @@
     return(make_from_ranks(ranking))
   }
 
-  stop(
+  .abort_bad_arg(
+    "ranking",
     paste(
       "Unsupported `ranking` type. Provide a distance spec/name, a",
       "ranks/ord/dx matrix/list, or a function(X, X0, ctx)->{ranks|ord|dx}."
     ),
-    call. = FALSE
+    actual = paste(class(ranking), collapse = "/")
   )
 }
 
@@ -125,7 +136,7 @@
   if (is.function(weight)) {
     w <- weight()
     if (!is_rank_weight(w)) {
-      stop("Zero-arg weight() factory must return a rank_weight.", call. = FALSE)
+      .abort_bad_arg("weight", "Zero-arg weight() factory must return a rank_weight")
     }
     return(list(kind = "rank", spec = w))
   }
@@ -134,10 +145,14 @@
   if (inherits(weight, "dist_weight") ||
     (is.list(weight) && identical(weight$.__kind, "dist_weight")) ||
     (is.list(weight) && (is.function(weight$eval) || is.function(weight$eval_batch)))) {
-    stop("dist_weight support has been removed from RdistNN. Please use a rank_weight.", call. = FALSE)
+    .abort_bad_arg("weight", "dist_weight support has been removed from RdistNN; use a rank_weight")
   }
 
-  stop("`weight` must be a rank_weight (or a zero-arg factory returning one).", call. = FALSE)
+  .abort_bad_arg(
+    "weight",
+    "must be a rank_weight (or a zero-arg factory returning one)",
+    actual = paste(class(weight), collapse = "/")
+  )
 }
 
 
@@ -157,8 +172,6 @@
 #'   - a function `(X, X0, ctx) ->` list with `$ranks`/`$ord`/`$dx`, or an `n x m` ranks matrix,
 #'   - precomputed object: list with `$ranks`, `$ord`, or `$dx`, or a ranks matrix.
 #' @param weight a `rank_weight` spec (or zero-arg factory returning one).
-#'   Back-compat: you may also pass `rank_weight=`; it will be used if `weight` is NULL.
-#' @param rank_weight (deprecated alias) rank_weight spec or zero-arg factory.
 #' @param ctx optional shared context passed to ranking and weight evaluators.
 #'   On the ranking side, if `ctx` is `NULL` and a distance spec defines
 #'   `setup(X)`, that setup path is used automatically.
@@ -183,23 +196,22 @@ weights_matrix <- function(
   X, X0 = NULL, x0 = NULL,
   ranking,
   weight = NULL,
-  rank_weight = NULL,
   ctx = NULL,
   return = c("W")
 ) {
   # shapes
   x_mat <- .validate_matrix_nonempty(X, arg = "X")
-  if (!is.null(X0) && !is.null(x0)) stop("Provide either `X0` or `x0`, not both.", call. = FALSE)
+  if (!is.null(X0) && !is.null(x0)) .abort_bad_arg("X0/x0", "Provide either `X0` or `x0`, not both.", quoted = FALSE)
   if (is.null(X0)) {
-    if (is.null(x0)) stop("Provide `X0` (m x p) or a single `x0` (length p).", call. = FALSE)
+    if (is.null(x0)) .abort_bad_arg("X0/x0", "Provide `X0` (m x p) or a single `x0` (length p).", quoted = FALSE)
     x0_vec <- .validate_target_vector(x0, ncol(x_mat), x0_arg = "x0", x_arg = "X")
     x0_mat <- matrix(x0_vec, nrow = 1L)
   } else {
     x0_mat <- as.matrix(X0)
-    if (ncol(x0_mat) == 0L) stop("`X` and `X0` must have at least one column.", call. = FALSE)
+    if (ncol(x0_mat) == 0L) .abort_bad_arg("X0", "must have at least one column", quoted = FALSE)
     x0_mat <- .validate_ncol_relation(x_mat, x0_mat, y_arg = "X0", x_arg = "X", relation = "equal")
   }
-  if (ncol(x0_mat) == 0L) stop("`X` and `X0` must have at least one column.", call. = FALSE)
+  if (ncol(x0_mat) == 0L) .abort_bad_arg("X0", "must have at least one column", quoted = FALSE)
 
   n <- nrow(x_mat)
   p <- ncol(x_mat)
@@ -211,14 +223,13 @@ weights_matrix <- function(
   ranking_result <- .resolve_ranking(ranking, x_mat, x0_mat, ctx)
 
   # resolve weight spec (rank- or distance-based)
-  wt_in <- weight %||% rank_weight
-  wt_res <- .resolve_weight(wt_in)
+  wt_res <- .resolve_weight(weight)
 
   # evaluate weights
   weight_matrix <- {
     # rank-only path
     if (is.null(ranking_result$ranks)) {
-      stop("rank_weight provided but no ranks available from `ranking`.", call. = FALSE)
+      .abort_bad_arg("ranking", "must provide ranks when `weight` is a rank_weight")
     }
     rank_weight_eval_batch(wt_res$spec, ranking_result$ranks, ctx = ctx)
   }
@@ -416,7 +427,7 @@ weights_tdnn_exact <- function(
   ctx = NULL, return = c("W")
 ) {
   if (is.null(dim)) {
-    if (is.null(X)) stop("Provide `dim` explicitly when `X` is NULL.", call. = FALSE)
+    if (is.null(X)) .abort_bad_arg("dim", "must be provided explicitly when `X` is NULL")
     dim <- ncol(as.matrix(X))
   }
   weights_matrix(
@@ -457,7 +468,7 @@ weights_tdnn_asymp <- function(
   normalize = TRUE, ctx = NULL, return = c("W")
 ) {
   if (is.null(dim)) {
-    if (is.null(X)) stop("Provide `dim` explicitly when `X` is NULL.", call. = FALSE)
+    if (is.null(X)) .abort_bad_arg("dim", "must be provided explicitly when `X` is NULL")
     dim <- ncol(as.matrix(X))
   }
   weights_matrix(

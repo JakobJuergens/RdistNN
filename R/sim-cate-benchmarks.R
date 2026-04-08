@@ -224,7 +224,7 @@
 
 .method_causal_forest <- function(dgp, x_cols, alpha, ...) {
   if (!requireNamespace("grf", quietly = TRUE)) {
-    warning("grf not available; causal_forest returns NA.")
+    warning("grf not available; causal_forest returns NA.", call. = FALSE)
     return(.sim_metric(NA_real_, NA_real_, dgp$tau_x0, alpha))
   }
   dat    <- dgp$data
@@ -251,7 +251,7 @@
 
 .method_llf <- function(dgp, x_cols, alpha, ll_lambda = 0.1, ...) {
   if (!requireNamespace("grf", quietly = TRUE)) {
-    warning("grf not available; llf returns NA.")
+    warning("grf not available; llf returns NA.", call. = FALSE)
     return(.sim_metric(NA_real_, NA_real_, dgp$tau_x0, alpha))
   }
   dat    <- dgp$data

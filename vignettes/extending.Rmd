@@ -261,7 +261,7 @@ sc_avg2 <- as_score(
   name = "avg2"
 )
 
-register_score(sc_avg2)
+register_score("avg2", sc_avg2)
 list_scores()
 
 df <- data.frame(Y = rnorm(10))

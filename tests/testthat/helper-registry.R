@@ -1,4 +1,4 @@
-# Robustly extract registry names from list_distances() output
+# Robustly extract registry names from distance_names() output
 registry_names <- function(ds) {
   if (is.character(ds)) {
     return(ds)
@@ -50,8 +50,8 @@ as_dnn_spec <- function(spec, fallback_name = "unnamed") {
 # Register helper:
 #  - finds registry API
 #  - coerces to dnn_distance
-#  - tries both signatures (name,spec) and (spec)
-#  - verifies success via list_distances()
+#  - registers via register_distance(name, spec)
+#  - verifies success via distance_names()
 ensure_registered <- function(named_specs) {
   reg <- get0("register_distance", mode = "function", inherits = TRUE)
   if (!is.function(reg)) {
@@ -59,9 +59,9 @@ ensure_registered <- function(named_specs) {
       error = function(e) NULL
     )
   }
-  lister <- get0("list_distances", mode = "function", inherits = TRUE)
+  lister <- get0("distance_names", mode = "function", inherits = TRUE)
   if (!is.function(lister)) {
-    lister <- tryCatch(getFromNamespace("list_distances", "RdistNN"),
+    lister <- tryCatch(getFromNamespace("distance_names", "RdistNN"),
       error = function(e) NULL
     )
   }
@@ -75,7 +75,6 @@ ensure_registered <- function(named_specs) {
     name <- spec$name
 
     success <- FALSE
-    # Try (name, spec)
     try(
       {
         reg(name, spec)
@@ -83,19 +82,9 @@ ensure_registered <- function(named_specs) {
       },
       silent = TRUE
     )
-    # Try (spec)
-    if (!success) {
-      try(
-        {
-          reg(spec)
-          if (name %in% registry_names(lister())) success <- TRUE
-        },
-        silent = TRUE
-      )
-    }
 
     if (!success) {
-      testthat::fail(sprintf("Failed to register '%s' via either signature.", name))
+      testthat::fail(sprintf("Failed to register '%s' via register_distance(name, spec).", name))
     }
   }
   invisible(NULL)

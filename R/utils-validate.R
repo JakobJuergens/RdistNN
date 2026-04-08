@@ -20,6 +20,24 @@
   )
 }
 
+.has_na_only <- function(x) {
+  any(is.na(x) & !is.nan(x))
+}
+
+.has_nonfinite_non_na <- function(x) {
+  any(is.nan(x) | is.infinite(x))
+}
+
+.abort_if_na_or_nonfinite <- function(x, arg, quoted = FALSE) {
+  if (.has_na_only(x)) {
+    .abort_bad_arg(arg, "cannot contain `NA` values", quoted = quoted)
+  }
+  if (.has_nonfinite_non_na(x)) {
+    .abort_bad_arg(arg, "cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`)", quoted = quoted)
+  }
+  invisible(NULL)
+}
+
 .validate_scalar_int <- function(x, arg = "x", min = 1L) {
   if (!is.numeric(x) || length(x) != 1L || !is.finite(x) || x != as.integer(x)) {
     .abort_bad_arg(arg, "must be an integer scalar")
@@ -43,8 +61,9 @@
 
 .validate_binary01 <- function(x, arg = "x") {
   x_vec <- as.numeric(x)
-  if (anyNA(x_vec) || any(!is.finite(x_vec)) || any(!(x_vec %in% c(0, 1)))) {
-    .abort_bad_arg(arg, "must be binary in {0,1}")
+  .abort_if_na_or_nonfinite(x_vec, arg = arg, quoted = FALSE)
+  if (any(!(x_vec %in% c(0, 1)))) {
+    .abort_bad_arg(arg, "must be binary in {0,1}", quoted = FALSE)
   }
   as.integer(x_vec)
 }
@@ -74,8 +93,8 @@
   if (isTRUE(numeric) && !is.numeric(x_mat)) {
     .abort_bad_arg(arg, "must be numeric", quoted = FALSE)
   }
-  if (isTRUE(finite) && any(!is.finite(x_mat))) {
-    .abort_bad_arg(arg, "must be finite", quoted = FALSE)
+  if (isTRUE(finite)) {
+    .abort_if_na_or_nonfinite(x_mat, arg = arg, quoted = FALSE)
   }
   x_mat
 }
@@ -111,8 +130,8 @@
   if (length(x0_vec) != p) {
     .abort_bad_length(x0_arg, sprintf("equal ncol(%s)", x_arg), quoted = FALSE)
   }
-  if (isTRUE(finite) && any(!is.finite(x0_vec))) {
-    .abort_bad_arg(x0_arg, "must be finite", quoted = FALSE)
+  if (isTRUE(finite)) {
+    .abort_if_na_or_nonfinite(x0_vec, arg = x0_arg, quoted = FALSE)
   }
   x0_vec
 }
@@ -129,8 +148,13 @@
   if (length(x0_vec) != p || length(inv_s_vec) != p) {
     .abort_bad_arg("x0/inv_s", sprintf("must both have length ncol(%s)", x_arg), quoted = FALSE)
   }
-  if (isTRUE(finite) && (any(!is.finite(x0_vec)) || any(!is.finite(inv_s_vec)))) {
-    .abort_bad_arg("x0/inv_s", "must both be finite", quoted = FALSE)
+  if (isTRUE(finite)) {
+    if (.has_na_only(x0_vec) || .has_na_only(inv_s_vec)) {
+      .abort_bad_arg("x0/inv_s", "cannot contain `NA` values", quoted = FALSE)
+    }
+    if (.has_nonfinite_non_na(x0_vec) || .has_nonfinite_non_na(inv_s_vec)) {
+      .abort_bad_arg("x0/inv_s", "cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`)", quoted = FALSE)
+    }
   }
   list(x0 = x0_vec, inv_s = inv_s_vec)
 }
@@ -143,8 +167,8 @@
   if (length(x_vec) != n) {
     .abort_bad_length(arg, sprintf("equal nrow(%s)", ref), quoted = FALSE)
   }
-  if (isTRUE(finite) && any(!is.finite(x_vec))) {
-    .abort_bad_arg(arg, "must be finite", quoted = FALSE)
+  if (isTRUE(finite)) {
+    .abort_if_na_or_nonfinite(x_vec, arg = arg, quoted = FALSE)
   }
   x_vec
 }
@@ -173,12 +197,20 @@
   s <- .validate_scalar_int(s, arg = "s", min = 1L)
 
   if (!is.matrix(idxs_or_subs)) {
-    idxs <- as.integer(idxs_or_subs)
-    if (length(idxs) != s) {
+    if (!is.numeric(idxs_or_subs)) {
+      .abort_bad_arg("idxs", "must be a numeric or integer vector of indices")
+    }
+    idxs_num <- as.numeric(idxs_or_subs)
+    if (length(idxs_num) != s) {
       .abort_bad_arg("idxs", sprintf("must have %d elements (order s)", s))
     }
-    if (anyNA(idxs)) {
-      .abort_bad_arg("idxs", "cannot contain NA")
+    .abort_if_na_or_nonfinite(idxs_num, arg = "idxs")
+    if (any(idxs_num != as.integer(idxs_num))) {
+      .abort_bad_arg("idxs", "must contain integer indices")
+    }
+    idxs <- as.integer(idxs_num)
+    if (length(idxs) != s) {
+      .abort_bad_arg("idxs", sprintf("must have %d elements (order s)", s))
     }
     if (any(idxs < 1L | idxs > n)) {
       .abort_bad_arg("idxs", "must lie in 1..n")
@@ -196,11 +228,15 @@
   if (nrow(subs) == 0L && !isTRUE(allow_empty)) {
     .abort_bad_arg("subs", "must have at least one row")
   }
+  if (!is.numeric(subs)) {
+    .abort_bad_arg("subs", "must be a numeric or integer matrix of indices")
+  }
+  .abort_if_na_or_nonfinite(subs, arg = "subs")
+  if (any(subs != as.integer(subs))) {
+    .abort_bad_arg("subs", "must contain integer indices")
+  }
   if (!is.integer(subs)) {
     storage.mode(subs) <- "integer"
-  }
-  if (any(!is.finite(subs))) {
-    .abort_bad_arg("subs", "contains non-finite entries")
   }
   if (any(subs < 1L | subs > n)) {
     .abort_bad_arg("subs", "indices must lie in 1..n")

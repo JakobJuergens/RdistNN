@@ -122,10 +122,10 @@ Two interfaces are supported.
 No nuisance models are fit internally; this wrapper assumes \code{q_tau(X)} and
 \code{m_D(X)} are supplied.
 
-As in \code{\link[=weights_dnn]{weights_dnn()}}, exact DNN localization uses the full rank
-permutation at each target rather than an \code{s}-nearest-neighbor truncation.
-The \code{"fast"} jackknife option reuses the full-sample rank matrix and updates
-ranks under deletion.
+As in \code{\link[=weights_dnn]{weights_dnn()}}, exact DNN localization uses the full rank permutation
+at each target rather than an \code{s}-nearest-neighbor truncation. The \code{"fast"}
+jackknife option reuses the full-sample rank matrix and updates ranks under
+deletion.
 }
 \examples{
 set.seed(1)

@@ -206,10 +206,14 @@ plqr_dnn <- function(
     stop(sprintf("`beta` length (%d) must equal ncol(D) (%d).", length(beta), p_d), call. = FALSE)
   }
 
-  if (!all(is.finite(d_mat))) stop("D must be finite.", call. = FALSE)
-  if (!all(is.finite(mD_mat))) stop("m_D(X) must be finite.", call. = FALSE)
-  if (!all(is.finite(q_vec))) stop("q_tau(X) must be finite.", call. = FALSE)
-  if (!all(is.finite(y_vec))) stop("Y must be finite.", call. = FALSE)
+  if (.has_na_only(d_mat)) stop("D cannot contain `NA` values.", call. = FALSE)
+  if (.has_nonfinite_non_na(d_mat)) stop("D cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+  if (.has_na_only(mD_mat)) stop("m_D(X) cannot contain `NA` values.", call. = FALSE)
+  if (.has_nonfinite_non_na(mD_mat)) stop("m_D(X) cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+  if (.has_na_only(q_vec)) stop("q_tau(X) cannot contain `NA` values.", call. = FALSE)
+  if (.has_nonfinite_non_na(q_vec)) stop("q_tau(X) cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+  if (.has_na_only(y_vec)) stop("Y cannot contain `NA` values.", call. = FALSE)
+  if (.has_nonfinite_non_na(y_vec)) stop("Y cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
 
   x0_mat <- .dnn_resolve_targets(x_mat, X0 = X0, x0 = x0)
 

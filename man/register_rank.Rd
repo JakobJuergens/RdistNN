@@ -4,10 +4,10 @@
 \alias{register_rank}
 \title{Register a rank_weight under a name}
 \usage{
-register_rank(name, spec = NULL)
+register_rank(name, spec)
 }
 \arguments{
-\item{name}{Character scalar or a spec (legacy).}
+\item{name}{Character scalar registry key.}
 
 \item{spec}{A rank_weight spec or function \verb{(ranks, ctx) -> numeric(n)}.}
 }
@@ -15,9 +15,7 @@ register_rank(name, spec = NULL)
 Invisibly, the registered spec.
 }
 \description{
-Accepts \strong{either} \verb{(name, spec)} or legacy single-arg form \code{(spec)} where
-\code{spec$name} is used as the key. If \code{spec} is a function, it is wrapped with
-\code{\link[=as_rank_weight]{as_rank_weight()}}.
+If \code{spec} is a function, it is wrapped with \code{\link[=as_rank_weight]{as_rank_weight()}}.
 }
 \examples{
 nm <- "tmp_rank_demo"

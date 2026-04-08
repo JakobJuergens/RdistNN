@@ -4,22 +4,21 @@
 \alias{register_score}
 \title{Register a score}
 \usage{
-register_score(name, score = NULL)
+register_score(name, score)
 }
 \arguments{
-\item{name}{Character scalar \strong{or} a score object (legacy single-arg form).}
+\item{name}{Character scalar registry key.}
 
-\item{score}{Optional \code{ustat_score} when using the two-arg form.}
+\item{score}{A \code{ustat_score} object.}
 }
 \value{
 Invisibly, the registered name.
 }
 \description{
-Accepts \strong{either} \code{(score)} where \code{score$name} is used as key,
-or \verb{(name, score)} where \code{name} overrides/sets \code{score$name}.
+Register a score
 }
 \examples{
 sc <- as_score(function(idxs, data) sum(data[idxs]), s = 2L, name = "tmp_score_demo")
-register_score(sc)
+register_score("tmp_score_demo", sc)
 "tmp_score_demo" \%in\% list_scores()
 }

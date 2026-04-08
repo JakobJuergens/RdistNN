@@ -10,7 +10,6 @@ weights_matrix(
   x0 = NULL,
   ranking,
   weight = NULL,
-  rank_weight = NULL,
   ctx = NULL,
   return = c("W")
 )
@@ -29,10 +28,7 @@ weights_matrix(
 \item precomputed object: list with \verb{$ranks}, \verb{$ord}, or \verb{$dx}, or a ranks matrix.
 }}
 
-\item{weight}{a \code{rank_weight} spec (or zero-arg factory returning one).
-Back-compat: you may also pass \verb{rank_weight=}; it will be used if \code{weight} is NULL.}
-
-\item{rank_weight}{(deprecated alias) rank_weight spec or zero-arg factory.}
+\item{weight}{a \code{rank_weight} spec (or zero-arg factory returning one).}
 
 \item{ctx}{optional shared context passed to ranking and weight evaluators.
 On the ranking side, if \code{ctx} is \code{NULL} and a distance spec defines

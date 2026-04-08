@@ -32,8 +32,7 @@ np_dnn(
 \item{y_col}{Name or index of the outcome column in \code{data}.}
 
 \item{y}{Optional numeric outcome vector of length \code{n}. In the data-frame
-interface, use this instead of \code{y_col}; in the matrix interface this is an
-alias for \code{Y}.}
+interface, use this instead of \code{y_col}.}
 
 \item{X}{Numeric matrix (\verb{n x p}) for the matrix interface.}
 
@@ -82,14 +81,14 @@ Two interfaces are supported.
 \enumerate{
 \item Data-frame interface (recommended): pass \code{data}, \code{x_cols}, and either
 \code{y_col} or \code{y} (exactly one).
-\item Matrix interface: pass \code{X}, one of \code{X0} or \code{x0}, and \code{Y} (or alias \code{y}).
+\item Matrix interface: pass \code{X}, one of \code{X0} or \code{x0}, and \code{Y}.
 }
 
 For \code{method = "exact"}, DNN weights are computed from the full rank
 permutation at each target. In particular, for the paper-faithful \code{k = 1}
 case the exact support extends through rank \code{n - s + 1}; this is not an
-\code{s}-nearest-neighbor truncation. The \code{"fast"} jackknife option reuses
-the full-sample rank matrix and updates ranks under deletion.
+\code{s}-nearest-neighbor truncation. The \code{"fast"} jackknife option reuses the
+full-sample rank matrix and updates ranks under deletion.
 }
 \examples{
 set.seed(1)

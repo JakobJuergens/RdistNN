@@ -29,10 +29,9 @@ permutation of ranks \code{ranks}, where \code{ranks[i]} is the global rank
 (1 = nearest) of observation \code{i} relative to the target.
 }
 \details{
-Weights are computed from the full rank permutation, not by truncating to the
-first \code{s} observations.
-
-For the exact finite-population rule, support in rank order is:
+For the exact rule, weights are computed from the full rank permutation, not
+by truncating to the first \code{s} observations. The resulting exact support in
+rank order is:
 \itemize{
 \item \code{j <= n - s + k} in the general \code{k}-NN-within-subset case;
 \item in particular, \code{j <= n - s + 1} when \code{k = 1}.

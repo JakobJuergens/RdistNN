@@ -155,21 +155,6 @@ test_that("return extras are populated consistently", {
   expect_true(all(out$neighbors >= 1 & out$neighbors <= nrow(d$X)))
 })
 
-test_that("matrix API accepts lowercase y alias and matches Y path", {
-  d <- .make_np_data(n = 26L, p = 2L, m = 3L)
-
-  out_Y <- np_dnn(
-    X = d$X, X0 = d$X0, Y = d$y,
-    k = 2L, s = 3L, method = "exact", se = FALSE
-  )
-  out_y <- np_dnn(
-    X = d$X, X0 = d$X0, y = d$y,
-    k = 2L, s = 3L, method = "exact", se = FALSE
-  )
-
-  expect_equal(out_Y$mu, out_y$mu, tolerance = 1e-12)
-})
-
 test_that("input validation catches common misuse", {
   d <- .make_np_data(n = 20L, p = 2L, m = 2L)
   df <- data.frame(X1 = d$X[, 1], X2 = d$X[, 2], Y = d$y)
@@ -182,6 +167,11 @@ test_that("input validation catches common misuse", {
   expect_error(
     np_dnn(X = d$X, X0 = d$X0, k = 1L, s = 1L),
     "requires `Y`",
+    ignore.case = TRUE
+  )
+  expect_error(
+    np_dnn(X = d$X, X0 = d$X0, y = d$y, k = 1L, s = 1L),
+    "`y` is only supported with `data=`",
     ignore.case = TRUE
   )
   expect_error(

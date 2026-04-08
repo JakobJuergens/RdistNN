@@ -196,6 +196,24 @@ test_that("[errors] K < s+1 raises an error", {
   expect_error(jackknife_fast_rank(ranks_short, a, phi_fn), regexp = "s\\+1")
 })
 
+test_that("[errors] ranks diagnostics distinguish NA vs non-finite", {
+  set.seed(111)
+  Tn <- 4L; n_ref <- 10L; s <- 3L
+  ranks <- t(replicate(Tn, sample(n_ref, s + 1L, replace = FALSE)))
+  a <- runif(s)
+  PHI <- cbind(rnorm(n_ref))
+  phi_fn <- function(j, t) PHI[j, ]
+
+  ranks_na <- ranks
+  ranks_na[1, 1] <- NA_integer_
+  expect_error(jackknife_fast_rank(ranks_na, a, phi_fn), regexp = "ranks.*NA")
+
+  ranks_inf <- ranks
+  storage.mode(ranks_inf) <- "double"
+  ranks_inf[1, 1] <- Inf
+  expect_error(jackknife_fast_rank(ranks_inf, a, phi_fn), regexp = "ranks.*non-finite")
+})
+
 test_that("[errors] sum(a)=0 with normalize=TRUE raises an error", {
   set.seed(12)
   Tn <- 3L; n_ref <- 8L; s <- 2L

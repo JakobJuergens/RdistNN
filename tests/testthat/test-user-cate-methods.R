@@ -160,27 +160,9 @@ test_that("methods validate level/parm and error on missing model state", {
   )
 })
 
-test_that("print.summary.cate_result and legacy print.cate_dnn_result run", {
+test_that("print.summary.cate_result runs", {
   obj <- .make_cate_fit(se = TRUE)
   s <- summary(obj$fit)
   txt_summary <- capture.output(print(s))
   expect_true(any(grepl("<summary.cate_result>", txt_summary, fixed = TRUE)))
-
-  legacy <- list(
-    tau = obj$fit$tau,
-    se = obj$fit$se,
-    meta = list(
-      n = obj$fit$meta$n,
-      p = obj$fit$meta$p,
-      m = obj$fit$meta$m,
-      k = obj$fit$meta$k,
-      s = obj$fit$meta$s,
-      method = obj$fit$meta$method,
-      weight_name = "dnn_exact",
-      distance_name = obj$fit$meta$distance
-    )
-  )
-  class(legacy) <- "cate_dnn_result"
-  txt_legacy <- capture.output(print(legacy))
-  expect_true(any(grepl("<cate_dnn_result>", txt_legacy, fixed = TRUE)))
 })

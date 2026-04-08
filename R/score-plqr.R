@@ -107,11 +107,16 @@ score_plqr_component <- function(
 
       # data-time checks
       .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X")
-      if (!all(is.finite(X))) stop("X must be finite.", call. = FALSE)
-      if (!all(is.finite(D))) stop("D must be finite.", call. = FALSE)
-      if (!all(is.finite(mD))) stop("m_D(X) must be finite.", call. = FALSE)
-      if (!all(is.finite(qx))) stop("q_tau(X) must be finite.", call. = FALSE)
-      if (!all(is.finite(Y))) stop("Y must be finite.", call. = FALSE)
+      if (.has_na_only(X)) stop("X cannot contain `NA` values.", call. = FALSE)
+      if (.has_nonfinite_non_na(X)) stop("X cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+      if (.has_na_only(D)) stop("D cannot contain `NA` values.", call. = FALSE)
+      if (.has_nonfinite_non_na(D)) stop("D cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+      if (.has_na_only(mD)) stop("m_D(X) cannot contain `NA` values.", call. = FALSE)
+      if (.has_nonfinite_non_na(mD)) stop("m_D(X) cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+      if (.has_na_only(qx)) stop("q_tau(X) cannot contain `NA` values.", call. = FALSE)
+      if (.has_nonfinite_non_na(qx)) stop("q_tau(X) cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+      if (.has_na_only(Y)) stop("Y cannot contain `NA` values.", call. = FALSE)
+      if (.has_nonfinite_non_na(Y)) stop("Y cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
 
       if (any(c(nrow(D), nrow(mD)) != n) || length(qx) != n || length(Y) != n) {
         stop("X, D, mD, q_tau(X), and Y must share the same n.", call. = FALSE)
@@ -149,7 +154,8 @@ score_plqr_component <- function(
         g <- resid * (D[, j] - mD[, j])
       }
 
-      if (!all(is.finite(g))) stop("Computed g contains non-finite values.", call. = FALSE)
+      if (.has_na_only(g)) stop("Computed g contains `NA` values.", call. = FALSE)
+      if (.has_nonfinite_non_na(g)) stop("Computed g contains non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
 
       list(
         g = as.numeric(g),
@@ -160,12 +166,14 @@ score_plqr_component <- function(
     },
     eval = function(idxs, data, ctx, rng) {
       gi <- ctx$g[idxs]
-      if (any(!is.finite(gi))) stop("Non-finite g encountered.", call. = FALSE)
+      if (.has_na_only(gi)) stop("g contains `NA` values.", call. = FALSE)
+      if (.has_nonfinite_non_na(gi)) stop("g contains non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
       as.numeric(sum(gi))
     },
     eval_batch = function(subs, data, ctx, rng) {
       gi <- ctx$g
-      if (any(!is.finite(gi))) stop("Non-finite g encountered.", call. = FALSE)
+      if (.has_na_only(gi)) stop("g contains `NA` values.", call. = FALSE)
+      if (.has_nonfinite_non_na(gi)) stop("g contains non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
       if (!is.matrix(subs)) subs <- as.matrix(subs)
       if (nrow(subs) == 0L) {
         return(numeric(0L))

@@ -20,7 +20,16 @@
     }
     resolved <- cols
   } else if (is.numeric(cols)) {
-    if (length(cols) == 0L || anyNA(cols) || any(!is.finite(cols)) || any(cols != as.integer(cols))) {
+    if (length(cols) == 0L) {
+      .abort_bad_arg(arg, "must be a non-empty integer vector of column indices")
+    }
+    if (.has_na_only(cols)) {
+      .abort_bad_arg(arg, "cannot contain `NA` indices")
+    }
+    if (.has_nonfinite_non_na(cols)) {
+      .abort_bad_arg(arg, "cannot contain non-finite indices (`Inf`, `-Inf`, or `NaN`)")
+    }
+    if (any(cols != as.integer(cols))) {
       .abort_bad_arg(arg, "must be a non-empty integer vector of column indices")
     }
     idx <- as.integer(cols)

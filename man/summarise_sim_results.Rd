@@ -7,26 +7,31 @@
 summarise_sim_results(raw)
 }
 \arguments{
-\item{raw}{A \code{data.frame} with at least the columns \code{design}, \code{n}, \code{kx},
-\code{bias}, \code{sq_err}, \code{se}, \code{cover}, \code{ci_len}.  An optional \code{neff} column
-is included in the output when present.}
+\item{raw}{A \code{data.frame} with at least the columns \code{method}, \code{design}, \code{n},
+\code{kx}, \code{bias}, \code{sq_err}, \code{se}, \code{cover}, \code{ci_len}. Optional columns
+\code{neff} and \code{tau_hat}/\code{tau0} (returned by \code{\link[=sim_cate_run]{sim_cate_run()}}) are handled
+gracefully: \code{neff} is averaged into the summary; \code{tau_hat} and \code{tau0}
+are per-rep quantities and are not aggregated (they live only in the
+raw data).}
 }
 \value{
-A \code{data.frame} with one row per unique \code{(design, n, kx)} cell and
-  columns \code{design}, \code{n}, \code{kx}, \code{n_reps}, \code{n_failed}, \code{bias}, \code{rmse},
-  \code{se_mean}, \code{cover}, \code{ci_len} (and \code{neff} when present in \code{raw}).
+A \code{data.frame} with one row per unique group and columns
+\code{method}, \code{design}, \code{n}, \code{kx},
+\code{n_reps}, \code{n_failed}, \code{bias}, \code{rmse}, \code{se_mean}, \code{cover}, \code{ci_len}
+(and \code{neff} when present in \code{raw}).
 }
 \description{
 Aggregates a data.frame of raw replicate-level results (as returned by
-\code{\link[=sim_cate_run]{sim_cate_run()}}) to one summary row per \code{(design, n, kx)} cell.
-Reports bias, RMSE, mean SE, empirical coverage, mean CI length, and
-(optionally) mean effective sample size.  Failed replicates (rows where
-metric columns are \code{NA}) are excluded from all averages; their count is
+\code{\link[=sim_cate_run]{sim_cate_run()}}) to one summary row per \verb{(method, design, n, kx)} cell.
+Reports bias, RMSE, mean SE, empirical coverage, mean CI
+length, and (optionally) mean effective sample size.  Failed replicates (rows
+where metric columns are \code{NA}) are excluded from all averages; their count is
 reported in \code{n_failed}.
 }
 \examples{
 \dontrun{
-raw <- sim_cate_run(designs = "dgp1_linear", n_vals = 500L, n_reps = 10L)
+raw <- sim_cate_run(designs = "dgp1_linear", n_vals = 500L, n_reps = 10L,
+                    methods = c("dnn_oracle", "ols_interact"))
 summarise_sim_results(raw)
 }
 

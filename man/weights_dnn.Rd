@@ -42,9 +42,6 @@ weights_dnn(
 A \code{weights_result} object.
 }
 \description{
-DNN weights (choose method), distance-based ranking
-}
-\details{
 Use \code{method = "exact"} for the exact finite-population rank-weight rule and
 \code{method = "asymp"} for the asymptotic full-rank approximation.
 }

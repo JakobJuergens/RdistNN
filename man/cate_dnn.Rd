@@ -98,14 +98,14 @@ For nuisance columns, use either:
 \item full AIPW form: \code{y_col}, \code{t_col}, \code{e_col}, \code{m0_col}, \code{m1_col};
 \item Robinson form: \code{y_col}, \code{t_col}, \code{e_col}, \code{m_col}.
 }
-\item Matrix interface (backward compatible): pass \code{X}, one of \code{X0} or \code{x0},
+\item Matrix interface: pass \code{X}, one of \code{X0} or \code{x0},
 and \code{pseudo_outcome}.
 }
 
-As in \code{\link[=weights_dnn]{weights_dnn()}}, exact DNN localization uses the full rank
-permutation at each target rather than an \code{s}-nearest-neighbor truncation.
-The \code{"fast"} jackknife option reuses the full-sample rank matrix and updates
-ranks under deletion.
+As in \code{\link[=weights_dnn]{weights_dnn()}}, exact DNN localization uses the full rank permutation
+at each target rather than an \code{s}-nearest-neighbor truncation. The \code{"fast"}
+jackknife option reuses the full-sample rank matrix and updates ranks under
+deletion.
 }
 \examples{
 set.seed(1)

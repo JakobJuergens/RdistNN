@@ -225,8 +225,14 @@ plqr_moment <- function(df, beta, tau) {
     .abort_bad_arg("df", "must be a data.frame")
   }
   p_d <- sum(grepl("^D[0-9]+$", names(df)))
-  if (!is.numeric(beta) || anyNA(beta) || any(!is.finite(beta))) {
-    .abort_bad_arg("beta", "must be a finite numeric vector")
+  if (!is.numeric(beta)) {
+    .abort_bad_arg("beta", "must be numeric")
+  }
+  if (.has_na_only(beta)) {
+    .abort_bad_arg("beta", "cannot contain `NA` values")
+  }
+  if (.has_nonfinite_non_na(beta)) {
+    .abort_bad_arg("beta", "cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`)")
   }
   if (length(beta) != p_d) {
     .abort_bad_arg("beta", sprintf("length must equal number of D-columns (got length(beta)=%d, p_d=%d)", length(beta), p_d))

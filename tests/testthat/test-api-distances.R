@@ -71,25 +71,15 @@ test_that("register_distance()/get_distance()/distance_names() work", {
 
   # Unknown name errors
   expect_error(get_distance("__definitely_missing__"), "Unknown distance")
-})
-
-test_that("register_distance() supports legacy single-arg form and list_distances alias", {
-  nm <- paste0("legacy_", sample.int(1e6, 1))
-  spec <- list(
-    name = nm,
-    eval = function(X, x0, ctx = NULL) {
-      rowSums((X - matrix(x0, nrow(X), ncol(X), byrow = TRUE))^2)
-    }
+  msg <- tryCatch(
+    {
+      get_distance("__definitely_missing__")
+      NA_character_
+    },
+    error = function(e) e$message
   )
-  class(spec) <- "dnn_distance"
-
-  invisible(register_distance(spec))
-  got <- get_distance(nm)
-  expect_true(is_distance(got))
-  expect_equal(got$name, nm)
-
-  expect_true(nm %in% distance_names())
-  expect_true(nm %in% getFromNamespace("list_distances", "RdistNN")())
+  expect_match(msg, "Expected:", fixed = TRUE)
+  expect_match(msg, "Got:", fixed = TRUE)
 })
 
 test_that("as_distance() accepts user functions with or without ctx argument", {
@@ -290,14 +280,14 @@ test_that("distance eval_batch path validates shape and finiteness", {
 test_that("register_distance validates malformed specs and named list specs", {
   # malformed: no eval and no eval_batch
   expect_error(
-    register_distance(list(name = "bad_no_eval")),
+    register_distance("bad_no_eval", list(name = "bad_no_eval")),
     "must provide at least one of `eval` or `eval_batch`"
   )
 
-  # malformed legacy call: missing/empty name
+  # malformed name in two-arg form
   expect_error(
-    register_distance(list(eval = function(X, x0, ctx) rowSums(X))),
-    "must have a non-empty \\$name"
+    register_distance("", list(eval = function(X, x0, ctx) rowSums(X))),
+    "non-empty character scalar"
   )
 
   # named list spec in two-arg form is accepted and normalized

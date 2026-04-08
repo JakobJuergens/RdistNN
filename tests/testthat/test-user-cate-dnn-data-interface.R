@@ -186,3 +186,51 @@ test_that("data-frame API errors: conflicting / missing outcome model columns", 
     regexp = "specified by `x_cols`", ignore.case = TRUE
   )
 })
+
+test_that("data-frame API distinguishes NA vs non-finite treatment diagnostics", {
+  d <- .make_df_data(seed = 19L)
+
+  df_na <- d$df
+  df_na$D[1] <- NA_real_
+  expect_error(
+    cate_dnn(
+      data = df_na, x_cols = d$x_cols, y_col = "Y", t_col = "D",
+      m_col = "m_oracle", e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
+    ),
+    regexp = "t_col.*NA",
+    ignore.case = TRUE
+  )
+
+  df_inf <- d$df
+  df_inf$D[1] <- Inf
+  expect_error(
+    cate_dnn(
+      data = df_inf, x_cols = d$x_cols, y_col = "Y", t_col = "D",
+      m_col = "m_oracle", e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
+    ),
+    regexp = "t_col.*non-finite",
+    ignore.case = TRUE
+  )
+})
+
+test_that("data-frame API distinguishes NA vs non-finite x_cols index diagnostics", {
+  d <- .make_df_data(seed = 29L)
+
+  expect_error(
+    cate_dnn(
+      data = d$df, x_cols = c(1L, NA_integer_), y_col = "Y", t_col = "D",
+      m_col = "m_oracle", e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
+    ),
+    regexp = "x_cols.*NA",
+    ignore.case = TRUE
+  )
+
+  expect_error(
+    cate_dnn(
+      data = d$df, x_cols = c(1L, Inf), y_col = "Y", t_col = "D",
+      m_col = "m_oracle", e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
+    ),
+    regexp = "x_cols.*non-finite",
+    ignore.case = TRUE
+  )
+})

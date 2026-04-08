@@ -315,6 +315,90 @@ test_that("plqr_dnn validation catches shape and beta issues", {
   )
 })
 
+test_that("plqr_dnn matrix API distinguishes NA vs non-finite diagnostics", {
+  d <- .make_plqr_data(n = 28L, p = 2L, p_d = 2L, m = 1L, tau = 0.5)
+
+  D_na <- d$D
+  D_na[1, 1] <- NA_real_
+  expect_error(
+    plqr_dnn(
+      X = d$X, D = D_na, q = d$q, mD = d$mD, Y = d$Y,
+      beta = d$beta, tau = d$tau, X0 = d$X0,
+      k = 1L, s = 2L, se = FALSE
+    ),
+    "D.*NA",
+    ignore.case = TRUE
+  )
+
+  D_inf <- d$D
+  D_inf[1, 1] <- Inf
+  expect_error(
+    plqr_dnn(
+      X = d$X, D = D_inf, q = d$q, mD = d$mD, Y = d$Y,
+      beta = d$beta, tau = d$tau, X0 = d$X0,
+      k = 1L, s = 2L, se = FALSE
+    ),
+    "D.*non-finite",
+    ignore.case = TRUE
+  )
+
+  q_na <- d$q
+  q_na[2] <- NA_real_
+  expect_error(
+    plqr_dnn(
+      X = d$X, D = d$D, q = q_na, mD = d$mD, Y = d$Y,
+      beta = d$beta, tau = d$tau, X0 = d$X0,
+      k = 1L, s = 2L, se = FALSE
+    ),
+    "q_tau\\(X\\).*NA",
+    ignore.case = TRUE
+  )
+
+  mD_inf <- d$mD
+  mD_inf[2, 1] <- Inf
+  expect_error(
+    plqr_dnn(
+      X = d$X, D = d$D, q = d$q, mD = mD_inf, Y = d$Y,
+      beta = d$beta, tau = d$tau, X0 = d$X0,
+      k = 1L, s = 2L, se = FALSE
+    ),
+    "m_D\\(X\\).*non-finite",
+    ignore.case = TRUE
+  )
+
+  y_inf <- d$Y
+  y_inf[3] <- Inf
+  expect_error(
+    plqr_dnn(
+      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = y_inf,
+      beta = d$beta, tau = d$tau, X0 = d$X0,
+      k = 1L, s = 2L, se = FALSE
+    ),
+    "Y.*non-finite",
+    ignore.case = TRUE
+  )
+})
+
+test_that("plqr_moment distinguishes NA vs non-finite beta diagnostics", {
+  d <- .make_plqr_data(n = 30L, p = 2L, p_d = 2L, m = 1L, tau = 0.5)
+
+  beta_na <- d$beta
+  beta_na[1] <- NA_real_
+  expect_error(
+    plqr_moment(d$df, beta = beta_na, tau = d$tau),
+    "beta.*NA",
+    ignore.case = TRUE
+  )
+
+  beta_inf <- d$beta
+  beta_inf[1] <- Inf
+  expect_error(
+    plqr_moment(d$df, beta = beta_inf, tau = d$tau),
+    "beta.*non-finite",
+    ignore.case = TRUE
+  )
+})
+
 test_that("plqr_dnn warns on unknown return values", {
   d <- .make_plqr_data(n = 35L, p = 2L, p_d = 2L, m = 2L, tau = 0.5)
   expect_warning(

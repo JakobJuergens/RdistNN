@@ -84,12 +84,14 @@ score_np_y <- function(
 
     # Runtime guards: fail at evaluation if non-finite anywhere (as in cate score)
     eval = function(idxs, data, ctx, rng) {
-      if (any(!is.finite(ctx$g))) stop("Non-finite g encountered.", call. = FALSE)
+      if (.has_na_only(ctx$g)) stop("g contains `NA` values.", call. = FALSE)
+      if (.has_nonfinite_non_na(ctx$g)) stop("g contains non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
       if (length(idxs) != 1L) stop("`score_np_y` expects a singleton subset in `eval()`.", call. = FALSE)
       as.numeric(ctx$g[as.integer(idxs[1L])])
     },
     eval_batch = function(subs, data, ctx, rng) {
-      if (any(!is.finite(ctx$g))) stop("Non-finite g encountered.", call. = FALSE)
+      if (.has_na_only(ctx$g)) stop("g contains `NA` values.", call. = FALSE)
+      if (.has_nonfinite_non_na(ctx$g)) stop("g contains non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
       if (!is.matrix(subs) || ncol(subs) != 1L) {
         stop("`score_np_y` expects `subs` to be an n x 1 matrix (singleton subsets).", call. = FALSE)
       }

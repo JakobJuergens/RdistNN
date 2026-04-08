@@ -4,12 +4,20 @@
 \alias{sim_cate_data}
 \title{Draw one sample from a named CATE simulation DGP}
 \usage{
-sim_cate_data(design, n, kx = 2L, sigma = 0.5, clip = 1e-3,
-              seed = NULL, x0 = NULL, ...)
+sim_cate_data(
+  design,
+  n,
+  kx = 2L,
+  sigma = 0.5,
+  clip = 0.001,
+  seed = NULL,
+  x0 = NULL,
+  ...
+)
 }
 \arguments{
 \item{design}{Character; one of \code{"dgp1_linear"}, \code{"dgp2_nonlinear"},
-\code{"dgp3_sparse_overlap"}.}
+\code{"dgp3_sparse_overlap"}, \code{"dgp4_clustered"}, \code{"dgp5_correlated"}.}
 
 \item{n}{Integer sample size.}
 
@@ -30,12 +38,12 @@ origin).}
 \value{
 A list with:
 \itemize{
-  \item \code{data}: a \code{data.frame} with columns \code{X1..Xkx}, \code{D}, \code{Y}, and oracle
-    nuisances \code{e_oracle}, \code{m_oracle}, \code{m0_oracle}, \code{m1_oracle},
-    \code{tau_oracle}, \code{rho_oracle}.
-  \item \code{x0}: numeric length-\code{kx} evaluation point.
-  \item \code{tau_x0}: true treatment effect at \code{x0}.
-  \item \code{truth}: named list of closures \code{tau_fn}, \code{e_fn}, \code{m0_fn}, \code{m_fn}.
+\item \code{data}: a \code{data.frame} with columns \code{X1..Xkx}, \code{D}, \code{Y}, and oracle
+nuisances \code{e_oracle}, \code{m_oracle}, \code{m0_oracle}, \code{m1_oracle},
+\code{tau_oracle}, \code{rho_oracle}.
+\item \code{x0}: numeric length-\code{kx} evaluation point.
+\item \code{tau_x0}: true treatment effect at \code{x0}.
+\item \code{truth}: named list of closures \code{tau_fn}, \code{e_fn}, \code{m0_fn}, \code{m_fn}.
 }
 }
 \description{
@@ -43,16 +51,28 @@ Generates a synthetic dataset for the CATE simulation study, including
 oracle nuisance quantities \eqn{e}, \eqn{m_0}, \eqn{m_1}, and the
 Robinson pseudo-outcome \eqn{\rho}, so that first-stage estimation error
 can be isolated from the target inference step.
-
+}
+\details{
 Three designs are available:
 \describe{
-  \item{\code{dgp1_linear}}{Linear CATE \eqn{\tau(x) = \beta'x}; logistic
-    propensity. Correctly specified for the OLS-interaction benchmark.}
-  \item{\code{dgp2_nonlinear}}{Sinusoidal CATE \eqn{\tau(x) = 0.5 + 0.5\sin(x_1)};
-    same propensity. Misspecified for OLS; primary horse-race DGP.}
-  \item{\code{dgp3_sparse_overlap}}{Same \eqn{\tau} as DGP 2; propensity
-    interpolates between 0.5 at \code{x0} and a near-boundary logistic far from
-    \code{x0}. Tests estimators that do not adapt to local effective sample size.}
+\item{\code{dgp1_linear}}{Linear CATE \eqn{\tau(x) = \beta'x}; logistic
+propensity. Correctly specified for the OLS-interaction benchmark.}
+\item{\code{dgp2_nonlinear}}{Sinusoidal CATE \eqn{\tau(x) = 0.5 + 0.5\sin(x_1)};
+same propensity. Misspecified for OLS; primary horse-race DGP.}
+\item{\code{dgp3_sparse_overlap}}{Same \eqn{\tau} as DGP 2; propensity
+interpolates between 0.5 at \code{x0} and a near-boundary logistic far from
+\code{x0}. Tests estimators that do not adapt to local effective sample size.}
+\item{\code{dgp4_clustered}}{Same \eqn{\tau} and propensity as DGP 2; covariates
+from a two-component mixture: 70\\% \eqn{N(0, 0.4^2 I)} (dense cluster at
+\code{x0}) and 30\\% \eqn{N((3,0,\ldots), I)} (sparse outer cluster). Tests
+density adaptivity: the DNN s-NN bandwidth automatically shrinks at the
+dense \code{x0}, while a fixed-bandwidth kernel over-smooths.}
+\item{\code{dgp5_correlated}}{Covariates \eqn{X \sim N(0,\Sigma)} with
+\eqn{\Sigma_{12} = \rho = 0.85}; \eqn{\tau(x) = \sin(2x_1) + 0.5x_1^2};
+evaluation point at \eqn{x_0 = (0.75, 0)}. Tests shape adaptivity: L2
+and diagonal-scaled neighbourhoods are misaligned with the elliptical
+covariate isocontours; the \code{dnn_oracle_mahal} benchmark (Mahalanobis
+distance) corrects for the off-diagonal covariance.}
 }
 }
 \examples{
@@ -60,7 +80,4 @@ dgp <- sim_cate_data("dgp2_nonlinear", n = 200, kx = 2, seed = 1)
 head(dgp$data)
 dgp$tau_x0
 
-}
-\seealso{
-\code{\link[=sim_cate_one_rep]{sim_cate_one_rep()}}, \code{\link[=sim_cate_run]{sim_cate_run()}}
 }
