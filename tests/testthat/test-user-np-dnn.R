@@ -230,6 +230,35 @@ test_that("input validation catches common misuse", {
   )
 })
 
+# ============================================================================
+# NA and non-finite values in Y produce informative, distinguishable errors
+# ============================================================================
+
+test_that("NA and non-finite Y values produce informative errors (matrix API)", {
+  d <- .make_np_data(n = 20L, p = 2L, m = 2L)
+  y_na  <- d$y; y_na[5L]  <- NA_real_
+  y_inf <- d$y; y_inf[5L] <- Inf
+
+  expect_error(
+    np_dnn(X = d$X, X0 = d$X0, Y = y_na,  k = 1L, s = 2L, se = FALSE),
+    regexp = "NA", ignore.case = TRUE
+  )
+  expect_error(
+    np_dnn(X = d$X, X0 = d$X0, Y = y_inf, k = 1L, s = 2L, se = FALSE),
+    regexp = "non-finite", ignore.case = TRUE
+  )
+
+  msg_na  <- tryCatch(
+    np_dnn(X = d$X, X0 = d$X0, Y = y_na,  k = 1L, s = 2L, se = FALSE),
+    error = conditionMessage
+  )
+  msg_inf <- tryCatch(
+    np_dnn(X = d$X, X0 = d$X0, Y = y_inf, k = 1L, s = 2L, se = FALSE),
+    error = conditionMessage
+  )
+  expect_false(identical(msg_na, msg_inf))
+})
+
 test_that("np_dnn warns on unknown return values", {
   d <- .make_np_data(n = 20L, p = 2L, m = 2L)
   expect_warning(

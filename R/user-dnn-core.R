@@ -108,7 +108,7 @@
 
 .dnn_signal_matrix <- function(signal, n, arg = "signal") {
   if (is.null(dim(signal))) {
-    signal <- .validate_vector_nrow(signal, n, arg = arg, ref = "X")
+    signal <- .validate_vector_nrow(signal, n, arg = arg, ref = "X", finite = TRUE)
     return(matrix(as.numeric(signal), ncol = 1L))
   }
 
@@ -119,9 +119,7 @@
   if (!is.numeric(sig)) {
     .abort_bad_arg(arg, "must be numeric")
   }
-  if (any(!is.finite(sig))) {
-    .abort_bad_arg(arg, "must be finite")
-  }
+  .abort_if_na_or_nonfinite(sig, arg = arg)
   sig
 }
 
