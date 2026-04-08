@@ -27,8 +27,8 @@ which gives full rank support (all n entries are non-zero).
 }
 \examples{
 rw <- rank_weight_tdnn_asymp(s1 = 3L, s2 = 6L, dim = 2L)
-R <- matrix(c(2L, 1L, 3L, 4L, 5L,
-              5L, 2L, 1L, 3L, 4L), nrow = 5)
+R <- matrix(c(2L, 1L, 3L, 4L, 5L, 6L,
+              6L, 2L, 1L, 3L, 4L, 5L), nrow = 6)
 W <- rank_weight_eval_batch(rw, R)
 colSums(W)  # c(1, 1)
 }
