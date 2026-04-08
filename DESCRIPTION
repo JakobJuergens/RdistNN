@@ -26,6 +26,7 @@ Suggests:
     optimx,
     nloptr,
     quantreg,
+    tibble,
     pkgbuild,
     bench,
     lintr,

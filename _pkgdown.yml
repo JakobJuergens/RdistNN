@@ -37,11 +37,15 @@ reference:
     contents:
       - cate_dnn
       - np_dnn
+      - np_tdnn
       - plqr_dnn
       - weights_matrix
       - weights_dnn
       - weights_dnn_exact
       - weights_dnn_asymp
+      - weights_tdnn
+      - weights_tdnn_exact
+      - weights_tdnn_asymp
 
   - title: Scores (U-stat kernels)
     desc: S3 spec, helpers, generics, registries, and built-in score topics.
@@ -74,6 +78,7 @@ reference:
       - distance_l1
       - distance_l2_scaled
       - distance_l1_scaled
+      - distance_mahalanobis
       - dist_l2
       - dist_l1
       - dist_l2_scaled
@@ -98,11 +103,18 @@ reference:
       - rank_weight_dnn_asymp
       - dnn_weights_exact_full_from_ranks
       - dnn_weights_asymp_full_from_ranks
+      - rank_weight_tdnn_exact
+      - rank_weight_tdnn_asymp
+      - dnn_weights_tdnn_exact_full_from_ranks
+      - dnn_weights_tdnn_asymp_full_from_ranks
+      - tdnn_rank_table_exact
+      - tdnn_rank_table_asymp
 
   - title: Jackknife (leave-one-out)
     desc: Fast C++ path with auto fallback, slow oracle, and DNN wrappers.
     contents:
       - jackknife_fast_rank
+      - jackknife_rank_full
       - jackknife_slow_rank
 
   - title: S3 methods
@@ -113,6 +125,7 @@ reference:
       - print.plqr_result
       - print.score_diff_path
       - print.summary.cate_result
+      - print.tdnn_np_result
       - print.ustat_score
       - print.weights_result
       - summary.cate_result
