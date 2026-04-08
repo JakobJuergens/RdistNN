@@ -1,50 +1,48 @@
 # RdistNN Design Notes
 
-This bundle contains a proposed design-note system for the `RdistNN` package,
-together with a concrete standardization plan for the existing code base.
+This directory contains the canonical ordered design-note corpus for the
+`RdistNN` package.
 
-## Suggested repo placement
-
-Recommended location inside the repo:
-
-- `markdown_notes/code_design_principles.md`
-- `markdown_notes/input_validation_contract.md`
-- `markdown_notes/api_shapes_and_input_formats.md`
-- `markdown_notes/error_messages_and_warnings.md`
-- `markdown_notes/comments_and_function_docs.md`
-- `markdown_notes/testing_and_regression_policy.md`
-- `markdown_notes/interface_standardization_decisions.md`
-- `markdown_notes/existing_codebase_standardization_plan.md`
+The numbered files are the authoritative development policy set for this repo.
+Older unnumbered notes have been retired so that humans and coding agents can
+rely on a single explicit read order.
 
 ## Read order
 
-1. `interface_standardization_decisions.md`
-2. `code_design_principles.md`
-3. `input_validation_contract.md`
-4. `api_shapes_and_input_formats.md`
-5. `error_messages_and_warnings.md`
-6. `testing_and_regression_policy.md`
-7. `existing_codebase_standardization_plan.md`
-8. `comments_and_function_docs.md`
+1. `01_interface_standardization_decisions.md`
+2. `02_code_design_principles.md`
+3. `03_input_validation_contract.md`
+4. `04_api_shapes_and_input_formats.md`
+5. `05_error_messages_and_warnings.md`
+6. `06_namespace_and_dependency_policy.md`
+7. `07_lifecycle_and_deprecation_policy.md`
+8. `08_comments_and_function_docs.md`
+9. `09_testing_and_regression_policy.md`
+10. `10_rcpp_and_compiled_code_policy.md`
+11. `11_examples_vignettes_and_pkgdown_policy.md`
+12. `12_release_and_ci_policy.md`
+13. `13_existing_codebase_standardization_plan.md`
 
-## Purpose of each note
+## Structure
 
-- `code_design_principles.md`:
-  repo-level design philosophy and layering rules
-- `input_validation_contract.md`:
-  package-wide validation rules and ordering
-- `api_shapes_and_input_formats.md`:
-  standard for public interfaces and canonical internal forms
-- `error_messages_and_warnings.md`:
-  style guide for diagnostics
-- `comments_and_function_docs.md`:
-  rules for comments and roxygen
-- `testing_and_regression_policy.md`:
-  test requirements for features, fixes, and validation behavior
-- `interface_standardization_decisions.md`:
-  concrete package-level decisions, especially on matrices/vectors vs data frames/tibbles
-- `existing_codebase_standardization_plan.md`:
-  actionable instructions for standardizing the current code base
+### Foundation
+- `01_interface_standardization_decisions.md`
+- `02_code_design_principles.md`
+- `03_input_validation_contract.md`
+- `04_api_shapes_and_input_formats.md`
+- `05_error_messages_and_warnings.md`
+
+### Package engineering
+- `06_namespace_and_dependency_policy.md`
+- `07_lifecycle_and_deprecation_policy.md`
+- `08_comments_and_function_docs.md`
+- `09_testing_and_regression_policy.md`
+- `10_rcpp_and_compiled_code_policy.md`
+- `11_examples_vignettes_and_pkgdown_policy.md`
+- `12_release_and_ci_policy.md`
+
+### Execution
+- `13_existing_codebase_standardization_plan.md`
 
 ## Core package-wide decision
 
