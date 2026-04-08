@@ -81,7 +81,7 @@
 }
 
 .validate_matrix_nonempty <- function(x, arg = "X") {
-  x_mat <- .validate_matrix(x, arg = arg, min_rows = 0L, min_cols = 1L, numeric = FALSE)
+  x_mat <- .validate_matrix(x, arg = arg, min_rows = 0L, min_cols = 1L, numeric = TRUE)
   if (ncol(x_mat) == 0L) {
     .abort_bad_arg(arg, "must have at least one column", quoted = FALSE)
   }
@@ -92,11 +92,13 @@
   relation <- match.arg(relation)
   y_mat <- as.matrix(y)
   if (ncol(x_mat) != ncol(y_mat)) {
-    .abort_bad_state(sprintf(
-      "ncol(%s) must %s ncol(%s): got ncol(%s)=%d and ncol(%s)=%d.",
-      y_arg, relation, x_arg,
-      y_arg, ncol(y_mat), x_arg, ncol(x_mat)
-    ))
+    .abort_bad_arg(
+      arg = sprintf("ncol(%s)", y_arg),
+      msg = sprintf("must %s ncol(%s)", relation, x_arg),
+      expected = sprintf("ncol(%s)=%d", x_arg, ncol(x_mat)),
+      actual = sprintf("ncol(%s)=%d", y_arg, ncol(y_mat)),
+      quoted = FALSE
+    )
   }
   y_mat
 }
@@ -125,10 +127,10 @@
   x0_vec <- as.numeric(x0)
   inv_s_vec <- as.numeric(inv_s)
   if (length(x0_vec) != p || length(inv_s_vec) != p) {
-    .abort_bad_state(sprintf("x0 and inv_s must be length p == ncol(%s).", x_arg))
+    .abort_bad_arg("x0/inv_s", sprintf("must both have length ncol(%s)", x_arg), quoted = FALSE)
   }
   if (isTRUE(finite) && (any(!is.finite(x0_vec)) || any(!is.finite(inv_s_vec)))) {
-    .abort_bad_state("x0 and inv_s must be finite.")
+    .abort_bad_arg("x0/inv_s", "must both be finite", quoted = FALSE)
   }
   list(x0 = x0_vec, inv_s = inv_s_vec)
 }
@@ -156,11 +158,11 @@
     args <- paste0("arg", seq_along(vals))
   }
   if (length(args) != length(vals)) {
-    .abort_bad_state("`args` length must match number of vectors.")
+    .abort_bad_arg("args", "length must match number of vectors")
   }
   for (i in seq_along(vals)) {
     if (length(vals[[i]]) != n) {
-      .abort_bad_state(sprintf("%s length must equal %s (%d).", args[[i]], ref, n))
+      .abort_bad_arg(args[[i]], sprintf("length must equal %s (%d)", ref, n), quoted = FALSE)
     }
   }
   invisible(TRUE)
@@ -173,38 +175,38 @@
   if (!is.matrix(idxs_or_subs)) {
     idxs <- as.integer(idxs_or_subs)
     if (length(idxs) != s) {
-      .abort_bad_state(sprintf("`idxs` must have %d elements (order s).", s))
+      .abort_bad_arg("idxs", sprintf("must have %d elements (order s)", s))
     }
     if (anyNA(idxs)) {
-      .abort_bad_state("`idxs` cannot contain NA.")
+      .abort_bad_arg("idxs", "cannot contain NA")
     }
     if (any(idxs < 1L | idxs > n)) {
-      .abort_bad_state("`idxs` must lie in 1..n.")
+      .abort_bad_arg("idxs", "must lie in 1..n")
     }
     if (isTRUE(unique_within_subset) && anyDuplicated(idxs)) {
-      .abort_bad_state("`idxs` must not contain duplicated indices.")
+      .abort_bad_arg("idxs", "must not contain duplicated indices")
     }
     return(matrix(idxs, nrow = 1L))
   }
 
   subs <- idxs_or_subs
   if (ncol(subs) != s) {
-    .abort_bad_state(sprintf("`subs` must have %d columns (order s).", s))
+    .abort_bad_arg("subs", sprintf("must have %d columns (order s)", s))
   }
   if (nrow(subs) == 0L && !isTRUE(allow_empty)) {
-    .abort_bad_state("`subs` must have at least one row.")
+    .abort_bad_arg("subs", "must have at least one row")
   }
   if (!is.integer(subs)) {
     storage.mode(subs) <- "integer"
   }
   if (any(!is.finite(subs))) {
-    .abort_bad_state("`subs` contains non-finite entries.")
+    .abort_bad_arg("subs", "contains non-finite entries")
   }
   if (any(subs < 1L | subs > n)) {
-    .abort_bad_state("`subs` indices must lie in 1..n.")
+    .abort_bad_arg("subs", "indices must lie in 1..n")
   }
   if (isTRUE(unique_within_subset) && any(apply(subs, 1L, function(row) anyDuplicated(row) > 0L))) {
-    .abort_bad_state("Each row of `subs` must not contain duplicated indices.")
+    .abort_bad_arg("subs", "each row must not contain duplicated indices")
   }
   subs
 }

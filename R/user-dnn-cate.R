@@ -99,12 +99,12 @@ cate_dnn <- function(
     if (!is.data.frame(data)) {
       .abort_bad_arg("data", "must be a data.frame")
     }
-    x_mat <- .validate_matrix_nonempty(data[, x_cols, drop = FALSE], arg = "X")
+    x_mat <- .dnn_col_mat(x_cols, data = data, arg = "x_cols", out_arg = "X")
     n <- nrow(x_mat)
     p <- ncol(x_mat)
 
     if (!is.null(pseudo_outcome)) {
-      psi <- .validate_vector_nrow(pseudo_outcome, n, arg = "`pseudo_outcome`", ref = "X")
+      psi <- .validate_vector_nrow(pseudo_outcome, n, arg = "pseudo_outcome", ref = "X", strict = TRUE)
       m0 <- m1 <- m <- e <- NULL
     } else {
       # Determine which outcome-model interface is used
@@ -153,7 +153,7 @@ cate_dnn <- function(
     n <- nrow(x_mat)
     p <- ncol(x_mat)
     if (is.null(pseudo_outcome)) stop("Matrix API requires `pseudo_outcome`.", call. = FALSE)
-    psi <- .validate_vector_nrow(pseudo_outcome, n, arg = "`pseudo_outcome`", ref = "X")
+    psi <- .validate_vector_nrow(pseudo_outcome, n, arg = "pseudo_outcome", ref = "X", strict = TRUE)
     m0 <- m1 <- m <- e <- NULL
   }
 

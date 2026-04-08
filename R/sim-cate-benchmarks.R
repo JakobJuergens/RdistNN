@@ -297,7 +297,7 @@
   fn <- .SIM_CATE_METHODS[[name]]
   if (is.null(fn))
     stop("Unknown simulation method: '", name, "'.  ",
-         "Use sim_cate_methods() to see available methods.")
+         "Use sim_cate_methods() to see available methods.", call. = FALSE)
   fn
 }
 

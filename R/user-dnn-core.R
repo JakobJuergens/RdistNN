@@ -1,16 +1,54 @@
 # Shared internal helpers for user-level DNN estimators.
 
-# Extract and validate a data-frame column by name.
-# Returns a validated numeric vector of length n, or stops with a clear message
-# naming both the missing column and the columns that ARE present.
-.dnn_col_vec <- function(col, data, n, arg, ref = "data") {
-  if (!col %in% names(data)) {
-    stop(sprintf(
-      "Column '%s' (specified by `%s`) not found in `data`.\nAvailable columns: %s",
-      col, arg, paste(names(data), collapse = ", ")
-    ), call. = FALSE)
+.dnn_resolve_data_cols <- function(cols, data, arg, allow_multiple = TRUE) {
+  if (is.null(cols)) {
+    .abort_bad_arg(arg, "must be provided")
   }
-  .validate_vector_nrow(data[[col]], n, arg = arg, ref = ref)
+
+  if (is.character(cols)) {
+    if (length(cols) == 0L || anyNA(cols) || any(!nzchar(cols))) {
+      .abort_bad_arg(arg, "must be a non-empty character vector of column names")
+    }
+    missing <- setdiff(cols, names(data))
+    if (length(missing) > 0L) {
+      stop(sprintf(
+        "Column(s) %s (specified by `%s`) not found in `data`.\nAvailable columns: %s",
+        paste(sprintf("'%s'", missing), collapse = ", "),
+        arg,
+        paste(names(data), collapse = ", ")
+      ), call. = FALSE)
+    }
+    resolved <- cols
+  } else if (is.numeric(cols)) {
+    if (length(cols) == 0L || anyNA(cols) || any(!is.finite(cols)) || any(cols != as.integer(cols))) {
+      .abort_bad_arg(arg, "must be a non-empty integer vector of column indices")
+    }
+    idx <- as.integer(cols)
+    p <- ncol(data)
+    if (any(idx < 1L | idx > p)) {
+      .abort_bad_arg(arg, sprintf("contains out-of-range indices; valid range is 1..%d", p))
+    }
+    resolved <- names(data)[idx]
+  } else {
+    .abort_bad_arg(arg, "must be a character vector of column names or an integer vector of indices")
+  }
+
+  if (!isTRUE(allow_multiple) && length(resolved) != 1L) {
+    .abort_bad_arg(arg, "must reference exactly one column")
+  }
+  resolved
+}
+
+# Extract and validate a single data-frame column by name or index.
+.dnn_col_vec <- function(col, data, n, arg, ref = "data") {
+  col_name <- .dnn_resolve_data_cols(col, data = data, arg = arg, allow_multiple = FALSE)
+  .validate_vector_nrow(data[[col_name]], n, arg = arg, ref = ref, strict = TRUE)
+}
+
+# Extract and validate multiple data-frame columns by names/indices.
+.dnn_col_mat <- function(cols, data, arg, out_arg = "X") {
+  col_names <- .dnn_resolve_data_cols(cols, data = data, arg = arg, allow_multiple = TRUE)
+  .validate_matrix_nonempty(data[, col_names, drop = FALSE], arg = out_arg)
 }
 
 .dnn_resolve_targets <- function(x_mat, X0 = NULL, x0 = NULL) {

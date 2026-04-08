@@ -65,10 +65,23 @@ cate_demo_data <- function(n = 200,
                            inject = NULL,
                            inject_col = "rho_oracle",
                            idx_inject = 3L) {
-  stopifnot(p >= 2L, clip > 0, clip < 0.5)
+  n <- .validate_scalar_int(n, arg = "n", min = 1L)
+  p <- .validate_scalar_int(p, arg = "p", min = 2L)
+  if (!is.numeric(sigma) || length(sigma) != 1L || !is.finite(sigma) || sigma < 0) {
+    .abort_bad_arg("sigma", "must be a non-negative finite numeric scalar")
+  }
+  sigma <- as.numeric(sigma)
+  if (!is.numeric(clip) || length(clip) != 1L || !is.finite(clip) || clip <= 0 || clip >= 0.5) {
+    .abort_bad_arg("clip", "must be a finite numeric scalar in (0, 0.5)")
+  }
+  clip <- as.numeric(clip)
   design <- match.arg(design)
   if (!is.null(seed)) set.seed(seed)
-  if (is.null(x0)) x0 <- rep(0, p)
+  if (is.null(x0)) {
+    x0 <- rep(0, p)
+  } else {
+    x0 <- .validate_target_vector(x0, p = p, x0_arg = "x0", x_arg = "X", finite = TRUE)
+  }
 
   # Draw covariates
   X <- matrix(rnorm(n * p), n, p)
@@ -127,8 +140,20 @@ cate_demo_data <- function(n = 200,
 
   # Optional injection of non-finites for guard testing
   if (!is.null(inject)) {
-    stopifnot(idx_inject >= 1L, idx_inject <= n)
-    stopifnot(inject_col %in% c("Y", "rho_oracle", "e_oracle", "m_oracle", "m0_oracle", "tau_oracle"))
+    if (!inject %in% c("na", "inf")) {
+      .abort_bad_arg("inject", "must be one of NULL, 'na', or 'inf'", quoted = FALSE)
+    }
+    idx_inject <- .validate_scalar_int(idx_inject, arg = "idx_inject", min = 1L)
+    if (idx_inject > n) {
+      .abort_bad_arg("idx_inject", sprintf("must be <= n (got idx_inject=%d, n=%d)", idx_inject, n))
+    }
+    allowed_inject_cols <- c("Y", "rho_oracle", "e_oracle", "m_oracle", "m0_oracle", "tau_oracle")
+    if (!inject_col %in% allowed_inject_cols) {
+      stop(sprintf(
+        "Column '%s' (specified by `inject_col`) is not a valid injection target.\nValid options: %s",
+        inject_col, paste(allowed_inject_cols, collapse = ", ")
+      ), call. = FALSE)
+    }
     if (identical(inject, "na")) df[[inject_col]][idx_inject] <- NA_real_
     if (identical(inject, "inf")) df[[inject_col]][idx_inject] <- Inf
   }
@@ -181,7 +206,12 @@ cate_demo_data <- function(n = 200,
 #'
 #' @export
 cate_demo_subsets <- function(n, K = 1000L, s = 8L, seed = NULL) {
-  stopifnot(s >= 1L, s <= n, K >= 1L)
+  n <- .validate_scalar_int(n, arg = "n", min = 1L)
+  s <- .validate_scalar_int(s, arg = "s", min = 1L)
+  K <- .validate_scalar_int(K, arg = "K", min = 1L)
+  if (s > n) {
+    .abort_bad_arg("s", sprintf("must satisfy s <= n (got s=%d, n=%d)", s, n))
+  }
   if (!is.null(seed)) set.seed(seed)
   # Efficient in base R for moderate sizes
   t(replicate(K, sort(sample.int(n, s))))
@@ -212,9 +242,8 @@ cate_demo_subsets <- function(n, K = 1000L, s = 8L, seed = NULL) {
 #' @keywords internal
 #' @noRd
 cate_demo_sets <- function(n = 80L, p = 2L) {
-  stopifnot(is.numeric(n), n >= 6L, is.numeric(p), p >= 2L)
-  n <- as.integer(n)
-  p <- as.integer(p)
+  n <- .validate_scalar_int(n, arg = "n", min = 6L)
+  p <- .validate_scalar_int(p, arg = "p", min = 2L)
 
   # Common subset matrices
   subs_all <- matrix(seq_len(n), ncol = 1L)

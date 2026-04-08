@@ -11,6 +11,7 @@ skip_if_not(
 
 test_that("data-frame AIPW path: psi matches manual formula", {
   d <- .make_df_data()
+  nms <- names(d$df)
   out <- cate_dnn(
     data = d$df,
     x_cols = d$x_cols,
@@ -23,8 +24,21 @@ test_that("data-frame AIPW path: psi matches manual formula", {
     k = 3L, s = 5L, method = "exact", se = FALSE,
     return = c("W", "psi")
   )
+  out_idx <- cate_dnn(
+    data = d$df,
+    x_cols = match(d$x_cols, nms),
+    y_col = match("Y", nms),
+    t_col = match("D", nms),
+    m0_col = match("m0_oracle", nms),
+    m1_col = match("m1_oracle", nms),
+    e_col = match("e_oracle", nms),
+    X0 = d$X0,
+    k = 3L, s = 5L, method = "exact", se = FALSE,
+    return = c("W", "psi")
+  )
 
   expect_equal(out$psi, d$psi_aipw, tolerance = 1e-12)
+  expect_equal(out_idx$psi, out$psi, tolerance = 1e-12)
   tau_manual <- as.numeric(crossprod(out$psi, out$W))
   expect_equal(out$tau, tau_manual, tolerance = 1e-12)
   expect_length(out$tau, nrow(d$X0))
@@ -162,5 +176,13 @@ test_that("data-frame API errors: conflicting / missing outcome model columns", 
       data = d$df, x_cols = d$x_cols, t_col = "D",
       m_col = "m_oracle", e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
     )
+  )
+  expect_error(
+    cate_dnn(
+      data = d$df, x_cols = c("X1", "X_missing"),
+      y_col = "Y", t_col = "D",
+      m_col = "m_oracle", e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
+    ),
+    regexp = "specified by `x_cols`", ignore.case = TRUE
   )
 })

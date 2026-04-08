@@ -310,7 +310,20 @@
 #' @export
 sim_cate_data <- function(design, n, kx = 2L, sigma = 0.5, clip = 1e-3,
                            seed = NULL, x0 = NULL, ...) {
-  stopifnot(kx >= 2L, clip > 0, clip < 0.5)
+  n <- .validate_scalar_int(n, arg = "n", min = 1L)
+  kx <- .validate_scalar_int(kx, arg = "kx", min = 2L)
+  if (!is.numeric(sigma) || length(sigma) != 1L || !is.finite(sigma) || sigma < 0) {
+    .abort_bad_arg("sigma", "must be a non-negative finite numeric scalar")
+  }
+  sigma <- as.numeric(sigma)
+  if (!is.numeric(clip) || length(clip) != 1L || !is.finite(clip) || clip <= 0 || clip >= 0.5) {
+    .abort_bad_arg("clip", "must be a finite numeric scalar in (0, 0.5)")
+  }
+  clip <- as.numeric(clip)
+  if (!is.null(x0)) {
+    x0 <- .validate_target_vector(x0, p = kx, x0_arg = "x0", x_arg = "X", finite = TRUE)
+  }
+
   # Each DGP has its own natural default for x0; resolve here so callers that
   # pass x0 = NULL still get the DGP-appropriate evaluation point rather than a
   # generic rep(0, kx) that would be wrong for, e.g., dgp5_correlated (x0=(0.75,0)).
@@ -328,6 +341,6 @@ sim_cate_data <- function(design, n, kx = 2L, sigma = 0.5, clip = 1e-3,
                             ...),
     stop("Unknown design: '", design,
          "'. Choose from: dgp1_linear, dgp2_nonlinear, dgp3_sparse_overlap, ",
-         "dgp4_clustered, dgp5_correlated.")
+         "dgp4_clustered, dgp5_correlated.", call. = FALSE)
   )
 }

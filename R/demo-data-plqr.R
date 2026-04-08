@@ -6,7 +6,12 @@
 # --- Internal: Asymmetric Laplace draws (location 0, scale = sigma, asymmetry = tau) ----
 # Ensures Q_tau(U) = 0, i.e., the tau-quantile of U is zero.
 .r_ald <- function(n, tau = 0.5, sigma = 1) {
-  stopifnot(0 < tau, tau < 1, sigma > 0)
+  n <- .validate_scalar_int(n, arg = "n", min = 1L)
+  tau <- .validate_scalar_prob(tau, arg = "tau")
+  if (!is.numeric(sigma) || length(sigma) != 1L || !is.finite(sigma) || sigma <= 0) {
+    .abort_bad_arg("sigma", "must be a positive finite numeric scalar")
+  }
+  sigma <- as.numeric(sigma)
   u <- runif(n)
   ifelse(
     u < tau,
@@ -82,10 +87,21 @@ plqr_demo_data <- function(n = 300,
                            inject = NULL,
                            inject_col = c("Y", "q_oracle", "D1", "mD1", "rD1")[1],
                            idx_inject = 3L) {
-  stopifnot(p >= 1L, p_d >= 1L, 0 < tau, tau < 1, sigma > 0)
+  n <- .validate_scalar_int(n, arg = "n", min = 1L)
+  p <- .validate_scalar_int(p, arg = "p", min = 1L)
+  p_d <- .validate_scalar_int(p_d, arg = "p_d", min = 1L)
+  tau <- .validate_scalar_prob(tau, arg = "tau")
+  if (!is.numeric(sigma) || length(sigma) != 1L || !is.finite(sigma) || sigma <= 0) {
+    .abort_bad_arg("sigma", "must be a positive finite numeric scalar")
+  }
+  sigma <- as.numeric(sigma)
   design <- match.arg(design)
   if (!is.null(seed)) set.seed(seed)
-  if (is.null(x0)) x0 <- rep(0, p)
+  if (is.null(x0)) {
+    x0 <- rep(0, p)
+  } else {
+    x0 <- .validate_target_vector(x0, p = p, x0_arg = "x0", x_arg = "X", finite = TRUE)
+  }
 
   # Covariates
   X <- matrix(rnorm(n * p), n, p)
@@ -142,13 +158,25 @@ plqr_demo_data <- function(n = 300,
 
   # Optional injection of non-finites for guard testing
   if (!is.null(inject)) {
-    stopifnot(idx_inject >= 1L, idx_inject <= n)
-    stopifnot(inject_col %in% c(
+    if (!inject %in% c("na", "inf")) {
+      .abort_bad_arg("inject", "must be one of NULL, 'na', or 'inf'", quoted = FALSE)
+    }
+    idx_inject <- .validate_scalar_int(idx_inject, arg = "idx_inject", min = 1L)
+    if (idx_inject > n) {
+      .abort_bad_arg("idx_inject", sprintf("must be <= n (got idx_inject=%d, n=%d)", idx_inject, n))
+    }
+    allowed_inject_cols <- c(
       "Y", "q_oracle",
       paste0("D", seq_len(p_d)[1]),
       paste0("mD", seq_len(p_d)[1]),
       paste0("rD", seq_len(p_d)[1])
-    ))
+    )
+    if (!inject_col %in% allowed_inject_cols) {
+      stop(sprintf(
+        "Column '%s' (specified by `inject_col`) is not a valid injection target.\nValid options: %s",
+        inject_col, paste(allowed_inject_cols, collapse = ", ")
+      ), call. = FALSE)
+    }
     if (identical(inject, "na")) df[[inject_col]][idx_inject] <- NA_real_
     if (identical(inject, "inf")) df[[inject_col]][idx_inject] <- Inf
   }
@@ -193,8 +221,17 @@ plqr_demo_data <- function(n = 300,
 #' plqr_moment(demo$data, beta = demo$truth$beta_true, tau = 0.5)
 #' @export
 plqr_moment <- function(df, beta, tau) {
+  if (!is.data.frame(df)) {
+    .abort_bad_arg("df", "must be a data.frame")
+  }
   p_d <- sum(grepl("^D[0-9]+$", names(df)))
-  stopifnot(length(beta) == p_d)
+  if (!is.numeric(beta) || anyNA(beta) || any(!is.finite(beta))) {
+    .abort_bad_arg("beta", "must be a finite numeric vector")
+  }
+  if (length(beta) != p_d) {
+    .abort_bad_arg("beta", sprintf("length must equal number of D-columns (got length(beta)=%d, p_d=%d)", length(beta), p_d))
+  }
+  tau <- .validate_scalar_prob(tau, arg = "tau")
   Dmat <- as.matrix(df[paste0("D", seq_len(p_d))])
   mD <- as.matrix(df[paste0("mD", seq_len(p_d))])
   rD <- Dmat - mD
@@ -210,7 +247,12 @@ plqr_moment <- function(df, beta, tau) {
 #' plqr_demo_subsets(n = 10, K = 4, s = 3, seed = 1)
 #' @export
 plqr_demo_subsets <- function(n, K = 1000L, s = 8L, seed = NULL) {
-  stopifnot(s >= 1L, s <= n, K >= 1L)
+  n <- .validate_scalar_int(n, arg = "n", min = 1L)
+  s <- .validate_scalar_int(s, arg = "s", min = 1L)
+  K <- .validate_scalar_int(K, arg = "K", min = 1L)
+  if (s > n) {
+    .abort_bad_arg("s", sprintf("must satisfy s <= n (got s=%d, n=%d)", s, n))
+  }
   if (!is.null(seed)) set.seed(seed)
   t(replicate(K, sort(sample.int(n, s))))
 }
@@ -242,10 +284,9 @@ plqr_demo_subsets <- function(n, K = 1000L, s = 8L, seed = NULL) {
 #' @keywords internal
 #' @noRd
 plqr_demo_sets <- function(n = 120L, p = 2L, p_d = 2L) {
-  stopifnot(is.numeric(n), n >= 10L, is.numeric(p), p >= 1L, is.numeric(p_d), p_d >= 1L)
-  n <- as.integer(n)
-  p <- as.integer(p)
-  p_d <- as.integer(p_d)
+  n <- .validate_scalar_int(n, arg = "n", min = 10L)
+  p <- .validate_scalar_int(p, arg = "p", min = 1L)
+  p_d <- .validate_scalar_int(p_d, arg = "p_d", min = 1L)
 
   # Subset matrices
   subs_all <- matrix(seq_len(n), ncol = 1L)

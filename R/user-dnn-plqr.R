@@ -169,14 +169,14 @@ plqr_dnn <- function(
       )
     }
 
-    x_mat <- .validate_matrix_nonempty(data[, x_cols, drop = FALSE], arg = "X")
+    x_mat <- .dnn_col_mat(x_cols, data = data, arg = "x_cols", out_arg = "X")
     n <- nrow(x_mat)
     p <- ncol(x_mat)
 
-    d_mat <- .validate_matrix_nonempty(data[, D_cols, drop = FALSE], arg = "D")
-    mD_mat <- .validate_matrix_nonempty(data[, mD_cols, drop = FALSE], arg = "mD")
-    q_vec <- .validate_vector_nrow(data[[q_col]], n, arg = "q_col", ref = "X")
-    y_vec <- .validate_vector_nrow(data[[y_col]], n, arg = "y_col", ref = "X")
+    d_mat <- .dnn_col_mat(D_cols, data = data, arg = "D_cols", out_arg = "D")
+    mD_mat <- .dnn_col_mat(mD_cols, data = data, arg = "mD_cols", out_arg = "mD")
+    q_vec <- .dnn_col_vec(q_col, data, n, arg = "q_col", ref = "X")
+    y_vec <- .dnn_col_vec(y_col, data, n, arg = "y_col", ref = "X")
   } else {
     if (is.null(X)) {
       stop("Provide either `data` ... or matrix interface via `X`.", call. = FALSE)
@@ -191,8 +191,8 @@ plqr_dnn <- function(
 
     d_mat <- .validate_matrix_nonempty(D, arg = "D")
     mD_mat <- .validate_matrix_nonempty(mD, arg = "mD")
-    q_vec <- .validate_vector_nrow(q, n, arg = "q", ref = "X")
-    y_vec <- .validate_vector_nrow(Y, n, arg = "Y", ref = "X")
+    q_vec <- .validate_vector_nrow(q, n, arg = "q", ref = "X", strict = TRUE)
+    y_vec <- .validate_vector_nrow(Y, n, arg = "Y", ref = "X", strict = TRUE)
   }
 
   if (nrow(d_mat) != n || nrow(mD_mat) != n) {

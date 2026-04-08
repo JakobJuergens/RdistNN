@@ -41,10 +41,19 @@ np_demo_data <- function(n = 200,
                          x0 = NULL,
                          inject = NULL,
                          idx_inject = 3L) {
-  stopifnot(n >= 1L, p >= 1L, sigma >= 0)
+  n <- .validate_scalar_int(n, arg = "n", min = 1L)
+  p <- .validate_scalar_int(p, arg = "p", min = 1L)
+  if (!is.numeric(sigma) || length(sigma) != 1L || !is.finite(sigma) || sigma < 0) {
+    .abort_bad_arg("sigma", "must be a non-negative finite numeric scalar")
+  }
+  sigma <- as.numeric(sigma)
   design <- match.arg(design)
   if (!is.null(seed)) set.seed(seed)
-  if (is.null(x0)) x0 <- rep(0, p)
+  if (is.null(x0)) {
+    x0 <- rep(0, p)
+  } else {
+    x0 <- .validate_target_vector(x0, p = p, x0_arg = "x0", x_arg = "X", finite = TRUE)
+  }
 
   # Covariates
   X <- matrix(rnorm(n * p), n, p)
@@ -80,7 +89,13 @@ np_demo_data <- function(n = 200,
 
   # Optional injection of non-finites (for guard tests)
   if (!is.null(inject)) {
-    stopifnot(idx_inject >= 1L, idx_inject <= n)
+    if (!inject %in% c("na", "inf")) {
+      .abort_bad_arg("inject", "must be one of NULL, 'na', or 'inf'", quoted = FALSE)
+    }
+    idx_inject <- .validate_scalar_int(idx_inject, arg = "idx_inject", min = 1L)
+    if (idx_inject > n) {
+      .abort_bad_arg("idx_inject", sprintf("must be <= n (got idx_inject=%d, n=%d)", idx_inject, n))
+    }
     if (identical(inject, "na")) Y[idx_inject] <- NA_real_
     if (identical(inject, "inf")) Y[idx_inject] <- Inf
   }
@@ -101,7 +116,12 @@ np_demo_data <- function(n = 200,
 #' np_demo_subsets(n = 10, K = 4, s = 1, seed = 1)
 #' @export
 np_demo_subsets <- function(n, K = 1000L, s = 1L, seed = NULL) {
-  stopifnot(s >= 1L, s <= n, K >= 1L)
+  n <- .validate_scalar_int(n, arg = "n", min = 1L)
+  s <- .validate_scalar_int(s, arg = "s", min = 1L)
+  K <- .validate_scalar_int(K, arg = "K", min = 1L)
+  if (s > n) {
+    .abort_bad_arg("s", sprintf("must satisfy s <= n (got s=%d, n=%d)", s, n))
+  }
   if (!is.null(seed)) set.seed(seed)
   t(replicate(K, sort(sample.int(n, s))))
 }
@@ -122,9 +142,8 @@ np_demo_subsets <- function(n, K = 1000L, s = 1L, seed = NULL) {
 #' @keywords internal
 #' @noRd
 np_y_demo_sets <- function(n = 8L, p = 3L) {
-  stopifnot(is.numeric(n), n >= 6L, is.numeric(p), p >= 1L)
-  n <- as.integer(n)
-  p <- as.integer(p)
+  n <- .validate_scalar_int(n, arg = "n", min = 6L)
+  p <- .validate_scalar_int(p, arg = "p", min = 1L)
 
   # Deterministic X for exact-equality expectations
   X <- as.data.frame(

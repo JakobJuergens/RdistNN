@@ -20,7 +20,7 @@
     return(step * pmax(1, abs(theta)))
   }
   if (length(step) != length(theta) || any(!is.finite(step)) || any(step <= 0)) {
-    .abort_bad_state("`fd_step` must be a positive finite scalar or length(theta) vector.")
+    .abort_bad_arg(arg, "must be a positive finite scalar or length(theta) vector")
   }
   step
 }

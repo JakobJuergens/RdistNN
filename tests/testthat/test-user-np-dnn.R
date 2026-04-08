@@ -66,8 +66,13 @@ test_that("data-frame API supports y_col and external y paths", {
     data = df, x_cols = 1:2, y = d$y,
     X0 = d$X0, k = 2L, s = 3L, se = FALSE
   )
+  out_col_idx <- np_dnn(
+    data = df, x_cols = c("X1", "X2"), y_col = 3L,
+    X0 = d$X0, k = 2L, s = 3L, se = FALSE
+  )
 
   expect_equal(out_col$mu, out_vec$mu, tolerance = 1e-12)
+  expect_equal(out_col$mu, out_col_idx$mu, tolerance = 1e-12)
 })
 
 test_that("jackknife behavior: none omits se; constant outcomes give zero se", {
@@ -202,6 +207,18 @@ test_that("input validation catches common misuse", {
   expect_error(
     np_dnn(data = df, y_col = "Y", X0 = d$X0),
     "x_cols",
+    ignore.case = TRUE
+  )
+  expect_error(
+    np_dnn(data = df, x_cols = c("X1", "X_missing"), y_col = "Y", X0 = d$X0, k = 1L, s = 2L, se = FALSE),
+    "specified by `x_cols`",
+    ignore.case = TRUE
+  )
+  df_bad_x <- df
+  df_bad_x$X1 <- as.character(df_bad_x$X1)
+  expect_error(
+    np_dnn(data = df_bad_x, x_cols = c("X1", "X2"), y_col = "Y", X0 = d$X0, k = 1L, s = 2L, se = FALSE),
+    "X.*numeric",
     ignore.case = TRUE
   )
   # k and s validation at entry point

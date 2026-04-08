@@ -63,7 +63,19 @@ jackknife_fast_rank <- function(ranks, a, phi, normalize = TRUE) {
 # --- Internal R engine (supports phi as matrix or function(j, t)) ---------
 
 .jackknife_fast_rank_R <- function(ranks, a, phi, normalize = TRUE) {
-  stopifnot(is.matrix(ranks))
+  if (!is.matrix(ranks)) {
+    stop("`ranks` must be a matrix.", call. = FALSE)
+  }
+  if (anyNA(ranks) || any(!is.finite(ranks))) {
+    stop("`ranks` must be finite and cannot contain NA.", call. = FALSE)
+  }
+  if (any(ranks != as.integer(ranks))) {
+    stop("`ranks` must contain integer indices.", call. = FALSE)
+  }
+  if (any(ranks < 1L)) {
+    stop("`ranks` indices must be >= 1.", call. = FALSE)
+  }
+  if (!is.integer(ranks)) storage.mode(ranks) <- "integer"
   Tn <- nrow(ranks)
   K <- ncol(ranks)
   s <- length(a)

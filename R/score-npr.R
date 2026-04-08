@@ -56,7 +56,7 @@ score_np_y <- function(
 ) {
   # XOR: exactly one of y_col or y
   if (is.null(y_col) == is.null(y)) {
-    .abort_bad_state("Provide exactly one of 'y_col' or 'y' (mutually exclusive).")
+    stop("Provide exactly one of 'y_col' or 'y' (mutually exclusive).", call. = FALSE)
   }
   # Enforce singleton score
   if (!is.numeric(s) || length(s) != 1L || s != 1L) {
@@ -68,11 +68,15 @@ score_np_y <- function(
     name = "np_y_singleton_purescore",
     order = function(n, data, ctx) 1L,
     setup = function(data, ...) {
-      X <- as.matrix(data[, x_cols, drop = FALSE])
-      yy <- if (!is.null(y_col)) as.numeric(data[[y_col]]) else as.numeric(y)
+      X <- .dnn_col_mat(x_cols, data = data, arg = "x_cols", out_arg = "X")
+      n <- nrow(X)
+      yy <- if (!is.null(y_col)) {
+        .dnn_col_vec(y_col, data = data, n = n, arg = "y_col", ref = "data")
+      } else {
+        .validate_vector_nrow(y, n, arg = "y", ref = "data")
+      }
 
       .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X")
-      yy <- .validate_vector_nrow(yy, nrow(X), arg = "y", ref = "data")
 
       # Do NOT check finiteness here (fail at evaluation time per convention)
       list(g = yy, n = nrow(X), p = ncol(X), s = 1L)

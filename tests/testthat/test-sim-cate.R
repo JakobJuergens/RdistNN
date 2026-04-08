@@ -61,6 +61,47 @@ test_that("sim_cate_data: kx < 2 is rejected", {
   expect_error(sim_cate_data("dgp1_linear", n = 10L, kx = 1L))
 })
 
+test_that("sim_cate_data: sigma validation is explicit", {
+  expect_error(
+    sim_cate_data("dgp1_linear", n = 10L, kx = 2L, sigma = -0.1),
+    "sigma"
+  )
+  expect_error(
+    sim_cate_data("dgp1_linear", n = 10L, kx = 2L, sigma = c(0.1, 0.2)),
+    "sigma"
+  )
+  expect_error(
+    sim_cate_data("dgp1_linear", n = 10L, kx = 2L, sigma = NA_real_),
+    "sigma"
+  )
+})
+
+test_that("sim_cate_data: clip validation is explicit", {
+  expect_error(
+    sim_cate_data("dgp1_linear", n = 10L, kx = 2L, clip = 0),
+    "clip"
+  )
+  expect_error(
+    sim_cate_data("dgp1_linear", n = 10L, kx = 2L, clip = 0.5),
+    "clip"
+  )
+  expect_error(
+    sim_cate_data("dgp1_linear", n = 10L, kx = 2L, clip = Inf),
+    "clip"
+  )
+})
+
+test_that("sim_cate_data: x0 validation checks length and finiteness", {
+  expect_error(
+    sim_cate_data("dgp1_linear", n = 10L, kx = 2L, x0 = c(0, 0, 0)),
+    "x0 length must equal ncol\\(X\\)"
+  )
+  expect_error(
+    sim_cate_data("dgp1_linear", n = 10L, kx = 2L, x0 = c(0, NA_real_)),
+    "x0 must be finite"
+  )
+})
+
 test_that("sim_cate_one_rep: returns a data.frame with correct structure (single method)", {
   r <- sim_cate_one_rep(
     n = 100L, kx = 2L, k = 3L,

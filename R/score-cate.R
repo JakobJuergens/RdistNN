@@ -55,7 +55,7 @@ score_cate_rho <- function(
 ) {
   # XOR: exactly one of rho_col or rho
   if (is.null(rho_col) == is.null(rho)) {
-    .abort_bad_state("Provide exactly one of 'rho_col' or 'rho' (mutually exclusive).")
+    stop("Provide exactly one of 'rho_col' or 'rho' (mutually exclusive).", call. = FALSE)
   }
   s <- .validate_scalar_int(s, arg = "s", min = 1L)
   k <- .validate_scalar_int(k, arg = "k", min = 1L)
@@ -67,11 +67,15 @@ score_cate_rho <- function(
     # in score_cate_rho(...)
 
     setup = function(data, ...) {
-      X <- as.matrix(data[, x_cols, drop = FALSE])
-      r <- if (!is.null(rho_col)) as.numeric(data[[rho_col]]) else as.numeric(rho)
+      X <- .dnn_col_mat(x_cols, data = data, arg = "x_cols", out_arg = "X")
+      n <- nrow(X)
+      r <- if (!is.null(rho_col)) {
+        .dnn_col_vec(rho_col, data = data, n = n, arg = "rho_col", ref = "data")
+      } else {
+        .validate_vector_nrow(rho, n, arg = "rho", ref = "data")
+      }
 
       .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X")
-      r <- .validate_vector_nrow(r, nrow(X), arg = "rho", ref = "data")
 
       # DO NOT check finiteness here (tests expect failure at evaluation)
       list(g = r, n = nrow(X), p = ncol(X), s = as.integer(s))

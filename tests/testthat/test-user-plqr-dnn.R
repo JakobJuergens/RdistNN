@@ -47,6 +47,7 @@ test_that("plqr_dnn matrix API matches direct g-weighted moment identity", {
 
 test_that("data-frame and matrix APIs agree for plqr_dnn", {
   d <- .make_plqr_data(n = 70L, p = 2L, p_d = 2L, m = 3L, tau = 0.5)
+  nms <- names(d$df)
 
   out_df <- plqr_dnn(
     data = d$df,
@@ -60,6 +61,18 @@ test_that("data-frame and matrix APIs agree for plqr_dnn", {
     X0 = d$X0,
     k = 2L, s = 3L, method = "exact", se = FALSE
   )
+  out_df_idx <- plqr_dnn(
+    data = d$df,
+    x_cols = match(d$x_cols, nms),
+    D_cols = match(d$D_cols, nms),
+    q_col = match("q_oracle", nms),
+    mD_cols = match(d$mD_cols, nms),
+    y_col = match("Y", nms),
+    beta = d$beta,
+    tau = d$tau,
+    X0 = d$X0,
+    k = 2L, s = 3L, method = "exact", se = FALSE
+  )
   out_m <- plqr_dnn(
     X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
     beta = d$beta, tau = d$tau,
@@ -68,6 +81,7 @@ test_that("data-frame and matrix APIs agree for plqr_dnn", {
   )
 
   expect_equal(out_df$moment, out_m$moment, tolerance = 1e-12)
+  expect_equal(out_df$moment, out_df_idx$moment, tolerance = 1e-12)
 })
 
 test_that("plqr_dnn returns finite jackknife SEs with expected shape", {
@@ -230,6 +244,40 @@ test_that("plqr_dnn validation catches shape and beta issues", {
       k = 1L, s = 2L, se = FALSE
     ),
     "provide `x_cols`, `D_cols`, `q_col`, `mD_cols`, and `y_col`",
+    ignore.case = TRUE
+  )
+  expect_error(
+    plqr_dnn(
+      data = d$df,
+      x_cols = d$x_cols,
+      D_cols = c(d$D_cols[1], "D_missing"),
+      q_col = "q_oracle",
+      mD_cols = d$mD_cols,
+      y_col = "Y",
+      beta = d$beta,
+      tau = d$tau,
+      X0 = d$X0,
+      k = 1L, s = 2L, se = FALSE
+    ),
+    "specified by `D_cols`",
+    ignore.case = TRUE
+  )
+  df_bad_mD <- d$df
+  df_bad_mD[[d$mD_cols[1]]] <- as.character(df_bad_mD[[d$mD_cols[1]]])
+  expect_error(
+    plqr_dnn(
+      data = df_bad_mD,
+      x_cols = d$x_cols,
+      D_cols = d$D_cols,
+      q_col = "q_oracle",
+      mD_cols = d$mD_cols,
+      y_col = "Y",
+      beta = d$beta,
+      tau = d$tau,
+      X0 = d$X0,
+      k = 1L, s = 2L, se = FALSE
+    ),
+    "mD.*numeric",
     ignore.case = TRUE
   )
   # k and s validation at entry point

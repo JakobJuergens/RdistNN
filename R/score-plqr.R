@@ -98,11 +98,12 @@ score_plqr_component <- function(
     name = paste0("plqr_comp_j", as.integer(j), "_purescore"),
     order = function(n, data, ctx) as.integer(s),
     setup = function(data, ...) {
-      X <- as.matrix(data[, x_cols, drop = FALSE])
-      D <- as.matrix(data[, D_cols, drop = FALSE])
-      mD <- as.matrix(data[, mD_cols, drop = FALSE])
-      qx <- as.numeric(data[[q_col]])
-      Y <- as.numeric(data$Y)
+      X <- .dnn_col_mat(x_cols, data = data, arg = "x_cols", out_arg = "X")
+      n <- nrow(X)
+      D <- .dnn_col_mat(D_cols, data = data, arg = "D_cols", out_arg = "D")
+      mD <- .dnn_col_mat(mD_cols, data = data, arg = "mD_cols", out_arg = "m_D(X)")
+      qx <- .dnn_col_vec(q_col, data = data, n = n, arg = "q_col", ref = "data")
+      Y <- .dnn_col_vec("Y", data = data, n = n, arg = "Y", ref = "data")
 
       # data-time checks
       .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X")
@@ -112,7 +113,6 @@ score_plqr_component <- function(
       if (!all(is.finite(qx))) stop("q_tau(X) must be finite.", call. = FALSE)
       if (!all(is.finite(Y))) stop("Y must be finite.", call. = FALSE)
 
-      n <- nrow(X)
       if (any(c(nrow(D), nrow(mD)) != n) || length(qx) != n || length(Y) != n) {
         stop("X, D, mD, q_tau(X), and Y must share the same n.", call. = FALSE)
       }

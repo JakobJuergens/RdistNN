@@ -7,7 +7,7 @@
 
   if (!is.null(newdata)) {
     if (is.data.frame(newdata) && !is.null(model$x_cols)) {
-      x0_mat <- as.matrix(newdata[, model$x_cols, drop = FALSE])
+      x0_mat <- .dnn_col_mat(model$x_cols, data = newdata, arg = "x_cols", out_arg = "newdata")
     } else {
       x0_mat <- as.matrix(newdata)
     }

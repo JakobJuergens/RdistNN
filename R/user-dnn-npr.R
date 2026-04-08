@@ -95,7 +95,7 @@ np_dnn <- function(
     if (is.null(x_cols)) {
       stop("With `data=`, `x_cols` is required.", call. = FALSE)
     }
-    x_mat <- .validate_matrix_nonempty(data[, x_cols, drop = FALSE], arg = "X")
+    x_mat <- .dnn_col_mat(x_cols, data = data, arg = "x_cols", out_arg = "X")
     n <- nrow(x_mat)
     p <- ncol(x_mat)
 
@@ -103,9 +103,9 @@ np_dnn <- function(
       stop("With `data=`, provide exactly one of `y_col` or `y`.", call. = FALSE)
     }
     if (!is.null(y_col)) {
-      y_vec <- .validate_vector_nrow(data[[y_col]], n, arg = "y_col", ref = "X")
+      y_vec <- .dnn_col_vec(y_col, data, n, arg = "y_col", ref = "X")
     } else {
-      y_vec <- .validate_vector_nrow(y, n, arg = "y", ref = "X")
+      y_vec <- .validate_vector_nrow(y, n, arg = "y", ref = "X", strict = TRUE)
     }
   } else {
     if (is.null(X)) {
@@ -119,7 +119,7 @@ np_dnn <- function(
     if (is.null(y_in)) {
       stop("Matrix API requires `Y` (or alias `y`).", call. = FALSE)
     }
-    y_vec <- .validate_vector_nrow(y_in, n, arg = "Y", ref = "X")
+    y_vec <- .validate_vector_nrow(y_in, n, arg = "Y", ref = "X", strict = TRUE)
   }
 
   x0_mat <- .dnn_resolve_targets(x_mat, X0 = X0, x0 = x0)

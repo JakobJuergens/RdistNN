@@ -53,7 +53,7 @@
     }
     for (j in seq_len(m)) {
       o <- order_matrix[, j]
-      if (!setequal(o, seq_len(n))) .abort_bad_state("Each column of `ord` must be a permutation of 1..n.")
+      if (!setequal(o, seq_len(n))) stop("Each column of `ord` must be a permutation of 1..n.", call. = FALSE)
     }
     rank_matrix <- apply(order_matrix, 2L, ord_to_ranks)
     list(ranks = rank_matrix, ord = order_matrix, dx = NULL)
@@ -65,7 +65,7 @@
     }
     for (j in seq_len(m)) {
       r <- rank_matrix[, j]
-      if (!setequal(r, seq_len(n))) .abort_bad_state("Each column of `ranks` must be a permutation of 1..n.")
+      if (!setequal(r, seq_len(n))) stop("Each column of `ranks` must be a permutation of 1..n.", call. = FALSE)
     }
     list(ranks = rank_matrix, ord = NULL, dx = NULL)
   }
@@ -98,7 +98,7 @@
     if (!is.null(ranking$dx)) {
       return(make_from_dx(ranking$dx))
     }
-    .abort_bad_state("`ranking` list must contain one of: $ranks, $ord, or $dx.")
+    stop("`ranking` list must contain one of: $ranks, $ord, or $dx.", call. = FALSE)
   }
 
   # 4) Matrix -> assume it is a ranks matrix
@@ -106,11 +106,12 @@
     return(make_from_ranks(ranking))
   }
 
-  .abort_bad_state(
+  stop(
     paste(
       "Unsupported `ranking` type. Provide a distance spec/name, a",
       "ranks/ord/dx matrix/list, or a function(X, X0, ctx)->{ranks|ord|dx}."
-    )
+    ),
+    call. = FALSE
   )
 }
 
@@ -188,17 +189,17 @@ weights_matrix <- function(
 ) {
   # shapes
   x_mat <- .validate_matrix_nonempty(X, arg = "X")
-  if (!is.null(X0) && !is.null(x0)) .abort_bad_state("Provide either `X0` or `x0`, not both.")
+  if (!is.null(X0) && !is.null(x0)) stop("Provide either `X0` or `x0`, not both.", call. = FALSE)
   if (is.null(X0)) {
-    if (is.null(x0)) .abort_bad_state("Provide `X0` (m x p) or a single `x0` (length p).")
+    if (is.null(x0)) stop("Provide `X0` (m x p) or a single `x0` (length p).", call. = FALSE)
     x0_vec <- .validate_target_vector(x0, ncol(x_mat), x0_arg = "x0", x_arg = "X")
     x0_mat <- matrix(x0_vec, nrow = 1L)
   } else {
     x0_mat <- as.matrix(X0)
-    if (ncol(x0_mat) == 0L) .abort_bad_state("`X` and `X0` must have at least one column.")
+    if (ncol(x0_mat) == 0L) stop("`X` and `X0` must have at least one column.", call. = FALSE)
     x0_mat <- .validate_ncol_relation(x_mat, x0_mat, y_arg = "X0", x_arg = "X", relation = "equal")
   }
-  if (ncol(x0_mat) == 0L) .abort_bad_state("`X` and `X0` must have at least one column.")
+  if (ncol(x0_mat) == 0L) stop("`X` and `X0` must have at least one column.", call. = FALSE)
 
   n <- nrow(x_mat)
   p <- ncol(x_mat)

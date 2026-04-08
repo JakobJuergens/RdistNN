@@ -40,7 +40,7 @@ summarise_sim_results <- function(raw) {
   required <- c("design", "n", "kx", "bias", "sq_err", "se", "cover", "ci_len")
   missing  <- setdiff(required, names(raw))
   if (length(missing) > 0L)
-    stop("raw is missing required columns: ", paste(missing, collapse = ", "))
+    stop("raw is missing required columns: ", paste(missing, collapse = ", "), call. = FALSE)
 
   has_neff   <- "neff"   %in% names(raw)
   has_method <- "method" %in% names(raw)
