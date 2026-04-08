@@ -2,7 +2,11 @@
 
 .cate_resolve_targets <- function(model, newdata = NULL, X0 = NULL, x0 = NULL) {
   if (!is.null(newdata) && (!is.null(X0) || !is.null(x0))) {
-    stop("Provide either `newdata` or `X0`/`x0`, not both.", call. = FALSE)
+    .abort_bad_arg(
+      "newdata/X0/x0",
+      "must provide either `newdata` or `X0`/`x0`, not both",
+      quoted = FALSE
+    )
   }
 
   if (!is.null(newdata)) {
@@ -15,11 +19,15 @@
   }
 
   if (!is.null(X0) && !is.null(x0)) {
-    stop("Provide either `X0` or `x0`, not both.", call. = FALSE)
+    .abort_bad_arg("X0/x0", "must provide either `X0` or `x0`, not both", quoted = FALSE)
   }
   if (is.null(X0)) {
     if (is.null(x0)) {
-      stop("Provide `newdata`, `X0`, or a single `x0`.", call. = FALSE)
+      .abort_bad_arg(
+        "newdata/X0/x0",
+        "must provide `newdata`, `X0`, or a single `x0`",
+        quoted = FALSE
+      )
     }
     x0_vec <- .validate_target_vector(x0, ncol(model$x_mat), x0_arg = "x0", x_arg = "X")
     return(matrix(x0_vec, nrow = 1L))
@@ -120,7 +128,7 @@ confint.cate_result <- function(object, parm = NULL, level = 0.95, ...) {
     .abort_bad_arg("level", "must be a numeric scalar in (0,1)")
   }
   if (is.null(object$se)) {
-    stop("Standard errors are not available. Refit with `se = TRUE`.", call. = FALSE)
+    .abort_bad_state("Standard errors are not available. Refit with `se = TRUE`.")
   }
 
   m <- length(object$tau)
@@ -180,11 +188,10 @@ predict.cate_result <- function(
 
   model <- object$.model
   if (!is.list(model) || is.null(model$x_mat) || is.null(model$psi)) {
-    stop(
+    .abort_bad_state(paste0(
       "This object does not contain fitted model state for prediction. ",
-      "Refit with the current cate_dnn() implementation.",
-      call. = FALSE
-    )
+      "Refit with the current cate_dnn() implementation."
+    ))
   }
 
   x0_mat <- .cate_resolve_targets(model, newdata = newdata, X0 = X0, x0 = x0)
@@ -209,10 +216,13 @@ predict.cate_result <- function(
   }
 
   if (as.integer(model$s) >= nrow(model$x_mat)) {
-    stop(sprintf(
-      "Delete-1 jackknife requires s < n (got s=%d, n=%d). Use `se.fit = FALSE` or `interval = 'none'`.",
-      as.integer(model$s), nrow(model$x_mat)
-    ), call. = FALSE)
+    .abort_bad_arg(
+      "model$s",
+      "must satisfy s < n when jackknife-based prediction intervals are requested",
+      expected = sprintf("s < n=%d", nrow(model$x_mat)),
+      actual = sprintf("s=%d", as.integer(model$s)),
+      quoted = FALSE
+    )
   }
   se_hat <- .cate_dnn_jackknife_se_loo(
     x_mat = model$x_mat,

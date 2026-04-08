@@ -1,24 +1,9 @@
 # Shared internal helpers for user-level TDNN estimators.
 #
-# Mirrors the structure of user-dnn-core.R, with DNN's (k, s, method)
-# replaced by TDNN's (s1, s2, dim, method).  The jackknife logic is
-# structurally identical: precompute full-sample ranks once, then for each
-# deleted observation decrement the affected ranks and re-evaluate the TDNN
-# rank-weight spec.  No distances are recomputed inside the loop.
-
-.tdnn_resolve_targets <- function(x_mat, X0 = NULL, x0 = NULL) {
-  if (!is.null(X0) && !is.null(x0)) {
-    stop("Provide either `X0` or `x0`, not both.", call. = FALSE)
-  }
-  if (is.null(X0)) {
-    if (is.null(x0)) {
-      stop("Provide `X0` (m x p) or a single `x0` (length p).", call. = FALSE)
-    }
-    x0_vec <- .validate_target_vector(x0, ncol(x_mat), x0_arg = "x0", x_arg = "X")
-    return(matrix(x0_vec, nrow = 1L))
-  }
-  .validate_ncol_relation(x_mat, X0, y_arg = "X0", x_arg = "X", relation = "equal")
-}
+# The TDNN wrapper reuses the same public-boundary helpers as the DNN wrapper
+# wherever the contract is identical (for example target resolution and
+# jackknife variance assembly).  TDNN-specific code starts only where the
+# rank-weight construction or jackknife engine truly differs.
 
 .tdnn_weights_with_extras <- function(
   x_mat, x0_mat, distance, method, s1, s2, dim, normalize, ctx, return
@@ -41,27 +26,6 @@
     W  = wt$W,
     m  = ncol(wt$W)
   )
-}
-
-.tdnn_jackknife_se_from_loo <- function(loo, q, n, m) {
-  # Identical to .dnn_jackknife_se_from_loo; reproduced here so this file is
-  # self-contained and does not depend on the DNN internals.
-  if (q == 1L) {
-    loo_bar  <- colMeans(loo)
-    centered <- sweep(loo, 2L, loo_bar, FUN = "-")
-    var_jk   <- ((n - 1) / n) * colSums(centered^2)
-    return(matrix(sqrt(pmax(var_jk, 0)), nrow = 1L, ncol = m))
-  }
-
-  se <- matrix(NA_real_, nrow = q, ncol = m)
-  for (j in seq_len(q)) {
-    mj      <- matrix(loo[, j, ], nrow = n, ncol = m)
-    mj_bar  <- colMeans(mj)
-    centered <- sweep(mj, 2L, mj_bar, FUN = "-")
-    var_jk  <- ((n - 1) / n) * colSums(centered^2)
-    se[j, ] <- sqrt(pmax(var_jk, 0))
-  }
-  se
 }
 
 #' Delete-one jackknife SE for TDNN rank-weighted estimators (internal)
@@ -172,7 +136,7 @@
       }
     }
 
-    return(.tdnn_jackknife_se_from_loo(loo = loo, q = q, n = n, m = m))
+    return(.dnn_jackknife_se_from_loo(loo = loo, q = q, n = n, m = m))
   }
 
   # ---- loo fallback: recompute weights from scratch for each deletion ------
@@ -194,7 +158,7 @@
       )
       loo[i, ] <- as.numeric(crossprod(sig[keep, 1L], wt_i$W))
     }
-    return(.tdnn_jackknife_se_from_loo(loo = loo, q = q, n = n, m = m))
+    return(.dnn_jackknife_se_from_loo(loo = loo, q = q, n = n, m = m))
   }
 
   loo <- array(NA_real_, dim = c(n, q, m))
@@ -214,7 +178,7 @@
     )
     loo[i, , ] <- crossprod(sig[keep, , drop = FALSE], wt_i$W)
   }
-  .tdnn_jackknife_se_from_loo(loo = loo, q = q, n = n, m = m)
+  .dnn_jackknife_se_from_loo(loo = loo, q = q, n = n, m = m)
 }
 
 # ---- Fast path: prefix/suffix jackknife via jackknife_rank_full --------------
@@ -301,5 +265,5 @@
   loo <- res$theta_loo
   if (q == 1L) loo <- matrix(loo, n, m)
 
-  .tdnn_jackknife_se_from_loo(loo = loo, q = q, n = n, m = m)
+  .dnn_jackknife_se_from_loo(loo = loo, q = q, n = n, m = m)
 }

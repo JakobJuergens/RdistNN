@@ -362,3 +362,93 @@ test_that("out-of-range integer index in x_cols produces informative error", {
     ignore.case = TRUE
   )
 })
+
+# ============================================================================
+# 13. Extended extras parity across interfaces
+# ============================================================================
+
+test_that("extended return extras are identical across interfaces", {
+  d <- .make_tdnn_iface_data(n = 46L, m = 3L, seed = 116L)
+
+  out_mat <- np_tdnn(
+    X = d$X, X0 = d$X0, Y = d$y,
+    s1 = 2L, s2 = 4L, method = "exact", se = FALSE,
+    return = c("W", "ranks", "ord", "dx", "y", "ess", "neighbors")
+  )
+  out_df <- np_tdnn(
+    data = d$df, x_cols = d$x_cols, y_col = "Y",
+    X0 = d$X0, s1 = 2L, s2 = 4L, method = "exact", se = FALSE,
+    return = c("W", "ranks", "ord", "dx", "y", "ess", "neighbors")
+  )
+
+  expect_equal(out_df$mu, out_mat$mu, tolerance = 1e-12)
+  expect_equal(out_df$W, out_mat$W, tolerance = 1e-12)
+  expect_equal(out_df$ranks, out_mat$ranks)
+  expect_equal(out_df$ord, out_mat$ord)
+  expect_equal(out_df$dx, out_mat$dx, tolerance = 1e-12)
+  expect_equal(out_df$y, out_mat$y, tolerance = 1e-12)
+  expect_equal(out_df$ess, out_mat$ess, tolerance = 1e-12)
+  expect_equal(out_df$neighbors, out_mat$neighbors)
+})
+
+# ============================================================================
+# 14. normalize=FALSE parity
+# ============================================================================
+
+test_that("normalize=FALSE preserves matrix/data-frame equivalence", {
+  d <- .make_tdnn_iface_data(n = 50L, m = 3L, seed = 117L)
+
+  out_mat <- np_tdnn(
+    X = d$X, X0 = d$X0, Y = d$y,
+    s1 = 2L, s2 = 5L, method = "asymp", normalize = FALSE, se = FALSE,
+    return = "W"
+  )
+  out_df <- np_tdnn(
+    data = d$df, x_cols = d$x_cols, y_col = "Y",
+    X0 = d$X0, s1 = 2L, s2 = 5L, method = "asymp", normalize = FALSE, se = FALSE,
+    return = "W"
+  )
+
+  expect_equal(out_df$mu, out_mat$mu, tolerance = 1e-12)
+  expect_equal(out_df$W, out_mat$W, tolerance = 1e-12)
+})
+
+# ============================================================================
+# 15. Distance spec object parity
+# ============================================================================
+
+test_that("distance spec object preserves matrix/data-frame equivalence", {
+  d <- .make_tdnn_iface_data(seed = 118L)
+  dist_spec <- distance_l2()
+
+  out_mat <- np_tdnn(
+    X = d$X, X0 = d$X0, Y = d$y,
+    distance = dist_spec, s1 = 2L, s2 = 4L, method = "exact", se = FALSE
+  )
+  out_df <- np_tdnn(
+    data = d$df, x_cols = d$x_cols, y_col = "Y",
+    X0 = d$X0, distance = dist_spec, s1 = 2L, s2 = 4L, method = "exact", se = FALSE
+  )
+
+  expect_equal(out_df$mu, out_mat$mu, tolerance = 1e-12)
+})
+
+# ============================================================================
+# 16. Degenerate shape parity (p=1, m=1)
+# ============================================================================
+
+test_that("p=1,m=1 edge case remains equivalent across interfaces", {
+  d <- .make_tdnn_iface_data(n = 38L, p = 1L, m = 1L, seed = 119L)
+
+  out_mat <- np_tdnn(
+    X = d$X, X0 = d$X0, Y = d$y,
+    s1 = 1L, s2 = 3L, method = "exact", se = TRUE, jackknife = "fast"
+  )
+  out_df <- np_tdnn(
+    data = d$df, x_cols = d$x_cols, y_col = "Y",
+    X0 = d$X0, s1 = 1L, s2 = 3L, method = "exact", se = TRUE, jackknife = "fast"
+  )
+
+  expect_equal(out_df$mu, out_mat$mu, tolerance = 1e-12)
+  expect_equal(out_df$se, out_mat$se, tolerance = 1e-12)
+})

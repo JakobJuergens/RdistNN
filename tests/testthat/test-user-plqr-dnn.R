@@ -84,6 +84,205 @@ test_that("data-frame and matrix APIs agree for plqr_dnn", {
   expect_equal(out_df$moment, out_df_idx$moment, tolerance = 1e-12)
 })
 
+test_that("plqr_dnn interfaces agree for exact method with fast jackknife", {
+  d <- .make_plqr_data(n = 54L, p = 2L, p_d = 2L, m = 3L, tau = 0.5)
+  nms <- names(d$df)
+
+  out_mat <- plqr_dnn(
+    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+    beta = d$beta, tau = d$tau, X0 = d$X0,
+    method = "exact", k = 2L, s = 3L, se = TRUE, jackknife = "fast"
+  )
+  out_df_name <- plqr_dnn(
+    data = d$df, x_cols = d$x_cols, D_cols = d$D_cols, q_col = "q_oracle",
+    mD_cols = d$mD_cols, y_col = "Y",
+    beta = d$beta, tau = d$tau, X0 = d$X0,
+    method = "exact", k = 2L, s = 3L, se = TRUE, jackknife = "fast"
+  )
+  out_df_idx <- plqr_dnn(
+    data = d$df,
+    x_cols = match(d$x_cols, nms),
+    D_cols = match(d$D_cols, nms),
+    q_col = match("q_oracle", nms),
+    mD_cols = match(d$mD_cols, nms),
+    y_col = match("Y", nms),
+    beta = d$beta, tau = d$tau, X0 = d$X0,
+    method = "exact", k = 2L, s = 3L, se = TRUE, jackknife = "fast"
+  )
+
+  expect_equal(out_df_name$moment, out_mat$moment, tolerance = 1e-12)
+  expect_equal(out_df_name$se, out_mat$se, tolerance = 1e-12)
+  expect_equal(out_df_idx$moment, out_mat$moment, tolerance = 1e-12)
+  expect_equal(out_df_idx$se, out_mat$se, tolerance = 1e-12)
+})
+
+test_that("plqr_dnn interfaces agree for exact method with loo jackknife", {
+  d <- .make_plqr_data(n = 40L, p = 2L, p_d = 2L, m = 2L, tau = 0.5)
+
+  out_mat <- plqr_dnn(
+    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+    beta = d$beta, tau = d$tau, X0 = d$X0,
+    method = "exact", k = 1L, s = 2L, se = TRUE, jackknife = "loo"
+  )
+  out_df <- plqr_dnn(
+    data = d$df, x_cols = d$x_cols, D_cols = d$D_cols, q_col = "q_oracle",
+    mD_cols = d$mD_cols, y_col = "Y",
+    beta = d$beta, tau = d$tau, X0 = d$X0,
+    method = "exact", k = 1L, s = 2L, se = TRUE, jackknife = "loo"
+  )
+
+  expect_equal(out_df$moment, out_mat$moment, tolerance = 1e-12)
+  expect_equal(out_df$se, out_mat$se, tolerance = 1e-12)
+})
+
+test_that("plqr_dnn interfaces agree for asymp method with fast jackknife", {
+  d <- .make_plqr_data(n = 52L, p = 2L, p_d = 2L, m = 3L, tau = 0.5)
+  nms <- names(d$df)
+
+  out_mat <- plqr_dnn(
+    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+    beta = d$beta, tau = d$tau, X0 = d$X0,
+    method = "asymp", k = 2L, s = 4L, se = TRUE, jackknife = "fast"
+  )
+  out_df_name <- plqr_dnn(
+    data = d$df, x_cols = d$x_cols, D_cols = d$D_cols, q_col = "q_oracle",
+    mD_cols = d$mD_cols, y_col = "Y",
+    beta = d$beta, tau = d$tau, X0 = d$X0,
+    method = "asymp", k = 2L, s = 4L, se = TRUE, jackknife = "fast"
+  )
+  out_df_idx <- plqr_dnn(
+    data = d$df,
+    x_cols = match(d$x_cols, nms),
+    D_cols = match(d$D_cols, nms),
+    q_col = match("q_oracle", nms),
+    mD_cols = match(d$mD_cols, nms),
+    y_col = match("Y", nms),
+    beta = d$beta, tau = d$tau, X0 = d$X0,
+    method = "asymp", k = 2L, s = 4L, se = TRUE, jackknife = "fast"
+  )
+
+  expect_equal(out_df_name$moment, out_mat$moment, tolerance = 1e-12)
+  expect_equal(out_df_name$se, out_mat$se, tolerance = 1e-12)
+  expect_equal(out_df_idx$moment, out_mat$moment, tolerance = 1e-12)
+  expect_equal(out_df_idx$se, out_mat$se, tolerance = 1e-12)
+})
+
+test_that("plqr_dnn x0 path agrees across matrix and data interfaces", {
+  d <- .make_plqr_data(n = 44L, p = 2L, p_d = 2L, m = 4L, tau = 0.5)
+  j <- 3L
+
+  out_mat <- plqr_dnn(
+    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+    beta = d$beta, tau = d$tau, x0 = d$X0[j, ],
+    method = "exact", k = 2L, s = 3L, se = FALSE
+  )
+  out_df <- plqr_dnn(
+    data = d$df, x_cols = d$x_cols, D_cols = d$D_cols, q_col = "q_oracle",
+    mD_cols = d$mD_cols, y_col = "Y",
+    beta = d$beta, tau = d$tau, x0 = d$X0[j, ],
+    method = "exact", k = 2L, s = 3L, se = FALSE
+  )
+
+  expect_equal(out_df$moment, out_mat$moment, tolerance = 1e-12)
+})
+
+test_that("plqr_dnn return extras and meta are identical across interfaces", {
+  d <- .make_plqr_data(n = 56L, p = 2L, p_d = 2L, m = 3L, tau = 0.5)
+
+  out_mat <- plqr_dnn(
+    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+    beta = d$beta, tau = d$tau, X0 = d$X0,
+    method = "exact", k = 3L, s = 4L, se = FALSE,
+    return = c("W", "ranks", "ord", "dx", "g", "ess", "neighbors")
+  )
+  out_df <- plqr_dnn(
+    data = d$df, x_cols = d$x_cols, D_cols = d$D_cols, q_col = "q_oracle",
+    mD_cols = d$mD_cols, y_col = "Y",
+    beta = d$beta, tau = d$tau, X0 = d$X0,
+    method = "exact", k = 3L, s = 4L, se = FALSE,
+    return = c("W", "ranks", "ord", "dx", "g", "ess", "neighbors")
+  )
+
+  expect_equal(out_df$moment, out_mat$moment, tolerance = 1e-12)
+  expect_equal(out_df$W, out_mat$W, tolerance = 1e-12)
+  expect_equal(out_df$ranks, out_mat$ranks)
+  expect_equal(out_df$ord, out_mat$ord)
+  expect_equal(out_df$dx, out_mat$dx, tolerance = 1e-12)
+  expect_equal(out_df$g, out_mat$g, tolerance = 1e-12)
+  expect_equal(out_df$ess, out_mat$ess, tolerance = 1e-12)
+  expect_equal(out_df$neighbors, out_mat$neighbors)
+
+  expect_identical(out_df$meta$n, out_mat$meta$n)
+  expect_identical(out_df$meta$m, out_mat$meta$m)
+  expect_identical(out_df$meta$p, out_mat$meta$p)
+  expect_identical(out_df$meta$p_d, out_mat$meta$p_d)
+  expect_identical(out_df$meta$k, out_mat$meta$k)
+  expect_identical(out_df$meta$s, out_mat$meta$s)
+  expect_identical(out_df$meta$method, out_mat$meta$method)
+  expect_identical(out_df$meta$distance, out_mat$meta$distance)
+})
+
+test_that("plqr_dnn preserves interface equivalence with distance spec object", {
+  d <- .make_plqr_data(n = 46L, p = 2L, p_d = 2L, m = 3L, tau = 0.5)
+  dist_spec <- distance_l2()
+
+  out_mat <- plqr_dnn(
+    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+    beta = d$beta, tau = d$tau, X0 = d$X0,
+    distance = dist_spec, method = "exact", k = 2L, s = 3L, se = FALSE
+  )
+  out_df <- plqr_dnn(
+    data = d$df, x_cols = d$x_cols, D_cols = d$D_cols, q_col = "q_oracle",
+    mD_cols = d$mD_cols, y_col = "Y",
+    beta = d$beta, tau = d$tau, X0 = d$X0,
+    distance = dist_spec, method = "exact", k = 2L, s = 3L, se = FALSE
+  )
+
+  expect_equal(out_df$moment, out_mat$moment, tolerance = 1e-12)
+})
+
+test_that("plqr_dnn tibble input matches data.frame input", {
+  skip_if_not_installed("tibble")
+  d <- .make_plqr_data(n = 42L, p = 2L, p_d = 2L, m = 3L, tau = 0.5)
+
+  out_df <- plqr_dnn(
+    data = d$df, x_cols = d$x_cols, D_cols = d$D_cols, q_col = "q_oracle",
+    mD_cols = d$mD_cols, y_col = "Y",
+    beta = d$beta, tau = d$tau, X0 = d$X0,
+    method = "exact", k = 2L, s = 3L, se = FALSE
+  )
+  out_tbl <- plqr_dnn(
+    data = tibble::as_tibble(d$df), x_cols = d$x_cols, D_cols = d$D_cols, q_col = "q_oracle",
+    mD_cols = d$mD_cols, y_col = "Y",
+    beta = d$beta, tau = d$tau, X0 = d$X0,
+    method = "exact", k = 2L, s = 3L, se = FALSE
+  )
+
+  expect_equal(out_tbl$moment, out_df$moment, tolerance = 1e-12)
+})
+
+test_that("plqr_dnn interface equivalence holds in p=1, p_d=1, m=1 edge case", {
+  d <- .make_plqr_data(n = 38L, p = 1L, p_d = 1L, m = 1L, tau = 0.5)
+
+  out_mat <- plqr_dnn(
+    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+    beta = d$beta, tau = d$tau, X0 = d$X0,
+    method = "exact", k = 1L, s = 2L, se = FALSE,
+    return = c("W", "g")
+  )
+  out_df <- plqr_dnn(
+    data = d$df, x_cols = d$x_cols, D_cols = d$D_cols, q_col = "q_oracle",
+    mD_cols = d$mD_cols, y_col = "Y",
+    beta = d$beta, tau = d$tau, X0 = d$X0,
+    method = "exact", k = 1L, s = 2L, se = FALSE,
+    return = c("W", "g")
+  )
+
+  expect_equal(out_df$moment, out_mat$moment, tolerance = 1e-12)
+  expect_equal(out_df$W, out_mat$W, tolerance = 1e-12)
+  expect_equal(out_df$g, out_mat$g, tolerance = 1e-12)
+})
+
 test_that("plqr_dnn returns finite jackknife SEs with expected shape", {
   d <- .make_plqr_data(n = 50L, p = 2L, p_d = 2L, m = 2L, tau = 0.5)
   out <- plqr_dnn(
@@ -202,7 +401,7 @@ test_that("plqr_dnn validation catches shape and beta issues", {
       beta = d$beta, tau = d$tau, X0 = d$X0,
       k = 1L, s = 2L, se = FALSE
     ),
-    "same number of columns",
+    "match ncol\\(D\\)|same number of columns",
     ignore.case = TRUE
   )
 
@@ -243,7 +442,7 @@ test_that("plqr_dnn validation catches shape and beta issues", {
       X0 = d$X0,
       k = 1L, s = 2L, se = FALSE
     ),
-    "provide `x_cols`, `D_cols`, `q_col`, `mD_cols`, and `y_col`",
+    "x_cols.*D_cols.*q_col.*mD_cols.*y_col",
     ignore.case = TRUE
   )
   expect_error(
@@ -313,6 +512,23 @@ test_that("plqr_dnn validation catches shape and beta issues", {
     ),
     "integer scalar"
   )
+})
+
+test_that("plqr_dnn shape diagnostics include expected and actual values", {
+  d <- .make_plqr_data(n = 28L, p = 2L, p_d = 2L, m = 1L, tau = 0.5)
+  msg <- tryCatch(
+    {
+      plqr_dnn(
+        X = d$X, D = d$D[-1, , drop = FALSE], q = d$q, mD = d$mD, Y = d$Y,
+        beta = d$beta, tau = d$tau, X0 = d$X0,
+        k = 1L, s = 2L, se = FALSE
+      )
+      ""
+    },
+    error = function(e) conditionMessage(e)
+  )
+  expect_match(msg, "Expected:", ignore.case = FALSE)
+  expect_match(msg, "Got:", ignore.case = FALSE)
 })
 
 test_that("plqr_dnn matrix API distinguishes NA vs non-finite diagnostics", {

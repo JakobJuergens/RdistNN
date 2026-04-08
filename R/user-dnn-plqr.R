@@ -163,9 +163,15 @@ plqr_dnn <- function(
       .abort_bad_arg("data", "must be a data.frame")
     }
     if (is.null(x_cols) || is.null(D_cols) || is.null(q_col) || is.null(mD_cols) || is.null(y_col)) {
-      stop(
-        "With `data=`, provide `x_cols`, `D_cols`, `q_col`, `mD_cols`, and `y_col`.",
-        call. = FALSE
+      missing_args <- c("x_cols", "D_cols", "q_col", "mD_cols", "y_col")[
+        c(is.null(x_cols), is.null(D_cols), is.null(q_col), is.null(mD_cols), is.null(y_col))
+      ]
+      .abort_bad_arg(
+        "x_cols/D_cols/q_col/mD_cols/y_col",
+        "must be provided with `data=` interface",
+        expected = "all of `x_cols`, `D_cols`, `q_col`, `mD_cols`, and `y_col` are non-NULL",
+        actual = sprintf("missing: %s", paste(missing_args, collapse = ", ")),
+        quoted = FALSE
       )
     }
 
@@ -179,10 +185,21 @@ plqr_dnn <- function(
     y_vec <- .dnn_col_vec(y_col, data, n, arg = "y_col", ref = "X")
   } else {
     if (is.null(X)) {
-      stop("Provide either `data` ... or matrix interface via `X`.", call. = FALSE)
+      .abort_bad_arg(
+        "X",
+        "must be provided for the matrix interface when `data` is NULL",
+        expected = "non-NULL `X`, or use the `data=` interface"
+      )
     }
     if (is.null(D) || is.null(q) || is.null(mD) || is.null(Y)) {
-      stop("Matrix API requires `D`, `q`, `mD`, and `Y`.", call. = FALSE)
+      missing_args <- c("D", "q", "mD", "Y")[c(is.null(D), is.null(q), is.null(mD), is.null(Y))]
+      .abort_bad_arg(
+        "D/q/mD/Y",
+        "must all be provided for the matrix interface",
+        expected = "non-NULL `D`, `q`, `mD`, and `Y`",
+        actual = sprintf("missing: %s", paste(missing_args, collapse = ", ")),
+        quoted = FALSE
+      )
     }
 
     x_mat <- .validate_matrix_nonempty(X, arg = "X")
@@ -196,28 +213,37 @@ plqr_dnn <- function(
   }
 
   if (nrow(d_mat) != n || nrow(mD_mat) != n) {
-    stop("`D` and `mD` must have nrow equal to nrow(X).", call. = FALSE)
+    .abort_bad_arg(
+      "D/mD",
+      "must have row counts equal to nrow(X)",
+      expected = sprintf("nrow(X)=%d", n),
+      actual = sprintf("nrow(D)=%d, nrow(mD)=%d", nrow(d_mat), nrow(mD_mat)),
+      quoted = FALSE
+    )
   }
   if (ncol(d_mat) != ncol(mD_mat)) {
-    stop("`D` and `mD` must have the same number of columns.", call. = FALSE)
+    .abort_bad_arg(
+      "ncol(mD)",
+      "must match ncol(D)",
+      expected = sprintf("ncol(D)=%d", ncol(d_mat)),
+      actual = sprintf("ncol(mD)=%d", ncol(mD_mat)),
+      quoted = FALSE
+    )
   }
   p_d <- ncol(d_mat)
   if (length(beta) != p_d) {
-    stop(sprintf("`beta` length (%d) must equal ncol(D) (%d).", length(beta), p_d), call. = FALSE)
+    .abort_bad_arg(
+      "beta",
+      "length must equal ncol(D)",
+      expected = sprintf("ncol(D)=%d", p_d),
+      actual = sprintf("length(beta)=%d", length(beta))
+    )
   }
 
-  if (.has_na_only(d_mat)) stop("D cannot contain `NA` values.", call. = FALSE)
-  if (.has_nonfinite_non_na(d_mat)) stop("D cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
-  if (.has_na_only(mD_mat)) stop("m_D(X) cannot contain `NA` values.", call. = FALSE)
-  if (.has_nonfinite_non_na(mD_mat)) {
-    stop("m_D(X) cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
-  }
-  if (.has_na_only(q_vec)) stop("q_tau(X) cannot contain `NA` values.", call. = FALSE)
-  if (.has_nonfinite_non_na(q_vec)) {
-    stop("q_tau(X) cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
-  }
-  if (.has_na_only(y_vec)) stop("Y cannot contain `NA` values.", call. = FALSE)
-  if (.has_nonfinite_non_na(y_vec)) stop("Y cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+  .abort_if_na_or_nonfinite(d_mat, arg = "D")
+  .abort_if_na_or_nonfinite(mD_mat, arg = "m_D(X)")
+  .abort_if_na_or_nonfinite(q_vec, arg = "q_tau(X)")
+  .abort_if_na_or_nonfinite(y_vec, arg = "Y")
 
   x0_mat <- .dnn_resolve_targets(x_mat, X0 = X0, x0 = x0)
 

@@ -129,14 +129,18 @@ np_tdnn <- function(
       .abort_bad_arg("data", "must be a data.frame")
     }
     if (is.null(x_cols)) {
-      stop("With `data=`, `x_cols` is required.", call. = FALSE)
+      .abort_bad_arg("x_cols", "is required with `data=` interface")
     }
     x_mat <- .dnn_col_mat(x_cols, data = data, arg = "x_cols", out_arg = "X")
     n     <- nrow(x_mat)
     p     <- ncol(x_mat)
 
     if (is.null(y_col) == is.null(y)) {
-      stop("With `data=`, provide exactly one of `y_col` or `y`.", call. = FALSE)
+      .abort_bad_arg(
+        "y_col/y",
+        "must provide exactly one of `y_col` or `y` with `data=` interface",
+        quoted = FALSE
+      )
     }
     if (!is.null(y_col)) {
       y_vec <- .dnn_col_vec(y_col, data, n, arg = "y_col", ref = "X")
@@ -145,17 +149,21 @@ np_tdnn <- function(
     }
   } else {
     if (is.null(X)) {
-      stop("Provide either `data=` + `x_cols` or the matrix interface via `X`.", call. = FALSE)
+      .abort_bad_arg(
+        "X",
+        "must be provided for the matrix interface when `data` is NULL",
+        expected = "non-NULL `X`, or use `data=` with `x_cols`"
+      )
     }
     x_mat <- .validate_matrix_nonempty(X, arg = "X")
     n     <- nrow(x_mat)
     p     <- ncol(x_mat)
 
     if (!is.null(y)) {
-      stop("Matrix API uses `Y`; `y` is only supported with `data=`.", call. = FALSE)
+      .abort_bad_arg("y", "is only supported with `data=`; matrix interface uses `Y`")
     }
     if (is.null(Y)) {
-      stop("Matrix API requires `Y`.", call. = FALSE)
+      .abort_bad_arg("Y", "is required for the matrix interface")
     }
     y_vec <- .validate_vector_nrow(Y, n, arg = "Y", ref = "X", strict = TRUE)
   }
@@ -172,16 +180,15 @@ np_tdnn <- function(
   # Jackknife feasibility: delete-1 requires s2 < n so the same pair
   # (s1, s2) is valid at both sizes n and n-1.
   if (isTRUE(se) && jackknife != "none" && s2 >= n) {
-    stop(
-      sprintf(
-        "Delete-1 jackknife requires s2 < n (got s2=%d, n=%d). Use `se = FALSE` or reduce `s2`.",
-        s2, n
-      ),
-      call. = FALSE
+    .abort_bad_arg(
+      "s2",
+      "must satisfy s2 < n when delete-1 jackknife is requested",
+      expected = sprintf("s2 < n=%d", n),
+      actual = sprintf("s2=%d (with `se`=%s, `jackknife`='%s')", s2, as.character(se), jackknife)
     )
   }
 
-  x0_mat <- .tdnn_resolve_targets(x_mat, X0 = X0, x0 = x0)
+  x0_mat <- .dnn_resolve_targets(x_mat, X0 = X0, x0 = x0)
 
   # ------------------------------------------------------------------
   # Block 4: computation
@@ -254,7 +261,7 @@ np_tdnn <- function(
   out <- .dnn_attach_common_extras(out, return = return, wt = wt, W = weight_matrix, k = 1L)
   if ("y" %in% return) out$y <- y_vec
 
-  class(out) <- "tdnn_np_result"
+  class(out) <- c("tdnn_np_result", "np_result")
   out
 }
 

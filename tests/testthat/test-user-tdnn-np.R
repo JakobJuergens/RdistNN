@@ -38,6 +38,7 @@ test_that("np_tdnn returns valid shapes and weighted-mean identity", {
   )
 
   expect_s3_class(out, "tdnn_np_result")
+  expect_s3_class(out, "np_result", exact = FALSE)
   expect_true(is.numeric(out$mu))
   expect_length(out$mu, nrow(d$X0))
   expect_true(is.numeric(out$se))
@@ -241,7 +242,7 @@ test_that("input validation catches common misuse", {
   # Matrix API requires Y
   expect_error(
     np_tdnn(X = d$X, X0 = d$X0, s1 = 1L, s2 = 2L),
-    "requires `Y`",
+    "requires `Y`|`Y` is required",
     ignore.case = TRUE
   )
   # y only supported in data= path
@@ -324,6 +325,22 @@ test_that("np_tdnn warns on unknown return values", {
       return = c("W", "ranks", "ord", "dx", "y", "ess", "neighbors")
     )
   )
+})
+
+test_that("np_tdnn jackknife feasibility diagnostics include expected and actual values", {
+  d <- .make_tdnn_data(n = 25L, p = 2L, m = 2L)
+  msg <- tryCatch(
+    {
+      np_tdnn(
+        X = d$X, X0 = d$X0, Y = d$y,
+        s1 = 1L, s2 = nrow(d$X), se = TRUE, jackknife = "loo"
+      )
+      ""
+    },
+    error = function(e) conditionMessage(e)
+  )
+  expect_match(msg, "Expected:", ignore.case = FALSE)
+  expect_match(msg, "Got:", ignore.case = FALSE)
 })
 
 # ============================================================================

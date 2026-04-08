@@ -311,3 +311,44 @@ test_that("metadata fields are stable and informative", {
   expect_identical(out$meta$method, "asymp")
   expect_true(is.character(out$meta$distance))
 })
+
+test_that("cate_dnn warns on unknown return values", {
+  dat <- .make_data(n = 25L, p = 2L, m = 2L)
+  psi <- dat$Y
+
+  expect_warning(
+    cate_dnn(
+      X = dat$X, X0 = dat$X0, pseudo_outcome = psi,
+      k = 1L, s = 2L, se = FALSE, return = c("W", "typo")
+    ),
+    "Unknown `return` value"
+  )
+  expect_no_warning(
+    cate_dnn(
+      X = dat$X, X0 = dat$X0, pseudo_outcome = psi,
+      k = 1L, s = 2L, se = FALSE,
+      return = c("W", "ranks", "ord", "dx", "psi", "nuisance", "ess", "neighbors")
+    )
+  )
+})
+
+test_that("cate_dnn jackknife feasibility diagnostics include expected and actual values", {
+  n <- 10L
+  p <- 2L
+  X <- matrix(rnorm(n * p), n, p)
+  X0 <- matrix(rnorm(2L * p), 2L, p)
+  psi <- rnorm(n)
+
+  msg <- tryCatch(
+    {
+      cate_dnn(
+        X = X, X0 = X0, pseudo_outcome = psi,
+        k = 1L, s = n, method = "exact", se = TRUE, jackknife = "loo"
+      )
+      ""
+    },
+    error = function(e) conditionMessage(e)
+  )
+  expect_match(msg, "Expected:", ignore.case = FALSE)
+  expect_match(msg, "Got:", ignore.case = FALSE)
+})

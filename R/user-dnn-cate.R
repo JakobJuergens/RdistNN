@@ -111,19 +111,31 @@ cate_dnn <- function(
       has_aipw <- !is.null(m0_col) && !is.null(m1_col)
       has_robinson <- !is.null(m_col)
       if (has_aipw && has_robinson) {
-        stop("Provide either {m0_col, m1_col} (full AIPW) OR m_col (Robinson form), not both.",
-          call. = FALSE)
+        .abort_bad_arg(
+          "m_col/m0_col/m1_col",
+          "must specify either {`m0_col`, `m1_col`} (full AIPW) or `m_col` (Robinson), but not both",
+          quoted = FALSE
+        )
       }
       if (!has_aipw && !has_robinson) {
-        stop(
-          "With `data=`, provide `pseudo_outcome` OR outcome model columns:\n",
-          "  - preferred: {y_col, t_col, m0_col, m1_col, e_col} for full AIPW pseudo-outcome\n",
-          "  - alternative: {y_col, t_col, m_col, e_col} for Robinson-form pseudo-outcome",
-          call. = FALSE
+        .abort_bad_arg(
+          "pseudo_outcome",
+          "must be provided, or supply nuisance columns for the `data=` interface",
+          expected = paste0(
+            "`pseudo_outcome`, or full AIPW columns {`y_col`,`t_col`,`m0_col`,`m1_col`,`e_col`}, ",
+            "or Robinson columns {`y_col`,`t_col`,`m_col`,`e_col`}"
+          )
         )
       }
       if (is.null(y_col) || is.null(t_col) || is.null(e_col)) {
-        stop("With `data=`, `y_col`, `t_col`, and `e_col` are required.", call. = FALSE)
+        missing_args <- c("y_col", "t_col", "e_col")[c(is.null(y_col), is.null(t_col), is.null(e_col))]
+        .abort_bad_arg(
+          "y_col/t_col/e_col",
+          "must all be provided with `data=` when constructing pseudo-outcomes from nuisance columns",
+          expected = "`y_col`, `t_col`, and `e_col` are all non-NULL",
+          actual = sprintf("missing: %s", paste(missing_args, collapse = ", ")),
+          quoted = FALSE
+        )
       }
 
       y_vec <- .dnn_col_vec(y_col,  data, n, arg = "y_col",  ref = "data")
@@ -148,11 +160,19 @@ cate_dnn <- function(
     }
   } else {
     # matrix API
-    if (is.null(X)) stop("Provide either `data` ... or matrix interface via `X`.", call. = FALSE)
+    if (is.null(X)) {
+      .abort_bad_arg(
+        "X",
+        "must be provided for the matrix interface when `data` is NULL",
+        expected = "non-NULL `X`, or use the `data=` interface"
+      )
+    }
     x_mat <- .validate_matrix_nonempty(X, arg = "X")
     n <- nrow(x_mat)
     p <- ncol(x_mat)
-    if (is.null(pseudo_outcome)) stop("Matrix API requires `pseudo_outcome`.", call. = FALSE)
+    if (is.null(pseudo_outcome)) {
+      .abort_bad_arg("pseudo_outcome", "is required for the matrix interface")
+    }
     psi <- .validate_vector_nrow(pseudo_outcome, n, arg = "pseudo_outcome", ref = "X", strict = TRUE)
     m0 <- m1 <- m <- e <- NULL
   }
@@ -160,10 +180,12 @@ cate_dnn <- function(
   # Guard the jackknife constraint at the entry point so the user gets a clear
   # error at their call site rather than deep inside the LOO loop.
   if (isTRUE(se) && jackknife != "none" && s >= n) {
-    stop(sprintf(
-      "Delete-1 jackknife requires s < n (got s=%d, n=%d). Use `se = FALSE` or reduce `s`.",
-      s, n
-    ), call. = FALSE)
+    .abort_bad_arg(
+      "s",
+      "must satisfy s < n when delete-1 jackknife is requested",
+      expected = sprintf("s < n=%d", n),
+      actual = sprintf("s=%d (with `se`=%s, `jackknife`='%s')", s, as.character(se), jackknife)
+    )
   }
 
   # Targets

@@ -234,3 +234,246 @@ test_that("data-frame API distinguishes NA vs non-finite x_cols index diagnostic
     ignore.case = TRUE
   )
 })
+
+# ============================================================================
+# Interface-equivalence coverage: matrix vs data-frame paths
+# ============================================================================
+
+test_that("pseudo_outcome path: tau is identical across matrix and data interfaces", {
+  d <- .make_df_data(seed = 101L)
+  nms <- names(d$df)
+  x_mat <- as.matrix(d$df[, d$x_cols, drop = FALSE])
+
+  out_mat <- cate_dnn(
+    X = x_mat, X0 = d$X0, pseudo_outcome = d$psi_aipw,
+    k = 3L, s = 5L, method = "exact", se = FALSE
+  )
+  out_df_name <- cate_dnn(
+    data = d$df, x_cols = d$x_cols, pseudo_outcome = d$psi_aipw,
+    X0 = d$X0, k = 3L, s = 5L, method = "exact", se = FALSE
+  )
+  out_df_idx <- cate_dnn(
+    data = d$df, x_cols = match(d$x_cols, nms), pseudo_outcome = d$psi_aipw,
+    X0 = d$X0, k = 3L, s = 5L, method = "exact", se = FALSE
+  )
+
+  expect_equal(out_df_name$tau, out_mat$tau, tolerance = 1e-12)
+  expect_equal(out_df_idx$tau, out_mat$tau, tolerance = 1e-12)
+})
+
+test_that("AIPW nuisance path matches matrix pseudo_outcome path", {
+  d <- .make_df_data(seed = 102L)
+  nms <- names(d$df)
+  x_mat <- as.matrix(d$df[, d$x_cols, drop = FALSE])
+
+  out_df_name <- cate_dnn(
+    data = d$df,
+    x_cols = d$x_cols,
+    y_col = "Y",
+    t_col = "D",
+    m0_col = "m0_oracle",
+    m1_col = "m1_oracle",
+    e_col = "e_oracle",
+    X0 = d$X0,
+    k = 2L, s = 4L, method = "exact", se = FALSE
+  )
+  out_df_idx <- cate_dnn(
+    data = d$df,
+    x_cols = match(d$x_cols, nms),
+    y_col = match("Y", nms),
+    t_col = match("D", nms),
+    m0_col = match("m0_oracle", nms),
+    m1_col = match("m1_oracle", nms),
+    e_col = match("e_oracle", nms),
+    X0 = d$X0,
+    k = 2L, s = 4L, method = "exact", se = FALSE
+  )
+  out_mat <- cate_dnn(
+    X = x_mat, X0 = d$X0, pseudo_outcome = d$psi_aipw,
+    k = 2L, s = 4L, method = "exact", se = FALSE
+  )
+
+  expect_equal(out_df_name$tau, out_mat$tau, tolerance = 1e-12)
+  expect_equal(out_df_idx$tau, out_mat$tau, tolerance = 1e-12)
+})
+
+test_that("Robinson nuisance path matches matrix pseudo_outcome path", {
+  d <- .make_df_data(seed = 103L)
+  nms <- names(d$df)
+  x_mat <- as.matrix(d$df[, d$x_cols, drop = FALSE])
+
+  out_df_name <- cate_dnn(
+    data = d$df,
+    x_cols = d$x_cols,
+    y_col = "Y",
+    t_col = "D",
+    m_col = "m_oracle",
+    e_col = "e_oracle",
+    X0 = d$X0,
+    k = 2L, s = 4L, method = "exact", se = FALSE
+  )
+  out_df_idx <- cate_dnn(
+    data = d$df,
+    x_cols = match(d$x_cols, nms),
+    y_col = match("Y", nms),
+    t_col = match("D", nms),
+    m_col = match("m_oracle", nms),
+    e_col = match("e_oracle", nms),
+    X0 = d$X0,
+    k = 2L, s = 4L, method = "exact", se = FALSE
+  )
+  out_mat <- cate_dnn(
+    X = x_mat, X0 = d$X0, pseudo_outcome = d$psi_robinson,
+    k = 2L, s = 4L, method = "exact", se = FALSE
+  )
+
+  expect_equal(out_df_name$tau, out_mat$tau, tolerance = 1e-12)
+  expect_equal(out_df_idx$tau, out_mat$tau, tolerance = 1e-12)
+})
+
+test_that("pseudo_outcome path: tau and se agree across interfaces (exact, fast jackknife)", {
+  d <- .make_df_data(n = 45L, m = 4L, seed = 104L)
+  x_mat <- as.matrix(d$df[, d$x_cols, drop = FALSE])
+
+  out_mat <- cate_dnn(
+    X = x_mat, X0 = d$X0, pseudo_outcome = d$psi_aipw,
+    k = 2L, s = 4L, method = "exact", se = TRUE, jackknife = "fast"
+  )
+  out_df <- cate_dnn(
+    data = d$df, x_cols = d$x_cols, pseudo_outcome = d$psi_aipw,
+    X0 = d$X0, k = 2L, s = 4L, method = "exact", se = TRUE, jackknife = "fast"
+  )
+
+  expect_equal(out_df$tau, out_mat$tau, tolerance = 1e-12)
+  expect_equal(out_df$se, out_mat$se, tolerance = 1e-12)
+})
+
+test_that("pseudo_outcome path: tau and se agree across interfaces (exact, loo jackknife)", {
+  d <- .make_df_data(n = 34L, m = 3L, seed = 105L)
+  x_mat <- as.matrix(d$df[, d$x_cols, drop = FALSE])
+
+  out_mat <- cate_dnn(
+    X = x_mat, X0 = d$X0, pseudo_outcome = d$psi_aipw,
+    k = 1L, s = 3L, method = "exact", se = TRUE, jackknife = "loo"
+  )
+  out_df <- cate_dnn(
+    data = d$df, x_cols = d$x_cols, pseudo_outcome = d$psi_aipw,
+    X0 = d$X0, k = 1L, s = 3L, method = "exact", se = TRUE, jackknife = "loo"
+  )
+
+  expect_equal(out_df$tau, out_mat$tau, tolerance = 1e-12)
+  expect_equal(out_df$se, out_mat$se, tolerance = 1e-12)
+})
+
+test_that("pseudo_outcome path: tau and se agree across interfaces (asymp, fast jackknife)", {
+  d <- .make_df_data(n = 48L, m = 3L, seed = 106L)
+  x_mat <- as.matrix(d$df[, d$x_cols, drop = FALSE])
+
+  out_mat <- cate_dnn(
+    X = x_mat, X0 = d$X0, pseudo_outcome = d$psi_aipw,
+    k = 2L, s = 5L, method = "asymp", se = TRUE, jackknife = "fast"
+  )
+  out_df <- cate_dnn(
+    data = d$df, x_cols = d$x_cols, pseudo_outcome = d$psi_aipw,
+    X0 = d$X0, k = 2L, s = 5L, method = "asymp", se = TRUE, jackknife = "fast"
+  )
+
+  expect_equal(out_df$tau, out_mat$tau, tolerance = 1e-12)
+  expect_equal(out_df$se, out_mat$se, tolerance = 1e-12)
+})
+
+test_that("x0 path via data-frame pseudo_outcome matches matrix interface", {
+  d <- .make_df_data(n = 40L, p = 3L, m = 5L, seed = 107L)
+  x_mat <- as.matrix(d$df[, d$x_cols, drop = FALSE])
+  j <- 3L
+
+  out_mat <- cate_dnn(
+    X = x_mat, x0 = d$X0[j, ], pseudo_outcome = d$psi_aipw,
+    k = 2L, s = 4L, method = "exact", se = FALSE
+  )
+  out_df <- cate_dnn(
+    data = d$df, x_cols = d$x_cols, x0 = d$X0[j, ], pseudo_outcome = d$psi_aipw,
+    k = 2L, s = 4L, method = "exact", se = FALSE
+  )
+
+  expect_equal(out_df$tau, out_mat$tau, tolerance = 1e-12)
+})
+
+test_that("return extras are identical across interfaces on pseudo_outcome path", {
+  d <- .make_df_data(n = 44L, m = 3L, seed = 108L)
+  x_mat <- as.matrix(d$df[, d$x_cols, drop = FALSE])
+
+  out_mat <- cate_dnn(
+    X = x_mat, X0 = d$X0, pseudo_outcome = d$psi_aipw,
+    k = 2L, s = 4L, method = "exact", se = FALSE,
+    return = c("W", "ranks", "ord", "dx", "psi", "ess", "neighbors")
+  )
+  out_df <- cate_dnn(
+    data = d$df, x_cols = d$x_cols, pseudo_outcome = d$psi_aipw,
+    X0 = d$X0, k = 2L, s = 4L, method = "exact", se = FALSE,
+    return = c("W", "ranks", "ord", "dx", "psi", "ess", "neighbors")
+  )
+
+  expect_equal(out_df$W, out_mat$W, tolerance = 1e-12)
+  expect_equal(out_df$ranks, out_mat$ranks)
+  expect_equal(out_df$ord, out_mat$ord)
+  expect_equal(out_df$dx, out_mat$dx, tolerance = 1e-12)
+  expect_equal(out_df$psi, out_mat$psi, tolerance = 1e-12)
+  expect_equal(out_df$ess, out_mat$ess, tolerance = 1e-12)
+  expect_equal(out_df$neighbors, out_mat$neighbors)
+})
+
+test_that("meta fields are identical across interfaces on pseudo_outcome path", {
+  d <- .make_df_data(seed = 109L)
+  x_mat <- as.matrix(d$df[, d$x_cols, drop = FALSE])
+
+  out_mat <- cate_dnn(
+    X = x_mat, X0 = d$X0, pseudo_outcome = d$psi_aipw,
+    k = 2L, s = 4L, method = "exact", se = FALSE
+  )
+  out_df <- cate_dnn(
+    data = d$df, x_cols = d$x_cols, pseudo_outcome = d$psi_aipw,
+    X0 = d$X0, k = 2L, s = 4L, method = "exact", se = FALSE
+  )
+
+  expect_identical(out_df$meta$n, out_mat$meta$n)
+  expect_identical(out_df$meta$m, out_mat$meta$m)
+  expect_identical(out_df$meta$p, out_mat$meta$p)
+  expect_identical(out_df$meta$k, out_mat$meta$k)
+  expect_identical(out_df$meta$s, out_mat$meta$s)
+  expect_identical(out_df$meta$method, out_mat$meta$method)
+  expect_identical(out_df$meta$distance, out_mat$meta$distance)
+})
+
+test_that("distance spec object preserves interface equivalence", {
+  d <- .make_df_data(seed = 110L)
+  x_mat <- as.matrix(d$df[, d$x_cols, drop = FALSE])
+  dist_spec <- distance_l2()
+
+  out_mat <- cate_dnn(
+    X = x_mat, X0 = d$X0, pseudo_outcome = d$psi_aipw,
+    distance = dist_spec, k = 2L, s = 4L, method = "exact", se = FALSE
+  )
+  out_df <- cate_dnn(
+    data = d$df, x_cols = d$x_cols, pseudo_outcome = d$psi_aipw,
+    X0 = d$X0, distance = dist_spec, k = 2L, s = 4L, method = "exact", se = FALSE
+  )
+
+  expect_equal(out_df$tau, out_mat$tau, tolerance = 1e-12)
+})
+
+test_that("tibble input matches data.frame input on pseudo_outcome path", {
+  skip_if_not_installed("tibble")
+  d <- .make_df_data(seed = 111L)
+
+  out_df <- cate_dnn(
+    data = d$df, x_cols = d$x_cols, pseudo_outcome = d$psi_aipw,
+    X0 = d$X0, k = 2L, s = 4L, method = "exact", se = FALSE
+  )
+  out_tbl <- cate_dnn(
+    data = tibble::as_tibble(d$df), x_cols = d$x_cols, pseudo_outcome = d$psi_aipw,
+    X0 = d$X0, k = 2L, s = 4L, method = "exact", se = FALSE
+  )
+
+  expect_equal(out_tbl$tau, out_df$tau, tolerance = 1e-12)
+})

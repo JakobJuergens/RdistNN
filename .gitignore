@@ -12,3 +12,6 @@ src/*.so
 src/*.dll
 src/*.dylib
 
+# Local troubleshooting outputs (do not commit)
+docs_local_ci_check/
+GH_logs/run_*.log
