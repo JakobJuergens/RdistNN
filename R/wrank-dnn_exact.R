@@ -85,7 +85,7 @@ dnn_weights_exact_full_from_ranks <- function(ranks, k, s) {
 
   # normalize (guard against tiny numerical drift)
   sw <- sum(w_rank)
-  if (!is.finite(sw) || sw <= 0) stop("Internal error: nonpositive total weight.")
+  if (!is.finite(sw) || sw <= 0) stop("Internal error: nonpositive total weight.", call. = FALSE)
   if (abs(sw - 1) > 1e-12) w_rank <- w_rank / sw
 
   # map back to data order: w[i] = w_rank[ ranks[i] ]

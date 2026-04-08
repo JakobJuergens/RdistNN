@@ -31,7 +31,7 @@
   if (isTRUE(normalize)) {
     sw <- sum(w_rank)
     if (!is.finite(sw) || sw <= 0) {
-      stop("Internal error: non-positive total weight in .dnn_rank_table_asymp_k1.")
+      stop("Internal error: non-positive total weight in .dnn_rank_table_asymp_k1.", call. = FALSE)
     }
     if (abs(sw - 1) > 1e-12) w_rank <- w_rank / sw
   }
@@ -81,10 +81,10 @@ tdnn_rank_table_asymp <- function(n, s1, s2, dim, normalize = TRUE) {
   s2  <- as.integer(s2)
   dim <- as.integer(dim)
 
-  if (n < 1L) stop("`n` must be a positive integer.")
-  if (s1 < 1L || s1 >= s2) stop("`s1` must satisfy 1 <= s1 < s2.")
-  if (s2 > n)  stop("`s2` must satisfy s2 <= n.")
-  if (dim < 1L) stop("`dim` must be a positive integer.")
+  if (n < 1L) stop("`n` must be a positive integer.", call. = FALSE)
+  if (s1 < 1L || s1 >= s2) stop("`s1` must satisfy 1 <= s1 < s2.", call. = FALSE)
+  if (s2 > n)  stop("`s2` must satisfy s2 <= n.", call. = FALSE)
+  if (dim < 1L) stop("`dim` must be a positive integer.", call. = FALSE)
 
   sc <- .tdnn_scalars(s1, s2, dim)
   t1 <- .dnn_rank_table_asymp_k1(n, s1, normalize = FALSE)
@@ -94,7 +94,7 @@ tdnn_rank_table_asymp <- function(n, s1, s2, dim, normalize = TRUE) {
   if (isTRUE(normalize)) {
     sw <- sum(w_rank)
     if (!is.finite(sw) || abs(sw) < .Machine$double.eps * 100) {
-      stop("Internal error: TDNN asymptotic rank table has zero/non-finite sum.")
+      stop("Internal error: TDNN asymptotic rank table has zero/non-finite sum.", call. = FALSE)
     }
     if (abs(sw - 1) > 1e-10) w_rank <- w_rank / sw
   }
@@ -137,19 +137,19 @@ tdnn_rank_table_asymp <- function(n, s1, s2, dim, normalize = TRUE) {
 #' @export
 dnn_weights_tdnn_asymp_full_from_ranks <- function(ranks, s1, s2, dim,
                                                     normalize = TRUE) {
-  if (is.null(ranks)) stop("`ranks` must be provided.")
+  if (is.null(ranks)) stop("`ranks` must be provided.", call. = FALSE)
   if (!is.integer(ranks)) ranks <- as.integer(ranks)
   n <- length(ranks)
-  if (n < 1L) stop("`ranks` must have positive length.")
-  if (anyNA(ranks)) stop("`ranks` cannot contain NA.")
-  if (!setequal(ranks, seq_len(n))) stop("`ranks` must be a permutation of 1..n.")
+  if (n < 1L) stop("`ranks` must have positive length.", call. = FALSE)
+  if (anyNA(ranks)) stop("`ranks` cannot contain NA.", call. = FALSE)
+  if (!setequal(ranks, seq_len(n))) stop("`ranks` must be a permutation of 1..n.", call. = FALSE)
 
   s1  <- as.integer(s1)
   s2  <- as.integer(s2)
   dim <- as.integer(dim)
-  if (s1 < 1L || s1 >= s2) stop("`s1` must satisfy 1 <= s1 < s2.")
-  if (s2 > n)  stop("`s2` must satisfy s2 <= n.")
-  if (dim < 1L) stop("`dim` must be a positive integer.")
+  if (s1 < 1L || s1 >= s2) stop("`s1` must satisfy 1 <= s1 < s2.", call. = FALSE)
+  if (s2 > n)  stop("`s2` must satisfy s2 <= n.", call. = FALSE)
+  if (dim < 1L) stop("`dim` must be a positive integer.", call. = FALSE)
 
   w_rank <- tdnn_rank_table_asymp(n, s1, s2, dim, normalize = normalize)
   w <- w_rank[ranks]

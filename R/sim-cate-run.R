@@ -208,10 +208,11 @@ sim_cate_run <- function(
     verbose     = TRUE
 ) {
   # Rep-level parallel map: future_lapply when available, lapply otherwise.
-  # We set future.seed = FALSE because seeds are managed explicitly inside
-  # sim_cate_one_rep() via sim_cate_data(..., seed = sd).
+  # Use future.seed = TRUE for parallel-safe reproducible RNG streams in the
+  # workers. Replicate-specific randomness remains anchored by explicit unique
+  # per-rep seeds passed as `seed = sd` into sim_cate_one_rep().
   .lapply <- if (requireNamespace("future.apply", quietly = TRUE)) {
-    function(X, FUN) future.apply::future_lapply(X, FUN, future.seed = FALSE)
+    function(X, FUN) future.apply::future_lapply(X, FUN, future.seed = TRUE)
   } else {
     lapply
   }

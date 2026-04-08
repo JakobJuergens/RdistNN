@@ -136,11 +136,11 @@ jackknife_rank_full <- function(ranks, PHI, wn, wnm1) {
 
   n <- nrow(ranks)
   if (length(wn) != n)
-    stop("`wn` must have length nrow(ranks).")
+    stop("`wn` must have length nrow(ranks).", call. = FALSE)
   if (length(wnm1) != n - 1L)
-    stop("`wnm1` must have length nrow(ranks) - 1.")
+    stop("`wnm1` must have length nrow(ranks) - 1.", call. = FALSE)
   if (nrow(PHI) != n)
-    stop("`PHI` must have nrow(ranks) rows.")
+    stop("`PHI` must have nrow(ranks) rows.", call. = FALSE)
 
   if (exists("rustat_jackknife_rank_full", mode = "function")) {
     return(rustat_jackknife_rank_full(ranks, PHI, wn, wnm1))

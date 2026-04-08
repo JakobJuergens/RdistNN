@@ -79,11 +79,11 @@ jackknife_fast_rank <- function(ranks, a, phi, normalize = TRUE) {
   Tn <- nrow(ranks)
   K <- ncol(ranks)
   s <- length(a)
-  if (K < s + 1L) stop("ncol(ranks) must be at least s+1.")
+  if (K < s + 1L) stop("ncol(ranks) must be at least s+1.", call. = FALSE)
 
   # Normalization constant
   Z <- if (isTRUE(normalize)) sum(a) else 1
-  if (isTRUE(normalize) && Z == 0) stop("sum(a) == 0 with normalize=TRUE.")
+  if (isTRUE(normalize) && Z == 0) stop("sum(a) == 0 with normalize=TRUE.", call. = FALSE)
 
   # Prepare y_tk: array (T x (s+1) x q) of per-(t,k) contributions
   if (is.matrix(phi) && is.numeric(phi)) {
@@ -93,7 +93,7 @@ jackknife_fast_rank <- function(ranks, a, phi, normalize = TRUE) {
     y_tk <- array(0.0, dim = c(Tn, s + 1L, q))
     for (k in seq_len(s + 1L)) {
       idx <- ranks[, k]
-      if (any(idx < 1L) || any(idx > n_ref)) stop("ranks indices out of PHI range.")
+      if (any(idx < 1L) || any(idx > n_ref)) stop("ranks indices out of PHI range.", call. = FALSE)
       y_tk[, k, ] <- PHI[idx, , drop = FALSE]
     }
   } else if (is.function(phi)) {
@@ -109,7 +109,7 @@ jackknife_fast_rank <- function(ranks, a, phi, normalize = TRUE) {
       }
     }
   } else {
-    stop("`phi` must be either a numeric matrix (n_ref x q) or a function(j, t).")
+    stop("`phi` must be either a numeric matrix (n_ref x q) or a function(j, t).", call. = FALSE)
   }
 
   # Baseline per-target sums: S_t = sum_{k<=s} a_k * y_{t,k}

@@ -169,6 +169,44 @@ test_that("sim_cate_run: smoke test with 3 reps over a small grid", {
   expect_true(all(raw$se > 0))
 })
 
+test_that("sim_cate_run: replicate seeds are unique and reproducible", {
+  args <- list(
+    designs = "dgp1_linear",
+    n_vals = 100L,
+    kx_vals = 2L,
+    n_reps = 6L,
+    master_seed = 123L,
+    verbose = FALSE
+  )
+  raw1 <- do.call(sim_cate_run, args)
+  raw2 <- do.call(sim_cate_run, args)
+
+  expect_equal(raw1$seed, raw2$seed)
+  expect_equal(length(unique(raw1$seed)), 6L)
+})
+
+test_that("sim_cate_run: no future.apply RNG misuse warning", {
+  skip_if_not_installed("future.apply")
+
+  warns <- character()
+  invisible(withCallingHandlers(
+    sim_cate_run(
+      designs = "dgp1_linear",
+      n_vals = 80L,
+      kx_vals = 2L,
+      n_reps = 2L,
+      master_seed = 321L,
+      verbose = FALSE
+    ),
+    warning = function(w) {
+      warns <<- c(warns, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  ))
+
+  expect_false(any(grepl("UNRELIABLE VALUE|future\\.seed", warns, ignore.case = TRUE)))
+})
+
 test_that("sim_cate_run: multi-method produces one row per method per rep", {
   raw <- sim_cate_run(
     designs     = "dgp1_linear",
