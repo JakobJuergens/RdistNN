@@ -11,6 +11,7 @@ vignette: >
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 library(RdistNN)
 set.seed(1)
+tuning_default <- tuning_dnn_paper()
 ```
 
 ## Overview
@@ -27,6 +28,7 @@ Each wrapper supports:
 - matrix and data-frame interfaces
 - DNN method choice (`"exact"` or `"asymp"`)
 - delete-1 jackknife SEs (`"fast"`, `"loo"`, `"none"`)
+- modular kernel-order tuning via `tuning = tuning_dnn_paper(...)`
 
 ## Local Mean (`np_dnn`)
 
@@ -39,10 +41,11 @@ fit_np <- np_dnn(
   y_col = "Y",
   x0 = c(0, 0),
   method = "exact",
-  k = 2L, s = 3L,
+  k = 2L,
+  tuning = tuning_default,
   se = TRUE,
   jackknife = "fast",
-  return = c("W", "ess")
+  return = c("W", "ess", "tuning")
 )
 
 fit_np$mu
@@ -72,9 +75,10 @@ fit_cate <- cate_dnn(
   e_col = "e_oracle",
   x0 = c(0, 0),
   method = "exact",
-  k = 2L, s = 3L,
+  k = 2L,
+  tuning = tuning_default,
   se = TRUE,
-  return = c("psi", "nuisance")
+  return = c("psi", "nuisance", "tuning")
 )
 
 summary(fit_cate)
@@ -98,9 +102,10 @@ fit_plqr <- plqr_dnn(
   tau = 0.5,
   x0 = c(0, 0),
   method = "exact",
-  k = 2L, s = 3L,
+  k = 2L,
+  tuning = tuning_default,
   se = TRUE,
-  return = c("g", "ess")
+  return = c("g", "ess", "tuning")
 )
 
 fit_plqr$moment

@@ -57,11 +57,14 @@ dgp$tau_x0   # true CATE at x0 = (0, 0)
 nuisances, and returns per-replicate metrics:
 
 ```{r one-rep}
+tuning_default <- tuning_dnn_paper()
+s_default <- tuning_eval(tuning_default, n = 300, kx = 2, k = 5)$s
+
 r <- sim_cate_one_rep(
   n      = 300,
   kx     = 2,
   k      = 5,
-  s      = floor(300 ^ (3 / 4)),   # undersmoothing: s ~ n^((kx+1)/(kx+2))
+  s      = s_default,
   design = "dgp2_nonlinear",
   seed   = 1
 )
@@ -81,6 +84,7 @@ raw <- sim_cate_run(
   kx_vals     = 2L,
   n_reps      = 5L,
   master_seed = 42L,
+  tuning      = tuning_dnn_paper(),
   verbose     = FALSE
 )
 head(raw)

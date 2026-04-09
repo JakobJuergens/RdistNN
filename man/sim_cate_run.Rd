@@ -13,6 +13,7 @@ sim_cate_run(
   master_seed = 42L,
   k = 5L,
   s_fn = function(n, kx) floor(n^((kx + 1L)/(kx + 2L))),
+  tuning = NULL,
   methods = "dnn_oracle",
   alpha = 0.05,
   sigma = 0.5,
@@ -39,6 +40,10 @@ across DGPs, sample sizes, and methods (fair comparison).}
 \item{s_fn}{Function \code{f(n, kx)} returning the integer kernel order.
 Default satisfies the undersmoothing condition
 \eqn{s \asymp n^{(k_x+1)/(k_x+2)}}.}
+
+\item{tuning}{Optional kernel-order tuning specification. When supplied,
+\code{s} is resolved per simulation cell from \code{tuning_eval(..., mode = "default")}
+and \code{s_fn} must be omitted.}
 
 \item{methods}{Character vector of method names; see \code{\link[=sim_cate_methods]{sim_cate_methods()}}.
 Default: \code{"dnn_oracle"}.}

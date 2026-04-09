@@ -31,6 +31,8 @@
 #' @param distance Distance name or specification (for example `"l2"`).
 #' @param method One of `"exact"` or `"asymp"` for DNN weights.
 #' @param k,s Integer DNN tuning parameters.
+#' @param tuning Optional kernel-order tuning specification. When supplied,
+#'   `s` must be omitted and is resolved from `tuning`.
 #' @param normalize Logical; renormalize columns of `W` to sum to 1.
 #' @param se Logical; compute delete-1 jackknife standard errors.
 #' @param jackknife One of `"fast"`, `"loo"`, or `"none"`. `"fast"` (default)
@@ -39,7 +41,7 @@
 #' @param ctx Optional context passed to distance and ranking components.
 #' @param return Optional extras in addition to the always-returned `mu`, `se`,
 #'   and `meta`. Allowed values:
-#'   `c("W", "ranks", "ord", "dx", "y", "ess", "neighbors")`.
+#'   `c("W", "ranks", "ord", "dx", "y", "ess", "neighbors", "tuning")`.
 #'
 #' @return An object of class `np_result` with components:
 #'   - `mu`: estimated local mean values at target points;
@@ -74,6 +76,7 @@ np_dnn <- function(
   method = c("exact", "asymp"),
   k = 1L,
   s = 1L,
+  tuning = NULL,
   normalize = TRUE,
   se = TRUE,
   jackknife = c("fast", "loo", "none"),
@@ -82,10 +85,9 @@ np_dnn <- function(
 ) {
   method <- match.arg(method)
   jackknife <- match.arg(jackknife)
+  s_arg <- if (missing(s)) NULL else s
   k <- .validate_scalar_int(k, "k")
-  s <- .validate_scalar_int(s, "s")
-  if (k > s) .abort_bad_arg("k", sprintf("must satisfy k <= s (got k=%d, s=%d)", k, s))
-  .warn_unknown_return(return, valid = c("W", "ranks", "ord", "dx", "y", "ess", "neighbors"))
+  .warn_unknown_return(return, valid = c("W", "ranks", "ord", "dx", "y", "ess", "neighbors", "tuning"))
 
   if (!is.null(data)) {
     if (!is.data.frame(data)) {
@@ -122,6 +124,20 @@ np_dnn <- function(
     }
     y_vec <- .validate_vector_nrow(Y, n, arg = "Y", ref = "X", strict = TRUE)
   }
+
+  s_resolved <- .dnn_resolve_s(
+    s = s_arg,
+    tuning = tuning,
+    n = n,
+    p = p,
+    k = k,
+    se = se,
+    jackknife = jackknife,
+    ctx = ctx
+  )
+  s <- s_resolved$s
+  tuning_payload <- s_resolved$tuning
+  tuning_used <- isTRUE(s_resolved$tuning_used)
 
   x0_mat <- .dnn_resolve_targets(x_mat, X0 = X0, x0 = x0)
 
@@ -172,7 +188,15 @@ np_dnn <- function(
       method = method, distance = .dnn_distance_name(distance)
     )
   )
-  out <- .dnn_attach_common_extras(out, return = return, wt = wt, W = weight_matrix, k = k)
+  if (tuning_used) out$meta$tuning <- tuning_payload
+  out <- .dnn_attach_common_extras(
+    out,
+    return = return,
+    wt = wt,
+    W = weight_matrix,
+    k = k,
+    tuning_payload = tuning_payload
+  )
   if ("y" %in% return) out$y <- y_vec
 
   class(out) <- "np_result"

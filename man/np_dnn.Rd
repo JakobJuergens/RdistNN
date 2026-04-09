@@ -17,6 +17,7 @@ np_dnn(
   method = c("exact", "asymp"),
   k = 1L,
   s = 1L,
+  tuning = NULL,
   normalize = TRUE,
   se = TRUE,
   jackknife = c("fast", "loo", "none"),
@@ -49,6 +50,9 @@ interface, use this instead of \code{y_col}.}
 
 \item{k, s}{Integer DNN tuning parameters.}
 
+\item{tuning}{Optional kernel-order tuning specification. When supplied,
+\code{s} must be omitted and is resolved from \code{tuning}.}
+
 \item{normalize}{Logical; renormalize columns of \code{W} to sum to 1.}
 
 \item{se}{Logical; compute delete-1 jackknife standard errors.}
@@ -61,7 +65,7 @@ recomputes leave-one-out weights directly, and \code{"none"} skips SEs.}
 
 \item{return}{Optional extras in addition to the always-returned \code{mu}, \code{se},
 and \code{meta}. Allowed values:
-\code{c("W", "ranks", "ord", "dx", "y", "ess", "neighbors")}.}
+\code{c("W", "ranks", "ord", "dx", "y", "ess", "neighbors", "tuning")}.}
 }
 \value{
 An object of class \code{np_result} with components:

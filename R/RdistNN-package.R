@@ -10,6 +10,8 @@
 #' @section Main User Workflows:
 #' - Compute DNN weights with [weights_dnn()], [weights_dnn_exact()], and
 #'   [weights_dnn_asymp()].
+#' - Resolve paper-default kernel orders with [tuning_dnn_paper()] and
+#'   [tuning_eval()].
 #' - Estimate local CATE targets with [cate_dnn()].
 #' - Summarize/predict CATE fits with [summary.cate_result()],
 #'   [confint.cate_result()], and [predict.cate_result()].
@@ -24,6 +26,8 @@
 #' - Start with `vignette("getting-started", package = "RdistNN")`.
 #' - For step-by-step extension patterns for custom distances, rank weights,
 #'   and scores, see `vignette("extending", package = "RdistNN")`.
+#' - For modular kernel-order tuning rules and registry usage, see
+#'   `vignette("kernel-order-tuning", package = "RdistNN")`.
 #' - For distance/rank weighting details see
 #'   `vignette("dnn-weights", package = "RdistNN")`.
 #' - For estimator workflows see

@@ -19,6 +19,7 @@ set.seed(3)
 
 - ranking: turn `X` and `x0` / `X0` into distances, orders, and ranks;
 - weighting: turn ranks into localization weights;
+- tuning: resolve kernel order `s` from `(n, kx, k)` using a pluggable rule;
 - scoring: evaluate a kernel or estimating function on subsets of the data;
 - wrappers: combine the pieces into user-facing workflows such as `np_dnn()`,
   `cate_dnn()`, or `plqr_dnn()`.
@@ -39,11 +40,31 @@ As a rule of thumb:
   custom ranking provider.
 - If you like the ranks but want a different localization profile, implement a
   custom rank-weight rule.
+- If you want a different kernel-order rule, implement a custom tuning spec.
 - If the localization stays fixed but the target moment changes, implement a
   custom score.
 - If you already have distances, orders, or ranks from another engine, pass
   them directly into `weights_matrix()` instead of rebuilding that layer inside
   `RdistNN`.
+
+## 0) Kernel-Order Tuning Specs
+
+Tuning specs mirror the same constructor/registry style as distances and rank
+weights. The built-in paper default is:
+
+```{r tuning-paper, eval=FALSE}
+tun <- tuning_dnn_paper(kappa = 1)
+tuning_eval(tun, n = 500, kx = 2, k = 5)
+tuning_eval(tun, n = 500, kx = 2, k = 5, mode = "grid")
+```
+
+You can add custom rules:
+
+```{r tuning-custom, eval=FALSE}
+tun_fast <- as_tuning(function(n, kx, ...) floor(0.8 * n^((kx + 1)/(kx + 2))), name = "fast_rule")
+register_tuning("fast_rule", tun_fast)
+tuning_names()
+```
 
 ## 1) Custom Distances
 

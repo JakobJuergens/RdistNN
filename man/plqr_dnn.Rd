@@ -24,6 +24,7 @@ plqr_dnn(
   method = c("exact", "asymp"),
   k = 1L,
   s = 1L,
+  tuning = NULL,
   normalize = TRUE,
   se = TRUE,
   jackknife = c("fast", "loo", "none"),
@@ -75,6 +76,9 @@ interface.}
 
 \item{k, s}{Integer DNN tuning parameters.}
 
+\item{tuning}{Optional kernel-order tuning specification. When supplied,
+\code{s} must be omitted and is resolved from \code{tuning}.}
+
 \item{normalize}{Logical; renormalize columns of \code{W} to sum to 1.}
 
 \item{se}{Logical; compute delete-1 jackknife standard errors.}
@@ -87,7 +91,7 @@ recomputes leave-one-out weights directly, and \code{"none"} skips SEs.}
 
 \item{return}{Optional extras in addition to the always-returned \code{moment},
 \code{se}, \code{beta}, \code{tau}, and \code{meta}. Allowed values:
-\code{c("W", "ranks", "ord", "dx", "g", "ess", "neighbors")}.}
+\code{c("W", "ranks", "ord", "dx", "g", "ess", "neighbors", "tuning")}.}
 }
 \value{
 An object of class \code{plqr_result} with components:

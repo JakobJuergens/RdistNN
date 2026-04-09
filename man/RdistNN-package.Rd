@@ -20,6 +20,8 @@ target;
 \itemize{
 \item Compute DNN weights with \code{\link[=weights_dnn]{weights_dnn()}}, \code{\link[=weights_dnn_exact]{weights_dnn_exact()}}, and
 \code{\link[=weights_dnn_asymp]{weights_dnn_asymp()}}.
+\item Resolve paper-default kernel orders with \code{\link[=tuning_dnn_paper]{tuning_dnn_paper()}} and
+\code{\link[=tuning_eval]{tuning_eval()}}.
 \item Estimate local CATE targets with \code{\link[=cate_dnn]{cate_dnn()}}.
 \item Summarize/predict CATE fits with \code{\link[=summary.cate_result]{summary.cate_result()}},
 \code{\link[=confint.cate_result]{confint.cate_result()}}, and \code{\link[=predict.cate_result]{predict.cate_result()}}.
@@ -38,6 +40,8 @@ target;
 \item Start with \code{vignette("getting-started", package = "RdistNN")}.
 \item For step-by-step extension patterns for custom distances, rank weights,
 and scores, see \code{vignette("extending", package = "RdistNN")}.
+\item For modular kernel-order tuning rules and registry usage, see
+\code{vignette("kernel-order-tuning", package = "RdistNN")}.
 \item For distance/rank weighting details see
 \code{vignette("dnn-weights", package = "RdistNN")}.
 \item For estimator workflows see

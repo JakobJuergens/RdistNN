@@ -74,6 +74,99 @@
   .validate_ncol_relation(x_mat, X0, y_arg = "X0", x_arg = "X", relation = "equal")
 }
 
+.dnn_resolve_s <- function(s, tuning, n, p, k, se, jackknife, ctx = NULL) {
+  needs_jk <- isTRUE(se) && !identical(jackknife, "none")
+
+  if (is.null(tuning)) {
+    s_out <- if (is.null(s)) 1L else .validate_scalar_int(s, "s")
+    k_ok <- as.integer(k) <= as.integer(s_out)
+    s_ok <- if (needs_jk) as.integer(s_out) < as.integer(n) else TRUE
+    if (!k_ok) {
+      .abort_bad_arg("k", sprintf("must satisfy k <= s (got k=%d, s=%d)", as.integer(k), as.integer(s_out)))
+    }
+    if (!s_ok) {
+      .abort_bad_arg(
+        "s",
+        "must satisfy s < n when delete-1 jackknife is requested",
+        expected = sprintf("s < n=%d", as.integer(n)),
+        actual = sprintf("s=%d (with `se`=%s, `jackknife`='%s')", as.integer(s_out), as.character(se), jackknife)
+      )
+    }
+    payload <- list(
+      source = "manual",
+      default = list(
+        s = as.integer(s_out),
+        meta = list(name = "manual", n = as.integer(n), kx = as.integer(p)),
+        feasibility = list(k_le_s = k_ok, s_lt_n = s_ok)
+      ),
+      grid = list(
+        candidates = data.frame(
+          kappa = NA_real_,
+          s = as.integer(s_out),
+          feasible = TRUE,
+          reason = "ok",
+          stringsAsFactors = FALSE
+        ),
+        meta = list(name = "manual", n = as.integer(n), kx = as.integer(p))
+      )
+    )
+    return(list(s = as.integer(s_out), tuning = payload, tuning_used = FALSE))
+  }
+
+  if (!is.null(s)) {
+    .abort_bad_arg(
+      "s/tuning",
+      "cannot provide both explicit `s` and `tuning`; omit `s` when `tuning` is used",
+      quoted = FALSE
+    )
+  }
+
+  default <- tuning_eval(
+    tuning = tuning,
+    n = n,
+    kx = p,
+    k = k,
+    se = se,
+    jackknife = jackknife,
+    ctx = ctx,
+    mode = "default"
+  )
+  grid <- tuning_eval(
+    tuning = tuning,
+    n = n,
+    kx = p,
+    k = k,
+    se = se,
+    jackknife = jackknife,
+    ctx = ctx,
+    mode = "grid"
+  )
+
+  if (!is.list(default$feasibility)) {
+    .abort_bad_state("`tuning_eval(..., mode='default')` must return `feasibility`.")
+  }
+
+  s_out <- .validate_scalar_int(default$s, "s")
+  if (!isTRUE(default$feasibility$k_le_s)) {
+    .abort_bad_arg("k", sprintf("must satisfy k <= s (got k=%d, s=%d)", as.integer(k), as.integer(s_out)))
+  }
+  if (needs_jk && !isTRUE(default$feasibility$s_lt_n)) {
+    .abort_bad_arg(
+      "s",
+      "must satisfy s < n when delete-1 jackknife is requested",
+      expected = sprintf("s < n=%d", as.integer(n)),
+      actual = sprintf("s=%d (with `se`=%s, `jackknife`='%s')", as.integer(s_out), as.character(se), jackknife)
+    )
+  }
+
+  payload <- list(
+    source = "tuning",
+    default = default,
+    grid = grid
+  )
+  list(s = as.integer(s_out), tuning = payload, tuning_used = TRUE)
+}
+
 .dnn_distance_name <- function(distance) {
   if (is.character(distance)) {
     return(distance)
@@ -128,11 +221,12 @@
   crossprod(sig, W)
 }
 
-.dnn_attach_common_extras <- function(out, return, wt, W, k) {
+.dnn_attach_common_extras <- function(out, return, wt, W, k, tuning_payload = NULL) {
   if ("W" %in% return) out$W <- W
   if ("ranks" %in% return && !is.null(wt$ranks)) out$ranks <- wt$ranks
   if ("ord" %in% return && !is.null(wt$ord)) out$ord <- wt$ord
   if ("dx" %in% return && !is.null(wt$dx)) out$dx <- wt$dx
+  if ("tuning" %in% return && !is.null(tuning_payload)) out$tuning <- tuning_payload
   if ("ess" %in% return) out$ess <- 1 / colSums(W^2)
   if ("neighbors" %in% return) {
     k_eff <- max(1L, min(nrow(W), as.integer(k)))

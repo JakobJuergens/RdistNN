@@ -159,6 +159,9 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
 #' @param s_fn Function `f(n, kx)` returning the integer kernel order.
 #'   Default satisfies the undersmoothing condition
 #'   \eqn{s \asymp n^{(k_x+1)/(k_x+2)}}.
+#' @param tuning Optional kernel-order tuning specification. When supplied,
+#'   `s` is resolved per simulation cell from `tuning_eval(..., mode = "default")`
+#'   and `s_fn` must be omitted.
 #' @param methods Character vector of method names; see [sim_cate_methods()].
 #'   Default: `"dnn_oracle"`.
 #' @param alpha Nominal coverage level.
@@ -200,6 +203,7 @@ sim_cate_run <- function(
     master_seed = 42L,
     k           = 5L,
     s_fn        = function(n, kx) floor(n^((kx + 1L) / (kx + 2L))),
+    tuning      = NULL,
     methods     = "dnn_oracle",
     alpha       = 0.05,
     sigma       = 0.5,
@@ -207,6 +211,20 @@ sim_cate_run <- function(
     n_folds     = 5L,
     verbose     = TRUE
 ) {
+  s_fn_arg <- if (missing(s_fn)) NULL else s_fn
+  if (!is.null(tuning) && !is.null(s_fn_arg)) {
+    .abort_bad_arg(
+      "tuning/s_fn",
+      "cannot provide both `tuning` and `s_fn`; omit `s_fn` when `tuning` is used",
+      quoted = FALSE
+    )
+  }
+  if (is.null(tuning) && is.null(s_fn_arg)) {
+    s_fn <- function(n, kx) floor(n^((kx + 1L) / (kx + 2L)))
+  } else if (is.null(tuning)) {
+    s_fn <- s_fn_arg
+  }
+
   # Rep-level parallel map: future_lapply when available, lapply otherwise.
   # Use future.seed = TRUE for parallel-safe reproducible RNG streams in the
   # workers. Replicate-specific randomness remains anchored by explicit unique
@@ -235,7 +253,19 @@ sim_cate_run <- function(
     d  <- cells$design[i]
     n  <- cells$n[i]
     kx <- cells$kx[i]
-    s  <- s_fn(n, kx)
+    s  <- if (!is.null(tuning)) {
+      tuning_eval(
+        tuning = tuning,
+        n = n,
+        kx = kx,
+        k = k,
+        se = TRUE,
+        jackknife = "fast",
+        mode = "default"
+      )$s
+    } else {
+      s_fn(n, kx)
+    }
 
     if (verbose)
       message(sprintf("  design=%-22s  n=%4d  kx=%d  s=%d  methods=[%s]",

@@ -5,4 +5,5 @@
 
 .onLoad <- function(libname, pkgname) {
   .register_builtin_distances()
+  .register_builtin_tuning()
 }

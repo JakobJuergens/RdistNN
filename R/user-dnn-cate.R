@@ -38,6 +38,8 @@
 #' @param distance Distance name or specification (for example `"l2"`).
 #' @param method One of `"exact"` or `"asymp"` for DNN weights.
 #' @param k,s Integer DNN tuning parameters.
+#' @param tuning Optional kernel-order tuning specification. When supplied,
+#'   `s` must be omitted and is resolved from `tuning`.
 #' @param normalize Logical; renormalize columns of `W` to sum to 1.
 #' @param se Logical; compute delete-1 jackknife standard errors.
 #' @param jackknife One of `"fast"`, `"loo"`, or `"none"`. `"fast"` (default)
@@ -46,7 +48,7 @@
 #' @param ctx Optional context passed to distance and ranking components.
 #' @param return Optional extras in addition to the always-returned `tau`, `se`,
 #'   and `meta`. Allowed values:
-#'   `c("W", "ranks", "ord", "dx", "psi", "nuisance", "ess", "neighbors")`.
+#'   `c("W", "ranks", "ord", "dx", "psi", "nuisance", "ess", "neighbors", "tuning")`.
 #'
 #' @return An object of class `cate_result` with components:
 #'   - `tau`: estimated CATE values at target points;
@@ -80,6 +82,7 @@ cate_dnn <- function(
   distance = "l2",
   method = c("exact", "asymp"),
   k = 1L, s = 1L,
+  tuning = NULL,
   normalize = TRUE,
   se = TRUE,
   jackknife = c("fast", "loo", "none"),
@@ -88,11 +91,10 @@ cate_dnn <- function(
 ) {
   method <- match.arg(method)
   jackknife <- match.arg(jackknife)
+  s_arg <- if (missing(s)) NULL else s
   k <- .validate_scalar_int(k, "k")
-  s <- .validate_scalar_int(s, "s")
-  if (k > s) .abort_bad_arg("k", sprintf("must satisfy k <= s (got k=%d, s=%d)", k, s))
 
-  .warn_unknown_return(return, valid = c("W", "ranks", "ord", "dx", "psi", "nuisance", "ess", "neighbors"))
+  .warn_unknown_return(return, valid = c("W", "ranks", "ord", "dx", "psi", "nuisance", "ess", "neighbors", "tuning"))
 
   # Dispatch: data-frame API vs matrix API.
   if (!is.null(data)) {
@@ -177,16 +179,19 @@ cate_dnn <- function(
     m0 <- m1 <- m <- e <- NULL
   }
 
-  # Guard the jackknife constraint at the entry point so the user gets a clear
-  # error at their call site rather than deep inside the LOO loop.
-  if (isTRUE(se) && jackknife != "none" && s >= n) {
-    .abort_bad_arg(
-      "s",
-      "must satisfy s < n when delete-1 jackknife is requested",
-      expected = sprintf("s < n=%d", n),
-      actual = sprintf("s=%d (with `se`=%s, `jackknife`='%s')", s, as.character(se), jackknife)
-    )
-  }
+  s_resolved <- .dnn_resolve_s(
+    s = s_arg,
+    tuning = tuning,
+    n = n,
+    p = p,
+    k = k,
+    se = se,
+    jackknife = jackknife,
+    ctx = ctx
+  )
+  s <- s_resolved$s
+  tuning_payload <- s_resolved$tuning
+  tuning_used <- isTRUE(s_resolved$tuning_used)
 
   # Targets
   x0_mat <- .dnn_resolve_targets(x_mat, X0 = X0, x0 = x0)
@@ -241,7 +246,15 @@ cate_dnn <- function(
       method = method, distance = .dnn_distance_name(distance)
     )
   )
-  out <- .dnn_attach_common_extras(out, return = return, wt = wt, W = weight_matrix, k = k)
+  if (tuning_used) out$meta$tuning <- tuning_payload
+  out <- .dnn_attach_common_extras(
+    out,
+    return = return,
+    wt = wt,
+    W = weight_matrix,
+    k = k,
+    tuning_payload = tuning_payload
+  )
   if ("psi" %in% return) out$psi <- psi
   if ("nuisance" %in% return) {
     if (!is.null(m0) && !is.null(m1) && !is.null(e)) {

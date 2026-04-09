@@ -1,0 +1,98 @@
+---
+title: "Kernel Order Tuning"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Kernel Order Tuning}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(RdistNN)
+```
+
+## Overview
+
+`RdistNN` exposes kernel-order selection through a modular tuning API:
+
+- build specs with `new_tuning()` or `as_tuning()`,
+- register/reuse with `register_tuning()` and `get_tuning()`,
+- evaluate defaults and candidate grids via `tuning_eval()`.
+
+This vignette focuses only on tuning-rule resolution, not diagnostics.
+
+## Paper Default Undersmoothing Rule
+
+The built-in rule is:
+
+\[
+s(\kappa) = \left\lfloor \kappa\, n^{(k_x+1)/(k_x+2)} \right\rfloor
+\]
+
+with default `kappa = 1` and default grid
+`kappa_grid = c(0.75, 1, 1.25, 1.5)`.
+
+```{r paper-default}
+tun <- tuning_dnn_paper()
+tuning_eval(tun, n = 1000, kx = 2, k = 5, mode = "default")
+```
+
+```{r paper-grid}
+tuning_eval(tun, n = 1000, kx = 2, k = 5, mode = "grid")$candidates
+```
+
+## Registry Usage
+
+```{r registry}
+tuning_names()
+get_tuning("paper_undersmooth")$name
+```
+
+## Custom Rule
+
+```{r custom}
+fixed12 <- as_tuning(function(...) 12L, name = "fixed_12")
+tuning_eval(fixed12, n = 300, kx = 2, k = 5)
+```
+
+A custom rule can also return richer metadata:
+
+```{r custom-meta}
+meta_rule <- new_tuning(
+  name = "meta_rule",
+  eval = function(n, kx, k, se, jackknife, ctx = NULL) {
+    list(
+      s = floor(0.9 * n^((kx + 1)/(kx + 2))),
+      meta = list(
+        kappa = 0.9,
+        formula = "0.9 * n^((kx + 1)/(kx + 2))",
+        rounding = "floor"
+      )
+    )
+  }
+)
+
+tuning_eval(meta_rule, n = 500, kx = 2, k = 5)
+```
+
+## Wrapper Integration
+
+High-level wrappers accept `tuning = ...` and resolve `s` internally:
+
+```{r wrapper-integration, eval=FALSE}
+demo <- np_demo_data(n = 200, p = 2, seed = 1)
+fit <- np_dnn(
+  data = demo$data,
+  x_cols = c("X1", "X2"),
+  y_col = "Y",
+  x0 = demo$x0,
+  k = 5,
+  tuning = tuning_dnn_paper(),
+  se = TRUE,
+  return = c("ess", "tuning")
+)
+
+fit$meta$s
+fit$tuning$grid$candidates
+```

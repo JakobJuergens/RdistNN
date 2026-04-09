@@ -80,6 +80,8 @@
 #' @param distance Distance name or specification (for example `"l2"`).
 #' @param method One of `"exact"` or `"asymp"` for DNN weights.
 #' @param k,s Integer DNN tuning parameters.
+#' @param tuning Optional kernel-order tuning specification. When supplied,
+#'   `s` must be omitted and is resolved from `tuning`.
 #' @param normalize Logical; renormalize columns of `W` to sum to 1.
 #' @param se Logical; compute delete-1 jackknife standard errors.
 #' @param jackknife One of `"fast"`, `"loo"`, or `"none"`. `"fast"` (default)
@@ -88,7 +90,7 @@
 #' @param ctx Optional context passed to distance and ranking components.
 #' @param return Optional extras in addition to the always-returned `moment`,
 #'   `se`, `beta`, `tau`, and `meta`. Allowed values:
-#'   `c("W", "ranks", "ord", "dx", "g", "ess", "neighbors")`.
+#'   `c("W", "ranks", "ord", "dx", "g", "ess", "neighbors", "tuning")`.
 #'
 #' @return An object of class `plqr_result` with components:
 #'   - `moment`: matrix (`p_d x m`) of localized PLQR moments;
@@ -139,6 +141,7 @@ plqr_dnn <- function(
   method = c("exact", "asymp"),
   k = 1L,
   s = 1L,
+  tuning = NULL,
   normalize = TRUE,
   se = TRUE,
   jackknife = c("fast", "loo", "none"),
@@ -147,10 +150,9 @@ plqr_dnn <- function(
 ) {
   method <- match.arg(method)
   jackknife <- match.arg(jackknife)
+  s_arg <- if (missing(s)) NULL else s
   k <- .validate_scalar_int(k, "k")
-  s <- .validate_scalar_int(s, "s")
-  if (k > s) .abort_bad_arg("k", sprintf("must satisfy k <= s (got k=%d, s=%d)", k, s))
-  .warn_unknown_return(return, valid = c("W", "ranks", "ord", "dx", "g", "ess", "neighbors"))
+  .warn_unknown_return(return, valid = c("W", "ranks", "ord", "dx", "g", "ess", "neighbors", "tuning"))
   tau <- .validate_scalar_prob(tau, arg = "tau")
 
   if (!is.numeric(beta) || length(beta) < 1L || any(!is.finite(beta))) {
@@ -245,6 +247,20 @@ plqr_dnn <- function(
   .abort_if_na_or_nonfinite(q_vec, arg = "q_tau(X)")
   .abort_if_na_or_nonfinite(y_vec, arg = "Y")
 
+  s_resolved <- .dnn_resolve_s(
+    s = s_arg,
+    tuning = tuning,
+    n = n,
+    p = p,
+    k = k,
+    se = se,
+    jackknife = jackknife,
+    ctx = ctx
+  )
+  s <- s_resolved$s
+  tuning_payload <- s_resolved$tuning
+  tuning_used <- isTRUE(s_resolved$tuning_used)
+
   x0_mat <- .dnn_resolve_targets(x_mat, X0 = X0, x0 = x0)
 
   weight_return <- return
@@ -302,7 +318,15 @@ plqr_dnn <- function(
       method = method, distance = .dnn_distance_name(distance)
     )
   )
-  out <- .dnn_attach_common_extras(out, return = return, wt = wt, W = weight_matrix, k = k)
+  if (tuning_used) out$meta$tuning <- tuning_payload
+  out <- .dnn_attach_common_extras(
+    out,
+    return = return,
+    wt = wt,
+    W = weight_matrix,
+    k = k,
+    tuning_payload = tuning_payload
+  )
   if ("g" %in% return) out$g <- g_mat
 
   class(out) <- "plqr_result"
