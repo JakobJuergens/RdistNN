@@ -29,6 +29,7 @@ Each wrapper supports:
 - DNN method choice (`"exact"` or `"asymp"`)
 - delete-1 jackknife SEs (`"fast"`, `"loo"`, `"none"`)
 - modular kernel-order tuning via `tuning = tuning_dnn_paper(...)`
+- fitted-object diagnostics via `diagnostics()`
 
 ## Local Mean (`np_dnn`)
 
@@ -50,6 +51,7 @@ fit_np <- np_dnn(
 
 fit_np$mu
 fit_np$se
+diagnostics(fit_np)
 ```
 
 ## CATE (`cate_dnn`)
@@ -78,11 +80,12 @@ fit_cate <- cate_dnn(
   k = 2L,
   tuning = tuning_default,
   se = TRUE,
-  return = c("psi", "nuisance", "tuning")
+  return = c("W", "psi", "nuisance", "tuning")
 )
 
 summary(fit_cate)
 confint(fit_cate)
+diagnostics(fit_cate)
 predict(fit_cate, x0 = c(0.2, -0.1), interval = "confidence")
 ```
 
@@ -105,12 +108,33 @@ fit_plqr <- plqr_dnn(
   k = 2L,
   tuning = tuning_default,
   se = TRUE,
-  return = c("g", "ess", "tuning")
+  return = c("W", "g", "ess", "tuning")
 )
 
 fit_plqr$moment
 fit_plqr$se
+diagnostics(fit_plqr)
 ```
+
+## Diagnostics and Reporting
+
+The three wrappers return enough retained state for `diagnostics()` to compute
+fit-level summaries without rerunning the estimator.
+
+```{r diagnostics, eval=FALSE}
+d_np <- diagnostics(fit_np)
+d_cate <- diagnostics(fit_cate)
+d_plqr <- diagnostics(fit_plqr)
+
+d_np[, c("target_id", "n_eff", "weighted_mean_y")]
+d_cate[, c("target_id", "treated_mass", "control_mass", "treated_share")]
+d_plqr[, c("target_id", "gram_min_eig", "gram_condition_number")]
+```
+
+General diagnostics summarize weight concentration, realized distance radii when
+`dx` was retained, and tuning metadata. Estimator-specific diagnostics add NP
+outcome summaries, CATE overlap summaries, and PLQR residual-regressor Gram
+conditioning.
 
 ## Notes on Standard Errors
 

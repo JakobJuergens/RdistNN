@@ -1,0 +1,188 @@
+---
+title: "Diagnostics and Reporting"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Diagnostics and Reporting}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(RdistNN)
+```
+
+## Overview
+
+`diagnostics()` gives a compact table for fitted DNN-localized estimators. The
+method is intentionally fit-object based:
+
+- it uses retained weights rather than refitting;
+- it uses retained distances only when `dx` was requested;
+- it uses hidden estimator state for NP, CATE, and PLQR diagnostics;
+- it marks unavailable diagnostics explicitly instead of reconstructing missing
+  inputs from assumptions.
+
+The general fields are available for `np_result`, `cate_result`, and
+`plqr_result` objects when weights are retained:
+
+- `n_eff`, `max_weight`, and top-weight shares;
+- realized rank radii and weighted distance summaries when `dx` is retained;
+- tuning metadata when a tuning spec was used.
+
+Estimator-specific fields are added by the corresponding method:
+
+- NP: weighted outcome mean, standard deviation, and outcome quantiles;
+- CATE: treated/control mass and propensity summaries;
+- PLQR: residual-regressor Gram eigenvalues and condition number.
+
+Diagnostics require `W`. The default `return = "W"` keeps it. If a fit was
+created without weights, refit with `return` including `"W"`.
+
+## Nonparametric Regression
+
+```{r np, eval=FALSE}
+demo_np <- np_demo_data(n = 120, p = 2, design = "sinusoidal", seed = 1)
+
+fit_np <- np_dnn(
+  data = demo_np$data,
+  x_cols = c("X1", "X2"),
+  y_col = "Y",
+  x0 = demo_np$x0,
+  method = "exact",
+  k = 2L,
+  s = 4L,
+  se = FALSE,
+  return = c("W", "dx", "ess")
+)
+
+d_np <- diagnostics(fit_np)
+d_np[, c(
+  "target_id",
+  "n_eff",
+  "weighted_mean_y",
+  "weighted_sd_y",
+  "weighted_y_q50"
+)]
+```
+
+For NP fits, `weighted_mean_y` equals the local mean estimate when the weights
+are normalized.
+
+## CATE Overlap
+
+```{r cate, eval=FALSE}
+demo_cate <- cate_demo_data(n = 150, p = 2, design = "hetero", seed = 2)
+
+fit_cate <- cate_dnn(
+  data = demo_cate$data,
+  x_cols = c("X1", "X2"),
+  y_col = "Y",
+  t_col = "D",
+  m_col = "m_oracle",
+  e_col = "e_oracle",
+  x0 = demo_cate$x0,
+  method = "exact",
+  k = 2L,
+  s = 4L,
+  se = FALSE,
+  return = c("W", "dx", "psi", "nuisance")
+)
+
+d_cate <- diagnostics(fit_cate)
+d_cate[, c(
+  "target_id",
+  "n_eff",
+  "treated_mass",
+  "control_mass",
+  "treated_share",
+  "weighted_mean_propensity"
+)]
+```
+
+Overlap diagnostics are available when the fit was constructed from treatment
+and propensity inputs. If `cate_dnn()` was called with only a direct
+`pseudo_outcome`, overlap fields remain present but are marked unavailable.
+
+## PLQR Conditioning
+
+```{r plqr, eval=FALSE}
+demo_plqr <- plqr_demo_data(n = 160, p = 2, p_d = 2, tau = 0.5, seed = 3)
+
+fit_plqr <- plqr_dnn(
+  data = demo_plqr$data,
+  x_cols = c("X1", "X2"),
+  D_cols = c("D1", "D2"),
+  q_col = "q_oracle",
+  mD_cols = c("mD1", "mD2"),
+  y_col = "Y",
+  beta = demo_plqr$truth$beta_true,
+  tau = 0.5,
+  x0 = demo_plqr$x0,
+  method = "exact",
+  k = 2L,
+  s = 4L,
+  se = FALSE,
+  return = c("W", "dx", "g", "ess")
+)
+
+d_plqr <- diagnostics(fit_plqr)
+d_plqr[, c(
+  "target_id",
+  "n_eff",
+  "gram_min_eig",
+  "gram_max_eig",
+  "gram_condition_number"
+)]
+```
+
+The PLQR Gram diagnostic is based on the localized residual-regressor matrix
+`D - m_D(X)`. It is an identification and conditioning diagnostic, not a local
+bread estimate.
+
+## Tuning Metadata
+
+When a fit uses `tuning = ...`, the diagnostics table exposes compact tuning
+metadata without duplicating the full candidate grid into every row.
+
+```{r tuning, eval=FALSE}
+fit_tuned <- np_dnn(
+  data = demo_np$data,
+  x_cols = c("X1", "X2"),
+  y_col = "Y",
+  x0 = demo_np$x0,
+  method = "exact",
+  k = 2L,
+  tuning = tuning_dnn_paper(kappa = 1.25),
+  se = FALSE,
+  return = c("W", "tuning")
+)
+
+d_tuned <- diagnostics(fit_tuned)
+d_tuned[, c(
+  "target_id",
+  "tuning_name",
+  "tuning_default_s",
+  "tuning_grid_n_candidates",
+  "tuning_kappa_default"
+)]
+
+attr(d_tuned, "tuning_grid")
+```
+
+Use `attr(d_tuned, "tuning_grid")` when you need the full candidate table.
+
+## Availability Rules
+
+Diagnostics avoid hidden recomputation.
+
+- If `W` is missing, `diagnostics()` errors and asks for a refit with weights.
+- If `dx` is missing, distance fields are returned as `NA` with
+  `distance_diagnostics_available = FALSE`.
+- If CATE treatment/propensity state is unavailable, overlap fields are present
+  but marked unavailable.
+- If PLQR residual-regressor state is unavailable, Gram fields are present but
+  marked unavailable.
+
+This behavior keeps diagnostics predictable and prevents the diagnostics layer
+from silently rerunning expensive estimator construction.

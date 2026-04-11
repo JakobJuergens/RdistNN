@@ -18,9 +18,8 @@ library(RdistNN)
 
 - build specs with `new_tuning()` or `as_tuning()`,
 - register/reuse with `register_tuning()` and `get_tuning()`,
-- evaluate defaults and candidate grids via `tuning_eval()`.
-
-This vignette focuses only on tuning-rule resolution, not diagnostics.
+- evaluate defaults and candidate grids via `tuning_eval()`;
+- inspect resolved tuning metadata in fitted-object diagnostics.
 
 ## Paper Default Undersmoothing Rule
 
@@ -90,9 +89,10 @@ fit <- np_dnn(
   k = 5,
   tuning = tuning_dnn_paper(),
   se = TRUE,
-  return = c("ess", "tuning")
+  return = c("W", "ess", "tuning")
 )
 
 fit$meta$s
 fit$tuning$grid$candidates
+diagnostics(fit)[, c("target_id", "tuning_name", "tuning_default_s", "tuning_grid_n_candidates")]
 ```

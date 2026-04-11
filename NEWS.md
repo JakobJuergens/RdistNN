@@ -2,6 +2,16 @@
 
 ## RdistNN (development)
 
+### Diagnostics and reporting
+
+- Added `diagnostics()` methods for `np_dnn()`, `cate_dnn()`, and `plqr_dnn()`
+  fitted objects, including generic DNN weight/tuning summaries plus
+  estimator-specific NP outcome, CATE overlap, and PLQR Gram conditioning
+  diagnostics.
+- Added a diagnostics/reporting vignette and updated README, getting-started,
+  conditional Z-estimation, kernel-order tuning, and pkgdown references to show
+  the diagnostics workflow.
+
 ### CI and package engineering
 
 - Added `tools/ci/check_tests_declared_deps.R` and a CI guard step to fail when

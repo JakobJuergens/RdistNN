@@ -283,6 +283,7 @@ plqr_dnn <- function(
   weight_matrix <- weight_fit$W
   m_out <- weight_fit$m
 
+  d_resid_mat <- d_mat - mD_mat
   g_mat <- .plqr_dnn_g_matrix(d_mat, mD_mat, q_vec, y_vec, beta = beta, tau = tau)
   moment_hat <- .dnn_estimate_from_signal(g_mat, weight_matrix, n = n, arg = "g")
   rownames(moment_hat) <- paste0("comp_", seq_len(p_d))
@@ -328,6 +329,9 @@ plqr_dnn <- function(
     tuning_payload = tuning_payload
   )
   if ("g" %in% return) out$g <- g_mat
+  out$.model <- list(
+    d_resid_mat = d_resid_mat
+  )
 
   class(out) <- "plqr_result"
   out

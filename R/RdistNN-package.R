@@ -17,6 +17,7 @@
 #'   [confint.cate_result()], and [predict.cate_result()].
 #' - Estimate local nonparametric means with [np_dnn()].
 #' - Evaluate local PLQR orthogonal moments with [plqr_dnn()].
+#' - Inspect fitted local estimators with [diagnostics()].
 #' - Build custom generalized U-statistics with [new_score()],
 #'   [score_eval_batch()], and [score_diff_path()].
 #' - Estimate uncertainty with [jackknife_fast_rank()] and
@@ -28,6 +29,8 @@
 #'   and scores, see `vignette("extending", package = "RdistNN")`.
 #' - For modular kernel-order tuning rules and registry usage, see
 #'   `vignette("kernel-order-tuning", package = "RdistNN")`.
+#' - For fitted-object diagnostics and reporting, see
+#'   `vignette("diagnostics-reporting", package = "RdistNN")`.
 #' - For distance/rank weighting details see
 #'   `vignette("dnn-weights", package = "RdistNN")`.
 #' - For estimator workflows see
@@ -39,7 +42,7 @@
 #' @name RdistNN-package
 #' @aliases RdistNN
 #' @seealso [weights_dnn()], [cate_dnn()], [np_dnn()], [plqr_dnn()],
-#'   [summary.cate_result()], [predict.cate_result()],
+#'   [diagnostics()], [summary.cate_result()], [predict.cate_result()],
 #'   [new_score()], [distance_l2()]
 #' @useDynLib RdistNN, .registration = TRUE
 #' @importFrom stats pbeta plogis rbinom rnorm runif setNames

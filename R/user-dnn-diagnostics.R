@@ -38,7 +38,9 @@
       tuning_source = rep(NA_character_, m),
       tuning_name = rep(NA_character_, m),
       tuning_default_s = rep(NA_integer_, m),
-      tuning_grid_available = rep(NA, m)
+      tuning_grid_available = rep(NA, m),
+      tuning_grid_n_candidates = rep(NA_integer_, m),
+      tuning_kappa_default = rep(NA_real_, m)
     ))
   }
 
@@ -61,12 +63,20 @@
   }
   has_grid <- !is.null(tuning_payload$grid$candidates) &&
     is.data.frame(tuning_payload$grid$candidates)
+  grid_n <- if (isTRUE(has_grid)) nrow(tuning_payload$grid$candidates) else NA_integer_
+  kappa <- if (!is.null(tuning_payload$default$meta$kappa)) {
+    as.numeric(tuning_payload$default$meta$kappa)
+  } else {
+    NA_real_
+  }
 
   list(
     tuning_source = rep(source, m),
     tuning_name = rep(name, m),
     tuning_default_s = rep(default_s, m),
-    tuning_grid_available = rep(has_grid, m)
+    tuning_grid_available = rep(has_grid, m),
+    tuning_grid_n_candidates = rep(as.integer(grid_n), m),
+    tuning_kappa_default = rep(kappa, m)
   )
 }
 
@@ -164,9 +174,41 @@
     tuning_name = tuning$tuning_name,
     tuning_default_s = tuning$tuning_default_s,
     tuning_grid_available = tuning$tuning_grid_available,
+    tuning_grid_n_candidates = tuning$tuning_grid_n_candidates,
+    tuning_kappa_default = tuning$tuning_kappa_default,
     stringsAsFactors = FALSE
   )
   rownames(out) <- out$target_id
+  if (!is.null(tuning_payload$grid$candidates) && is.data.frame(tuning_payload$grid$candidates)) {
+    attr(out, "tuning_grid") <- tuning_payload$grid$candidates
+  }
+  class(out) <- c("dnn_diagnostics", "data.frame")
+  out
+}
+
+.dnn_diag_require_W <- function(object) {
+  if (is.null(object$W)) {
+    .abort_bad_arg(
+      "object$W",
+      "is required for diagnostics; refit with `return` including \"W\"",
+      quoted = FALSE
+    )
+  }
+  object$W
+}
+
+.dnn_diag_tuning_payload <- function(object) {
+  if (!is.null(object$meta$tuning)) {
+    object$meta$tuning
+  } else {
+    object$tuning
+  }
+}
+
+.dnn_diag_append <- function(out, extra) {
+  for (nm in names(extra)) {
+    out[[nm]] <- extra[[nm]]
+  }
   class(out) <- c("dnn_diagnostics", "data.frame")
   out
 }
@@ -175,16 +217,44 @@
 #'
 #' Returns a compact diagnostics table for supported fit objects.
 #'
-#' @param object A fitted estimator object.
+#' @param object A fitted estimator object, currently an object returned by
+#'   [np_dnn()], [cate_dnn()], or [plqr_dnn()].
 #' @param ... Not used.
 #' @return An object of class `dnn_diagnostics`.
+#' @name diagnostics
 #' @examples
 #' set.seed(1)
-#' n <- 30
-#' x_mat <- matrix(rnorm(n * 2), n, 2)
-#' y_vec <- x_mat[, 1] + rnorm(n, sd = 0.2)
-#' fit <- np_dnn(X = x_mat, x0 = c(0, 0), Y = y_vec, se = FALSE)
-#' diagnostics(fit)
+#' x_mat <- matrix(rnorm(40 * 2), 40, 2)
+#' y_vec <- x_mat[, 1] + rnorm(40, sd = 0.2)
+#' fit_np <- np_dnn(X = x_mat, x0 = c(0, 0), Y = y_vec, se = FALSE)
+#' diagnostics(fit_np)
+#'
+#' demo_cate <- cate_demo_data(n = 50, p = 2, seed = 2)
+#' fit_cate <- cate_dnn(
+#'   data = demo_cate$data,
+#'   x_cols = c("X1", "X2"),
+#'   y_col = "Y",
+#'   t_col = "D",
+#'   m_col = "m_oracle",
+#'   e_col = "e_oracle",
+#'   x0 = demo_cate$x0,
+#'   se = FALSE
+#' )
+#' diagnostics(fit_cate)
+#'
+#' demo_plqr <- plqr_demo_data(n = 60, p = 2, p_d = 1, seed = 3)
+#' fit_plqr <- plqr_dnn(
+#'   data = demo_plqr$data,
+#'   x_cols = c("X1", "X2"),
+#'   D_cols = "D1",
+#'   q_col = "q_oracle",
+#'   mD_cols = "mD1",
+#'   y_col = "Y",
+#'   beta = demo_plqr$truth$beta_true,
+#'   x0 = demo_plqr$x0,
+#'   se = FALSE
+#' )
+#' diagnostics(fit_plqr)
 #' @export
 diagnostics <- function(object, ...) {
   UseMethod("diagnostics")
@@ -197,30 +267,6 @@ diagnostics.default <- function(object, ...) {
     "object",
     sprintf("diagnostics() is not implemented for class '%s'", class(object)[1L]),
     quoted = FALSE
-  )
-}
-
-#' @rdname diagnostics
-#' @param object An object returned by [np_dnn()].
-#' @export
-diagnostics.np_result <- function(object, ...) {
-  if (is.null(object$W)) {
-    .abort_bad_arg(
-      "object$W",
-      "is required for diagnostics; refit with `return` including \"W\"",
-      quoted = FALSE
-    )
-  }
-  tuning_payload <- if (!is.null(object$meta$tuning)) {
-    object$meta$tuning
-  } else {
-    object$tuning
-  }
-  .dnn_weight_diagnostics(
-    W = object$W,
-    meta = object$meta,
-    dx = object$dx,
-    tuning_payload = tuning_payload
   )
 }
 
@@ -242,5 +288,31 @@ print.dnn_diagnostics <- function(x, ...) {
     ", max(weight)=", round(max(x$max_weight), 4), "\n",
     sep = ""
   )
+  cat(
+    "  dist   : available for ", sum(x$distance_diagnostics_available), "/", nrow(x),
+    " target(s)\n",
+    sep = ""
+  )
+  if ("outcome_available" %in% names(x)) {
+    cat(
+      "  outcome: available for ", sum(x$outcome_available), "/", nrow(x),
+      " target(s)\n",
+      sep = ""
+    )
+  }
+  if ("overlap_available" %in% names(x)) {
+    cat(
+      "  overlap: available for ", sum(x$overlap_available), "/", nrow(x),
+      " target(s)\n",
+      sep = ""
+    )
+  }
+  if ("gram_available" %in% names(x)) {
+    cat(
+      "  gram   : available for ", sum(x$gram_available), "/", nrow(x),
+      " target(s)\n",
+      sep = ""
+    )
+  }
   invisible(x)
 }

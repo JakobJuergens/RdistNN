@@ -198,6 +198,9 @@ np_dnn <- function(
     tuning_payload = tuning_payload
   )
   if ("y" %in% return) out$y <- y_vec
+  out$.model <- list(
+    y_vec = y_vec
+  )
 
   class(out) <- "np_result"
   out

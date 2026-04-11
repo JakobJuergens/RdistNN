@@ -93,6 +93,49 @@ test_that("tuning_eval validates argument types and accepts bare function tuning
   expect_equal(out_fun$s, 31L)
 })
 
+test_that("tuning_eval passes context and filters user function formals", {
+  seen <- NULL
+  tun_ctx <- as_tuning(
+    function(n, ctx) {
+      seen <<- list(n = n, ctx = ctx)
+      ctx$s
+    },
+    name = "ctx_reader"
+  )
+  out_ctx <- tuning_eval(
+    tun_ctx,
+    n = 40L, kx = 2L, k = 3L,
+    ctx = list(s = 6L, tag = "from_ctx")
+  )
+  expect_equal(out_ctx$s, 6L)
+  expect_equal(seen$n, 40L)
+  expect_equal(seen$ctx$tag, "from_ctx")
+
+  tun_no_dots <- new_tuning(
+    name = "no_dots",
+    eval = function(n, k) list(s = k + 2L),
+    eval_grid = function(k, ctx) {
+      data.frame(
+        s = ctx$s_grid + k,
+        label = c("low", "high"),
+        stringsAsFactors = FALSE
+      )
+    }
+  )
+  expect_equal(
+    tuning_eval(tun_no_dots, n = 100L, kx = 5L, k = 4L)$s,
+    6L
+  )
+  out_grid <- tuning_eval(
+    tun_no_dots,
+    n = 100L, kx = 5L, k = 4L,
+    ctx = list(s_grid = c(1L, 3L)),
+    mode = "grid"
+  )
+  expect_equal(out_grid$candidates$s, c(5L, 7L))
+  expect_equal(out_grid$candidates$label, c("low", "high"))
+})
+
 test_that("default and grid output validators reject malformed user outputs", {
   tun_missing_s <- new_tuning(name = "bad_missing_s", eval = function(...) list(meta = list(a = 1)))
   expect_error(
@@ -104,6 +147,21 @@ test_that("default and grid output validators reject malformed user outputs", {
   expect_error(
     tuning_eval(tun_bad_s, n = 50L, kx = 2L, k = 2L, mode = "default"),
     "integer scalar"
+  )
+  tun_bad_numeric_s <- new_tuning(name = "bad_numeric_s", eval = function(...) 2.5)
+  expect_error(
+    tuning_eval(tun_bad_numeric_s, n = 50L, kx = 2L, k = 2L, mode = "default"),
+    "positive finite integer-like numeric scalar"
+  )
+  tun_bad_numeric_na <- new_tuning(name = "bad_numeric_na", eval = function(...) NA_real_)
+  expect_error(
+    tuning_eval(tun_bad_numeric_na, n = 50L, kx = 2L, k = 2L, mode = "default"),
+    "positive finite integer-like numeric scalar"
+  )
+  tun_bad_numeric_inf <- new_tuning(name = "bad_numeric_inf", eval = function(...) Inf)
+  expect_error(
+    tuning_eval(tun_bad_numeric_inf, n = 50L, kx = 2L, k = 2L, mode = "default"),
+    "positive finite integer-like numeric scalar"
   )
 
   tun_grid_not_df <- new_tuning(name = "bad_grid_not_df", eval_grid = function(...) list(s = 2L))
@@ -127,7 +185,38 @@ test_that("default and grid output validators reject malformed user outputs", {
   )
   expect_error(
     tuning_eval(tun_grid_bad_s, n = 50L, kx = 2L, k = 2L, mode = "grid"),
-    "column `s` must be finite integer-like numeric values"
+    "column `s` must be positive finite integer-like numeric values"
+  )
+
+  tun_grid_bad_numeric_s <- new_tuning(name = "bad_grid_numeric_s", eval_grid = function(...) c(2.5, 3))
+  expect_error(
+    tuning_eval(tun_grid_bad_numeric_s, n = 50L, kx = 2L, k = 2L, mode = "grid"),
+    "column `s` must be positive finite integer-like numeric values"
+  )
+
+  tun_grid_bad_na_s <- new_tuning(
+    name = "bad_grid_na_s",
+    eval_grid = function(...) data.frame(s = c(2L, NA_integer_), stringsAsFactors = FALSE)
+  )
+  expect_error(
+    tuning_eval(tun_grid_bad_na_s, n = 50L, kx = 2L, k = 2L, mode = "grid"),
+    "column `s` must be positive finite integer-like numeric values"
+  )
+  tun_grid_bad_inf_s <- new_tuning(
+    name = "bad_grid_inf_s",
+    eval_grid = function(...) data.frame(s = c(2, Inf), stringsAsFactors = FALSE)
+  )
+  expect_error(
+    tuning_eval(tun_grid_bad_inf_s, n = 50L, kx = 2L, k = 2L, mode = "grid"),
+    "column `s` must be positive finite integer-like numeric values"
+  )
+  tun_grid_empty_numeric <- new_tuning(
+    name = "bad_grid_empty_numeric",
+    eval_grid = function(...) numeric(0L)
+  )
+  expect_error(
+    tuning_eval(tun_grid_empty_numeric, n = 50L, kx = 2L, k = 2L, mode = "grid"),
+    "at least one candidate row"
   )
 })
 

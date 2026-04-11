@@ -17,6 +17,7 @@ articles:
   - title: Getting started
     contents:
       - getting-started
+      - diagnostics-reporting
       - extending
   - title: Theory & details
     contents:
@@ -118,8 +119,9 @@ reference:
       - jackknife_slow_rank
 
   - title: S3 methods
-    desc: print, summary, confint, and predict methods for package objects.
+    desc: diagnostics, print, summary, confint, and predict methods for package objects.
     contents:
+      - diagnostics
       - print.cate_result
       - print.np_result
       - print.plqr_result
@@ -131,6 +133,18 @@ reference:
       - summary.cate_result
       - confint.cate_result
       - predict.cate_result
+
+  - title: Kernel-order tuning
+    desc: Tuning specifications, registry helpers, and paper-default rules.
+    contents:
+      - new_tuning
+      - as_tuning
+      - is_tuning
+      - register_tuning
+      - get_tuning
+      - tuning_names
+      - tuning_eval
+      - tuning_dnn_paper
 
   - title: Simulation study
     desc: Data-generating processes and Monte Carlo harness for the paper simulation.

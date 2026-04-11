@@ -25,6 +25,7 @@ knitr::opts_chunk$set(
 
 - Core distance/rank/weight primitives (`weights_dnn()`, `weights_matrix()`, custom registries)
 - User-level wrappers for localized estimation: `np_dnn()`, `cate_dnn()`, and `plqr_dnn()`
+- Unified diagnostics for fitted local estimators via `diagnostics()`
 - Built-in post-estimation methods for CATE (`summary()`, `confint()`, `predict()`)
 - Fast delete-1 jackknife options (`jackknife = "fast"` and `"loo"`) for standard errors
 - Simulation infrastructure for the paper's CATE study: `sim_cate_data()`, `sim_cate_one_rep()`, `sim_cate_run()`, `summarise_sim_results()`
@@ -69,6 +70,7 @@ fit_np <- np_dnn(
 
 fit_np$mu
 fit_np$se
+diagnostics(fit_np)
 ```
 
 ### 2) CATE Estimation (`cate_dnn`) and Methods
@@ -94,11 +96,12 @@ fit_cate <- cate_dnn(
   k = 2L, s = 3L,
   se = TRUE,
   jackknife = "fast",
-  return = c("psi", "nuisance")
+  return = c("W", "psi", "nuisance")
 )
 
 summary(fit_cate)
 confint(fit_cate)
+diagnostics(fit_cate)
 predict(fit_cate, x0 = c(0.2, -0.1), interval = "confidence")
 ```
 
@@ -124,11 +127,12 @@ fit_plqr <- plqr_dnn(
   k = 2L, s = 3L,
   se = TRUE,
   jackknife = "fast",
-  return = c("g", "ess")
+  return = c("W", "g", "ess")
 )
 
 fit_plqr$moment
 fit_plqr$se
+diagnostics(fit_plqr)
 ```
 
 ### 4) CATE Simulation Study
@@ -199,6 +203,7 @@ covers `setup()` / `eval_batch()` patterns, custom ranking inputs to
 ## Documentation Map
 
 - Start with `vignette("getting-started", package = "RdistNN")`
+- `vignette("diagnostics-reporting", package = "RdistNN")` for fitted-object diagnostics
 - `vignette("dnn-weights", package = "RdistNN")` for exact/asymptotic DNN weight rules
 - `vignette("conditional-z-estimation", package = "RdistNN")` for end-to-end estimator workflows
 - `vignette("extending", package = "RdistNN")` for custom distance/rank/score components

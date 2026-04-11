@@ -38,11 +38,47 @@
   as.integer(round(x))
 }
 
+.tuning_validate_s_scalar_output <- function(x, arg) {
+  if (
+    !is.numeric(x) ||
+      length(x) != 1L ||
+      !is.finite(x) ||
+      x != floor(x) ||
+      x < 1L ||
+      x > .Machine$integer.max
+  ) {
+    .abort_bad_arg(
+      arg,
+      "must return a positive finite integer-like numeric scalar",
+      quoted = FALSE
+    )
+  }
+  as.integer(x)
+}
+
+.tuning_validate_s_grid_output <- function(x, arg) {
+  if (
+    !is.numeric(x) ||
+      length(x) < 1L ||
+      any(!is.finite(x)) ||
+      any(x != floor(x)) ||
+      any(x < 1L) ||
+      any(x > .Machine$integer.max)
+  ) {
+    .abort_bad_arg(
+      arg,
+      "column `s` must be positive finite integer-like numeric values",
+      quoted = FALSE
+    )
+  }
+  as.integer(x)
+}
+
 .tuning_validate_default_output <- function(
   out, n, kx, k, se, jackknife, name
 ) {
-  if (is.numeric(out) && length(out) == 1L && is.finite(out)) {
-    out <- list(s = as.integer(out))
+  if (is.numeric(out) && length(out) == 1L) {
+    out <- list(s = .tuning_validate_s_scalar_output(out, arg = "tuning$eval()"))
   }
   if (!is.list(out) || is.null(out$s)) {
     .abort_bad_arg(
@@ -77,8 +113,15 @@
 .tuning_validate_grid_output <- function(
   out, n, kx, k, se, jackknife, name
 ) {
+  if (is.numeric(out) && length(out) == 0L) {
+    .abort_bad_arg("tuning$eval_grid()", "must return at least one candidate row", quoted = FALSE)
+  }
   if (is.numeric(out) && length(out) > 0L) {
-    out <- data.frame(kappa = NA_real_, s = as.integer(out), stringsAsFactors = FALSE)
+    out <- data.frame(
+      kappa = NA_real_,
+      s = .tuning_validate_s_grid_output(out, arg = "tuning$eval_grid()"),
+      stringsAsFactors = FALSE
+    )
   }
   if (!is.data.frame(out)) {
     .abort_bad_arg(
@@ -94,15 +137,10 @@
       quoted = FALSE
     )
   }
-  s_raw <- out$s
-  if (!is.numeric(s_raw) || any(!is.finite(s_raw)) || any(s_raw != as.integer(s_raw))) {
-    .abort_bad_arg(
-      "tuning$eval_grid()",
-      "column `s` must be finite integer-like numeric values",
-      quoted = FALSE
-    )
+  if (nrow(out) < 1L) {
+    .abort_bad_arg("tuning$eval_grid()", "must return at least one candidate row", quoted = FALSE)
   }
-  out$s <- as.integer(s_raw)
+  out$s <- .tuning_validate_s_grid_output(out$s, arg = "tuning$eval_grid()")
   needs_jk <- .tuning_needs_jackknife(se = se, jackknife = jackknife)
   out$feasible <- (as.integer(k) <= out$s) & (!needs_jk | (out$s < as.integer(n)))
   out$reason <- ifelse(

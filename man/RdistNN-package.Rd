@@ -27,6 +27,7 @@ target;
 \code{\link[=confint.cate_result]{confint.cate_result()}}, and \code{\link[=predict.cate_result]{predict.cate_result()}}.
 \item Estimate local nonparametric means with \code{\link[=np_dnn]{np_dnn()}}.
 \item Evaluate local PLQR orthogonal moments with \code{\link[=plqr_dnn]{plqr_dnn()}}.
+\item Inspect fitted local estimators with \code{\link[=diagnostics]{diagnostics()}}.
 \item Build custom generalized U-statistics with \code{\link[=new_score]{new_score()}},
 \code{\link[=score_eval_batch]{score_eval_batch()}}, and \code{\link[=score_diff_path]{score_diff_path()}}.
 \item Estimate uncertainty with \code{\link[=jackknife_fast_rank]{jackknife_fast_rank()}} and
@@ -42,6 +43,8 @@ target;
 and scores, see \code{vignette("extending", package = "RdistNN")}.
 \item For modular kernel-order tuning rules and registry usage, see
 \code{vignette("kernel-order-tuning", package = "RdistNN")}.
+\item For fitted-object diagnostics and reporting, see
+\code{vignette("diagnostics-reporting", package = "RdistNN")}.
 \item For distance/rank weighting details see
 \code{vignette("dnn-weights", package = "RdistNN")}.
 \item For estimator workflows see
@@ -53,7 +56,7 @@ and scores, see \code{vignette("extending", package = "RdistNN")}.
 
 \seealso{
 \code{\link[=weights_dnn]{weights_dnn()}}, \code{\link[=cate_dnn]{cate_dnn()}}, \code{\link[=np_dnn]{np_dnn()}}, \code{\link[=plqr_dnn]{plqr_dnn()}},
-\code{\link[=summary.cate_result]{summary.cate_result()}}, \code{\link[=predict.cate_result]{predict.cate_result()}},
+\code{\link[=diagnostics]{diagnostics()}}, \code{\link[=summary.cate_result]{summary.cate_result()}}, \code{\link[=predict.cate_result]{predict.cate_result()}},
 \code{\link[=new_score]{new_score()}}, \code{\link[=distance_l2]{distance_l2()}}
 }
 \author{

@@ -95,6 +95,7 @@ cate_dnn <- function(
   k <- .validate_scalar_int(k, "k")
 
   .warn_unknown_return(return, valid = c("W", "ranks", "ord", "dx", "psi", "nuisance", "ess", "neighbors", "tuning"))
+  t_vec <- e <- m0 <- m1 <- m <- NULL
 
   # Dispatch: data-frame API vs matrix API.
   if (!is.null(data)) {
@@ -107,7 +108,6 @@ cate_dnn <- function(
 
     if (!is.null(pseudo_outcome)) {
       psi <- .validate_vector_nrow(pseudo_outcome, n, arg = "pseudo_outcome", ref = "X", strict = TRUE)
-      m0 <- m1 <- m <- e <- NULL
     } else {
       # Determine which outcome-model interface is used
       has_aipw <- !is.null(m0_col) && !is.null(m1_col)
@@ -176,7 +176,6 @@ cate_dnn <- function(
       .abort_bad_arg("pseudo_outcome", "is required for the matrix interface")
     }
     psi <- .validate_vector_nrow(pseudo_outcome, n, arg = "pseudo_outcome", ref = "X", strict = TRUE)
-    m0 <- m1 <- m <- e <- NULL
   }
 
   s_resolved <- .dnn_resolve_s(
@@ -268,6 +267,8 @@ cate_dnn <- function(
   out$.model <- list(
     x_mat = x_mat,
     psi = psi,
+    t_vec = t_vec,
+    e = e,
     x_cols = if (!is.null(data)) x_cols else NULL,
     distance = distance,
     method = method,
