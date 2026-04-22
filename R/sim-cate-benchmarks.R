@@ -52,24 +52,20 @@
 }
 
 # ── DNN oracle ────────────────────────────────────────────────────────────────
-# Proposed method.  Uses oracle nuisances so that first-stage error does not
-# contaminate the comparison.
+# Proposed method.  Uses the oracle Robinson pseudo-outcome so that first-stage
+# error does not contaminate the comparison and the oracle/crossfit comparison
+# differs only in nuisance quality, not in score construction.
 
 .method_dnn_oracle <- function(dgp, x_cols, k, s, alpha, ...) {
   fit <- cate_dnn(
-    data      = dgp$data,
-    x_cols    = x_cols,
-    y_col     = "Y",
-    t_col     = "D",
-    e_col     = "e_oracle",
-    m0_col    = "m0_oracle",
-    m1_col    = "m1_oracle",
-    x0        = dgp$x0,
-    k         = k,
-    s         = s,
-    se        = TRUE,
-    jackknife = "fast",
-    return    = "ess"
+    X              = as.matrix(dgp$data[, x_cols]),
+    x0             = dgp$x0,
+    pseudo_outcome = dgp$data$rho_oracle,
+    k              = k,
+    s              = s,
+    se             = TRUE,
+    jackknife      = "fast",
+    return         = "ess"
   )
   .sim_metric(fit$tau, fit$se, dgp$tau_x0, alpha, neff = fit$ess)
 }
@@ -123,27 +119,23 @@
 }
 
 # ── DNN oracle with Mahalanobis distance ─────────────────────────────────────
-# Proposed method with Mahalanobis distance; relevant for dgp5_correlated where
-# the off-diagonal covariance makes L2 neighbourhoods geometrically misaligned.
-# The sample covariance is estimated once from the training data (via the
-# distance_mahalanobis() setup() mechanism) and reused for all evaluations.
+# Proposed method with Mahalanobis distance and the oracle Robinson
+# pseudo-outcome; relevant for dgp5_correlated where the off-diagonal covariance
+# makes L2 neighbourhoods geometrically misaligned. The sample covariance is
+# estimated once from the training data (via the distance_mahalanobis() setup()
+# mechanism) and reused for all evaluations.
 
 .method_dnn_oracle_mahal <- function(dgp, x_cols, k, s, alpha, ...) {
   fit <- cate_dnn(
-    data      = dgp$data,
-    x_cols    = x_cols,
-    y_col     = "Y",
-    t_col     = "D",
-    e_col     = "e_oracle",
-    m0_col    = "m0_oracle",
-    m1_col    = "m1_oracle",
-    x0        = dgp$x0,
-    k         = k,
-    s         = s,
-    distance  = "mahalanobis",
-    se        = TRUE,
-    jackknife = "fast",
-    return    = "ess"
+    X              = as.matrix(dgp$data[, x_cols]),
+    x0             = dgp$x0,
+    pseudo_outcome = dgp$data$rho_oracle,
+    k              = k,
+    s              = s,
+    distance       = "mahalanobis",
+    se             = TRUE,
+    jackknife      = "fast",
+    return         = "ess"
   )
   .sim_metric(fit$tau, fit$se, dgp$tau_x0, alpha, neff = fit$ess)
 }
@@ -221,6 +213,9 @@
 # Uses oracle nuisances (Y.hat = m_oracle, W.hat = e_oracle) to isolate
 # the estimator's adaptation capability from first-stage quality.
 # Primary comparison for the paper's self-normalisation / power claim.
+# Use one GRF thread per Monte Carlo worker: the outer simulation harness
+# parallelizes over replications, so letting each forest fit use all cores would
+# oversubscribe the machine badly on local multisession runs.
 
 .method_causal_forest <- function(dgp, x_cols, alpha, ...) {
   if (!requireNamespace("grf", quietly = TRUE)) {
@@ -236,9 +231,15 @@
     Y     = dat$Y,
     W     = dat$D,
     Y.hat = dat$m_oracle,
-    W.hat = dat$e_oracle
+    W.hat = dat$e_oracle,
+    num.threads = 1L
   )
-  pred    <- stats::predict(cf, newdata = x0_mat, estimate.variance = TRUE)
+  pred    <- stats::predict(
+    cf,
+    newdata = x0_mat,
+    estimate.variance = TRUE,
+    num.threads = 1L
+  )
   tau_hat <- pred$predictions[1L]
   se_hat  <- sqrt(pred$variance.estimates[1L])
 
@@ -248,6 +249,8 @@
 # ── GRF local linear forest ───────────────────────────────────────────────────
 # Causal forest with local-linear corrections applied at prediction time via
 # linear.correction.variables.  Oracle nuisances for first-stage isolation.
+# Keep GRF itself single-threaded here for the same reason as above: rep-level
+# parallelism lives outside this method.
 
 .method_llf <- function(dgp, x_cols, alpha, ll_lambda = 0.1, ...) {
   if (!requireNamespace("grf", quietly = TRUE)) {
@@ -266,14 +269,16 @@
     Y     = dat$Y,
     W     = dat$D,
     Y.hat = dat$m_oracle,
-    W.hat = dat$e_oracle
+    W.hat = dat$e_oracle,
+    num.threads = 1L
   )
   pred <- stats::predict(
     cf,
     newdata                    = x0_mat,
     ll.lambda                  = ll_lambda,
     estimate.variance          = TRUE,
-    linear.correction.variables = seq_len(kx)
+    linear.correction.variables = seq_len(kx),
+    num.threads                = 1L
   )
   tau_hat <- pred$predictions[1L]
   se_hat  <- sqrt(pred$variance.estimates[1L])

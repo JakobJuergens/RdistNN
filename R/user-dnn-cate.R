@@ -147,17 +147,30 @@ cate_dnn <- function(
       den   <- pmax(e * (1 - e), 1e-8)
 
       if (has_aipw) {
-        # Full doubly-robust AIPW pseudo-outcome (paper formula, Algorithm 1 / Eq. 5.1):
-        # φ̂_i = T_i(Y_i - μ̂₁) / (π̂_i(1-π̂_i)) - (1-T_i)(Y_i - μ̂₀) / (π̂_i(1-π̂_i)) + μ̂₁ - μ̂₀
+        # Full doubly-robust AIPW pseudo-outcome:
+        # tau_hat_i = mu1_hat - mu0_hat
+        #           + T_i (Y_i - mu1_hat) / pi_hat
+        #           - (1-T_i) (Y_i - mu0_hat) / (1-pi_hat)
         m0  <- .dnn_col_vec(m0_col, data, n, arg = "m0_col", ref = "data")
         m1  <- .dnn_col_vec(m1_col, data, n, arg = "m1_col", ref = "data")
         m   <- NULL
-        psi <- (t_vec * (y_vec - m1) - (1 - t_vec) * (y_vec - m0)) / den + (m1 - m0)
+        psi <- cate_rho_aipw(
+          y = y_vec,
+          d = t_vec,
+          m1hat = m1,
+          m0hat = m0,
+          ehat = e
+        )
       } else {
         # Robinson-form: (Y - m(X))(T - e) / (e(1-e))
         m0 <- m1 <- NULL
         m   <- .dnn_col_vec(m_col,  data, n, arg = "m_col",  ref = "data")
-        psi <- (y_vec - m) * (t_vec - e) / den
+        psi <- cate_rho_rlearner(
+          y = y_vec,
+          d = t_vec,
+          ehat = e,
+          mhat = m
+        )
       }
     }
   } else {

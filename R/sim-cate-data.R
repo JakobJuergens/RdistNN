@@ -95,7 +95,7 @@
 # ── DGP 2: nonlinear (sinusoidal) CATE ───────────────────────────────────────
 
 .sim_dgp2 <- function(n, kx = 2L, sigma = 0.5, clip = 1e-3, seed = NULL,
-                       x0 = rep(0, kx)) {
+                       x0 = c(1, rep(0, max(0L, kx - 1L)))) {
   if (!is.null(seed)) set.seed(seed)
   X <- matrix(stats::rnorm(n * kx), n, kx)
 
@@ -127,7 +127,7 @@
 # methods that do not adapt to the local effective sample size.
 
 .sim_dgp3 <- function(n, kx = 2L, sigma = 0.5, clip = 1e-3, seed = NULL,
-                       x0 = rep(0, kx), r = 1.0, c_sharp = 3.0) {
+                       x0 = c(1, rep(0, max(0L, kx - 1L))), r = 1.0, c_sharp = 3.0) {
   if (!is.null(seed)) set.seed(seed)
   X <- matrix(stats::rnorm(n * kx), n, kx)
 
@@ -157,7 +157,7 @@
 
 # ── DGP 4: clustered (mixture) covariate design ──────────────────────────────
 
-# X is a two-component mixture: a dense inner cluster N(0, inner_sd^2 * I)
+# X is a two-component mixture: a dense inner cluster N(x0, inner_sd^2 * I)
 # centred at x0 (weight mix_prob) and a sparse outer cluster N(outer_mu, I)
 # far from x0 (weight 1 - mix_prob).  Tests density adaptivity: the DNN
 # s-NN effective bandwidth automatically shrinks at x0 because the local
@@ -167,7 +167,7 @@
 # comparison; only the covariate distribution changes.
 
 .sim_dgp4 <- function(n, kx = 2L, sigma = 0.5, clip = 1e-3, seed = NULL,
-                       x0 = rep(0, kx), mix_prob = 0.7, inner_sd = 0.4,
+                       x0 = c(1, rep(0, max(0L, kx - 1L))), mix_prob = 0.7, inner_sd = 0.4,
                        outer_x1 = 3.0) {
   if (!is.null(seed)) set.seed(seed)
 
@@ -180,7 +180,8 @@
   X <- matrix(0, n, kx)
   if (n_inner > 0L)
     X[cluster == 1L, ] <- matrix(stats::rnorm(n_inner * kx, sd = inner_sd),
-                                  n_inner, kx)
+                                  n_inner, kx) +
+                          matrix(x0, n_inner, kx, byrow = TRUE)
   if (n_outer > 0L)
     X[cluster == 0L, ] <- matrix(stats::rnorm(n_outer * kx), n_outer, kx) +
                           matrix(outer_mu, n_outer, kx, byrow = TRUE)
@@ -263,15 +264,20 @@
 #'   \item{`dgp1_linear`}{Linear CATE \eqn{\tau(x) = \beta'x}; logistic
 #'     propensity. Correctly specified for the OLS-interaction benchmark.}
 #'   \item{`dgp2_nonlinear`}{Sinusoidal CATE \eqn{\tau(x) = 0.5 + 0.5\sin(x_1)};
-#'     same propensity. Misspecified for OLS; primary horse-race DGP.}
+#'     same propensity. Misspecified for OLS; primary horse-race DGP. Default
+#'     target is the interior point \eqn{x_0 = (1,0,\ldots)} so the local CATE
+#'     is visibly nonlinear around the evaluation point.}
 #'   \item{`dgp3_sparse_overlap`}{Same \eqn{\tau} as DGP 2; propensity
 #'     interpolates between 0.5 at `x0` and a near-boundary logistic far from
-#'     `x0`. Tests estimators that do not adapt to local effective sample size.}
+#'     `x0`. Tests estimators that do not adapt to local effective sample size.
+#'     Default target is the same interior point \eqn{x_0 = (1,0,\ldots)}.}
 #'   \item{`dgp4_clustered`}{Same \eqn{\tau} and propensity as DGP 2; covariates
-#'     from a two-component mixture: 70\% \eqn{N(0, 0.4^2 I)} (dense cluster at
+#'     from a two-component mixture: 70\% \eqn{N(x_0, 0.4^2 I)} (dense cluster at
 #'     `x0`) and 30\% \eqn{N((3,0,\ldots), I)} (sparse outer cluster). Tests
 #'     density adaptivity: the DNN s-NN bandwidth automatically shrinks at the
-#'     dense `x0`, while a fixed-bandwidth kernel over-smooths.}
+#'     dense `x0`, while a fixed-bandwidth kernel over-smooths. Default target is
+#'     the interior point \eqn{x_0 = (1,0,\ldots)} and the inner cluster is
+#'     recentered there.}
 #'   \item{`dgp5_correlated`}{Covariates \eqn{X \sim N(0,\Sigma)} with
 #'     \eqn{\Sigma_{12} = \rho = 0.85}; \eqn{\tau(x) = \sin(2x_1) + 0.5x_1^2};
 #'     evaluation point at \eqn{x_0 = (0.75, 0)}. Tests shape adaptivity: L2
@@ -287,8 +293,10 @@
 #' @param sigma Noise standard deviation in \eqn{Y}.
 #' @param clip Propensity clipping bound in \eqn{(0, 0.5)}.
 #' @param seed Optional integer seed for reproducibility.
-#' @param x0 Optional numeric length-`kx` evaluation point (defaults to the
-#'   origin).
+#' @param x0 Optional numeric length-`kx` evaluation point. Defaults are
+#'   DGP-specific interior points: \eqn{(0,\ldots,0)} for `dgp1_linear`,
+#'   \eqn{(1,0,\ldots)} for `dgp2_nonlinear`, `dgp3_sparse_overlap`, and
+#'   `dgp4_clustered`, and \eqn{(0.75,0,\ldots)} for `dgp5_correlated`.
 #' @param ... Extra arguments forwarded to the underlying DGP (e.g. `r` and
 #'   `c_sharp` for `dgp3_sparse_overlap`).
 #'
@@ -331,11 +339,11 @@ sim_cate_data <- function(design, n, kx = 2L, sigma = 0.5, clip = 1e-3,
     dgp1_linear         = .sim_dgp1(n, kx, sigma, clip, seed,
                             x0 = if (is.null(x0)) rep(0, kx) else x0, ...),
     dgp2_nonlinear      = .sim_dgp2(n, kx, sigma, clip, seed,
-                            x0 = if (is.null(x0)) rep(0, kx) else x0, ...),
+                            x0 = if (is.null(x0)) c(1, rep(0, max(0L, kx - 1L))) else x0, ...),
     dgp3_sparse_overlap = .sim_dgp3(n, kx, sigma, clip, seed,
-                            x0 = if (is.null(x0)) rep(0, kx) else x0, ...),
+                            x0 = if (is.null(x0)) c(1, rep(0, max(0L, kx - 1L))) else x0, ...),
     dgp4_clustered      = .sim_dgp4(n, kx, sigma, clip, seed,
-                            x0 = if (is.null(x0)) rep(0, kx) else x0, ...),
+                            x0 = if (is.null(x0)) c(1, rep(0, max(0L, kx - 1L))) else x0, ...),
     dgp5_correlated     = .sim_dgp5(n, kx, sigma, clip, seed,
                             x0 = if (is.null(x0)) c(0.75, rep(0, max(0L, kx - 1L))) else x0,
                             ...),

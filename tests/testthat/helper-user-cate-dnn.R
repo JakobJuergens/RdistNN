@@ -23,7 +23,8 @@
   e <- df$e_oracle
   m_oracle <- df$m_oracle
   den <- pmax(e * (1 - e), 1e-8)
-  psi_aipw <- (T_ * (Y - m1) - (1 - T_) * (Y - m0)) / den + (m1 - m0)
+  psi_aipw <- (m1 - m0) + T_ * (Y - m1) / pmax(e, 1e-8) -
+    (1 - T_) * (Y - m0) / pmax(1 - e, 1e-8)
   psi_robinson <- (Y - m_oracle) * (T_ - e) / den
 
   list(

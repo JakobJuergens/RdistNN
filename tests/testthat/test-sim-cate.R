@@ -324,21 +324,28 @@ test_that("sim_cate_data dgp4_clustered: m1_oracle = m0_oracle + tau_oracle", {
                tolerance = 1e-12)
 })
 
+test_that("sim_cate_data dgp2/dgp3/dgp4: default x0 is (1, 0, ...)", {
+  for (design in c("dgp2_nonlinear", "dgp3_sparse_overlap", "dgp4_clustered")) {
+    dgp <- sim_cate_data(design, n = 50L, kx = 2L, seed = 1L)
+    expect_equal(dgp$x0[1L], 1.0, tolerance = 1e-12)
+    expect_equal(dgp$x0[2L], 0.0, tolerance = 1e-12)
+  }
+})
+
 test_that("sim_cate_data dgp4_clustered: mixture creates dense cluster near x0", {
   # With mix_prob = 0.7 and inner_sd = 0.4, the majority of obs should be near
-  # x0 = (0, 0), giving a bimodal X1 distribution.  We verify the dense inner
-  # cluster exists: at least 50% of obs should have |X1| < 1 (inner cluster has
-  # sd=0.4 so nearly all of them land there, outer is at X1 ≈ 3 by default).
+  # the DGP-specific default x0 = (1, 0), giving a bimodal X1 distribution.
+  # We verify the dense inner cluster exists around x0 itself.
   dgp <- sim_cate_data("dgp4_clustered", n = 500L, kx = 2L, seed = 7L)
-  prop_near <- mean(abs(dgp$data$X1) < 1)
+  prop_near <- mean(abs(dgp$data$X1 - dgp$x0[1L]) < 1)
   expect_gt(prop_near, 0.5)
 })
 
 test_that("sim_cate_data dgp4_clustered: outer cluster is well separated from x0", {
-  # Outer cluster is centred at (outer_x1=3, 0).  With n large, some fraction of
-  # obs should have X1 > 2.
+  # Outer cluster is centred at (outer_x1=3, 0).  With the default x0 = (1, 0),
+  # some fraction of obs should sit well to the right of x0.
   dgp <- sim_cate_data("dgp4_clustered", n = 500L, kx = 2L, seed = 8L)
-  expect_gt(mean(dgp$data$X1 > 2), 0.05)
+  expect_gt(mean(dgp$data$X1 > (dgp$x0[1L] + 1)), 0.05)
 })
 
 test_that("sim_cate_data dgp4_clustered: tau_x0 matches tau_fn at x0", {
@@ -397,6 +404,39 @@ test_that("sim_cate_one_rep: dnn_crossfit returns finite metrics", {
   expect_true(is.finite(r$tau_hat))
   expect_true(r$se > 0)
   expect_true(r$cover %in% c(0, 1))
+})
+
+test_that("sim_cate_one_rep: dnn_oracle matches direct oracle Robinson fit", {
+  n <- 120L
+  kx <- 2L
+  k <- 3L
+  s <- floor(n^(3/4))
+  seed <- 42L
+  dgp <- sim_cate_data("dgp2_nonlinear", n = n, kx = kx, seed = seed)
+
+  fit <- cate_dnn(
+    X = as.matrix(dgp$data[, paste0("X", seq_len(kx))]),
+    x0 = dgp$x0,
+    pseudo_outcome = dgp$data$rho_oracle,
+    k = k,
+    s = s,
+    se = TRUE,
+    jackknife = "fast",
+    return = "ess"
+  )
+  r <- sim_cate_one_rep(
+    n = n, kx = kx, k = k,
+    s = s,
+    design = "dgp2_nonlinear",
+    methods = "dnn_oracle",
+    seed = seed
+  )
+
+  expect_equal(nrow(r), 1L)
+  expect_equal(r$method, "dnn_oracle")
+  expect_equal(r$tau_hat, fit$tau, tolerance = 1e-12)
+  expect_equal(r$se, fit$se, tolerance = 1e-12)
+  expect_equal(r$neff, fit$ess, tolerance = 1e-12)
 })
 
 test_that("sim_cate_one_rep: local_constant returns finite metrics", {
