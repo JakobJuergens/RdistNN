@@ -9,3 +9,8 @@ and cleanup plan are defined there and in the linked files under
 
 Before changing code, especially in exported functions or shared helpers, follow
 `AGENTS.md` and its required read order.
+
+For mathematical derivations, symbolic checks, or finite combinatorial
+verification, Mathematica / Wolfram Language is available through
+`wolframscript` and should be used when helpful; record nontrivial conclusions
+in code, tests, or design notes rather than relying on an ephemeral session.

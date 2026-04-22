@@ -43,6 +43,10 @@ also read as relevant:
 - New compiled paths must include fallback-equivalence tests.
 - New user-visible validation or behavior changes must include tests.
 - Do not introduce new interface conventions without updating the design notes.
+- Mathematica / Wolfram Language is available through `wolframscript`. Use it
+  when helpful for symbolic derivations, finite combinatorial checks, or
+  estimator-formula sanity checks, and record any substantive conclusions back
+  into code, tests, or design notes.
 
 ## Working rules for agents
 
