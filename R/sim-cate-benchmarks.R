@@ -70,13 +70,58 @@
   .sim_metric(fit$tau, fit$se, dgp$tau_x0, alpha, neff = fit$ess)
 }
 
+# ── DNN with estimated nuisances ──────────────────────────────────────────────
+# Same nuisance models are used for both same-sample and cross-fitted variants:
+# logistic regression for the propensity score and OLS for the marginal outcome
+# mean E[Y | X].  The comparison between dnn_fullsample and dnn_crossfit then
+# isolates the cost of sample splitting rather than the nuisance specification.
+
+.fit_sim_nuisances_fullsample <- function(dat, x_cols, clip = 1e-3) {
+  e_fmla <- stats::as.formula(paste("D ~", paste(x_cols, collapse = " + ")))
+  m_fmla <- stats::as.formula(paste("Y ~", paste(x_cols, collapse = " + ")))
+
+  e_fit <- stats::glm(e_fmla, data = dat, family = stats::binomial())
+  e_hat <- stats::predict(e_fit, newdata = dat, type = "response")
+  e_hat <- pmin(pmax(e_hat, clip), 1 - clip)
+
+  m_fit <- stats::lm(m_fmla, data = dat)
+  m_hat <- stats::predict(m_fit, newdata = dat)
+
+  list(e_hat = e_hat, m_hat = m_hat)
+}
+
+# ── DNN full-sample ───────────────────────────────────────────────────────────
+# Same nuisance estimators as dnn_crossfit, but fit once on the full sample and
+# reused on that same sample. This is the direct non-cross-fitted counterpart of
+# the realistic cross-fit implementation.
+
+.method_dnn_fullsample <- function(dgp, x_cols, k, s, alpha,
+                                   clip = 1e-3, ...) {
+  dat <- dgp$data
+  nuis <- .fit_sim_nuisances_fullsample(dat, x_cols = x_cols, clip = clip)
+  rho_fs <- (dat$D - nuis$e_hat) * (dat$Y - nuis$m_hat) /
+    pmax(nuis$e_hat * (1 - nuis$e_hat), 1e-8)
+
+  fit <- cate_dnn(
+    X              = as.matrix(dat[, x_cols]),
+    x0             = dgp$x0,
+    pseudo_outcome = rho_fs,
+    k              = k,
+    s              = s,
+    se             = TRUE,
+    jackknife      = "fast",
+    return         = "ess"
+  )
+  .sim_metric(fit$tau, fit$se, dgp$tau_x0, alpha, neff = fit$ess)
+}
+
 # ── DNN cross-fitted ──────────────────────────────────────────────────────────
 # Proposed method with K-fold cross-fitted nuisances estimated via
 # logistic regression (propensity) and OLS (outcome mean), both base-R.
 # Compares same-sample inference against the cross-fitting alternative.
 
 .method_dnn_crossfit <- function(dgp, x_cols, k, s, alpha,
-                                  n_folds = 5L, clip = 1e-3, ...) {
+                                 n_folds = 5L, clip = 1e-3, ...) {
   dat <- dgp$data
   n   <- nrow(dat)
 
@@ -291,6 +336,7 @@
 .SIM_CATE_METHODS <- list(
   dnn_oracle       = .method_dnn_oracle,
   dnn_oracle_mahal = .method_dnn_oracle_mahal,
+  dnn_fullsample   = .method_dnn_fullsample,
   dnn_crossfit     = .method_dnn_crossfit,
   local_constant   = .method_local_constant,
   ols_interact     = .method_ols_interact,
@@ -315,6 +361,7 @@
 #' |---------------------|-------------|
 #' | `dnn_oracle`        | Proposed DNN Z-estimator, L2 distance, oracle nuisances |
 #' | `dnn_oracle_mahal`  | Proposed DNN Z-estimator, Mahalanobis distance, oracle nuisances (`dgp5_correlated`) |
+#' | `dnn_fullsample`    | Proposed DNN Z-estimator, L2 distance, full-sample estimated nuisances |
 #' | `dnn_crossfit`      | Proposed DNN Z-estimator, L2 distance, K-fold cross-fitted nuisances |
 #' | `local_constant`    | Nadaraya-Watson smoother on oracle pseudo-outcome |
 #' | `ols_interact`      | OLS with D*X interactions, delta-method SE at x0 |

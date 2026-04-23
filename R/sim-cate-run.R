@@ -57,7 +57,7 @@
 #' rep1 <- sim_cate_one_rep(
 #'   n = 200, kx = 2, k = 5, s = 12,
 #'   design = "dgp2_nonlinear",
-#'   methods = c("dnn_oracle", "ols_interact"),
+#'   methods = c("dnn_fullsample", "ols_interact"),
 #'   seed = 1
 #' )
 #' rep1
@@ -186,7 +186,7 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
 #' future::plan(future::multisession)
 #' raw <- sim_cate_run(
 #'   designs = "dgp2_nonlinear", n_vals = 500L, n_reps = 10L,
-#'   methods = c("dnn_oracle", "dnn_crossfit", "ols_interact", "causal_forest")
+#'   methods = c("dnn_fullsample", "dnn_crossfit", "ols_interact", "causal_forest")
 #' )
 #' future::plan(future::sequential)
 #'

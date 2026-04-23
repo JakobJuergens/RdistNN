@@ -41,7 +41,7 @@ GRID <- list(
   s_fn        = function(n, kx) floor(n^((kx + 1L) / (kx + 2L))),
   # Must match run.R and merge.R.  dnn_oracle_mahal is especially informative
   # for dgp5_correlated (shape adaptivity).
-  methods     = c("dnn_oracle", "dnn_oracle_mahal", "dnn_crossfit",
+  methods     = c("dnn_fullsample", "dnn_oracle_mahal", "dnn_crossfit",
                   "local_constant", "ols_interact"),
   alpha       = 0.05,
   sigma       = 0.5,

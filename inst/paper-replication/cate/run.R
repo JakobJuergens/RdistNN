@@ -33,7 +33,7 @@ PAPER_GRID <- list(
   # Methods evaluated on every draw.  dnn_oracle_mahal is especially informative
   # for dgp5_correlated (shape adaptivity).  Add "causal_forest" and "llf" if
   # grf is installed.
-  methods     = c("dnn_oracle", "dnn_oracle_mahal", "dnn_crossfit",
+  methods     = c("dnn_fullsample", "dnn_oracle_mahal", "dnn_crossfit",
                   "local_constant", "ols_interact"),
   alpha       = 0.05,
   sigma       = 0.5,
