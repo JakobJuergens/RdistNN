@@ -4,8 +4,17 @@ on:
   workflow_dispatch:
   push:
     branches: [ main, master ]
-    paths-ignore:
-      - 'archives/**'
+    paths:
+      - 'R/**'
+      - 'src/**'
+      - 'tests/**'
+      - 'inst/include/**'
+      - 'tools/bench/**'
+      - 'DESCRIPTION'
+      - 'NAMESPACE'
+      - 'README.md'
+      - 'README.Rmd'
+      - '.github/workflows/package-snapshot.yml'
 
 permissions:
   contents: write
@@ -13,12 +22,132 @@ permissions:
 
 concurrency:
   group: archive-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
-  zip-and-commit:
+  cooldown_gate:
     runs-on: ubuntu-latest
-    if: ${{ github.actor != 'github-actions[bot]' }}
+    outputs:
+      should_run: ${{ steps.decide.outputs.should_run }}
+      reason: ${{ steps.decide.outputs.reason }}
+    steps:
+      - name: Enforce workflow cooldown
+        id: decide
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WINDOW_HOURS: "12"
+          TARGET_JOB_NAME: "zip-and-commit"
+          CURRENT_RUN_ID: ${{ github.run_id }}
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+
+          {
+            echo "## Cooldown gate"
+            echo "- event: \`$EVENT_NAME\`"
+            echo "- cooldown window: \`${WINDOW_HOURS}h\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            echo "reason=manual_dispatch" >> "$GITHUB_OUTPUT"
+            echo "- decision: allow heavy jobs (manual dispatch bypass)" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          if ! current_run="$(gh api "/repos/${{ github.repository }}/actions/runs/${CURRENT_RUN_ID}")"; then
+            echo "::warning::Unable to inspect the current workflow run; allowing execution."
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            echo "reason=gate_lookup_failed" >> "$GITHUB_OUTPUT"
+            echo "- decision: allow heavy jobs (gate lookup failed)" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          workflow_id="$(jq -r '.workflow_id' <<<"$current_run")"
+          scope_branch="$(jq -r '.head_branch // empty' <<<"$current_run")"
+          if [[ -z "$scope_branch" || "$scope_branch" == "null" ]]; then
+            scope_branch="$HEAD_REF"
+          fi
+          if [[ -z "$scope_branch" || "$scope_branch" == "null" ]]; then
+            scope_branch="$REF_NAME"
+          fi
+          scope_repo="$(jq -r '.head_repository.full_name // .repository.full_name // empty' <<<"$current_run")"
+          if [[ -z "$scope_repo" || "$scope_repo" == "null" ]]; then
+            scope_repo="${{ github.repository }}"
+          fi
+          cutoff="$(date -u -d "-${WINDOW_HOURS} hours" +"%Y-%m-%dT%H:%M:%SZ")"
+
+          if ! runs_json="$(gh api "/repos/${{ github.repository }}/actions/workflows/${workflow_id}/runs?per_page=50")"; then
+            echo "::warning::Unable to inspect recent workflow runs; allowing execution."
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            echo "reason=history_lookup_failed" >> "$GITHUB_OUTPUT"
+            echo "- decision: allow heavy jobs (history lookup failed)" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          candidate_runs="$(jq -c \
+            --argjson current "$CURRENT_RUN_ID" \
+            --arg event "$EVENT_NAME" \
+            --arg branch "$scope_branch" \
+            --arg repo "$scope_repo" \
+            --arg cutoff "$cutoff" \
+            '
+              [
+                .workflow_runs[]
+                | select(.id != $current)
+                | select(.event == $event)
+                | select((.head_branch // "") == $branch)
+                | select((.head_repository.full_name // .repository.full_name // "") == $repo)
+                | select(.created_at >= $cutoff)
+                | {id, created_at, html_url}
+              ]
+              | sort_by(.created_at)
+              | reverse
+            ' <<<"$runs_json")"
+
+          echo "- branch scope: \`$scope_branch\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- repo scope: \`$scope_repo\`" >> "$GITHUB_STEP_SUMMARY"
+
+          last_run=""
+          while IFS= read -r candidate; do
+            [[ -z "$candidate" ]] && continue
+            run_id="$(jq -r '.id' <<<"$candidate")"
+            if ! jobs_json="$(gh api "/repos/${{ github.repository }}/actions/runs/${run_id}/jobs?per_page=100" --paginate)"; then
+              echo "::warning::Unable to inspect jobs for workflow run ${run_id}; ignoring that run in cooldown history."
+              continue
+            fi
+
+            if echo "$jobs_json" | jq -e \
+              --arg job_name "$TARGET_JOB_NAME" \
+              '
+                .jobs[]
+                | select(.name == $job_name)
+                | select(.started_at != null)
+                | select(.status == "in_progress" or (.status == "completed" and (.conclusion // "") != "skipped"))
+              ' >/dev/null; then
+              last_run="$candidate"
+              break
+            fi
+          done < <(jq -c '.[]' <<<"$candidate_runs")
+
+          if [[ -n "$last_run" ]]; then
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            echo "reason=cooled_down" >> "$GITHUB_OUTPUT"
+            echo "- decision: skip heavy jobs" >> "$GITHUB_STEP_SUMMARY"
+            echo "- prior run within window: \`$(jq -r '.created_at' <<<"$last_run")\`" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            echo "reason=window_elapsed" >> "$GITHUB_OUTPUT"
+            echo "- decision: allow heavy jobs" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  zip-and-commit:
+    needs: cooldown_gate
+    if: ${{ needs.cooldown_gate.outputs.should_run == 'true' && github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -96,8 +225,8 @@ jobs:
           retention-days: 14
 
   save_logs:
-    if: ${{ always() && needs.zip-and-commit.result != 'success' && github.actor != 'github-actions[bot]' }}
-    needs: [zip-and-commit]
+    if: ${{ needs.cooldown_gate.outputs.should_run == 'true' && !cancelled() && always() && needs.zip-and-commit.result != 'success' && github.actor != 'github-actions[bot]' }}
+    needs: [cooldown_gate, zip-and-commit]
     uses: ./.github/workflows/harvest-failure-logs.yml
     with:
       logs_dir: GH_logs/package-snapshot

@@ -9,6 +9,10 @@ permissions:
   contents: write
   actions: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   r-lint:
     runs-on: ubuntu-latest
@@ -68,8 +72,31 @@ jobs:
             echo "had_failure=true" >> "$GITHUB_OUTPUT"
           fi
 
+  enforce:
+    if: ${{ !cancelled() }}
+    needs: [r-lint, cxx-style]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail workflow if any style check failed
+        shell: bash
+        run: |
+          set -euo pipefail
+          failed=0
+
+          if [[ "${{ needs.r-lint.outputs.had_failure }}" == "true" ]]; then
+            echo "::error::R lint failed."
+            failed=1
+          fi
+
+          if [[ "${{ needs.cxx-style.outputs.had_failure }}" == "true" ]]; then
+            echo "::error::C++ style check failed."
+            failed=1
+          fi
+
+          exit "$failed"
+
   save_logs:
-    if: ${{ github.actor != 'github-actions[bot]' && (needs.r-lint.outputs.had_failure == 'true' || needs.cxx-style.outputs.had_failure == 'true') }}
+    if: ${{ !cancelled() && github.actor != 'github-actions[bot]' && (needs.r-lint.outputs.had_failure == 'true' || needs.cxx-style.outputs.had_failure == 'true') }}
     needs: [r-lint, cxx-style]
     uses: ./.github/workflows/harvest-failure-logs.yml
     with:

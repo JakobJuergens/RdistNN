@@ -1,13 +1,17 @@
 name: test-coverage
 
 on:
-  push:
-    branches: [main, master]
-  pull_request:
+  schedule:
+    - cron: '43 3 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: write
   actions: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test-coverage:
@@ -40,30 +44,24 @@ jobs:
           print(cov)
           covr::to_cobertura(cov, filename = "cobertura.xml")
 
-            # (optional) Fail early if pushing to protected branches w/o token
-      - name: Ensure CODECOV_TOKEN is present on pushes to main/master
-        if: ${{ github.event_name != 'pull_request' && (github.ref_name == 'main' || github.ref_name == 'master') }}
+      - name: Ensure CODECOV_TOKEN is present on default-branch runs
+        if: ${{ github.ref_name == 'main' || github.ref_name == 'master' }}
         run: |
           if [ -z "${{ secrets.CODECOV_TOKEN }}" ]; then
-            echo "CODECOV_TOKEN is required for uploads from protected branches (main/master)."
+            echo "CODECOV_TOKEN is required for coverage uploads from the default branch."
             exit 1
           fi
 
-      # Upload to Codecov:
-      #  - skip fork PRs (no secrets)
-      #  - tokenless on public PRs from same repo
-      #  - token for pushes (esp. protected branches) or private repos
       - name: Upload coverage to Codecov
-        if: ${{ always() && hashFiles('cobertura.xml') != '' && (github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork) }}
+        if: ${{ always() && hashFiles('cobertura.xml') != '' }}
         uses: codecov/codecov-action@v4
         with:
           files: ./cobertura.xml
           token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: ${{ github.event_name != 'pull_request' }}
+          fail_ci_if_error: true
           verbose: true
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
 
       - name: Show testthat output
         if: always()
@@ -83,12 +81,12 @@ jobs:
           retention-days: 14
 
   save_logs:
-    if: ${{ always() && needs.test-coverage.result != 'success' && github.actor != 'github-actions[bot]' }}
+    if: ${{ !cancelled() && always() && needs.test-coverage.result != 'success' && github.actor != 'github-actions[bot]' }}
     needs: [test-coverage]
     uses: ./.github/workflows/harvest-failure-logs.yml
     with:
       logs_dir: GH_logs/test-coverage
       artifact_pattern: debug-test-coverage-*
       harvested_artifact_name: harvested-test-coverage-logs
-      commit_logs: ${{ github.event_name != 'pull_request' }}
+      commit_logs: true
     secrets: inherit

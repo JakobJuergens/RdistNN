@@ -29,6 +29,8 @@ if (is.na(cell_idx) || cell_idx < 1L)
 
 # ── Paper grid ────────────────────────────────────────────────────────────────
 # Must match merge.R.  Edit both files if you change the grid.
+# The focused nuisance-efficiency design dgp6_nuisance_efficiency is available
+# in the package but is not part of this default five-design HPC grid.
 
 GRID <- list(
   designs     = c("dgp1_linear", "dgp2_nonlinear", "dgp3_sparse_overlap",

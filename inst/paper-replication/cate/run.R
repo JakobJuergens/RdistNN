@@ -19,7 +19,9 @@
 library(RdistNN)
 
 # ── Paper simulation grid ─────────────────────────────────────────────────────
-# Mirrors the design grid in 05b_CATE_Simulation.tex.
+# Mirrors the main five-design grid in 05b_CATE_Simulation.tex.
+# The focused nuisance-efficiency design dgp6_nuisance_efficiency is implemented
+# in the package but is intended for a separate full-sample-versus-cross-fit run.
 
 PAPER_GRID <- list(
   designs     = c("dgp1_linear", "dgp2_nonlinear", "dgp3_sparse_overlap",

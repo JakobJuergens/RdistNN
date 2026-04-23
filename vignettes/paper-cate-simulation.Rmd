@@ -31,15 +31,16 @@ system.file("paper-replication/cate/run.R", package = "RdistNN")
 
 ## Data-generating processes
 
-Five DGPs are available via `sim_cate_data()`:
+Six DGPs are available via `sim_cate_data()`:
 
 | Design | `tau(x)` | Propensity | Covariate design | Notes |
 |---|---|---|---|---|
 | `dgp1_linear` | `0.5 x1 - 0.3 x2` | logistic | iid N(0,I) | correctly specified for OLS-interaction |
-| `dgp2_nonlinear` | `0.5 + 0.5 sin(x1)` | logistic | iid N(0,I) | primary horse-race DGP |
-| `dgp3_sparse_overlap` | same as DGP 2 | near-boundary except at `x0` | iid N(0,I) | stress-tests local ESS adaptation |
-| `dgp4_clustered` | same as DGP 2 | logistic | mixture: 70% N(0, 0.4²I) + 30% N((3,0),I) | density-adaptivity DGP; DNN shrinks bandwidth at dense `x0` |
+| `dgp2_nonlinear` | `0.5 + 0.75 sin(1.5 x1)` | logistic | iid N(0,I) | sharper local misspecification design |
+| `dgp3_sparse_overlap` | same as DGP 2 | near-boundary except in a tight pocket at `x0` | iid N(0,I) | stress-tests local ESS adaptation |
+| `dgp4_clustered` | same as DGP 2 | logistic | mixture: 80% N(x0, 0.2²I) + 10% N((4.5,2), 1.25²I) + 10% N((-2.5,-2), 1.25²I) | density-adaptivity DGP; DNN shrinks bandwidth at dense `x0` |
 | `dgp5_correlated` | `sin(2x1) + 0.5 x1²` | steeper logistic | N(0,Σ), ρ=0.85; x0=(0.75,0) | shape-adaptivity DGP; `dnn_oracle_mahal` corrects for off-diagonal covariance |
+| `dgp6_nuisance_efficiency` | `0.5 + 0.60 sin(1.5 x1)` | logistic, correctly specified for benchmark nuisance models | iid N(0,I) | focused `dnn_fullsample` versus `dnn_crossfit` design |
 
 All DGPs return oracle nuisances (`e_oracle`, `m0_oracle`, `m1_oracle`,
 `tau_oracle`, `rho_oracle`) so that first-stage estimation error can be
@@ -48,7 +49,7 @@ isolated.
 ```{r dgp-example}
 dgp <- sim_cate_data("dgp2_nonlinear", n = 300, kx = 2, seed = 42)
 head(dgp$data[, c("X1", "X2", "D", "Y", "tau_oracle", "e_oracle")])
-dgp$tau_x0   # true CATE at x0 = (0, 0)
+dgp$tau_x0   # true CATE at the default target x0 = (1, 0)
 ```
 
 ## Single replicate

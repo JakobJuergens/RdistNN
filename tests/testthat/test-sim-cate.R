@@ -1,6 +1,6 @@
 test_that("sim_cate_data: output schema is correct for each design", {
   designs <- c("dgp1_linear", "dgp2_nonlinear", "dgp3_sparse_overlap",
-               "dgp4_clustered", "dgp5_correlated")
+               "dgp4_clustered", "dgp5_correlated", "dgp6_nuisance_efficiency")
   expected_cols <- c(
     "X1", "X2", "D", "Y",
     "e_oracle", "m_oracle", "m0_oracle", "m1_oracle",
@@ -324,28 +324,28 @@ test_that("sim_cate_data dgp4_clustered: m1_oracle = m0_oracle + tau_oracle", {
                tolerance = 1e-12)
 })
 
-test_that("sim_cate_data dgp2/dgp3/dgp4: default x0 is (1, 0, ...)", {
-  for (design in c("dgp2_nonlinear", "dgp3_sparse_overlap", "dgp4_clustered")) {
+test_that("sim_cate_data dgp2/dgp3/dgp4/dgp6: default x0 is (1, 0, ...)", {
+  for (design in c("dgp2_nonlinear", "dgp3_sparse_overlap",
+                   "dgp4_clustered", "dgp6_nuisance_efficiency")) {
     dgp <- sim_cate_data(design, n = 50L, kx = 2L, seed = 1L)
     expect_equal(dgp$x0[1L], 1.0, tolerance = 1e-12)
     expect_equal(dgp$x0[2L], 0.0, tolerance = 1e-12)
   }
 })
 
-test_that("sim_cate_data dgp4_clustered: mixture creates dense cluster near x0", {
-  # With mix_prob = 0.7 and inner_sd = 0.4, the majority of obs should be near
-  # the DGP-specific default x0 = (1, 0), giving a bimodal X1 distribution.
-  # We verify the dense inner cluster exists around x0 itself.
-  dgp <- sim_cate_data("dgp4_clustered", n = 500L, kx = 2L, seed = 7L)
-  prop_near <- mean(abs(dgp$data$X1 - dgp$x0[1L]) < 1)
-  expect_gt(prop_near, 0.5)
+test_that("sim_cate_data dgp4_clustered: mixture creates a dense spike near x0", {
+  dgp <- sim_cate_data("dgp4_clustered", n = 1200L, kx = 2L, seed = 7L)
+  d2 <- (dgp$data$X1 - dgp$x0[1L])^2 + (dgp$data$X2 - dgp$x0[2L])^2
+  prop_near <- mean(d2 < 0.6^2)
+  expect_gt(prop_near, 0.7)
 })
 
-test_that("sim_cate_data dgp4_clustered: outer cluster is well separated from x0", {
-  # Outer cluster is centred at (outer_x1=3, 0).  With the default x0 = (1, 0),
-  # some fraction of obs should sit well to the right of x0.
-  dgp <- sim_cate_data("dgp4_clustered", n = 500L, kx = 2L, seed = 8L)
-  expect_gt(mean(dgp$data$X1 > (dgp$x0[1L] + 1)), 0.05)
+test_that("sim_cate_data dgp4_clustered: both remote clusters are populated", {
+  dgp <- sim_cate_data("dgp4_clustered", n = 1500L, kx = 2L, seed = 8L)
+  pos_cluster <- mean(dgp$data$X1 > 2.5 & dgp$data$X2 > 0.5)
+  neg_cluster <- mean(dgp$data$X1 < -0.5 & dgp$data$X2 < -0.5)
+  expect_gt(pos_cluster, 0.04)
+  expect_gt(neg_cluster, 0.04)
 })
 
 test_that("sim_cate_data dgp4_clustered: tau_x0 matches tau_fn at x0", {
@@ -385,6 +385,26 @@ test_that("sim_cate_data dgp5_correlated: X1 and X2 are strongly correlated", {
 
 test_that("sim_cate_data dgp5_correlated: tau_x0 matches tau_fn at x0", {
   dgp <- sim_cate_data("dgp5_correlated", n = 50L, kx = 2L, seed = 2L)
+  tau_at_x0 <- dgp$truth$tau_fn(matrix(dgp$x0, nrow = 1L))
+  expect_equal(dgp$tau_x0, as.numeric(tau_at_x0), tolerance = 1e-12)
+})
+
+# ── DGP 6: nuisance-efficiency design ────────────────────────────────────────
+
+test_that("sim_cate_data dgp6_nuisance_efficiency: propensity is clipped to (clip, 1-clip)", {
+  dgp <- sim_cate_data("dgp6_nuisance_efficiency", n = 200L, kx = 2L, seed = 1L, clip = 0.05)
+  expect_true(all(dgp$data$e_oracle >= 0.05))
+  expect_true(all(dgp$data$e_oracle <= 0.95))
+})
+
+test_that("sim_cate_data dgp6_nuisance_efficiency: oracle marginal mean is linear", {
+  dgp <- sim_cate_data("dgp6_nuisance_efficiency", n = 200L, kx = 2L, seed = 4L)
+  m_linear <- 1 + 1.5 * (dgp$data$X1 - 1) - dgp$data$X2
+  expect_equal(dgp$data$m_oracle, m_linear, tolerance = 1e-12)
+})
+
+test_that("sim_cate_data dgp6_nuisance_efficiency: tau_x0 matches tau_fn at x0", {
+  dgp <- sim_cate_data("dgp6_nuisance_efficiency", n = 50L, kx = 2L, seed = 2L)
   tau_at_x0 <- dgp$truth$tau_fn(matrix(dgp$x0, nrow = 1L))
   expect_equal(dgp$tau_x0, as.numeric(tau_at_x0), tolerance = 1e-12)
 })
@@ -557,20 +577,21 @@ test_that("sim_cate_methods: includes all six core paper methods", {
 
 # ── sim_cate_run with all 5 designs ──────────────────────────────────────────
 
-test_that("sim_cate_run: smoke test covers all 5 designs", {
+test_that("sim_cate_run: smoke test covers all 6 designs", {
   raw <- sim_cate_run(
     designs     = c("dgp1_linear", "dgp2_nonlinear", "dgp3_sparse_overlap",
-                    "dgp4_clustered", "dgp5_correlated"),
+                    "dgp4_clustered", "dgp5_correlated", "dgp6_nuisance_efficiency"),
     n_vals      = 100L,
     kx_vals     = 2L,
     n_reps      = 2L,
     master_seed = 1L,
     verbose     = FALSE
   )
-  # 5 designs x 1 n x 1 kx x 2 reps x 1 method (default dnn_oracle) = 10
-  expect_equal(nrow(raw), 10L)
+  # 6 designs x 1 n x 1 kx x 2 reps x 1 method (default dnn_oracle) = 12
+  expect_equal(nrow(raw), 12L)
   expect_true(all(c("dgp1_linear", "dgp2_nonlinear", "dgp3_sparse_overlap",
-                    "dgp4_clustered", "dgp5_correlated") %in% raw$design))
+                    "dgp4_clustered", "dgp5_correlated",
+                    "dgp6_nuisance_efficiency") %in% raw$design))
   expect_true(all(is.finite(raw$se)))
 })
 
