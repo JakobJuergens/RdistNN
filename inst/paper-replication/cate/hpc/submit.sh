@@ -1,10 +1,10 @@
 #!/bin/bash
-# submit.sh — SLURM submission script for the CATE simulation array.
+# submit.sh - SLURM submission script for the CATE simulation array.
 #
-# Each array task runs one (design × n × kx) cell (all n_reps replications).
+# Each array task runs one (design x n x kx) cell for all n_reps replications.
 # The number of array tasks must equal:
-#   length(designs) × length(n_vals) × length(kx_vals)
-# Default paper grid: 5 × 3 × 1 = 15 cells → --array=1-15
+#   length(designs) x length(n_vals) x length(kx_vals)
+# Default paper grid: 4 x 4 x 1 = 16 cells -> --array=1-16
 #
 # Usage (from the directory where you want results written):
 #   sbatch /path/to/submit.sh
@@ -12,19 +12,19 @@
 #   sbatch submit.sh
 #
 # The script locates task.R via system.file() so RdistNN must be installed
-# in the R library visible to the compute nodes.  Set R_LIBS_USER below if
+# in the R library visible to the compute nodes. Set R_LIBS_USER below if
 # the package lives in a non-default user library.
 
-# ── SLURM directives ──────────────────────────────────────────────────────────
+# SLURM directives
 #SBATCH --job-name=cate_sim
-#SBATCH --array=1-15              # one task per cell; update if grid changes
+#SBATCH --array=1-16              # one task per cell; update if grid changes
 #SBATCH --cpus-per-task=8         # cores for within-task rep parallelism
 #SBATCH --mem=8G                  # memory per task (adjust for large n)
 #SBATCH --time=04:00:00           # wall time per task (adjust as needed)
 #SBATCH --output=logs/cell_%a.out
 #SBATCH --error=logs/cell_%a.err
 
-# ── Environment ───────────────────────────────────────────────────────────────
+# Environment
 
 # Uncomment and edit if RdistNN is installed in a non-default user library:
 # export R_LIBS_USER="/path/to/your/R/library:$R_LIBS_USER"
@@ -35,7 +35,7 @@ export SIM_OUTDIR="${SLURM_SUBMIT_DIR}/results"
 # Load R module (name varies by cluster; adjust as needed):
 # module load R/4.4.0
 
-# ── Run ───────────────────────────────────────────────────────────────────────
+# Run
 
 mkdir -p logs
 mkdir -p "${SIM_OUTDIR}/cells"

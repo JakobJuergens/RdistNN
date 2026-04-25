@@ -15,27 +15,32 @@
 #
 # Results are written to ./results/sim_cate_raw.rds and
 # ./results/sim_cate_table.csv in the current working directory.
+# This package-side script mirrors the manuscript-facing main production grid
+# only. The chunked manifest layer, the nuisance-efficiency run, and the
+# fixed-kappa sweep wrappers live in Cond_Z_Estimation/Codes/Simulations/.
 
 library(RdistNN)
 
 # ── Paper simulation grid ─────────────────────────────────────────────────────
-# Mirrors the main five-design grid in 05b_CATE_Simulation.tex.
+# Mirrors the current manuscript-facing main grid in 05b_CATE_Simulation.tex:
+# four retained designs, four sample sizes, and 10,000 replications per cell.
 # The focused nuisance-efficiency design dgp6_nuisance_efficiency is implemented
 # in the package but is intended for a separate full-sample-versus-cross-fit run.
 
 PAPER_GRID <- list(
-  designs     = c("dgp1_linear", "dgp2_nonlinear", "dgp3_sparse_overlap",
+  designs     = c("dgp1_linear", "dgp2_nonlinear",
                   "dgp4_clustered", "dgp5_correlated"),
-  n_vals      = c(500L, 1000L, 2000L),
+  n_vals      = c(100L, 250L, 500L, 1000L),
   kx_vals     = 2L,
-  n_reps      = 500L,
+  n_reps      = 10000L,
   master_seed = 42L,
   k           = 5L,
   s_fn        = function(n, kx) floor(n^((kx + 1L) / (kx + 2L))),
-  # Methods evaluated on every draw.  dnn_oracle_mahal is especially informative
-  # for dgp5_correlated (shape adaptivity).  Add "causal_forest" and "llf" if
-  # grf is installed.
-  methods     = c("dnn_fullsample", "dnn_oracle_mahal", "dnn_crossfit",
+  # Main manuscript comparison: same-sample DNN, cross-fitted DNN, fixed-
+  # bandwidth local constant, and interaction OLS. Diagnostic oracle /
+  # Mahalanobis variants remain available in the package but are not part of the
+  # production table-and-figure run.
+  methods     = c("dnn_fullsample", "dnn_crossfit",
                   "local_constant", "ols_interact"),
   alpha       = 0.05,
   sigma       = 0.5,

@@ -21,7 +21,14 @@ This vignette documents the simulation infrastructure for the paper
 *"Robust Inference for Conditional Z-Estimation via Distributional Nearest
 Neighbors"* (Juergens). It shows how to use the package-level simulation
 functions on a small synthetic example. The full Monte Carlo run for the paper
-is in `inst/paper-replication/cate/run.R`.
+main grid is in `inst/paper-replication/cate/run.R`.
+
+The manuscript repo `Cond_Z_Estimation/Codes/Simulations/` now provides the
+paper-facing orchestration layer on top of these package functions:
+
+- chunked resumable runs with run manifests and generated run READMEs,
+- the separate nuisance-efficiency launcher, and
+- fixed-`\kappa` sweep wrappers that write one output folder per `\kappa`.
 
 To access that script after installing the package:
 
@@ -75,8 +82,11 @@ r
 ## Small Monte Carlo run
 
 The following runs 5 replications per cell over a tiny grid to illustrate the
-workflow.  The full paper grid uses `n_reps = 500` and
-`n_vals = c(500, 1000, 2000)`.
+workflow. The manuscript-facing main production grid uses `n_reps = 10000`,
+`n_vals = c(100, 250, 500, 1000)`, and the retained designs
+`dgp1_linear`, `dgp2_nonlinear`, `dgp4_clustered`, and `dgp5_correlated`.
+The focused nuisance-efficiency comparison and the fixed-`\kappa` sweeps are
+driven from the manuscript repo rather than this package vignette.
 
 ```{r small-run}
 raw <- sim_cate_run(
@@ -123,9 +133,9 @@ plan(sequential)              # reset when done
 
 ### SLURM HPC (array jobs)
 
-For the full paper grid on a cluster, use the HPC scripts in
+For the full paper main grid on a cluster, use the HPC scripts in
 `inst/paper-replication/cate/hpc/`.  Each SLURM array task runs one
-`(design, n, kx)` cell (all 500 reps), and uses the cores allocated by
+`(design, n, kx)` cell (all 10,000 reps), and uses the cores allocated by
 `--cpus-per-task` for within-task rep parallelism.
 
 ```{r hpc-path, eval = FALSE}
@@ -137,7 +147,7 @@ Workflow on the cluster:
 
 ```bash
 # 1. Install RdistNN on the cluster, then from your working directory:
-sbatch /path/to/hpc/submit.sh        # submits 15 array tasks (edit --array if grid changes)
+sbatch /path/to/hpc/submit.sh        # submits 16 array tasks (edit --array if grid changes)
 
 # 2. After all tasks complete, merge the per-cell results:
 Rscript /path/to/hpc/merge.R
@@ -157,6 +167,11 @@ source(system.file("paper-replication/cate/run.R", package = "RdistNN"))
 
 Results are written to `./results/sim_cate_raw.rds` and
 `./results/sim_cate_table.csv` in the current working directory.
+
+This package-side script is the manuscript-facing **main-grid** baseline only.
+If you want the chunked manuscript output with manifests, the nuisance-efficiency
+run, or the `\kappa`-sweep folders, use the launchers in
+`Cond_Z_Estimation/Codes/Simulations/`.
 
 ## Competitor benchmarks
 

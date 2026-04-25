@@ -29,21 +29,23 @@ if (is.na(cell_idx) || cell_idx < 1L)
 
 # ── Paper grid ────────────────────────────────────────────────────────────────
 # Must match merge.R.  Edit both files if you change the grid.
-# The focused nuisance-efficiency design dgp6_nuisance_efficiency is available
-# in the package but is not part of this default five-design HPC grid.
+# This is the manuscript-facing main production grid: four retained designs,
+# four sample sizes, and 10,000 replications per cell. The focused nuisance-
+# efficiency design dgp6_nuisance_efficiency is available in the package but is
+# not part of this default main-grid HPC run.
 
 GRID <- list(
-  designs     = c("dgp1_linear", "dgp2_nonlinear", "dgp3_sparse_overlap",
+  designs     = c("dgp1_linear", "dgp2_nonlinear",
                   "dgp4_clustered", "dgp5_correlated"),
-  n_vals      = c(500L, 1000L, 2000L),
+  n_vals      = c(100L, 250L, 500L, 1000L),
   kx_vals     = 2L,
-  n_reps      = 500L,
+  n_reps      = 10000L,
   master_seed = 42L,
   k           = 5L,
   s_fn        = function(n, kx) floor(n^((kx + 1L) / (kx + 2L))),
-  # Must match run.R and merge.R.  dnn_oracle_mahal is especially informative
-  # for dgp5_correlated (shape adaptivity).
-  methods     = c("dnn_fullsample", "dnn_oracle_mahal", "dnn_crossfit",
+  # Must match run.R and merge.R. Diagnostic oracle / Mahalanobis variants are
+  # intentionally excluded from this main manuscript run.
+  methods     = c("dnn_fullsample", "dnn_crossfit",
                   "local_constant", "ols_interact"),
   alpha       = 0.05,
   sigma       = 0.5,
