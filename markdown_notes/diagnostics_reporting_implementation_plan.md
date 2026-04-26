@@ -1,6 +1,6 @@
 # Diagnostics and Reporting Implementation Plan
 
-*Created: 2026-04-10.*
+*Created: 2026-04-10. Updated: 2026-04-26 after the public diagnostics layer landed. Status: historical implementation plan plus the remaining tuning-sensitivity follow-up.*
 
 ## Purpose
 
@@ -10,13 +10,37 @@ make the existing estimator workflows easier to evaluate, report, and defend in
 paper applications without prematurely expanding the package into a fully
 general conditional Z-estimation solver.
 
-The main conclusion is:
+The main conclusion is now:
 
-1. Build a stable diagnostics and reporting layer for existing DNN wrappers.
-2. Build tuning-grid sensitivity summaries on top of that diagnostics layer.
-3. Integrate compact diagnostics into print and summary methods.
-4. Defer the general conditional Z-estimation front end until the existing
-   workflows are diagnosable and well documented.
+1. The stable diagnostics/reporting layer for existing DNN wrappers has landed.
+2. The main remaining simulation-facing package task is tuning-grid sensitivity on top of that diagnostics layer.
+3. Compact diagnostics exist through `diagnostics()`, but summary/print integration remains partial.
+4. The general conditional Z-estimation front end should still be deferred until the existing workflows are diagnosable and well documented.
+
+## Status Update
+
+As of 2026-04-26, the following pieces described in this plan are now live in
+the repo:
+
+- `diagnostics()` plus methods for `np_result`, `cate_result`, and `plqr_result`;
+- universal weight/distance/tuning diagnostics;
+- CATE overlap diagnostics;
+- PLQR residual-Gram conditioning diagnostics;
+- a `dnn_diagnostics` print method;
+- README and vignette coverage, including `diagnostics-reporting` and
+  `paper-cate-simulation`.
+
+What remains live from this note is narrower:
+
+- there is still no exported `tuning_sensitivity()` helper;
+- estimator `print()` / `summary()` methods do not yet surface diagnostics as
+  fully as they could; and
+- the general conditional Z-estimation front end remains a later project.
+
+Read the detailed phase material below accordingly:
+
+- Phases 1-4 and the documentation pass are now historical route records.
+- The tuning-sensitivity phase is still the main open simulation-facing follow-up.
 
 ## Design-Note Alignment
 
@@ -107,17 +131,17 @@ The relevant source files are:
 
 Important object-state constraints:
 
-- `np_dnn()` currently does not retain replay-safe model state.
-- `cate_dnn()` retains hidden `.model` state for prediction, but this state
-  currently includes `x_mat`, `psi`, distance settings, and tuning parameters,
-  not treatment indicators.
-- `plqr_dnn()` currently computes localized moments at a supplied `beta`; it
-  does not estimate a local root or a Jacobian/bread object.
+- `np_dnn()` still does not retain replay-safe model state for arbitrary refits.
+- `cate_dnn()` now retains hidden `.model` state that includes `x_mat`, `psi`,
+  `t_vec`, `e`, distance settings, and tuning parameters.
+- `plqr_dnn()` now retains hidden `.model$d_resid_mat` for Gram diagnostics,
+  but it still computes localized moments at a supplied `beta`; it does not
+  estimate a local root or a Jacobian/bread object.
 - All three wrappers usually return `W` by default, but users can request other
   `return` values and may create objects without distance or rank extras.
 
-These facts should shape the first implementation.  Do not design the first
-tuning sensitivity helper as if every fit object can be replayed.
+These facts now shape the **remaining** tuning-sensitivity helper.  Do not
+design that helper as if every fit object can be replayed.
 
 ## Core Diagnostic Concepts
 
@@ -378,6 +402,7 @@ Tests:
 ### Phase 5: Tuning-Grid Sensitivity
 
 Build tuning sensitivity after diagnostics are stable.
+As of 2026-04-26, this is the first phase in this note that is still genuinely open.
 
 Do not start with `sensitivity(fit)` as the only API because current fit
 objects are not all replay-safe.  Use an explicit estimator-call API first:
@@ -479,15 +504,15 @@ A future front end should likely:
 
 Recommended commit-sized sequence:
 
-1. Add generic weight diagnostics helper, `diagnostics()` generic, and
-   `diagnostics.np_result()`.
-2. Extend generic diagnostics to CATE and PLQR universal fields.
-3. Add CATE overlap state and diagnostics.
-4. Add PLQR residual-regressor state and Gram diagnostics.
-5. Integrate compact diagnostics into print/summary methods.
-6. Add explicit-call tuning sensitivity helper.
-7. Update docs, pkgdown reference groups, and NEWS.
-8. Regenerate roxygen outputs and run tests.
+1. Land generic weight diagnostics, `diagnostics()` generic, and
+   `diagnostics.np_result()`. Landed.
+2. Extend generic diagnostics to CATE and PLQR universal fields. Landed.
+3. Add CATE overlap state and diagnostics. Landed.
+4. Add PLQR residual-regressor state and Gram diagnostics. Landed.
+5. Integrate compact diagnostics into print/summary methods. Partially landed.
+6. Add explicit-call tuning sensitivity helper. Still open.
+7. Update docs, pkgdown reference groups, and NEWS. Largely landed.
+8. Regenerate roxygen outputs and run tests. Historical implementation step.
 
 Verification commands for the final implementation pass:
 

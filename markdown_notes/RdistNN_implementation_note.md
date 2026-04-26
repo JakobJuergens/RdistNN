@@ -1,5 +1,7 @@
 # RdistNN package audit note: application completeness, remaining gaps, and implementation priorities
 
+*Created: 2026-04-09. Updated: 2026-04-26 after the diagnostics layer landed and the manuscript-facing simulation orchestration moved into `Cond_Z_Estimation/Codes/Simulations/`.*
+
 ## Purpose
 
 This note summarizes the current state of the `RdistNN` package relative to the functionality needed for the paper applications, and identifies the remaining gaps in an order that is useful for implementation planning with codex.
@@ -12,7 +14,7 @@ The goal here is not to restate everything the package already does in abstract 
 
 ## Bottom line
 
-The package is now **close to being functionally complete for the applications currently shown in the paper**, but it is **not yet fully complete as a polished paper-facing implementation**, and it is **not yet a complete package implementation of the full general conditional Z-estimation framework**.
+The package is now **functionally complete for the current baseline simulation workflows used by the paper**, but it is **not yet fully complete as a polished end-to-end paper-facing reporting layer**, and it is **not yet a complete package implementation of the full general conditional Z-estimation framework**.
 
 That distinction matters.
 
@@ -21,8 +23,8 @@ That distinction matters.
 The answer is basically:
 
 - **yes on the estimator side**,
-- **no not yet on the diagnostics/reporting side**,
-- and **partially no on the general empirical workflow side**, depending on how much of the application/replication layer is supposed to live inside the package.
+- **mostly yes on the diagnostics/reporting side**, because `diagnostics()` is now a live public API for `np_dnn()`, `cate_dnn()`, and `plqr_dnn()`,
+- and **partially no on the higher-level simulation-reporting side**, because there is still no package-level tuning-sensitivity helper that reruns fits across the candidate `\kappa` grid and summarizes estimate / SE / CI / diagnostics in one object.
 
 ### For the full general framework
 
@@ -57,6 +59,7 @@ The current package surface also includes:
 - `np_dnn()` for localized nonparametric regression,
 - `cate_dnn()` for localized CATE estimation,
 - `plqr_dnn()` for localized PLQR orthogonal moments,
+- `diagnostics()` plus package vignettes for diagnostics/reporting,
 - a score API (`new_score()`, `as_score()`, `score_eval()`, `score_diff_path()`, etc.),
 - simulation and replication code for the CATE paper workflow.
 
@@ -127,7 +130,26 @@ This is a strong sign that the package is no longer just a low-level methods san
 
 ---
 
-## 1.4 The modular architecture is now strong
+## 1.4 Diagnostics and reporting are now materially in place
+
+The earlier version of this note treated diagnostics as the main missing layer.
+That is no longer accurate.
+
+The current repo now exposes:
+
+- a public `diagnostics()` generic with methods for `np_result`, `cate_result`, and `plqr_result`,
+- weight-concentration and distance-scale diagnostics,
+- CATE overlap diagnostics,
+- PLQR residual-Gram conditioning diagnostics,
+- compact tuning metadata in fitted-object diagnostics, and
+- dedicated diagnostics/reporting documentation in the README and vignettes.
+
+So the package no longer stops at "estimate plus standard error."
+It now has a real fitted-object diagnostics surface.
+
+---
+
+## 1.5 The modular architecture is now strong
 
 The package has a modular decomposition across:
 
@@ -161,9 +183,14 @@ These are broader framework gaps. They matter if the package is supposed to embo
 
 ---
 
-# 3. Main remaining gap for the paper-facing version: diagnostics
+# 3. Main remaining gap for the paper-facing version: diagnostics (historical heading; see status update below)
 
-This is the most important practical gap.
+Status update, 2026-04-26:
+the public diagnostics/reporting layer has now landed. The live simulation-facing gap is no longer "add diagnostics at all." It is the higher-level tuning-sensitivity / stability workflow that would rerun a fit over the candidate `\kappa` grid and summarize estimate / SE / CI / diagnostics in one object.
+
+Read the detailed discussion in this section as the design history for why that diagnostics layer was important, not as the current top-priority task list.
+
+At the time this note was first drafted, this was the most important practical gap.
 
 The package now estimates the main objects, computes jackknife standard errors, and exposes some helpful ingredients such as:
 
@@ -174,13 +201,13 @@ The package now estimates the main objects, computes jackknife standard errors, 
 - neighbors,
 - tuning payloads.
 
-But there is **not yet a real diagnostics/reporting layer** that turns these ingredients into paper-relevant diagnostics.
+At that point there was **not yet a real diagnostics/reporting layer** that turned these ingredients into paper-relevant diagnostics.
 
-That is the single most important thing to build next.
+That was the single most important thing to build next.
 
-## Why this matters
+## Why this mattered at the time
 
-Right now the package can often produce the estimate and standard error, but it still does not fully help the user answer questions like:
+At that point the package could often produce the estimate and standard error, but it still did not fully help the user answer questions like:
 
 - Is the fit meaningfully local?
 - Is the local neighborhood too concentrated on a handful of observations?
@@ -195,6 +222,8 @@ So this is not “nice to have.” It is the missing paper-facing layer that sit
 ---
 
 # 4. Secondary paper-facing gap: sensitivity-grid workflow
+
+This section is now the live package-side follow-up for simulation work. The manuscript repo already owns the baseline and fixed-`\kappa` run orchestration; what remains package-side is a reusable sensitivity/reporting helper rather than new baseline-simulation infrastructure.
 
 The tuning infrastructure now supports candidate grids, but there is not yet a high-level workflow that uses those grids to evaluate stability of the estimate and its inferential objects.
 
@@ -260,7 +289,7 @@ What I did **not** see in the inspected material is an equally mature installed 
 
 So if you want the package to fully support the actual paper applications in a replication sense, there may still be a gap here.
 
-This is not as urgent as diagnostics unless the application section is a major part of the paper/package story.
+This is not as urgent as the tuning-sensitivity/reporting gap unless the application section is a major part of the paper/package story.
 
 ---
 
@@ -268,53 +297,55 @@ This is not as urgent as diagnostics unless the application section is a major p
 
 This is the implementation order I would recommend.
 
-## Priority 1: diagnostics and reporting layer
+## Priority 1: tuning-grid sensitivity summary
 
-This is the most important missing piece.
+This is now the most important missing piece.
 
 Reason:
+
+Updated rationale, 2026-04-26:
+the diagnostics layer already exists, the tuning grid already exists, and the missing package-side piece is the structured stability/sensitivity workflow across that grid.
 
 - it is the main remaining gap even for workflows already implemented,
 - it improves the package’s credibility immediately,
 - it gives empirical users something they can actually inspect and report,
 - it naturally complements the new tuning API.
 
-## Priority 2: tuning-grid sensitivity summary
-
-Build this as part of diagnostics, not as an unrelated helper.
-
-Reason:
-
-- the tuning grid now exists,
-- but there is no structured way to report stability across it,
-- and that is one of the most natural paper-facing deliverables.
-
-## Priority 3: wrapper summary integration
+## Priority 2: wrapper summary integration
 
 Once diagnostics exist, integrate them into user-facing summaries / print methods rather than forcing users to pull raw objects apart.
 
 Reason:
 
-- raw ingredients are helpful for debugging,
-- but a good applied package needs stable reporting objects.
+Updated rationale, 2026-04-26:
+the issue is no longer whether diagnostics can be computed, but whether they surface naturally in routine user-facing summaries.
 
-## Priority 4: empirical-application packaging, if needed
+- the tuning grid now exists,
+- but there is no structured way to report stability across it,
+- and that is one of the most natural paper-facing deliverables.
+
+## Priority 3: empirical-application packaging, if needed
 
 Only prioritize this highly if the empirical application is part of the package story.
 
-## Priority 5: generic conditional Z-estimation front end
+This matters only if the empirical application is part of the package story rather than remaining manuscript-only replication code.
+
+## Priority 4: generic conditional Z-estimation front end
 
 This is the big framework expansion.
 
 It matters, but it is not the first bottleneck for the current paper-facing state.
 
-## Priority 6: nuisance-fitting convenience
+## Priority 5: nuisance-fitting convenience
 
 This is useful, but should come later.
 
 ---
 
 # 9. What diagnostics should be included
+
+Historical note, 2026-04-26:
+the detailed diagnostics design material below remains useful as the route record for the API that ultimately landed. It should no longer be read as the live top-priority task list. The live package-side simulation follow-up is the higher-level tuning-sensitivity/reporting layer described above.
 
 The diagnostics should be organized in a way that matches both the theory and the applied use case.
 
@@ -820,16 +851,17 @@ It has moved beyond being just a collection of low-level DNN components. It now 
 
 - real user-facing wrappers,
 - paper-default tuning integration,
+- a public diagnostics/reporting API,
 - CATE simulation replication support,
 - modular score infrastructure.
 
 So the package is **not far away** from being a strong paper-facing implementation.
 
-However, the most important remaining gap is now clearly **diagnostics and reporting**, not the raw estimator computation itself.
+However, the most important remaining simulation-facing gap is no longer diagnostics itself. It is the **tuning-grid sensitivity / stability layer** that would sit on top of the current diagnostics and tuning APIs.
 
 That is the next thing to fix.
 
-If that layer is implemented well, the package will feel much closer to complete for the actual paper applications.
+If that layer is implemented well, the package will feel much closer to complete for the actual paper applications and for the second-stage fixed-`\kappa` simulation agenda.
 
 If you later want the package to fully embody the general framework of the paper, the next major step after that is a **general localized conditional Z-estimation front end** built on the score API.
 
@@ -837,9 +869,8 @@ If you later want the package to fully embody the general framework of the paper
 
 ## Short priority summary
 
-1. **Build diagnostics/reporting**
-2. **Add tuning-grid sensitivity summaries**
-3. **Integrate diagnostics into summary/print**
-4. **Package empirical application workflows if needed**
-5. **Later: build a full general conditional Z-estimation front end**
-6. **Only after that: think about nuisance-fitting convenience**
+1. **Add tuning-grid sensitivity summaries**
+2. **Integrate diagnostics into summary/print more fully**
+3. **Package empirical application workflows if needed**
+4. **Later: build a full general conditional Z-estimation front end**
+5. **Only after that: think about nuisance-fitting convenience**
