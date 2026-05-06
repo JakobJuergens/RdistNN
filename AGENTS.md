@@ -55,11 +55,17 @@ The parent Windows workspace has these tools on `PATH` as of 2026-05-06:
 - Search and discovery: `rg`, `rga` for PDFs/Office files/archives, and `fd`.
 - Structured data: `jq`, `yq`, and `duckdb` for JSON, YAML, CSV, Parquet, and
   tabular scratch queries.
+- Code and CI quality: `actionlint` for GitHub workflows, `shellcheck` and
+  `shfmt` for shell scripts and workflow `run:` blocks, `pre-commit` for
+  multi-tool hooks, and `ruff` for Python helper scripts.
 - PDF/OCR/image work: `pdfinfo`, `pdftotext`, `pdftoppm`, `pdffonts`, `qpdf`,
   Ghostscript as `gswin64c`, ImageMagick as `magick`, Tesseract as
-  `tesseract`, and `ocrmypdf`.
+  `tesseract`, `ocrmypdf`, and ExifTool as `exiftool`.
 - R/package/build helpers: `Rscript`, `pandoc`, `latexmk`, `lualatex`, `gh`,
   `gcc`, `g++`, `make`, `cmake`, and `wolframscript`.
+- Python tooling: `pip`, `pip3`, `pre-commit`, `ruff`, and `exiftool` are
+  exposed through small shims in `C:\Users\jakob\.local\bin`, which is already
+  on the user `PATH`.
 - Use `magick`, not Windows `convert.exe`. Tesseract has `eng` and `osd`
   data; use `ocrmypdf --skip-text --deskew --rotate-pages` for scanned PDFs
   and `pdftotext -layout` for searchable PDFs.
