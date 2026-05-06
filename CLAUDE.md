@@ -14,3 +14,13 @@ For mathematical derivations, symbolic checks, or finite combinatorial
 verification, Mathematica / Wolfram Language is available through
 `wolframscript` and should be used when helpful; record nontrivial conclusions
 in code, tests, or design notes rather than relying on an ephemeral session.
+
+Local CLI tooling on the parent Windows workspace was verified on 2026-05-06:
+`rg`, `rga`, and `fd` for search/discovery; `jq`, `yq`, and `duckdb` for
+structured data; `pdfinfo`, `pdftotext`, `pdftoppm`, `pdffonts`, `qpdf`,
+`gswin64c`, `magick`, `tesseract`, and `ocrmypdf` for PDF/OCR/image work; and
+`Rscript`, `pandoc`, `latexmk`, `lualatex`, `gh`, `gcc`, `g++`, `make`,
+`cmake`, and `wolframscript` for package/document/build work. Use `magick`,
+not Windows `convert.exe`. Tesseract has `eng` and `osd`; use
+`ocrmypdf --skip-text --deskew --rotate-pages` for scanned PDFs and
+`pdftotext -layout` for searchable PDFs.

@@ -48,6 +48,22 @@ also read as relevant:
   estimator-formula sanity checks, and record any substantive conclusions back
   into code, tests, or design notes.
 
+## Local CLI Tooling
+
+The parent Windows workspace has these tools on `PATH` as of 2026-05-06:
+
+- Search and discovery: `rg`, `rga` for PDFs/Office files/archives, and `fd`.
+- Structured data: `jq`, `yq`, and `duckdb` for JSON, YAML, CSV, Parquet, and
+  tabular scratch queries.
+- PDF/OCR/image work: `pdfinfo`, `pdftotext`, `pdftoppm`, `pdffonts`, `qpdf`,
+  Ghostscript as `gswin64c`, ImageMagick as `magick`, Tesseract as
+  `tesseract`, and `ocrmypdf`.
+- R/package/build helpers: `Rscript`, `pandoc`, `latexmk`, `lualatex`, `gh`,
+  `gcc`, `g++`, `make`, `cmake`, and `wolframscript`.
+- Use `magick`, not Windows `convert.exe`. Tesseract has `eng` and `osd`
+  data; use `ocrmypdf --skip-text --deskew --rotate-pages` for scanned PDFs
+  and `pdftotext -layout` for searchable PDFs.
+
 ## Working rules for agents
 
 When editing existing code:
