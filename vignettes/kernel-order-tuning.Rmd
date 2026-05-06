@@ -62,7 +62,7 @@ meta_rule <- new_tuning(
   name = "meta_rule",
   eval = function(n, kx, k, se, jackknife, ctx = NULL) {
     list(
-      s = floor(0.9 * n^((kx + 1)/(kx + 2))),
+      s = floor(0.9 * n ^ ((kx + 1) / (kx + 2))),
       meta = list(
         kappa = 0.9,
         formula = "0.9 * n^((kx + 1)/(kx + 2))",

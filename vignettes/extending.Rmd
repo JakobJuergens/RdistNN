@@ -61,7 +61,7 @@ tuning_eval(tun, n = 500, kx = 2, k = 5, mode = "grid")
 You can add custom rules:
 
 ```{r tuning-custom, eval=FALSE}
-tun_fast <- as_tuning(function(n, kx, ...) floor(0.8 * n^((kx + 1)/(kx + 2))), name = "fast_rule")
+tun_fast <- as_tuning(function(n, kx, ...) floor(0.8 * n ^ ((kx + 1) / (kx + 2))), name = "fast_rule")
 register_tuning("fast_rule", tun_fast)
 tuning_names()
 ```
