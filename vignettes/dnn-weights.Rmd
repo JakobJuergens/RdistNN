@@ -31,6 +31,10 @@ Two support facts matter in practice:
 - the asymptotic Beta-increment approximation is typically treated as a
   full-support rank-weight sequence.
 
+Fixed top-`k` DNN kernels are fully implemented for `1 <= k <= s`. The fixed-`k`
+extension of the 1-NN theory is essentially direct, but the accompanying
+manuscript currently writes out the theoretical derivations only for `k = 1`.
+
 ## Basic Usage
 
 ```{r basic, eval=FALSE}

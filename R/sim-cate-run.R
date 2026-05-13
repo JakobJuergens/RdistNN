@@ -158,6 +158,8 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
 #' @param k Integer DNN neighbour count. The paper-facing DNN default is
 #'   `k = 1L`, meaning one nearest neighbor is selected inside each size-`s`
 #'   subsample; larger values use the package's generalized top-`k` weights.
+#'   The fixed-`k` extension is essentially direct, but the current paper
+#'   derivations are written for `k = 1`.
 #' @param s_fn Function `f(n, kx)` returning the integer kernel order.
 #'   Default satisfies the undersmoothing condition
 #'   \eqn{s \asymp n^{(k_x+1)/(k_x+2)}}.

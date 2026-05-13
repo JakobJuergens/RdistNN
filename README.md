@@ -28,6 +28,11 @@ output: github_document
 For exact DNN weights, the package works with the full rank permutation at each
 target. In particular, exact single-scale DNN with `k = 1` has support through
 rank `n - s + 1`; it is not an `s`-nearest-neighbor truncation.
+The implementation also supports fixed top-`k` DNN kernels. Extending the
+fixed-`k` theory from the 1-NN derivation is essentially direct, but the current
+accompanying manuscript derivations are written for `k = 1`; use larger fixed
+`k` values as implementation-supported generalizations until that proof text is
+added.
 
 ## Installation
 

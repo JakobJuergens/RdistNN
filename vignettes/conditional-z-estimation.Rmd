@@ -31,6 +31,10 @@ Each wrapper supports:
 - modular kernel-order tuning via `tuning = tuning_dnn_paper(...)`
 - fitted-object diagnostics via `diagnostics()`
 
+The wrappers implement fixed top-`k` DNN kernels for `1 <= k <= s`. Extending
+the written 1-NN theory to fixed `k` is essentially direct, but the current
+accompanying manuscript derivations are stated for `k = 1`.
+
 ## Local Mean (`np_dnn`)
 
 ```{r np, eval=FALSE}

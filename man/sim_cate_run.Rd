@@ -37,7 +37,9 @@ across DGPs, sample sizes, and methods (fair comparison).}
 
 \item{k}{Integer DNN neighbour count. The paper-facing DNN default is
 \code{k = 1L}, meaning one nearest neighbor is selected inside each size-\code{s}
-subsample; larger values use the package's generalized top-\code{k} weights.}
+subsample; larger values use the package's generalized top-\code{k} weights.
+The fixed-\code{k} extension is essentially direct, but the current paper
+derivations are written for \code{k = 1}.}
 
 \item{s_fn}{Function \code{f(n, kx)} returning the integer kernel order.
 Default satisfies the undersmoothing condition

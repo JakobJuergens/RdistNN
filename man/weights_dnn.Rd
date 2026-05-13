@@ -44,6 +44,9 @@ A \code{weights_result} object.
 \description{
 Use \code{method = "exact"} for the exact finite-population rank-weight rule and
 \code{method = "asymp"} for the asymptotic full-rank approximation.
+Fixed top-\code{k} kernels are available in both cases. The package treats them as
+implementation-supported generalizations; the accompanying manuscript's
+current derivations are written for \code{k = 1}.
 }
 \examples{
 set.seed(1)
