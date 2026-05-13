@@ -31,6 +31,24 @@ test_that("iv_demo_data: injection hooks are honored", {
     inject = "inf", inject_col = "Z1", idx_inject = 4L
   )
   expect_true(is.infinite(d_inf$data$Z1[4L]))
+
+  d_pi <- iv_demo_data(
+    n = 40L, p = 2L, q = 2L, design = "homog", seed = 3L,
+    inject = "na", inject_col = "piZ2_oracle", idx_inject = 6L
+  )
+  expect_true(is.na(d_pi$data$piZ2_oracle[6L]))
+})
+
+test_that("iv_demo_data: aliases and x0 are forwarded to IV DGPs", {
+  x0 <- c(0.25, -0.5, 0.1)
+  demo <- iv_demo_data(n = 60L, p = 3L, q = 3L, design = "weak",
+                       seed = 4L, x0 = x0)
+  expect_equal(demo$x0, x0)
+  expect_equal(demo$q, 3L)
+  expect_equal(demo$truth$instrument_type, rep("binary", 3L))
+
+  expect_error(iv_demo_data(n = 60L, p = 2L, q = 2L, design = "bad"),
+               "should be one of")
 })
 
 test_that("iv_demo_data: rejects invalid injection requests", {

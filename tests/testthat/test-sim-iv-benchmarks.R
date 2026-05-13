@@ -90,6 +90,45 @@ test_that("classical IV benchmark methods return full metric schema", {
   }
 })
 
+test_that("DNN IV benchmark methods return full metric schema", {
+  expected <- c(
+    "theta_hat", "theta0", "bias", "sq_err", "se", "cover", "ci_len",
+    "neff", "J", "df", "pval_J", "reject_J"
+  )
+  dgp <- sim_iv_data("dgp2_iv_homog_overid", n = 120L, kx = 2L, q = 2L, seed = 14L)
+  methods <- c(".method_dnn_iv_oracle", ".method_dnn_iv_fullsample",
+               ".method_dnn_iv_crossfit")
+
+  for (name in methods) {
+    fn <- getFromNamespace(name, "RdistNN")
+    res <- fn(
+      dgp = dgp,
+      x_cols = c("X1", "X2"),
+      k = 2L,
+      s = 10L,
+      alpha = 0.05,
+      n_folds = 3L
+    )
+    expect_named(res, expected)
+    expect_true(is.finite(res[["theta_hat"]]), info = name)
+    expect_true(is.finite(res[["se"]]), info = name)
+    expect_equal(res[["df"]], 1, info = name)
+    expect_true(is.finite(res[["J"]]), info = name)
+  }
+})
+
+test_that("Mahalanobis DNN IV benchmark works on correlated instruments", {
+  fn <- getFromNamespace(".method_dnn_iv_oracle_mahal", "RdistNN")
+  dgp <- sim_iv_data("dgp5_iv_correlated_instruments", n = 140L, kx = 2L,
+                     q = 2L, seed = 15L)
+  res <- fn(dgp = dgp, x_cols = c("X1", "X2"), k = 2L, s = 11L, alpha = 0.05)
+
+  expect_true(is.finite(res[["theta_hat"]]))
+  expect_true(is.finite(res[["se"]]))
+  expect_equal(res[["df"]], 1)
+  expect_true(is.finite(res[["pval_J"]]))
+})
+
 test_that(".get_sim_iv_method dispatches registered methods", {
   getter <- getFromNamespace(".get_sim_iv_method", "RdistNN")
   expect_true(is.function(getter("iv_oracle")))

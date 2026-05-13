@@ -70,6 +70,30 @@ test_that("IV paper replication smoke grid is small and script-safe", {
   expect_equal(unique(cells$q[cells$design == "dgp1_iv_justid_linear"]), 1L)
 })
 
+test_that("IV paper replication smoke grid can be selected by environment", {
+  restore <- .set_env_for_test(c(RDISTNN_IV_SMOKE = "1"))
+  on.exit(restore(), add = TRUE)
+
+  env <- new.env(parent = globalenv())
+  source(.iv_repl_path("grid.R"), local = env)
+
+  grid <- env$iv_paper_grid()
+  expect_equal(grid$n_reps, 2L)
+  expect_equal(env$iv_expected_cells(grid), 2L)
+  expect_equal(env$IV_PAPER_CELL_COUNT, 36L)
+})
+
+test_that("IV SLURM submit array matches the production grid size", {
+  env <- new.env(parent = globalenv())
+  source(.iv_repl_path("grid.R"), local = env)
+
+  submit <- readLines(.iv_repl_path("hpc", "submit.sh"), warn = FALSE)
+  array_line <- grep("^#SBATCH --array=", submit, value = TRUE)
+  expect_length(array_line, 1L)
+  submit_n <- as.integer(sub("^#SBATCH --array=1-", "", array_line))
+  expect_equal(submit_n, env$IV_PAPER_CELL_COUNT)
+})
+
 test_that("IV single-machine replication script writes smoke outputs", {
   out_dir <- tempfile("rdistnn-iv-run-")
   dir.create(out_dir, recursive = TRUE)
@@ -126,4 +150,27 @@ test_that("IV HPC task and merge scripts smoke-run one cell", {
 
   expect_true(file.exists(file.path(out_dir, "sim_iv_raw.rds")))
   expect_true(file.exists(file.path(out_dir, "sim_iv_table.csv")))
+})
+
+test_that("IV HPC scripts validate missing and out-of-range cells", {
+  out_dir <- tempfile("rdistnn-iv-hpc-empty-")
+  dir.create(out_dir, recursive = TRUE)
+  restore <- .set_env_for_test(c(
+    RDISTNN_IV_SMOKE = "1",
+    SIM_OUTDIR = out_dir,
+    SLURM_ARRAY_TASK_ID = "99",
+    SLURM_CPUS_PER_TASK = "1"
+  ))
+  on.exit(restore(), add = TRUE)
+
+  expect_error(
+    suppressMessages(source(.iv_repl_path("hpc", "task.R"), local = new.env(parent = globalenv()))),
+    "exceeds"
+  )
+
+  Sys.setenv(SLURM_ARRAY_TASK_ID = "1")
+  expect_error(
+    suppressMessages(source(.iv_repl_path("hpc", "merge.R"), local = new.env(parent = globalenv()))),
+    "No cell_"
+  )
 })
