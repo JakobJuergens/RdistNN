@@ -22,6 +22,7 @@ articles:
   - title: Theory & details
     contents:
       - conditional-z-estimation
+      - local-iv-estimation
       - dnn-weights
       - jackknife-gen-ustats
   - title: Paper replication
@@ -37,6 +38,7 @@ reference:
     desc: General matrix builder + DNN convenience wrappers.
     contents:
       - cate_dnn
+      - gmm_dnn
       - np_dnn
       - np_tdnn
       - plqr_dnn
@@ -63,6 +65,13 @@ reference:
       - get_score
       - list_scores
       - starts_with("score_")      # e.g. score_cate_rho / score_cate_from_rho, score_plqr_component
+
+  - title: GMM models
+    desc: Vector-moment model objects for local GMM estimation.
+    contents:
+      - new_gmm_model
+      - is_gmm_model
+      - gmm_model_dr_iv
 
   - title: Distances (rankers)
     desc: S3 spec, helpers, generics, registries, and built-in distances.
@@ -123,15 +132,21 @@ reference:
     contents:
       - diagnostics
       - print.cate_result
+      - print.gmm_result
       - print.np_result
       - print.plqr_result
       - print.score_diff_path
       - print.summary.cate_result
+      - print.summary.gmm_result
       - print.tdnn_np_result
       - print.ustat_score
       - print.weights_result
       - summary.cate_result
+      - summary.gmm_result
       - confint.cate_result
+      - confint.gmm_result
+      - coef.gmm_result
+      - vcov.gmm_result
       - predict.cate_result
 
   - title: Kernel-order tuning
@@ -147,17 +162,23 @@ reference:
       - tuning_dnn_paper
 
   - title: Simulation study
-    desc: Data-generating processes and Monte Carlo harness for the paper simulation.
+    desc: Data-generating processes and Monte Carlo harnesses for paper simulations.
     contents:
       - sim_cate_data
       - sim_cate_one_rep
       - sim_cate_run
       - sim_cate_methods
       - summarise_sim_results
+      - sim_iv_data
+      - sim_iv_one_rep
+      - sim_iv_run
+      - sim_iv_methods
+      - summarise_iv_results
 
   - title: Demo data & utilities
     contents:
       - cate_demo_data
+      - iv_demo_data
       - cate_demo_subsets
       - np_demo_data
       - np_demo_subsets

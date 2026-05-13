@@ -393,3 +393,20 @@ If I had to choose one concrete implementation path right now, it would be:
 - leave refit jackknife and automatic nuisance fitting for a second pass
 
 That path is closest to the GMM paper, fits the existing `RdistNN` architecture, and keeps the first implementation small enough to land cleanly.
+
+## Implementation decisions for the first estimator layer
+
+The first implementation layer uses the following public names and defaults:
+
+- `new_gmm_model()` / `is_gmm_model()` define the vector-moment extension point.
+- `gmm_model_dr_iv()` is the first concrete model factory.
+- `gmm_dnn()` is the user-facing estimator wrapper.
+- Estimator outputs use generic `theta` naming. IV simulation DGPs may keep
+  `tau_x0` as an alias, but simulation metrics and estimator results use
+  `theta`, `theta_hat`, and `theta0`.
+- `gmm_dnn()` consumes nuisance values supplied in `data` or `model_data`; it
+  does not fit nuisances internally.
+- Sandwich inference is the first supported inference path. Delete-1 refit
+  jackknife, CUE, and automatic nuisance learning are deferred.
+- Local moment covariance matrices are symmetrized and ridge-regularized with
+  `omega_ridge = 1e-8` by default before inversion.

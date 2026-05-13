@@ -24,11 +24,12 @@ knitr::opts_chunk$set(
 **RdistNN** is a modular toolkit for distance-localized estimation with DNN rank weights and generalized U-statistics.
 
 - Core distance/rank/weight primitives (`weights_dnn()`, `weights_matrix()`, custom registries)
-- User-level wrappers for localized estimation: `np_dnn()`, `cate_dnn()`, and `plqr_dnn()`
+- User-level wrappers for localized estimation: `np_dnn()`, `cate_dnn()`, `plqr_dnn()`, and `gmm_dnn()`
 - Unified diagnostics for fitted local estimators via `diagnostics()`
 - Built-in post-estimation methods for CATE (`summary()`, `confint()`, `predict()`)
 - Fast delete-1 jackknife options (`jackknife = "fast"` and `"loo"`) for standard errors
 - Simulation infrastructure for the paper's CATE study: `sim_cate_data()`, `sim_cate_one_rep()`, `sim_cate_run()`, `summarise_sim_results()`
+- Local IV-GMM estimator and simulation layer: `gmm_model_dr_iv()`, `gmm_dnn()`, `sim_iv_data()`, `sim_iv_run()`, `iv_demo_data()`
 
 > Status: active research package. APIs may continue to evolve.
 
@@ -164,7 +165,59 @@ raw <- sim_cate_run(
 summarise_sim_results(raw)
 ```
 
-### 5) Custom Distances, Rank Weights, and Scores
+### 5) Local IV-GMM Estimation and Simulation
+
+```{r, eval = FALSE}
+library(RdistNN)
+
+# Draw one local IV-GMM dataset with two valid instruments
+iv <- sim_iv_data(
+  "dgp2_iv_homog_overid",
+  n = 300,
+  kx = 2,
+  q = 2,
+  seed = 1
+)
+
+names(iv$data)
+iv$theta_x0
+
+model_iv <- gmm_model_dr_iv(
+  z_cols = c("Z1", "Z2"),
+  pi_cols = c("piZ1_oracle", "piZ2_oracle"),
+  muY_col = "muY_oracle",
+  muD_col = "muD_oracle"
+)
+
+fit_iv <- gmm_dnn(
+  data = iv$data,
+  x_cols = c("X1", "X2"),
+  x0 = iv$x0,
+  model = model_iv,
+  k = 2L, s = 12L,
+  return = "ess"
+)
+
+fit_iv$theta
+fit_iv$J
+
+# Smaller demo-data wrapper for examples and tests
+demo_iv <- iv_demo_data(n = 120, p = 2, q = 2, design = "homog", seed = 1)
+head(demo_iv$data)
+
+# Small Monte Carlo grid
+raw_iv <- sim_iv_run(
+  designs = "dgp2_iv_homog_overid",
+  n_vals = 300L,
+  q_vals = 2L,
+  n_reps = 5L,
+  methods = c("dnn_iv_oracle", "iv_oracle"),
+  verbose = FALSE
+)
+summarise_iv_results(raw_iv)
+```
+
+### 6) Custom Distances, Rank Weights, and Scores
 
 ```{r, eval = FALSE}
 library(RdistNN)
@@ -211,6 +264,7 @@ covers `setup()` / `eval_batch()` patterns, custom ranking inputs to
 - `vignette("diagnostics-reporting", package = "RdistNN")` for fitted-object diagnostics
 - `vignette("dnn-weights", package = "RdistNN")` for exact/asymptotic DNN weight rules
 - `vignette("conditional-z-estimation", package = "RdistNN")` for end-to-end estimator workflows
+- `vignette("local-iv-estimation", package = "RdistNN")` for local IV-GMM estimation and simulation
 - `vignette("extending", package = "RdistNN")` for custom distance/rank/score components
 - `vignette("jackknife-gen-ustats", package = "RdistNN")` for jackknife background
 - `vignette("paper-cate-simulation", package = "RdistNN")` for the paper's CATE simulation infrastructure
