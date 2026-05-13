@@ -142,7 +142,7 @@ dgp <- sim_cate_data("dgp2_nonlinear", n = 300, kx = 2, seed = 1)
 dgp$tau_x0   # true CATE at x0 = (0, 0)
 
 # Run one replicate and get bias / SE / coverage metrics
-r <- sim_cate_one_rep(n = 300, kx = 2, k = 5, s = 12,
+r <- sim_cate_one_rep(n = 300, kx = 2, k = 1, s = 12,
                       design = "dgp2_nonlinear", seed = 1)
 r
 

@@ -41,7 +41,7 @@ GRID <- list(
   kx_vals     = 2L,
   n_reps      = 10000L,
   master_seed = 42L,
-  k           = 5L,
+  k           = 1L,  # one-nearest-neighbor DNN kernel used in the paper theory
   s_fn        = function(n, kx) floor(n^((kx + 1L) / (kx + 2L))),
   # Must match run.R and merge.R. Diagnostic oracle / Mahalanobis variants are
   # intentionally excluded from this main manuscript run.

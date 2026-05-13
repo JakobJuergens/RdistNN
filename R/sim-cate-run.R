@@ -55,7 +55,7 @@
 #'
 #' @examples
 #' rep1 <- sim_cate_one_rep(
-#'   n = 200, kx = 2, k = 5, s = 12,
+#'   n = 200, kx = 2, k = 1, s = 12,
 #'   design = "dgp2_nonlinear",
 #'   methods = c("dnn_fullsample", "ols_interact"),
 #'   seed = 1
@@ -155,7 +155,9 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
 #' @param master_seed Integer seed used to draw the per-replicate seeds.
 #'   Every cell uses the same seed vector so noise realisations are comparable
 #'   across DGPs, sample sizes, and methods (fair comparison).
-#' @param k Integer DNN neighbour count.
+#' @param k Integer DNN neighbour count. The paper-facing DNN default is
+#'   `k = 1L`, meaning one nearest neighbor is selected inside each size-`s`
+#'   subsample; larger values use the package's generalized top-`k` weights.
 #' @param s_fn Function `f(n, kx)` returning the integer kernel order.
 #'   Default satisfies the undersmoothing condition
 #'   \eqn{s \asymp n^{(k_x+1)/(k_x+2)}}.
@@ -201,7 +203,7 @@ sim_cate_run <- function(
     kx_vals     = 2L,
     n_reps      = 500L,
     master_seed = 42L,
-    k           = 5L,
+    k           = 1L,
     s_fn        = function(n, kx) floor(n^((kx + 1L) / (kx + 2L))),
     tuning      = NULL,
     methods     = "dnn_oracle",

@@ -11,7 +11,7 @@ sim_cate_run(
   kx_vals = 2L,
   n_reps = 500L,
   master_seed = 42L,
-  k = 5L,
+  k = 1L,
   s_fn = function(n, kx) floor(n^((kx + 1L)/(kx + 2L))),
   tuning = NULL,
   methods = "dnn_oracle",
@@ -35,7 +35,9 @@ sim_cate_run(
 Every cell uses the same seed vector so noise realisations are comparable
 across DGPs, sample sizes, and methods (fair comparison).}
 
-\item{k}{Integer DNN neighbour count.}
+\item{k}{Integer DNN neighbour count. The paper-facing DNN default is
+\code{k = 1L}, meaning one nearest neighbor is selected inside each size-\code{s}
+subsample; larger values use the package's generalized top-\code{k} weights.}
 
 \item{s_fn}{Function \code{f(n, kx)} returning the integer kernel order.
 Default satisfies the undersmoothing condition
@@ -105,7 +107,7 @@ raw <- sim_cate_run(designs = "dgp2_nonlinear", n_vals = 500L, n_reps = 10L)
 future::plan(future::multisession)
 raw <- sim_cate_run(
   designs = "dgp2_nonlinear", n_vals = 500L, n_reps = 10L,
-  methods = c("dnn_oracle", "dnn_crossfit", "ols_interact", "causal_forest")
+  methods = c("dnn_fullsample", "dnn_crossfit", "ols_interact", "causal_forest")
 )
 future::plan(future::sequential)
 

@@ -34,7 +34,7 @@ PAPER_GRID <- list(
   kx_vals     = 2L,
   n_reps      = 10000L,
   master_seed = 42L,
-  k           = 5L,
+  k           = 1L,  # one-nearest-neighbor DNN kernel used in the paper theory
   s_fn        = function(n, kx) floor(n^((kx + 1L) / (kx + 2L))),
   # Main manuscript comparison: same-sample DNN, cross-fitted DNN, fixed-
   # bandwidth local constant, and interaction OLS. Diagnostic oracle /

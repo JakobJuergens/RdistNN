@@ -17,7 +17,8 @@ sim_cate_data(
 }
 \arguments{
 \item{design}{Character; one of \code{"dgp1_linear"}, \code{"dgp2_nonlinear"},
-\code{"dgp3_sparse_overlap"}, \code{"dgp4_clustered"}, \code{"dgp5_correlated"}.}
+\code{"dgp3_sparse_overlap"}, \code{"dgp4_clustered"}, \code{"dgp5_correlated"}, or
+\code{"dgp6_nuisance_efficiency"}.}
 
 \item{n}{Integer sample size.}
 
@@ -29,8 +30,11 @@ sim_cate_data(
 
 \item{seed}{Optional integer seed for reproducibility.}
 
-\item{x0}{Optional numeric length-\code{kx} evaluation point (defaults to the
-origin).}
+\item{x0}{Optional numeric length-\code{kx} evaluation point. Defaults are
+DGP-specific interior points: \eqn{(0,\ldots,0)} for \code{dgp1_linear},
+\eqn{(1,0,\ldots)} for \code{dgp2_nonlinear}, \code{dgp3_sparse_overlap}, and
+\code{dgp4_clustered}, and \code{dgp6_nuisance_efficiency}, and
+\eqn{(0.75,0,\ldots)} for \code{dgp5_correlated}.}
 
 \item{...}{Extra arguments forwarded to the underlying DGP (e.g. \code{r} and
 \code{c_sharp} for \code{dgp3_sparse_overlap}).}
@@ -53,26 +57,41 @@ Robinson pseudo-outcome \eqn{\rho}, so that first-stage estimation error
 can be isolated from the target inference step.
 }
 \details{
-Three designs are available:
+Six designs are available:
 \describe{
 \item{\code{dgp1_linear}}{Linear CATE \eqn{\tau(x) = \beta'x}; logistic
 propensity. Correctly specified for the OLS-interaction benchmark.}
-\item{\code{dgp2_nonlinear}}{Sinusoidal CATE \eqn{\tau(x) = 0.5 + 0.5\sin(x_1)};
-same propensity. Misspecified for OLS; primary horse-race DGP.}
+\item{\code{dgp2_nonlinear}}{Sharpened nonlinear CATE
+\eqn{\tau(x) = 0.5 + 0.75\sin(1.5 x_1)};
+same propensity. Misspecified for OLS; primary horse-race DGP. Default
+target is the interior point \eqn{x_0 = (1,0,\ldots)} so the local CATE
+is visibly nonlinear around the evaluation point.}
 \item{\code{dgp3_sparse_overlap}}{Same \eqn{\tau} as DGP 2; propensity
-interpolates between 0.5 at \code{x0} and a near-boundary logistic far from
-\code{x0}. Tests estimators that do not adapt to local effective sample size.}
+interpolates between 0.5 at \code{x0} and a much sharper near-boundary
+logistic far from \code{x0}, using a tighter Gaussian overlap pocket. Tests
+estimators that do not adapt to local effective sample size. Default
+target is the same interior point \eqn{x_0 = (1,0,\ldots)}.}
 \item{\code{dgp4_clustered}}{Same \eqn{\tau} and propensity as DGP 2; covariates
-from a two-component mixture: 70\\% \eqn{N(0, 0.4^2 I)} (dense cluster at
-\code{x0}) and 30\\% \eqn{N((3,0,\ldots), I)} (sparse outer cluster). Tests
-density adaptivity: the DNN s-NN bandwidth automatically shrinks at the
-dense \code{x0}, while a fixed-bandwidth kernel over-smooths.}
+from a three-component mixture: 80\\% \eqn{N(x_0, 0.2^2 I)} (dense spike at
+\code{x0}) plus two diffuse 10\\% remote clusters centered at
+\eqn{(4.5,2,0,\ldots)} and \eqn{(-2.5,-2,0,\ldots)} with covariance
+\eqn{1.25^2 I}. Tests density adaptivity: the DNN s-NN bandwidth
+automatically shrinks at the dense \code{x0}, while a fixed-bandwidth kernel
+over-smooths. Default target is the interior point
+\eqn{x_0 = (1,0,\ldots)} and the inner cluster is recentered there.}
 \item{\code{dgp5_correlated}}{Covariates \eqn{X \sim N(0,\Sigma)} with
 \eqn{\Sigma_{12} = \rho = 0.85}; \eqn{\tau(x) = \sin(2x_1) + 0.5x_1^2};
 evaluation point at \eqn{x_0 = (0.75, 0)}. Tests shape adaptivity: L2
 and diagonal-scaled neighbourhoods are misaligned with the elliptical
 covariate isocontours; the \code{dnn_oracle_mahal} benchmark (Mahalanobis
 distance) corrects for the off-diagonal covariance.}
+\item{\code{dgp6_nuisance_efficiency}}{Propensity
+\eqn{e(x) = \operatorname{logit}^{-1}(1.25(x_1 - 1) - 0.75x_2)} and
+marginal regression \eqn{m(x) = 1 + 1.5(x_1 - 1) - x_2} are aligned with
+the benchmark nuisance models, while
+\eqn{\tau(x) = 0.5 + 0.60\sin(1.5 x_1)} remains nonlinear. Tests the
+precision gap between \code{dnn_fullsample} and \code{dnn_crossfit}. Default target
+is \eqn{x_0 = (1,0,\ldots)}.}
 }
 }
 \examples{

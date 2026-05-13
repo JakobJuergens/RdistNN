@@ -18,6 +18,7 @@ Returns the names of all estimator methods registered for use with
    Name \tab Description \cr
    \code{dnn_oracle} \tab Proposed DNN Z-estimator, L2 distance, oracle nuisances \cr
    \code{dnn_oracle_mahal} \tab Proposed DNN Z-estimator, Mahalanobis distance, oracle nuisances (\code{dgp5_correlated}) \cr
+   \code{dnn_fullsample} \tab Proposed DNN Z-estimator, L2 distance, full-sample estimated nuisances \cr
    \code{dnn_crossfit} \tab Proposed DNN Z-estimator, L2 distance, K-fold cross-fitted nuisances \cr
    \code{local_constant} \tab Nadaraya-Watson smoother on oracle pseudo-outcome \cr
    \code{ols_interact} \tab OLS with D*X interactions, delta-method SE at x0 \cr

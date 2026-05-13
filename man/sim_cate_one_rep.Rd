@@ -54,9 +54,9 @@ metrics aligned with the paper's evaluation criteria.
 }
 \examples{
 rep1 <- sim_cate_one_rep(
-  n = 200, kx = 2, k = 5, s = 12,
+  n = 200, kx = 2, k = 1, s = 12,
   design = "dgp2_nonlinear",
-  methods = c("dnn_oracle", "ols_interact"),
+  methods = c("dnn_fullsample", "ols_interact"),
   seed = 1
 )
 rep1
