@@ -50,7 +50,7 @@ fit_np <- np_dnn(
   y_col = "Y",
   x0 = demo_np$x0,
   method = "exact",
-  k = 2L,
+  k = 1L,
   s = 4L,
   se = FALSE,
   return = c("W", "dx", "ess")
@@ -83,7 +83,7 @@ fit_cate <- cate_dnn(
   e_col = "e_oracle",
   x0 = demo_cate$x0,
   method = "exact",
-  k = 2L,
+  k = 1L,
   s = 4L,
   se = FALSE,
   return = c("W", "dx", "psi", "nuisance")
@@ -120,7 +120,7 @@ fit_plqr <- plqr_dnn(
   tau = 0.5,
   x0 = demo_plqr$x0,
   method = "exact",
-  k = 2L,
+  k = 1L,
   s = 4L,
   se = FALSE,
   return = c("W", "dx", "g", "ess")
@@ -152,7 +152,7 @@ fit_tuned <- np_dnn(
   y_col = "Y",
   x0 = demo_np$x0,
   method = "exact",
-  k = 2L,
+  k = 1L,
   tuning = tuning_dnn_paper(kappa = 1.25),
   se = FALSE,
   return = c("W", "tuning")

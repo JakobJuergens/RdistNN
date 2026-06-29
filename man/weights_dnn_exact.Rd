@@ -48,6 +48,6 @@ manuscript derivations cover the \code{k = 1} case.
 set.seed(1)
 x_mat <- matrix(rnorm(20), 10, 2)
 x0_mat <- matrix(rnorm(6), 3, 2)
-out <- weights_dnn_exact(x_mat, x0_mat, distance = "l2", k = 2L, s = 3L, return = "W")
+out <- weights_dnn_exact(x_mat, x0_mat, distance = "l2", k = 1L, s = 3L, return = "W")
 dim(out$W)
 }

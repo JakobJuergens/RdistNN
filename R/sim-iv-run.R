@@ -42,7 +42,7 @@
 #'   `ci_len`, `neff`, `J`, `df`, `pval_J`, and `reject_J`.
 #' @examples
 #' sim_iv_one_rep(
-#'   n = 120, kx = 2, q = 2, k = 2, s = 10,
+#'   n = 120, kx = 2, q = 2, k = 1, s = 10,
 #'   design = "dgp2_iv_homog_overid",
 #'   methods = c("dnn_iv_oracle", "iv_oracle"),
 #'   seed = 1

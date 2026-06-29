@@ -52,15 +52,16 @@
 }
 
 # ── DNN oracle ────────────────────────────────────────────────────────────────
-# Proposed method.  Uses the oracle Robinson pseudo-outcome so that first-stage
-# error does not contaminate the comparison and the oracle/crossfit comparison
-# differs only in nuisance quality, not in score construction.
+# Proposed method.  Uses the oracle AIPW score from the dormant coupled-source
+# CATE route so that first-stage error does not contaminate the comparison and
+# the oracle/crossfit comparison differs only in nuisance quality, not in score
+# construction.
 
 .method_dnn_oracle <- function(dgp, x_cols, k, s, alpha, ...) {
   fit <- cate_dnn(
     X              = as.matrix(dgp$data[, x_cols]),
     x0             = dgp$x0,
-    pseudo_outcome = dgp$data$rho_oracle,
+    pseudo_outcome = dgp$data$aipw_oracle,
     k              = k,
     s              = s,
     se             = TRUE,
@@ -71,23 +72,39 @@
 }
 
 # ── DNN with estimated nuisances ──────────────────────────────────────────────
-# Same nuisance models are used for both same-sample and cross-fitted variants:
-# logistic regression for the propensity score and OLS for the marginal outcome
-# mean E[Y | X].  The comparison between dnn_fullsample and dnn_crossfit then
-# isolates the cost of sample splitting rather than the nuisance specification.
+# Same nuisance model families are used for both same-sample and cross-fitted
+# variants: logistic regression for the propensity score and arm-specific OLS
+# for the potential outcome means.  The comparison between dnn_fullsample and
+# dnn_crossfit then isolates the cost of sample splitting rather than the score
+# construction.
 
-.fit_sim_nuisances_fullsample <- function(dat, x_cols, clip = 1e-3) {
-  e_fmla <- stats::as.formula(paste("D ~", paste(x_cols, collapse = " + ")))
+.fit_sim_outcome_arm <- function(dat, x_cols, arm, train = rep(TRUE, nrow(dat))) {
   m_fmla <- stats::as.formula(paste("Y ~", paste(x_cols, collapse = " + ")))
+  train_dat <- dat[train & dat$D == arm, , drop = FALSE]
+  if (nrow(train_dat) == 0L) {
+    .abort_bad_state(sprintf(
+      "Cannot fit AIPW outcome nuisance: no D=%d observations in training sample.",
+      arm
+    ))
+  }
+  fit <- stats::lm(m_fmla, data = train_dat)
+  as.numeric(stats::predict(fit, newdata = dat))
+}
 
-  e_fit <- stats::glm(e_fmla, data = dat, family = stats::binomial())
+.fit_sim_aipw_nuisances <- function(dat, x_cols, train = rep(TRUE, nrow(dat)),
+                                    clip = 1e-3) {
+  e_fmla <- stats::as.formula(paste("D ~", paste(x_cols, collapse = " + ")))
+  train_dat <- dat[train, , drop = FALSE]
+
+  e_fit <- stats::glm(e_fmla, data = train_dat, family = stats::binomial())
   e_hat <- stats::predict(e_fit, newdata = dat, type = "response")
   e_hat <- pmin(pmax(e_hat, clip), 1 - clip)
 
-  m_fit <- stats::lm(m_fmla, data = dat)
-  m_hat <- stats::predict(m_fit, newdata = dat)
-
-  list(e_hat = e_hat, m_hat = m_hat)
+  list(
+    e_hat = e_hat,
+    m0_hat = .fit_sim_outcome_arm(dat, x_cols = x_cols, arm = 0L, train = train),
+    m1_hat = .fit_sim_outcome_arm(dat, x_cols = x_cols, arm = 1L, train = train)
+  )
 }
 
 # ── DNN full-sample ───────────────────────────────────────────────────────────
@@ -98,14 +115,19 @@
 .method_dnn_fullsample <- function(dgp, x_cols, k, s, alpha,
                                    clip = 1e-3, ...) {
   dat <- dgp$data
-  nuis <- .fit_sim_nuisances_fullsample(dat, x_cols = x_cols, clip = clip)
-  rho_fs <- (dat$D - nuis$e_hat) * (dat$Y - nuis$m_hat) /
-    pmax(nuis$e_hat * (1 - nuis$e_hat), 1e-8)
+  nuis <- .fit_sim_aipw_nuisances(dat, x_cols = x_cols, clip = clip)
+  aipw_fs <- cate_rho_aipw(
+    y = dat$Y,
+    d = dat$D,
+    m1hat = nuis$m1_hat,
+    m0hat = nuis$m0_hat,
+    ehat = nuis$e_hat
+  )
 
   fit <- cate_dnn(
     X              = as.matrix(dat[, x_cols]),
     x0             = dgp$x0,
-    pseudo_outcome = rho_fs,
+    pseudo_outcome = aipw_fs,
     k              = k,
     s              = s,
     se             = TRUE,
@@ -116,9 +138,9 @@
 }
 
 # ── DNN cross-fitted ──────────────────────────────────────────────────────────
-# Proposed method with K-fold cross-fitted nuisances estimated via
-# logistic regression (propensity) and OLS (outcome mean), both base-R.
-# Compares same-sample inference against the cross-fitting alternative.
+# Proposed method with K-fold cross-fitted nuisances estimated via logistic
+# regression (propensity) and arm-specific OLS (potential outcome means), both
+# base-R.  Compares same-sample inference against the cross-fitting alternative.
 
 .method_dnn_crossfit <- function(dgp, x_cols, k, s, alpha,
                                  n_folds = 5L, clip = 1e-3, ...) {
@@ -130,30 +152,34 @@
   fold_ids <- sample(rep_len(seq_len(n_folds), n))
 
   e_cf <- numeric(n)
-  m_cf <- numeric(n)
-
-  e_fmla <- stats::as.formula(paste("D ~", paste(x_cols, collapse = " + ")))
-  # Outcome model: E[Y | X] (marginalizing over D for Robinson residuals)
-  m_fmla <- stats::as.formula(paste("Y ~", paste(x_cols, collapse = " + ")))
+  m0_cf <- numeric(n)
+  m1_cf <- numeric(n)
 
   for (fold_k in seq_len(n_folds)) {
-    tr <- fold_ids != fold_k
     te <- fold_ids == fold_k
-
-    e_fit    <- stats::glm(e_fmla, data = dat[tr, ], family = stats::binomial())
-    e_raw    <- stats::predict(e_fit, newdata = dat[te, ], type = "response")
-    e_cf[te] <- pmin(pmax(e_raw, clip), 1 - clip)
-
-    m_fit    <- stats::lm(m_fmla, data = dat[tr, ])
-    m_cf[te] <- stats::predict(m_fit, newdata = dat[te, ])
+    nuis <- .fit_sim_aipw_nuisances(
+      dat = dat,
+      x_cols = x_cols,
+      train = !te,
+      clip = clip
+    )
+    e_cf[te] <- nuis$e_hat[te]
+    m0_cf[te] <- nuis$m0_hat[te]
+    m1_cf[te] <- nuis$m1_hat[te]
   }
 
-  rho_cf <- (dat$D - e_cf) * (dat$Y - m_cf) / pmax(e_cf * (1 - e_cf), 1e-8)
+  aipw_cf <- cate_rho_aipw(
+    y = dat$Y,
+    d = dat$D,
+    m1hat = m1_cf,
+    m0hat = m0_cf,
+    ehat = e_cf
+  )
 
   fit <- cate_dnn(
     X              = as.matrix(dat[, x_cols]),
     x0             = dgp$x0,
-    pseudo_outcome = rho_cf,
+    pseudo_outcome = aipw_cf,
     k              = k,
     s              = s,
     se             = TRUE,
@@ -164,7 +190,7 @@
 }
 
 # ── DNN oracle with Mahalanobis distance ─────────────────────────────────────
-# Proposed method with Mahalanobis distance and the oracle Robinson
+# Proposed method with Mahalanobis distance and the oracle AIPW
 # pseudo-outcome; relevant for dgp5_correlated where the off-diagonal covariance
 # makes L2 neighbourhoods geometrically misaligned. The sample covariance is
 # estimated once from the training data (via the distance_mahalanobis() setup()
@@ -174,7 +200,7 @@
   fit <- cate_dnn(
     X              = as.matrix(dgp$data[, x_cols]),
     x0             = dgp$x0,
-    pseudo_outcome = dgp$data$rho_oracle,
+    pseudo_outcome = dgp$data$aipw_oracle,
     k              = k,
     s              = s,
     distance       = "mahalanobis",
@@ -186,14 +212,14 @@
 }
 
 # ── Local constant (Nadaraya-Watson) ──────────────────────────────────────────
-# Product Gaussian kernel applied to oracle pseudo-outcomes.  Per-variable
+# Product Gaussian kernel applied to oracle AIPW pseudo-outcomes.  Per-variable
 # Silverman bandwidth.  SE via the vectorized delete-1 jackknife.
 # Serves as the simplest nonparametric fixed-point comparator.
 
 .method_local_constant <- function(dgp, x_cols, alpha, bw_factor = 1.06, ...) {
   dat <- dgp$data
   X   <- as.matrix(dat[, x_cols])
-  rho <- dat$rho_oracle
+  aipw <- dat$aipw_oracle
   x0  <- dgp$x0
   n   <- nrow(X)
   kx  <- ncol(X)
@@ -207,14 +233,14 @@
   K_vals <- exp(-0.5 * rowSums(Z^2))
 
   K_sum     <- sum(K_vals)
-  K_rho_sum <- sum(K_vals * rho)
-  tau_hat   <- K_rho_sum / K_sum
+  K_aipw_sum <- sum(K_vals * aipw)
+  tau_hat    <- K_aipw_sum / K_sum
 
-  # Vectorized LOO: tau_loo[i] = (K_rho_sum - K[i]*rho[i]) / (K_sum - K[i])
+  # Vectorized LOO: tau_loo[i] = (K_aipw_sum - K[i]*aipw[i]) / (K_sum - K[i])
   denom_loo  <- K_sum - K_vals
   safe       <- denom_loo > .Machine$double.eps
   tau_loo    <- numeric(n)
-  tau_loo[safe]  <- (K_rho_sum - K_vals[safe] * rho[safe]) / denom_loo[safe]
+  tau_loo[safe]  <- (K_aipw_sum - K_vals[safe] * aipw[safe]) / denom_loo[safe]
   tau_loo[!safe] <- tau_hat  # isolated dominant observation; leave-one-out = full
 
   se_hat <- sqrt((n - 1L) / n * sum((tau_loo - tau_hat)^2))
@@ -361,9 +387,9 @@
 #' |---------------------|-------------|
 #' | `dnn_oracle`        | Proposed DNN Z-estimator, L2 distance, oracle nuisances |
 #' | `dnn_oracle_mahal`  | Proposed DNN Z-estimator, Mahalanobis distance, oracle nuisances (`dgp5_correlated`) |
-#' | `dnn_fullsample`    | Proposed DNN Z-estimator, L2 distance, full-sample estimated nuisances |
-#' | `dnn_crossfit`      | Proposed DNN Z-estimator, L2 distance, K-fold cross-fitted nuisances |
-#' | `local_constant`    | Nadaraya-Watson smoother on oracle pseudo-outcome |
+#' | `dnn_fullsample`    | Proposed DNN Z-estimator, L2 distance, full-sample estimated AIPW nuisances |
+#' | `dnn_crossfit`      | Proposed DNN Z-estimator, L2 distance, K-fold cross-fitted AIPW nuisances |
+#' | `local_constant`    | Nadaraya-Watson smoother on the oracle AIPW score |
 #' | `ols_interact`      | OLS with D*X interactions, delta-method SE at x0 |
 #' | `causal_forest`     | GRF causal forest, oracle nuisances (requires **grf**) |
 #' | `llf`               | GRF causal forest with local-linear corrections (requires **grf**) |

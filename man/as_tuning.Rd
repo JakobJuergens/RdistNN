@@ -19,5 +19,5 @@ Wrap a function as a tuning spec
 }
 \examples{
 tun <- as_tuning(function(n, kx, ...) floor(n^((kx + 1)/(kx + 2))))
-tuning_eval(tun, n = 200, kx = 2, k = 5)
+tuning_eval(tun, n = 200, kx = 2, k = 1)
 }

@@ -54,8 +54,8 @@ weights. The built-in paper default is:
 
 ```{r tuning-paper, eval=FALSE}
 tun <- tuning_dnn_paper(kappa = 1)
-tuning_eval(tun, n = 500, kx = 2, k = 5)
-tuning_eval(tun, n = 500, kx = 2, k = 5, mode = "grid")
+tuning_eval(tun, n = 500, kx = 2, k = 1)
+tuning_eval(tun, n = 500, kx = 2, k = 1, mode = "grid")
 ```
 
 You can add custom rules:

@@ -47,11 +47,11 @@ Six DGPs are available via `sim_cate_data()`:
 | `dgp3_sparse_overlap` | same as DGP 2 | near-boundary except in a tight pocket at `x0` | iid N(0,I) | stress-tests local ESS adaptation |
 | `dgp4_clustered` | same as DGP 2 | logistic | mixture: 80% N(x0, 0.2²I) + 10% N((4.5,2), 1.25²I) + 10% N((-2.5,-2), 1.25²I) | density-adaptivity DGP; DNN shrinks bandwidth at dense `x0` |
 | `dgp5_correlated` | `sin(2x1) + 0.5 x1²` | steeper logistic | N(0,Σ), ρ=0.85; x0=(0.75,0) | shape-adaptivity DGP; `dnn_oracle_mahal` corrects for off-diagonal covariance |
-| `dgp6_nuisance_efficiency` | `0.5 + 0.60 sin(1.5 x1)` | logistic, correctly specified for benchmark nuisance models | iid N(0,I) | focused `dnn_fullsample` versus `dnn_crossfit` design |
+| `dgp6_nuisance_efficiency` | `0.5 + 0.60 sin(1.5 x1)` | logistic, simple benchmark nuisance structure | iid N(0,I) | focused `dnn_fullsample` versus `dnn_crossfit` design |
 
 All DGPs return oracle nuisances (`e_oracle`, `m0_oracle`, `m1_oracle`,
-`tau_oracle`, `rho_oracle`) so that first-stage estimation error can be
-isolated.
+`tau_oracle`), the paper-facing oracle AIPW score (`aipw_oracle`), and the
+legacy Robinson pseudo-outcome (`rho_oracle`).
 
 ```{r dgp-example}
 dgp <- sim_cate_data("dgp2_nonlinear", n = 300, kx = 2, seed = 42)
@@ -61,17 +61,17 @@ dgp$tau_x0   # true CATE at the default target x0 = (1, 0)
 
 ## Single replicate
 
-`sim_cate_one_rep()` draws one dataset, fits the DNN Z-estimator with oracle
-nuisances, and returns per-replicate metrics:
+`sim_cate_one_rep()` draws one dataset, fits the DNN Z-estimator using the
+AIPW score, and returns per-replicate metrics:
 
 ```{r one-rep}
 tuning_default <- tuning_dnn_paper()
-s_default <- tuning_eval(tuning_default, n = 300, kx = 2, k = 5)$s
+s_default <- tuning_eval(tuning_default, n = 300, kx = 2, k = 1)$s
 
 r <- sim_cate_one_rep(
   n      = 300,
   kx     = 2,
-  k      = 5,
+  k      = 1,
   s      = s_default,
   design = "dgp2_nonlinear",
   seed   = 1

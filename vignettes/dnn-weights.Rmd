@@ -47,7 +47,7 @@ wt_exact <- weights_dnn(
   X = X, X0 = X0,
   distance = "l2",
   method = "exact",
-  k = 2L, s = 4L,
+  k = 1L, s = 4L,
   return = c("W", "ranks", "ord", "dx")
 )
 
@@ -55,7 +55,7 @@ wt_asymp <- weights_dnn(
   X = X, X0 = X0,
   distance = "l2",
   method = "asymp",
-  k = 2L, s = 4L,
+  k = 1L, s = 4L,
   normalize = TRUE,
   return = "W"
 )
@@ -73,7 +73,7 @@ x0 <- c(0, 0)
 wt_single <- weights_dnn(
   X = X, x0 = x0,
   method = "exact",
-  k = 2L, s = 4L,
+  k = 1L, s = 4L,
   return = c("W", "ranks")
 )
 

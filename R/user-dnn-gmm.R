@@ -382,7 +382,7 @@
 #'   x_cols = c("X1", "X2"),
 #'   x0 = dgp$x0,
 #'   model = model,
-#'   k = 2, s = 10,
+#'   k = 1, s = 10,
 #'   return = "ess"
 #' )
 #' fit$theta

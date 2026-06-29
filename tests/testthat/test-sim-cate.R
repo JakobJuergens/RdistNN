@@ -1,10 +1,37 @@
+.test_aipw_score <- function(dat, e_hat, m0_hat, m1_hat) {
+  pmax_e <- pmax(e_hat, 1e-8)
+  pmax_1e <- pmax(1 - e_hat, 1e-8)
+  m1_hat - m0_hat +
+    dat$D * (dat$Y - m1_hat) / pmax_e -
+    (1 - dat$D) * (dat$Y - m0_hat) / pmax_1e
+}
+
+.test_fit_aipw_nuisances <- function(dat, x_cols, train = rep(TRUE, nrow(dat)),
+                                     clip = 1e-3) {
+  e_fmla <- stats::as.formula(paste("D ~", paste(x_cols, collapse = " + ")))
+  m_fmla <- stats::as.formula(paste("Y ~", paste(x_cols, collapse = " + ")))
+  train_dat <- dat[train, , drop = FALSE]
+
+  e_fit <- stats::glm(e_fmla, data = train_dat, family = stats::binomial())
+  e_hat <- stats::predict(e_fit, newdata = dat, type = "response")
+  e_hat <- pmin(pmax(e_hat, clip), 1 - clip)
+
+  m0_fit <- stats::lm(m_fmla, data = train_dat[train_dat$D == 0L, , drop = FALSE])
+  m1_fit <- stats::lm(m_fmla, data = train_dat[train_dat$D == 1L, , drop = FALSE])
+  list(
+    e_hat = e_hat,
+    m0_hat = stats::predict(m0_fit, newdata = dat),
+    m1_hat = stats::predict(m1_fit, newdata = dat)
+  )
+}
+
 test_that("sim_cate_data: output schema is correct for each design", {
   designs <- c("dgp1_linear", "dgp2_nonlinear", "dgp3_sparse_overlap",
                "dgp4_clustered", "dgp5_correlated", "dgp6_nuisance_efficiency")
   expected_cols <- c(
     "X1", "X2", "D", "Y",
     "e_oracle", "m_oracle", "m0_oracle", "m1_oracle",
-    "tau_oracle", "rho_oracle"
+    "tau_oracle", "rho_oracle", "aipw_oracle"
   )
 
   for (des in designs) {
@@ -48,6 +75,20 @@ test_that("sim_cate_data: m1_oracle = m0_oracle + tau_oracle", {
   expect_equal(dgp$data$m1_oracle,
                dgp$data$m0_oracle + dgp$data$tau_oracle,
                tolerance = 1e-12)
+})
+
+test_that("sim_cate_data: aipw_oracle matches the dormant-source AIPW score", {
+  dgp <- sim_cate_data("dgp2_nonlinear", n = 100L, kx = 2L, seed = 3L)
+  dat <- dgp$data
+  aipw_manual <- .test_aipw_score(
+    dat = dat,
+    e_hat = dat$e_oracle,
+    m0_hat = dat$m0_oracle,
+    m1_hat = dat$m1_oracle
+  )
+
+  expect_equal(dat$aipw_oracle, aipw_manual, tolerance = 1e-12)
+  expect_false(isTRUE(all.equal(dat$aipw_oracle, dat$rho_oracle)))
 })
 
 test_that("sim_cate_data: unknown design gives informative error", {
@@ -441,7 +482,7 @@ test_that("sim_cate_one_rep: dnn_fullsample returns finite metrics", {
   expect_true(r$cover %in% c(0, 1))
 })
 
-test_that("sim_cate_one_rep: dnn_oracle matches direct oracle Robinson fit", {
+test_that("sim_cate_one_rep: dnn_oracle matches direct oracle AIPW fit", {
   n <- 120L
   kx <- 2L
   k <- 3L
@@ -450,9 +491,14 @@ test_that("sim_cate_one_rep: dnn_oracle matches direct oracle Robinson fit", {
   dgp <- sim_cate_data("dgp2_nonlinear", n = n, kx = kx, seed = seed)
 
   fit <- cate_dnn(
-    X = as.matrix(dgp$data[, paste0("X", seq_len(kx))]),
+    data = dgp$data,
+    x_cols = paste0("X", seq_len(kx)),
+    y_col = "Y",
+    t_col = "D",
+    e_col = "e_oracle",
+    m0_col = "m0_oracle",
+    m1_col = "m1_oracle",
     x0 = dgp$x0,
-    pseudo_outcome = dgp$data$rho_oracle,
     k = k,
     s = s,
     se = TRUE,
@@ -474,7 +520,7 @@ test_that("sim_cate_one_rep: dnn_oracle matches direct oracle Robinson fit", {
   expect_equal(r$neff, fit$ess, tolerance = 1e-12)
 })
 
-test_that("sim_cate_one_rep: dnn_fullsample matches direct full-sample Robinson fit", {
+test_that("sim_cate_one_rep: dnn_fullsample matches direct full-sample AIPW fit", {
   n <- 120L
   kx <- 2L
   k <- 3L
@@ -485,19 +531,18 @@ test_that("sim_cate_one_rep: dnn_fullsample matches direct full-sample Robinson 
   x_cols <- paste0("X", seq_len(kx))
   dat <- dgp$data
 
-  e_fmla <- stats::as.formula(paste("D ~", paste(x_cols, collapse = " + ")))
-  m_fmla <- stats::as.formula(paste("Y ~", paste(x_cols, collapse = " + ")))
-  e_fit <- stats::glm(e_fmla, data = dat, family = stats::binomial())
-  e_hat <- stats::predict(e_fit, newdata = dat, type = "response")
-  e_hat <- pmin(pmax(e_hat, clip), 1 - clip)
-  m_fit <- stats::lm(m_fmla, data = dat)
-  m_hat <- stats::predict(m_fit, newdata = dat)
-  rho_hat <- (dat$D - e_hat) * (dat$Y - m_hat) / pmax(e_hat * (1 - e_hat), 1e-8)
+  nuis <- .test_fit_aipw_nuisances(dat, x_cols = x_cols, clip = clip)
+  aipw_hat <- .test_aipw_score(
+    dat = dat,
+    e_hat = nuis$e_hat,
+    m0_hat = nuis$m0_hat,
+    m1_hat = nuis$m1_hat
+  )
 
   fit <- cate_dnn(
     X = as.matrix(dat[, x_cols]),
     x0 = dgp$x0,
-    pseudo_outcome = rho_hat,
+    pseudo_outcome = aipw_hat,
     k = k,
     s = s,
     se = TRUE,
@@ -515,6 +560,67 @@ test_that("sim_cate_one_rep: dnn_fullsample matches direct full-sample Robinson 
 
   expect_equal(nrow(r), 1L)
   expect_equal(r$method, "dnn_fullsample")
+  expect_equal(r$tau_hat, fit$tau, tolerance = 1e-12)
+  expect_equal(r$se, fit$se, tolerance = 1e-12)
+  expect_equal(r$neff, fit$ess, tolerance = 1e-12)
+})
+
+test_that("sim_cate_one_rep: dnn_crossfit matches direct cross-fitted AIPW fit", {
+  n <- 120L
+  kx <- 2L
+  k <- 3L
+  s <- floor(n^(3/4))
+  seed <- 42L
+  clip <- 1e-3
+  n_folds <- 5L
+
+  dgp <- sim_cate_data("dgp2_nonlinear", n = n, kx = kx, seed = seed, clip = clip)
+  x_cols <- paste0("X", seq_len(kx))
+  dat <- dgp$data
+
+  fold_ids <- sample(rep_len(seq_len(n_folds), n))
+  e_cf <- m0_cf <- m1_cf <- numeric(n)
+  for (fold_k in seq_len(n_folds)) {
+    te <- fold_ids == fold_k
+    nuis <- .test_fit_aipw_nuisances(
+      dat = dat,
+      x_cols = x_cols,
+      train = !te,
+      clip = clip
+    )
+    e_cf[te] <- nuis$e_hat[te]
+    m0_cf[te] <- nuis$m0_hat[te]
+    m1_cf[te] <- nuis$m1_hat[te]
+  }
+  aipw_cf <- .test_aipw_score(
+    dat = dat,
+    e_hat = e_cf,
+    m0_hat = m0_cf,
+    m1_hat = m1_cf
+  )
+
+  fit <- cate_dnn(
+    X = as.matrix(dat[, x_cols]),
+    x0 = dgp$x0,
+    pseudo_outcome = aipw_cf,
+    k = k,
+    s = s,
+    se = TRUE,
+    jackknife = "fast",
+    return = "ess"
+  )
+  r <- sim_cate_one_rep(
+    n = n, kx = kx, k = k,
+    s = s,
+    design = "dgp2_nonlinear",
+    methods = "dnn_crossfit",
+    seed = seed,
+    clip = clip,
+    n_folds = n_folds
+  )
+
+  expect_equal(nrow(r), 1L)
+  expect_equal(r$method, "dnn_crossfit")
   expect_equal(r$tau_hat, fit$tau, tolerance = 1e-12)
   expect_equal(r$se, fit$se, tolerance = 1e-12)
   expect_equal(r$neff, fit$ess, tolerance = 1e-12)

@@ -67,7 +67,7 @@
 #' psi <- rnorm(n)
 #' out <- cate_dnn(
 #'   X = x_mat, X0 = x0_mat, pseudo_outcome = psi,
-#'   distance = "l2", method = "exact", k = 2L, s = 3L,
+#'   distance = "l2", method = "exact", k = 1L, s = 3L,
 #'   se = FALSE, return = c("W", "ess")
 #' )
 #' out$tau

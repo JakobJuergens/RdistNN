@@ -32,6 +32,10 @@
 
 .sim_cate_pseudo <- function(D, Y, e, m) (D - e) * (Y - m) / (e * (1 - e))
 
+.sim_cate_aipw <- function(D, Y, e, m0, m1) {
+  m1 - m0 + D * (Y - m1) / e - (1 - D) * (Y - m0) / (1 - e)
+}
+
 .sim_cate_tau_shared <- function(xx) {
   xx <- as.matrix(xx)
   0.5 + 0.75 * sin(1.5 * xx[, 1L])
@@ -43,6 +47,7 @@
   m1_true <- m0_true + tau_true
   m_true  <- m0_true + e_true * tau_true
   rho     <- .sim_cate_pseudo(D, Y, e_true, m_true)
+  aipw    <- .sim_cate_aipw(D, Y, e_true, m0_true, m1_true)
   p       <- ncol(X)
 
   df <- data.frame(
@@ -54,7 +59,8 @@
     m0_oracle  = as.numeric(m0_true),
     m1_oracle  = as.numeric(m1_true),
     tau_oracle = as.numeric(tau_true),
-    rho_oracle = as.numeric(rho)
+    rho_oracle = as.numeric(rho),
+    aipw_oracle = as.numeric(aipw)
   )
   colnames(df)[seq_len(p)] <- paste0("X", seq_len(p))
 
@@ -278,10 +284,12 @@
 
 # ── DGP 6: nuisance-efficiency design ────────────────────────────────────────
 
-# Propensity and outcome nuisances are aligned with the benchmark nuisance
-# models used by dnn_fullsample and dnn_crossfit: the propensity is logistic
-# in X and the marginal regression E[Y|X=x] is linear in X.  tau remains
-# nonlinear so the target inference problem is still genuinely local.
+# Propensity and the legacy Robinson marginal outcome nuisance are aligned with
+# simple benchmark models.  The DNN simulation methods now use AIPW potential
+# outcome nuisances, so this design mainly remains a full-sample versus
+# cross-fit precision stress test rather than a fully correctly specified
+# AIPW-nuisance design.  tau remains nonlinear so the target inference problem
+# is still genuinely local.
 
 .sim_dgp6 <- function(n, kx = 2L, sigma = 0.5, clip = 1e-3, seed = NULL,
                        x0 = c(1, rep(0, max(0L, kx - 1L)))) {
@@ -324,9 +332,9 @@
 #' Draw one sample from a named CATE simulation DGP
 #'
 #' Generates a synthetic dataset for the CATE simulation study, including
-#' oracle nuisance quantities \eqn{e}, \eqn{m_0}, \eqn{m_1}, and the
-#' Robinson pseudo-outcome \eqn{\rho}, so that first-stage estimation error
-#' can be isolated from the target inference step.
+#' oracle nuisance quantities \eqn{e}, \eqn{m_0}, \eqn{m_1}, the AIPW score used
+#' by the paper-facing DNN CATE simulations, and the legacy Robinson
+#' pseudo-outcome \eqn{\rho}.
 #'
 #' Six designs are available:
 #' \describe{
@@ -359,7 +367,7 @@
 #'   \item{`dgp6_nuisance_efficiency`}{Propensity
 #'     \eqn{e(x) = \operatorname{logit}^{-1}(1.25(x_1 - 1) - 0.75x_2)} and
 #'     marginal regression \eqn{m(x) = 1 + 1.5(x_1 - 1) - x_2} are aligned with
-#'     the benchmark nuisance models, while
+#'     simple benchmark nuisance models, while
 #'     \eqn{\tau(x) = 0.5 + 0.60\sin(1.5 x_1)} remains nonlinear. Tests the
 #'     precision gap between `dnn_fullsample` and `dnn_crossfit`. Default target
 #'     is \eqn{x_0 = (1,0,\ldots)}.}
@@ -385,7 +393,7 @@
 #' \itemize{
 #'   \item `data`: a `data.frame` with columns `X1..Xkx`, `D`, `Y`, and oracle
 #'     nuisances `e_oracle`, `m_oracle`, `m0_oracle`, `m1_oracle`,
-#'     `tau_oracle`, `rho_oracle`.
+#'     `tau_oracle`, `aipw_oracle`, and legacy `rho_oracle`.
 #'   \item `x0`: numeric length-`kx` evaluation point.
 #'   \item `tau_x0`: true treatment effect at `x0`.
 #'   \item `truth`: named list of closures `tau_fn`, `e_fn`, `m0_fn`, `m_fn`.

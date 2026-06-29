@@ -66,7 +66,7 @@ fit_np <- np_dnn(
   x0 = c(0, 0),
   distance = "l2",
   method = "exact",
-  k = 2L, s = 3L,
+  k = 1L, s = 3L,
   se = TRUE,
   jackknife = "fast",
   return = c("W", "ess", "neighbors")
@@ -97,7 +97,7 @@ fit_cate <- cate_dnn(
   e_col = "e_oracle",
   distance = "l2",
   method = "exact",
-  k = 2L, s = 3L,
+  k = 1L, s = 3L,
   se = TRUE,
   jackknife = "fast",
   return = c("W", "psi", "nuisance")
@@ -128,7 +128,7 @@ fit_plqr <- plqr_dnn(
   x0 = c(0, 0),
   distance = "l2",
   method = "exact",
-  k = 2L, s = 3L,
+  k = 1L, s = 3L,
   se = TRUE,
   jackknife = "fast",
   return = c("W", "g", "ess")
@@ -144,9 +144,9 @@ diagnostics(fit_plqr)
 ``` r
 library(RdistNN)
 
-# Draw one dataset from a named DGP (oracle nuisances included)
+# Draw one dataset from a named DGP (oracle AIPW and nuisance columns included)
 dgp <- sim_cate_data("dgp2_nonlinear", n = 300, kx = 2, seed = 1)
-dgp$tau_x0   # true CATE at x0 = (0, 0)
+dgp$tau_x0   # true CATE at the default x0 = (1, 0)
 
 # Run one replicate and get bias / SE / coverage metrics
 r <- sim_cate_one_rep(n = 300, kx = 2, k = 1, s = 12,
@@ -192,7 +192,7 @@ fit_iv <- gmm_dnn(
   x_cols = c("X1", "X2"),
   x0 = iv$x0,
   model = model_iv,
-  k = 2L, s = 12L,
+  k = 1L, s = 12L,
   return = "ess"
 )
 

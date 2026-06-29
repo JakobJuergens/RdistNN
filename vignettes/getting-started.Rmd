@@ -53,7 +53,7 @@ wt_exact <- weights_dnn(
   X = X, X0 = X0,
   distance = "l2",
   method = "exact",
-  k = 2L, s = 3L,
+  k = 1L, s = 3L,
   return = c("W", "ranks", "ord")
 )
 
@@ -62,7 +62,7 @@ wt_asymp <- weights_dnn(
   X = X, X0 = X0,
   distance = "l2",
   method = "asymp",
-  k = 2L, s = 3L,
+  k = 1L, s = 3L,
   normalize = TRUE,
   return = "W"
 )
@@ -86,7 +86,7 @@ fit_np <- np_dnn(
   y_col = "Y",
   x0 = c(0, 0),
   method = "exact",
-  k = 2L, s = 3L,
+  k = 1L, s = 3L,
   se = TRUE,
   jackknife = "fast",
   return = c("W", "ess", "neighbors")
@@ -120,7 +120,7 @@ fit_cate <- cate_dnn(
   e_col = "e_oracle",
   x0 = c(0, 0),
   method = "exact",
-  k = 2L, s = 3L,
+  k = 1L, s = 3L,
   se = TRUE,
   return = c("W", "psi", "nuisance")
 )
@@ -154,7 +154,7 @@ fit_plqr <- plqr_dnn(
   tau = 0.5,
   x0 = c(0, 0),
   method = "exact",
-  k = 2L, s = 3L,
+  k = 1L, s = 3L,
   se = TRUE,
   return = c("W", "g", "ess")
 )

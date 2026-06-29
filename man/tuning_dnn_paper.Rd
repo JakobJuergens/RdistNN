@@ -30,5 +30,5 @@ with default \eqn{\kappa = 1} and optional candidate grid.
 }
 \examples{
 tun <- tuning_dnn_paper()
-tuning_eval(tun, n = 1000, kx = 2, k = 5)
+tuning_eval(tun, n = 1000, kx = 2, k = 1)
 }

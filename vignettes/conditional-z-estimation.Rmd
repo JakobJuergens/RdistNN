@@ -46,7 +46,7 @@ fit_np <- np_dnn(
   y_col = "Y",
   x0 = c(0, 0),
   method = "exact",
-  k = 2L,
+  k = 1L,
   tuning = tuning_default,
   se = TRUE,
   jackknife = "fast",
@@ -81,7 +81,7 @@ fit_cate <- cate_dnn(
   e_col = "e_oracle",
   x0 = c(0, 0),
   method = "exact",
-  k = 2L,
+  k = 1L,
   tuning = tuning_default,
   se = TRUE,
   return = c("W", "psi", "nuisance", "tuning")
@@ -109,7 +109,7 @@ fit_plqr <- plqr_dnn(
   tau = 0.5,
   x0 = c(0, 0),
   method = "exact",
-  k = 2L,
+  k = 1L,
   tuning = tuning_default,
   se = TRUE,
   return = c("W", "g", "ess", "tuning")

@@ -297,7 +297,7 @@ print.weights_result <- function(x, ...) {
 #' set.seed(1)
 #' x_mat <- matrix(rnorm(20), 10, 2)
 #' x0_mat <- matrix(rnorm(6), 3, 2)
-#' out <- weights_dnn_exact(x_mat, x0_mat, distance = "l2", k = 2L, s = 3L, return = "W")
+#' out <- weights_dnn_exact(x_mat, x0_mat, distance = "l2", k = 1L, s = 3L, return = "W")
 #' dim(out$W)
 #' @export
 weights_dnn_exact <- function(
@@ -326,7 +326,7 @@ weights_dnn_exact <- function(
 #' set.seed(1)
 #' x_mat <- matrix(rnorm(20), 10, 2)
 #' x0_mat <- matrix(rnorm(4), 2, 2)
-#' out <- weights_dnn_asymp(x_mat, x0_mat, k = 2L, s = 3L, normalize = TRUE)
+#' out <- weights_dnn_asymp(x_mat, x0_mat, k = 1L, s = 3L, normalize = TRUE)
 #' dim(out$W)
 #' @export
 weights_dnn_asymp <- function(
@@ -357,7 +357,7 @@ weights_dnn_asymp <- function(
 #' set.seed(1)
 #' x_mat <- matrix(rnorm(20), 10, 2)
 #' x0 <- c(0, 0)
-#' out <- weights_dnn(x_mat, x0 = x0, k = 2L, s = 3L, method = "exact")
+#' out <- weights_dnn(x_mat, x0 = x0, k = 1L, s = 3L, method = "exact")
 #' dim(out$W)
 #' @export
 weights_dnn <- function(

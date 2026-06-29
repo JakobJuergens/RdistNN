@@ -42,6 +42,6 @@ tuning_eval(
 Evaluate a tuning spec
 }
 \examples{
-tuning_eval("paper_undersmooth", n = 500, kx = 2, k = 5)
-tuning_eval("paper_undersmooth", n = 500, kx = 2, k = 5, mode = "grid")
+tuning_eval("paper_undersmooth", n = 500, kx = 2, k = 1)
+tuning_eval("paper_undersmooth", n = 500, kx = 2, k = 1, mode = "grid")
 }

@@ -69,7 +69,7 @@ fit_iv <- gmm_dnn(
   x_cols = c("X1", "X2"),
   x0 = iv$x0,
   model = model_iv,
-  k = 2L,
+  k = 1L,
   s = 12L,
   se = TRUE,
   return = "ess"

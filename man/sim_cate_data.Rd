@@ -44,7 +44,7 @@ A list with:
 \itemize{
 \item \code{data}: a \code{data.frame} with columns \code{X1..Xkx}, \code{D}, \code{Y}, and oracle
 nuisances \code{e_oracle}, \code{m_oracle}, \code{m0_oracle}, \code{m1_oracle},
-\code{tau_oracle}, \code{rho_oracle}.
+\code{tau_oracle}, \code{aipw_oracle}, and legacy \code{rho_oracle}.
 \item \code{x0}: numeric length-\code{kx} evaluation point.
 \item \code{tau_x0}: true treatment effect at \code{x0}.
 \item \code{truth}: named list of closures \code{tau_fn}, \code{e_fn}, \code{m0_fn}, \code{m_fn}.
@@ -52,9 +52,9 @@ nuisances \code{e_oracle}, \code{m_oracle}, \code{m0_oracle}, \code{m1_oracle},
 }
 \description{
 Generates a synthetic dataset for the CATE simulation study, including
-oracle nuisance quantities \eqn{e}, \eqn{m_0}, \eqn{m_1}, and the
-Robinson pseudo-outcome \eqn{\rho}, so that first-stage estimation error
-can be isolated from the target inference step.
+oracle nuisance quantities \eqn{e}, \eqn{m_0}, \eqn{m_1}, the AIPW score used
+by the paper-facing DNN CATE simulations, and the legacy Robinson
+pseudo-outcome \eqn{\rho}.
 }
 \details{
 Six designs are available:
@@ -88,7 +88,7 @@ distance) corrects for the off-diagonal covariance.}
 \item{\code{dgp6_nuisance_efficiency}}{Propensity
 \eqn{e(x) = \operatorname{logit}^{-1}(1.25(x_1 - 1) - 0.75x_2)} and
 marginal regression \eqn{m(x) = 1 + 1.5(x_1 - 1) - x_2} are aligned with
-the benchmark nuisance models, while
+simple benchmark nuisance models, while
 \eqn{\tau(x) = 0.5 + 0.60\sin(1.5 x_1)} remains nonlinear. Tests the
 precision gap between \code{dnn_fullsample} and \code{dnn_crossfit}. Default target
 is \eqn{x_0 = (1,0,\ldots)}.}

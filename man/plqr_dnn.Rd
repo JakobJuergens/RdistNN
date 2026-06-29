@@ -145,7 +145,7 @@ out <- plqr_dnn(
   tau = 0.5,
   x0 = c(0, 0),
   method = "exact",
-  k = 2L, s = 3L,
+  k = 1L, s = 3L,
   se = FALSE
 )
 out$moment

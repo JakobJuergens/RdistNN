@@ -299,7 +299,7 @@ new_tuning <- function(name, eval = NULL, eval_grid = NULL, setup = NULL) {
 #' @return A `dnn_tuning` spec.
 #' @examples
 #' tun <- as_tuning(function(n, kx, ...) floor(n^((kx + 1)/(kx + 2))))
-#' tuning_eval(tun, n = 200, kx = 2, k = 5)
+#' tuning_eval(tun, n = 200, kx = 2, k = 1)
 #' @export
 as_tuning <- function(fun, name = "user_tuning") {
   if (!is.function(fun)) {
@@ -386,8 +386,8 @@ tuning_names <- function() {
 #' - `mode = "grid"`: list with `candidates` data.frame and `meta`.
 #'
 #' @examples
-#' tuning_eval("paper_undersmooth", n = 500, kx = 2, k = 5)
-#' tuning_eval("paper_undersmooth", n = 500, kx = 2, k = 5, mode = "grid")
+#' tuning_eval("paper_undersmooth", n = 500, kx = 2, k = 1)
+#' tuning_eval("paper_undersmooth", n = 500, kx = 2, k = 1, mode = "grid")
 #' @export
 tuning_eval <- function(
   tuning,
@@ -457,7 +457,7 @@ tuning_eval <- function(
 #' @return A `dnn_tuning` spec.
 #' @examples
 #' tun <- tuning_dnn_paper()
-#' tuning_eval(tun, n = 1000, kx = 2, k = 5)
+#' tuning_eval(tun, n = 1000, kx = 2, k = 1)
 #' @export
 tuning_dnn_paper <- function(
   kappa = 1,

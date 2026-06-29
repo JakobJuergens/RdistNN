@@ -34,11 +34,11 @@ with default `kappa = 1` and default grid
 
 ```{r paper-default}
 tun <- tuning_dnn_paper()
-tuning_eval(tun, n = 1000, kx = 2, k = 5, mode = "default")
+tuning_eval(tun, n = 1000, kx = 2, k = 1, mode = "default")
 ```
 
 ```{r paper-grid}
-tuning_eval(tun, n = 1000, kx = 2, k = 5, mode = "grid")$candidates
+tuning_eval(tun, n = 1000, kx = 2, k = 1, mode = "grid")$candidates
 ```
 
 ## Registry Usage
@@ -52,7 +52,7 @@ get_tuning("paper_undersmooth")$name
 
 ```{r custom}
 fixed12 <- as_tuning(function(...) 12L, name = "fixed_12")
-tuning_eval(fixed12, n = 300, kx = 2, k = 5)
+tuning_eval(fixed12, n = 300, kx = 2, k = 1)
 ```
 
 A custom rule can also return richer metadata:
@@ -72,7 +72,7 @@ meta_rule <- new_tuning(
   }
 )
 
-tuning_eval(meta_rule, n = 500, kx = 2, k = 5)
+tuning_eval(meta_rule, n = 500, kx = 2, k = 1)
 ```
 
 ## Wrapper Integration
@@ -86,7 +86,7 @@ fit <- np_dnn(
   x_cols = c("X1", "X2"),
   y_col = "Y",
   x0 = demo$x0,
-  k = 5,
+  k = 1,
   tuning = tuning_dnn_paper(),
   se = TRUE,
   return = c("W", "ess", "tuning")
