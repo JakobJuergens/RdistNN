@@ -97,3 +97,22 @@ test_that("plqr_dnn, gmm_dnn, and tdnn_np store x0", {
   )
   .x0_expectations(fit_tdnn, 1L, 2L, colnames_expected = c("V1", "V2"))
 })
+
+test_that("stored x0 is invariant to se, jackknife, and return options", {
+  set.seed(24)
+  n <- 50L
+  x_mat <- matrix(rnorm(n * 2L), n, 2L,
+                  dimnames = list(NULL, c("X1", "X2")))
+  y <- rnorm(n)
+  X0 <- rbind(c(0, 0), c(1, 1))
+
+  fit_a <- np_dnn(X = x_mat, X0 = X0, Y = y, k = 1L, s = 8L, se = TRUE)
+  fit_b <- np_dnn(X = x_mat, X0 = X0, Y = y, k = 1L, s = 8L, se = FALSE,
+                  return = c("W", "dx", "ess"))
+  fit_c <- np_dnn(X = x_mat, X0 = X0, Y = y, k = 1L, s = 8L, se = TRUE,
+                  jackknife = "loo")
+
+  expect_identical(fit_a$x0, fit_b$x0)
+  expect_identical(fit_a$x0, fit_c$x0)
+  expect_identical(colnames(fit_a$x0), c("X1", "X2"))
+})
