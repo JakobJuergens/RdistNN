@@ -2,6 +2,29 @@
 
 ## RdistNN (development)
 
+### Plotting data layer (Phase 0)
+
+- Added the tidy data extractors behind the upcoming ggplot2-based plotting
+  interface, with no plotting dependency: `plot_data_estimates()` (S3
+  generic with methods for `np_result`, `cate_result`, `plqr_result`, and
+  `gmm_result`; TDNN fits dispatch through `np_result`) returns one row
+  per target and coefficient with estimates, stored jackknife standard
+  errors, and normal confidence bounds at a chosen `level`;
+  `plot_data_weights()` returns per-(target, rank) weight profiles with
+  cumulative shares and distances when stored; `plot_data_diagnostics()`
+  returns the per-target diagnostics frame with an integer `target_id`
+  aligned with the other extractors.
+- Design and phase plan: `markdown_notes/plotting_layer_implementation_plan.md`.
+
+### Fitted objects store evaluation points
+
+- `np_dnn()`, `cate_dnn()`, `plqr_dnn()`, `gmm_dnn()`, and `np_tdnn()`
+  result objects now include `x0`, the `m x p` matrix of evaluation
+  points, with covariate column names propagated from the training data
+  when the targets carry none. This is Phase 0 of the plotting layer
+  (`markdown_notes/plotting_layer_implementation_plan.md`): profile
+  plots need the target coordinates, which were previously not stored.
+
 ### Breaking change: default kernel order `s`
 
 - `np_dnn()`, `cate_dnn()`, `plqr_dnn()`, and `gmm_dnn()` no longer default
@@ -21,7 +44,7 @@
   the `k = 1` documentation guardrail: it pins the default-`s` resolution
   for all four wrappers, the manual-`s` path, the degenerate-weight
   warning, and R/Stata default-formula agreement.
-- `tdnn_np()` still uses explicit `s1`/`s2` defaults; a two-scale default
+- `np_tdnn()` still uses explicit `s1`/`s2` defaults; a two-scale default
   rule is a separate follow-up.
 
 ### Diagnostics and reporting

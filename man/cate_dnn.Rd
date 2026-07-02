@@ -92,6 +92,8 @@ An object of class \code{cate_result} with components:
 \itemize{
 \item \code{tau}: estimated CATE values at target points;
 \item \code{se}: optional jackknife standard errors;
+\item \code{x0}: the \verb{m x p} matrix of evaluation points, with covariate
+column names propagated from the training data when available;
 \item \code{meta}: metadata (\code{n}, \code{m}, \code{p}, \code{k}, \code{s}, \code{method}, \code{distance});
 \item optional extras requested via \code{return}.
 }

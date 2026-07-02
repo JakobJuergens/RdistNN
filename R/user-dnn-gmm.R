@@ -374,8 +374,9 @@
 #'   `c("W", "ranks", "ord", "dx", "g_obs", "omega", "jacobian", "ess",
 #'   "neighbors", "tuning")`.
 #'
-#' @return A `gmm_result` object with estimates, diagnostics, metadata, and
-#'   requested extras.
+#' @return A `gmm_result` object with estimates, diagnostics, metadata, the
+#'   `m x p` evaluation-point matrix `x0` (with covariate column names
+#'   propagated from the training data when available), and requested extras.
 #' @examples
 #' dgp <- sim_iv_data("dgp2_iv_homog_overid", n = 120, kx = 2, q = 2, seed = 1)
 #' model <- gmm_model_dr_iv(
@@ -656,6 +657,7 @@ gmm_dnn <- function(
     pval_J = pval_J,
     neff = neff,
     convergence = convergence,
+    x0 = .dnn_x0_with_names(x0_mat, x_mat),
     meta = list(
       n = n, m = m_out, p = p_x, p_theta = p_theta, q = q,
       k = as.integer(k), s = as.integer(s),

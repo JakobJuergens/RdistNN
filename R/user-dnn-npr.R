@@ -53,6 +53,8 @@
 #' @return An object of class `np_result` with components:
 #'   - `mu`: estimated local mean values at target points;
 #'   - `se`: optional jackknife standard errors;
+#'   - `x0`: the `m x p` matrix of evaluation points, with covariate
+#'     column names propagated from the training data when available;
 #'   - `meta`: metadata (`n`, `m`, `p`, `k`, `s`, `method`, `distance`);
 #'   - optional extras requested via `return`.
 #'
@@ -189,6 +191,7 @@ np_dnn <- function(
   out <- list(
     mu = mu_hat,
     se = se_hat,
+    x0 = .dnn_x0_with_names(x0_mat, x_mat),
     meta = list(
       n = n, m = m_out, p = p,
       k = k, s = s,

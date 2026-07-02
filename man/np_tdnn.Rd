@@ -79,6 +79,8 @@ An object of class \code{tdnn_np_result} with components:
 \itemize{
 \item \code{mu}: estimated local mean values at target points;
 \item \code{se}: optional jackknife standard errors;
+\item \code{x0}: the \verb{m x p} matrix of evaluation points, with covariate
+column names propagated from the training data when available;
 \item \code{meta}: metadata (\code{n}, \code{m}, \code{p}, \code{s1}, \code{s2}, \code{dim}, \code{method},
 \code{distance});
 \item optional extras requested via \code{return}.

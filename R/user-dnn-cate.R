@@ -60,6 +60,8 @@
 #' @return An object of class `cate_result` with components:
 #'   - `tau`: estimated CATE values at target points;
 #'   - `se`: optional jackknife standard errors;
+#'   - `x0`: the `m x p` matrix of evaluation points, with covariate
+#'     column names propagated from the training data when available;
 #'   - `meta`: metadata (`n`, `m`, `p`, `k`, `s`, `method`, `distance`);
 #'   - optional extras requested via `return`.
 #'
@@ -259,6 +261,7 @@ cate_dnn <- function(
   out <- list(
     tau = tau,
     se = se_hat,
+    x0 = .dnn_x0_with_names(x0_mat, x_mat),
     meta = list(
       n = n, m = m_out, p = p,
       k = as.integer(k), s = as.integer(s),

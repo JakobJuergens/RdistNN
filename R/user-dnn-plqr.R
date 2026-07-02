@@ -104,6 +104,8 @@
 #'   - `se`: optional jackknife standard errors (`p_d x m`);
 #'   - `beta`: the coefficient vector used in the moment map;
 #'   - `tau`: quantile level;
+#'   - `x0`: the `m x p` matrix of evaluation points, with covariate
+#'     column names propagated from the training data when available;
 #'   - `meta`: metadata (`n`, `m`, `p`, `p_d`, `k`, `s`, `method`, `distance`);
 #'   - optional extras requested via `return`.
 #'
@@ -320,6 +322,7 @@ plqr_dnn <- function(
     se = se_hat,
     beta = beta,
     tau = tau,
+    x0 = .dnn_x0_with_names(x0_mat, x_mat),
     meta = list(
       n = n, m = m_out, p = p, p_d = p_d,
       k = k, s = s,

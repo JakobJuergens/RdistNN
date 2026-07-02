@@ -74,6 +74,17 @@
   .validate_ncol_relation(x_mat, X0, y_arg = "X0", x_arg = "X", relation = "equal")
 }
 
+.dnn_x0_with_names <- function(x0_mat, x_mat) {
+  # Result objects store the evaluation points so downstream consumers
+  # (plotting, reporting) can reconstruct target profiles. Propagate
+  # covariate names from the training matrix when the targets have none.
+  if (is.null(colnames(x0_mat)) && !is.null(colnames(x_mat)) &&
+      ncol(x0_mat) == ncol(x_mat)) {
+    colnames(x0_mat) <- colnames(x_mat)
+  }
+  x0_mat
+}
+
 .dnn_resolve_s <- function(s, tuning, n, p, k, se, jackknife, ctx = NULL) {
   needs_jk <- isTRUE(se) && !identical(jackknife, "none")
 

@@ -81,8 +81,9 @@ matrix, used as optimizer starts.}
 \code{c("W", "ranks", "ord", "dx", "g_obs", "omega", "jacobian", "ess", "neighbors", "tuning")}.}
 }
 \value{
-A \code{gmm_result} object with estimates, diagnostics, metadata, and
-requested extras.
+A \code{gmm_result} object with estimates, diagnostics, metadata, the
+\verb{m x p} evaluation-point matrix \code{x0} (with covariate column names
+propagated from the training data when available), and requested extras.
 }
 \description{
 Estimates a local parameter by solving a two-step GMM problem after

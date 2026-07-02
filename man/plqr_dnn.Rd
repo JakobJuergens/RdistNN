@@ -108,6 +108,8 @@ An object of class \code{plqr_result} with components:
 \item \code{se}: optional jackknife standard errors (\verb{p_d x m});
 \item \code{beta}: the coefficient vector used in the moment map;
 \item \code{tau}: quantile level;
+\item \code{x0}: the \verb{m x p} matrix of evaluation points, with covariate
+column names propagated from the training data when available;
 \item \code{meta}: metadata (\code{n}, \code{m}, \code{p}, \code{p_d}, \code{k}, \code{s}, \code{method}, \code{distance});
 \item optional extras requested via \code{return}.
 }
