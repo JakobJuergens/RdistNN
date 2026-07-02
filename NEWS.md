@@ -2,6 +2,28 @@
 
 ## RdistNN (development)
 
+### Breaking change: default kernel order `s`
+
+- `np_dnn()`, `cate_dnn()`, `plqr_dnn()`, and `gmm_dnn()` no longer default
+  to `s = 1L`, which produced exactly uniform DNN weights and therefore no
+  localization (every target point silently received the global weighted
+  mean). When both `s` and `tuning` are omitted, `s` is now resolved from
+  the paper undersmoothing rule `tuning_dnn_paper()`,
+  `s = floor(n^((kx + 1)/(kx + 2)))`, matching the default already used by
+  the Stata companion (`cate_dnn.ado`). The resolved rule is recorded in
+  `meta$tuning` with `source = "paper_default"`. Calls that passed `s`
+  explicitly are unaffected.
+- All DNN and TDNN user wrappers now emit a warning when the computed
+  weights are (near-)uniform (max effective sample size at least `0.9 * n`,
+  for example `s = 1` or `k = s`), instead of silently returning an
+  unlocalized fit.
+- Added `tests/testthat/test-s-default-paper-rule.R`, the `s`-analogue of
+  the `k = 1` documentation guardrail: it pins the default-`s` resolution
+  for all four wrappers, the manual-`s` path, the degenerate-weight
+  warning, and R/Stata default-formula agreement.
+- `tdnn_np()` still uses explicit `s1`/`s2` defaults; a two-scale default
+  rule is a separate follow-up.
+
 ### Diagnostics and reporting
 
 - Added `diagnostics()` methods for `np_dnn()`, `cate_dnn()`, and `plqr_dnn()`

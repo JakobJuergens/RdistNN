@@ -21,6 +21,7 @@
     ctx       = ctx,
     return    = unique(c("W", keep_extras))
   )
+  .dnn_warn_degenerate_weights(wt$W)
   list(
     wt = wt,
     W  = wt$W,

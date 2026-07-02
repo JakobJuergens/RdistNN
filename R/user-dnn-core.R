@@ -77,8 +77,18 @@
 .dnn_resolve_s <- function(s, tuning, n, p, k, se, jackknife, ctx = NULL) {
   needs_jk <- isTRUE(se) && !identical(jackknife, "none")
 
+  tuning_source <- "tuning"
+  if (is.null(tuning) && is.null(s)) {
+    # Neither `s` nor `tuning` supplied: default to the paper undersmoothing
+    # rule s = floor(n^((kx + 1)/(kx + 2))) via tuning_dnn_paper(). A fixed
+    # constant default (for example s = 1) yields uniform weights and hence
+    # no localization at all, so it must never be the silent default.
+    tuning <- tuning_dnn_paper()
+    tuning_source <- "paper_default"
+  }
+
   if (is.null(tuning)) {
-    s_out <- if (is.null(s)) 1L else .validate_scalar_int(s, "s")
+    s_out <- .validate_scalar_int(s, "s")
     k_ok <- as.integer(k) <= as.integer(s_out)
     s_ok <- if (needs_jk) as.integer(s_out) < as.integer(n) else TRUE
     if (!k_ok) {
@@ -160,7 +170,7 @@
   }
 
   payload <- list(
-    source = "tuning",
+    source = tuning_source,
     default = default,
     grid = grid
   )
@@ -175,6 +185,30 @@
     return(distance$name)
   }
   "user_distance"
+}
+
+.dnn_warn_degenerate_weights <- function(W) {
+  n <- nrow(W)
+  if (is.null(n) || n < 2L) {
+    return(invisible(NULL))
+  }
+  ess_max <- max(1 / colSums(W^2))
+  if (ess_max >= 0.9 * n) {
+    warning(
+      sprintf(
+        paste0(
+          "DNN weights are (near-)uniform at one or more target points ",
+          "(max effective sample size %.1f of n = %d), so the fit provides ",
+          "little or no localization. This typically means `s` is too small ",
+          "relative to `k` (for example s = 1, or k = s). Increase `s`, or ",
+          "omit both `s` and `tuning` to use the default paper tuning rule."
+        ),
+        ess_max, n
+      ),
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
 }
 
 .dnn_weights_with_extras <- function(
@@ -192,6 +226,7 @@
     ctx = ctx,
     return = unique(c("W", keep_extras))
   )
+  .dnn_warn_degenerate_weights(wt$W)
   list(
     wt = wt,
     W = wt$W,

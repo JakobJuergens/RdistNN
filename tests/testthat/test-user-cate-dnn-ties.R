@@ -31,12 +31,14 @@ test_that("deterministic ties in distances lead to deterministic ordering and st
     X1 = X[, 1], X2 = X[, 2]
   )
 
-  out <- cate_dnn(
+  # k = s is intentional here (uniform weights make tie ordering the only
+  # source of variation), so the degenerate-localization warning is expected.
+  out <- suppressWarnings(cate_dnn(
     data = df, x_cols = c("X1", "X2"), y_col = "Y", t_col = "T",
     pseudo_outcome = psi, X0 = X0,
     distance = "l2", k = 3L, s = 3L, method = "exact",
     se = FALSE, return = c("W", "ord")
-  )
+  ))
   expect_true("ord" %in% names(out))
 
   l2 <- get_distance("l2")
@@ -44,11 +46,11 @@ test_that("deterministic ties in distances lead to deterministic ordering and st
   exp_ord1 <- order(DX[, 1], seq_along(DX[, 1]))
   expect_equal(out$ord[, 1], exp_ord1)
 
-  out2 <- cate_dnn(
+  out2 <- suppressWarnings(cate_dnn(
     data = df, x_cols = c("X1", "X2"), y_col = "Y", t_col = "T",
     pseudo_outcome = psi, X0 = X0,
     distance = "l2", k = 3L, s = 3L, method = "exact",
     se = FALSE
-  )
+  ))
   expect_equal(out$tau, out2$tau, tolerance = 1e-12)
 })

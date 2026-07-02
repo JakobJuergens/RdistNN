@@ -131,24 +131,41 @@ test_that("cate_dnn and plqr_dnn tuning path matches manual s", {
   expect_true(is.list(plqr_tuned$meta$tuning))
 })
 
-test_that("manual path keeps backward-compatible default s=1 and can expose manual payload", {
+test_that("omitted s resolves to the paper default; explicit s keeps the manual payload", {
   set.seed(10)
   x_mat <- matrix(rnorm(80), nrow = 40L, ncol = 2L)
   y_vec <- rnorm(40L)
 
+  # Omitted s and tuning: the paper undersmoothing rule is the default.
+  # (The historical silent default s = 1 produced uniform weights and is
+  # deliberately no longer reachable without an explicit `s = 1L`.)
   fit <- np_dnn(
     X = x_mat, Y = y_vec, x0 = c(0, 0),
     method = "exact", k = 1L, se = FALSE,
     return = "tuning"
   )
 
-  expect_equal(fit$meta$s, 1L)
-  expect_null(fit$meta$tuning)
-  expect_equal(fit$tuning$source, "manual")
-  expect_equal(fit$tuning$default$s, 1L)
-  expect_equal(fit$tuning$default$meta$name, "manual")
-  expect_equal(fit$tuning$grid$candidates$s, 1L)
-  expect_true(isTRUE(fit$tuning$grid$candidates$feasible[1L]))
+  s_paper <- as.integer(floor(40^(3 / 4)))
+  expect_equal(fit$meta$s, s_paper)
+  expect_true(is.list(fit$meta$tuning))
+  expect_equal(fit$tuning$source, "paper_default")
+  expect_equal(fit$tuning$default$s, s_paper)
+  expect_equal(nrow(fit$tuning$grid$candidates), 4L)
+
+  # Explicit s: manual payload, no tuning metadata attached to meta.
+  fit_manual <- np_dnn(
+    X = x_mat, Y = y_vec, x0 = c(0, 0),
+    method = "exact", k = 1L, s = 5L, se = FALSE,
+    return = "tuning"
+  )
+
+  expect_equal(fit_manual$meta$s, 5L)
+  expect_null(fit_manual$meta$tuning)
+  expect_equal(fit_manual$tuning$source, "manual")
+  expect_equal(fit_manual$tuning$default$s, 5L)
+  expect_equal(fit_manual$tuning$default$meta$name, "manual")
+  expect_equal(fit_manual$tuning$grid$candidates$s, 5L)
+  expect_true(isTRUE(fit_manual$tuning$grid$candidates$feasible[1L]))
 })
 
 test_that("tuning works via registered name and bare function in wrappers", {

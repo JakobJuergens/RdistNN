@@ -30,7 +30,14 @@
 #' @param x0 Numeric vector of length `p` for a single target point.
 #' @param distance Distance name or specification (for example `"l2"`).
 #' @param method One of `"exact"` or `"asymp"` for DNN weights.
-#' @param k,s Integer DNN tuning parameters.
+#' @param k Integer DNN neighbour count inside each size-`s` subsample. The
+#'   paper theory uses `k = 1` (the default).
+#' @param s Integer kernel order (undersmoothing parameter), or `NULL`. When
+#'   both `s` and `tuning` are `NULL` (the default), `s` is resolved from the
+#'   paper undersmoothing rule [tuning_dnn_paper()],
+#'   \eqn{s = \lfloor n^{(k_x+1)/(k_x+2)} \rfloor}. Note that small fixed
+#'   values such as `s = 1` (or `k = s`) yield uniform weights and hence no
+#'   localization; a warning is emitted in that case.
 #' @param tuning Optional kernel-order tuning specification. When supplied,
 #'   `s` must be omitted and is resolved from `tuning`.
 #' @param normalize Logical; renormalize columns of `W` to sum to 1.
@@ -75,7 +82,7 @@ np_dnn <- function(
   distance = "l2",
   method = c("exact", "asymp"),
   k = 1L,
-  s = 1L,
+  s = NULL,
   tuning = NULL,
   normalize = TRUE,
   se = TRUE,
@@ -85,7 +92,7 @@ np_dnn <- function(
 ) {
   method <- match.arg(method)
   jackknife <- match.arg(jackknife)
-  s_arg <- if (missing(s)) NULL else s
+  s_arg <- s
   k <- .validate_scalar_int(k, "k")
   .warn_unknown_return(return, valid = c("W", "ranks", "ord", "dx", "y", "ess", "neighbors", "tuning"))
 
