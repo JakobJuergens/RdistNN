@@ -47,13 +47,31 @@ one-time message instead of a composed figure.
   and `autoplot(fit) + theme_bw()` (power user) working.
 - Implement a small **`plot_*()` family** of explicitly named builders for
   the individual panels, exported per the export discipline in design/06
-  (each has a stable user story and public-API tests):
-  - `plot_estimates()` — estimates with CIs across target points;
-  - `plot_weights()` — weight profiles;
-  - `plot_overlap()` — CATE treated/control weighted mass;
+  (each has a stable user story and public-API tests).  Where one builder
+  hosts several closely related views, a `type =` argument selects the
+  view instead of multiplying exports:
+  - `plot_estimates()` — estimates with CIs across target points
+    (profile / pointrange / forest variants, §3.0);
+  - `plot_weights(type = c("profile", "cumulative", "kernel"))` — weight
+    decay by rank, cumulative concentration, and weight-vs-distance
+    ("effective kernel") views;
+  - `plot_overlap(type = c("mass", "propensity"))` — CATE treated/control
+    weighted mass and local weighted propensity summaries;
+  - `plot_influence()` — per-observation weighted score contributions
+    (CATE first; NP analogue later);
+  - `plot_calibration()` — PLQR local quantile calibration;
+  - `plot_conditioning()` — PLQR weighted-Gram conditioning;
   - `plot_tuning()` — estimate stability across the `s` candidate grid;
-  - `plot_dashboard()` — patchwork composition of the above.
+  - `plot_dashboard()` — patchwork composition per class (§3.1–3.3).
 - All builders return ggplot (or patchwork) objects; they never print.
+- **Sample-level inputs precedence.**  Panels that need observation-level
+  data beyond the stored fit (raw outcome scatter, propensity values,
+  score contributions) resolve inputs in a fixed order: (1) components
+  stored on the fit (e.g. `model$t_vec`, `model$e` on data-interface CATE
+  fits), then (2) stored `return` extras (`psi`, `nuisance`, `g`, `dx`),
+  then (3) explicit user-supplied arguments (`X`, `Y`, `T`, `e`), and
+  otherwise (4) an actionable error naming the `return =` or argument
+  remedy.  No panel silently recomputes first stages.
 
 ### 2.3 Data layer first
 
@@ -94,59 +112,227 @@ index) with a caption noting that targets vary in several coordinates,
 and accept an explicit `x_var =` argument (column index/name) to override.
 Never silently pick "the first varying coordinate" when several vary.
 
-## 3. Plot Inventory by Class
+## 3. Plot Inventory: Precise Panel Specifications
 
-### 3.1 `np_result` / `tdnn_np_result`
+Panels are identified as `NP-*` (nonparametric regression), `C-*` (CATE),
+`P-*` (PLQR), and `G-*` (GMM).  Each spec states the question the panel
+answers, its data source in extractor terms, the exact geometry, and edge
+cases.  Data sources refer to the Phase-0 extractors
+(`plot_data_estimates()`, `plot_data_weights()`,
+`plot_data_diagnostics()`) and the confirmed diagnostics columns
+(`treated_mass`, `control_mass`, `treated_share`,
+`weighted_mean_propensity`, `weighted_propensity_q10/q90`,
+`gram_min_eig`, `gram_max_eig`, `gram_condition_number`, plus the generic
+`n_eff`, `max_weight`, `top1/5/10_weight_share`, `radius_rank_k/s`,
+`weighted_mean/median_distance`, `tuning_*` fields).
 
-- **Estimates panel**: `mu` vs. profile axis; `geom_ribbon` CI band when
-  `se` present and targets form a profile, `geom_pointrange` otherwise.
-- **Weights panel**: weight vs. rank (line, one facet or colour per
-  target when `m` small; summarize to selected targets when `m` large),
-  with `n_eff` annotated per target and a vertical guide at rank
-  `n - s + 1` (support edge).
-- TDNN: overlay the two scales' weight profiles; negative weights make
-  `geom_hline(yintercept = 0)` mandatory.
+### 3.0 Shared panel grammar
 
-### 3.2 `cate_result`
+Rules applied by every builder, so individual specs below only state
+deviations:
 
-- **Estimates panel**: `tau` with CI band/pointrange (the flagship plot;
-  this is the README image).
-- **Overlap panel**: per-target weighted treated mass `sum(w * T)` and
-  control mass side by side (stacked or dodged bars for few targets, two
-  lines for profiles), with a reference band marking severe imbalance;
-  reuses the quantities from `diagnostics.cate_result()`.
-- **Weights panel**: as in 3.1.
-- **Dashboard**: estimates / overlap / weights composed via patchwork
-  with `plot_annotation()` carrying `n`, `s` (and its provenance:
-  `paper_default` vs manual), `k`, distance, and jackknife type.
+- **Estimate display mode** (from `plot_data_estimates()`): if targets
+  form a profile (§2.5) **and** `m >= 4`: `geom_line` + `geom_ribbon`
+  (CI band, `alpha = 0.25`) over the profile axis.  If `m < 4` or targets
+  are not a profile: `geom_pointrange` over `target_id` (or forest
+  layout, §3.2 C-2).  If `m = 1`: single `geom_pointrange`.
+- **CI handling**: bands/ranges from `ci_lower`/`ci_upper`; when `se` is
+  all `NA`, draw the point/line layer only and add the caption line
+  "no standard errors stored (se = FALSE)".
+- **Honesty caption**: every estimate-bearing panel appends
+  "median n_eff = X (min–max across targets); s = S (paper_default|manual)"
+  built from `plot_data_diagnostics()` and `meta$tuning$source`.
+- **Multi-coefficient fits** (PLQR, GMM): `facet_wrap(~ coef,
+  scales = "free_y")`, coefficient order as returned by the extractor.
+- **Reference lines**: zero lines (`geom_hline(yintercept = 0,
+  linetype = "dashed")`) are mandatory wherever zero is meaningful
+  (CATE effects, PLQR moments, TDNN weights) and omitted elsewhere
+  (NP conditional means).
+- **Weight-domain scales**: rank-domain panels use a linear y by default;
+  `log_weights = TRUE` switches to `scale_y_log10` after dropping exact
+  zeros with a caption noting how many were dropped.  Distance-domain
+  panels always use linear axes.
+- **Many targets**: weight-domain panels default to a target subset
+  (first, median-`n_eff`, last; `targets =` overrides) once `m > 8`;
+  colour maps `factor(target_id)` with an `x0`-based legend label when a
+  profile axis exists.
+- **Palette**: Okabe–Ito, hard-coded; treated = "#0072B2" (blue),
+  control = "#D55E00" (vermillion); single-series panels use near-black.
 
-### 3.3 `plqr_result`
+### 3.1 Nonparametric regression (`np_result`, `tdnn_np_result`)
 
-- **Estimates panel**: coefficient-wise pointrange, faceted by
-  coefficient across targets (profile axis when detected).
-- **Conditioning panel**: smallest eigenvalue / condition number of the
-  weighted Gram matrix per target (already in the PLQR diagnostics).
+- **NP-1 — Fit profile** (flagship; `plot_estimates()` /
+  `autoplot.np_result`).  *Question: what does the fitted conditional
+  mean look like, and how uncertain is it?*  Data: estimates frame
+  (`coef == "mu"`).  Geometry per §3.0.  Optional raw-data underlay:
+  when the caller supplies `X`/`Y` (precedence chain §2.2) and a profile
+  axis exists, add `geom_point(alpha = 0.25, colour = "grey55")` of `Y`
+  against the matching covariate *before* the fit layer — the classic
+  nonparametric-regression picture.  Off-profile covariates of the
+  sample are *not* filtered; the caption notes that the scatter ignores
+  the non-varying coordinates (pointwise honesty, not a curve-fitting
+  claim).
+- **NP-2 — Effective kernel** (`plot_weights(type = "kernel")`).
+  *Question: what kernel did the DNN weights effectively place at this
+  target?*  Data: weights frame with `distance` (requires `dx`).
+  Geometry: `geom_step(aes(distance, weight))` per target; vertical
+  dashed guide at `radius_rank_s` (the s-th neighbour distance, from the
+  diagnostics frame) labelled "rank-s radius"; `n_eff` in the subtitle.
+  For TDNN fits the zero hline is mandatory (§3.0) and the caption warns
+  that two-scale weights are signed.
+- **NP-3 — Weight decay and concentration**
+  (`plot_weights(type = "profile")` and `type = "cumulative"`).
+  *Questions: how fast do weights decay in rank; how concentrated is the
+  estimate?*  Profile view: `geom_step(aes(rank, weight))`, vertical
+  guide at rank `n - s + 1` (support edge, exact zeros beyond).
+  Cumulative view: `geom_line(aes(rank, cum_share))`, horizontal guides
+  at 0.5 and 0.9 with the crossing ranks annotated ("half the weight
+  from the nearest r* points"), and points marking `top1/5/10` shares
+  from the diagnostics frame for cross-checking.
+- **NP-4 — n_eff profile** (`autoplot.dnn_diagnostics`, first facet).
+  *Question: where in covariate space does the fit have effective
+  data?*  Data: diagnostics frame.  Geometry: `geom_line`/`geom_point`
+  of `n_eff` over the profile axis (or `target_id`); companion facets
+  for `max_weight` and `top5_weight_share`.  A horizontal guide at
+  `0.9 * n` marks the degenerate-weights warning threshold so the plot
+  and the runtime warning tell one story.
+- **NP-5 — TDNN scale decomposition** (`plot_tdnn_scales()`; Phase 3).
+  *Question: what does the two-scale combination do relative to its
+  single-scale components?*  Implementation decision: the builder refits
+  `np_dnn` at `s1` and `s2` internally (cheap; same `X`, `Y` via the
+  precedence chain) and overlays three NP-1 layers: DNN(s1), DNN(s2)
+  (thin, muted), TDNN (bold), with a legend keyed by estimator.  No new
+  storage on the fit object.
+- **NP-6 — s-sensitivity** (`plot_tuning()`).  *Question: how much does
+  the estimate move across admissible kernel orders?*  Data: refits at
+  each `s` in the tuning grid (default: the four built-in kappas; accept
+  precomputed fits to avoid recomputation).  Geometry: pointrange of
+  estimate ± CI against `s` (x continuous, breaks at candidate values),
+  the selected default marked by a filled point and vertical dotted
+  guide, `n_eff` per candidate as secondary text labels.  One target per
+  panel; multiple targets facet.
 
-### 3.4 `gmm_result`
+### 3.2 CATE (`cate_result`)
 
-- **Estimates panel**: coefficient-wise pointrange (as PLQR).
-- Overidentification visuals (local `J` profiles / `J_n(x)` maps) are
-  **out of scope** here; they belong to the Cond_GMM paper timeline and
-  get their own plan when that paper's inference layer lands.
+- **C-1 — CATE profile** (flagship; `plot_estimates()` /
+  `autoplot.cate_result`; the README image).  *Question: how does the
+  treatment effect vary along the profile, and where is it
+  distinguishable from zero?*  Data: estimates frame (`coef == "tau"`).
+  Geometry per §3.0 plus the mandatory zero hline; optional
+  `shade_significant = TRUE` (default `FALSE`) underlines profile
+  segments whose CI excludes zero with a subtle `geom_rug`-style bar
+  rather than colour fills (no traffic-light styling of point
+  estimates).  Caption carries the §3.0 honesty line.
+- **C-2 — Forest view** (`plot_estimates(style = "forest")`; automatic
+  when `m <= 12` and targets are not a profile).  *Question: how do
+  effects compare across a set of named covariate profiles?*  Rows are
+  targets ordered by `target_id`, labelled by compact `x0` descriptions
+  built from `x0_*` columns and `attr(., "x0_names")` (e.g.
+  "X1 = 0, X2 = 1"); `geom_pointrange` horizontal, zero vline.
+- **C-3 — Overlap mass** (`plot_overlap(type = "mass")`).  *Question: do
+  both treatment arms carry weight near the target?*  Data: diagnostics
+  frame columns `treated_mass`, `control_mass`, `treated_share`.
+  Geometry: for profiles, two lines (treated/control, Okabe–Ito pair)
+  of arm mass over the profile axis; otherwise dodged bars per target.
+  A shaded warning band where `treated_share` leaves `[0.1, 0.9]`
+  (configurable `share_limits =`), matching the overlap gate language in
+  the paper.  Unavailable overlap columns (matrix-interface fit without
+  stored treatment) produce the precedence-chain error naming
+  `t_col`/`T` remedies.
+- **C-4 — Local propensity summary** (`plot_overlap(type =
+  "propensity")`).  *Question: what does the weighted propensity
+  distribution look like at the target?*  Data: diagnostics columns
+  `weighted_mean_propensity`, `weighted_propensity_q10/q90` (interval
+  plot over targets: pointrange mean with q10–q90 whiskers, guides at
+  the clipping bounds); when observation-level `e` is available
+  (stored `model$e` or user-supplied), add a per-target weighted density
+  overlay (`geom_density(aes(weight = w))`, one facet per selected
+  target) — the richer view supersedes the summary whiskers in that
+  facet.
+- **C-5 — Influence / contribution** (`plot_influence()`; Phase 2–3).
+  *Question: is the estimate driven by a handful of observations?*
+  Data: weights frame joined with the stored pseudo-outcome (`psi`
+  extra; else user-supplied): contribution
+  `w_i * (psi_i - tau_hat)` against rank (or distance when available),
+  `geom_point` with the top three |contribution| observations labelled
+  by `obs_id`.  Caption ties to `max_weight`/`top1_weight_share`
+  diagnostics.  This is the plot-level counterpart of the delete-one
+  jackknife's sensitivity logic.
+- **C-6 — CATE dashboard** (`plot_dashboard.cate_result`).  patchwork
+  layout `(C-1 | C-3) / (C-4 | NP-3 cumulative)` with
+  `plot_annotation()` carrying `n`, `m`, `k`, `s` + provenance,
+  distance, jackknife type; panels degrade per availability (a missing
+  overlap panel is replaced by NP-4 rather than an empty slot).
 
-### 3.5 `dnn_diagnostics`
+### 3.3 PLQR (`plqr_result`)
 
-- `autoplot()` on the diagnostics object itself: `n_eff`, `max_weight`,
-  and top-share panels across targets — cheap, since the frame exists.
+The current wrapper evaluates localized PLQR moments at a supplied
+`beta`; panels are phrased for that object and will transfer unchanged
+to the future estimation wrapper (whose coefficient profiles then reuse
+the §3.0 estimate grammar like GMM).
 
-### 3.6 Tuning sensitivity (`plot_tuning`)
+- **P-1 — Moment profile** (`plot_estimates()` /
+  `autoplot.plqr_result`).  *Question: how far are the localized
+  orthogonal moments from zero at this beta?*  Data: estimates frame
+  (one `coef` level per moment coordinate).  Geometry per §3.0 with
+  coefficient facets and the mandatory zero hline; the subtitle names
+  `beta` and `tau`.  Reading: a specification/centering check — moments
+  within their CIs of zero are consistent with `beta` at these targets.
+- **P-2 — Gram conditioning** (`plot_conditioning()`).  *Question: is
+  the local residualized design well-conditioned enough to trust the
+  moment evaluation (and later, inversion)?*  Data: diagnostics columns
+  `gram_min_eig`, `gram_condition_number`.  Geometry: two facets over
+  targets — `gram_min_eig` (linear y, guide at 0) and
+  `gram_condition_number` (`scale_y_log10`, dashed guides at 1e3/1e6
+  labelled "caution"/"ill-conditioned", `cond_limits =` configurable).
+  This panel is the software face of the paper's local-design
+  conditioning diagnostics.
+- **P-3 — Local quantile calibration** (`plot_calibration()`; Phase 3).
+  *Question: does the weighted share of below-threshold residuals match
+  tau locally?*  Data: requires the stored score matrix (`g` extra) or
+  user-supplied residual indicators; per target compute the weighted
+  indicator share and plot as points over targets with a horizontal
+  line at `tau` and a normal-approximation reference band
+  `tau ± z * sqrt(tau(1-tau)/n_eff)`.  Deviations flag local
+  misspecification of `beta`/first stages — the applied reading of the
+  quantile moment condition.
+- **P-4 — Threshold band mass** (optional, Phase 3+, theory-facing).
+  *Question: how much weighted mass sits in a shrinking band around the
+  quantile threshold?*  Weighted mass of `|residual| <= h` against a
+  small grid of `h`, one line per target.  This is the fitted-band
+  weighted-square object from the paper's nonsmooth ScoreCov route made
+  visible; it is deliberately labelled as a research diagnostic and can
+  live in the paper-replication material first if the API surface should
+  stay lean.
+- **P-5 — PLQR dashboard** (`plot_dashboard.plqr_result`): layout
+  `P-1 / (P-2 | NP-3 cumulative)` with the standard annotation block.
 
-For a fitted object (or `tuning_eval()` grid), refit at each candidate `s`
-in `kappa_grid` and plot estimate ± CI against `s`, marking the selected
-default.  This directly answers the "how sensitive is this to `s`?"
-seminar question.  Refitting is the expensive part: accept a fitted
-object plus data, or precomputed fits; document cost; cap default grid at
-the four built-in kappas.
+### 3.4 GMM (`gmm_result`)
+
+- **G-1 — Coefficient estimates**: §3.0 estimate grammar with
+  coefficient facets from `meta$coef_names` (works today via
+  `plot_data_estimates.gmm_result`).  Overidentification visuals
+  (local `J` profiles, `J_n(x)` maps) remain out of scope pending the
+  Cond_GMM paper timeline.
+
+### 3.5 Data requirements matrix
+
+| Panel | needs `se` | needs `W` | needs `dx` | needs extras/args |
+|---|---|---|---|---|
+| NP-1 / C-1 / C-2 / P-1 / G-1 | optional | no | no | `X`,`Y` for NP-1 underlay |
+| NP-2 kernel | no | yes | yes | — |
+| NP-3 profile/cumulative | no | yes | optional | — |
+| NP-4 diagnostics facets | no | via diagnostics | optional | — |
+| NP-5 TDNN scales | optional | no | no | `X`,`Y` (refits) |
+| NP-6 / tuning | optional | no | no | data for refits |
+| C-3 mass / C-4 propensity | no | via diagnostics | no | stored `t_vec`/`e` or args |
+| C-5 influence | no | yes | optional | `psi` extra or arg |
+| P-2 conditioning | no | via diagnostics | no | — |
+| P-3 calibration | no | yes | no | `g` extra or residuals |
+| P-4 band mass | no | yes | no | residuals + `h` grid |
+
+Every "needs" failure routes through the §2.2 precedence chain and ends
+in an actionable error; no panel fabricates inputs.
 
 ## 4. Visual Style
 
@@ -228,17 +414,23 @@ declared test dependencies:
   guardrails green.  Note: the TDNN wrapper is `np_tdnn()`, not
   `tdnn_np()` as earlier drafts of this note said.  Phase 1 (autoplot/
   plot + estimates/weights panels, ggplot2 in Suggests) is next.*
-- **Phase 1 — core panels.**  `autoplot()`/`plot()` for `np_result` and
-  `cate_result` (estimates + weights), `plot_estimates()`,
-  `plot_weights()`; Suggests updated; guard errors tested.  Gate: full
-  suite green; README figure generated.
-- **Phase 2 — diagnostics and composition.**  `plot_overlap()`,
-  `autoplot.dnn_diagnostics()`, `plot_dashboard()` with patchwork
-  degradation path; dashboard annotation contract test.  Gate: vignette
-  draft renders.
-- **Phase 3 — remaining classes + tuning.**  `plqr_result`, `gmm_result`,
-  TDNN overlays, `plot_tuning()`.  Gate: pkgdown section complete;
-  vdiffr baselines recorded.
+- **Phase 1 — core panels.**  Panels NP-1, C-1, C-2, NP-3
+  (profile + cumulative): `autoplot()`/`plot()` for `np_result` and
+  `cate_result`, `plot_estimates()` (incl. forest style),
+  `plot_weights()` (all three types; kernel view NP-2 included since it
+  shares the weights-frame plumbing); Suggests updated; guard errors
+  tested.  Gate: full suite green; README figure (C-1) generated.
+- **Phase 2 — diagnostics and composition.**  Panels C-3, C-4, NP-4,
+  C-6: `plot_overlap()` (both types), `autoplot.dnn_diagnostics()`,
+  `plot_dashboard()` for cate/np with the patchwork degradation path and
+  panel-availability substitution; dashboard annotation contract test.
+  Gate: vignette draft renders.
+- **Phase 3 — remaining classes, influence, tuning.**  Panels P-1, P-2,
+  P-3, P-5, G-1, C-5, NP-5, NP-6: `autoplot.plqr_result` /
+  `autoplot.gmm_result`, `plot_conditioning()`, `plot_calibration()`,
+  `plot_influence()`, `plot_tdnn_scales()`, `plot_tuning()`.  P-4 lands
+  in paper-replication material first (§10.7).  Gate: pkgdown section
+  complete; vdiffr baselines recorded.
 - **Phase 4 — polish.**  README/vignette finalized; NEWS consolidated;
   Stata parity decision recorded (§9).
 
@@ -255,19 +447,42 @@ gate (full testthat suite; pkgdown coverage check when exports change).
   extractors from `inst/paper-replication/` scripts without new exports.
 - Interactive (plotly/shiny) output.
 
-## 10. Open Decisions (resolve before or during Phase 1)
+## 10. Decisions
 
-1. **`plot(fit)` default**: single estimates panel (proposed) vs. full
+Resolved during the 2026-07-02 detailing pass (§3):
+
+1. **Sample-level inputs**: no training data is stored on fit objects for
+   plotting; panels use the fixed precedence chain in §2.2 (stored model
+   components → `return` extras → user arguments → actionable error).
+2. **TDNN scale decomposition (NP-5)**: implemented by internal refits at
+   `s1`/`s2`, not by new storage on the fit.
+3. **Weight-panel scales**: linear y default; `log_weights = TRUE` opt-in
+   with zero-dropping caption; distance-domain panels always linear.
+4. **View multiplexing**: `type =` arguments on `plot_weights()` and
+   `plot_overlap()` instead of one export per view.
+
+Still open (resolve before or during the phase that ships them):
+
+5. **`plot(fit)` default**: single estimates panel (proposed) vs. full
    dashboard.  Proposal: estimates panel; dashboards are explicit
    (`plot_dashboard()`), so casual `plot()` stays fast and legible.
-2. **CI type**: plain Wald bands from stored `se` only, or also expose
+6. **CI type**: plain Wald bands from stored `se` only, or also expose
    `level` recomputation from jackknife internals?  Proposal: stored `se`
-   with `level` argument; nothing recomputed.
-3. **broom methods** (`tidy.cate_result` etc.): defer; `plot_data_*`
-   covers the need without a new dependency surface.  Revisit if users
-   ask.
-4. **Naming**: `plot_dashboard()` vs `plot_summary()`; proposal
-   `plot_dashboard()` to avoid clashing with `summary()` semantics.
-5. Whether `plot_tuning()` belongs in Phase 3 or ships earlier as the
-   public answer to the `s`-sensitivity question (it is the most
-   seminar-valuable panel after the CATE profile).
+   with `level` argument; nothing recomputed.  (Phase 0 implemented the
+   proposal in `plot_data_estimates()`.)
+7. **P-4 band-mass panel**: research diagnostic — ship in
+   paper-replication material first (proposed) or in the public API.
+8. **Default guide values**: `share_limits = c(0.1, 0.9)` for C-3 and
+   `cond_limits = c(1e3, 1e6)` for P-2 are provisional; confirm against
+   the paper's diagnostics prose before Phase 2/3 ship them.
+9. **`shade_significant`** on C-1: keep default `FALSE` (proposed) so the
+   flagship plot never invites naive significance reading; revisit only
+   with a design that shades intervals, not point estimates.
+10. **broom methods** (`tidy.cate_result` etc.): defer; `plot_data_*`
+    covers the need without a new dependency surface.  Revisit if users
+    ask.
+11. **Naming**: `plot_dashboard()` vs `plot_summary()`; proposal
+    `plot_dashboard()` to avoid clashing with `summary()` semantics.
+12. Whether `plot_tuning()` belongs in Phase 3 or ships earlier as the
+    public answer to the `s`-sensitivity question (it is the most
+    seminar-valuable panel after the CATE profile).
