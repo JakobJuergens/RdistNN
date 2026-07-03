@@ -1,5 +1,5 @@
 test_that("documentation examples use k = 1 for DNN defaults", {
-  root <- normalizePath(file.path(testthat::test_path(), "..", ".."), mustWork = TRUE)
+  root <- .rdistnn_source_root(required = c("README.md", "vignettes", "man", "R"))
 
   doc_files <- c(
     file.path(root, "README.md"),

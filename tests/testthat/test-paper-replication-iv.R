@@ -1,20 +1,9 @@
-.iv_repo_root <- function() {
-  candidates <- c(
-    getwd(),
-    normalizePath(file.path(getwd(), ".."), mustWork = FALSE),
-    normalizePath(file.path(getwd(), "..", ".."), mustWork = FALSE)
-  )
-  for (cand in candidates) {
-    if (file.exists(file.path(cand, "DESCRIPTION")) &&
-        dir.exists(file.path(cand, "inst", "paper-replication", "iv"))) {
-      return(cand)
-    }
-  }
-  stop("Could not locate package root for IV paper-replication tests.", call. = FALSE)
-}
-
 .iv_repl_path <- function(...) {
-  file.path(.iv_repo_root(), "inst", "paper-replication", "iv", ...)
+  path <- system.file("paper-replication", "iv", ..., package = "RdistNN")
+  if (!nzchar(path)) {
+    stop("Could not locate installed IV paper-replication files.", call. = FALSE)
+  }
+  path
 }
 
 .set_env_for_test <- function(values) {

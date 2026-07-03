@@ -244,13 +244,23 @@ test_that("weight panels are class-agnostic and honest about provenance", {
   expect_match(p_def$labels$caption, "paper_default")
 })
 
-test_that("constant-n_eff default subsetting collapses to first and last", {
+test_that("default weight subsetting uses first, median-n_eff, and last", {
   skip_if_not_installed("ggplot2")
-  # Exact DNN weights are location-free, so n_eff is constant across
-  # targets and the median pick coincides with the first target.
   fit_many <- .pbc_np_fit(m = 10L, se = FALSE)
+  dw <- plot_data_weights(fit_many)
+  all_targets <- sort(unique(dw$target_id))
+  neff <- vapply(
+    all_targets,
+    function(j) 1 / sum(dw$weight[dw$target_id == j]^2),
+    numeric(1L)
+  )
+  med <- all_targets[which.min(abs(neff - stats::median(neff)))]
+  expected <- unique(c(all_targets[1L], med, all_targets[length(all_targets)]))
+
   p <- plot_weights(fit_many, type = "profile")
-  expect_setequal(unique(p$data$target_id), c(1L, 10L))
+  expect_setequal(unique(p$data$target_id), expected)
+  expect_true(all(c(1L, 10L) %in% unique(p$data$target_id)))
+  expect_lte(length(unique(p$data$target_id)), 3L)
 })
 
 test_that("the ggplot2 guard fires before the missing-W error", {
