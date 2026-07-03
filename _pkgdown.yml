@@ -24,6 +24,7 @@ articles:
       - conditional-z-estimation
       - local-iv-estimation
       - dnn-weights
+      - kernel-order-tuning
       - jackknife-gen-ustats
   - title: Paper replication
     contents:
