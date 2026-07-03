@@ -211,6 +211,16 @@ jobs:
           git add archives/source.zip
           git commit -m "chore(archive): update source.zip [skip ci]" || exit 0
           BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          # The branch can move between checkout and push (human pushes,
+          # other bots): rebase and retry instead of failing the run.
+          for attempt in 1 2 3; do
+            if git push origin "HEAD:$BRANCH"; then
+              exit 0
+            fi
+            echo "push rejected (attempt $attempt); rebasing onto origin/$BRANCH"
+            git fetch origin "$BRANCH"
+            git rebase "origin/$BRANCH"
+          done
           git push origin "HEAD:$BRANCH"
 
       - name: Upload debug artifact (snapshot workspace)
