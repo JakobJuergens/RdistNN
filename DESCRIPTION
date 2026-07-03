@@ -37,6 +37,7 @@ Suggests:
     testthat (>= 3.0.0),
     grf,
     ggplot2,
+    patchwork,
     future,
     future.apply
 SystemRequirements: C++17

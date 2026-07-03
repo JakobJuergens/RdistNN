@@ -2,6 +2,34 @@
 
 ## RdistNN (development)
 
+### Plotting layer (Phase 2)
+
+- `plot_overlap()` for CATE fits: `type = "mass"` draws the weighted
+  treated/control mass per target with dotted share guides and shaded
+  warning bands outside `share_limits` (violations reported in the
+  caption); `type = "propensity"` draws weighted propensity densities at
+  selected targets when observation-level propensities are available and
+  a weighted q10-q90 summary otherwise. Inputs resolve through the
+  documented precedence chain (stored fit components, then
+  `treatment`/`propensity` arguments, then an actionable error).
+- `autoplot()`/`plot()` on `diagnostics()` frames: effective sample size
+  (with the degenerate-weights guide at `0.9 n`), maximum weight, and
+  top-5 weight share faceted across targets.
+- `plot_dashboard()` for `cate_result` and `np_result`: patchwork
+  composition with a metadata annotation (`n`, `m`, `k`, `s` with
+  provenance, distance, jackknife type); unavailable panels are
+  substituted (diagnostics facets replace a missing overlap panel) or
+  dropped, and without patchwork the panels are returned as a named list
+  with a message. patchwork joins Suggests.
+- Fitted `np_dnn()`, `cate_dnn()`, `plqr_dnn()`, and `np_tdnn()` objects
+  record the jackknife type in `meta$jackknife` (`"none"` when `se =
+  FALSE`).
+- New vignette `visualising-fits` walks from a CATE fit through the
+  estimate, weight, overlap, and diagnostics panels to the dashboard and
+  panel customisation.
+- The agent instruction files are excluded from the build, removing the
+  long-standing top-level-files NOTE in R CMD check.
+
 ### Plotting layer (Phase 1)
 
 - Added ggplot2-based plotting (ggplot2 is a suggested dependency; all

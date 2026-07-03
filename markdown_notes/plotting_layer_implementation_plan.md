@@ -439,6 +439,25 @@ declared test dependencies:
   `plot_dashboard()` for cate/np with the patchwork degradation path and
   panel-availability substitution; dashboard annotation contract test.
   Gate: vignette draft renders.
+  *Status 2026-07-03: complete.  `R/plot-overlap.R` (mass view with
+  warning bands/violation captions and dodged-column fallback;
+  propensity view with weighted densities, q10–q90 summary fallback, and
+  the full stored→argument→error precedence chain),
+  `R/plot-diagnostics.R` (`autoplot`/`plot` on `dnn_diagnostics`, three
+  facets, 0.9·n guide restricted to the n_eff facet),
+  `R/plot-dashboard.R` (cate/np methods, tryCatch panel assembly,
+  diagnostics substitution for missing overlap, named-list degradation
+  without patchwork, metadata annotation via
+  `.plot_dashboard_annotation()`), `meta$jackknife` plumbing in the four
+  jackknife wrappers, shared `.plot_select_targets()`/
+  `.plot_diag_frame()` helpers (weights builder refactored onto them),
+  patchwork in Suggests, agent instruction files Rbuildignored (removes
+  the top-level NOTE), vignette `visualising-fits.Rmd` (renders; added
+  to the pkgdown articles index — the April pkgdown failure mode).
+  46 tests in `test-plot-phase2.R` including the dashboard annotation
+  contract against meta; full suite 2525 passing; guardrails green.
+  Phase 3 (plqr/gmm autoplot, conditioning, calibration, influence,
+  TDNN scales, tuning) is next.*
 - **Phase 3 — remaining classes, influence, tuning.**  Panels P-1, P-2,
   P-3, P-5, G-1, C-5, NP-5, NP-6: `autoplot.plqr_result` /
   `autoplot.gmm_result`, `plot_conditioning()`, `plot_calibration()`,

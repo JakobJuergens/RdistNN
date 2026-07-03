@@ -326,7 +326,8 @@ plqr_dnn <- function(
     meta = list(
       n = n, m = m_out, p = p, p_d = p_d,
       k = k, s = s,
-      method = method, distance = .dnn_distance_name(distance)
+      method = method, distance = .dnn_distance_name(distance),
+      jackknife = if (isTRUE(se)) jackknife else "none"
     )
   )
   if (tuning_used) out$meta$tuning <- tuning_payload

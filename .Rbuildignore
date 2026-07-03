@@ -26,3 +26,6 @@
 ^src/.*\.(o|so|dll|dylib)$
 ^GH_logs$
 ^markdown_notes$
+^AGENTS\.md$
+^CLAUDE\.md$
+^OPENAI\.md$

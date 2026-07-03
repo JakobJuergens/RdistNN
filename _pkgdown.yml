@@ -18,6 +18,7 @@ articles:
     contents:
       - getting-started
       - diagnostics-reporting
+      - visualising-fits
       - extending
   - title: Theory & details
     contents:
@@ -136,6 +137,9 @@ reference:
     contents:
       - plot_estimates
       - plot_weights
+      - plot_overlap
+      - plot_dashboard
+      - autoplot.dnn_diagnostics
       - plot_data_estimates
       - plot_data_weights
       - plot_data_diagnostics

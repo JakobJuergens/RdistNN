@@ -62,28 +62,12 @@ plot_weights <- function(object,
     )
   }
 
-  if (is.null(targets)) {
-    if (m > 8L) {
-      neff <- vapply(
-        all_targets,
-        function(j) 1 / sum(dw$weight[dw$target_id == j]^2),
-        numeric(1L)
-      )
-      med <- all_targets[which.min(abs(neff - stats::median(neff)))]
-      targets <- unique(c(all_targets[1L], med, all_targets[m]))
-    } else {
-      targets <- all_targets
-    }
-  } else {
-    targets <- unique(as.integer(targets))
-    if (!all(targets %in% all_targets)) {
-      .abort_bad_arg(
-        "targets",
-        sprintf("must be target ids in 1..%d", max(all_targets)),
-        quoted = FALSE
-      )
-    }
-  }
+  neff_by_target <- vapply(
+    all_targets,
+    function(j) 1 / sum(dw$weight[dw$target_id == j]^2),
+    numeric(1L)
+  )
+  targets <- .plot_select_targets(all_targets, neff_by_target, targets)
   dw <- dw[dw$target_id %in% targets, , drop = FALSE]
   dw$target <- factor(dw$target_id)
   multi <- length(targets) > 1L

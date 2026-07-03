@@ -265,7 +265,8 @@ cate_dnn <- function(
     meta = list(
       n = n, m = m_out, p = p,
       k = as.integer(k), s = as.integer(s),
-      method = method, distance = .dnn_distance_name(distance)
+      method = method, distance = .dnn_distance_name(distance),
+      jackknife = if (isTRUE(se)) jackknife else "none"
     )
   )
   if (tuning_used) out$meta$tuning <- tuning_payload

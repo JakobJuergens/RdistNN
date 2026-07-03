@@ -128,6 +128,66 @@ utils::globalVariables(".data")
   "pointrange"
 }
 
+# Default target subsetting for weight-domain and density panels: with more
+# than eight targets, show the first, the median-n_eff, and the last.
+.plot_select_targets <- function(all_targets, neff_by_target, targets = NULL) {
+  m <- length(all_targets)
+  if (!is.null(targets)) {
+    targets <- unique(as.integer(targets))
+    if (!all(targets %in% all_targets)) {
+      .abort_bad_arg(
+        "targets",
+        sprintf("must be target ids in 1..%d", max(all_targets)),
+        quoted = FALSE
+      )
+    }
+    return(targets)
+  }
+  if (m <= 8L) {
+    return(all_targets)
+  }
+  med <- all_targets[which.min(abs(neff_by_target - stats::median(neff_by_target)))]
+  unique(c(all_targets[1L], med, all_targets[m]))
+}
+
+# Diagnostics frame augmented with stored target coordinates so overlap and
+# diagnostics panels can reuse the profile-axis detection.
+.plot_diag_frame <- function(object) {
+  dd <- plot_data_diagnostics(object)
+  x0 <- object$x0
+  if (!is.null(x0) && nrow(as.matrix(x0)) == nrow(dd)) {
+    x0 <- as.matrix(x0)
+    for (j in seq_len(ncol(x0))) {
+      dd[[sprintf("x0_%d", j)]] <- as.numeric(x0[, j])
+    }
+    attr(dd, "x0_names") <- colnames(x0)
+  }
+  dd
+}
+
+# Dashboard annotation string (plan C-6): metadata contract consumed by the
+# dashboard tests. Fields absent from meta are omitted.
+.plot_dashboard_annotation <- function(object) {
+  meta <- object$meta
+  s_txt <- if (!is.null(meta$s)) {
+    src <- if (!is.null(meta$tuning$source)) meta$tuning$source else "manual"
+    sprintf("s = %d (%s)", as.integer(meta$s), src)
+  } else if (!is.null(meta$s1)) {
+    sprintf("s1 = %d, s2 = %d", as.integer(meta$s1), as.integer(meta$s2))
+  } else {
+    NULL
+  }
+  parts <- c(
+    if (!is.null(meta$n)) sprintf("n = %d", as.integer(meta$n)),
+    if (!is.null(meta$m)) sprintf("m = %d", as.integer(meta$m)),
+    if (!is.null(meta$k)) sprintf("k = %d", as.integer(meta$k)),
+    s_txt,
+    if (!is.null(meta$distance)) sprintf("distance = %s", meta$distance),
+    if (!is.null(meta$jackknife)) sprintf("jackknife = %s", meta$jackknife)
+  )
+  paste(parts, collapse = ", ")
+}
+
 # Compact target labels for forest layouts, built from stored coordinates:
 # "X1 = 0, X2 = 1" (or "x[j] = v" without names); plain "target j" when no
 # coordinates are stored.

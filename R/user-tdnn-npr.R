@@ -256,7 +256,8 @@ np_tdnn <- function(
       s2       = s2,
       dim      = dim,
       method   = method,
-      distance = .dnn_distance_name(distance)
+      distance = .dnn_distance_name(distance),
+      jackknife = if (isTRUE(se)) jackknife else "none"
     )
   )
   # k = 1L is TDNN's fixed single-neighbor order; used only by the
