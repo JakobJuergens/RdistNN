@@ -274,10 +274,10 @@ X <- cbind(X1 = runif(n, -2, 2), X2 = rnorm(n))
 e <- plogis(0.4 * X[, "X1"])                    # oracle propensity
 tau <- 1 + sin(X[, "X1"])                       # true CATE along X1
 m0 <- X[, "X1"] - 0.5 * X[, "X2"]               # oracle control mean
-T <- as.integer(runif(n) < e)
-Y <- m0 + T * tau + rnorm(n, sd = 0.5)
+treat <- as.integer(runif(n) < e)
+Y <- m0 + treat * tau + rnorm(n, sd = 0.5)
 
-df <- data.frame(X, T = T, Y = Y, e = e, m0 = m0, m1 = m0 + tau)
+df <- data.frame(X, T = treat, Y = Y, e = e, m0 = m0, m1 = m0 + tau)
 X0 <- cbind(X1 = seq(-1.8, 1.8, length.out = 21), X2 = 0)
 
 fit <- cate_dnn(

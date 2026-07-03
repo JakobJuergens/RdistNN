@@ -104,7 +104,10 @@ plot_overlap <- function(object,
     if (is.null(t_use)) {
       .abort_bad_arg(
         "treatment",
-        "is required for type = \"mass\": fit through the data interface with `t_col`, or supply `treatment` (0/1, length n)",
+        paste0(
+          "is required for type = \"mass\": fit through the data ",
+          "interface with `t_col`, or supply `treatment` (0/1, length n)"
+        ),
         quoted = FALSE
       )
     }
@@ -235,7 +238,11 @@ plot_overlap <- function(object,
   } else {
     .abort_bad_arg(
       "propensity",
-      "is required for type = \"propensity\": fit through the data interface with `e_col`, or supply `propensity` (length n, values in (0, 1))",
+      paste0(
+        "is required for type = \"propensity\": fit through the data ",
+        "interface with `e_col`, or supply `propensity` ",
+        "(length n, values in (0, 1))"
+      ),
       quoted = FALSE
     )
   }
