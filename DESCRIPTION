@@ -36,6 +36,7 @@ Suggests:
     methods,
     testthat (>= 3.0.0),
     grf,
+    ggplot2,
     future,
     future.apply
 SystemRequirements: C++17

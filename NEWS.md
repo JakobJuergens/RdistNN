@@ -2,6 +2,27 @@
 
 ## RdistNN (development)
 
+### Plotting layer (Phase 1)
+
+- Added ggplot2-based plotting (ggplot2 is a suggested dependency; all
+  entry points fail with an actionable message when it is missing):
+  `plot_estimates()` draws point estimates with normal confidence bounds
+  as a profile band (targets varying along one stored coordinate), a
+  forest layout (small non-profile target sets, labelled from the stored
+  coordinates), or pointranges, with an honesty caption carrying the
+  median effective sample size and the kernel-order provenance on every
+  panel; CATE panels add a dashed zero reference line and an opt-in
+  `shade_significant` rug that marks intervals, never point estimates.
+- `plot_weights()` draws weight decay by rank (support-edge guide at
+  `n - s + 1`, optional log scale), cumulative weight shares (0.5/0.9
+  guides and top-share markers), and the weight-vs-distance "effective
+  kernel" view (rank-`s` radius guide); two-scale TDNN panels add a zero
+  line for signed weights, and large target sets are subset to
+  first/median-`n_eff`/last by default.
+- `autoplot()` (registered on ggplot2) and `plot()` methods for
+  `np_result` and `cate_result` delegate to `plot_estimates()`.
+- README gains a visualisation section with the CATE profile figure.
+
 ### Plotting data layer (Phase 0)
 
 - Added the tidy data extractors behind the upcoming ggplot2-based plotting

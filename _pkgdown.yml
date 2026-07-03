@@ -127,12 +127,14 @@ reference:
       - jackknife_rank_full
       - jackknife_slow_rank
 
-  - title: Plotting data layer
+  - title: Plotting
     desc: >
-      Tidy data extractors behind the (upcoming) plotting interface; see
-      the plotting-layer plan in the repository notes. No plotting
-      dependency is required.
+      ggplot2-based panels for fitted objects (ggplot2 is a suggested
+      dependency), and the tidy data extractors underneath them; see the
+      plotting-layer plan in the repository notes.
     contents:
+      - plot_estimates
+      - plot_weights
       - plot_data_estimates
       - plot_data_weights
       - plot_data_diagnostics

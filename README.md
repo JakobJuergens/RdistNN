@@ -257,6 +257,49 @@ The full extension guide is
 parameter-aware scores, and debugging with
 `return = c("dx", "ord", "ranks")`.
 
+## Visualisation
+
+Fitted objects have ggplot2-based `plot()`/`autoplot()` methods (ggplot2
+is a suggested dependency). The flagship view is the CATE profile: point
+estimates with jackknife confidence bounds along a covariate profile, a
+zero reference line, and an honesty caption reporting the effective
+local sample size and the kernel-order provenance.
+
+``` r
+library(RdistNN)
+
+set.seed(42)
+n <- 1000
+X <- cbind(X1 = runif(n, -2, 2), X2 = rnorm(n))
+e <- plogis(0.4 * X[, "X1"])                    # oracle propensity
+tau <- 1 + sin(X[, "X1"])                       # true CATE along X1
+m0 <- X[, "X1"] - 0.5 * X[, "X2"]               # oracle control mean
+T <- as.integer(runif(n) < e)
+Y <- m0 + T * tau + rnorm(n, sd = 0.5)
+
+df <- data.frame(X, T = T, Y = Y, e = e, m0 = m0, m1 = m0 + tau)
+X0 <- cbind(X1 = seq(-1.8, 1.8, length.out = 21), X2 = 0)
+
+fit <- cate_dnn(
+  data = df, x_cols = c("X1", "X2"), y_col = "Y", t_col = "T",
+  e_col = "e", m0_col = "m0", m1_col = "m1",
+  X0 = X0, k = 1L, se = TRUE, jackknife = "fast"
+)
+
+plot(fit)
+```
+
+<img src="man/figures/README-cate-profile-1.png" alt="" width="100%" />
+
+Weight-geometry views show what the estimator averaged over:
+`plot_weights(fit, type = "kernel")` draws the effective data-driven
+kernel (weight against distance), `type = "profile"` the decay by rank,
+and `type = "cumulative"` the concentration of the weight mass. All
+panels are regular ggplot objects and can be re-themed or extended with
+`+` as usual; `plot_data_estimates()`, `plot_data_weights()`, and
+`plot_data_diagnostics()` expose the underlying tidy frames for custom
+figures.
+
 ## Documentation Map
 
 - Start with `vignette("getting-started", package = "RdistNN")`

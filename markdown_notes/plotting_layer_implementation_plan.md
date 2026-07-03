@@ -420,6 +420,20 @@ declared test dependencies:
   `plot_weights()` (all three types; kernel view NP-2 included since it
   shares the weights-frame plumbing); Suggests updated; guard errors
   tested.  Gate: full suite green; README figure (C-1) generated.
+  *Status 2026-07-03: complete.  `R/plot-common.R` (guard via mockable
+  `.plot_pkg_installed()`, Okabe–Ito constants, theme, profile-axis
+  detection with `x_var` override, honesty caption, mode selection,
+  forest labels), `R/plot-estimates.R` (builder + `autoplot`/`plot`
+  methods; delayed `S3method(ggplot2::autoplot, ...)` registration so
+  ggplot2 stays in Suggests; `.data` pronoun via the tidy-eval mask with
+  a `globalVariables` declaration), `R/plot-weights.R` (three `type`
+  views, target subsetting, `log_weights`, TDNN zero line).  46
+  structural tests in `test-plot-builders.R`; full suite 2422 passing;
+  all CI guardrails green.  README gained the Visualisation section and
+  the C-1 figure; regenerating README.md exposed a pre-existing
+  source/generated drift (README.Rmd used `k = 2L` where the committed
+  README.md had been hand-fixed to `k = 1L`) — fixed in the source.
+  Phase 2 (overlap, diagnostics autoplot, dashboard) is next.*
 - **Phase 2 — diagnostics and composition.**  Panels C-3, C-4, NP-4,
   C-6: `plot_overlap()` (both types), `autoplot.dnn_diagnostics()`,
   `plot_dashboard()` for cate/np with the patchwork degradation path and
