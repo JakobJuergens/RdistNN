@@ -75,6 +75,7 @@ rank_weight_tdnn_exact <- function(s1, s2, dim) {
 
   spec <- list(
     name       = sprintf("tdnn_exact[s1=%d,s2=%d,dim=%d]", s1, s2, dim),
+    table      = .get_table,
     eval_batch = eval_batch
   )
   spec$.__kind <- "rank_weight"
@@ -137,6 +138,7 @@ rank_weight_tdnn_asymp <- function(s1, s2, dim, normalize = TRUE) {
   spec <- list(
     name = sprintf("tdnn_asymp[s1=%d,s2=%d,dim=%d,norm=%s]",
                    s1, s2, dim, if (normalize) "T" else "F"),
+    table = .get_table,
     eval_batch = eval_batch
   )
   spec$.__kind <- "rank_weight"

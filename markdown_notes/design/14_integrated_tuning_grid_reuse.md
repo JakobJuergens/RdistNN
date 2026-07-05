@@ -796,6 +796,9 @@ Integration into `.dnn_jackknife_se_loo_matrix()`:
 - on the `"fast"` path, when the rank-weight spec supplies a table, compute
   `loo` via `.dnn_loo_prefix()` and feed the **unchanged**
   `.dnn_jackknife_se_from_loo(loo, q, n, m)`;
+- in production, pass both the full-sample table and the delete-one table into
+  `.dnn_loo_prefix()` so it can reuse the existing `jackknife_rank_full()`
+  dispatcher and therefore the compiled C++ prefix/suffix engine when present;
 - keep the current per-deletion loop, unexported, as the reference
   implementation and as the fallback for non-table specs;
 - the `"loo"` path is untouched (Section 8.6).

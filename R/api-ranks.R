@@ -7,8 +7,9 @@
 #' Is this a rank_weight spec?
 #'
 #' A rank-weight spec is a list with `eval(ranks, ctx)` and/or
-#' `eval_batch(rank_matrix, ctx)`, where `rank_matrix` is an n x m rank matrix (each column a
-#' permutation of 1..n). Optionally it may define `setup(data)` for manual or
+#' `eval_batch(rank_matrix, ctx)`, where `rank_matrix` is an n x m rank matrix
+#' (each column a permutation of 1..n). Specs may also define `table(n)` as an
+#' optional rank-to-weight lookup table and `setup(data)` for manual or
 #' wrapper-level context construction.
 #'
 #' @param x Any object.
@@ -54,8 +55,12 @@ new_rank_weight <- function(name, eval = NULL, eval_batch = NULL, setup = NULL) 
   if (!is.list(spec)) .abort_bad_arg("spec", "must be a list")
   has_eval <- !is.null(spec$eval) && is.function(spec$eval)
   has_eval_batch <- !is.null(spec$eval_batch) && is.function(spec$eval_batch)
-  if (!(has_eval || has_eval_batch)) {
-    .abort_bad_arg("spec", "must provide at least one of `eval` or `eval_batch`")
+  has_table <- !is.null(spec$table) && is.function(spec$table)
+  if (!is.null(spec$table) && !is.function(spec$table)) {
+    .abort_bad_arg("spec$table", "must be a function", quoted = FALSE)
+  }
+  if (!(has_eval || has_eval_batch || has_table)) {
+    .abort_bad_arg("spec", "must provide at least one of `eval` or `eval_batch`, or `table`")
   }
   if (is.null(spec$name) || !nzchar(as.character(spec$name))) {
     spec$name <- "unnamed_rank_weight"
@@ -75,6 +80,37 @@ new_rank_weight <- function(name, eval = NULL, eval_batch = NULL, setup = NULL) 
     )
   }
   as.numeric(w)
+}
+
+.rank_weight_table <- function(spec, n) {
+  if (!is_rank_weight(spec)) .abort_bad_arg("spec", "must be a rank_weight")
+  n <- .validate_scalar_int(n, "n")
+  if (is.null(spec$table)) {
+    return(NULL)
+  }
+  if (!is.function(spec$table)) {
+    .abort_bad_state("`rank_weight$table` must be a function.")
+  }
+
+  tab <- spec$table(n)
+  if (!is.numeric(tab) || length(tab) != n || any(!is.finite(tab))) {
+    actual <- if (is.numeric(tab)) {
+      sprintf("numeric vector of length %d", length(tab))
+    } else {
+      sprintf("%s of length %d", class(tab)[1L], length(tab))
+    }
+    .abort_bad_state(sprintf(
+      "`rank_weight$table(n)` must return a finite numeric vector of length %d; got %s.",
+      n, actual
+    ))
+  }
+
+  tab <- as.numeric(tab)
+  tab_sum <- sum(tab)
+  if (!is.finite(tab_sum) || tab_sum <= 0) {
+    .abort_bad_state("`rank_weight$table(n)` must have positive finite sum.")
+  }
+  tab
 }
 
 # -----------------------------------------------------------------------------
@@ -199,7 +235,7 @@ rank_weight_eval <- function(spec, ranks, ctx = NULL) {
   if (!is_rank_weight(spec)) .abort_bad_arg("spec", "must be a rank_weight")
   r <- .rank_check_vec(ranks)
 
-  if (is.function(spec$eval_batch)) {
+  if (is.function(spec$table) || is.function(spec$eval_batch)) {
     # Prefer batch path whenever available.
     rank_matrix_one <- matrix(r, nrow = length(r), ncol = 1L)
     weight_matrix_one <- rank_weight_eval_batch(spec, rank_matrix_one, ctx)
@@ -207,7 +243,7 @@ rank_weight_eval <- function(spec, ranks, ctx = NULL) {
   } else if (is.function(spec$eval)) {
     w <- spec$eval(r, ctx)
   } else {
-    .abort_bad_arg("spec", "rank_weight spec has neither eval nor eval_batch")
+    .abort_bad_arg("spec", "rank_weight spec has neither eval nor eval_batch nor table")
   }
 
   if (!is.numeric(w) || length(w) != length(r) || any(!is.finite(w))) {
@@ -237,7 +273,10 @@ rank_weight_eval_batch <- function(spec, R, ctx = NULL) {
   if (!is_rank_weight(spec)) .abort_bad_arg("spec", "must be a rank_weight")
   rank_matrix <- .rank_check_mat(R)
 
-  if (is.function(spec$eval_batch)) {
+  tab <- .rank_weight_table(spec, nrow(rank_matrix))
+  if (!is.null(tab)) {
+    weight_matrix <- matrix(tab[rank_matrix], nrow = nrow(rank_matrix), ncol = ncol(rank_matrix))
+  } else if (is.function(spec$eval_batch)) {
     weight_matrix <- spec$eval_batch(rank_matrix, ctx)
   } else if (is.function(spec$eval)) {
     # Fallback: apply eval to each column; coerce to matrix if m == 1
@@ -246,7 +285,7 @@ rank_weight_eval_batch <- function(spec, R, ctx = NULL) {
       weight_matrix <- matrix(weight_matrix, nrow = nrow(rank_matrix), ncol = 1L)
     }
   } else {
-    .abort_bad_arg("spec", "rank_weight spec has neither eval nor eval_batch")
+    .abort_bad_arg("spec", "rank_weight spec has neither eval nor eval_batch nor table")
   }
 
   if (!is.matrix(weight_matrix) || any(!is.finite(weight_matrix)) ||

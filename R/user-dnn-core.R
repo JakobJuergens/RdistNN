@@ -85,6 +85,117 @@
   x0_mat
 }
 
+.dnn_candidate_format_kappa <- function(kappa) {
+  label <- vapply(
+    kappa,
+    function(x) format(x, trim = TRUE, scientific = FALSE),
+    character(1L)
+  )
+  label <- gsub("\\.", "p", label)
+  gsub("-", "m", label)
+}
+
+.dnn_candidate_unique_ids <- function(base_ids) {
+  seen <- new.env(parent = emptyenv())
+  ids <- character(length(base_ids))
+  for (i in seq_along(base_ids)) {
+    base <- base_ids[[i]]
+    count <- if (exists(base, envir = seen, inherits = FALSE)) {
+      get(base, envir = seen, inherits = FALSE) + 1L
+    } else {
+      1L
+    }
+    assign(base, count, envir = seen)
+    ids[[i]] <- if (count == 1L) base else sprintf("%s__%d", base, count)
+  }
+  ids
+}
+
+.dnn_candidate_default_index <- function(candidates, default) {
+  idx_s <- which(as.integer(candidates$s) == as.integer(default$s))
+  if (length(idx_s) == 0L) {
+    return(integer(0L))
+  }
+
+  default_kappa <- default$meta[["kappa", exact = TRUE]]
+  default_kappa_num <- suppressWarnings(as.numeric(default_kappa))
+  if (!is.null(default_kappa) && length(default_kappa_num) == 1L &&
+      !is.na(default_kappa_num) && is.finite(default_kappa_num)) {
+    kappa <- suppressWarnings(as.numeric(as.character(candidates$kappa)))
+    tol <- sqrt(.Machine$double.eps) * pmax(1, abs(default_kappa_num))
+    idx_kappa <- idx_s[!is.na(kappa[idx_s]) & abs(kappa[idx_s] - default_kappa_num) <= tol]
+    if (length(idx_kappa) > 0L) {
+      return(idx_kappa[1L])
+    }
+  }
+
+  idx_s[1L]
+}
+
+.dnn_prepend_synthetic_default_candidate <- function(candidates, default) {
+  synthetic <- candidates[NA_integer_, , drop = FALSE]
+  rownames(synthetic) <- NULL
+  synthetic$s <- as.integer(default$s)
+  synthetic$kappa <- NA_real_
+  synthetic$feasible <- TRUE
+  synthetic$reason <- "ok"
+  rbind(synthetic, candidates)
+}
+
+.dnn_resolve_candidate_schema <- function(grid, default) {
+  if (!is.list(grid) || !is.data.frame(grid$candidates)) {
+    .abort_bad_state("`tuning$grid$candidates` must be a data.frame.")
+  }
+  candidates <- as.data.frame(grid$candidates, stringsAsFactors = FALSE)
+  if (nrow(candidates) < 1L) {
+    .abort_bad_state("`tuning$grid$candidates` must contain at least one row.")
+  }
+  required <- c("s", "feasible", "reason")
+  missing <- setdiff(required, names(candidates))
+  if (length(missing) > 0L) {
+    .abort_bad_state(sprintf(
+      "`tuning$grid$candidates` is missing required column(s): %s.",
+      paste(missing, collapse = ", ")
+    ))
+  }
+
+  candidates$s <- as.integer(candidates$s)
+  candidates$feasible <- as.logical(candidates$feasible)
+  candidates$reason <- as.character(candidates$reason)
+  if (!("kappa" %in% names(candidates))) {
+    candidates$kappa <- NA_real_
+  }
+  candidates$kappa <- suppressWarnings(as.numeric(as.character(candidates$kappa)))
+
+  default_idx <- .dnn_candidate_default_index(candidates, default)
+  if (length(default_idx) == 0L) {
+    candidates <- .dnn_prepend_synthetic_default_candidate(candidates, default)
+    default_idx <- 1L
+  }
+
+  candidates$is_default <- FALSE
+  candidates$is_default[default_idx[1L]] <- TRUE
+  candidates$status <- ifelse(candidates$feasible, "ok", "infeasible")
+  candidates$computed_key <- sprintf("s_%d", as.integer(candidates$s))
+
+  base_ids <- sprintf("s_%d", as.integer(candidates$s))
+  has_kappa <- !is.na(candidates$kappa)
+  base_ids[has_kappa] <- paste0(
+    "kappa_",
+    .dnn_candidate_format_kappa(candidates$kappa[has_kappa])
+  )
+  candidates$candidate_id <- .dnn_candidate_unique_ids(base_ids)
+
+  schema_cols <- c(
+    "candidate_id", "computed_key", "is_default", "feasible",
+    "reason", "status", "kappa", "s"
+  )
+  candidates <- candidates[, c(schema_cols, setdiff(names(candidates), schema_cols)), drop = FALSE]
+  rownames(candidates) <- NULL
+  grid$candidates <- candidates
+  grid
+}
+
 .dnn_resolve_s <- function(s, tuning, n, p, k, se, jackknife, ctx = NULL) {
   needs_jk <- isTRUE(se) && !identical(jackknife, "none")
 
@@ -113,14 +224,13 @@
         actual = sprintf("s=%d (with `se`=%s, `jackknife`='%s')", as.integer(s_out), as.character(se), jackknife)
       )
     }
-    payload <- list(
-      source = "manual",
-      default = list(
-        s = as.integer(s_out),
-        meta = list(name = "manual", n = as.integer(n), kx = as.integer(p)),
-        feasibility = list(k_le_s = k_ok, s_lt_n = s_ok)
-      ),
-      grid = list(
+    default <- list(
+      s = as.integer(s_out),
+      meta = list(name = "manual", n = as.integer(n), kx = as.integer(p)),
+      feasibility = list(k_le_s = k_ok, s_lt_n = s_ok)
+    )
+    grid <- .dnn_resolve_candidate_schema(
+      list(
         candidates = data.frame(
           kappa = NA_real_,
           s = as.integer(s_out),
@@ -129,7 +239,13 @@
           stringsAsFactors = FALSE
         ),
         meta = list(name = "manual", n = as.integer(n), kx = as.integer(p))
-      )
+      ),
+      default = default
+    )
+    payload <- list(
+      source = "manual",
+      default = default,
+      grid = grid
     )
     return(list(s = as.integer(s_out), tuning = payload, tuning_used = FALSE))
   }
@@ -183,9 +299,355 @@
   payload <- list(
     source = tuning_source,
     default = default,
-    grid = grid
+    grid = .dnn_resolve_candidate_schema(grid, default = default)
   )
   list(s = as.integer(s_out), tuning = payload, tuning_used = TRUE)
+}
+
+.dnn_grid_candidate_s <- function(candidate_row) {
+  if (!("s" %in% names(candidate_row))) {
+    return(NA_integer_)
+  }
+  as.integer(candidate_row$s[[1L]])
+}
+
+.dnn_grid_candidate_kappa <- function(candidate_row) {
+  if (!("kappa" %in% names(candidate_row))) {
+    return(NA_real_)
+  }
+  suppressWarnings(as.numeric(candidate_row$kappa[[1L]]))
+}
+
+.dnn_grid_top_k <- function(ctx) {
+  if (is.list(ctx) && !is.null(ctx$k)) {
+    return(.validate_scalar_int(ctx$k, "ctx$k"))
+  }
+  if (is.list(ctx) && is.list(ctx$meta) && !is.null(ctx$meta$k)) {
+    return(.validate_scalar_int(ctx$meta$k, "ctx$meta$k"))
+  }
+  NA_integer_
+}
+
+.dnn_grid_check_candidates <- function(candidates) {
+  if (!is.data.frame(candidates)) {
+    .abort_bad_arg("candidates", "must be a data.frame")
+  }
+  required <- c(
+    "candidate_id", "computed_key", "is_default", "feasible",
+    "reason", "status"
+  )
+  missing <- setdiff(required, names(candidates))
+  if (length(missing) > 0L) {
+    .abort_bad_state(sprintf(
+      "`candidates` is missing required column(s): %s.",
+      paste(missing, collapse = ", ")
+    ))
+  }
+  if (nrow(candidates) < 1L) {
+    .abort_bad_state("`candidates` must contain at least one row.")
+  }
+
+  candidates <- as.data.frame(candidates, stringsAsFactors = FALSE)
+  candidates$candidate_id <- as.character(candidates$candidate_id)
+  candidates$computed_key <- as.character(candidates$computed_key)
+  candidates$is_default <- as.logical(candidates$is_default)
+  candidates$feasible <- as.logical(candidates$feasible)
+  candidates$reason <- as.character(candidates$reason)
+  candidates$status <- as.character(candidates$status)
+
+  if (anyNA(candidates$candidate_id) || any(!nzchar(candidates$candidate_id))) {
+    .abort_bad_state("`candidates$candidate_id` must contain non-empty strings.")
+  }
+  if (anyNA(candidates$computed_key) || any(!nzchar(candidates$computed_key))) {
+    .abort_bad_state("`candidates$computed_key` must contain non-empty strings.")
+  }
+  if (anyNA(candidates$is_default) || sum(candidates$is_default) != 1L) {
+    .abort_bad_state("`candidates$is_default` must contain exactly one TRUE value.")
+  }
+  if (anyNA(candidates$feasible)) {
+    .abort_bad_state("`candidates$feasible` cannot contain missing values.")
+  }
+  if (anyNA(candidates$status) || any(!nzchar(candidates$status))) {
+    .abort_bad_state("`candidates$status` must contain non-empty strings.")
+  }
+  candidates
+}
+
+.dnn_grid_check_estimates <- function(estimates) {
+  if (!is.data.frame(estimates)) {
+    .abort_bad_state("`estimate_fn()` must return a data.frame.")
+  }
+  required <- c("target_id", "component", "estimate")
+  missing <- setdiff(required, names(estimates))
+  if (length(missing) > 0L) {
+    .abort_bad_state(sprintf(
+      "`estimate_fn()` output is missing required column(s): %s.",
+      paste(missing, collapse = ", ")
+    ))
+  }
+  if (nrow(estimates) < 1L) {
+    .abort_bad_state("`estimate_fn()` output must contain at least one row.")
+  }
+  if (!is.numeric(estimates$estimate)) {
+    .abort_bad_state("`estimate_fn()` column `estimate` must be numeric.")
+  }
+  estimates <- as.data.frame(estimates, stringsAsFactors = FALSE)
+  estimates$estimate <- as.numeric(estimates$estimate)
+  estimates
+}
+
+.dnn_grid_check_se <- function(se) {
+  if (!is.data.frame(se)) {
+    .abort_bad_state("`se_fn()` must return a data.frame.")
+  }
+  required <- c("target_id", "component", "se")
+  missing <- setdiff(required, names(se))
+  if (length(missing) > 0L) {
+    .abort_bad_state(sprintf(
+      "`se_fn()` output is missing required column(s): %s.",
+      paste(missing, collapse = ", ")
+    ))
+  }
+  if (!is.numeric(se$se)) {
+    .abort_bad_state("`se_fn()` column `se` must be numeric.")
+  }
+  se <- as.data.frame(se, stringsAsFactors = FALSE)
+  se$se <- as.numeric(se$se)
+  se
+}
+
+.dnn_grid_target_key <- function(x) {
+  component <- as.character(x$component)
+  component[is.na(x$component)] <- "<NA>"
+  paste(as.character(x$target_id), component, sep = "\r")
+}
+
+.dnn_grid_merge_estimate_se <- function(estimates, se) {
+  if (is.null(se)) {
+    estimates$se <- NA_real_
+    return(estimates)
+  }
+  idx <- match(.dnn_grid_target_key(estimates), .dnn_grid_target_key(se))
+  estimates$se <- se$se[idx]
+  estimates
+}
+
+.dnn_grid_diagnostics_from_table <- function(tab, n, ctx) {
+  if (is.null(tab)) {
+    return(data.frame(
+      ess = NA_real_,
+      max_weight = NA_real_,
+      top_share = NA_real_,
+      degenerate = NA,
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  abs_tab <- abs(tab)
+  denom <- sum(abs_tab)
+  ess <- 1 / sum(tab^2)
+  k_top <- .dnn_grid_top_k(ctx)
+  top_share <- NA_real_
+  if (!is.na(k_top) && denom > 0) {
+    top_n <- min(length(tab), as.integer(k_top))
+    top_share <- sum(abs_tab[seq_len(top_n)]) / denom
+  }
+  data.frame(
+    ess = ess,
+    max_weight = max(abs_tab),
+    top_share = top_share,
+    degenerate = ess >= 0.9 * n,
+    stringsAsFactors = FALSE
+  )
+}
+
+.dnn_grid_compute_key <- function(
+  candidate_row, ranks, weight_spec_fn, estimate_fn, se_fn, ctx
+) {
+  n <- nrow(ranks)
+  spec <- weight_spec_fn(candidate_row)
+  if (!is_rank_weight(spec)) {
+    .abort_bad_state("`weight_spec_fn()` must return a rank_weight.")
+  }
+
+  tab <- .rank_weight_table(spec, n)
+  W <- if (is.null(tab)) {
+    rank_weight_eval_batch(spec, ranks, ctx = ctx)
+  } else {
+    matrix(tab[ranks], nrow = n, ncol = ncol(ranks))
+  }
+
+  estimates <- .dnn_grid_check_estimates(estimate_fn(W, candidate_row))
+  se <- NULL
+  if (!is.null(se_fn)) {
+    tab_jk <- .rank_weight_table(spec, n - 1L)
+    se <- .dnn_grid_check_se(se_fn(candidate_row, tab_jk))
+  }
+
+  list(
+    estimates = .dnn_grid_merge_estimate_se(estimates, se),
+    diagnostics = .dnn_grid_diagnostics_from_table(tab, n = n, ctx = ctx)
+  )
+}
+
+.dnn_grid_estimate_template <- function(results, m) {
+  for (result in results) {
+    if (!is.null(result$estimates)) {
+      return(result$estimates[, c("target_id", "component"), drop = FALSE])
+    }
+  }
+  data.frame(
+    target_id = seq_len(m),
+    component = NA_character_,
+    stringsAsFactors = FALSE
+  )
+}
+
+.dnn_grid_na_estimates <- function(template) {
+  out <- template
+  out$estimate <- NA_real_
+  out$se <- NA_real_
+  out
+}
+
+.dnn_grid_attach_estimate_candidate <- function(estimates, candidate_row) {
+  data.frame(
+    candidate_id = as.character(candidate_row$candidate_id[[1L]]),
+    computed_key = as.character(candidate_row$computed_key[[1L]]),
+    kappa = .dnn_grid_candidate_kappa(candidate_row),
+    s = .dnn_grid_candidate_s(candidate_row),
+    target_id = estimates$target_id,
+    component = estimates$component,
+    estimate = estimates$estimate,
+    se = estimates$se,
+    status = as.character(candidate_row$status[[1L]]),
+    reason = as.character(candidate_row$reason[[1L]]),
+    stringsAsFactors = FALSE
+  )
+}
+
+.dnn_grid_empty_diagnostics <- function() {
+  data.frame(
+    ess = NA_real_,
+    max_weight = NA_real_,
+    top_share = NA_real_,
+    degenerate = NA,
+    stringsAsFactors = FALSE
+  )
+}
+
+.dnn_grid_attach_diagnostic_candidate <- function(diagnostic, candidate_row) {
+  data.frame(
+    candidate_id = as.character(candidate_row$candidate_id[[1L]]),
+    computed_key = as.character(candidate_row$computed_key[[1L]]),
+    kappa = .dnn_grid_candidate_kappa(candidate_row),
+    s = .dnn_grid_candidate_s(candidate_row),
+    ess = diagnostic$ess[[1L]],
+    max_weight = diagnostic$max_weight[[1L]],
+    top_share = diagnostic$top_share[[1L]],
+    degenerate = diagnostic$degenerate[[1L]],
+    status = as.character(candidate_row$status[[1L]]),
+    reason = as.character(candidate_row$reason[[1L]]),
+    stringsAsFactors = FALSE
+  )
+}
+
+.dnn_grid_meta <- function(candidates, ranks, unique_keys) {
+  list(
+    n = as.integer(nrow(ranks)),
+    m = as.integer(ncol(ranks)),
+    n_candidates = as.integer(nrow(candidates)),
+    n_feasible = as.integer(sum(candidates$feasible)),
+    n_skipped = as.integer(sum(!candidates$feasible)),
+    n_failed = as.integer(sum(candidates$status == "failed")),
+    n_unique = as.integer(length(unique_keys))
+  )
+}
+
+.dnn_grid_eval <- function(
+  candidates,
+  ranks,
+  weight_spec_fn,
+  estimate_fn,
+  se_fn = NULL,
+  ctx = NULL
+) {
+  candidates <- .dnn_grid_check_candidates(candidates)
+  ranks <- .rank_check_mat(ranks)
+  if (!is.function(weight_spec_fn)) {
+    .abort_bad_arg("weight_spec_fn", "must be a function", quoted = FALSE)
+  }
+  if (!is.function(estimate_fn)) {
+    .abort_bad_arg("estimate_fn", "must be a function", quoted = FALSE)
+  }
+  if (!is.null(se_fn) && !is.function(se_fn)) {
+    .abort_bad_arg("se_fn", "must be NULL or a function", quoted = FALSE)
+  }
+
+  feasible_keys <- unique(candidates$computed_key[candidates$feasible])
+  if (length(feasible_keys) < 1L) {
+    .abort_bad_arg("candidates", "must contain at least one feasible candidate")
+  }
+  if (sum(candidates$feasible) > 1L && length(feasible_keys) == 1L) {
+    warning(
+      "All feasible tuning candidates share the same computed key; the grid is effectively a single value.",
+      call. = FALSE
+    )
+  }
+
+  results <- setNames(vector("list", length(feasible_keys)), feasible_keys)
+  for (key in feasible_keys) {
+    idx <- which(candidates$feasible & candidates$computed_key == key)
+    candidate_row <- candidates[idx[[1L]], , drop = FALSE]
+    key_is_default <- any(candidates$is_default[idx])
+    result <- tryCatch(
+      .dnn_grid_compute_key(
+        candidate_row = candidate_row,
+        ranks = ranks,
+        weight_spec_fn = weight_spec_fn,
+        estimate_fn = estimate_fn,
+        se_fn = se_fn,
+        ctx = ctx
+      ),
+      error = function(err) {
+        if (key_is_default) {
+          stop(err)
+        }
+        list(error = err, reason = conditionMessage(err))
+      }
+    )
+    if (!is.null(result$error)) {
+      failed_idx <- candidates$feasible & candidates$computed_key == key
+      candidates$status[failed_idx] <- "failed"
+      candidates$reason[failed_idx] <- result$reason
+    }
+    results[[key]] <- result
+  }
+
+  template <- .dnn_grid_estimate_template(results, m = ncol(ranks))
+  estimates <- vector("list", nrow(candidates))
+  diagnostics <- vector("list", nrow(candidates))
+  for (i in seq_len(nrow(candidates))) {
+    candidate_row <- candidates[i, , drop = FALSE]
+    key <- as.character(candidate_row$computed_key[[1L]])
+    result <- results[[key]]
+    ok <- isTRUE(candidate_row$feasible[[1L]]) &&
+      identical(as.character(candidate_row$status[[1L]]), "ok") &&
+      !is.null(result) &&
+      is.null(result$error)
+
+    base_est <- if (ok) result$estimates else .dnn_grid_na_estimates(template)
+    base_diag <- if (ok) result$diagnostics else .dnn_grid_empty_diagnostics()
+    estimates[[i]] <- .dnn_grid_attach_estimate_candidate(base_est, candidate_row)
+    diagnostics[[i]] <- .dnn_grid_attach_diagnostic_candidate(base_diag, candidate_row)
+  }
+
+  list(
+    candidates = candidates,
+    estimates = do.call(rbind, estimates),
+    diagnostics = do.call(rbind, diagnostics),
+    meta = .dnn_grid_meta(candidates, ranks, feasible_keys)
+  )
 }
 
 .dnn_distance_name <- function(distance) {
@@ -304,6 +766,125 @@
   se
 }
 
+.dnn_loo_prefix <- function(sig, ranks, tab_jk, tab_full = NULL) {
+  ranks <- .rank_check_mat(ranks)
+  n <- nrow(ranks)
+  m <- ncol(ranks)
+  if (n < 2L) {
+    .abort_bad_arg("ranks", "must have at least two rows for delete-1 jackknife")
+  }
+
+  sig <- .dnn_signal_matrix(sig, n = n, arg = "sig")
+  q <- ncol(sig)
+
+  if (!is.numeric(tab_jk)) {
+    .abort_bad_arg("tab_jk", "must be numeric", quoted = FALSE)
+  }
+  if (length(tab_jk) != n - 1L) {
+    .abort_bad_arg(
+      "tab_jk",
+      "length must equal nrow(ranks) - 1",
+      expected = sprintf("length %d", n - 1L),
+      actual = sprintf("length %d", length(tab_jk)),
+      quoted = FALSE
+    )
+  }
+  .abort_if_na_or_nonfinite(tab_jk, arg = "tab_jk", quoted = FALSE)
+  tab_jk <- as.numeric(tab_jk)
+
+  if (!is.null(tab_full)) {
+    if (!is.numeric(tab_full)) {
+      .abort_bad_arg("tab_full", "must be numeric", quoted = FALSE)
+    }
+    if (length(tab_full) != n) {
+      .abort_bad_arg(
+        "tab_full",
+        "length must equal nrow(ranks)",
+        expected = sprintf("length %d", n),
+        actual = sprintf("length %d", length(tab_full)),
+        quoted = FALSE
+      )
+    }
+    .abort_if_na_or_nonfinite(tab_full, arg = "tab_full", quoted = FALSE)
+
+    res <- jackknife_rank_full(ranks, sig, as.numeric(tab_full), tab_jk)
+    loo <- res$theta_loo
+    if (q == 1L) {
+      loo <- matrix(loo, nrow = n, ncol = m)
+    }
+    return(loo)
+  }
+
+  if (q == 1L) {
+    loo <- matrix(NA_real_, nrow = n, ncol = m)
+  } else {
+    loo <- array(NA_real_, dim = c(n, q, m))
+  }
+
+  tab_left <- c(tab_jk, 0)
+  tab_right <- c(0, tab_jk)
+
+  for (j in seq_len(m)) {
+    r <- ranks[, j]
+    ord <- order(r)
+    for (component in seq_len(q)) {
+      sig_by_rank <- sig[ord, component]
+      left_sum <- cumsum(sig_by_rank * tab_left)
+      right_sum <- rev(cumsum(rev(sig_by_rank * tab_right)))
+      loo_j <- c(0, left_sum)[r] + c(right_sum, 0)[r + 1L]
+
+      if (q == 1L) {
+        loo[, j] <- loo_j
+      } else {
+        loo[, component, j] <- loo_j
+      }
+    }
+  }
+
+  loo
+}
+
+.dnn_loo_loop <- function(sig, ranks, rw) {
+  if (!is_rank_weight(rw)) {
+    .abort_bad_arg("rw", "must be a rank_weight", quoted = FALSE)
+  }
+  ranks <- .rank_check_mat(ranks)
+  n <- nrow(ranks)
+  m <- ncol(ranks)
+  if (n < 2L) {
+    .abort_bad_arg("ranks", "must have at least two rows for delete-1 jackknife")
+  }
+
+  sig <- .dnn_signal_matrix(sig, n = n, arg = "sig")
+  q <- ncol(sig)
+
+  if (q == 1L) {
+    loo <- matrix(NA_real_, nrow = n, ncol = m)
+  } else {
+    loo <- array(NA_real_, dim = c(n, q, m))
+  }
+
+  idx_all <- seq_len(n)
+  for (i in idx_all) {
+    keep <- (idx_all != i)
+
+    r_i <- matrix(ranks[i, ], nrow = n - 1L, ncol = m, byrow = TRUE)
+    rank_matrix_i <- ranks[keep, , drop = FALSE]
+    rank_matrix_i <- rank_matrix_i - (rank_matrix_i > r_i)
+    if (!is.integer(rank_matrix_i)) storage.mode(rank_matrix_i) <- "integer"
+
+    W_i <- rank_weight_eval_batch(rw, rank_matrix_i)
+    est_i <- crossprod(sig[keep, , drop = FALSE], W_i)
+    if (q == 1L) {
+      loo[i, ] <- as.numeric(est_i[1L, ])
+    } else {
+      loo[i, , ] <- est_i
+    }
+  }
+
+  loo
+}
+
 .dnn_jackknife_se_loo_matrix <- function(
   x_mat, x0_mat, signal, distance, method, k, s, normalize, ctx,
   signal_arg = "signal",
@@ -351,30 +932,13 @@
       rank_weight_dnn_asymp(k = as.integer(k), s = as.integer(s), normalize = normalize)
     }
 
-    if (q == 1L) {
-      loo <- matrix(NA_real_, nrow = n, ncol = m)
+    tab_jk <- .rank_weight_table(rw, n - 1L)
+    loo <- if (is.null(tab_jk)) {
+      .dnn_loo_loop(sig, ranks_full, rw)
     } else {
-      loo <- array(NA_real_, dim = c(n, q, m))
+      tab_full <- .rank_weight_table(rw, n)
+      .dnn_loo_prefix(sig, ranks_full, tab_jk, tab_full = tab_full)
     }
-
-    idx_all <- seq_len(n)
-    for (i in idx_all) {
-      keep <- (idx_all != i)
-
-      r_i <- matrix(ranks_full[i, ], nrow = n - 1L, ncol = m, byrow = TRUE)
-      rank_matrix_i <- ranks_full[keep, , drop = FALSE]
-      rank_matrix_i <- rank_matrix_i - (rank_matrix_i > r_i)
-      if (!is.integer(rank_matrix_i)) storage.mode(rank_matrix_i) <- "integer"
-
-      W_i <- rank_weight_eval_batch(rw, rank_matrix_i)
-      est_i <- crossprod(sig[keep, , drop = FALSE], W_i)
-      if (q == 1L) {
-        loo[i, ] <- as.numeric(est_i[1L, ])
-      } else {
-        loo[i, , ] <- est_i
-      }
-    }
-
     return(.dnn_jackknife_se_from_loo(loo = loo, q = q, n = n, m = m))
   }
 
