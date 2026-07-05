@@ -22,6 +22,7 @@ rely on a single explicit read order.
 11. `11_examples_vignettes_and_pkgdown_policy.md`
 12. `12_release_and_ci_policy.md`
 13. `13_existing_codebase_standardization_plan.md`
+14. `14_integrated_tuning_grid_reuse.md`
 
 ## Structure
 
@@ -43,6 +44,7 @@ rely on a single explicit read order.
 
 ### Execution
 - `13_existing_codebase_standardization_plan.md`
+- `14_integrated_tuning_grid_reuse.md`
 
 ## Core package-wide decision
 
