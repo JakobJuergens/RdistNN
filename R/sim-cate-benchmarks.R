@@ -52,7 +52,7 @@
 }
 
 # ── DNN oracle ────────────────────────────────────────────────────────────────
-# Proposed method.  Uses the oracle AIPW score from the dormant coupled-source
+# Proposed method.  Uses the oracle AIPW score from the active coupled-score
 # CATE route so that first-stage error does not contaminate the comparison and
 # the oracle/crossfit comparison differs only in nuisance quality, not in score
 # construction.
