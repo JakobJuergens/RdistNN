@@ -1418,3 +1418,315 @@ assuming a linear cross-product.
 This gives users and paper simulations the performance benefits of grid reuse
 without fragmenting the public API — and makes the scalar estimators
 substantially faster along the way.
+
+---
+
+## 20. Implementation Roadmap
+
+This roadmap is the operational version of Section 14. Each layer should be
+small enough to review, test, and revert independently. Do not start a layer
+that depends on an unmerged earlier layer. In particular, do not start the
+simulation integration until the estimator grid payload exists, and do not
+start plotting integration until the payload and accessors are stable.
+
+The main sequencing principle is:
+
+> first make the scalar path faster and better tested; then add candidate
+> metadata; then add grid evaluation for the simplest estimators; then expose
+> candidate views; then move simulations and plots onto the same machinery.
+
+### Layer 0: reference tests and scalar safety net
+
+Purpose: lock down the behavior that later layers must preserve.
+
+Scope:
+
+- add or identify a slow reference implementation for the current fast
+  jackknife loop, kept internal and test-only if possible;
+- add scalar parity tests for `np_dnn()`, `cate_dnn()`, and `plqr_dnn()` on
+  estimates, SEs, return extras, warnings, and important error paths;
+- add focused tests around ties and rank boundaries, especially rank 1 and
+  rank n cases.
+
+Exit criteria:
+
+- tests fail if the current scalar estimates or fast-jackknife SEs change
+  materially;
+- later layers can compare against a stable reference rather than stored
+  numeric constants.
+
+Why first: every performance change below should be judged against the current
+scalar contract. Without this layer, the optimization work and grid work are
+too easy to conflate.
+
+### Layer 1: rank-weight table contract
+
+Purpose: make the package's built-in DNN and TDNN rank weights expose their
+rank-to-weight tables directly.
+
+Scope:
+
+- add optional `spec$table(n)` support to the `rank_weight` contract;
+- add `.rank_weight_table(spec, n)` as the single internal validator/accessor;
+- implement `table(n)` for exact DNN, asymptotic DNN, exact TDNN, and
+  asymptotic TDNN rank-weight specs;
+- update `rank_weight_eval_batch()` to use the table path when present and
+  keep the existing per-column fallback for custom specs.
+
+Exit criteria:
+
+- table output equals existing `eval()` / `eval_batch()` output on identity
+  and random rank permutations;
+- custom rank weights without a table still work unchanged;
+- no public estimator signatures or return objects change.
+
+Why second: this is a pure internal speedup and the foundation for the
+prefix-sum jackknife and cheap grid diagnostics.
+
+### Layer 2: prefix-sum fast jackknife on the scalar path
+
+Purpose: replace the expensive O(n^2) fast-jackknife loop with the O(n)
+prefix-sum identity where rank-weight tables are available.
+
+Scope:
+
+- add `.dnn_loo_prefix(sig, ranks, tab_jk)`;
+- route `.dnn_jackknife_se_loo_matrix(jackknife = "fast")` through the
+  prefix helper when `.rank_weight_table()` is available;
+- retain the current per-deletion loop as the reference and fallback path;
+- leave `jackknife = "loo"` untouched.
+
+Exit criteria:
+
+- prefix-sum SEs match the reference loop to numerical tolerance for `q = 1`
+  and `q > 1`, one and multiple targets, small and large `s`, and tied
+  covariates;
+- scalar wrapper behavior remains unchanged except for runtime;
+- fallback behavior remains available for non-table rank weights.
+
+Why third: after this layer, grid-mode SEs become cheap enough that the
+simulation grid is practical. This is the highest-value runtime layer.
+
+### Layer 3: candidate schema in `.dnn_resolve_s()`
+
+Purpose: give scalar and grid paths one candidate table schema without
+evaluating non-default candidates yet.
+
+Scope:
+
+- extend the existing candidate table in `.dnn_resolve_s()` with
+  `candidate_id`, `computed_key`, `is_default`, and `status`;
+- preserve the existing returned scalar `s`, tuning payload shape, and scalar
+  behavior;
+- implement deterministic candidate-id formatting and duplicate-id suffixes;
+- ensure the default candidate is represented, including the synthetic-default
+  row case for custom tuning specs.
+
+Exit criteria:
+
+- all existing tuning tests still pass;
+- new tests cover id formatting, duplicate `s`, infeasible candidates,
+  default-row identification, and manual scalar `s`;
+- no wrapper evaluates more than one candidate yet.
+
+Why fourth: this isolates metadata and feasibility behavior from estimator
+computation. It is the cleanest place to settle candidate ids before they
+appear in result objects and simulation rows.
+
+### Layer 4: internal grid engine, tested through small harnesses
+
+Purpose: add the reusable candidate loop without changing exported wrapper
+behavior.
+
+Scope:
+
+- add `.dnn_grid_eval()` with the contract in Section 8.3;
+- make it consume an existing rank matrix, a candidate table, a weight-spec
+  factory, an estimator callback, and an optional SE callback;
+- compute each unique feasible `computed_key` once;
+- return tidy `candidates`, `estimates`, `diagnostics`, and `meta` payload
+  components;
+- implement duplicate, infeasible, failed, and default-candidate handling.
+
+Exit criteria:
+
+- helper-level tests verify duplicate reuse, skipped infeasible rows, failed
+  non-default rows, failed default rethrowing, and diagnostic table values;
+- no public wrapper has `tuning_mode` yet;
+- no plotting or simulation code calls the engine yet.
+
+Why fifth: the engine should be proven with controlled callbacks before it is
+embedded in the user-facing wrappers.
+
+### Layer 5: `np_dnn()` grid mode
+
+Purpose: integrate the engine into the simplest high-level estimator first.
+
+Scope:
+
+- add `tuning_mode = c("default", "grid")` after `tuning` in `np_dnn()`;
+- keep `tuning_mode = "default"` behavior identical;
+- make `tuning_mode = "grid"` reject explicit `s`;
+- compute the default candidate through the existing scalar path;
+- attach `fit$tuning_grid` with candidate-level estimates, SEs, diagnostics,
+  and metadata;
+- keep `return = "W"` and related extras anchored to the default candidate.
+
+Exit criteria:
+
+- default-candidate fields equal the scalar call exactly;
+- each non-default candidate equals a separate scalar call at that `s`;
+- duplicate and infeasible candidate behavior matches Layer 4;
+- no changes are needed in `cate_dnn()` yet.
+
+Why sixth: NP has one signal, no treatment nuisances, and no component
+dimension. It is the best public wrapper to shake out the payload contract.
+
+### Layer 6: `cate_dnn()` grid mode
+
+Purpose: add the paper-critical estimator while proving nuisance and
+pseudo-outcome reuse.
+
+Scope:
+
+- add the same `tuning_mode` argument and interaction rules to `cate_dnn()`;
+- reuse the exact candidate/payload conventions from `np_dnn()`;
+- compute direct, AIPW, or Robinson pseudo-outcomes once before grid
+  evaluation;
+- keep nuisance returns and scalar-style extras anchored to the default
+  candidate.
+
+Exit criteria:
+
+- direct pseudo-outcome, AIPW, and Robinson paths all match separate scalar
+  calls candidate by candidate;
+- counted or instrumented tests show pseudo-outcome/nuisance construction is
+  not repeated per candidate;
+- grid mode without explicit `tuning` uses the paper default grid;
+- this layer is sufficient for estimator-level CATE sensitivity checks.
+
+Why seventh: this is the key estimator for the conditional Z simulation work,
+but it should inherit the payload behavior already settled in NP.
+
+### Layer 7: `candidate_fit()` and `candidate_fits()`
+
+Purpose: provide scalar-fit views over grid fits without storing full
+per-candidate objects.
+
+Scope:
+
+- add exported accessors `candidate_fit()` and `candidate_fits()`;
+- reconstruct candidate-dependent primary fields and default-style extras on
+  demand from the payload and cached ranks;
+- carry over candidate-independent state (`x0`, `.model`, signal/nuisance
+  extras, ranks/orders/distances);
+- document the accessors and add pkgdown reference entries.
+
+Exit criteria:
+
+- `candidate_fit(fit, id)` is equivalent to a scalar fit at that candidate's
+  `s` for NP and CATE;
+- existing methods such as `predict()` and `diagnostics()` work on the
+  candidate view;
+- errors are actionable for scalar fits, unknown candidates, infeasible
+  candidates, and failed candidates.
+
+Why eighth: accessors give users and existing single-fit tools a stable bridge
+before native multi-candidate diagnostics and plots are built.
+
+### Layer 8: CATE simulation grid integration
+
+Purpose: move the paper simulation off external per-`kappa` reruns and onto
+the integrated package path.
+
+Scope:
+
+- change registered CATE simulation methods to return data frames rather than
+  named vectors;
+- add `tuning_mode` to `sim_cate_one_rep()` and `sim_cate_run()`;
+- in DNN methods, call `cate_dnn(..., tuning_mode = "grid")` and emit one
+  row per candidate from `fit$tuning_grid`;
+- keep non-DNN benchmarks to one row per replicate with `candidate_id = NA`
+  and `s = NA`;
+- update `summarise_sim_results()` grouping and failure-row construction.
+
+Exit criteria:
+
+- candidate rows match external per-`kappa` runs seed-for-seed;
+- DGP draws, fold assignments, and nuisance fits are not repeated per
+  candidate;
+- benchmark rows are not duplicated across candidates;
+- raw and summarized schemas match Section 10.2.
+
+Why ninth: this layer directly supports the next conditional Z simulation set,
+but it should wait until the CATE wrapper payload is stable.
+
+### Layer 9: `plqr_dnn()` grid mode
+
+Purpose: extend the same machinery to multi-component moment outputs.
+
+Scope:
+
+- add `tuning_mode` to `plqr_dnn()`;
+- use the same candidate engine with a long-form estimate callback;
+- store `component` in `tuning_grid$estimates`;
+- preserve scalar `fit$moment` and `fit$se` matrix fields at the default
+  candidate.
+
+Exit criteria:
+
+- each candidate's moment and SE match a separate scalar call;
+- candidate views have scalar-compatible `moment`, `se`, and metadata;
+- `q > 1` prefix-sum jackknife tests remain the main regression anchor.
+
+Why tenth: PLQR exercises the long-form component schema and should be added
+after NP/CATE settle the simpler scalar-estimate payload.
+
+### Layer 10: diagnostics and plotting integration
+
+Purpose: make the grid payload visible in the user-facing reporting layer
+without reintroducing refit loops.
+
+Scope:
+
+- add `diagnostics(fit, candidates = c("default", "all"))`;
+- update comparison-native plots to accept the shared `candidates =`
+  argument;
+- make `plot_tuning()` consume `fit$tuning_grid` when present and use the
+  internal engine on `.model` for scalar fits;
+- keep single-fit plots working through `candidate_fit()`;
+- add or update vdiffr tests where visual behavior changes.
+
+Exit criteria:
+
+- default scalar plots remain unchanged;
+- no plot function refits through public estimators to obtain candidate
+  results;
+- infeasible/failed candidates are reported compactly in displays;
+- candidate ordering and labels follow Section 9.3.
+
+Why last among the paper-critical layers: plotting and diagnostics should
+consume the stable payload, not shape it.
+
+### Deferred layers
+
+These remain out of the main implementation path until there is a concrete
+need:
+
+- `gmm_dnn()` grid mode, because each candidate may require a full
+  optimization and estimator-specific covariance handling;
+- TDNN grid scheduling, because the candidate schema supports it but the
+  paper-critical path does not require it;
+- vector-valued public `s`, because `tuning` already carries labels,
+  feasibility, and default-candidate semantics;
+- per-candidate weight storage (`return = "grid_weights"`), pending memory
+  measurements on realistic simulation sizes;
+- native multi-candidate displays for overlap, influence, calibration, and
+  conditioning plots, beyond the `candidate_fit()` route.
+
+### First implementation pass recommendation
+
+For the next coding session, implement only Layers 0-2. That produces a
+valuable scalar speedup, de-risks the algebra, and gives the grid work a
+tested computational base. The first user-visible grid work should start only
+after the prefix-sum jackknife is merged and covered by equivalence tests.
