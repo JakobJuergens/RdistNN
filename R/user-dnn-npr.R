@@ -209,8 +209,15 @@ np_dnn <- function(
     tuning_payload = tuning_payload
   )
   if ("y" %in% return) out$y <- y_vec
+  # Internal fit state used by diagnostics and refit-based plotting
+  # panels (plot_tuning()).
   out$.model <- list(
-    y_vec = y_vec
+    y_vec = y_vec,
+    x_mat = x_mat,
+    distance = distance,
+    method = method,
+    normalize = normalize,
+    ctx = ctx
   )
 
   class(out) <- "np_result"

@@ -38,6 +38,7 @@ Suggests:
     grf,
     ggplot2,
     patchwork,
+    vdiffr,
     future,
     future.apply
 SystemRequirements: C++17

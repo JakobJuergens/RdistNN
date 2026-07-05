@@ -74,7 +74,9 @@ plot_estimates <- function(object, level = 0.95,
   honesty <- .plot_honesty_caption(object)
   if (nzchar(honesty)) captions <- c(captions, honesty)
 
-  zero_line <- inherits(object, "cate_result")
+  # Zero reference lines are mandatory where zero is meaningful (plan
+  # 3.0): treatment effects and PLQR moment coordinates.
+  zero_line <- inherits(object, "cate_result") || inherits(object, "plqr_result")
 
   if (mode == "forest") {
     labs_map <- .plot_target_labels(df)
@@ -158,6 +160,30 @@ autoplot.cate_result <- function(object, ...) {
 }
 
 #' @rdname plot_estimates
+#' @exportS3Method ggplot2::autoplot plqr_result
+autoplot.plqr_result <- function(object, ...) {
+  p <- plot_estimates(object, ...)
+  beta_txt <- paste(format(as.numeric(object$beta), digits = 3),
+                    collapse = ", ")
+  p + ggplot2::labs(
+    subtitle = sprintf("PLQR moments at beta = (%s), tau = %.2f",
+                       beta_txt, object$tau)
+  )
+}
+
+#' @rdname plot_estimates
+#' @exportS3Method ggplot2::autoplot gmm_result
+autoplot.gmm_result <- function(object, ...) {
+  p <- plot_estimates(object, ...)
+  if (!is.null(object$meta$model)) {
+    p <- p + ggplot2::labs(
+      subtitle = sprintf("GMM model: %s", object$meta$model)
+    )
+  }
+  p
+}
+
+#' @rdname plot_estimates
 #' @param x A fitted result object (for the `plot()` methods).
 #' @export
 plot.np_result <- function(x, ...) {
@@ -170,6 +196,22 @@ plot.np_result <- function(x, ...) {
 #' @export
 plot.cate_result <- function(x, ...) {
   p <- plot_estimates(x, ...)
+  print(p)
+  invisible(p)
+}
+
+#' @rdname plot_estimates
+#' @export
+plot.plqr_result <- function(x, ...) {
+  p <- autoplot.plqr_result(x, ...)
+  print(p)
+  invisible(p)
+}
+
+#' @rdname plot_estimates
+#' @export
+plot.gmm_result <- function(x, ...) {
+  p <- autoplot.gmm_result(x, ...)
   print(p)
   invisible(p)
 }

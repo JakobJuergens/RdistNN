@@ -340,8 +340,13 @@ plqr_dnn <- function(
     tuning_payload = tuning_payload
   )
   if ("g" %in% return) out$g <- g_mat
+  # Internal fit state used by diagnostics and calibration plotting.
+  # below_threshold is the indicator 1{Y <= D'beta + q} entering the
+  # quantile score; its weighted mean per target is the local quantile
+  # calibration checked by plot_calibration().
   out$.model <- list(
-    d_resid_mat = d_resid_mat
+    d_resid_mat = d_resid_mat,
+    below_threshold = as.numeric(y_vec <= as.vector(d_mat %*% beta) + q_vec)
   )
 
   class(out) <- "plqr_result"

@@ -265,6 +265,17 @@ np_tdnn <- function(
   out <- .dnn_attach_common_extras(out, return = return, wt = wt, W = weight_matrix, k = 1L)
   if ("y" %in% return) out$y <- y_vec
 
+  # Internal fit state used by refit-based plotting panels
+  # (plot_tdnn_scales()).
+  out$.model <- list(
+    y_vec = y_vec,
+    x_mat = x_mat,
+    distance = distance,
+    method = method,
+    normalize = normalize,
+    ctx = ctx
+  )
+
   class(out) <- c("tdnn_np_result", "np_result")
   out
 }

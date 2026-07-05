@@ -4,8 +4,12 @@
 \alias{plot_estimates}
 \alias{autoplot.np_result}
 \alias{autoplot.cate_result}
+\alias{autoplot.plqr_result}
+\alias{autoplot.gmm_result}
 \alias{plot.np_result}
 \alias{plot.cate_result}
+\alias{plot.plqr_result}
+\alias{plot.gmm_result}
 \title{Plot estimates with confidence bounds across target points}
 \usage{
 plot_estimates(
@@ -21,9 +25,17 @@ autoplot.np_result(object, ...)
 
 autoplot.cate_result(object, ...)
 
+autoplot.plqr_result(object, ...)
+
+autoplot.gmm_result(object, ...)
+
 \method{plot}{np_result}(x, ...)
 
 \method{plot}{cate_result}(x, ...)
+
+\method{plot}{plqr_result}(x, ...)
+
+\method{plot}{gmm_result}(x, ...)
 }
 \arguments{
 \item{object}{A fitted result object accepted by

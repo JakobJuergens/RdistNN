@@ -139,6 +139,11 @@ reference:
       - plot_weights
       - plot_overlap
       - plot_dashboard
+      - plot_conditioning
+      - plot_calibration
+      - plot_influence
+      - plot_tdnn_scales
+      - plot_tuning
       - autoplot.dnn_diagnostics
       - plot_data_estimates
       - plot_data_weights

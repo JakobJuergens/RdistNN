@@ -2,6 +2,34 @@
 
 ## RdistNN (development)
 
+### Plotting layer (Phase 3)
+
+- `autoplot()`/`plot()` methods for `plqr_result` (zero-referenced moment
+  facets with a beta/tau subtitle) and `gmm_result` (coefficient facets
+  with the model name); zero reference lines are now drawn for PLQR
+  moments as well as CATE effects.
+- `plot_conditioning()` for PLQR fits: smallest Gram eigenvalue and log10
+  condition number across targets with caution/ill-conditioned guides at
+  `cond_limits`.
+- `plot_calibration()` for PLQR fits: the weighted below-threshold share
+  against the nominal `tau` with a normal reference band scaled by the
+  local effective sample size; the indicator is stored on new fits and
+  can be supplied as `residuals` otherwise.
+- `plot_influence()` for CATE fits: per-observation weighted score
+  contributions against rank or distance, with the largest contributions
+  labelled by observation index.
+- `plot_tdnn_scales()` overlays a TDNN fit with internal single-scale
+  refits at `s1` and `s2`.
+- `plot_tuning()` for `np_result` and `cate_result`: refits across the
+  tuning grid's candidate kernel orders (always including the fitted `s`)
+  and plots estimate stability with the fitted order marked.
+- Fitted objects store the additional components these panels need:
+  training data on `np_dnn()`/`np_tdnn()` fits, and the below-threshold
+  indicator on `plqr_dnn()` fits.
+- Optional visual regression layer: vdiffr snapshots for the main panels,
+  opt-in via the `RDISTNN_VDIFFR=true` environment variable so platform
+  font differences cannot break CI.
+
 ### Plotting layer (Phase 2)
 
 - `plot_overlap()` for CATE fits: `type = "mass"` draws the weighted
