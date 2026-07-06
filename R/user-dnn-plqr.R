@@ -182,7 +182,10 @@ plqr_dnn <- function(
   if (identical(tuning_mode, "grid") && !is.null(s_arg)) {
     .abort_bad_arg(
       "tuning_mode",
-      "cannot be \"grid\" when explicit `s` is supplied; omit `s` and use `tuning`, or omit both to use the paper default tuning grid",
+      paste0(
+        "cannot be \"grid\" when explicit `s` is supplied; omit `s` ",
+        "and use `tuning`, or omit both to use the paper default tuning grid"
+      ),
       quoted = FALSE
     )
   }

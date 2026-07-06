@@ -153,7 +153,6 @@ reference:
     desc: diagnostics, print, summary, confint, and predict methods for package objects.
     contents:
       - candidate_fit
-      - candidate_fits
       - diagnostics
       - print.cate_result
       - print.gmm_result

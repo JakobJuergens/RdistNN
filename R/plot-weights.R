@@ -170,7 +170,10 @@ plot_weights <- function(object,
   if (!identical(type, "profile")) {
     .abort_bad_arg(
       "type",
-      "candidate comparisons are available only for type = \"profile\"; use candidate_fit() for target-specific kernel or cumulative views",
+      paste0(
+        "candidate comparisons are available only for type = \"profile\"; ",
+        "use candidate_fit() for target-specific kernel or cumulative views"
+      ),
       quoted = FALSE
     )
   }

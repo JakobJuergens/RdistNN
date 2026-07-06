@@ -55,7 +55,10 @@ plot_conditioning <- function(object, cond_limits = c(1e3, 1e6), ...) {
   dd <- .plot_diag_frame(object)
   if (!"gram_available" %in% names(dd) || !any(dd$gram_available)) {
     .abort_bad_state(
-      "no Gram conditioning diagnostics are available for this fit; the weighted residualized design could not be formed."
+      paste0(
+        "no Gram conditioning diagnostics are available for this fit; ",
+        "the weighted residualized design could not be formed."
+      )
     )
   }
   axis <- .plot_profile_axis(dd)
