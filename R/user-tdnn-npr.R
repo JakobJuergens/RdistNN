@@ -67,6 +67,8 @@
 #' @param return Optional extras in addition to the always-returned `mu`, `se`,
 #'   and `meta`.  Allowed values:
 #'   `c("W", "ranks", "ord", "dx", "y", "ess", "neighbors")`.
+#'   The `neighbors` extra returns the nearest observation for each target; it
+#'   is not the TDNN signed weight support.
 #'
 #' @return An object of class `tdnn_np_result` with components:
 #'   - `mu`: estimated local mean values at target points;

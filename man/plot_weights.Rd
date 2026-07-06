@@ -39,10 +39,12 @@ A ggplot object.
 \description{
 Three views of the localization weights stored on a fitted object.
 \code{type = "profile"} draws weight against rank with a guide at the exact
-support edge \code{n - s + 1}; \code{type = "cumulative"} draws the cumulative
-weight share with guides at 0.5 and 0.9 and markers at the top-1/5/10
-shares; \code{type = "kernel"} draws weight against stored distance — the
-effective data-driven kernel — with a guide at the rank-\code{s} radius.
+finite-population support edge \code{n - s + k} for DNN fits (\code{n - s + 1} in
+the paper-default \code{k = 1} case); \code{type = "cumulative"} draws the
+cumulative weight share with guides at 0.5 and 0.9 and markers at the
+top-1/5/10 shares; \code{type = "kernel"} draws weight against stored distance
+— the effective data-driven kernel — with a guide at the rank-\code{s} radius.
+The rank-\code{s} radius is a scale diagnostic, not the DNN support radius.
 }
 \details{
 When more than eight targets are stored, panels default to a subset

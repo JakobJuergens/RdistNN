@@ -318,14 +318,8 @@
   suppressWarnings(as.numeric(candidate_row$kappa[[1L]]))
 }
 
-.dnn_grid_top_k <- function(ctx) {
-  if (is.list(ctx) && !is.null(ctx$k)) {
-    return(.validate_scalar_int(ctx$k, "ctx$k"))
-  }
-  if (is.list(ctx) && is.list(ctx$meta) && !is.null(ctx$meta$k)) {
-    return(.validate_scalar_int(ctx$meta$k, "ctx$meta$k"))
-  }
-  NA_integer_
+.dnn_grid_diag_top_n <- function(default = 5L) {
+  .validate_scalar_int(default, "default")
 }
 
 .dnn_grid_check_candidates <- function(candidates) {
@@ -433,10 +427,13 @@
 }
 
 .dnn_grid_diagnostics_from_table <- function(tab, n, ctx) {
+  top_n <- .dnn_grid_diag_top_n()
   if (is.null(tab)) {
     return(data.frame(
       ess = NA_real_,
       max_weight = NA_real_,
+      top_n = as.integer(top_n),
+      top5_weight_share = NA_real_,
       top_share = NA_real_,
       degenerate = NA,
       stringsAsFactors = FALSE
@@ -446,15 +443,16 @@
   abs_tab <- abs(tab)
   denom <- sum(abs_tab)
   ess <- 1 / sum(tab^2)
-  k_top <- .dnn_grid_top_k(ctx)
   top_share <- NA_real_
-  if (!is.na(k_top) && denom > 0) {
-    top_n <- min(length(tab), as.integer(k_top))
-    top_share <- sum(abs_tab[seq_len(top_n)]) / denom
+  if (!is.na(top_n) && denom > 0) {
+    top_n_use <- min(length(tab), as.integer(top_n))
+    top_share <- sum(abs_tab[seq_len(top_n_use)]) / denom
   }
   data.frame(
     ess = ess,
     max_weight = max(abs_tab),
+    top_n = as.integer(top_n),
+    top5_weight_share = top_share,
     top_share = top_share,
     degenerate = ess >= 0.9 * n,
     stringsAsFactors = FALSE
@@ -529,17 +527,32 @@
   )
 }
 
-.dnn_grid_empty_diagnostics <- function() {
+.dnn_grid_empty_diagnostics <- function(ctx = NULL) {
+  top_n <- .dnn_grid_diag_top_n()
   data.frame(
     ess = NA_real_,
     max_weight = NA_real_,
+    top_n = as.integer(top_n),
+    top5_weight_share = NA_real_,
     top_share = NA_real_,
     degenerate = NA,
     stringsAsFactors = FALSE
   )
 }
 
+.dnn_grid_diag_field <- function(diagnostic, name, default) {
+  if (name %in% names(diagnostic)) {
+    return(diagnostic[[name]][[1L]])
+  }
+  default
+}
+
 .dnn_grid_attach_diagnostic_candidate <- function(diagnostic, candidate_row) {
+  top5 <- .dnn_grid_diag_field(
+    diagnostic,
+    "top5_weight_share",
+    .dnn_grid_diag_field(diagnostic, "top_share", NA_real_)
+  )
   data.frame(
     candidate_id = as.character(candidate_row$candidate_id[[1L]]),
     computed_key = as.character(candidate_row$computed_key[[1L]]),
@@ -547,7 +560,9 @@
     s = .dnn_grid_candidate_s(candidate_row),
     ess = diagnostic$ess[[1L]],
     max_weight = diagnostic$max_weight[[1L]],
-    top_share = diagnostic$top_share[[1L]],
+    top_n = .dnn_grid_diag_field(diagnostic, "top_n", .dnn_grid_diag_top_n()),
+    top5_weight_share = top5,
+    top_share = .dnn_grid_diag_field(diagnostic, "top_share", top5),
     degenerate = diagnostic$degenerate[[1L]],
     status = as.character(candidate_row$status[[1L]]),
     reason = as.character(candidate_row$reason[[1L]]),
@@ -652,7 +667,7 @@
       is.null(result$error)
 
     base_est <- if (ok) result$estimates else .dnn_grid_na_estimates(template)
-    base_diag <- if (ok) result$diagnostics else .dnn_grid_empty_diagnostics()
+    base_diag <- if (ok) result$diagnostics else .dnn_grid_empty_diagnostics(ctx = ctx)
     estimates[[i]] <- .dnn_grid_attach_estimate_candidate(base_est, candidate_row)
     diagnostics[[i]] <- .dnn_grid_attach_diagnostic_candidate(base_diag, candidate_row)
   }
@@ -757,6 +772,9 @@
       out$neighbors <- wt$ord[seq_len(k_eff), , drop = FALSE]
     } else if (!is.null(wt$ranks)) {
       out$neighbors <- apply(wt$ranks, 2L, function(r) order(r)[seq_len(k_eff)])
+      if (is.null(dim(out$neighbors))) {
+        out$neighbors <- matrix(out$neighbors, nrow = k_eff)
+      }
     }
   }
   out

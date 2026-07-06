@@ -19,7 +19,8 @@
 #' As in [weights_dnn()], exact DNN localization uses the full rank permutation
 #' at each target rather than an `s`-nearest-neighbor truncation. The `"fast"`
 #' jackknife option reuses the full-sample rank matrix and updates ranks under
-#' deletion.
+#' deletion. For exact DNN fits, the finite-population support edge is rank
+#' `n - s + k`, not rank `s`.
 #'
 #' `tuning_mode = "default"` evaluates only the default kernel order and
 #' preserves the ordinary scalar-fit return shape. `tuning_mode = "grid"`
@@ -28,7 +29,10 @@
 #' The pseudo-outcome and nuisance columns are resolved once before grid
 #' evaluation. The primary `tau`, `se`, `meta`, and optional extras such as
 #' `W`, `ranks`, `ess`, `psi`, and `nuisance` remain anchored to the default
-#' candidate. Full per-candidate weight matrices are not stored.
+#' candidate. Full per-candidate weight matrices are not stored. Candidate
+#' diagnostics include `ess`, `max_weight`, `top_n`, `top5_weight_share`, and
+#' `degenerate`; `top_n` is fixed at 5 and is independent of the estimator's
+#' `k`.
 #'
 #' @param data Data frame with covariates and optional nuisance columns.
 #' @param x_cols Names or indices of covariate columns in `data`.
@@ -70,6 +74,8 @@
 #' @param return Optional extras in addition to the always-returned `tau`, `se`,
 #'   and `meta`. Allowed values:
 #'   `c("W", "ranks", "ord", "dx", "psi", "nuisance", "ess", "neighbors", "tuning")`.
+#'   The `neighbors` extra returns the first `k` nearest observations used
+#'   inside each size-`s` subsample, not the full DNN weight support.
 #'
 #' @return An object of class `cate_result` with components:
 #'   - `tau`: estimated CATE values at target points;
@@ -78,7 +84,8 @@
 #'     column names propagated from the training data when available;
 #'   - `meta`: metadata (`n`, `m`, `p`, `k`, `s`, `method`, `distance`);
 #'   - `tuning_grid`: in grid mode, a list with `candidates`, `estimates`,
-#'     `diagnostics`, and `meta` tables;
+#'     `diagnostics`, and `meta` tables. Candidate diagnostics report
+#'     top-5 weight concentration separately from the estimator's `k`;
 #'   - optional extras requested via `return`.
 #'
 #' @seealso [weights_dnn()], [weights_matrix()], [score_cate_rho()],

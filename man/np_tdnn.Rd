@@ -72,7 +72,9 @@ evaluators.}
 
 \item{return}{Optional extras in addition to the always-returned \code{mu}, \code{se},
 and \code{meta}.  Allowed values:
-\code{c("W", "ranks", "ord", "dx", "y", "ess", "neighbors")}.}
+\code{c("W", "ranks", "ord", "dx", "y", "ess", "neighbors")}.
+The \code{neighbors} extra returns the nearest observation for each target; it
+is not the TDNN signed weight support.}
 }
 \value{
 An object of class \code{tdnn_np_result} with components:

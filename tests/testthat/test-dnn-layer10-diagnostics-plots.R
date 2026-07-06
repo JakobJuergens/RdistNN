@@ -1,7 +1,8 @@
 skip_if_not(
   all(vapply(
     c("np_dnn", "cate_dnn", "plqr_dnn", "new_tuning", "diagnostics",
-      "plot_estimates", "plot_weights", "plot_tuning", "plot_dashboard"),
+      "plot_estimates", "plot_weights", "plot_tuning", "plot_dashboard",
+      "rank_weight_dnn_exact"),
     exists, logical(1),
     mode = "function"
   )),
@@ -110,6 +111,19 @@ test_that("diagnostics exposes candidate-level grid diagnostics on request", {
   expect_equal(d_all$status, fit$tuning_grid$candidates$status)
   expect_true(any(d_all$status != "ok"))
   expect_true(all(is.na(d_all$n_eff[d_all$status != "ok"])))
+
+  ok_idx <- which(d_all$status == "ok")[[1L]]
+  cand <- fit$tuning_grid$candidates[
+    fit$tuning_grid$candidates$candidate_id == d_all$candidate_id[[ok_idx]],
+    ,
+    drop = FALSE
+  ]
+  tab <- rank_weight_dnn_exact(k = fit$meta$k, s = cand$s[[1L]])$table(fit$meta$n)
+  denom <- sum(abs(tab))
+  expected_top5 <- sum(abs(tab[seq_len(min(5L, length(tab)))])) / denom
+  estimator_k_share <- sum(abs(tab[seq_len(min(fit$meta$k, length(tab)))])) / denom
+  expect_equal(d_all$top5_weight_share[[ok_idx]], expected_top5, tolerance = 1e-12)
+  expect_false(isTRUE(all.equal(expected_top5, estimator_k_share)))
 
   p <- ggplot2::autoplot(d_all)
   expect_s3_class(p, "ggplot")

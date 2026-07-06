@@ -92,7 +92,9 @@ recomputes leave-one-out weights directly, and \code{"none"} skips SEs.}
 
 \item{return}{Optional extras in addition to the always-returned \code{tau}, \code{se},
 and \code{meta}. Allowed values:
-\code{c("W", "ranks", "ord", "dx", "psi", "nuisance", "ess", "neighbors", "tuning")}.}
+\code{c("W", "ranks", "ord", "dx", "psi", "nuisance", "ess", "neighbors", "tuning")}.
+The \code{neighbors} extra returns the first \code{k} nearest observations used
+inside each size-\code{s} subsample, not the full DNN weight support.}
 }
 \value{
 An object of class \code{cate_result} with components:
@@ -103,7 +105,8 @@ An object of class \code{cate_result} with components:
 column names propagated from the training data when available;
 \item \code{meta}: metadata (\code{n}, \code{m}, \code{p}, \code{k}, \code{s}, \code{method}, \code{distance});
 \item \code{tuning_grid}: in grid mode, a list with \code{candidates}, \code{estimates},
-\code{diagnostics}, and \code{meta} tables;
+\code{diagnostics}, and \code{meta} tables. Candidate diagnostics report
+top-5 weight concentration separately from the estimator's \code{k};
 \item optional extras requested via \code{return}.
 }
 }
@@ -128,7 +131,8 @@ and \code{pseudo_outcome}.
 As in \code{\link[=weights_dnn]{weights_dnn()}}, exact DNN localization uses the full rank permutation
 at each target rather than an \code{s}-nearest-neighbor truncation. The \code{"fast"}
 jackknife option reuses the full-sample rank matrix and updates ranks under
-deletion.
+deletion. For exact DNN fits, the finite-population support edge is rank
+\code{n - s + k}, not rank \code{s}.
 
 \code{tuning_mode = "default"} evaluates only the default kernel order and
 preserves the ordinary scalar-fit return shape. \code{tuning_mode = "grid"}
@@ -137,7 +141,10 @@ grid when \code{tuning} is omitted, and attaches a tidy \code{tuning_grid} paylo
 The pseudo-outcome and nuisance columns are resolved once before grid
 evaluation. The primary \code{tau}, \code{se}, \code{meta}, and optional extras such as
 \code{W}, \code{ranks}, \code{ess}, \code{psi}, and \code{nuisance} remain anchored to the default
-candidate. Full per-candidate weight matrices are not stored.
+candidate. Full per-candidate weight matrices are not stored. Candidate
+diagnostics include \code{ess}, \code{max_weight}, \code{top_n}, \code{top5_weight_share}, and
+\code{degenerate}; \code{top_n} is fixed at 5 and is independent of the estimator's
+\code{k}.
 }
 \examples{
 set.seed(1)

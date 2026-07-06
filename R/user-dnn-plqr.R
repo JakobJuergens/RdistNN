@@ -53,7 +53,8 @@
 #' As in [weights_dnn()], exact DNN localization uses the full rank permutation
 #' at each target rather than an `s`-nearest-neighbor truncation. The `"fast"`
 #' jackknife option reuses the full-sample rank matrix and updates ranks under
-#' deletion.
+#' deletion. For exact DNN fits, the finite-population support edge is rank
+#' `n - s + k`, not rank `s`.
 #'
 #' `tuning_mode = "default"` evaluates only the default kernel order and
 #' preserves the ordinary scalar-fit return shape. `tuning_mode = "grid"`
@@ -61,7 +62,9 @@
 #' grid when `tuning` is omitted, and attaches a tidy `tuning_grid` payload.
 #' The payload stores one long-form row per candidate, target, and PLQR moment
 #' component; the public `moment` and `se` matrix fields remain anchored to the
-#' default candidate.
+#' default candidate. Candidate diagnostics include `ess`, `max_weight`,
+#' `top_n`, `top5_weight_share`, and `degenerate`; `top_n` is fixed at 5 and
+#' is independent of the estimator's `k`.
 #'
 #' @param data Optional data frame containing covariates, regressors, outcome,
 #'   and nuisance columns.
@@ -111,6 +114,8 @@
 #' @param return Optional extras in addition to the always-returned `moment`,
 #'   `se`, `beta`, `tau`, and `meta`. Allowed values:
 #'   `c("W", "ranks", "ord", "dx", "g", "ess", "neighbors", "tuning")`.
+#'   The `neighbors` extra returns the first `k` nearest observations used
+#'   inside each size-`s` subsample, not the full DNN weight support.
 #'
 #' @return An object of class `plqr_result` with components:
 #'   - `moment`: matrix (`p_d x m`) of localized PLQR moments;
@@ -121,7 +126,8 @@
 #'     column names propagated from the training data when available;
 #'   - `meta`: metadata (`n`, `m`, `p`, `p_d`, `k`, `s`, `method`, `distance`);
 #'   - `tuning_grid`: in grid mode, a list with `candidates`, `estimates`,
-#'     `diagnostics`, and `meta` tables;
+#'     `diagnostics`, and `meta` tables. Candidate diagnostics report
+#'     top-5 weight concentration separately from the estimator's `k`;
 #'   - optional extras requested via `return`.
 #'
 #' @seealso [weights_dnn()], [score_plqr_component()], [plqr_demo_data()].

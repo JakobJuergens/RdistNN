@@ -163,7 +163,8 @@ plot_data_estimates.gmm_result <- function(object, level = 0.95, ...) {
 #' stored distance when `dx` is available and by descending weight otherwise;
 #' the two orderings coincide for monotone single-scale DNN weights, while
 #' two-scale (TDNN) fits should request `return = c("W", "dx")` for
-#' distance-based ranks.
+#' distance-based ranks. For exact DNN fits the finite-population support edge
+#' is rank `n - s + k`, not rank `s`; `s` is the subsample/localization order.
 #'
 #' @param object A fitted result object holding the weight matrix `W`
 #'   (stored by default via `return = c("W")`).

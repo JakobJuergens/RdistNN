@@ -155,6 +155,26 @@ test_that("return extras are populated consistently", {
   expect_true(all(out$neighbors >= 1 & out$neighbors <= nrow(d$X)))
 })
 
+test_that("neighbors extra is nearest-k, not the full DNN weight support", {
+  d <- .make_np_data(n = 36L, p = 2L, m = 2L)
+  k <- 1L
+  s <- 8L
+  out <- np_dnn(
+    X = d$X, X0 = d$X0, Y = d$y,
+    distance = "l2", method = "exact",
+    k = k, s = s, se = FALSE,
+    return = c("W", "ranks", "neighbors")
+  )
+  support_edge <- nrow(d$X) - s + k
+
+  expect_equal(nrow(out$neighbors), k)
+  for (j in seq_len(nrow(d$X0))) {
+    expect_equal(out$neighbors[, j], order(out$ranks[, j])[seq_len(k)])
+    expect_equal(sum(out$W[, j] > 0), support_edge)
+    expect_gt(sum(out$W[, j] > 0), nrow(out$neighbors))
+  }
+})
+
 test_that("input validation catches common misuse", {
   d <- .make_np_data(n = 20L, p = 2L, m = 2L)
   df <- data.frame(X1 = d$X[, 1], X2 = d$X[, 2], Y = d$y)

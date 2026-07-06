@@ -7,13 +7,14 @@
 }
 
 .pb_np_profile_fit <- function(n = 80L, m = 6L, se = TRUE,
-                               return = c("W"), seed = 51L) {
+                               return = c("W"), seed = 51L,
+                               k = 1L, s = 12L) {
   set.seed(seed)
   x_mat <- matrix(rnorm(n * 2L), n, 2L,
                   dimnames = list(NULL, c("X1", "X2")))
   y_vec <- x_mat[, 1L] + rnorm(n, sd = 0.3)
   X0 <- cbind(seq(-1, 1, length.out = m), 0)
-  np_dnn(X = x_mat, X0 = X0, Y = y_vec, k = 1L, s = 12L,
+  np_dnn(X = x_mat, X0 = X0, Y = y_vec, k = k, s = s,
          se = se, return = return)
 }
 
@@ -151,6 +152,22 @@ test_that("weight profile and cumulative views carry guides and captions", {
   expect_true("GeomHline" %in% geoms_cum)
   expect_true("GeomPoint" %in% geoms_cum)
   expect_identical(p_cum$labels$y, "Cumulative weight share")
+})
+
+test_that("weight profile guide uses exact DNN support edge for k > 1", {
+  skip_if_not_installed("ggplot2")
+  n <- 80L
+  k <- 3L
+  s <- 12L
+  fit <- .pb_np_profile_fit(
+    n = n, m = 2L, se = FALSE, return = c("W", "dx"), k = k, s = s
+  )
+  p <- plot_weights(fit, type = "profile")
+  geoms <- .pb_layer_geoms(p)
+  vl <- p$layers[[which(geoms == "GeomVline")[1L]]]
+
+  expect_identical(vl$data$xintercept, n - s + k)
+  expect_false(identical(vl$data$xintercept, n - s + 1L))
 })
 
 test_that("kernel view requires distances and marks the rank-s radius", {

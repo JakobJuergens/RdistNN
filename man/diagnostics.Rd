@@ -30,7 +30,9 @@ diagnostics(object, candidates = "default", ...)
 \item{candidates}{Candidate rows to report for grid fits. The default
 \code{"default"} preserves the per-target diagnostics table for the selected
 fit. Use \code{"all"} or a character vector of candidate ids to report
-candidate-level grid diagnostics from \code{object$tuning_grid}.}
+candidate-level grid diagnostics from \code{object$tuning_grid}. Candidate
+grid diagnostics include \code{top5_weight_share}; the cutoff is recorded as
+\code{top_n = 5} and is independent of the estimator's \code{k}.}
 
 \item{...}{Not used.}
 
@@ -42,7 +44,12 @@ An object of class \code{dnn_diagnostics}.
 \code{x}, invisibly.
 }
 \description{
-Returns a compact diagnostics table for supported fit objects.
+Returns a compact diagnostics table for supported fit objects. Per-target
+DNN diagnostics report fixed top-1, top-5, and top-10 weight concentration
+shares. Distance diagnostics such as \code{radius_rank_k} and \code{radius_rank_s}
+are ordinary nearest-rank scale summaries; \code{radius_rank_s} is not the DNN
+support radius. For exact DNN fits the finite-population support edge is
+rank \code{n - s + k}.
 }
 \examples{
 set.seed(1)

@@ -78,7 +78,9 @@ matrix, used as optimizer starts.}
 \item{ctx}{Optional context passed to distance and ranking components.}
 
 \item{return}{Optional extras:
-\code{c("W", "ranks", "ord", "dx", "g_obs", "omega", "jacobian", "ess", "neighbors", "tuning")}.}
+\code{c("W", "ranks", "ord", "dx", "g_obs", "omega", "jacobian", "ess", "neighbors", "tuning")}. The \code{neighbors} extra returns the first \code{k}
+nearest observations used inside each size-\code{s} subsample, not the full DNN
+weight support.}
 }
 \value{
 A \code{gmm_result} object with estimates, diagnostics, metadata, the
@@ -101,6 +103,10 @@ Two interfaces are supported.
 
 Nuisance quantities are not fit internally.  They must be supplied to the
 model through \code{data} or \code{model_data}.
+
+Exact DNN localization uses the full rank permutation at each target rather
+than an \code{s}-nearest-neighbor truncation. For exact DNN fits, the
+finite-population support edge is rank \code{n - s + k}, not rank \code{s}.
 }
 \examples{
 dgp <- sim_iv_data("dgp2_iv_homog_overid", n = 120, kx = 2, q = 2, seed = 1)

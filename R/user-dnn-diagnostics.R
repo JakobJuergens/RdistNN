@@ -221,6 +221,11 @@
   diag <- diag[order(diag$.candidate_order), , drop = FALSE]
   diag$.candidate_order <- NULL
   idx <- match(diag$candidate_id, selected$candidate_id)
+  top5 <- if ("top5_weight_share" %in% names(diag)) {
+    as.numeric(diag$top5_weight_share)
+  } else {
+    as.numeric(diag$top_share)
+  }
 
   meta <- object$meta
   out <- data.frame(
@@ -240,7 +245,7 @@
     n_eff = as.numeric(diag$ess),
     max_weight = as.numeric(diag$max_weight),
     top1_weight_share = rep(NA_real_, nrow(diag)),
-    top5_weight_share = as.numeric(diag$top_share),
+    top5_weight_share = top5,
     top10_weight_share = rep(NA_real_, nrow(diag)),
     n_nonzero_weight = rep(NA_integer_, nrow(diag)),
     distance_diagnostics_available = rep(FALSE, nrow(diag)),
@@ -258,14 +263,21 @@
 
 #' Compute diagnostics for fitted localized estimators
 #'
-#' Returns a compact diagnostics table for supported fit objects.
+#' Returns a compact diagnostics table for supported fit objects. Per-target
+#' DNN diagnostics report fixed top-1, top-5, and top-10 weight concentration
+#' shares. Distance diagnostics such as `radius_rank_k` and `radius_rank_s`
+#' are ordinary nearest-rank scale summaries; `radius_rank_s` is not the DNN
+#' support radius. For exact DNN fits the finite-population support edge is
+#' rank `n - s + k`.
 #'
 #' @param object A fitted estimator object, currently an object returned by
 #'   [np_dnn()], [cate_dnn()], or [plqr_dnn()].
 #' @param candidates Candidate rows to report for grid fits. The default
 #'   `"default"` preserves the per-target diagnostics table for the selected
 #'   fit. Use `"all"` or a character vector of candidate ids to report
-#'   candidate-level grid diagnostics from `object$tuning_grid`.
+#'   candidate-level grid diagnostics from `object$tuning_grid`. Candidate
+#'   grid diagnostics include `top5_weight_share`; the cutoff is recorded as
+#'   `top_n = 5` and is independent of the estimator's `k`.
 #' @param ... Not used.
 #' @return An object of class `dnn_diagnostics`.
 #' @name diagnostics

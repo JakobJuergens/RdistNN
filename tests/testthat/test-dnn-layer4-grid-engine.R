@@ -167,6 +167,8 @@ test_that("grid engine emits NA rows for skipped infeasible candidates", {
   expect_true(all(is.na(skipped_est$se)))
   expect_equal(skipped_diag$status, "infeasible")
   expect_true(is.na(skipped_diag$ess))
+  expect_equal(skipped_diag$top_n, 5L)
+  expect_true(is.na(skipped_diag$top5_weight_share))
   expect_true(is.na(skipped_diag$top_share))
 })
 
@@ -235,8 +237,38 @@ test_that("grid engine computes table diagnostics from the rank-weight table", {
 
   expect_equal(out$diagnostics$ess, 1 / sum(tab^2), tolerance = 1e-12)
   expect_equal(out$diagnostics$max_weight, max(abs(tab)), tolerance = 1e-12)
-  expect_equal(out$diagnostics$top_share, 0.8, tolerance = 1e-12)
+  expect_equal(out$diagnostics$top_n, 5L)
+  expect_equal(out$diagnostics$top5_weight_share, 1, tolerance = 1e-12)
+  expect_equal(out$diagnostics$top_share, out$diagnostics$top5_weight_share, tolerance = 1e-12)
   expect_false(out$diagnostics$degenerate)
+})
+
+test_that("grid engine diagnostic top share is independent of estimator k", {
+  ranks <- matrix(as.integer(seq_len(6L)), ncol = 1L)
+  candidates <- .layer4_candidates(
+    s_grid = 3L,
+    kappa_grid = 1,
+    default_s = 3L,
+    n = 6L,
+    k = 1L,
+    se = FALSE,
+    jackknife = "none"
+  )
+  tab <- c(0.4, 0.2, 0.1, 0.1, 0.1, 0.1)
+
+  out <- RdistNN:::.dnn_grid_eval(
+    candidates = candidates,
+    ranks = ranks,
+    weight_spec_fn = function(candidate_row) .layer4_fixed_table_spec(tab),
+    estimate_fn = .layer4_estimator(seq_len(6L)),
+    se_fn = NULL,
+    ctx = list(k = 1L)
+  )
+
+  expect_equal(out$diagnostics$top_n, 5L)
+  expect_equal(out$diagnostics$top5_weight_share, 0.9, tolerance = 1e-12)
+  expect_equal(out$diagnostics$top_share, out$diagnostics$top5_weight_share, tolerance = 1e-12)
+  expect_false(isTRUE(all.equal(out$diagnostics$top5_weight_share, tab[[1L]])))
 })
 
 test_that("grid engine falls back to rank_weight_eval_batch when no table is available", {
@@ -268,6 +300,7 @@ test_that("grid engine falls back to rank_weight_eval_batch when no table is ava
 
   expect_equal(out$estimates$estimate, as.numeric(crossprod(signal, expected_W)), tolerance = 1e-12)
   expect_true(all(is.na(out$diagnostics$ess)))
+  expect_true(all(is.na(out$diagnostics$top5_weight_share)))
   expect_true(all(is.na(out$diagnostics$top_share)))
 })
 

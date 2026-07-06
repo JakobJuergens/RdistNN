@@ -9,7 +9,7 @@
 #   - cross-extractor consistency (weights frame vs diagnostics frame),
 #   - CATE overlap and PLQR Gram diagnostic invariants.
 
-.pdc_np_fit <- function(n = 60L, s = 10L, se = TRUE, return = c("W"),
+.pdc_np_fit <- function(n = 60L, k = 1L, s = 10L, se = TRUE, return = c("W"),
                         X0 = rbind(c(0, 0), c(1, 0)), seed = 41L) {
   set.seed(seed)
   x_mat <- matrix(rnorm(n * 2L), n, 2L,
@@ -17,7 +17,7 @@
   y_vec <- x_mat[, 1L] + rnorm(n, sd = 0.3)
   np_dnn(
     X = x_mat, X0 = X0, Y = y_vec,
-    k = 1L, s = s, se = se, return = return
+    k = k, s = s, se = se, return = return
   )
 }
 
@@ -153,6 +153,24 @@ test_that("weight frame values are a permutation with exact zero tail", {
     expect_equal(dj$cum_share[n - s + 1L], 1)
     # First-rank weight is the DNN closed form s/n.
     expect_equal(dj$weight[1L], s / n)
+  }
+})
+
+test_that("weight frame exact support uses n - s + k, not first s ranks", {
+  n <- 60L
+  k <- 3L
+  s <- 10L
+  fit <- .pdc_np_fit(n = n, k = k, s = s, se = FALSE, return = c("W", "dx"))
+  dw <- plot_data_weights(fit)
+  support_edge <- n - s + k
+
+  for (j in seq_len(fit$meta$m)) {
+    dj <- dw[dw$target_id == j, ]
+    expect_identical(sum(dj$weight == 0), s - k)
+    expect_true(all(dj$weight[seq_len(support_edge)] > 0))
+    expect_true(all(dj$weight[(support_edge + 1L):n] == 0))
+    expect_equal(dj$cum_share[support_edge], 1)
+    expect_false(identical(support_edge, s))
   }
 })
 

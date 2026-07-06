@@ -48,7 +48,7 @@ NULL
   metrics <- c(
     n_eff = "n_eff",
     max_weight = "max weight",
-    top5_weight_share = "top weight share"
+    top5_weight_share = "top-5 weight share"
   )
   long <- do.call(rbind, lapply(names(metrics), function(col) {
     data.frame(

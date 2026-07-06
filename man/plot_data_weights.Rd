@@ -23,7 +23,8 @@ stored — the distance to the target. Ranks are assigned by ascending
 stored distance when \code{dx} is available and by descending weight otherwise;
 the two orderings coincide for monotone single-scale DNN weights, while
 two-scale (TDNN) fits should request \code{return = c("W", "dx")} for
-distance-based ranks.
+distance-based ranks. For exact DNN fits the finite-population support edge
+is rank \code{n - s + k}, not rank \code{s}; \code{s} is the subsample/localization order.
 }
 \examples{
 set.seed(1)

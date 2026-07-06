@@ -342,6 +342,10 @@
 #' Nuisance quantities are not fit internally.  They must be supplied to the
 #' model through `data` or `model_data`.
 #'
+#' Exact DNN localization uses the full rank permutation at each target rather
+#' than an `s`-nearest-neighbor truncation. For exact DNN fits, the
+#' finite-population support edge is rank `n - s + k`, not rank `s`.
+#'
 #' @param data Optional data frame containing covariates and model variables.
 #' @param x_cols Names or indices of covariate columns in `data`.
 #' @param X Numeric `n x p` covariate matrix for the matrix interface.
@@ -372,7 +376,9 @@
 #' @param ctx Optional context passed to distance and ranking components.
 #' @param return Optional extras:
 #'   `c("W", "ranks", "ord", "dx", "g_obs", "omega", "jacobian", "ess",
-#'   "neighbors", "tuning")`.
+#'   "neighbors", "tuning")`. The `neighbors` extra returns the first `k`
+#'   nearest observations used inside each size-`s` subsample, not the full DNN
+#'   weight support.
 #'
 #' @return A `gmm_result` object with estimates, diagnostics, metadata, the
 #'   `m x p` evaluation-point matrix `x0` (with covariate column names

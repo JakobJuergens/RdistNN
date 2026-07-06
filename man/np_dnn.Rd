@@ -80,7 +80,9 @@ recomputes leave-one-out weights directly, and \code{"none"} skips SEs.}
 
 \item{return}{Optional extras in addition to the always-returned \code{mu}, \code{se},
 and \code{meta}. Allowed values:
-\code{c("W", "ranks", "ord", "dx", "y", "ess", "neighbors", "tuning")}.}
+\code{c("W", "ranks", "ord", "dx", "y", "ess", "neighbors", "tuning")}.
+The \code{neighbors} extra returns the first \code{k} nearest observations used
+inside each size-\code{s} subsample, not the full DNN weight support.}
 }
 \value{
 An object of class \code{np_result} with components:
@@ -91,7 +93,8 @@ An object of class \code{np_result} with components:
 column names propagated from the training data when available;
 \item \code{meta}: metadata (\code{n}, \code{m}, \code{p}, \code{k}, \code{s}, \code{method}, \code{distance});
 \item \code{tuning_grid}: in grid mode, a list with \code{candidates}, \code{estimates},
-\code{diagnostics}, and \code{meta} tables;
+\code{diagnostics}, and \code{meta} tables. Candidate diagnostics report
+top-5 weight concentration separately from the estimator's \code{k};
 \item optional extras requested via \code{return}.
 }
 }
@@ -108,10 +111,10 @@ Two interfaces are supported.
 }
 
 For \code{method = "exact"}, DNN weights are computed from the full rank
-permutation at each target. In particular, for the paper-faithful \code{k = 1}
-case the exact support extends through rank \code{n - s + 1}; this is not an
-\code{s}-nearest-neighbor truncation. The \code{"fast"} jackknife option reuses the
-full-sample rank matrix and updates ranks under deletion.
+permutation at each target. The exact support extends through rank
+\code{n - s + k} (\code{n - s + 1} in the paper-faithful \code{k = 1} case); this is not
+an \code{s}-nearest-neighbor truncation. The \code{"fast"} jackknife option reuses
+the full-sample rank matrix and updates ranks under deletion.
 
 \code{tuning_mode = "default"} evaluates only the default kernel order and
 preserves the ordinary scalar-fit return shape. \code{tuning_mode = "grid"}
@@ -119,7 +122,9 @@ evaluates the feasible candidates in \code{tuning}, or the paper default tuning
 grid when \code{tuning} is omitted, and attaches a tidy \code{tuning_grid} payload.
 The primary \code{mu}, \code{se}, \code{meta}, and optional extras such as \code{W}, \code{ranks},
 \code{ess}, and \code{neighbors} remain anchored to the default candidate. Full
-per-candidate weight matrices are not stored.
+per-candidate weight matrices are not stored. Candidate diagnostics include
+\code{ess}, \code{max_weight}, \code{top_n}, \code{top5_weight_share}, and \code{degenerate};
+\code{top_n} is fixed at 5 and is independent of the estimator's \code{k}.
 }
 \examples{
 set.seed(1)

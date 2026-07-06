@@ -74,6 +74,8 @@ For exact DNN weights, the package uses the full rank permutation at each
 target. This is not an `s`-nearest-neighbor truncation. In rank order, the
 exact finite-population support is `j <= n - s + k`, and in particular
 `j <= n - s + 1` when `k = 1`.
+When requested, the `neighbors` extra reports the first `k` nearest
+observations, not the full DNN weight support.
 
 ## 2) Local Nonparametric Regression with `np_dnn()`
 

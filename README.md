@@ -32,13 +32,17 @@ DNN rank weights and generalized U-statistics.
 > Status: active research package. APIs may continue to evolve.
 
 For exact DNN weights, the package works with the full rank permutation
-at each target. In particular, exact single-scale DNN with `k = 1` has
-support through rank `n - s + 1`; it is not an `s`-nearest-neighbor
-truncation. The implementation also supports fixed top-`k` DNN kernels.
-Extending the fixed-`k` theory from the 1-NN derivation is essentially
-direct, but the current accompanying manuscript derivations are written
-for `k = 1`; use larger fixed `k` values as implementation-supported
-generalizations until that proof text is added.
+at each target. Exact single-scale DNN has finite-population support
+through rank `n - s + k`; in the paper-default `k = 1` case this is
+`n - s + 1`. Thus `s` is a subsample/localization order, not an
+`s`-nearest-neighbor truncation. The optional `neighbors` extra reports
+the first `k` nearest observations used inside each size-`s` subsample,
+not the full DNN weight support. The implementation also supports fixed
+top-`k` DNN kernels. Extending the fixed-`k` theory from the 1-NN
+derivation is essentially direct, but the current accompanying
+manuscript derivations are written for `k = 1`; use larger fixed `k`
+values as implementation-supported generalizations until that proof text
+is added.
 
 ## Installation
 

@@ -184,7 +184,8 @@ deviations:
   (`plot_weights(type = "profile")` and `type = "cumulative"`).
   *Questions: how fast do weights decay in rank; how concentrated is the
   estimate?*  Profile view: `geom_step(aes(rank, weight))`, vertical
-  guide at rank `n - s + 1` (support edge, exact zeros beyond).
+  guide at rank `n - s + k` for exact DNN fits (`n - s + 1` when `k = 1`),
+  the finite-population support edge with exact zeros beyond.
   Cumulative view: `geom_line(aes(rank, cum_share))`, horizontal guides
   at 0.5 and 0.9 with the crossing ranks annotated ("half the weight
   from the nearest r* points"), and points marking `top1/5/10` shares

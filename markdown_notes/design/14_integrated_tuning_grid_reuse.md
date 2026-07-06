@@ -465,7 +465,9 @@ Fact 4.4):
 | `s`           | integer   |                                                   |
 | `ess`         | numeric   | `1 / sum(tab^2)`; identical across targets        |
 | `max_weight`  | numeric   | `max(abs(tab))`                                   |
-| `top_share`   | numeric   | share of total absolute weight in the top `k` ranks (extend with further table functionals as needed) |
+| `top_n`       | integer   | rank-count used for the table concentration summary; fixed at `5`, independent of estimator `k` |
+| `top5_weight_share` | numeric | share of total absolute weight in the first five rank positions |
+| `top_share`   | numeric   | compatibility alias for `top5_weight_share`; do not interpret this as estimator-`k` share |
 | `degenerate`  | logical   | `ess >= 0.9 * n` (the scalar-path warning criterion) |
 
 Per-target, data-dependent diagnostics (CATE overlap, PLQR conditioning) are
@@ -549,7 +551,9 @@ Specification:
   provenance;
 - candidate-dependent extras that the parent fit carried (`W`, `ess`,
   `neighbors`) are **recomputed on demand** from the cached ranks and the
-  candidate's rank-weight table — O(nm), nothing stored;
+  candidate's rank-weight table — O(nm), nothing stored. Here `neighbors`
+  means the first estimator-`k` nearest observations, not the full rank-weight
+  support; for exact DNN support the rank edge is `n - s + k`;
 - candidate-independent components (`x0`, `psi`/`y`/`nuisance`,
   `ranks`/`ord`/`dx` extras, `.model` state) are carried over unchanged;
   sharing `.model` is what makes the view cheap and makes `predict()` work;

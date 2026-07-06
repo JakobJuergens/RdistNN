@@ -286,7 +286,9 @@
 #' The returned object has the same class as `object`, with primary estimates
 #' and standard errors taken from `object$tuning_grid`, candidate-dependent
 #' extras such as `W`, `ess`, and `neighbors` rebuilt from cached ranks when
-#' the parent carried them, and candidate-independent state carried over.
+#' the parent carried them, and candidate-independent state carried over. The
+#' rebuilt `neighbors` extra is the first `k` nearest observations, not the
+#' full DNN weight support.
 #'
 #' @param object A grid fit returned by [np_dnn()], [cate_dnn()], or
 #'   [plqr_dnn()] with

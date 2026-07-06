@@ -2,14 +2,42 @@
 # cumulative concentration, and the weight-vs-distance "effective kernel"
 # view. The data layer is plot_data_weights().
 
+.dnn_profile_support_edge <- function(object, n) {
+  meta <- object$meta
+  method <- if (!is.null(meta$method)) {
+    as.character(meta$method[[1L]])
+  } else {
+    NA_character_
+  }
+  if (!identical(method, "exact")) {
+    return(NA_integer_)
+  }
+
+  if (inherits(object, "tdnn_np_result")) {
+    if (is.null(meta$s1)) {
+      return(NA_integer_)
+    }
+    edge <- as.integer(n) - as.integer(meta$s1[[1L]]) + 1L
+    return(max(1L, min(as.integer(n), edge)))
+  }
+
+  if (is.null(meta$s) || is.null(meta$k)) {
+    return(NA_integer_)
+  }
+  edge <- as.integer(n) - as.integer(meta$s[[1L]]) + as.integer(meta$k[[1L]])
+  max(1L, min(as.integer(n), edge))
+}
+
 #' Plot DNN weight profiles, concentration, and effective kernels
 #'
 #' Three views of the localization weights stored on a fitted object.
 #' `type = "profile"` draws weight against rank with a guide at the exact
-#' support edge `n - s + 1`; `type = "cumulative"` draws the cumulative
-#' weight share with guides at 0.5 and 0.9 and markers at the top-1/5/10
-#' shares; `type = "kernel"` draws weight against stored distance — the
-#' effective data-driven kernel — with a guide at the rank-`s` radius.
+#' finite-population support edge `n - s + k` for DNN fits (`n - s + 1` in
+#' the paper-default `k = 1` case); `type = "cumulative"` draws the
+#' cumulative weight share with guides at 0.5 and 0.9 and markers at the
+#' top-1/5/10 shares; `type = "kernel"` draws weight against stored distance
+#' — the effective data-driven kernel — with a guide at the rank-`s` radius.
+#' The rank-`s` radius is a scale diagnostic, not the DNN support radius.
 #'
 #' When more than eight targets are stored, panels default to a subset
 #' (first, median effective sample size, last); override with `targets =`.
@@ -103,6 +131,7 @@ plot_weights <- function(object,
   col_args <- if (multi) list() else list(colour = .plot_col_single)
 
   s_meta <- object$meta$s
+  support_edge <- .dnn_profile_support_edge(object, n = n)
 
   if (type == "profile") {
     if (isTRUE(log_weights)) {
@@ -118,9 +147,9 @@ plot_weights <- function(object,
     if (signed && !isTRUE(log_weights)) {
       p <- p + ggplot2::geom_hline(yintercept = 0, linetype = "dashed")
     }
-    if (!is.null(s_meta)) {
+    if (!is.na(support_edge)) {
       p <- p + ggplot2::geom_vline(
-        xintercept = n - as.integer(s_meta) + 1L,
+        xintercept = support_edge,
         linetype = "dotted"
       )
     }

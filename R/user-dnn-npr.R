@@ -13,10 +13,10 @@
 #' 2. Matrix interface: pass `X`, one of `X0` or `x0`, and `Y`.
 #'
 #' For `method = "exact"`, DNN weights are computed from the full rank
-#' permutation at each target. In particular, for the paper-faithful `k = 1`
-#' case the exact support extends through rank `n - s + 1`; this is not an
-#' `s`-nearest-neighbor truncation. The `"fast"` jackknife option reuses the
-#' full-sample rank matrix and updates ranks under deletion.
+#' permutation at each target. The exact support extends through rank
+#' `n - s + k` (`n - s + 1` in the paper-faithful `k = 1` case); this is not
+#' an `s`-nearest-neighbor truncation. The `"fast"` jackknife option reuses
+#' the full-sample rank matrix and updates ranks under deletion.
 #'
 #' `tuning_mode = "default"` evaluates only the default kernel order and
 #' preserves the ordinary scalar-fit return shape. `tuning_mode = "grid"`
@@ -24,7 +24,9 @@
 #' grid when `tuning` is omitted, and attaches a tidy `tuning_grid` payload.
 #' The primary `mu`, `se`, `meta`, and optional extras such as `W`, `ranks`,
 #' `ess`, and `neighbors` remain anchored to the default candidate. Full
-#' per-candidate weight matrices are not stored.
+#' per-candidate weight matrices are not stored. Candidate diagnostics include
+#' `ess`, `max_weight`, `top_n`, `top5_weight_share`, and `degenerate`;
+#' `top_n` is fixed at 5 and is independent of the estimator's `k`.
 #'
 #' @param data Optional data frame containing covariates and outcome columns.
 #' @param x_cols Names or indices of covariate columns in `data`.
@@ -62,6 +64,8 @@
 #' @param return Optional extras in addition to the always-returned `mu`, `se`,
 #'   and `meta`. Allowed values:
 #'   `c("W", "ranks", "ord", "dx", "y", "ess", "neighbors", "tuning")`.
+#'   The `neighbors` extra returns the first `k` nearest observations used
+#'   inside each size-`s` subsample, not the full DNN weight support.
 #'
 #' @return An object of class `np_result` with components:
 #'   - `mu`: estimated local mean values at target points;
@@ -70,7 +74,8 @@
 #'     column names propagated from the training data when available;
 #'   - `meta`: metadata (`n`, `m`, `p`, `k`, `s`, `method`, `distance`);
 #'   - `tuning_grid`: in grid mode, a list with `candidates`, `estimates`,
-#'     `diagnostics`, and `meta` tables;
+#'     `diagnostics`, and `meta` tables. Candidate diagnostics report
+#'     top-5 weight concentration separately from the estimator's `k`;
 #'   - optional extras requested via `return`.
 #'
 #' @seealso [weights_dnn()], [np_demo_data()].

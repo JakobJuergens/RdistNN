@@ -56,7 +56,9 @@ A named list of scalar-style candidate views.
 The returned object has the same class as \code{object}, with primary estimates
 and standard errors taken from \code{object$tuning_grid}, candidate-dependent
 extras such as \code{W}, \code{ess}, and \code{neighbors} rebuilt from cached ranks when
-the parent carried them, and candidate-independent state carried over.
+the parent carried them, and candidate-independent state carried over. The
+rebuilt \code{neighbors} extra is the first \code{k} nearest observations, not the
+full DNN weight support.
 }
 \examples{
 set.seed(1)
