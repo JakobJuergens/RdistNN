@@ -1,6 +1,6 @@
 skip_if_not(
   all(vapply(
-    c("np_dnn", "new_tuning", "tuning_dnn_paper"),
+    c("np_dnn", "new_tuning", "tuning_dnn_paper", "rank_weight_dnn_exact"),
     exists, logical(1),
     mode = "function"
   )),
@@ -27,6 +27,47 @@ skip_if_not(
       )
     }
   )
+}
+
+.layer5_top_share <- function(n, k, s, top_n) {
+  tab <- rank_weight_dnn_exact(k = k, s = s)$table(n)
+  abs_tab <- abs(tab)
+  sum(abs_tab[seq_len(min(top_n, length(abs_tab)))]) / sum(abs_tab)
+}
+
+.layer5_expect_fixed_top5_diagnostics <- function(grid) {
+  diag <- grid$tuning_grid$diagnostics
+  expect_true(all(c("top_n", "top5_weight_share", "top_share") %in% names(diag)))
+  expect_equal(diag$top_n, rep(5L, nrow(diag)))
+
+  ok_idx <- which(diag$status == "ok")
+  expect_gt(length(ok_idx), 0L)
+  expect_equal(diag$top5_weight_share[ok_idx], diag$top_share[ok_idx], tolerance = 1e-12)
+
+  differs_from_estimator_k <- logical(length(ok_idx))
+  for (pos in seq_along(ok_idx)) {
+    i <- ok_idx[[pos]]
+    cand <- grid$tuning_grid$candidates[
+      grid$tuning_grid$candidates$candidate_id == diag$candidate_id[[i]],
+      ,
+      drop = FALSE
+    ]
+    expected_top5 <- .layer5_top_share(
+      n = grid$tuning_grid$meta$n,
+      k = grid$tuning_grid$meta$k,
+      s = cand$s[[1L]],
+      top_n = 5L
+    )
+    estimator_k_share <- .layer5_top_share(
+      n = grid$tuning_grid$meta$n,
+      k = grid$tuning_grid$meta$k,
+      s = cand$s[[1L]],
+      top_n = grid$tuning_grid$meta$k
+    )
+    expect_equal(diag$top5_weight_share[[i]], expected_top5, tolerance = 1e-12)
+    differs_from_estimator_k[[pos]] <- !isTRUE(all.equal(expected_top5, estimator_k_share))
+  }
+  expect_true(any(differs_from_estimator_k))
 }
 
 test_that("np_dnn grid mode preserves default-candidate fields and extras", {
@@ -93,6 +134,48 @@ test_that("np_dnn grid mode candidate rows match separate scalar fits", {
     dup$estimate[dup$candidate_id == "kappa_1p25"],
     tolerance = 0
   )
+})
+
+test_that("np_dnn grid diagnostics expose fixed top-5 shares independent of estimator k", {
+  d <- .layer5_np_data(n = 40L, m = 3L, seed = 5509L)
+  grid <- np_dnn(
+    X = d$X, X0 = d$X0, Y = d$y,
+    method = "exact", k = 2L,
+    tuning = .layer5_np_tuning(default_s = 5L, s_grid = c(2L, 5L, 5L, 7L)),
+    tuning_mode = "grid",
+    se = FALSE,
+    return = character(0)
+  )
+
+  .layer5_expect_fixed_top5_diagnostics(grid)
+})
+
+test_that("np_dnn grid mode computes s = n candidates when no jackknife is requested", {
+  n <- 34L
+  k <- 2L
+  d <- .layer5_np_data(n = n, m = 3L, seed = 5510L)
+  grid <- np_dnn(
+    X = d$X, X0 = d$X0, Y = d$y,
+    method = "exact", k = k,
+    tuning = .layer5_np_tuning(default_s = 5L, s_grid = c(2L, 5L, n, n)),
+    tuning_mode = "grid",
+    se = FALSE,
+    return = character(0)
+  )
+
+  s_n_ids <- grid$tuning_grid$candidates$candidate_id[grid$tuning_grid$candidates$s == n]
+  expect_length(s_n_ids, 2L)
+  expect_true(all(grid$tuning_grid$candidates$status[grid$tuning_grid$candidates$s == n] == "ok"))
+
+  s_n_est <- grid$tuning_grid$estimates[grid$tuning_grid$estimates$candidate_id %in% s_n_ids, ]
+  expect_true(all(is.finite(s_n_est$estimate)))
+  expect_true(all(is.na(s_n_est$se)))
+
+  s_n_diag <- grid$tuning_grid$diagnostics[grid$tuning_grid$diagnostics$candidate_id %in% s_n_ids, ]
+  expect_equal(s_n_diag$ess, rep(k, nrow(s_n_diag)), tolerance = 1e-12)
+  expect_equal(s_n_diag$max_weight, rep(1 / k, nrow(s_n_diag)), tolerance = 1e-12)
+  expect_equal(s_n_diag$top5_weight_share, rep(1, nrow(s_n_diag)), tolerance = 1e-12)
+  expect_equal(unique(s_n_diag$computed_key), sprintf("s_%d", n))
 })
 
 test_that("np_dnn grid mode rejects explicit s and can use the paper default grid", {

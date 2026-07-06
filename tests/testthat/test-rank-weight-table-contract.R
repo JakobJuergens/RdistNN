@@ -75,6 +75,22 @@ test_that("DNN rank-weight specs expose validated tables matching existing evalu
     ref_table = rank_weight_dnn_asymp(k = 2L, s = 5L, normalize = FALSE)$eval(seq_len(n)),
     ref_one = function(r) rank_weight_dnn_asymp(k = 2L, s = 5L, normalize = FALSE)$eval(r)
   )
+
+  .layer1_expect_table_contract(
+    spec = rank_weight_dnn_asymp(k = 4L, s = 4L, normalize = TRUE),
+    n = n,
+    R = R,
+    ref_table = rank_weight_dnn_asymp(k = 4L, s = 4L, normalize = TRUE)$eval(seq_len(n)),
+    ref_one = function(r) rank_weight_dnn_asymp(k = 4L, s = 4L, normalize = TRUE)$eval(r)
+  )
+
+  .layer1_expect_table_contract(
+    spec = rank_weight_dnn_asymp(k = 2L, s = n, normalize = TRUE),
+    n = n,
+    R = R,
+    ref_table = rank_weight_dnn_asymp(k = 2L, s = n, normalize = TRUE)$eval(seq_len(n)),
+    ref_one = function(r) rank_weight_dnn_asymp(k = 2L, s = n, normalize = TRUE)$eval(r)
+  )
 })
 
 test_that("TDNN rank-weight specs expose validated tables matching existing evaluators", {

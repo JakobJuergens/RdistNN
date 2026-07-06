@@ -1,6 +1,9 @@
 skip_if_not(
   all(vapply(
-    c("plqr_dnn", "new_tuning", "tuning_dnn_paper", "candidate_fit", "candidate_fits"),
+    c(
+      "plqr_dnn", "new_tuning", "tuning_dnn_paper",
+      "candidate_fit", "candidate_fits", "rank_weight_dnn_exact"
+    ),
     exists, logical(1),
     mode = "function"
   )),
@@ -51,6 +54,47 @@ skip_if_not(
     beta = d$beta, tau = d$tau, X0 = d$X0,
     ...
   )
+}
+
+.layer9_top_share <- function(n, k, s, top_n) {
+  tab <- rank_weight_dnn_exact(k = k, s = s)$table(n)
+  abs_tab <- abs(tab)
+  sum(abs_tab[seq_len(min(top_n, length(abs_tab)))]) / sum(abs_tab)
+}
+
+.layer9_expect_fixed_top5_diagnostics <- function(grid) {
+  diag <- grid$tuning_grid$diagnostics
+  expect_true(all(c("top_n", "top5_weight_share", "top_share") %in% names(diag)))
+  expect_equal(diag$top_n, rep(5L, nrow(diag)))
+
+  ok_idx <- which(diag$status == "ok")
+  expect_gt(length(ok_idx), 0L)
+  expect_equal(diag$top5_weight_share[ok_idx], diag$top_share[ok_idx], tolerance = 1e-12)
+
+  differs_from_estimator_k <- logical(length(ok_idx))
+  for (pos in seq_along(ok_idx)) {
+    i <- ok_idx[[pos]]
+    cand <- grid$tuning_grid$candidates[
+      grid$tuning_grid$candidates$candidate_id == diag$candidate_id[[i]],
+      ,
+      drop = FALSE
+    ]
+    expected_top5 <- .layer9_top_share(
+      n = grid$tuning_grid$meta$n,
+      k = grid$tuning_grid$meta$k,
+      s = cand$s[[1L]],
+      top_n = 5L
+    )
+    estimator_k_share <- .layer9_top_share(
+      n = grid$tuning_grid$meta$n,
+      k = grid$tuning_grid$meta$k,
+      s = cand$s[[1L]],
+      top_n = grid$tuning_grid$meta$k
+    )
+    expect_equal(diag$top5_weight_share[[i]], expected_top5, tolerance = 1e-12)
+    differs_from_estimator_k[[pos]] <- !isTRUE(all.equal(expected_top5, estimator_k_share))
+  }
+  expect_true(any(differs_from_estimator_k))
 }
 
 .layer9_value_matrix <- function(rows, value_col, p_d, m) {
@@ -159,6 +203,20 @@ test_that("plqr_dnn grid mode candidate rows match separate scalar fits", {
     dup$se[dup$candidate_id == "kappa_1p25"],
     tolerance = 0
   )
+})
+
+test_that("plqr_dnn grid diagnostics expose fixed top-5 shares independent of estimator k", {
+  d <- .layer9_plqr_case(n = 44L, m = 3L, seed = 9914L)
+  grid <- .layer9_do_plqr(
+    d,
+    method = "exact", k = 2L,
+    tuning = .layer9_plqr_tuning(default_s = 5L, s_grid = c(2L, 5L, 5L, 7L)),
+    tuning_mode = "grid",
+    se = FALSE,
+    return = character(0)
+  )
+
+  .layer9_expect_fixed_top5_diagnostics(grid)
 })
 
 test_that("candidate_fit reconstructs PLQR candidate views", {

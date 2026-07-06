@@ -321,6 +321,31 @@ test_that("NA-index error is distinct from non-finite-index error", {
   expect_match(msg_inf, "non-finite", ignore.case = TRUE)
 })
 
+test_that("data-frame covariate values distinguish NA and non-finite errors", {
+  d <- .make_np_iface_data()
+  base <- function(df) {
+    tryCatch(
+      np_dnn(
+        data = df, x_cols = d$x_cols, y_col = "Y",
+        X0 = d$X0, k = 2L, s = 3L, se = FALSE
+      ),
+      error = conditionMessage
+    )
+  }
+
+  df_na <- d$df
+  df_na$X1[2L] <- NA_real_
+  df_inf <- d$df
+  df_inf$X1[2L] <- Inf
+
+  msg_na <- base(df_na)
+  msg_inf <- base(df_inf)
+
+  expect_match(msg_na, "X.*NA", ignore.case = TRUE)
+  expect_match(msg_inf, "X.*non-finite", ignore.case = TRUE)
+  expect_false(identical(msg_na, msg_inf))
+})
+
 # ============================================================================
 # 11. Missing column names produce informative errors
 # ============================================================================

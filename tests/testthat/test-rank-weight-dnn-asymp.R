@@ -41,6 +41,24 @@ test_that("[edge] s = 1, k = 1 yields uniform weights exactly", {
   expect_equal(out$w, out$w_rank[ranks], tolerance = 1e-12) # was tolerance = 0
 })
 
+test_that("[edge] k = s yields uniform asymptotic DNN weights", {
+  n <- 37L
+  for (s in c(2L, 5L, 11L)) {
+    ranks <- sample.int(n)
+    out_false <- dnn_weights_asymp_full_from_ranks(
+      ranks, k = s, s = s, normalize = FALSE
+    )
+    out_true <- dnn_weights_asymp_full_from_ranks(
+      ranks, k = s, s = s, normalize = TRUE
+    )
+
+    expect_equal(out_false$w_rank, rep(1 / n, n), tolerance = 1e-12)
+    expect_equal(out_false$w, rep(1 / n, n), tolerance = 1e-12)
+    expect_equal(out_true$w_rank, out_false$w_rank, tolerance = 1e-12)
+    expect_equal(out_true$w, out_false$w, tolerance = 1e-12)
+  }
+})
+
 
 test_that("[edge] k = 1 produces (near) monotone nonincreasing weights in rank", {
   # With k=1, w_rank[j] are Beta(1, s)-bin increments over equal bins; they should decrease with j.

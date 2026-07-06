@@ -1,6 +1,9 @@
 skip_if_not(
   all(vapply(
-    c("np_dnn", "cate_dnn", "new_tuning", "tuning_dnn_paper", "diagnostics"),
+    c(
+      "np_dnn", "cate_dnn", "new_tuning", "tuning_dnn_paper",
+      "diagnostics", "candidate_fit", "candidate_fits"
+    ),
     exists, logical(1),
     mode = "function"
   )),
@@ -87,6 +90,70 @@ test_that("candidate_fit reconstructs NP candidate views equivalent to scalar fi
   expect_equal(default_view$W, fit$W, tolerance = 0)
 })
 
+test_that("candidate_fit preserves matrix extras for single-target x0 views", {
+  d <- .layer7_np_case(n = 35L, m = 1L, seed = 7715L)
+  x0 <- as.numeric(d$X0[1L, ])
+  tun <- .layer7_tuning(default_s = 4L, s_grid = c(2L, 4L, 7L))
+  fit <- np_dnn(
+    X = d$X, x0 = x0, Y = d$y,
+    method = "exact", k = 1L, tuning = tun, tuning_mode = "grid",
+    se = FALSE,
+    return = c("W", "ranks", "ord", "dx", "ess", "neighbors", "y")
+  )
+
+  cand <- fit$tuning_grid$candidates[fit$tuning_grid$candidates$candidate_id == "kappa_1p5", ]
+  view <- candidate_fit(fit, cand$candidate_id)
+  ref <- np_dnn(
+    X = d$X, x0 = x0, Y = d$y,
+    method = "exact", k = 1L, s = cand$s,
+    se = FALSE,
+    return = c("W", "ranks", "ord", "dx", "ess", "neighbors", "y")
+  )
+
+  .layer7_compare_np(view, ref)
+  expect_equal(dim(view$x0), c(1L, ncol(d$X)))
+  expect_equal(dim(view$W), c(nrow(d$X), 1L))
+  expect_equal(dim(view$ranks), c(nrow(d$X), 1L))
+  expect_equal(dim(view$ord), c(nrow(d$X), 1L))
+  expect_equal(dim(view$dx), c(nrow(d$X), 1L))
+  expect_equal(dim(view$neighbors), c(1L, 1L))
+  expect_length(view$ess, 1L)
+  expect_length(view$mu, 1L)
+  expect_equal(view$neighbors[1L, 1L], order(view$ranks[, 1L])[[1L]])
+  expect_equal(sum(view$W[, 1L] > 0), nrow(d$X) - cand$s[[1L]] + 1L)
+})
+
+test_that("candidate_fit keeps nearest-k neighbors distinct from DNN support", {
+  d <- .layer7_np_case(n = 42L, m = 4L, seed = 7714L)
+  k <- 2L
+  tun <- .layer7_tuning(default_s = 5L, s_grid = c(3L, 5L, 8L))
+  fit <- np_dnn(
+    X = d$X, X0 = d$X0, Y = d$y,
+    method = "exact", k = k, tuning = tun, tuning_mode = "grid",
+    se = FALSE,
+    return = c("W", "ranks", "neighbors")
+  )
+
+  cand <- fit$tuning_grid$candidates[fit$tuning_grid$candidates$candidate_id == "kappa_1p5", ]
+  view <- candidate_fit(fit, cand$candidate_id)
+  ref <- np_dnn(
+    X = d$X, X0 = d$X0, Y = d$y,
+    method = "exact", k = k, s = cand$s,
+    se = FALSE,
+    return = c("W", "ranks", "neighbors")
+  )
+
+  support_edge <- nrow(d$X) - cand$s[[1L]] + k
+  expect_equal(view$W, ref$W, tolerance = 1e-12)
+  expect_equal(view$neighbors, ref$neighbors, tolerance = 0)
+  expect_equal(dim(view$neighbors), c(k, nrow(d$X0)))
+  for (j in seq_len(nrow(d$X0))) {
+    expect_equal(view$neighbors[, j], order(view$ranks[, j])[seq_len(k)])
+    expect_equal(sum(view$W[, j] > 0), support_edge)
+    expect_gt(sum(view$W[, j] > 0), nrow(view$neighbors))
+  }
+})
+
 test_that("candidate_fit reconstructs CATE candidate views and methods work", {
   d <- .make_df_data(n = 44L, p = 2L, m = 3L, seed = 7711L)
   tun <- .layer7_tuning()
@@ -142,6 +209,33 @@ test_that("candidate_fits is a named list matching repeated candidate_fit calls"
   subset_views <- candidate_fits(fit, candidates = ids[c(3L, 1L)])
   expect_equal(names(subset_views), ids[c(3L, 1L)])
   expect_equal(subset_views[[1L]], candidate_fit(fit, ids[[3L]]))
+})
+
+test_that("candidate_fit does not attach optional extras absent from the parent fit", {
+  d <- .layer7_np_case(seed = 7716L)
+  fit <- np_dnn(
+    X = d$X, X0 = d$X0, Y = d$y,
+    method = "exact", k = 1L,
+    tuning = .layer7_tuning(), tuning_mode = "grid",
+    se = FALSE,
+    return = character(0)
+  )
+
+  cand <- fit$tuning_grid$candidates[fit$tuning_grid$candidates$candidate_id == "kappa_1p5", ]
+  view <- candidate_fit(fit, cand$candidate_id)
+  ref <- np_dnn(
+    X = d$X, X0 = d$X0, Y = d$y,
+    method = "exact", k = 1L, s = cand$s,
+    se = FALSE,
+    return = character(0)
+  )
+
+  expect_equal(view$mu, ref$mu, tolerance = 1e-12)
+  expect_null(view$se)
+  expect_equal(view$meta$s, cand$s[[1L]])
+  expect_equal(view$meta$candidate_id, cand$candidate_id)
+  expect_null(view$tuning_grid)
+  expect_false(any(c("W", "ranks", "ord", "dx", "ess", "neighbors", "y") %in% names(view)))
 })
 
 test_that("candidate_fit errors are actionable", {

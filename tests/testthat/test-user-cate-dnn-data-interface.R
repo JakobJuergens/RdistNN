@@ -213,6 +213,32 @@ test_that("data-frame API distinguishes NA vs non-finite treatment diagnostics",
   )
 })
 
+test_that("data-frame API distinguishes NA vs non-finite covariate diagnostics", {
+  d <- .make_df_data(seed = 21L)
+  base <- function(df) {
+    tryCatch(
+      cate_dnn(
+        data = df, x_cols = d$x_cols, y_col = "Y", t_col = "D",
+        m_col = "m_oracle", e_col = "e_oracle",
+        X0 = d$X0, k = 2L, s = 3L, se = FALSE
+      ),
+      error = conditionMessage
+    )
+  }
+
+  df_na <- d$df
+  df_na[[d$x_cols[[1L]]]][2L] <- NA_real_
+  df_inf <- d$df
+  df_inf[[d$x_cols[[1L]]]][2L] <- Inf
+
+  msg_na <- base(df_na)
+  msg_inf <- base(df_inf)
+
+  expect_match(msg_na, "X.*NA", ignore.case = TRUE)
+  expect_match(msg_inf, "X.*non-finite", ignore.case = TRUE)
+  expect_false(identical(msg_na, msg_inf))
+})
+
 test_that("data-frame API distinguishes NA vs non-finite x_cols index diagnostics", {
   d <- .make_df_data(seed = 29L)
 

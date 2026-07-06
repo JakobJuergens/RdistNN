@@ -175,6 +175,35 @@ test_that("neighbors extra is nearest-k, not the full DNN weight support", {
   }
 })
 
+test_that("exact DNN collapses to equal nearest-k weights only at s = n", {
+  set.seed(125)
+  d <- .make_np_data(n = 30L, p = 2L, m = 3L)
+  k <- 3L
+
+  boundary <- np_dnn(
+    X = d$X, X0 = d$X0, Y = d$y,
+    distance = "l2", method = "exact",
+    k = k, s = nrow(d$X), se = FALSE,
+    return = c("W", "ranks", "neighbors")
+  )
+  interior <- np_dnn(
+    X = d$X, X0 = d$X0, Y = d$y,
+    distance = "l2", method = "exact",
+    k = k, s = 8L, se = FALSE,
+    return = "W"
+  )
+
+  for (j in seq_len(nrow(d$X0))) {
+    nearest <- order(boundary$ranks[, j])[seq_len(k)]
+    positive <- which(boundary$W[, j] > 0)
+    expect_equal(sort(positive), sort(nearest))
+    expect_equal(boundary$W[nearest, j], rep(1 / k, k), tolerance = 1e-12)
+    expect_equal(boundary$mu[[j]], mean(d$y[nearest]), tolerance = 1e-12)
+    expect_equal(boundary$neighbors[, j], nearest)
+    expect_gt(sum(interior$W[, j] > 0), k)
+  }
+})
+
 test_that("input validation catches common misuse", {
   d <- .make_np_data(n = 20L, p = 2L, m = 2L)
   df <- data.frame(X1 = d$X[, 1], X2 = d$X[, 2], Y = d$y)
@@ -277,6 +306,39 @@ test_that("NA and non-finite Y values produce informative errors (matrix API)", 
     error = conditionMessage
   )
   expect_false(identical(msg_na, msg_inf))
+})
+
+test_that("np_dnn surfaces malformed custom distance outputs", {
+  skip_if_not(exists("new_distance"), "new_distance() not found")
+  d <- .make_np_data(n = 18L, p = 2L, m = 2L)
+
+  bad_shape <- new_distance(
+    name = "np_bad_shape_distance",
+    eval_batch = function(X, X0, ctx = NULL) rep(0, nrow(X) * nrow(X0))
+  )
+  expect_error(
+    np_dnn(
+      X = d$X, X0 = d$X0, Y = d$y,
+      distance = bad_shape, k = 1L, s = 2L, se = FALSE
+    ),
+    "finite numeric matrix of shape"
+  )
+
+  bad_finite <- new_distance(
+    name = "np_bad_finite_distance",
+    eval_batch = function(X, X0, ctx = NULL) {
+      out <- matrix(0, nrow(X), nrow(X0))
+      out[1L, 1L] <- Inf
+      out
+    }
+  )
+  expect_error(
+    np_dnn(
+      X = d$X, X0 = d$X0, Y = d$y,
+      distance = bad_finite, k = 1L, s = 2L, se = FALSE
+    ),
+    "contains non-finite values"
+  )
 })
 
 test_that("np_dnn warns on unknown return values", {

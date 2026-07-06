@@ -259,8 +259,14 @@ test_that("return= extras: ranks/ord/dx, psi, ess, neighbors are populated corre
   expect_true(all(out$ess > 0))
 
   skip_if_not("neighbors" %in% names(out), "neighbors not returned")
-  expect_equal(dim(out$neighbors)[2], nrow(dat$X0))
+  expect_equal(dim(out$neighbors), c(out$meta$k, nrow(dat$X0)))
   expect_true(all(out$neighbors >= 1 & out$neighbors <= nrow(dat$X)))
+  support_edge <- nrow(dat$X) - out$meta$s + out$meta$k
+  for (j in seq_len(nrow(dat$X0))) {
+    expect_equal(out$neighbors[, j], order(out$ranks[, j])[seq_len(out$meta$k)])
+    expect_equal(sum(out$W[, j] > 0), support_edge)
+    expect_gt(sum(out$W[, j] > 0), nrow(out$neighbors))
+  }
 })
 
 test_that("error handling: both X0 and x0 provided; bad shapes; missing pseudo/nuisance", {

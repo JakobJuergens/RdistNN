@@ -100,7 +100,14 @@
 }
 
 .validate_matrix_nonempty <- function(x, arg = "X") {
-  x_mat <- .validate_matrix(x, arg = arg, min_rows = 0L, min_cols = 1L, numeric = TRUE)
+  x_mat <- .validate_matrix(
+    x,
+    arg = arg,
+    min_rows = 0L,
+    min_cols = 1L,
+    numeric = TRUE,
+    finite = TRUE
+  )
   if (ncol(x_mat) == 0L) {
     .abort_bad_arg(arg, "must have at least one column", quoted = FALSE)
   }

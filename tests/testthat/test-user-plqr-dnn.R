@@ -358,6 +358,12 @@ test_that("return extras are populated consistently for plqr_dnn", {
   expect_equal(out$ess, 1 / colSums(out$W^2), tolerance = 1e-12)
   expect_equal(dim(out$neighbors), c(3L, nrow(d$X0)))
   expect_true(all(out$neighbors >= 1 & out$neighbors <= nrow(d$X)))
+  support_edge <- nrow(d$X) - out$meta$s + out$meta$k
+  for (j in seq_len(nrow(d$X0))) {
+    expect_equal(out$neighbors[, j], order(out$ranks[, j])[seq_len(out$meta$k)])
+    expect_equal(sum(out$W[, j] > 0), support_edge)
+    expect_gt(sum(out$W[, j] > 0), nrow(out$neighbors))
+  }
 })
 
 test_that("x0 path matches corresponding single target from X0", {
@@ -578,7 +584,7 @@ test_that("plqr_dnn matrix API distinguishes NA vs non-finite diagnostics", {
       beta = d$beta, tau = d$tau, X0 = d$X0,
       k = 1L, s = 2L, se = FALSE
     ),
-    "m_D\\(X\\).*non-finite",
+    "mD.*non-finite",
     ignore.case = TRUE
   )
 
