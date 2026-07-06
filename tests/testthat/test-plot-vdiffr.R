@@ -42,6 +42,25 @@ test_that("visual baselines for the core panels", {
   vdiffr::expect_doppelganger("diagnostics facets", ggplot2::autoplot(diagnostics(fit)))
   vdiffr::expect_doppelganger("influence", plot_influence(fit, targets = 3L))
 
+  grid_tuning <- new_tuning(
+    name = "vdiffr_grid",
+    eval = function(...) list(s = 15L, meta = list(kappa = 1)),
+    eval_grid = function(...) data.frame(
+      kappa = c(0.75, 1, 1.25),
+      s = c(10L, 15L, 20L),
+      stringsAsFactors = FALSE
+    )
+  )
+  fit_grid <- cate_dnn(
+    data = df, x_cols = c("X1", "X2"), y_col = "Y", t_col = "T",
+    e_col = "e", m0_col = "m0", m1_col = "m1",
+    X0 = X0, k = 1L, tuning = grid_tuning, tuning_mode = "grid",
+    se = TRUE, return = c("W", "dx", "ranks")
+  )
+  vdiffr::expect_doppelganger("grid candidate estimates", plot_estimates(fit_grid, candidates = "all"))
+  vdiffr::expect_doppelganger("grid candidate diagnostics", ggplot2::autoplot(diagnostics(fit_grid, candidates = "all")))
+  vdiffr::expect_doppelganger("grid tuning sweep", plot_tuning(fit_grid))
+
   demo <- plqr_demo_data(n = 90L, p = 2L, p_d = 2L, tau = 0.5, seed = 7)
   dfp <- demo$data
   fit_plqr <- plqr_dnn(

@@ -203,7 +203,7 @@ test_that("plot_tdnn_scales overlays refits that match manual estimates", {
   expect_equal(p_args$data$estimate, p$data$estimate)
 })
 
-test_that("plot_tuning refits across the candidate grid and marks the fit", {
+test_that("plot_tuning evaluates candidate grids and marks the fit", {
   skip_if_not_installed("ggplot2")
   set.seed(105)
   n <- 80L
@@ -217,7 +217,8 @@ test_that("plot_tuning refits across the candidate grid and marks the fit", {
   expect_identical(sum(p$data$selected), 1L)
   expect_identical(p$data$s[p$data$selected], s_fit)
 
-  # Candidate estimates equal manual refits.
+  # Candidate estimates equal scalar fits without requiring plot_tuning()
+  # to call public estimators internally.
   s_other <- setdiff(unique(p$data$s), s_fit)[1L]
   ref <- np_dnn(X = x_mat, x0 = c(0, 0), Y = y_vec, k = 1L, s = s_other,
                 se = FALSE)
@@ -238,7 +239,9 @@ test_that("plot_tuning refits across the candidate grid and marks the fit", {
   expect_true("GeomPointrange" %in% .p3_geoms(p_cate))
   expect_identical(class(p_cate$facet)[1L], "FacetWrap")
 
-  expect_error(plot_tuning(.p3_plqr_fit()), "not implemented")
+  p_plqr <- plot_tuning(.p3_plqr_fit(), se = FALSE)
+  expect_s3_class(p_plqr, "ggplot")
+  expect_identical(class(p_plqr$facet)[1L], "FacetWrap")
   fit_old <- fit
   fit_old$.model$x_mat <- NULL
   expect_error(plot_tuning(fit_old), "re-estimate")

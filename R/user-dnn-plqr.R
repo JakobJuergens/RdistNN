@@ -55,6 +55,14 @@
 #' jackknife option reuses the full-sample rank matrix and updates ranks under
 #' deletion.
 #'
+#' `tuning_mode = "default"` evaluates only the default kernel order and
+#' preserves the ordinary scalar-fit return shape. `tuning_mode = "grid"`
+#' evaluates the feasible candidates in `tuning`, or the paper default tuning
+#' grid when `tuning` is omitted, and attaches a tidy `tuning_grid` payload.
+#' The payload stores one long-form row per candidate, target, and PLQR moment
+#' component; the public `moment` and `se` matrix fields remain anchored to the
+#' default candidate.
+#'
 #' @param data Optional data frame containing covariates, regressors, outcome,
 #'   and nuisance columns.
 #' @param x_cols Names or indices of covariate columns in `data`.
@@ -89,6 +97,11 @@
 #'   localization; a warning is emitted in that case.
 #' @param tuning Optional kernel-order tuning specification. When supplied,
 #'   `s` must be omitted and is resolved from `tuning`.
+#' @param tuning_mode One of `"default"` or `"grid"`. `"default"` evaluates
+#'   the default `s` only. `"grid"` evaluates the feasible candidates from
+#'   `tuning` (or the paper default tuning grid when `tuning` is `NULL`) and
+#'   stores candidate-level moments, standard errors, diagnostics, and metadata
+#'   in `tuning_grid`. Grid mode cannot be combined with explicit `s`.
 #' @param normalize Logical; renormalize columns of `W` to sum to 1.
 #' @param se Logical; compute delete-1 jackknife standard errors.
 #' @param jackknife One of `"fast"`, `"loo"`, or `"none"`. `"fast"` (default)
@@ -107,6 +120,8 @@
 #'   - `x0`: the `m x p` matrix of evaluation points, with covariate
 #'     column names propagated from the training data when available;
 #'   - `meta`: metadata (`n`, `m`, `p`, `p_d`, `k`, `s`, `method`, `distance`);
+#'   - `tuning_grid`: in grid mode, a list with `candidates`, `estimates`,
+#'     `diagnostics`, and `meta` tables;
 #'   - optional extras requested via `return`.
 #'
 #' @seealso [weights_dnn()], [score_plqr_component()], [plqr_demo_data()].
@@ -151,6 +166,7 @@ plqr_dnn <- function(
   k = 1L,
   s = NULL,
   tuning = NULL,
+  tuning_mode = c("default", "grid"),
   normalize = TRUE,
   se = TRUE,
   jackknife = c("fast", "loo", "none"),
@@ -159,9 +175,17 @@ plqr_dnn <- function(
 ) {
   method <- match.arg(method)
   jackknife <- match.arg(jackknife)
+  tuning_mode <- match.arg(tuning_mode)
   s_arg <- s
   k <- .validate_scalar_int(k, "k")
   .warn_unknown_return(return, valid = c("W", "ranks", "ord", "dx", "g", "ess", "neighbors", "tuning"))
+  if (identical(tuning_mode, "grid") && !is.null(s_arg)) {
+    .abort_bad_arg(
+      "tuning_mode",
+      "cannot be \"grid\" when explicit `s` is supplied; omit `s` and use `tuning`, or omit both to use the paper default tuning grid",
+      quoted = FALSE
+    )
+  }
   tau <- .validate_scalar_prob(tau, arg = "tau")
 
   if (!is.numeric(beta) || length(beta) < 1L || any(!is.finite(beta))) {
@@ -273,7 +297,7 @@ plqr_dnn <- function(
   x0_mat <- .dnn_resolve_targets(x_mat, X0 = X0, x0 = x0)
 
   weight_return <- return
-  if (isTRUE(se) && identical(jackknife, "fast")) {
+  if (identical(tuning_mode, "grid") || (isTRUE(se) && identical(jackknife, "fast"))) {
     # Request ranks once so fast jackknife can reuse them.
     weight_return <- unique(c(return, "ranks"))
   }
@@ -340,15 +364,266 @@ plqr_dnn <- function(
     tuning_payload = tuning_payload
   )
   if ("g" %in% return) out$g <- g_mat
+  if (identical(tuning_mode, "grid")) {
+    out$tuning_grid <- .plqr_dnn_tuning_grid(
+      candidates = tuning_payload$grid$candidates,
+      ranks = wt$ranks,
+      moment_hat = moment_hat,
+      se_hat = se_hat,
+      x_mat = x_mat,
+      x0_mat = x0_mat,
+      g_mat = g_mat,
+      distance = distance,
+      method = method,
+      k = k,
+      normalize = normalize,
+      ctx = ctx,
+      se = se,
+      jackknife = jackknife,
+      tuning_payload = tuning_payload
+    )
+  }
   # Internal fit state used by diagnostics and calibration plotting.
   # below_threshold is the indicator 1{Y <= D'beta + q} entering the
   # quantile score; its weighted mean per target is the local quantile
   # calibration checked by plot_calibration().
   out$.model <- list(
+    x_mat = x_mat,
+    distance = distance,
+    method = method,
+    k = k,
+    s = s,
+    normalize = normalize,
+    ctx = ctx,
+    ranks = if (identical(tuning_mode, "grid")) wt$ranks else NULL,
     d_resid_mat = d_resid_mat,
     below_threshold = as.numeric(y_vec <= as.vector(d_mat %*% beta) + q_vec)
   )
 
   class(out) <- "plqr_result"
   out
+}
+
+.plqr_dnn_rank_weight_spec <- function(method, k, s, normalize) {
+  if (identical(method, "exact")) {
+    rank_weight_dnn_exact(k = as.integer(k), s = as.integer(s))
+  } else {
+    rank_weight_dnn_asymp(k = as.integer(k), s = as.integer(s), normalize = normalize)
+  }
+}
+
+.plqr_dnn_grid_estimates <- function(moment, se) {
+  component <- rownames(moment)
+  if (is.null(component)) {
+    component <- paste0("comp_", seq_len(nrow(moment)))
+  }
+  out <- data.frame(
+    target_id = rep(seq_len(ncol(moment)), each = nrow(moment)),
+    component = rep(component, times = ncol(moment)),
+    estimate = as.numeric(moment),
+    stringsAsFactors = FALSE
+  )
+  out$se <- if (is.null(se)) rep(NA_real_, nrow(out)) else as.numeric(se)
+  out
+}
+
+.plqr_dnn_grid_default_precomputed <- function(
+  candidates, moment_hat, se_hat, n, k, method, normalize
+) {
+  default_row <- candidates[candidates$is_default, , drop = FALSE]
+  spec <- .plqr_dnn_rank_weight_spec(
+    method = method,
+    k = k,
+    s = default_row$s[[1L]],
+    normalize = normalize
+  )
+  tab <- .rank_weight_table(spec, n)
+  result <- list(
+    estimates = .plqr_dnn_grid_estimates(moment = moment_hat, se = se_hat),
+    diagnostics = .dnn_grid_diagnostics_from_table(tab, n = n, ctx = list(k = k))
+  )
+  stats::setNames(list(result), as.character(default_row$computed_key[[1L]]))
+}
+
+.plqr_dnn_grid_se_fn <- function(
+  ranks, g_mat, x_mat, x0_mat, distance, method, k, normalize, ctx, jackknife
+) {
+  force(ranks)
+  force(g_mat)
+  force(x_mat)
+  force(x0_mat)
+  force(distance)
+  force(method)
+  force(k)
+  force(normalize)
+  force(ctx)
+  force(jackknife)
+
+  function(candidate_row, tab_jk) {
+    s <- as.integer(candidate_row$s[[1L]])
+    se <- if (identical(jackknife, "fast")) {
+      spec <- .plqr_dnn_rank_weight_spec(method = method, k = k, s = s, normalize = normalize)
+      loo <- if (is.null(tab_jk)) {
+        .dnn_loo_loop(g_mat, ranks, spec)
+      } else {
+        .dnn_loo_prefix(
+          g_mat,
+          ranks,
+          tab_jk,
+          tab_full = attr(tab_jk, "tab_full", exact = TRUE)
+        )
+      }
+      .dnn_jackknife_se_from_loo(
+        loo = loo,
+        q = ncol(g_mat),
+        n = nrow(ranks),
+        m = ncol(ranks)
+      )
+    } else {
+      .plqr_dnn_jackknife_se_loo(
+        x_mat = x_mat,
+        x0_mat = x0_mat,
+        g_mat = g_mat,
+        distance = distance,
+        method = method,
+        k = k,
+        s = s,
+        normalize = normalize,
+        ctx = ctx,
+        jackknife = "loo",
+        precomputed_ranks = NULL
+      )
+    }
+
+    out <- .plqr_dnn_grid_estimates(moment = se, se = NULL)
+    data.frame(
+      target_id = out$target_id,
+      component = out$component,
+      se = out$estimate,
+      stringsAsFactors = FALSE
+    )
+  }
+}
+
+.plqr_dnn_warn_infeasible_grid <- function(candidates) {
+  skipped <- candidates[!candidates$feasible, c("candidate_id", "reason"), drop = FALSE]
+  if (nrow(skipped) < 1L) {
+    return(invisible(NULL))
+  }
+  details <- paste(
+    sprintf("%s (%s)", skipped$candidate_id, skipped$reason),
+    collapse = ", "
+  )
+  warning(
+    sprintf("Skipped infeasible tuning candidate(s): %s.", details),
+    call. = FALSE
+  )
+  invisible(NULL)
+}
+
+.plqr_dnn_grid_meta <- function(
+  tuning_payload, engine_meta, n, p, p_d, k, method, distance, se, jackknife
+) {
+  grid_meta <- tuning_payload$grid$meta
+  name <- if (!is.null(grid_meta$name)) {
+    as.character(grid_meta$name)
+  } else if (!is.null(tuning_payload$default$meta$name)) {
+    as.character(tuning_payload$default$meta$name)
+  } else {
+    as.character(tuning_payload$source)
+  }
+  list(
+    name = name,
+    n = as.integer(n),
+    kx = as.integer(p),
+    p_d = as.integer(p_d),
+    k = as.integer(k),
+    method = method,
+    distance = .dnn_distance_name(distance),
+    jackknife = if (isTRUE(se)) jackknife else "none",
+    n_candidates = engine_meta$n_candidates,
+    n_feasible = engine_meta$n_feasible,
+    n_skipped = engine_meta$n_skipped,
+    n_failed = engine_meta$n_failed,
+    n_unique = engine_meta$n_unique
+  )
+}
+
+.plqr_dnn_tuning_grid <- function(
+  candidates,
+  ranks,
+  moment_hat,
+  se_hat,
+  x_mat,
+  x0_mat,
+  g_mat,
+  distance,
+  method,
+  k,
+  normalize,
+  ctx,
+  se,
+  jackknife,
+  tuning_payload
+) {
+  .plqr_dnn_warn_infeasible_grid(candidates)
+  se_fn <- if (isTRUE(se) && !identical(jackknife, "none")) {
+    .plqr_dnn_grid_se_fn(
+      ranks = ranks,
+      g_mat = g_mat,
+      x_mat = x_mat,
+      x0_mat = x0_mat,
+      distance = distance,
+      method = method,
+      k = k,
+      normalize = normalize,
+      ctx = ctx,
+      jackknife = jackknife
+    )
+  } else {
+    NULL
+  }
+
+  grid <- .dnn_grid_eval(
+    candidates = candidates,
+    ranks = ranks,
+    weight_spec_fn = function(candidate_row) {
+      .plqr_dnn_rank_weight_spec(
+        method = method,
+        k = k,
+        s = candidate_row$s[[1L]],
+        normalize = normalize
+      )
+    },
+    estimate_fn = function(W, candidate_row) {
+      moment <- .dnn_estimate_from_signal(g_mat, W, n = nrow(x_mat), arg = "g")
+      rownames(moment) <- paste0("comp_", seq_len(nrow(moment)))
+      colnames(moment) <- paste0("target_", seq_len(ncol(moment)))
+      .plqr_dnn_grid_estimates(moment = moment, se = NULL)
+    },
+    se_fn = se_fn,
+    ctx = list(k = k),
+    precomputed = .plqr_dnn_grid_default_precomputed(
+      candidates = candidates,
+      moment_hat = moment_hat,
+      se_hat = se_hat,
+      n = nrow(x_mat),
+      k = k,
+      method = method,
+      normalize = normalize
+    )
+  )
+  grid$meta <- .plqr_dnn_grid_meta(
+    tuning_payload = tuning_payload,
+    engine_meta = grid$meta,
+    n = nrow(x_mat),
+    p = ncol(x_mat),
+    p_d = ncol(g_mat),
+    k = k,
+    method = method,
+    distance = distance,
+    se = se,
+    jackknife = jackknife
+  )
+  grid
 }

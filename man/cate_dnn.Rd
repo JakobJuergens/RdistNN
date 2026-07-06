@@ -22,6 +22,7 @@ cate_dnn(
   k = 1L,
   s = NULL,
   tuning = NULL,
+  tuning_mode = c("default", "grid"),
   normalize = TRUE,
   se = TRUE,
   jackknife = c("fast", "loo", "none"),
@@ -73,6 +74,12 @@ localization; a warning is emitted in that case.}
 \item{tuning}{Optional kernel-order tuning specification. When supplied,
 \code{s} must be omitted and is resolved from \code{tuning}.}
 
+\item{tuning_mode}{One of \code{"default"} or \code{"grid"}. \code{"default"} evaluates
+the default \code{s} only. \code{"grid"} evaluates the feasible candidates from
+\code{tuning}, or from \code{\link[=tuning_dnn_paper]{tuning_dnn_paper()}} when \code{tuning} is omitted, and
+stores candidate-level estimates, standard errors, diagnostics, and
+metadata in \code{tuning_grid}. Grid mode cannot be combined with explicit \code{s}.}
+
 \item{normalize}{Logical; renormalize columns of \code{W} to sum to 1.}
 
 \item{se}{Logical; compute delete-1 jackknife standard errors.}
@@ -95,6 +102,8 @@ An object of class \code{cate_result} with components:
 \item \code{x0}: the \verb{m x p} matrix of evaluation points, with covariate
 column names propagated from the training data when available;
 \item \code{meta}: metadata (\code{n}, \code{m}, \code{p}, \code{k}, \code{s}, \code{method}, \code{distance});
+\item \code{tuning_grid}: in grid mode, a list with \code{candidates}, \code{estimates},
+\code{diagnostics}, and \code{meta} tables;
 \item optional extras requested via \code{return}.
 }
 }
@@ -120,6 +129,15 @@ As in \code{\link[=weights_dnn]{weights_dnn()}}, exact DNN localization uses the
 at each target rather than an \code{s}-nearest-neighbor truncation. The \code{"fast"}
 jackknife option reuses the full-sample rank matrix and updates ranks under
 deletion.
+
+\code{tuning_mode = "default"} evaluates only the default kernel order and
+preserves the ordinary scalar-fit return shape. \code{tuning_mode = "grid"}
+evaluates the feasible candidates in \code{tuning}, or the paper default tuning
+grid when \code{tuning} is omitted, and attaches a tidy \code{tuning_grid} payload.
+The pseudo-outcome and nuisance columns are resolved once before grid
+evaluation. The primary \code{tau}, \code{se}, \code{meta}, and optional extras such as
+\code{W}, \code{ranks}, \code{ess}, \code{psi}, and \code{nuisance} remain anchored to the default
+candidate. Full per-candidate weight matrices are not stored.
 }
 \examples{
 set.seed(1)

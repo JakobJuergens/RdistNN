@@ -14,6 +14,7 @@ sim_cate_run(
   k = 1L,
   s_fn = function(n, kx) floor(n^((kx + 1L)/(kx + 2L))),
   tuning = NULL,
+  tuning_mode = c("default", "grid"),
   methods = "dnn_oracle",
   alpha = 0.05,
   sigma = 0.5,
@@ -49,6 +50,11 @@ Default satisfies the undersmoothing condition
 \code{s} is resolved per simulation cell from \code{tuning_eval(..., mode = "default")}
 and \code{s_fn} must be omitted.}
 
+\item{tuning_mode}{One of \code{"default"} or \code{"grid"}. \code{"default"} preserves
+scalar simulation behavior. \code{"grid"} requires \code{tuning}; DNN methods emit
+one row per tuning candidate from the integrated \code{\link[=cate_dnn]{cate_dnn()}} grid payload,
+while non-DNN benchmarks emit one row with \code{candidate_id = NA} and \code{s = NA}.}
+
 \item{methods}{Character vector of method names; see \code{\link[=sim_cate_methods]{sim_cate_methods()}}.
 Default: \code{"dnn_oracle"}.}
 
@@ -63,10 +69,10 @@ Default: \code{"dnn_oracle"}.}
 \item{verbose}{Print one progress line per cell (default \code{TRUE}).}
 }
 \value{
-A \code{data.frame} with one row per replicate-method combination and
-columns: \code{method}, \code{design}, \code{n}, \code{kx}, \code{s}, \code{seed},
-\code{bias}, \code{sq_err}, \code{se}, \code{cover}, \code{ci_len}, \code{neff}.
-Failed entries have \code{NA} for all metric columns.
+A \code{data.frame} with raw rows and columns \code{method}, \code{design}, \code{n},
+\code{kx}, \code{k}, \code{tuning_source}, \code{candidate_id}, \code{kappa}, \code{s}, \code{seed},
+\code{tau_hat}, \code{tau0}, \code{bias}, \code{sq_err}, \code{se}, \code{cover}, \code{ci_len}, \code{neff},
+and \code{status}. Failed entries have \code{NA} for all metric columns.
 }
 \description{
 Expands a grid of DGP designs, sample sizes, and covariate dimensions, then
@@ -74,7 +80,8 @@ runs \code{n_reps} independent Monte Carlo replications for each cell using
 \code{\link[=sim_cate_one_rep]{sim_cate_one_rep()}}.  Each replicate draws one dataset and evaluates \strong{all}
 requested \code{methods} on the same draw, enabling like-for-like comparisons.
 Returns a tidy data.frame of raw per-replicate, per-method results.  Use
-\code{\link[=summarise_sim_results]{summarise_sim_results()}} to aggregate to one row per \verb{(method, design, n, kx)}.
+\code{\link[=summarise_sim_results]{summarise_sim_results()}} to aggregate to one row per
+\verb{(method, design, n, kx, candidate_id, kappa, s)}.
 }
 \section{Parallelism}{
 
@@ -97,7 +104,7 @@ Without \code{future.apply} the function falls back silently to sequential
 Each replicate is wrapped in \code{tryCatch}.  A total rep failure (e.g. DGP
 draw error) records \code{NA} for all metrics and all methods and emits a warning;
 per-method failures are handled inside \code{\link[=sim_cate_one_rep]{sim_cate_one_rep()}}.
-\code{\link[=summarise_sim_results]{summarise_sim_results()}} reports \code{n_failed} per \verb{(method, design, n, kx)}.
+\code{\link[=summarise_sim_results]{summarise_sim_results()}} reports \code{n_failed} per candidate-aware group.
 }
 
 \examples{

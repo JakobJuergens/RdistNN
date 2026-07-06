@@ -271,10 +271,8 @@ test_that("grid engine falls back to rank_weight_eval_batch when no table is ava
   expect_true(all(is.na(out$diagnostics$top_share)))
 })
 
-test_that("layer 4 leaves public wrappers and plotting or simulation code unwired", {
-  expect_false("tuning_mode" %in% names(formals(np_dnn)))
-  expect_false("tuning_mode" %in% names(formals(cate_dnn)))
-  expect_false("tuning_mode" %in% names(formals(plqr_dnn)))
+test_that("later layers wire plqr wrappers while plotting stays outside the grid engine", {
+  expect_true("tuning_mode" %in% names(formals(plqr_dnn)))
 
   source_dir <- normalizePath(file.path(testthat::test_path(), "..", "..", "R"), mustWork = FALSE)
   skip_if_not(dir.exists(source_dir), "source R directory not available in installed-package checks")
@@ -286,6 +284,7 @@ test_that("layer 4 leaves public wrappers and plotting or simulation code unwire
     }
   ), use.names = FALSE)
   source_refs <- source_refs[grepl("[.]dnn_grid_eval", source_refs)]
-  expect_equal(length(source_refs), 1L)
-  expect_match(source_refs, "user-dnn-core[.]R")
+  expect_true(any(grepl("user-dnn-core[.]R", source_refs)))
+  expect_true(any(grepl("user-dnn-plqr[.]R", source_refs)))
+  expect_false(any(grepl("plot-|sim-", source_refs)))
 })

@@ -11,21 +11,26 @@
 \alias{diagnostics.plqr_result}
 \title{Compute diagnostics for fitted localized estimators}
 \usage{
-\method{diagnostics}{cate_result}(object, ...)
+\method{diagnostics}{cate_result}(object, candidates = "default", ...)
 
-diagnostics(object, ...)
+diagnostics(object, candidates = "default", ...)
 
-\method{diagnostics}{default}(object, ...)
+\method{diagnostics}{default}(object, candidates = "default", ...)
 
 \method{print}{dnn_diagnostics}(x, ...)
 
-\method{diagnostics}{np_result}(object, ...)
+\method{diagnostics}{np_result}(object, candidates = "default", ...)
 
-\method{diagnostics}{plqr_result}(object, ...)
+\method{diagnostics}{plqr_result}(object, candidates = "default", ...)
 }
 \arguments{
 \item{object}{A fitted estimator object, currently an object returned by
 \code{\link[=np_dnn]{np_dnn()}}, \code{\link[=cate_dnn]{cate_dnn()}}, or \code{\link[=plqr_dnn]{plqr_dnn()}}.}
+
+\item{candidates}{Candidate rows to report for grid fits. The default
+\code{"default"} preserves the per-target diagnostics table for the selected
+fit. Use \code{"all"} or a character vector of candidate ids to report
+candidate-level grid diagnostics from \code{object$tuning_grid}.}
 
 \item{...}{Not used.}
 

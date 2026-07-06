@@ -481,6 +481,9 @@
   se <- NULL
   if (!is.null(se_fn)) {
     tab_jk <- .rank_weight_table(spec, n - 1L)
+    if (!is.null(tab_jk) && !is.null(tab)) {
+      attr(tab_jk, "tab_full") <- tab
+    }
     se <- .dnn_grid_check_se(se_fn(candidate_row, tab_jk))
   }
 
@@ -570,7 +573,8 @@
   weight_spec_fn,
   estimate_fn,
   se_fn = NULL,
-  ctx = NULL
+  ctx = NULL,
+  precomputed = NULL
 ) {
   candidates <- .dnn_grid_check_candidates(candidates)
   ranks <- .rank_check_mat(ranks)
@@ -588,7 +592,7 @@
   if (length(feasible_keys) < 1L) {
     .abort_bad_arg("candidates", "must contain at least one feasible candidate")
   }
-  if (sum(candidates$feasible) > 1L && length(feasible_keys) == 1L) {
+  if (nrow(candidates) > 1L && length(unique(candidates$computed_key)) == 1L) {
     warning(
       "All feasible tuning candidates share the same computed key; the grid is effectively a single value.",
       call. = FALSE
@@ -596,7 +600,18 @@
   }
 
   results <- setNames(vector("list", length(feasible_keys)), feasible_keys)
+  if (!is.null(precomputed)) {
+    if (!is.list(precomputed) || is.null(names(precomputed))) {
+      .abort_bad_arg("precomputed", "must be a named list", quoted = FALSE)
+    }
+    for (key in intersect(names(precomputed), feasible_keys)) {
+      results[[key]] <- precomputed[[key]]
+    }
+  }
   for (key in feasible_keys) {
+    if (!is.null(results[[key]])) {
+      next
+    }
     idx <- which(candidates$feasible & candidates$computed_key == key)
     candidate_row <- candidates[idx[[1L]], , drop = FALSE]
     key_is_default <- any(candidates$is_default[idx])

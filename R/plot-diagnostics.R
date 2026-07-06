@@ -31,6 +31,82 @@
 #' @name autoplot.dnn_diagnostics
 NULL
 
+.plot_autoplot_candidate_diagnostics <- function(dd) {
+  selected <- dd
+  ok <- selected[as.character(selected$status) == "ok", , drop = FALSE]
+  if (nrow(ok) < 1L) {
+    .abort_bad_arg(
+      "object",
+      "does not contain any available candidate diagnostics to display",
+      quoted = FALSE
+    )
+  }
+  ok$candidate_label <- factor(
+    as.character(ok$candidate_label),
+    levels = as.character(ok$candidate_label)
+  )
+  metrics <- c(
+    n_eff = "n_eff",
+    max_weight = "max weight",
+    top5_weight_share = "top weight share"
+  )
+  long <- do.call(rbind, lapply(names(metrics), function(col) {
+    data.frame(
+      candidate_id = ok$candidate_id,
+      candidate_label = ok$candidate_label,
+      s = as.integer(ok$s),
+      is_default = as.logical(ok$is_default),
+      metric = metrics[[col]],
+      value = as.numeric(ok[[col]]),
+      stringsAsFactors = FALSE
+    )
+  }))
+  long$metric <- factor(long$metric, levels = unname(metrics))
+  long$default_shape <- factor(
+    ifelse(long$is_default, "default", "candidate"),
+    levels = c("candidate", "default")
+  )
+
+  guide <- data.frame(
+    metric = factor(metrics[["n_eff"]], levels = unname(metrics)),
+    yintercept = 0.9 * ok$n[1L]
+  )
+  captions <- c(
+    sprintf(
+      "n = %d; dotted guide: n_eff = 0.9 n (degenerate-weights warning threshold)",
+      as.integer(ok$n[1L])
+    ),
+    .plot_candidate_drop_caption(selected)
+  )
+  captions <- captions[nzchar(captions)]
+
+  ggplot2::ggplot(
+    long,
+    ggplot2::aes(x = .data$s, y = .data$value)
+  ) +
+    ggplot2::geom_hline(
+      data = guide,
+      ggplot2::aes(yintercept = .data$yintercept),
+      linetype = "dotted"
+    ) +
+    ggplot2::geom_line(colour = .plot_col_single) +
+    ggplot2::geom_point(
+      ggplot2::aes(shape = .data$default_shape),
+      colour = .plot_col_single
+    ) +
+    ggplot2::scale_shape_manual(
+      values = c(candidate = 1, default = 16),
+      guide = "none"
+    ) +
+    ggplot2::scale_x_continuous(breaks = sort(unique(long$s))) +
+    ggplot2::facet_wrap(ggplot2::vars(.data$metric), scales = "free_y") +
+    ggplot2::labs(
+      x = "kernel order s", y = NULL,
+      caption = paste(captions, collapse = "\n")
+    ) +
+    .rdistnn_theme()
+}
+
 #' @rdname autoplot.dnn_diagnostics
 #' @exportS3Method ggplot2::autoplot dnn_diagnostics
 autoplot.dnn_diagnostics <- function(object, ...) {
@@ -38,6 +114,9 @@ autoplot.dnn_diagnostics <- function(object, ...) {
 
   dd <- as.data.frame(object, stringsAsFactors = FALSE)
   class(dd) <- "data.frame"
+  if ("candidate_id" %in% names(dd)) {
+    return(.plot_autoplot_candidate_diagnostics(dd))
+  }
   m <- nrow(dd)
   metrics <- c(
     n_eff = "n_eff",

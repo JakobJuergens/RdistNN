@@ -212,3 +212,277 @@ utils::globalVariables(".data")
   }, character(1L))
   stats::setNames(labs, ids)
 }
+
+.plot_candidates_is_default <- function(candidates) {
+  is.character(candidates) &&
+    length(candidates) == 1L &&
+    identical(candidates[[1L]], "default")
+}
+
+.plot_require_grid <- function(object, fn) {
+  grid <- object$tuning_grid
+  if (is.null(grid)) {
+    .abort_bad_arg(
+      "candidates",
+      sprintf(
+        "%s() can compare non-default candidates only for grid fits; refit with `tuning_mode = \"grid\"`.",
+        fn
+      ),
+      quoted = FALSE
+    )
+  }
+  if (!is.list(grid) || !is.data.frame(grid$candidates) ||
+      !is.data.frame(grid$estimates) || !is.data.frame(grid$diagnostics)) {
+    .abort_bad_state("`object$tuning_grid` is malformed.")
+  }
+  grid
+}
+
+.plot_format_candidate_value <- function(x) {
+  format(as.numeric(x), trim = TRUE, scientific = FALSE)
+}
+
+.plot_candidate_label <- function(candidate_row) {
+  s <- as.integer(candidate_row$s[[1L]])
+  kappa <- if ("kappa" %in% names(candidate_row)) {
+    suppressWarnings(as.numeric(candidate_row$kappa[[1L]]))
+  } else {
+    NA_real_
+  }
+  if (!is.na(kappa) && is.finite(kappa)) {
+    sprintf("kappa = %s (s = %d)", .plot_format_candidate_value(kappa), s)
+  } else {
+    sprintf("s = %d", s)
+  }
+}
+
+.plot_add_candidate_labels <- function(candidates) {
+  candidates$candidate_label <- vapply(
+    seq_len(nrow(candidates)),
+    function(i) .plot_candidate_label(candidates[i, , drop = FALSE]),
+    character(1L)
+  )
+  candidates
+}
+
+.plot_order_candidates <- function(candidates) {
+  candidates <- .plot_add_candidate_labels(candidates)
+  candidates[order(as.integer(candidates$s), candidates$candidate_id), , drop = FALSE]
+}
+
+.plot_resolve_candidates <- function(object, candidates, fn) {
+  grid <- .plot_require_grid(object, fn = fn)
+  rows <- grid$candidates
+  if (.plot_candidates_is_default(candidates)) {
+    rows <- rows[as.logical(rows$is_default), , drop = FALSE]
+  } else if (is.character(candidates) &&
+             length(candidates) == 1L &&
+             identical(candidates[[1L]], "all")) {
+    rows <- rows
+  } else if (is.character(candidates) &&
+             length(candidates) > 0L &&
+             !anyNA(candidates) &&
+             all(nzchar(candidates))) {
+    idx <- match(candidates, rows$candidate_id)
+    if (anyNA(idx)) {
+      .abort_bad_arg(
+        "candidates",
+        sprintf(
+          "Unknown candidate id(s): %s. Available candidate ids: %s",
+          paste(candidates[is.na(idx)], collapse = ", "),
+          paste(rows$candidate_id, collapse = ", ")
+        ),
+        quoted = FALSE
+      )
+    }
+    rows <- rows[idx, , drop = FALSE]
+  } else {
+    .abort_bad_arg(
+      "candidates",
+      "must be \"default\", \"all\", or a character vector of candidate ids",
+      quoted = FALSE
+    )
+  }
+  .plot_order_candidates(rows)
+}
+
+.plot_candidate_drop_caption <- function(candidates) {
+  dropped <- candidates[as.character(candidates$status) != "ok", , drop = FALSE]
+  if (nrow(dropped) < 1L) {
+    return(NULL)
+  }
+  details <- paste(
+    sprintf(
+      "%s (%s: %s)",
+      dropped$candidate_id,
+      dropped$status,
+      dropped$reason
+    ),
+    collapse = ", "
+  )
+  sprintf(
+    "Dropped %d unavailable candidate(s): %s.",
+    nrow(dropped),
+    details
+  )
+}
+
+.plot_ok_candidates <- function(candidates) {
+  candidates[as.character(candidates$status) == "ok", , drop = FALSE]
+}
+
+.plot_grid_estimate_coef <- function(object, component) {
+  coef <- as.character(component)
+  coef[is.na(component) | !nzchar(coef)] <- if (inherits(object, "np_result")) {
+    "mu"
+  } else if (inherits(object, "cate_result")) {
+    "tau"
+  } else {
+    "estimate"
+  }
+  coef
+}
+
+.plot_attach_x0 <- function(out, object) {
+  if (is.null(object$x0)) {
+    return(out)
+  }
+  x0 <- as.matrix(object$x0)
+  if (!"target_id" %in% names(out)) {
+    return(out)
+  }
+  target_id <- as.integer(out$target_id)
+  if (anyNA(target_id) || any(target_id < 1L | target_id > nrow(x0))) {
+    return(out)
+  }
+  x0_df <- as.data.frame(x0[target_id, , drop = FALSE])
+  names(x0_df) <- paste0("x0_", seq_len(ncol(x0)))
+  out <- cbind(out, x0_df)
+  attr(out, "x0_names") <- colnames(x0)
+  out
+}
+
+.plot_candidate_levels <- function(candidates) {
+  as.character(.plot_order_candidates(.plot_ok_candidates(candidates))$candidate_label)
+}
+
+.plot_order_candidate_frame <- function(df) {
+  if (nrow(df) < 1L) {
+    return(df)
+  }
+  df[order(
+    as.logical(df$is_default),
+    as.integer(df$target_id),
+    as.character(df$coef),
+    as.integer(df$s),
+    as.character(df$candidate_id)
+  ), , drop = FALSE]
+}
+
+.plot_candidate_estimates_frame <- function(object, candidates, level, fn) {
+  grid <- .plot_require_grid(object, fn = fn)
+  selected <- .plot_resolve_candidates(object, candidates = candidates, fn = fn)
+  ok <- .plot_ok_candidates(selected)
+  if (nrow(ok) < 1L) {
+    .abort_bad_arg(
+      "candidates",
+      "did not select any available candidates to display",
+      quoted = FALSE
+    )
+  }
+
+  rows <- grid$estimates[grid$estimates$candidate_id %in% ok$candidate_id, , drop = FALSE]
+  rows$.candidate_order <- match(rows$candidate_id, ok$candidate_id)
+  rows <- rows[order(
+    rows$.candidate_order,
+    as.integer(rows$target_id),
+    as.character(rows$component)
+  ), , drop = FALSE]
+  rows$.candidate_order <- NULL
+  idx <- match(rows$candidate_id, ok$candidate_id)
+  z <- stats::qnorm(1 - (1 - .validate_scalar_prob(level, arg = "level")) / 2)
+  out <- data.frame(
+    candidate_id = rows$candidate_id,
+    candidate_label = ok$candidate_label[idx],
+    computed_key = rows$computed_key,
+    kappa = rows$kappa,
+    s = as.integer(rows$s),
+    is_default = as.logical(ok$is_default[idx]),
+    target_id = as.integer(rows$target_id),
+    coef = .plot_grid_estimate_coef(object, rows$component),
+    estimate = as.numeric(rows$estimate),
+    se = as.numeric(rows$se),
+    status = rows$status,
+    reason = rows$reason,
+    stringsAsFactors = FALSE
+  )
+  out$ci_lower <- out$estimate - z * out$se
+  out$ci_upper <- out$estimate + z * out$se
+  out <- .plot_attach_x0(out, object)
+  out$candidate_label <- factor(
+    out$candidate_label,
+    levels = .plot_candidate_levels(selected)
+  )
+  out$default_linewidth <- factor(
+    ifelse(out$is_default, "default", "candidate"),
+    levels = c("candidate", "default")
+  )
+  attr(out, "level") <- level
+  list(
+    data = .plot_order_candidate_frame(out),
+    drop_caption = .plot_candidate_drop_caption(selected),
+    selected = selected,
+    ok = ok
+  )
+}
+
+.plot_candidate_weight_frame <- function(object, candidates, fn) {
+  selected <- .plot_resolve_candidates(object, candidates = candidates, fn = fn)
+  ok <- .plot_ok_candidates(selected)
+  if (nrow(ok) < 1L) {
+    .abort_bad_arg(
+      "candidates",
+      "did not select any available candidates to display",
+      quoted = FALSE
+    )
+  }
+  ranks <- .candidate_cached_ranks(object)
+  n <- nrow(ranks)
+  frames <- vector("list", nrow(ok))
+  for (i in seq_len(nrow(ok))) {
+    row <- ok[i, , drop = FALSE]
+    spec <- .candidate_rank_weight_spec(object, row)
+    tab <- .rank_weight_table(spec, n)
+    if (is.null(tab)) {
+      ctx <- if (is.list(object$.model)) object$.model$ctx else NULL
+      tab <- rank_weight_eval(spec, seq_len(n), ctx = ctx)
+    }
+    total <- sum(tab)
+    frames[[i]] <- data.frame(
+      candidate_id = row$candidate_id,
+      candidate_label = row$candidate_label,
+      s = as.integer(row$s),
+      is_default = as.logical(row$is_default),
+      rank = seq_len(n),
+      weight = as.numeric(tab),
+      cum_share = if (is.finite(total) && abs(total) > 0) cumsum(tab) / total else NA_real_,
+      stringsAsFactors = FALSE
+    )
+  }
+  out <- do.call(rbind, frames)
+  out$candidate_label <- factor(
+    out$candidate_label,
+    levels = .plot_candidate_levels(selected)
+  )
+  out$default_linewidth <- factor(
+    ifelse(out$is_default, "default", "candidate"),
+    levels = c("candidate", "default")
+  )
+  out <- out[order(as.logical(out$is_default), out$rank, out$s), , drop = FALSE]
+  list(
+    data = out,
+    drop_caption = .plot_candidate_drop_caption(selected),
+    selected = selected,
+    ok = ok
+  )
+}

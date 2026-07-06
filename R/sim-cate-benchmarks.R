@@ -3,52 +3,141 @@
 #
 # All methods share a common internal interface:
 #
-#   .method_XXX(dgp, x_cols, k, s, alpha, ...)
+#   .method_XXX(dgp, x_cols, k, s, tuning, tuning_mode, alpha, ...)
 #     dgp    -- list returned by sim_cate_data()
 #     x_cols -- character vector of covariate column names
-#     k, s   -- DNN tuning (only used by dnn_* methods)
+#     k, s   -- scalar DNN tuning (only used by dnn_* methods in default mode)
+#     tuning, tuning_mode -- optional DNN candidate grid controls
 #     alpha  -- nominal coverage level
 #     ...    -- method-specific extra arguments (absorbed silently if unused)
 #
-#   Returns a named numeric vector:
-#     tau_hat, tau0, bias, sq_err, se, cover, ci_len, neff,
-#     bw_eff, n_folds, n_per_fold
+#   Returns a data.frame with one or more rows:
+#     candidate_id, kappa, s, tau_hat, tau0, bias, sq_err, se, cover, ci_len,
+#     neff, status
 #
 #   tau_hat / tau0   -- raw estimate and truth; self-contained for downstream
 #   neff             -- neff_x = 1/sum(w_i^2(x)); paper eq. (02b L.81); NA for
 #                       global methods
-#   bw_eff           -- empirical localization radius r_s(x): distance to the
-#                       s-th nearest neighbour for DNN (paper 02b L.71-72;
-#                       r_s(x) ≍ h_eff = s^{-1/k_x}); mean Silverman h for
-#                       local_constant; NA for global methods. Informative about
-#                       actual local density realizations across reps.
-#   n_folds          -- cross-fitting folds; non-NA only for dnn_crossfit
-#   n_per_fold       -- obs per fold (n %/% n_folds); non-NA only for dnn_crossfit
-#
 # Methods are registered in .SIM_CATE_METHODS and dispatched through
 # .get_sim_method().  The public API is sim_cate_methods().
 #
 # GRF-based methods (causal_forest, llf) require the grf package listed
 # under Suggests.  They return NA metrics with a warning when grf is absent.
 
-# ── Shared metric constructor ─────────────────────────────────────────────────
+# ── Shared metric constructors ────────────────────────────────────────────────
 
-.sim_metric <- function(tau_hat, se_hat, tau0, alpha, neff = NA_real_) {
-  z       <- stats::qnorm(1 - alpha / 2)
-  finite  <- is.finite(tau_hat) && is.finite(se_hat) && se_hat > 0
-  covered <- if (finite) {
-    (tau_hat - z * se_hat <= tau0) & (tau0 <= tau_hat + z * se_hat)
-  } else {
-    NA_real_
+.sim_cate_metric_names <- function() {
+  c("tau_hat", "tau0", "bias", "sq_err", "se", "cover", "ci_len", "neff")
+}
+
+.sim_cate_row_names <- function() {
+  c("candidate_id", "kappa", "s", .sim_cate_metric_names(), "status")
+}
+
+.sim_recycle <- function(x, n) {
+  if (length(x) == 0L) {
+    return(rep(NA, n))
   }
-  c(tau_hat = as.numeric(tau_hat),
-    tau0    = as.numeric(tau0),
-    bias    = as.numeric(tau_hat - tau0),
-    sq_err  = as.numeric((tau_hat - tau0)^2),
-    se      = as.numeric(se_hat),
-    cover   = as.numeric(covered),
-    ci_len  = as.numeric(2 * z * se_hat),
-    neff    = as.numeric(neff))
+  if (length(x) == n) {
+    return(x)
+  }
+  rep(x, length.out = n)
+}
+
+.sim_metric <- function(
+  tau_hat,
+  se_hat,
+  tau0,
+  alpha,
+  neff = NA_real_,
+  candidate_id = NA_character_,
+  kappa = NA_real_,
+  s = NA_integer_,
+  status = "ok"
+) {
+  n_out <- max(
+    length(tau_hat), length(se_hat), length(tau0), length(neff),
+    length(candidate_id), length(kappa), length(s), length(status)
+  )
+  tau_hat <- as.numeric(.sim_recycle(tau_hat, n_out))
+  se_hat <- as.numeric(.sim_recycle(se_hat, n_out))
+  tau0 <- as.numeric(.sim_recycle(tau0, n_out))
+  neff <- as.numeric(.sim_recycle(neff, n_out))
+  candidate_id <- as.character(.sim_recycle(candidate_id, n_out))
+  kappa <- as.numeric(.sim_recycle(kappa, n_out))
+  s <- as.integer(.sim_recycle(s, n_out))
+  status <- as.character(.sim_recycle(status, n_out))
+
+  z <- stats::qnorm(1 - alpha / 2)
+  finite <- is.finite(tau_hat) & is.finite(se_hat) & se_hat > 0
+  covered <- rep(NA_real_, n_out)
+  if (any(finite)) {
+    covered[finite] <- as.numeric(
+      (tau_hat[finite] - z * se_hat[finite] <= tau0[finite]) &
+        (tau0[finite] <= tau_hat[finite] + z * se_hat[finite])
+    )
+  }
+
+  data.frame(
+    candidate_id = candidate_id,
+    kappa = kappa,
+    s = s,
+    tau_hat = tau_hat,
+    tau0 = tau0,
+    bias = as.numeric(tau_hat - tau0),
+    sq_err = as.numeric((tau_hat - tau0)^2),
+    se = se_hat,
+    cover = covered,
+    ci_len = as.numeric(2 * z * se_hat),
+    neff = neff,
+    status = status,
+    stringsAsFactors = FALSE,
+    row.names = NULL
+  )
+}
+
+.sim_cate_default_kappa <- function(tuning, n, kx, k) {
+  if (is.null(tuning)) {
+    return(NA_real_)
+  }
+  default <- tryCatch(
+    tuning_eval(
+      tuning = tuning,
+      n = n,
+      kx = kx,
+      k = k,
+      se = TRUE,
+      jackknife = "fast",
+      mode = "default"
+    ),
+    error = function(e) NULL
+  )
+  if (is.null(default) || is.null(default$meta$kappa)) {
+    return(NA_real_)
+  }
+  out <- suppressWarnings(as.numeric(default$meta$kappa))
+  if (length(out) != 1L || !is.finite(out)) NA_real_ else out
+}
+
+.sim_cate_dnn_grid_metrics <- function(fit, tau0, alpha) {
+  grid <- fit$tuning_grid
+  candidates <- grid$candidates
+  est <- grid$estimates
+  diag <- grid$diagnostics
+  est_idx <- match(candidates$candidate_id, est$candidate_id)
+  diag_idx <- match(candidates$candidate_id, diag$candidate_id)
+
+  .sim_metric(
+    tau_hat = est$estimate[est_idx],
+    se_hat = est$se[est_idx],
+    tau0 = tau0,
+    alpha = alpha,
+    neff = diag$ess[diag_idx],
+    candidate_id = candidates$candidate_id,
+    kappa = candidates$kappa,
+    s = candidates$s,
+    status = candidates$status
+  )
 }
 
 # ── DNN oracle ────────────────────────────────────────────────────────────────
@@ -57,7 +146,23 @@
 # the oracle/crossfit comparison differs only in nuisance quality, not in score
 # construction.
 
-.method_dnn_oracle <- function(dgp, x_cols, k, s, alpha, ...) {
+.method_dnn_oracle <- function(dgp, x_cols, k, s, tuning = NULL,
+                               tuning_mode = "default", alpha, ...) {
+  if (identical(tuning_mode, "grid")) {
+    fit <- cate_dnn(
+      X              = as.matrix(dgp$data[, x_cols]),
+      x0             = dgp$x0,
+      pseudo_outcome = dgp$data$aipw_oracle,
+      k              = k,
+      tuning         = tuning,
+      tuning_mode    = "grid",
+      se             = TRUE,
+      jackknife      = "fast",
+      return         = "ess"
+    )
+    return(.sim_cate_dnn_grid_metrics(fit, dgp$tau_x0, alpha))
+  }
+
   fit <- cate_dnn(
     X              = as.matrix(dgp$data[, x_cols]),
     x0             = dgp$x0,
@@ -68,7 +173,12 @@
     jackknife      = "fast",
     return         = "ess"
   )
-  .sim_metric(fit$tau, fit$se, dgp$tau_x0, alpha, neff = fit$ess)
+  .sim_metric(
+    fit$tau, fit$se, dgp$tau_x0, alpha,
+    neff = fit$ess,
+    kappa = .sim_cate_default_kappa(tuning, nrow(dgp$data), length(x_cols), k),
+    s = s
+  )
 }
 
 # ── DNN with estimated nuisances ──────────────────────────────────────────────
@@ -112,7 +222,8 @@
 # reused on that same sample. This is the direct non-cross-fitted counterpart of
 # the realistic cross-fit implementation.
 
-.method_dnn_fullsample <- function(dgp, x_cols, k, s, alpha,
+.method_dnn_fullsample <- function(dgp, x_cols, k, s, tuning = NULL,
+                                   tuning_mode = "default", alpha,
                                    clip = 1e-3, ...) {
   dat <- dgp$data
   nuis <- .fit_sim_aipw_nuisances(dat, x_cols = x_cols, clip = clip)
@@ -124,6 +235,21 @@
     ehat = nuis$e_hat
   )
 
+  if (identical(tuning_mode, "grid")) {
+    fit <- cate_dnn(
+      X              = as.matrix(dat[, x_cols]),
+      x0             = dgp$x0,
+      pseudo_outcome = aipw_fs,
+      k              = k,
+      tuning         = tuning,
+      tuning_mode    = "grid",
+      se             = TRUE,
+      jackknife      = "fast",
+      return         = "ess"
+    )
+    return(.sim_cate_dnn_grid_metrics(fit, dgp$tau_x0, alpha))
+  }
+
   fit <- cate_dnn(
     X              = as.matrix(dat[, x_cols]),
     x0             = dgp$x0,
@@ -134,7 +260,12 @@
     jackknife      = "fast",
     return         = "ess"
   )
-  .sim_metric(fit$tau, fit$se, dgp$tau_x0, alpha, neff = fit$ess)
+  .sim_metric(
+    fit$tau, fit$se, dgp$tau_x0, alpha,
+    neff = fit$ess,
+    kappa = .sim_cate_default_kappa(tuning, nrow(dat), length(x_cols), k),
+    s = s
+  )
 }
 
 # ── DNN cross-fitted ──────────────────────────────────────────────────────────
@@ -142,7 +273,8 @@
 # regression (propensity) and arm-specific OLS (potential outcome means), both
 # base-R.  Compares same-sample inference against the cross-fitting alternative.
 
-.method_dnn_crossfit <- function(dgp, x_cols, k, s, alpha,
+.method_dnn_crossfit <- function(dgp, x_cols, k, s, tuning = NULL,
+                                 tuning_mode = "default", alpha,
                                  n_folds = 5L, clip = 1e-3, ...) {
   dat <- dgp$data
   n   <- nrow(dat)
@@ -176,6 +308,21 @@
     ehat = e_cf
   )
 
+  if (identical(tuning_mode, "grid")) {
+    fit <- cate_dnn(
+      X              = as.matrix(dat[, x_cols]),
+      x0             = dgp$x0,
+      pseudo_outcome = aipw_cf,
+      k              = k,
+      tuning         = tuning,
+      tuning_mode    = "grid",
+      se             = TRUE,
+      jackknife      = "fast",
+      return         = "ess"
+    )
+    return(.sim_cate_dnn_grid_metrics(fit, dgp$tau_x0, alpha))
+  }
+
   fit <- cate_dnn(
     X              = as.matrix(dat[, x_cols]),
     x0             = dgp$x0,
@@ -186,7 +333,12 @@
     jackknife      = "fast",
     return         = "ess"
   )
-  .sim_metric(fit$tau, fit$se, dgp$tau_x0, alpha, neff = fit$ess)
+  .sim_metric(
+    fit$tau, fit$se, dgp$tau_x0, alpha,
+    neff = fit$ess,
+    kappa = .sim_cate_default_kappa(tuning, nrow(dat), length(x_cols), k),
+    s = s
+  )
 }
 
 # ── DNN oracle with Mahalanobis distance ─────────────────────────────────────
@@ -196,7 +348,24 @@
 # estimated once from the training data (via the distance_mahalanobis() setup()
 # mechanism) and reused for all evaluations.
 
-.method_dnn_oracle_mahal <- function(dgp, x_cols, k, s, alpha, ...) {
+.method_dnn_oracle_mahal <- function(dgp, x_cols, k, s, tuning = NULL,
+                                     tuning_mode = "default", alpha, ...) {
+  if (identical(tuning_mode, "grid")) {
+    fit <- cate_dnn(
+      X              = as.matrix(dgp$data[, x_cols]),
+      x0             = dgp$x0,
+      pseudo_outcome = dgp$data$aipw_oracle,
+      k              = k,
+      tuning         = tuning,
+      tuning_mode    = "grid",
+      distance       = "mahalanobis",
+      se             = TRUE,
+      jackknife      = "fast",
+      return         = "ess"
+    )
+    return(.sim_cate_dnn_grid_metrics(fit, dgp$tau_x0, alpha))
+  }
+
   fit <- cate_dnn(
     X              = as.matrix(dgp$data[, x_cols]),
     x0             = dgp$x0,
@@ -208,7 +377,12 @@
     jackknife      = "fast",
     return         = "ess"
   )
-  .sim_metric(fit$tau, fit$se, dgp$tau_x0, alpha, neff = fit$ess)
+  .sim_metric(
+    fit$tau, fit$se, dgp$tau_x0, alpha,
+    neff = fit$ess,
+    kappa = .sim_cate_default_kappa(tuning, nrow(dgp$data), length(x_cols), k),
+    s = s
+  )
 }
 
 # ── Local constant (Nadaraya-Watson) ──────────────────────────────────────────
@@ -291,7 +465,7 @@
 .method_causal_forest <- function(dgp, x_cols, alpha, ...) {
   if (!requireNamespace("grf", quietly = TRUE)) {
     warning("grf not available; causal_forest returns NA.", call. = FALSE)
-    return(.sim_metric(NA_real_, NA_real_, dgp$tau_x0, alpha))
+    return(.sim_metric(NA_real_, NA_real_, dgp$tau_x0, alpha, status = "failed"))
   }
   dat    <- dgp$data
   X      <- as.matrix(dat[, x_cols])
@@ -326,7 +500,7 @@
 .method_llf <- function(dgp, x_cols, alpha, ll_lambda = 0.1, ...) {
   if (!requireNamespace("grf", quietly = TRUE)) {
     warning("grf not available; llf returns NA.", call. = FALSE)
-    return(.sim_metric(NA_real_, NA_real_, dgp$tau_x0, alpha))
+    return(.sim_metric(NA_real_, NA_real_, dgp$tau_x0, alpha, status = "failed"))
   }
   dat    <- dgp$data
   X      <- as.matrix(dat[, x_cols])

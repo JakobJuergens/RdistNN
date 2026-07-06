@@ -24,6 +24,10 @@
 #' @param log_weights Logical (default `FALSE`); for rank-domain views,
 #'   drop non-positive weights and use a log10 y scale (the number of
 #'   dropped weights is reported in the caption).
+#' @param candidates Candidate rows to compare for grid fits. The default
+#'   `"default"` preserves the stored weight-matrix display. Use `"all"` or
+#'   a character vector of candidate ids with `type = "profile"` to compare
+#'   rank-weight profiles without refitting.
 #' @param ... Ignored; reserved for future options.
 #'
 #' @return A ggplot object.
@@ -45,9 +49,18 @@ plot_weights <- function(object,
                          type = c("profile", "cumulative", "kernel"),
                          targets = NULL,
                          log_weights = FALSE,
+                         candidates = "default",
                          ...) {
   .plot_require_ggplot2("plot_weights")
   type <- match.arg(type)
+  if (!.plot_candidates_is_default(candidates)) {
+    return(.plot_weights_candidates(
+      object = object,
+      type = type,
+      log_weights = log_weights,
+      candidates = candidates
+    ))
+  }
 
   dw <- plot_data_weights(object)
   n <- max(dw$rank)
@@ -147,6 +160,72 @@ plot_weights <- function(object,
   }
   honesty <- .plot_honesty_caption(object)
   if (nzchar(honesty)) captions <- c(captions, honesty)
+  if (length(captions) > 0L) {
+    p <- p + ggplot2::labs(caption = paste(captions, collapse = "\n"))
+  }
+  p + .rdistnn_theme()
+}
+
+.plot_weights_candidates <- function(object, type, log_weights, candidates) {
+  if (!identical(type, "profile")) {
+    .abort_bad_arg(
+      "type",
+      "candidate comparisons are available only for type = \"profile\"; use candidate_fit() for target-specific kernel or cumulative views",
+      quoted = FALSE
+    )
+  }
+  payload <- .plot_candidate_weight_frame(
+    object = object,
+    candidates = candidates,
+    fn = "plot_weights"
+  )
+  dw <- payload$data
+  captions <- character(0)
+  signed <- any(dw$weight < 0)
+  if (signed) {
+    captions <- c(captions, "two-scale weights are signed")
+  }
+  if (isTRUE(log_weights)) {
+    dropped <- sum(dw$weight <= 0)
+    dw <- dw[dw$weight > 0, , drop = FALSE]
+    captions <- c(
+      captions,
+      sprintf("log scale: %d non-positive weights dropped", dropped)
+    )
+  }
+  if (!is.null(payload$drop_caption)) {
+    captions <- c(captions, payload$drop_caption)
+  }
+
+  p <- ggplot2::ggplot(
+    dw,
+    ggplot2::aes(
+      x = .data$rank,
+      y = .data$weight,
+      colour = .data$candidate_label,
+      linetype = .data$candidate_label,
+      linewidth = .data$default_linewidth,
+      group = .data$candidate_id
+    )
+  ) +
+    ggplot2::geom_step()
+  if (signed && !isTRUE(log_weights)) {
+    p <- p + ggplot2::geom_hline(yintercept = 0, linetype = "dashed")
+  }
+  if (isTRUE(log_weights)) {
+    p <- p + ggplot2::scale_y_log10()
+  }
+  p <- p +
+    ggplot2::scale_linewidth_manual(
+      values = c(candidate = 0.5, default = 0.9),
+      guide = "none"
+    ) +
+    ggplot2::labs(
+      x = "Rank",
+      y = "DNN weight",
+      colour = "candidate",
+      linetype = "candidate"
+    )
   if (length(captions) > 0L) {
     p <- p + ggplot2::labs(caption = paste(captions, collapse = "\n"))
   }

@@ -94,6 +94,9 @@ plot_dashboard.cate_result <- function(object, ...) {
     propensity = function() plot_overlap(object, type = "propensity"),
     weights = function() plot_weights(object, type = "cumulative")
   )
+  if (!is.null(object$tuning_grid)) {
+    specs$tuning <- function() plot_tuning(object)
+  }
   panels <- .plot_dashboard_panels(specs)
   # Availability substitution (plan C-6): a missing overlap panel is
   # replaced by the diagnostics facets rather than an empty slot.
@@ -119,6 +122,9 @@ plot_dashboard.np_result <- function(object, ...) {
     weights = function() plot_weights(object, type = "profile"),
     concentration = function() plot_weights(object, type = "cumulative")
   )
+  if (!is.null(object$tuning_grid)) {
+    specs$tuning <- function() plot_tuning(object)
+  }
   panels <- .plot_dashboard_panels(specs)
   .plot_dashboard_compose(panels, object)
 }

@@ -18,6 +18,7 @@ plot_estimates(
   style = c("auto", "profile", "pointrange", "forest"),
   x_var = NULL,
   shade_significant = FALSE,
+  candidates = "default",
   ...
 )
 
@@ -55,6 +56,11 @@ column name, or a coordinate index.}
 \item{shade_significant}{Logical (default \code{FALSE}); for profile-style
 CATE panels, add a rug along the axis where the confidence interval
 excludes zero. Intervals are marked, never point estimates.}
+
+\item{candidates}{Candidate rows to compare for grid fits. The default
+\code{"default"} preserves the scalar-fit display. Use \code{"all"} or a
+character vector of candidate ids to compare stored grid candidates
+without refitting.}
 
 \item{...}{Passed to methods (for \code{autoplot()}/\code{plot()}) or ignored.}
 

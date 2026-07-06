@@ -3,7 +3,7 @@
 #
 # Public API:
 #   sim_cate_one_rep()  -- one replicate: draws data, runs all requested methods,
-#                          returns a data.frame with one row per method
+#                          returns a data.frame with one or more rows per method
 #   sim_cate_run()      -- full MC grid, returns a data.frame of raw results
 #
 # Available methods are listed by sim_cate_methods() and implemented in
@@ -28,6 +28,126 @@
 #   inst/paper-replication/cate/hpc/task.R and submit.sh, which dispatch
 #   one sim_cate_run() call per cell via SLURM_ARRAY_TASK_ID.
 
+# ── Shared row helpers ────────────────────────────────────────────────────────
+
+.sim_cate_raw_schema <- function() {
+  c(
+    "method", "design", "n", "kx", "k", "tuning_source",
+    "candidate_id", "kappa", "s", "seed",
+    .sim_cate_metric_names(),
+    "status"
+  )
+}
+
+.sim_cate_is_dnn_method <- function(method) {
+  grepl("^dnn_", method)
+}
+
+.sim_cate_tuning_default <- function(tuning, n, kx, k) {
+  tuning_eval(
+    tuning = tuning,
+    n = n,
+    kx = kx,
+    k = k,
+    se = TRUE,
+    jackknife = "fast",
+    mode = "default"
+  )
+}
+
+.sim_cate_grid_candidates <- function(tuning, n, kx, k) {
+  resolved <- .dnn_resolve_s(
+    s = NULL,
+    tuning = tuning,
+    n = n,
+    p = kx,
+    k = k,
+    se = TRUE,
+    jackknife = "fast"
+  )
+  resolved$tuning$grid$candidates
+}
+
+.sim_cate_failure_rows <- function(method, n, kx, k, s, tuning, tuning_mode,
+                                   alpha, by_candidate = FALSE) {
+  if (isTRUE(by_candidate) && identical(tuning_mode, "grid") &&
+      .sim_cate_is_dnn_method(method)) {
+    candidates <- .sim_cate_grid_candidates(tuning = tuning, n = n, kx = kx, k = k)
+    return(.sim_metric(
+      tau_hat = rep(NA_real_, nrow(candidates)),
+      se_hat = rep(NA_real_, nrow(candidates)),
+      tau0 = NA_real_,
+      alpha = alpha,
+      neff = rep(NA_real_, nrow(candidates)),
+      candidate_id = candidates$candidate_id,
+      kappa = candidates$kappa,
+      s = candidates$s,
+      status = "failed"
+    ))
+  }
+
+  .sim_metric(
+    tau_hat = NA_real_,
+    se_hat = NA_real_,
+    tau0 = NA_real_,
+    alpha = alpha,
+    s = if (.sim_cate_is_dnn_method(method)) s else NA_integer_,
+    status = "failed"
+  )
+}
+
+.sim_cate_normalize_method_rows <- function(res) {
+  if (!is.data.frame(res)) {
+    res <- as.list(res)
+    res <- as.data.frame(res, check.names = FALSE, stringsAsFactors = FALSE)
+  }
+  missing <- setdiff(.sim_cate_row_names(), names(res))
+  if (length(missing) > 0L) {
+    for (col in missing) {
+      res[[col]] <- if (identical(col, "status")) "ok" else NA_real_
+    }
+  }
+  res[, .sim_cate_row_names(), drop = FALSE]
+}
+
+.sim_cate_cell_config <- function(tuning, tuning_mode, s_fn, n, kx, k) {
+  if (identical(tuning_mode, "grid")) {
+    candidates <- .sim_cate_grid_candidates(tuning = tuning, n = n, kx = kx, k = k)
+    return(list(
+      s = NA_integer_,
+      tuning_source = "tuning",
+      candidates = candidates
+    ))
+  }
+
+  if (!is.null(tuning)) {
+    default <- .sim_cate_tuning_default(tuning = tuning, n = n, kx = kx, k = k)
+    return(list(
+      s = as.integer(default$s),
+      tuning_source = "tuning",
+      candidates = NULL
+    ))
+  }
+
+  list(
+    s = as.integer(s_fn(n, kx)),
+    tuning_source = "s_fn",
+    candidates = NULL
+  )
+}
+
+.sim_cate_add_cell_columns <- function(result, method, d, n, kx, k,
+                                       tuning_source, seed) {
+  result$method <- method
+  result$design <- d
+  result$n <- n
+  result$kx <- kx
+  result$k <- k
+  result$tuning_source <- tuning_source
+  result$seed <- seed
+  result[, .sim_cate_raw_schema(), drop = FALSE]
+}
+
 # ── Single replicate ──────────────────────────────────────────────────────────
 
 #' Run one replicate of CATE estimators
@@ -39,19 +159,25 @@
 #' @param n Integer sample size.
 #' @param kx Integer covariate dimension (\eqn{\ge 2}).
 #' @param k Integer DNN neighbour count.
-#' @param s Integer kernel order (undersmoothing parameter).
+#' @param s Integer kernel order (undersmoothing parameter). May be omitted
+#'   when `tuning` is supplied.
 #' @param design Character DGP name; passed to [sim_cate_data()].
 #' @param methods Character vector of method names; see [sim_cate_methods()].
 #'   Default: `"dnn_oracle"`.
+#' @param tuning Optional kernel-order tuning specification.
+#' @param tuning_mode One of `"default"` or `"grid"`. `"default"` evaluates
+#'   one scalar kernel order. `"grid"` requires `tuning` and emits one row per
+#'   DNN candidate while non-DNN benchmarks remain one row per replicate.
 #' @param alpha Nominal coverage level (default 0.05).
 #' @param seed Optional integer seed for this replicate.
 #' @param sigma Noise SD forwarded to the DGP.
 #' @param clip Propensity clipping bound forwarded to the DGP and cross-fitting.
 #' @param n_folds Number of cross-fitting folds for the `dnn_crossfit` method.
 #'
-#' @return A `data.frame` with one row per method and columns
-#'   `method`, `bias`, `sq_err`, `se`, `cover` (0/1), `ci_len`, `neff`.
-#'   Failed methods have `NA` for all metric columns.
+#' @return A `data.frame` with one or more rows per method and columns
+#'   `method`, `candidate_id`, `kappa`, `s`, `tau_hat`, `tau0`, `bias`,
+#'   `sq_err`, `se`, `cover` (0/1), `ci_len`, `neff`, and `status`.
+#'   Failed methods have `NA` for all metric columns and `status = "failed"`.
 #'
 #' @examples
 #' rep1 <- sim_cate_one_rep(
@@ -65,23 +191,47 @@
 #' @export
 sim_cate_one_rep <- function(n, kx, k, s, design,
                               methods   = "dnn_oracle",
+                              tuning    = NULL,
+                              tuning_mode = c("default", "grid"),
                               alpha     = 0.05,
                               seed      = NULL,
                               sigma     = 0.5,
                               clip      = 1e-3,
                               n_folds   = 5L) {
+  s_missing <- missing(s)
+  if (s_missing) {
+    s <- NULL
+  }
+  tuning_mode <- match.arg(tuning_mode)
+  if (identical(tuning_mode, "grid") && is.null(tuning)) {
+    .abort_bad_arg(
+      "tuning_mode",
+      "requires `tuning` when `tuning_mode = \"grid\"`",
+      quoted = FALSE
+    )
+  }
+  if (!identical(tuning_mode, "grid") && is.null(s) && is.null(tuning)) {
+    .abort_bad_arg(
+      "s",
+      "must be supplied unless `tuning` is supplied",
+      quoted = FALSE
+    )
+  }
+  if (!identical(tuning_mode, "grid") && is.null(s) && !is.null(tuning)) {
+    s <- .sim_cate_tuning_default(tuning = tuning, n = n, kx = kx, k = k)$s
+  }
+
   dgp    <- sim_cate_data(design, n = n, kx = kx,
                           sigma = sigma, clip = clip, seed = seed)
   x_cols <- paste0("X", seq_len(kx))
+  fns <- lapply(methods, .get_sim_method)
 
-  na_row <- c(tau_hat = NA_real_, tau0 = NA_real_,
-              bias = NA_real_, sq_err = NA_real_, se = NA_real_,
-              cover = NA_real_, ci_len = NA_real_, neff = NA_real_)
-
-  rows <- lapply(methods, function(meth) {
-    fn  <- .get_sim_method(meth)
+  rows <- lapply(seq_along(methods), function(i) {
+    meth <- methods[[i]]
+    fn <- fns[[i]]
     res <- tryCatch(
-      fn(dgp = dgp, x_cols = x_cols, k = k, s = s, alpha = alpha,
+      fn(dgp = dgp, x_cols = x_cols, k = k, s = s,
+         tuning = tuning, tuning_mode = tuning_mode, alpha = alpha,
          n_folds = n_folds, clip = clip),
       error = function(e) {
         warning(sprintf("sim_cate_one_rep: method '%s' failed: %s",
@@ -90,30 +240,25 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
       }
     )
     if (is.null(res)) {
-      na_row
+      res <- .sim_cate_failure_rows(
+        method = meth,
+        n = n,
+        kx = kx,
+        k = k,
+        s = s,
+        tuning = tuning,
+        tuning_mode = tuning_mode,
+        alpha = alpha,
+        by_candidate = identical(tuning_mode, "grid")
+      )
     } else {
-      # Ensure neff is present even if method omits it
-      if (!"neff" %in% names(res)) res <- c(res, neff = NA_real_)
-      res[names(na_row)]
+      res <- .sim_cate_normalize_method_rows(res)
     }
+    res$method <- meth
+    res[, c("method", .sim_cate_row_names()), drop = FALSE]
   })
 
-  do.call(rbind, lapply(seq_along(methods), function(i) {
-    r <- rows[[i]]
-    data.frame(
-      method  = methods[i],
-      tau_hat = r[["tau_hat"]],
-      tau0    = r[["tau0"]],
-      bias    = r[["bias"]],
-      sq_err  = r[["sq_err"]],
-      se      = r[["se"]],
-      cover   = r[["cover"]],
-      ci_len  = r[["ci_len"]],
-      neff    = r[["neff"]],
-      stringsAsFactors = FALSE,
-      row.names = NULL
-    )
-  }))
+  do.call(rbind, rows)
 }
 
 # ── Monte Carlo grid ──────────────────────────────────────────────────────────
@@ -125,7 +270,8 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
 #' [sim_cate_one_rep()].  Each replicate draws one dataset and evaluates **all**
 #' requested `methods` on the same draw, enabling like-for-like comparisons.
 #' Returns a tidy data.frame of raw per-replicate, per-method results.  Use
-#' [summarise_sim_results()] to aggregate to one row per `(method, design, n, kx)`.
+#' [summarise_sim_results()] to aggregate to one row per
+#' `(method, design, n, kx, candidate_id, kappa, s)`.
 #'
 #' @section Parallelism:
 #' When the `future.apply` package is installed, the rep loop within each cell
@@ -146,7 +292,7 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
 #' Each replicate is wrapped in `tryCatch`.  A total rep failure (e.g. DGP
 #' draw error) records `NA` for all metrics and all methods and emits a warning;
 #' per-method failures are handled inside [sim_cate_one_rep()].
-#' [summarise_sim_results()] reports `n_failed` per `(method, design, n, kx)`.
+#' [summarise_sim_results()] reports `n_failed` per candidate-aware group.
 #'
 #' @param designs Character vector of DGP names.
 #' @param n_vals Integer vector of sample sizes.
@@ -166,6 +312,10 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
 #' @param tuning Optional kernel-order tuning specification. When supplied,
 #'   `s` is resolved per simulation cell from `tuning_eval(..., mode = "default")`
 #'   and `s_fn` must be omitted.
+#' @param tuning_mode One of `"default"` or `"grid"`. `"default"` preserves
+#'   scalar simulation behavior. `"grid"` requires `tuning`; DNN methods emit
+#'   one row per tuning candidate from the integrated [cate_dnn()] grid payload,
+#'   while non-DNN benchmarks emit one row with `candidate_id = NA` and `s = NA`.
 #' @param methods Character vector of method names; see [sim_cate_methods()].
 #'   Default: `"dnn_oracle"`.
 #' @param alpha Nominal coverage level.
@@ -174,10 +324,10 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
 #' @param n_folds Number of cross-fitting folds for the `dnn_crossfit` method.
 #' @param verbose Print one progress line per cell (default `TRUE`).
 #'
-#' @return A `data.frame` with one row per replicate-method combination and
-#'   columns: `method`, `design`, `n`, `kx`, `s`, `seed`,
-#'   `bias`, `sq_err`, `se`, `cover`, `ci_len`, `neff`.
-#'   Failed entries have `NA` for all metric columns.
+#' @return A `data.frame` with raw rows and columns `method`, `design`, `n`,
+#'   `kx`, `k`, `tuning_source`, `candidate_id`, `kappa`, `s`, `seed`,
+#'   `tau_hat`, `tau0`, `bias`, `sq_err`, `se`, `cover`, `ci_len`, `neff`,
+#'   and `status`. Failed entries have `NA` for all metric columns.
 #'
 #' @seealso [sim_cate_one_rep()], [summarise_sim_results()], [sim_cate_methods()]
 #'
@@ -208,6 +358,7 @@ sim_cate_run <- function(
     k           = 1L,
     s_fn        = function(n, kx) floor(n^((kx + 1L) / (kx + 2L))),
     tuning      = NULL,
+    tuning_mode = c("default", "grid"),
     methods     = "dnn_oracle",
     alpha       = 0.05,
     sigma       = 0.5,
@@ -215,11 +366,19 @@ sim_cate_run <- function(
     n_folds     = 5L,
     verbose     = TRUE
 ) {
+  tuning_mode <- match.arg(tuning_mode)
   s_fn_arg <- if (missing(s_fn)) NULL else s_fn
   if (!is.null(tuning) && !is.null(s_fn_arg)) {
     .abort_bad_arg(
       "tuning/s_fn",
       "cannot provide both `tuning` and `s_fn`; omit `s_fn` when `tuning` is used",
+      quoted = FALSE
+    )
+  }
+  if (identical(tuning_mode, "grid") && is.null(tuning)) {
+    .abort_bad_arg(
+      "tuning_mode",
+      "requires `tuning` when `tuning_mode = \"grid\"`",
       quoted = FALSE
     )
   }
@@ -257,28 +416,34 @@ sim_cate_run <- function(
     d  <- cells$design[i]
     n  <- cells$n[i]
     kx <- cells$kx[i]
-    s  <- if (!is.null(tuning)) {
-      tuning_eval(
-        tuning = tuning,
-        n = n,
-        kx = kx,
-        k = k,
-        se = TRUE,
-        jackknife = "fast",
-        mode = "default"
-      )$s
-    } else {
-      s_fn(n, kx)
-    }
+    cell <- .sim_cate_cell_config(
+      tuning = tuning,
+      tuning_mode = tuning_mode,
+      s_fn = s_fn,
+      n = n,
+      kx = kx,
+      k = k
+    )
 
-    if (verbose)
-      message(sprintf("  design=%-22s  n=%4d  kx=%d  s=%d  methods=[%s]",
-                      d, n, kx, s, paste(methods, collapse = ", ")))
+    if (verbose) {
+      if (identical(tuning_mode, "grid")) {
+        skipped <- sum(!cell$candidates$feasible)
+        message(sprintf(
+          "  design=%-22s  n=%4d  kx=%d  s in {%s}  skipped=%d  methods=[%s]",
+          d, n, kx, paste(sort(unique(cell$candidates$s)), collapse = ", "),
+          skipped, paste(methods, collapse = ", ")
+        ))
+      } else {
+        message(sprintf("  design=%-22s  n=%4d  kx=%d  s=%d  methods=[%s]",
+                        d, n, kx, cell$s, paste(methods, collapse = ", ")))
+      }
+    }
 
     reps <- .lapply(as.list(seeds), function(sd) {
       result <- tryCatch(
-        sim_cate_one_rep(n = n, kx = kx, k = k, s = s,
+        sim_cate_one_rep(n = n, kx = kx, k = k, s = cell$s,
                          design = d, methods = methods,
+                         tuning = tuning, tuning_mode = tuning_mode,
                          alpha = alpha, sigma = sigma,
                          clip = clip, seed = sd, n_folds = n_folds),
         error = function(e) {
@@ -291,25 +456,44 @@ sim_cate_run <- function(
       )
 
       if (is.null(result)) {
-        # Total rep failure: NA rows for every method
+        # Total rep failure: shape rows by the rows each method would have
+        # emitted in this cell.
         do.call(rbind, lapply(methods, function(meth) {
-          data.frame(design = d, n = n, kx = kx, s = s, seed = sd,
-                     method = meth, tau_hat = NA_real_, tau0 = NA_real_,
-                     bias = NA_real_, sq_err = NA_real_, se = NA_real_,
-                     cover = NA_real_, ci_len = NA_real_, neff = NA_real_,
-                     stringsAsFactors = FALSE, row.names = NULL)
+          fail <- .sim_cate_failure_rows(
+            method = meth,
+            n = n,
+            kx = kx,
+            k = k,
+            s = cell$s,
+            tuning = tuning,
+            tuning_mode = tuning_mode,
+            alpha = alpha,
+            by_candidate = TRUE
+          )
+          .sim_cate_add_cell_columns(
+            fail,
+            method = meth,
+            d = d,
+            n = n,
+            kx = kx,
+            k = k,
+            tuning_source = cell$tuning_source,
+            seed = sd
+          )
         }))
       } else {
-        # Prepend cell identity columns (scalar assignment recycles safely)
-        result$design <- d
-        result$n      <- n
-        result$kx     <- kx
-        result$s      <- s
-        result$seed   <- sd
-        result[, c("design", "n", "kx", "s", "seed", "method",
-                   "tau_hat", "tau0", "bias", "sq_err", "se",
-                   "cover", "ci_len", "neff"),
-               drop = FALSE]
+        do.call(rbind, lapply(split(result, seq_len(nrow(result))), function(row) {
+          .sim_cate_add_cell_columns(
+            row,
+            method = row$method[[1L]],
+            d = d,
+            n = n,
+            kx = kx,
+            k = k,
+            tuning_source = cell$tuning_source,
+            seed = sd
+          )
+        }))
       }
     })
 

@@ -11,6 +11,8 @@ sim_cate_one_rep(
   s,
   design,
   methods = "dnn_oracle",
+  tuning = NULL,
+  tuning_mode = c("default", "grid"),
   alpha = 0.05,
   seed = NULL,
   sigma = 0.5,
@@ -25,12 +27,19 @@ sim_cate_one_rep(
 
 \item{k}{Integer DNN neighbour count.}
 
-\item{s}{Integer kernel order (undersmoothing parameter).}
+\item{s}{Integer kernel order (undersmoothing parameter). May be omitted
+when \code{tuning} is supplied.}
 
 \item{design}{Character DGP name; passed to \code{\link[=sim_cate_data]{sim_cate_data()}}.}
 
 \item{methods}{Character vector of method names; see \code{\link[=sim_cate_methods]{sim_cate_methods()}}.
 Default: \code{"dnn_oracle"}.}
+
+\item{tuning}{Optional kernel-order tuning specification.}
+
+\item{tuning_mode}{One of \code{"default"} or \code{"grid"}. \code{"default"} evaluates
+one scalar kernel order. \code{"grid"} requires \code{tuning} and emits one row per
+DNN candidate while non-DNN benchmarks remain one row per replicate.}
 
 \item{alpha}{Nominal coverage level (default 0.05).}
 
@@ -43,9 +52,10 @@ Default: \code{"dnn_oracle"}.}
 \item{n_folds}{Number of cross-fitting folds for the \code{dnn_crossfit} method.}
 }
 \value{
-A \code{data.frame} with one row per method and columns
-\code{method}, \code{bias}, \code{sq_err}, \code{se}, \code{cover} (0/1), \code{ci_len}, \code{neff}.
-Failed methods have \code{NA} for all metric columns.
+A \code{data.frame} with one or more rows per method and columns
+\code{method}, \code{candidate_id}, \code{kappa}, \code{s}, \code{tau_hat}, \code{tau0}, \code{bias},
+\code{sq_err}, \code{se}, \code{cover} (0/1), \code{ci_len}, \code{neff}, and \code{status}.
+Failed methods have \code{NA} for all metric columns and \code{status = "failed"}.
 }
 \description{
 Draws one dataset from the named DGP (via \code{\link[=sim_cate_data]{sim_cate_data()}}), then runs each

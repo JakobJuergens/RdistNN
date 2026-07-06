@@ -5,6 +5,7 @@
 \alias{plot_tuning.default}
 \alias{plot_tuning.np_result}
 \alias{plot_tuning.cate_result}
+\alias{plot_tuning.plqr_result}
 \title{Plot estimate sensitivity to the kernel order}
 \usage{
 plot_tuning(
@@ -13,6 +14,7 @@ plot_tuning(
   targets = NULL,
   level = 0.95,
   se = TRUE,
+  candidates = "all",
   ...
 )
 
@@ -22,6 +24,7 @@ plot_tuning(
   targets = NULL,
   level = 0.95,
   se = TRUE,
+  candidates = "all",
   ...
 )
 
@@ -31,6 +34,7 @@ plot_tuning(
   targets = NULL,
   level = 0.95,
   se = TRUE,
+  candidates = "all",
   ...
 )
 
@@ -40,11 +44,22 @@ plot_tuning(
   targets = NULL,
   level = 0.95,
   se = TRUE,
+  candidates = "all",
+  ...
+)
+
+\method{plot_tuning}{plqr_result}(
+  object,
+  tuning = tuning_dnn_paper(),
+  targets = NULL,
+  level = 0.95,
+  se = TRUE,
+  candidates = "all",
   ...
 )
 }
 \arguments{
-\item{object}{A fitted \code{np_result} or \code{cate_result}.}
+\item{object}{A fitted \code{np_result}, \code{cate_result}, or \code{plqr_result}.}
 
 \item{tuning}{A tuning specification for the candidate grid (default
 \code{\link[=tuning_dnn_paper]{tuning_dnn_paper()}}).}
@@ -55,7 +70,12 @@ most three: first, middle, last).}
 \item{level}{Confidence level for the bounds (default \code{0.95}).}
 
 \item{se}{Logical; compute jackknife bounds for each candidate
-(default \code{TRUE}).}
+when \code{object} is a scalar fit (default \code{TRUE}). Stored grid fits reuse
+the standard errors already present in \code{object$tuning_grid}.}
+
+\item{candidates}{Candidate rows to display. The default \code{"all"} shows
+the tuning sweep; a character vector of candidate ids or \code{"default"}
+can be used to restrict the display.}
 
 \item{...}{Ignored; reserved for future options.}
 }
@@ -63,16 +83,17 @@ most three: first, middle, last).}
 A ggplot object.
 }
 \description{
-Refits the estimator at each candidate kernel order of a tuning grid
+Evaluates or reuses the candidate kernel orders of a tuning grid
 (default: the paper rule's kappa grid via \code{\link[=tuning_dnn_paper]{tuning_dnn_paper()}}, always
 including the fitted \code{s}) and plots the estimates with confidence
 bounds against \code{s}, marking the fitted kernel order with a filled point
-and a dotted guide. Each candidate refit recomputes the delete-one
-jackknife, so the panel costs roughly one fit per candidate.
+and a dotted guide. For grid fits, the stored \code{tuning_grid} payload is
+consumed directly. For scalar fits, the internal grid engine is used on
+the stored model state; public estimators are not refit.
 }
 \details{
-Refits use the training data stored on the fit; fits from package
-versions predating that storage must be re-estimated first.
+Scalar grid evaluation uses the training data stored on the fit; fits
+from package versions predating that storage must be re-estimated first.
 }
 \examples{
 \donttest{

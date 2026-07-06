@@ -61,7 +61,10 @@
 
 #' @name diagnostics
 #' @export
-diagnostics.plqr_result <- function(object, ...) {
+diagnostics.plqr_result <- function(object, candidates = "default", ...) {
+  if (!.plot_candidates_is_default(candidates)) {
+    return(.dnn_candidate_diagnostics(object, candidates = candidates))
+  }
   out <- .dnn_weight_diagnostics(
     W = .dnn_diag_require_W(object),
     meta = object$meta,

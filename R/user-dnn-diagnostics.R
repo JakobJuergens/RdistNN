@@ -213,12 +213,59 @@
   out
 }
 
+.dnn_candidate_diagnostics <- function(object, candidates = "all") {
+  grid <- .plot_require_grid(object, fn = "diagnostics")
+  selected <- .plot_resolve_candidates(object, candidates = candidates, fn = "diagnostics")
+  diag <- grid$diagnostics[grid$diagnostics$candidate_id %in% selected$candidate_id, , drop = FALSE]
+  diag$.candidate_order <- match(diag$candidate_id, selected$candidate_id)
+  diag <- diag[order(diag$.candidate_order), , drop = FALSE]
+  diag$.candidate_order <- NULL
+  idx <- match(diag$candidate_id, selected$candidate_id)
+
+  meta <- object$meta
+  out <- data.frame(
+    candidate_id = diag$candidate_id,
+    candidate_label = selected$candidate_label[idx],
+    computed_key = diag$computed_key,
+    is_default = as.logical(selected$is_default[idx]),
+    status = diag$status,
+    reason = diag$reason,
+    n = rep(if (!is.null(meta$n)) as.integer(meta$n) else NA_integer_, nrow(diag)),
+    p = rep(if (!is.null(meta$p)) as.integer(meta$p) else NA_integer_, nrow(diag)),
+    k = rep(if (!is.null(meta$k)) as.integer(meta$k) else NA_integer_, nrow(diag)),
+    s = as.integer(diag$s),
+    kappa = suppressWarnings(as.numeric(diag$kappa)),
+    method = rep(if (!is.null(meta$method)) as.character(meta$method) else NA_character_, nrow(diag)),
+    distance = rep(if (!is.null(meta$distance)) as.character(meta$distance) else NA_character_, nrow(diag)),
+    n_eff = as.numeric(diag$ess),
+    max_weight = as.numeric(diag$max_weight),
+    top1_weight_share = rep(NA_real_, nrow(diag)),
+    top5_weight_share = as.numeric(diag$top_share),
+    top10_weight_share = rep(NA_real_, nrow(diag)),
+    n_nonzero_weight = rep(NA_integer_, nrow(diag)),
+    distance_diagnostics_available = rep(FALSE, nrow(diag)),
+    radius_rank_k = rep(NA_real_, nrow(diag)),
+    radius_rank_s = rep(NA_real_, nrow(diag)),
+    weighted_mean_distance = rep(NA_real_, nrow(diag)),
+    weighted_median_distance = rep(NA_real_, nrow(diag)),
+    degenerate = as.logical(diag$degenerate),
+    stringsAsFactors = FALSE
+  )
+  rownames(out) <- out$candidate_id
+  class(out) <- c("dnn_diagnostics", "data.frame")
+  out
+}
+
 #' Compute diagnostics for fitted localized estimators
 #'
 #' Returns a compact diagnostics table for supported fit objects.
 #'
 #' @param object A fitted estimator object, currently an object returned by
 #'   [np_dnn()], [cate_dnn()], or [plqr_dnn()].
+#' @param candidates Candidate rows to report for grid fits. The default
+#'   `"default"` preserves the per-target diagnostics table for the selected
+#'   fit. Use `"all"` or a character vector of candidate ids to report
+#'   candidate-level grid diagnostics from `object$tuning_grid`.
 #' @param ... Not used.
 #' @return An object of class `dnn_diagnostics`.
 #' @name diagnostics
@@ -256,13 +303,13 @@
 #' )
 #' diagnostics(fit_plqr)
 #' @export
-diagnostics <- function(object, ...) {
+diagnostics <- function(object, candidates = "default", ...) {
   UseMethod("diagnostics")
 }
 
 #' @rdname diagnostics
 #' @export
-diagnostics.default <- function(object, ...) {
+diagnostics.default <- function(object, candidates = "default", ...) {
   .abort_bad_arg(
     "object",
     sprintf("diagnostics() is not implemented for class '%s'", class(object)[1L]),
@@ -277,17 +324,30 @@ diagnostics.default <- function(object, ...) {
 #' @export
 print.dnn_diagnostics <- function(x, ...) {
   cat("<dnn_diagnostics>\n", sep = "")
-  cat("  targets: ", nrow(x), "\n", sep = "")
-  cat(
-    "  n_eff  : min=", round(min(x$n_eff), 4), ", median=", round(stats::median(x$n_eff), 4),
-    ", max=", round(max(x$n_eff), 4), "\n",
-    sep = ""
-  )
-  cat(
-    "  weights: max(top5 share)=", round(max(x$top5_weight_share), 4),
-    ", max(weight)=", round(max(x$max_weight), 4), "\n",
-    sep = ""
-  )
+  if ("candidate_id" %in% names(x)) {
+    ok <- as.character(x$status) == "ok"
+    cat("  candidates: ", nrow(x), " (available: ", sum(ok), ")\n", sep = "")
+  } else {
+    cat("  targets: ", nrow(x), "\n", sep = "")
+  }
+  finite_neff <- x$n_eff[is.finite(x$n_eff)]
+  if (length(finite_neff) > 0L) {
+    cat(
+      "  n_eff  : min=", round(min(finite_neff), 4),
+      ", median=", round(stats::median(finite_neff), 4),
+      ", max=", round(max(finite_neff), 4), "\n",
+      sep = ""
+    )
+  }
+  finite_top5 <- x$top5_weight_share[is.finite(x$top5_weight_share)]
+  finite_max <- x$max_weight[is.finite(x$max_weight)]
+  if (length(finite_top5) > 0L && length(finite_max) > 0L) {
+    cat(
+      "  weights: max(top5 share)=", round(max(finite_top5), 4),
+      ", max(weight)=", round(max(finite_max), 4), "\n",
+      sep = ""
+    )
+  }
   cat(
     "  dist   : available for ", sum(x$distance_diagnostics_available), "/", nrow(x),
     " target(s)\n",
