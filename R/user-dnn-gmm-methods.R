@@ -116,25 +116,33 @@ confint.gmm_result <- function(object, parm = NULL, level = 0.95,
   }
 
   if (!is.null(target)) {
-    target_idx <- as.integer(target)
-    if (length(target_idx) == 0L || anyNA(target_idx) ||
-        any(target_idx < 1L | target_idx > ncol(object$theta))) {
-      .abort_bad_arg("target", "must contain valid target indices")
-    }
+    target_idx <- .validate_index_vector(
+      target,
+      upper = ncol(object$theta),
+      arg = "target",
+      label = "target indices"
+    )
     keep_targets <- colnames(object$theta)[target_idx]
     tab <- tab[tab$target %in% keep_targets, , drop = FALSE]
   }
 
   if (!is.null(parm)) {
     if (is.character(parm)) {
-      keep_terms <- parm
-    } else {
-      parm_idx <- as.integer(parm)
-      if (length(parm_idx) == 0L || anyNA(parm_idx) ||
-          any(parm_idx < 1L | parm_idx > nrow(object$theta))) {
+      if (length(parm) == 0L || anyNA(parm) || any(!nzchar(parm)) ||
+          any(!(parm %in% rownames(object$theta)))) {
         .abort_bad_arg("parm", "must contain valid coefficient names or indices")
       }
+      keep_terms <- parm
+    } else if (is.numeric(parm)) {
+      parm_idx <- .validate_index_vector(
+        parm,
+        upper = nrow(object$theta),
+        arg = "parm",
+        label = "coefficient indices"
+      )
       keep_terms <- rownames(object$theta)[parm_idx]
+    } else {
+      .abort_bad_arg("parm", "must contain valid coefficient names or indices")
     }
     tab <- tab[tab$term %in% keep_terms, , drop = FALSE]
   }

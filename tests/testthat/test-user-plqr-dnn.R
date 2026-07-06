@@ -261,6 +261,30 @@ test_that("plqr_dnn tibble input matches data.frame input", {
   expect_equal(out_tbl$moment, out_df$moment, tolerance = 1e-12)
 })
 
+test_that("plqr_dnn rejects ambiguous data-frame column-name schemas", {
+  d <- .make_plqr_data(n = 42L, p = 2L, p_d = 2L, m = 2L, tau = 0.5)
+  nms <- names(d$df)
+  df_dup <- d$df
+  names(df_dup)[match(d$D_cols[2L], nms)] <- d$D_cols[1L]
+
+  expect_error(
+    plqr_dnn(
+      data = df_dup,
+      x_cols = match(d$x_cols, nms),
+      D_cols = match(d$D_cols, nms),
+      q_col = match("q_oracle", nms),
+      mD_cols = match(d$mD_cols, nms),
+      y_col = match("Y", nms),
+      beta = d$beta,
+      tau = d$tau,
+      X0 = d$X0,
+      k = 1L, s = 2L, se = FALSE
+    ),
+    "unique column names",
+    ignore.case = TRUE
+  )
+})
+
 test_that("plqr_dnn interface equivalence holds in p=1, p_d=1, m=1 edge case", {
   d <- .make_plqr_data(n = 38L, p = 1L, p_d = 1L, m = 1L, tau = 0.5)
 
@@ -440,6 +464,36 @@ test_that("plqr_dnn validation catches shape and beta issues", {
   )
   expect_error(
     plqr_dnn(
+      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+      beta = d$beta, tau = d$tau, x0 = c(NA_real_, 0),
+      k = 1L, s = 2L, se = FALSE
+    ),
+    "x0.*NA",
+    ignore.case = TRUE
+  )
+  bad_X0 <- d$X0
+  bad_X0[1L, 1L] <- Inf
+  expect_error(
+    plqr_dnn(
+      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+      beta = d$beta, tau = d$tau, X0 = bad_X0,
+      k = 1L, s = 2L, se = FALSE
+    ),
+    "X0.*non-finite",
+    ignore.case = TRUE
+  )
+  expect_error(
+    plqr_dnn(
+      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+      beta = d$beta, tau = d$tau,
+      X0 = matrix(numeric(0), nrow = 0L, ncol = ncol(d$X)),
+      k = 1L, s = 2L, se = FALSE
+    ),
+    "X0.*at least 1 row",
+    ignore.case = TRUE
+  )
+  expect_error(
+    plqr_dnn(
       data = d$df,
       x_cols = d$x_cols,
       D_cols = d$D_cols,
@@ -517,6 +571,40 @@ test_that("plqr_dnn validation catches shape and beta issues", {
       k = "foo", s = 3L, se = FALSE
     ),
     "integer scalar"
+  )
+  expect_error(
+    plqr_dnn(
+      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+      beta = d$beta, tau = d$tau, X0 = d$X0,
+      k = 1L, s = 3L, se = NA
+    ),
+    "se.*TRUE or FALSE"
+  )
+  expect_error(
+    plqr_dnn(
+      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+      beta = d$beta, tau = d$tau, X0 = d$X0,
+      k = 1L, s = 3L, se = "yes"
+    ),
+    "se.*TRUE or FALSE"
+  )
+  expect_error(
+    plqr_dnn(
+      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+      beta = d$beta, tau = d$tau, X0 = d$X0,
+      method = "asymp", k = 1L, s = 3L, se = FALSE,
+      normalize = NA
+    ),
+    "normalize.*TRUE or FALSE"
+  )
+  expect_error(
+    plqr_dnn(
+      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+      beta = d$beta, tau = d$tau, X0 = d$X0,
+      method = "asymp", k = 1L, s = 3L, se = FALSE,
+      normalize = "yes"
+    ),
+    "normalize.*TRUE or FALSE"
   )
 })
 

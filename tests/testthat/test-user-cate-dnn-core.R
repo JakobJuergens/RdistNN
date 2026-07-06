@@ -169,6 +169,27 @@ test_that("data-frame API with pseudo_outcome supports jackknife SEs", {
   expect_true(all(out$se >= 0))
 })
 
+test_that("cate_dnn rejects ambiguous data-frame column-name schemas", {
+  dat <- .make_df_data(n = 36L, p = 2L, m = 2L)
+  nms <- names(dat$df)
+  df_dup <- dat$df
+  names(df_dup)[match("X2", nms)] <- "X1"
+
+  expect_error(
+    cate_dnn(
+      data = df_dup,
+      x_cols = match(dat$x_cols, nms),
+      y_col = match("Y", nms),
+      t_col = match("D", nms),
+      pseudo_outcome = dat$psi_aipw,
+      X0 = dat$X0,
+      k = 1L, s = 2L, se = FALSE
+    ),
+    "unique column names",
+    ignore.case = TRUE
+  )
+})
+
 test_that("invalid jackknife argument errors clearly", {
   dat <- .make_data(n = 20L, p = 2L, m = 3L)
 
@@ -208,6 +229,30 @@ test_that("k and s are validated at the cate_dnn entry point", {
   expect_error(
     cate_dnn(X = dat$X, X0 = dat$X0, pseudo_outcome = psi, k = "foo", s = 3L, se = FALSE),
     "integer scalar"
+  )
+  expect_error(
+    cate_dnn(X = dat$X, X0 = dat$X0, pseudo_outcome = psi, k = 1L, s = 3L, se = NA),
+    "se.*TRUE or FALSE"
+  )
+  expect_error(
+    cate_dnn(X = dat$X, X0 = dat$X0, pseudo_outcome = psi, k = 1L, s = 3L, se = "yes"),
+    "se.*TRUE or FALSE"
+  )
+  expect_error(
+    cate_dnn(
+      X = dat$X, X0 = dat$X0, pseudo_outcome = psi,
+      method = "asymp", k = 1L, s = 3L, se = FALSE,
+      normalize = NA
+    ),
+    "normalize.*TRUE or FALSE"
+  )
+  expect_error(
+    cate_dnn(
+      X = dat$X, X0 = dat$X0, pseudo_outcome = psi,
+      method = "asymp", k = 1L, s = 3L, se = FALSE,
+      normalize = "yes"
+    ),
+    "normalize.*TRUE or FALSE"
   )
 })
 
@@ -280,6 +325,32 @@ test_that("error handling: both X0 and x0 provided; bad shapes; missing pseudo/n
       pseudo_outcome = psi, distance = "l2", k = 2L, s = 3L, method = "exact"
     ),
     regexp = "either `X0` or `x0`", ignore.case = TRUE
+  )
+
+  expect_error(
+    cate_dnn(
+      X = dat$X, x0 = c(NA_real_, 0),
+      pseudo_outcome = psi, distance = "l2", k = 2L, s = 3L, se = FALSE
+    ),
+    regexp = "x0.*NA", ignore.case = TRUE
+  )
+
+  bad_X0 <- dat$X0
+  bad_X0[1L, 1L] <- Inf
+  expect_error(
+    cate_dnn(
+      X = dat$X, X0 = bad_X0,
+      pseudo_outcome = psi, distance = "l2", k = 2L, s = 3L, se = FALSE
+    ),
+    regexp = "X0.*non-finite", ignore.case = TRUE
+  )
+
+  expect_error(
+    cate_dnn(
+      X = dat$X, X0 = matrix(numeric(0), nrow = 0L, ncol = ncol(dat$X)),
+      pseudo_outcome = psi, distance = "l2", k = 2L, s = 3L, se = FALSE
+    ),
+    regexp = "X0.*at least 1 row", ignore.case = TRUE
   )
 
   expect_error(

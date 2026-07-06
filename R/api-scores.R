@@ -157,9 +157,22 @@ validate_score <- function(sc) {
   if (!inherits(sc, "ustat_score")) {
     .abort_bad_arg("sc", "must inherit from class 'ustat_score'")
   }
-  if (!nzchar(sc$name)) .abort_bad_arg("name", "must be a non-empty character scalar", quoted = FALSE)
-  if (!(.is_scalar_int(sc$order) || .is_fun(sc$order, 1L))) {
+  if (!is.character(sc$name) || length(sc$name) != 1L || !nzchar(sc$name)) {
+    .abort_bad_arg("name", "must be a non-empty character scalar", quoted = FALSE)
+  }
+  if (.is_scalar_int(sc$order)) {
+    sc$order <- .validate_scalar_int(sc$order, arg = "order", min = 1L)
+  } else if (!.is_fun(sc$order, 1L)) {
     .abort_bad_arg("order", "must be an integer scalar or function(n, data, ctx)")
+  }
+  if (!is.null(sc$setup) && !is.function(sc$setup)) {
+    .abort_bad_arg("setup", "must be NULL or a function")
+  }
+  if (!is.null(sc$eval) && !is.function(sc$eval)) {
+    .abort_bad_arg("eval", "must be NULL or a function")
+  }
+  if (!is.null(sc$eval_batch) && !is.function(sc$eval_batch)) {
+    .abort_bad_arg("eval_batch", "must be NULL or a function")
   }
   if (!is.null(sc$eval_param) && !is.function(sc$eval_param)) {
     .abort_bad_arg("eval_param", "must be NULL or a function")
@@ -285,10 +298,14 @@ score_setup.ustat_score <- function(score, data, ...) {
 score_order <- function(score, n, data, ctx = NULL) UseMethod("score_order")
 #' @export
 score_order.ustat_score <- function(score, n, data, ctx = NULL) {
-  if (.is_scalar_int(score$order)) {
-    return(as.integer(score$order))
+  if (!is_score(score)) {
+    .abort_bad_arg("score", "must be a `ustat_score` object")
   }
-  as.integer(score$order(n, data, ctx))
+  n <- .validate_scalar_int(n, arg = "n", min = 1L)
+  if (.is_scalar_int(score$order)) {
+    return(.validate_scalar_int(score$order, arg = "order", min = 1L))
+  }
+  .validate_scalar_int(score$order(n, data, ctx), arg = "score$order()", min = 1L)
 }
 
 # --- evaluators (robust fallbacks) -------------------------------------------
@@ -311,6 +328,13 @@ score_order.ustat_score <- function(score, n, data, ctx = NULL) {
 score_eval <- function(score, idxs, data, ctx = NULL, rng = NULL) UseMethod("score_eval")
 #' @export
 score_eval.ustat_score <- function(score, idxs, data, ctx = NULL, rng = NULL) {
+  if (!is_score(score)) {
+    .abort_bad_arg("score", "must be a `ustat_score` object")
+  }
+  n <- .score_n(data)
+  s <- score_order(score, n, data, ctx)
+  idxs <- .score_check_idxs(idxs, n, s)
+
   if (is.function(score$eval)) {
     out <- score$eval(idxs, data, ctx, rng)
     if (!is.numeric(out) || length(out) != 1L || !is.finite(out)) {
@@ -326,7 +350,7 @@ score_eval.ustat_score <- function(score, idxs, data, ctx = NULL, rng = NULL) {
   }
 
   if (is.function(score$eval_batch)) {
-    subs1 <- if (is.matrix(idxs)) idxs else matrix(as.integer(idxs), nrow = 1L)
+    subs1 <- matrix(idxs, nrow = 1L)
     out <- score$eval_batch(subs1, data, ctx, rng)
     if (!is.numeric(out) || length(out) != 1L || !is.finite(out)) {
       .abort_bad_arg(
@@ -360,14 +384,22 @@ score_eval.ustat_score <- function(score, idxs, data, ctx = NULL, rng = NULL) {
 score_eval_batch <- function(score, subs, data, ctx = NULL, rng = NULL) UseMethod("score_eval_batch")
 #' @export
 score_eval_batch.ustat_score <- function(score, subs, data, ctx = NULL, rng = NULL) {
+  if (!is_score(score)) {
+    .abort_bad_arg("score", "must be a `ustat_score` object")
+  }
+
   # Fail fast with batch-first wording to match test
   if (!is.function(score$eval_batch) && !is.function(score$eval)) {
     .abort_bad_arg("score", "No R `eval_batch` or `eval` provided", quoted = FALSE)
   }
 
+  n <- .score_n(data)
+  s <- score_order(score, n, data, ctx)
+  subsets_matrix <- .score_check_subs(subs, n, s)
+  n_subsets <- nrow(subsets_matrix)
+
   if (is.function(score$eval_batch)) {
-    out <- score$eval_batch(subs, data, ctx, rng)
-    n_subsets <- if (is.matrix(subs)) nrow(subs) else length(subs)
+    out <- score$eval_batch(subsets_matrix, data, ctx, rng)
     if (!is.numeric(out) || length(out) != n_subsets || any(!is.finite(out))) {
       .abort_bad_arg(
         "score$eval_batch",
@@ -380,11 +412,7 @@ score_eval_batch.ustat_score <- function(score, subs, data, ctx = NULL, rng = NU
     return(as.numeric(out))
   }
 
-  # Fallback: validate inputs and loop through scalar eval
-  n <- .score_n(data)
-  s <- score_order(score, n, data, ctx)
-  subsets_matrix <- .score_check_subs(subs, n, s)
-  n_subsets <- nrow(subsets_matrix)
+  # Fallback: loop through scalar eval after shared subset validation.
   ans <- numeric(n_subsets)
   for (k in seq_len(n_subsets)) {
     ans[k] <- score_eval(score, subsets_matrix[k, ], data, ctx, rng)

@@ -331,6 +331,36 @@ test_that("[jkfull] input validation: PHI wrong nrow", {
   expect_error(jackknife_rank_full(ranks, PHI, wn, wnm1), "PHI")
 })
 
+test_that("[jkfull] input validation rejects malformed ranks and non-finite inputs", {
+  n <- 10L; m <- 2L
+  ranks <- apply(matrix(runif(n * m), n, m), 2L, rank)
+  storage.mode(ranks) <- "integer"
+  PHI  <- matrix(rnorm(n), n, 1L)
+  wn   <- rep(1 / n, n)
+  wnm1 <- rep(1 / (n - 1L), n - 1L)
+
+  ranks_dup <- ranks
+  ranks_dup[1L, 1L] <- ranks_dup[2L, 1L]
+  expect_error(jackknife_rank_full(ranks_dup, PHI, wn, wnm1), "permutation")
+
+  ranks_frac <- ranks
+  storage.mode(ranks_frac) <- "double"
+  ranks_frac[1L, 1L] <- 1.5
+  expect_error(jackknife_rank_full(ranks_frac, PHI, wn, wnm1), "integer ranks")
+
+  PHI_bad <- PHI
+  PHI_bad[1L, 1L] <- Inf
+  expect_error(jackknife_rank_full(ranks, PHI_bad, wn, wnm1), "PHI.*non-finite")
+
+  wn_bad <- wn
+  wn_bad[1L] <- NA_real_
+  expect_error(jackknife_rank_full(ranks, PHI, wn_bad, wnm1), "wn.*NA")
+
+  wnm1_bad <- wnm1
+  wnm1_bad[1L] <- Inf
+  expect_error(jackknife_rank_full(ranks, PHI, wn, wnm1_bad), "wnm1.*non-finite")
+})
+
 test_that("[jkfull] R fallback produces same result as dispatch", {
   set.seed(45L)
   n <- 12L; m <- 2L; q <- 2L

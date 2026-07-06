@@ -19,6 +19,38 @@ test_that("Scaled L2 handles eps-floor (finite output)", {
   expect_true(all.equal(d^2, ds, tolerance = 1e-12) == TRUE)
 })
 
+test_that("Scaled L2 rejects non-finite and non-numeric scale inputs", {
+  X <- gen_X()
+  x0 <- gen_x0(p = ncol(X))
+  inv <- rep(1, ncol(X))
+
+  inv_bad <- inv
+  inv_bad[1L] <- Inf
+  expect_error(dist_l2_scaled(X, x0, inv_bad), "inv_s.*non-finite", ignore.case = TRUE)
+  expect_error(dist_l2_scaled(X, x0, as.character(inv)), "inv_s.*numeric", ignore.case = TRUE)
+
+  expect_error(
+    order_by_l2_scaled(X, x0, rule = "custom", scale_vec = replace(inv, 1L, Inf)),
+    "scale_vec.*non-finite",
+    ignore.case = TRUE
+  )
+  expect_error(
+    order_by_l2_scaled(X, x0, rule = "custom", scale_vec = as.character(inv)),
+    "scale_vec.*numeric",
+    ignore.case = TRUE
+  )
+  expect_error(
+    order_by_l2_scaled(X, x0, rule = "custom", scale_vec = inv, eps = NA_real_),
+    "eps.*positive finite",
+    ignore.case = TRUE
+  )
+
+  spec <- distance_l2_scaled(rule = "sd")
+  bad_ctx <- list(inv_s = replace(inv, 1L, NaN))
+  expect_error(spec$eval(X, x0, bad_ctx), "x0/inv_s.*non-finite", ignore.case = TRUE)
+  expect_error(spec$eval_batch(X, matrix(x0, nrow = 1L), bad_ctx), "inv_s.*non-finite", ignore.case = TRUE)
+})
+
 # Battery: unsquared (data-driven scaling)
 run_distance_battery(
   metric_name = "l2_scaled",

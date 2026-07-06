@@ -8,15 +8,16 @@ jackknife_slow_rank(ranks, a, phi, normalize = TRUE)
 }
 \arguments{
 \item{ranks}{Integer matrix (T x (s+1)): for each target \code{t}, \code{ranks[t, k]}
-gives the 1-based index of the k-th neighbor, for \verb{k = 1, ..., s+1}.
+gives the positive 1-based index of the k-th neighbor, for \verb{k = 1, ..., s+1}.
 (Must exclude \code{t} itself if targets are a subset of reference.)}
 
-\item{a}{Numeric length-\code{s} vector of L-stat coefficients \eqn{(a_1,\dots,a_s)}.}
+\item{a}{Finite numeric length-\code{s} vector of L-stat coefficients \eqn{(a_1,\dots,a_s)}.}
 
-\item{phi}{Either a numeric matrix (n_ref x q) with row \code{j} equal to \eqn{\phi(j)},
-or a function \code{phi(j, t)} returning a length-\code{q} numeric.}
+\item{phi}{Either a finite numeric matrix (n_ref x q) with row \code{j} equal to
+\eqn{\phi(j)}, or a function \code{phi(j, t)} returning a finite length-\code{q}
+numeric vector.}
 
-\item{normalize}{Logical; if \code{TRUE} (default) divide aggregates by \code{sum(a)}.}
+\item{normalize}{Scalar logical; if \code{TRUE} (default) divide aggregates by \code{sum(a)}.}
 }
 \value{
 A list with:

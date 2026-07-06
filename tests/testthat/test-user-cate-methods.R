@@ -114,6 +114,11 @@ test_that("predict accepts single x0 and validates target inputs", {
     "either `X0` or `x0`",
     ignore.case = TRUE
   )
+  expect_error(
+    predict(obj$fit, newdata = obj$X0, X0 = obj$X0),
+    "either `newdata` or `X0`/`x0`",
+    fixed = TRUE
+  )
 })
 
 test_that("predict handles data.frame newdata via stored x_cols", {
@@ -135,6 +140,140 @@ test_that("predict handles data.frame newdata via stored x_cols", {
   expect_equal(pred_df, pred_X0, tolerance = 1e-12)
 })
 
+test_that("predict validates se.fit and target values before weight computation", {
+  obj <- .make_cate_fit(se = TRUE)
+
+  expect_error(
+    predict(obj$fit, X0 = obj$X0, se.fit = "yes"),
+    "se.fit.*TRUE or FALSE"
+  )
+  expect_error(
+    predict(obj$fit, X0 = obj$X0, se.fit = NA),
+    "se.fit.*TRUE or FALSE"
+  )
+  expect_error(
+    predict(obj$fit, x0 = c(NA_real_, 0)),
+    "x0 cannot contain `NA` values",
+    fixed = TRUE
+  )
+
+  bad_X0 <- obj$X0
+  bad_X0[1L, 1L] <- Inf
+  expect_error(
+    predict(obj$fit, X0 = bad_X0),
+    "X0 cannot contain non-finite values",
+    fixed = TRUE
+  )
+
+  bad_newdata <- obj$X0
+  bad_newdata[1L, 1L] <- NaN
+  expect_error(
+    predict(obj$fit, newdata = bad_newdata),
+    "newdata cannot contain non-finite values",
+    fixed = TRUE
+  )
+  expect_error(
+    predict(obj$fit, newdata = data.frame(X1 = "a", X2 = "b")),
+    "newdata must be numeric",
+    fixed = TRUE
+  )
+  expect_error(
+    predict(obj$fit, X0 = matrix(numeric(0), nrow = 0L, ncol = ncol(obj$X0))),
+    "X0 must have at least 1 row",
+    fixed = TRUE
+  )
+})
+
+test_that("predict validates data-frame newdata columns", {
+  d <- .make_df_data(n = 55L, p = 2L, m = 4L, seed = 34L)
+  fit <- cate_dnn(
+    data = d$df, x_cols = d$x_cols,
+    y_col = "Y", t_col = "D", m_col = "m_oracle", e_col = "e_oracle",
+    X0 = d$X0, k = 2L, s = 3L, method = "exact", se = FALSE
+  )
+
+  expect_error(
+    predict(fit, newdata = data.frame(X1 = d$X0[, 1L])),
+    "X2.*x_cols"
+  )
+
+  nd <- data.frame(X1 = d$X0[, 1L], X2 = d$X0[, 2L])
+  nd$X2[1L] <- NA_real_
+  expect_error(
+    predict(fit, newdata = nd),
+    "newdata cannot contain `NA` values",
+    fixed = TRUE
+  )
+})
+
+test_that("predict validates fitted model state before computing", {
+  obj <- .make_cate_fit(se = FALSE)
+
+  bad_psi <- obj$fit
+  bad_psi$.model$psi <- bad_psi$.model$psi[-1L]
+  expect_error(
+    predict(bad_psi, X0 = obj$X0),
+    "object\\$\\.model\\$psi.*length"
+  )
+
+  bad_x <- obj$fit
+  bad_x$.model$x_mat[1L, 1L] <- Inf
+  expect_error(
+    predict(bad_x, X0 = obj$X0),
+    "object$.model$x_mat cannot contain non-finite values",
+    fixed = TRUE
+  )
+
+  bad_k <- obj$fit
+  bad_k$.model$k <- bad_k$.model$s + 1L
+  expect_error(
+    predict(bad_k, X0 = obj$X0),
+    "object$.model$k must satisfy k <= s",
+    fixed = TRUE
+  )
+
+  bad_s <- obj$fit
+  bad_s$.model$s <- nrow(bad_s$.model$x_mat) + 1L
+  expect_error(
+    predict(bad_s, X0 = obj$X0),
+    "object$.model$s must satisfy s <= n",
+    fixed = TRUE
+  )
+
+  bad_method <- obj$fit
+  bad_method$.model$method <- "bogus"
+  expect_error(
+    predict(bad_method, X0 = obj$X0),
+    "object$.model$method must be one of",
+    fixed = TRUE
+  )
+
+  bad_normalize <- obj$fit
+  bad_normalize$.model$normalize <- NA
+  expect_error(
+    predict(bad_normalize, X0 = obj$X0),
+    "object$.model$normalize must be TRUE or FALSE",
+    fixed = TRUE
+  )
+})
+
+test_that("predict interval requests enforce jackknife feasibility", {
+  obj <- .make_cate_fit(se = FALSE)
+  bad <- obj$fit
+  bad$.model$s <- nrow(bad$.model$x_mat)
+
+  expect_error(
+    predict(bad, X0 = obj$X0, se.fit = TRUE),
+    "s < n",
+    fixed = TRUE
+  )
+  expect_error(
+    predict(bad, X0 = obj$X0, interval = "confidence"),
+    "s < n",
+    fixed = TRUE
+  )
+})
+
 test_that("methods validate level/parm and error on missing model state", {
   obj <- .make_cate_fit(se = TRUE)
 
@@ -142,6 +281,26 @@ test_that("methods validate level/parm and error on missing model state", {
   expect_error(confint(obj$fit, level = 1), "numeric scalar in \\(0,1\\)", ignore.case = TRUE)
   expect_error(
     confint(obj$fit, parm = c(0L, 2L)),
+    "valid target indices",
+    ignore.case = TRUE
+  )
+  expect_error(
+    confint(obj$fit, parm = 1.5),
+    "integer target indices",
+    ignore.case = TRUE
+  )
+  expect_error(
+    confint(obj$fit, parm = Inf),
+    "non-finite",
+    ignore.case = TRUE
+  )
+  expect_error(
+    confint(obj$fit, parm = 1e20),
+    "valid target indices",
+    ignore.case = TRUE
+  )
+  expect_error(
+    confint(obj$fit, parm = "target_1"),
     "valid target indices",
     ignore.case = TRUE
   )

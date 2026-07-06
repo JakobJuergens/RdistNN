@@ -4,7 +4,7 @@
 #' @noRd
 .dist_l1_R <- function(X, x0) {
   X <- as.matrix(X)
-  x0 <- .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X")
+  x0 <- .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X", finite = TRUE)
   rowSums(abs(X - matrix(x0, nrow(X), ncol(X), byrow = TRUE)))
 }
 
@@ -31,7 +31,7 @@
 dist_l1 <- function(X, x0) {
   .assert_no_na(X, x0)
   X <- as.matrix(X)
-  x0 <- .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X")
+  x0 <- .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X", finite = TRUE)
 
   cpp <- get0("rustat_dist_l1", mode = "function")
   if (!is.null(cpp)) {
@@ -63,7 +63,7 @@ dist_l1 <- function(X, x0) {
 order_by_l1 <- function(X, x0) {
   .assert_no_na(X, x0)
   X <- as.matrix(X)
-  x0 <- as.numeric(x0)
+  x0 <- .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X", finite = TRUE)
 
   cpp <- get0("rustat_order_by_l1", mode = "function")
   if (!is.null(cpp)) {
@@ -145,7 +145,7 @@ distance_l1 <- function() {
 dist_l1_scaled <- function(X, x0, inv_s) {
   .assert_no_na(X, x0)
   X <- as.matrix(X)
-  validated <- .validate_x0_inv_s(x0, inv_s, ncol(X), x_arg = "X")
+  validated <- .validate_x0_inv_s(x0, inv_s, ncol(X), x_arg = "X", strict = TRUE, finite = TRUE)
   x0 <- validated$x0
   inv_s <- validated$inv_s
 
@@ -198,7 +198,7 @@ distance_l1_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
       } else {
         .compute_inv_scale(X, rule, scale_vec, eps)
       }
-      validated <- .validate_x0_inv_s(x0, inv_s, ncol(X), x_arg = "X")
+      validated <- .validate_x0_inv_s(x0, inv_s, ncol(X), x_arg = "X", strict = TRUE, finite = TRUE)
       x0 <- validated$x0
       inv_s <- validated$inv_s
 
@@ -220,7 +220,16 @@ distance_l1_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
         inv_s <- .compute_inv_scale(X, rule, scale_vec, eps)
         ctx <- list(inv_s = inv_s)
       }
+      if (!is.numeric(ctx$inv_s)) {
+        stop("inv_s must be numeric.", call. = FALSE)
+      }
       inv_s <- as.numeric(ctx$inv_s)
+      if (.has_na_only(inv_s)) {
+        stop("inv_s cannot contain NA values.", call. = FALSE)
+      }
+      if (.has_nonfinite_non_na(inv_s)) {
+        stop("inv_s cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+      }
       if (length(inv_s) != ncol(X)) {
         stop("inv_s length must equal ncol(X).", call. = FALSE)
       }
@@ -268,7 +277,7 @@ order_by_l1_scaled <- function(X, x0,
                                scale_vec = NULL, eps = 1e-12) {
   .assert_no_na(X, x0)
   X <- as.matrix(X)
-  x0 <- as.numeric(x0)
+  x0 <- .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X", finite = TRUE)
   rule <- match.arg(rule)
 
   inv_s <- if (rule == "custom") {

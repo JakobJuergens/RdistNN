@@ -41,42 +41,69 @@
   n <- nrow(x_mat)
   m <- nrow(x0_mat)
 
+  validate_nm_matrix <- function(mat, arg, finite = FALSE) {
+    if (!is.matrix(mat)) {
+      .abort_bad_arg(
+        arg,
+        "must be n x m",
+        expected = sprintf("%d x %d matrix", n, m),
+        actual = sprintf("non-matrix (%s)", class(mat)[1L])
+      )
+    }
+    if (nrow(mat) != n || ncol(mat) != m) {
+      .abort_bad_arg(
+        arg,
+        "must be n x m",
+        expected = sprintf("%d x %d", n, m),
+        actual = sprintf("%d x %d", nrow(mat), ncol(mat))
+      )
+    }
+    if (isTRUE(finite)) {
+      if (!is.numeric(mat)) {
+        .abort_bad_arg(arg, "must be numeric")
+      }
+      .abort_if_na_or_nonfinite(mat, arg = arg)
+      return(as.matrix(mat))
+    }
+    mat
+  }
+
+  validate_permutation_columns <- function(mat, arg) {
+    mat <- validate_nm_matrix(as.matrix(mat), arg = arg, finite = FALSE)
+    if (!is.numeric(mat)) {
+      .abort_bad_arg(arg, "must be numeric or integer")
+    }
+    .abort_if_na_or_nonfinite(mat, arg = arg)
+    if (any(mat != as.integer(mat))) {
+      .abort_bad_arg(arg, "each column must contain integer values")
+    }
+    mat_int <- matrix(as.integer(mat), nrow = nrow(mat), ncol = ncol(mat))
+    dimnames(mat_int) <- dimnames(mat)
+    for (j in seq_len(ncol(mat_int))) {
+      vals <- mat_int[, j]
+      if (!setequal(vals, seq_len(n))) {
+        .abort_bad_arg(
+          arg,
+          sprintf("Each column of `%s` must be a permutation of 1..n (failed at column %d)", arg, j)
+        )
+      }
+    }
+    mat_int
+  }
+
   make_from_dx <- function(dist_matrix) {
+    dist_matrix <- validate_nm_matrix(dist_matrix, arg = "dx", finite = TRUE)
     order_matrix <- apply(dist_matrix, 2L, .order_with_ties) # n x m
     rank_matrix <- apply(order_matrix, 2L, ord_to_ranks) # n x m
     list(ranks = rank_matrix, ord = order_matrix, dx = dist_matrix)
   }
   make_from_ord <- function(order_matrix) {
-    if (!is.integer(order_matrix)) storage.mode(order_matrix) <- "integer"
-    if (nrow(order_matrix) != n || ncol(order_matrix) != m) {
-      .abort_bad_arg("ord", "must be n x m")
-    }
-    for (j in seq_len(m)) {
-      o <- order_matrix[, j]
-      if (!setequal(o, seq_len(n))) {
-        .abort_bad_arg(
-          "ord",
-          sprintf("Each column of `ord` must be a permutation of 1..n (failed at column %d)", j)
-        )
-      }
-    }
+    order_matrix <- validate_permutation_columns(order_matrix, arg = "ord")
     rank_matrix <- apply(order_matrix, 2L, ord_to_ranks)
     list(ranks = rank_matrix, ord = order_matrix, dx = NULL)
   }
   make_from_ranks <- function(rank_matrix) {
-    if (!is.integer(rank_matrix)) storage.mode(rank_matrix) <- "integer"
-    if (nrow(rank_matrix) != n || ncol(rank_matrix) != m) {
-      .abort_bad_arg("ranks", "must be n x m")
-    }
-    for (j in seq_len(m)) {
-      r <- rank_matrix[, j]
-      if (!setequal(r, seq_len(n))) {
-        .abort_bad_arg(
-          "ranks",
-          sprintf("Each column of `ranks` must be a permutation of 1..n (failed at column %d)", j)
-        )
-      }
-    }
+    rank_matrix <- validate_permutation_columns(rank_matrix, arg = "ranks")
     list(ranks = rank_matrix, ord = NULL, dx = NULL)
   }
 

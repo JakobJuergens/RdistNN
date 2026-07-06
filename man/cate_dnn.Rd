@@ -31,7 +31,8 @@ cate_dnn(
 )
 }
 \arguments{
-\item{data}{Data frame with covariates and optional nuisance columns.}
+\item{data}{Data frame with covariates and optional nuisance columns. Column
+names must be non-missing, non-empty, and unique.}
 
 \item{x_cols}{Names or indices of covariate columns in \code{data}.}
 

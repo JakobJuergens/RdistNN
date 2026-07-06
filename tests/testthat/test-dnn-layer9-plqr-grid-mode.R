@@ -256,6 +256,52 @@ test_that("candidate_fit reconstructs PLQR candidate views", {
   expect_equal(views[[1L]], view)
 })
 
+test_that("candidate_fit rejects stale PLQR target/component estimate rows", {
+  d <- .layer9_plqr_case(n = 42L, seed = 9915L)
+  fit <- .layer9_do_plqr(
+    d,
+    method = "exact", k = 1L, tuning = .layer9_plqr_tuning(), tuning_mode = "grid",
+    se = FALSE,
+    return = character(0)
+  )
+
+  missing_component <- fit
+  drop <- missing_component$tuning_grid$estimates$candidate_id == "kappa_1p5" &
+    missing_component$tuning_grid$estimates$target_id == 1L &
+    missing_component$tuning_grid$estimates$component == "comp_2"
+  missing_component$tuning_grid$estimates <- missing_component$tuning_grid$estimates[!drop, , drop = FALSE]
+  expect_error(
+    candidate_fit(missing_component, "kappa_1p5"),
+    "missing target/component rows"
+  )
+
+  duplicate_component <- fit
+  dup <- duplicate_component$tuning_grid$estimates[
+    duplicate_component$tuning_grid$estimates$candidate_id == "kappa_1p5" &
+      duplicate_component$tuning_grid$estimates$target_id == 1L &
+      duplicate_component$tuning_grid$estimates$component == "comp_1",
+    ,
+    drop = FALSE
+  ]
+  duplicate_component$tuning_grid$estimates <- rbind(duplicate_component$tuning_grid$estimates, dup)
+  expect_error(
+    candidate_fit(duplicate_component, "kappa_1p5"),
+    "duplicate target/component rows"
+  )
+
+  unknown_component <- fit
+  idx <- which(
+    unknown_component$tuning_grid$estimates$candidate_id == "kappa_1p5" &
+      unknown_component$tuning_grid$estimates$target_id == 1L &
+      unknown_component$tuning_grid$estimates$component == "comp_1"
+  )[[1L]]
+  unknown_component$tuning_grid$estimates$component[[idx]] <- "not_a_component"
+  expect_error(
+    candidate_fit(unknown_component, "kappa_1p5"),
+    "unknown component"
+  )
+})
+
 test_that("plqr_dnn grid mode rejects explicit s and records infeasible candidates", {
   d <- .layer9_plqr_case(n = 36L, m = 2L, seed = 9913L)
 

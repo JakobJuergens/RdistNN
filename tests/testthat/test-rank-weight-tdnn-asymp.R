@@ -70,6 +70,12 @@ test_that("[table] tdnn_rank_table_asymp validates inputs", {
   expect_error(tdnn_rank_table_asymp(10L, 5L, 4L, 2L), "s1 < s2")
   expect_error(tdnn_rank_table_asymp(10L, 2L, 11L, 2L), "s2 <= n")
   expect_error(tdnn_rank_table_asymp(10L, 2L, 4L, 0L), "positive integer")
+  expect_error(tdnn_rank_table_asymp(10L, 2L, 4L, 2L, normalize = NA), "normalize.*TRUE or FALSE")
+  expect_error(tdnn_rank_table_asymp(10L, 2L, 4L, 2L, normalize = "yes"), "normalize.*TRUE or FALSE")
+  expect_error(
+    tdnn_rank_table_asymp(10L, 2L, 4L, 2L, normalize = c(TRUE, FALSE)),
+    "normalize.*TRUE or FALSE"
+  )
 })
 
 # ── [vs-exact] ────────────────────────────────────────────────────────────────
@@ -166,6 +172,18 @@ test_that("[from_ranks] dnn_weights_tdnn_asymp_full_from_ranks validates inputs"
   expect_error(dnn_weights_tdnn_asymp_full_from_ranks(ranks, 4L, 4L, 2L), "s1 < s2")
   expect_error(dnn_weights_tdnn_asymp_full_from_ranks(ranks, 2L, n + 1L, 2L), "s2 <= n")
   expect_error(dnn_weights_tdnn_asymp_full_from_ranks(ranks, 2L, 5L, 0L), "positive integer")
+  expect_error(
+    dnn_weights_tdnn_asymp_full_from_ranks(ranks, 2L, 5L, 2L, normalize = NA),
+    "normalize.*TRUE or FALSE"
+  )
+  expect_error(
+    dnn_weights_tdnn_asymp_full_from_ranks(ranks, 2L, 5L, 2L, normalize = "yes"),
+    "normalize.*TRUE or FALSE"
+  )
+  expect_error(
+    dnn_weights_tdnn_asymp_full_from_ranks(ranks, 2L, 5L, 2L, normalize = c(TRUE, FALSE)),
+    "normalize.*TRUE or FALSE"
+  )
 })
 
 # ── [spec-errors] rank_weight_tdnn_asymp constructor ─────────────────────────
@@ -183,6 +201,13 @@ test_that("[spec-errors] rank_weight_tdnn_asymp validates s1, s2, dim at constru
   expect_error(rank_weight_tdnn_asymp(s1 = "foo", s2 = 4L, dim = 2L), "integer scalar")
   expect_error(rank_weight_tdnn_asymp(s1 = 2L, s2 = 3.9, dim = 2L), "integer scalar")
   expect_error(rank_weight_tdnn_asymp(s1 = 2L, s2 = 4L, dim = 1.5), "integer scalar")
+  # Logical controls are not silently coerced via isTRUE().
+  expect_error(rank_weight_tdnn_asymp(s1 = 2L, s2 = 4L, dim = 2L, normalize = NA), "normalize.*TRUE or FALSE")
+  expect_error(rank_weight_tdnn_asymp(s1 = 2L, s2 = 4L, dim = 2L, normalize = "yes"), "normalize.*TRUE or FALSE")
+  expect_error(
+    rank_weight_tdnn_asymp(s1 = 2L, s2 = 4L, dim = 2L, normalize = c(TRUE, FALSE)),
+    "normalize.*TRUE or FALSE"
+  )
   # valid call must not error
   expect_no_error(rank_weight_tdnn_asymp(s1 = 3L, s2 = 6L, dim = 2L))
 })

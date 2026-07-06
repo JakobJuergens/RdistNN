@@ -91,13 +91,13 @@
 #' @param ranks Integer matrix (\eqn{n \times m}); column \eqn{t} is a
 #'   permutation of \code{1:n} giving the rank of each observation for
 #'   target \eqn{t} (rank 1 = nearest).
-#' @param PHI Numeric matrix (\eqn{n \times q}); row \eqn{i} is the
+#' @param PHI Finite numeric matrix (\eqn{n \times q}); row \eqn{i} is the
 #'   \eqn{q}-dimensional signal contribution of observation \eqn{i}.
 #'   For a scalar signal, pass \code{cbind(y)}.
-#' @param wn Numeric vector of length \eqn{n}; rank-weight table at full
+#' @param wn Finite numeric vector of length \eqn{n}; rank-weight table at full
 #'   sample size \eqn{n}.  Entry \code{wn[r]} is the weight assigned to
 #'   rank \eqn{r}.
-#' @param wnm1 Numeric vector of length \eqn{n-1}; rank-weight table at
+#' @param wnm1 Finite numeric vector of length \eqn{n-1}; rank-weight table at
 #'   leave-one-out sample size \eqn{n-1}.
 #'
 #' @return A list with:
@@ -127,12 +127,18 @@
 #' dim(out$theta0)      # c(q, m)
 #' @export
 jackknife_rank_full <- function(ranks, PHI, wn, wnm1) {
-  ranks <- as.matrix(ranks)
-  PHI   <- as.matrix(PHI)
-  wn    <- as.numeric(wn)
-  wnm1  <- as.numeric(wnm1)
-
-  if (!is.integer(ranks)) storage.mode(ranks) <- "integer"
+  ranks <- .validate_permutation_matrix(ranks, arg = "ranks", col_arg = "ranks")
+  PHI <- .validate_matrix(
+    PHI,
+    arg = "PHI",
+    min_rows = 1L,
+    min_cols = 1L,
+    numeric = TRUE,
+    finite = TRUE,
+    strict = TRUE
+  )
+  wn <- .validate_finite_numeric_vector(wn, arg = "wn", min_length = 1L)
+  wnm1 <- .validate_finite_numeric_vector(wnm1, arg = "wnm1", min_length = 0L)
 
   n <- nrow(ranks)
   if (length(wn) != n)

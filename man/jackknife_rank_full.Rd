@@ -11,15 +11,15 @@ jackknife_rank_full(ranks, PHI, wn, wnm1)
 permutation of \code{1:n} giving the rank of each observation for
 target \eqn{t} (rank 1 = nearest).}
 
-\item{PHI}{Numeric matrix (\eqn{n \times q}); row \eqn{i} is the
+\item{PHI}{Finite numeric matrix (\eqn{n \times q}); row \eqn{i} is the
 \eqn{q}-dimensional signal contribution of observation \eqn{i}.
 For a scalar signal, pass \code{cbind(y)}.}
 
-\item{wn}{Numeric vector of length \eqn{n}; rank-weight table at full
+\item{wn}{Finite numeric vector of length \eqn{n}; rank-weight table at full
 sample size \eqn{n}.  Entry \code{wn[r]} is the weight assigned to
 rank \eqn{r}.}
 
-\item{wnm1}{Numeric vector of length \eqn{n-1}; rank-weight table at
+\item{wnm1}{Finite numeric vector of length \eqn{n-1}; rank-weight table at
 leave-one-out sample size \eqn{n-1}.}
 }
 \value{

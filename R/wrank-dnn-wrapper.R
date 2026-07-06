@@ -63,7 +63,7 @@ rank_weight_dnn_asymp <- function(k, s, normalize = TRUE) {
   k <- .validate_scalar_int(k, "k")
   s <- .validate_scalar_int(s, "s")
   if (k > s) .abort_bad_arg("k", sprintf("must satisfy k <= s (got k=%d, s=%d)", k, s))
-  normalize <- isTRUE(normalize)
+  normalize <- .validate_scalar_logical(normalize, "normalize")
 
   table_one <- function(n) {
     n <- .validate_scalar_int(n, "n")

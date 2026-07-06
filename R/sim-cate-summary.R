@@ -3,6 +3,20 @@
 #
 # Public API: summarise_sim_results()
 
+.sim_cate_mean <- function(x) {
+  if (length(x) == 0L || all(is.na(x))) {
+    return(NA_real_)
+  }
+  mean(x, na.rm = TRUE)
+}
+
+.sim_cate_rmse <- function(x) {
+  if (length(x) == 0L || all(is.na(x))) {
+    return(NA_real_)
+  }
+  sqrt(mean(x, na.rm = TRUE))
+}
+
 #' Summarise raw per-replicate CATE simulation results
 #'
 #' Aggregates a data.frame of raw replicate-level results (as returned by
@@ -63,6 +77,7 @@ summarise_sim_results <- function(raw) {
     sub <- raw[idx, , drop = FALSE]
 
     n_failed <- sum(is.na(sub$status) | sub$status != "ok" | is.na(sub$bias))
+    ok <- !is.na(sub$status) & sub$status == "ok" & !is.na(sub$bias)
 
     row <- data.frame(
       design   = cells$design[i],
@@ -73,15 +88,15 @@ summarise_sim_results <- function(raw) {
       s        = cells$s[i],
       n_reps   = nrow(sub),
       n_failed = n_failed,
-      bias     = mean(sub$bias,    na.rm = TRUE),
-      rmse     = sqrt(mean(sub$sq_err, na.rm = TRUE)),
-      se_mean  = mean(sub$se,      na.rm = TRUE),
-      cover    = mean(sub$cover,   na.rm = TRUE),
-      ci_len   = mean(sub$ci_len,  na.rm = TRUE),
+      bias     = .sim_cate_mean(sub$bias[ok]),
+      rmse     = .sim_cate_rmse(sub$sq_err[ok]),
+      se_mean  = .sim_cate_mean(sub$se[ok]),
+      cover    = .sim_cate_mean(sub$cover[ok]),
+      ci_len   = .sim_cate_mean(sub$ci_len[ok]),
       stringsAsFactors = FALSE
     )
     row$method <- cells$method[i]
-    if (has_neff)   row$neff   <- mean(sub$neff, na.rm = TRUE)
+    if (has_neff)   row$neff   <- .sim_cate_mean(sub$neff[ok])
     out[[i]] <- row
   }
 

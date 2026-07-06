@@ -110,6 +110,26 @@ test_that("gmm_dnn supports numeric columns and tibble data like data frames", {
   expect_equal(fit_tbl$se, fit_names$se, tolerance = 1e-8)
 })
 
+test_that("gmm_dnn rejects ambiguous data-frame column-name schemas", {
+  dgp <- sim_iv_data("dgp2_iv_homog_overid", n = 70L, kx = 2L, q = 2L, seed = 31L)
+  nms <- names(dgp$data)
+  model <- .test_dr_iv_model(dgp$q)
+  df_dup <- dgp$data
+  names(df_dup)[match("X2", nms)] <- "X1"
+
+  expect_error(
+    gmm_dnn(
+      data = df_dup,
+      x_cols = match(c("X1", "X2"), nms),
+      x0 = dgp$x0,
+      model = model,
+      k = 1L, s = 2L, se = FALSE
+    ),
+    "unique column names",
+    ignore.case = TRUE
+  )
+})
+
 test_that("gmm_dnn handles multi-parameter models and 3D analytic Jacobians", {
   set.seed(25L)
   n <- 90L
@@ -227,6 +247,13 @@ test_that("gmm_result methods validate availability and selectors", {
   expect_equal(nrow(ci), 1L)
   expect_named(ci, c("target", "term", "conf.low", "conf.high"))
   expect_error(confint(fit, parm = 2L), "parm")
+  expect_error(confint(fit, parm = 1.5), "integer coefficient indices", ignore.case = TRUE)
+  expect_error(confint(fit, parm = "theta_typo"), "valid coefficient names", ignore.case = TRUE)
+  expect_error(confint(fit, parm = character()), "valid coefficient names", ignore.case = TRUE)
+  expect_error(confint(fit, target = 1.5), "integer target indices", ignore.case = TRUE)
+  expect_error(confint(fit, target = Inf), "non-finite", ignore.case = TRUE)
+  expect_error(confint(fit, target = 1e20), "valid target indices", ignore.case = TRUE)
+  expect_error(confint(fit, target = c(0L, 1L)), "valid target indices", ignore.case = TRUE)
   expect_error(summary(fit, level = 1), "level")
 
   fit_no_se <- gmm_dnn(
@@ -249,6 +276,18 @@ test_that("gmm_dnn validates user-facing interface controls", {
 
   expect_error(gmm_dnn(data = dgp$data, x_cols = c("X1", "X2"), x0 = dgp$x0,
                        model = list()), "model")
+  bad_model <- model
+  bad_model$moment_obs <- NULL
+  expect_error(gmm_dnn(data = dgp$data, x_cols = c("X1", "X2"), x0 = dgp$x0,
+                       model = bad_model), "model\\$moment_obs.*function")
+  bad_model <- model
+  bad_model$coef_names <- character()
+  expect_error(gmm_dnn(data = dgp$data, x_cols = c("X1", "X2"), x0 = dgp$x0,
+                       model = bad_model), "model\\$coef_names")
+  bad_model <- model
+  bad_model$p <- 2L
+  expect_error(gmm_dnn(data = dgp$data, x_cols = c("X1", "X2"), x0 = dgp$x0,
+                       model = bad_model), "model\\$p.*length\\(model\\$coef_names\\)")
   expect_error(gmm_dnn(data = dgp$data, X = X, x_cols = c("X1", "X2"),
                        x0 = dgp$x0, model = model), "data-frame interface")
   expect_error(gmm_dnn(X = X, x0 = dgp$x0, model = model), "Y")
@@ -261,8 +300,258 @@ test_that("gmm_dnn validates user-facing interface controls", {
   expect_error(gmm_dnn(data = dgp$data, x_cols = c("X1", "X2"), x0 = dgp$x0,
                        model = model, start = c(0, 1)), "start")
   expect_error(gmm_dnn(data = dgp$data, x_cols = c("X1", "X2"), x0 = dgp$x0,
+                       model = model, start = "0"), "start.*numeric", ignore.case = TRUE)
+  expect_error(gmm_dnn(data = dgp$data, x_cols = c("X1", "X2"), x0 = dgp$x0,
                        X0 = matrix(dgp$x0, nrow = 1L), model = model),
                "either `X0`")
+  expect_error(gmm_dnn(data = dgp$data, x_cols = c("X1", "X2"),
+                       x0 = c(NA_real_, 0), model = model, k = 1L, s = 2L),
+               "x0.*NA",
+               ignore.case = TRUE)
+  bad_X0 <- matrix(dgp$x0, nrow = 1L)
+  bad_X0[1L, 1L] <- Inf
+  expect_error(gmm_dnn(data = dgp$data, x_cols = c("X1", "X2"),
+                       X0 = bad_X0, model = model, k = 1L, s = 2L),
+               "X0.*non-finite",
+               ignore.case = TRUE)
+  expect_error(gmm_dnn(data = dgp$data, x_cols = c("X1", "X2"),
+                       X0 = matrix(numeric(0), nrow = 0L, ncol = 2L),
+                       model = model, k = 1L, s = 2L),
+               "X0.*at least 1 row",
+               ignore.case = TRUE)
+})
+
+test_that("gmm_dnn validates malformed model moment outputs before target fitting", {
+  set.seed(32L)
+  n <- 35L
+  df <- data.frame(
+    X1 = rnorm(n),
+    X2 = rnorm(n),
+    Y = rnorm(n)
+  )
+
+  make_model <- function(moment_obs) {
+    new_gmm_model(
+      name = "moment_contract",
+      setup = function(sample, n, ...) list(y = sample$Y),
+      moment_obs = moment_obs,
+      start = function(sample, ctx, w, x0) sum(w * ctx$y),
+      coef_names = "theta",
+      moment_names = "mean"
+    )
+  }
+
+  fit_vector <- gmm_dnn(
+    data = df,
+    x_cols = c("X1", "X2"),
+    x0 = c(0, 0),
+    model = make_model(function(sample, theta, ctx) ctx$y - theta[1L]),
+    k = 1L,
+    s = 6L,
+    se = FALSE
+  )
+  expect_equal(dim(fit_vector$theta), c(1L, 1L))
+  expect_true(is.finite(fit_vector$theta[1L, 1L]))
+
+  expect_error(
+    gmm_dnn(
+      data = df,
+      x_cols = c("X1", "X2"),
+      x0 = c(0, 0),
+      model = make_model(function(sample, theta, ctx) matrix(0, nrow = nrow(sample) - 1L, ncol = 1L)),
+      k = 1L,
+      s = 6L,
+      se = FALSE
+    ),
+    "model\\$moment_obs\\(\\).*one row per observation",
+    ignore.case = TRUE
+  )
+
+  expect_error(
+    gmm_dnn(
+      data = df,
+      x_cols = c("X1", "X2"),
+      x0 = c(0, 0),
+      model = make_model(function(sample, theta, ctx) matrix("bad", nrow = nrow(sample), ncol = 1L)),
+      k = 1L,
+      s = 6L,
+      se = FALSE
+    ),
+    "model\\$moment_obs\\(\\).*numeric",
+    ignore.case = TRUE
+  )
+
+  expect_error(
+    gmm_dnn(
+      data = df,
+      x_cols = c("X1", "X2"),
+      x0 = c(0, 0),
+      model = make_model(function(sample, theta, ctx) {
+        out <- matrix(0, nrow = nrow(sample), ncol = 1L)
+        out[1L, 1L] <- NA_real_
+        out
+      }),
+      k = 1L,
+      s = 6L,
+      se = FALSE
+    ),
+    "model\\$moment_obs\\(\\).*NA",
+    ignore.case = TRUE
+  )
+
+  expect_error(
+    gmm_dnn(
+      data = df,
+      x_cols = c("X1", "X2"),
+      x0 = c(0, 0),
+      model = make_model(function(sample, theta, ctx) {
+        out <- matrix(0, nrow = nrow(sample), ncol = 1L)
+        out[1L, 1L] <- Inf
+        out
+      }),
+      k = 1L,
+      s = 6L,
+      se = FALSE
+    ),
+    "model\\$moment_obs\\(\\).*non-finite",
+    ignore.case = TRUE
+  )
+})
+
+test_that("gmm_dnn reports malformed analytic Jacobian outputs per target", {
+  set.seed(33L)
+  n <- 36L
+  df <- data.frame(
+    X1 = rnorm(n),
+    X2 = rnorm(n),
+    Y = rnorm(n)
+  )
+
+  make_model <- function(jacobian_obs = NULL) {
+    new_gmm_model(
+      name = "jacobian_contract",
+      setup = function(sample, n, ...) list(y = sample$Y),
+      moment_obs = function(sample, theta, ctx) matrix(ctx$y - theta[1L], ncol = 1L),
+      jacobian_obs = jacobian_obs,
+      start = function(sample, ctx, w, x0) sum(w * ctx$y),
+      coef_names = "theta",
+      moment_names = "mean"
+    )
+  }
+
+  fit_missing <- NULL
+  expect_warning(
+    fit_missing <- gmm_dnn(
+      data = df,
+      x_cols = c("X1", "X2"),
+      x0 = c(0, 0),
+      model = make_model(),
+      k = 1L,
+      s = 6L,
+      se = FALSE,
+      jacobian = "analytic",
+      return = "jacobian"
+    ),
+    "analytic.*jacobian_obs",
+    ignore.case = TRUE
+  )
+  expect_equal(fit_missing$convergence$message, "target failed")
+  expect_true(all(is.na(fit_missing$theta)))
+
+  fit_bad_shape <- NULL
+  expect_warning(
+    fit_bad_shape <- gmm_dnn(
+      data = df,
+      x_cols = c("X1", "X2"),
+      x0 = c(0, 0),
+      model = make_model(function(sample, theta, ctx) matrix(-1, nrow = nrow(sample), ncol = 2L)),
+      k = 1L,
+      s = 6L,
+      se = FALSE,
+      jacobian = "analytic",
+      return = "jacobian"
+    ),
+    "n x q matrix",
+    ignore.case = TRUE
+  )
+  expect_equal(fit_bad_shape$convergence$message, "target failed")
+  expect_true(all(is.na(fit_bad_shape$theta)))
+
+  fit_bad_type <- NULL
+  expect_warning(
+    fit_bad_type <- gmm_dnn(
+      data = df,
+      x_cols = c("X1", "X2"),
+      x0 = c(0, 0),
+      model = make_model(function(sample, theta, ctx) matrix("bad", nrow = nrow(sample), ncol = 1L)),
+      k = 1L,
+      s = 6L,
+      se = FALSE,
+      jacobian = "analytic",
+      return = "jacobian"
+    ),
+    "model\\$jacobian_obs\\(\\).*numeric",
+    ignore.case = TRUE
+  )
+  expect_equal(fit_bad_type$convergence$message, "target failed")
+  expect_true(all(is.na(fit_bad_type$theta)))
+
+  fit_bad_values <- NULL
+  expect_warning(
+    fit_bad_values <- gmm_dnn(
+      data = df,
+      x_cols = c("X1", "X2"),
+      x0 = c(0, 0),
+      model = make_model(function(sample, theta, ctx) {
+        out <- matrix(-1, nrow = nrow(sample), ncol = 1L)
+        out[1L, 1L] <- NaN
+        out
+      }),
+      k = 1L,
+      s = 6L,
+      se = FALSE,
+      jacobian = "analytic",
+      return = "jacobian"
+    ),
+    "model\\$jacobian_obs\\(\\).*non-finite",
+    ignore.case = TRUE
+  )
+  expect_equal(fit_bad_values$convergence$message, "target failed")
+  expect_true(all(is.na(fit_bad_values$theta)))
+})
+
+test_that("gmm_dnn reports invalid model-generated starts per target", {
+  set.seed(29L)
+  n <- 40L
+  df <- data.frame(
+    X1 = rnorm(n),
+    X2 = rnorm(n),
+    Y = rnorm(n)
+  )
+  bad_start_model <- new_gmm_model(
+    name = "bad_start",
+    setup = function(sample, n, ...) list(y = sample$Y),
+    moment_obs = function(sample, theta, ctx) matrix(ctx$y - theta[1L], ncol = 1L),
+    start = function(sample, ctx, w, x0) "0",
+    coef_names = "theta",
+    moment_names = "mean"
+  )
+
+  fit <- NULL
+  expect_warning(
+    fit <- gmm_dnn(
+      data = df,
+      x_cols = c("X1", "X2"),
+      x0 = c(0, 0),
+      model = bad_start_model,
+      k = 1L,
+      s = 6L,
+      se = FALSE
+    ),
+    "model\\$start\\(\\).*numeric"
+  )
+  expect_true(all(is.na(fit$theta)))
+  expect_equal(fit$convergence$message, "target failed")
 })
 
 test_that("gmm_dnn detects model moment-name mismatches", {

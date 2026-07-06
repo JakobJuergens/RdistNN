@@ -85,13 +85,14 @@ tdnn_rank_table_asymp <- function(n, s1, s2, dim, normalize = TRUE) {
   if (s1 < 1L || s1 >= s2) stop("`s1` must satisfy 1 <= s1 < s2.", call. = FALSE)
   if (s2 > n)  stop("`s2` must satisfy s2 <= n.", call. = FALSE)
   if (dim < 1L) stop("`dim` must be a positive integer.", call. = FALSE)
+  normalize <- .validate_scalar_logical(normalize, "normalize")
 
   sc <- .tdnn_scalars(s1, s2, dim)
   t1 <- .dnn_rank_table_asymp_k1(n, s1, normalize = FALSE)
   t2 <- .dnn_rank_table_asymp_k1(n, s2, normalize = FALSE)
   w_rank <- sc["w1"] * t1 + sc["w2"] * t2
 
-  if (isTRUE(normalize)) {
+  if (normalize) {
     sw <- sum(w_rank)
     if (!is.finite(sw) || abs(sw) < .Machine$double.eps * 100) {
       stop("Internal error: TDNN asymptotic rank table has zero/non-finite sum.", call. = FALSE)
@@ -150,6 +151,7 @@ dnn_weights_tdnn_asymp_full_from_ranks <- function(ranks, s1, s2, dim,
   if (s1 < 1L || s1 >= s2) stop("`s1` must satisfy 1 <= s1 < s2.", call. = FALSE)
   if (s2 > n)  stop("`s2` must satisfy s2 <= n.", call. = FALSE)
   if (dim < 1L) stop("`dim` must be a positive integer.", call. = FALSE)
+  normalize <- .validate_scalar_logical(normalize, "normalize")
 
   w_rank <- tdnn_rank_table_asymp(n, s1, s2, dim, normalize = normalize)
   w <- w_rank[ranks]
@@ -162,7 +164,7 @@ dnn_weights_tdnn_asymp_full_from_ranks <- function(ranks, s1, s2, dim,
       s1        = s1,
       s2        = s2,
       dim       = dim,
-      normalize = isTRUE(normalize),
+      normalize = normalize,
       scalars   = .tdnn_scalars(s1, s2, dim)
     )
   )

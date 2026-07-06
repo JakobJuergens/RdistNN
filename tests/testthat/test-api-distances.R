@@ -50,6 +50,42 @@ test_that("new_distance() builds validated specs", {
   )
 })
 
+test_that("new_distance() rejects malformed names and optional slots", {
+  ok_eval <- function(X, x0, ctx = NULL) rep(0, nrow(X))
+  ok_batch <- function(X, X0, ctx = NULL) matrix(0, nrow(X), nrow(X0))
+
+  expect_error(
+    new_distance(name = c("a", "b"), eval = ok_eval),
+    "name.*non-empty character scalar",
+    ignore.case = TRUE
+  )
+  expect_error(
+    new_distance(name = NA_character_, eval = ok_eval),
+    "name.*non-empty character scalar",
+    ignore.case = TRUE
+  )
+  expect_error(
+    new_distance(name = 1, eval = ok_eval),
+    "name.*non-empty character scalar",
+    ignore.case = TRUE
+  )
+  expect_error(
+    new_distance(name = "bad_setup", eval = ok_eval, setup = 1),
+    "setup.*function",
+    ignore.case = TRUE
+  )
+  expect_error(
+    new_distance(name = "bad_eval", eval = 1, eval_batch = ok_batch),
+    "eval.*function",
+    ignore.case = TRUE
+  )
+  expect_error(
+    new_distance(name = "bad_eval_batch", eval = ok_eval, eval_batch = 1),
+    "eval_batch.*function",
+    ignore.case = TRUE
+  )
+})
+
 test_that("register_distance()/get_distance()/distance_names() work", {
   # Register a simple absolute-distance spec under a fresh name
   nm <- paste0("abs_", sample.int(1e6, 1))
@@ -184,6 +220,69 @@ test_that("distance_eval/Batch basic shape checks and errors", {
   expect_error(distance_eval_batch(ok, X, X0), "ncol\\(X0\\) must match ncol\\(X\\)")
 })
 
+test_that("distance evaluators validate targets before calling custom functions", {
+  X <- matrix(0, 3, 2)
+
+  eval_calls <- 0L
+  spec_eval_ignores_target <- new_distance(
+    name = "ignore_target_eval",
+    eval = function(X, x0, ctx = NULL) {
+      eval_calls <<- eval_calls + 1L
+      rep(0, nrow(X))
+    }
+  )
+
+  expect_error(
+    distance_eval(spec_eval_ignores_target, X, c(NA_real_, 0)),
+    "x0.*NA",
+    ignore.case = TRUE
+  )
+  expect_error(
+    distance_eval(spec_eval_ignores_target, X, c(Inf, 0)),
+    "x0.*non-finite",
+    ignore.case = TRUE
+  )
+  expect_error(
+    distance_eval(spec_eval_ignores_target, X, c("a", "b")),
+    "x0.*numeric",
+    ignore.case = TRUE
+  )
+  expect_identical(eval_calls, 0L)
+
+  expect_equal(distance_eval(spec_eval_ignores_target, X, c(0, 0)), rep(0, nrow(X)))
+  expect_identical(eval_calls, 1L)
+
+  batch_calls <- 0L
+  spec_batch_ignores_target <- new_distance(
+    name = "ignore_target_batch",
+    eval_batch = function(X, X0, ctx = NULL) {
+      batch_calls <<- batch_calls + 1L
+      matrix(0, nrow(X), nrow(X0))
+    }
+  )
+
+  expect_error(
+    distance_eval_batch(spec_batch_ignores_target, X, matrix(c(NA_real_, 0), nrow = 1L)),
+    "X0.*NA",
+    ignore.case = TRUE
+  )
+  expect_error(
+    distance_eval_batch(spec_batch_ignores_target, X, matrix(c(Inf, 0), nrow = 1L)),
+    "X0.*non-finite",
+    ignore.case = TRUE
+  )
+  expect_error(
+    distance_eval_batch(spec_batch_ignores_target, X, matrix(c("a", "b"), nrow = 1L)),
+    "X0.*numeric",
+    ignore.case = TRUE
+  )
+  expect_identical(batch_calls, 0L)
+
+  D <- distance_eval_batch(spec_batch_ignores_target, X, matrix(c(0, 0, 1, 1), nrow = 2L, byrow = TRUE))
+  expect_equal(D, matrix(0, nrow(X), 2L))
+  expect_identical(batch_calls, 1L)
+})
+
 test_that("registry specs actually evaluate after registration", {
   nm <- paste0("toy_", sample.int(1e6, 1))
   fun <- function(X, x0, ctx) rowSums(abs(X - matrix(x0, nrow(X), ncol(X), TRUE)))
@@ -290,6 +389,15 @@ test_that("register_distance validates malformed specs and named list specs", {
     "non-empty character scalar"
   )
 
+  expect_error(
+    register_distance(
+      "bad_inner_name",
+      list(name = c("a", "b"), eval = function(X, x0, ctx = NULL) rowSums(X))
+    ),
+    "name.*non-empty character scalar",
+    ignore.case = TRUE
+  )
+
   # named list spec in two-arg form is accepted and normalized
   nm <- paste0("list_spec_", sample.int(1e6, 1))
   spec <- list(
@@ -299,6 +407,22 @@ test_that("register_distance validates malformed specs and named list specs", {
   got <- get_distance(nm)
   expect_true(inherits(got, "dnn_distance"))
   expect_equal(got$name, nm)
+})
+
+test_that("distance_eval validates raw list specs before evaluation", {
+  X <- matrix(0, 3, 2)
+  raw_bad_setup <- list(
+    name = "raw_bad_setup",
+    setup = 1,
+    eval = function(X, x0, ctx = NULL) rep(0, nrow(X))
+  )
+
+  expect_true(is_distance(raw_bad_setup))
+  expect_error(
+    distance_eval(raw_bad_setup, X, c(0, 0)),
+    "setup.*function",
+    ignore.case = TRUE
+  )
 })
 
 test_that("distance_eval_batch errors when eval looks like batch but eval_batch is absent", {

@@ -17,11 +17,23 @@
 
 .tuning_validate_spec <- function(spec) {
   if (!is.list(spec)) .abort_bad_arg("spec", "must be a list")
+  if (is.null(spec$name)) {
+    spec$name <- "unnamed_tuning"
+  } else if (!is.character(spec$name) || length(spec$name) != 1L ||
+    is.na(spec$name) || !nzchar(spec$name)) {
+    .abort_bad_arg("name", "must be a non-empty character scalar", quoted = FALSE)
+  }
+  if (!is.null(spec$eval) && !is.function(spec$eval)) {
+    .abort_bad_arg("eval", "must be NULL or a function")
+  }
+  if (!is.null(spec$eval_grid) && !is.function(spec$eval_grid)) {
+    .abort_bad_arg("eval_grid", "must be NULL or a function")
+  }
+  if (!is.null(spec$setup) && !is.function(spec$setup)) {
+    .abort_bad_arg("setup", "must be NULL or a function")
+  }
   if (!(.tuning_has_eval(spec) || .tuning_has_eval_grid(spec))) {
     .abort_bad_arg("spec", "must provide at least one of `eval` or `eval_grid`")
-  }
-  if (is.null(spec$name) || !nzchar(as.character(spec$name))) {
-    spec$name <- "unnamed_tuning"
   }
   class(spec) <- union("dnn_tuning", class(spec))
   spec
@@ -74,6 +86,41 @@
   as.integer(x)
 }
 
+.tuning_validate_meta <- function(meta, name, n, kx, arg = "tuning$eval()$meta") {
+  if (is.null(meta) || !is.list(meta)) {
+    meta <- list()
+  }
+
+  meta_name <- meta[["name", exact = TRUE]]
+  if (is.null(meta_name)) {
+    meta$name <- name
+  } else {
+    if (!is.character(meta_name) || length(meta_name) != 1L ||
+      is.na(meta_name) || !nzchar(meta_name)) {
+      .abort_bad_arg(
+        arg,
+        "field `name` must be a non-empty character scalar",
+        quoted = FALSE
+      )
+    }
+    meta$name <- meta_name
+  }
+
+  meta_n <- meta[["n", exact = TRUE]]
+  meta_kx <- meta[["kx", exact = TRUE]]
+  meta$n <- if (is.null(meta_n)) {
+    as.integer(n)
+  } else {
+    .validate_scalar_int(meta_n, arg = paste0(arg, "$n"), min = 1L)
+  }
+  meta$kx <- if (is.null(meta_kx)) {
+    as.integer(kx)
+  } else {
+    .validate_scalar_int(meta_kx, arg = paste0(arg, "$kx"), min = 1L)
+  }
+  meta
+}
+
 .tuning_validate_default_output <- function(
   out, n, kx, k, se, jackknife, name
 ) {
@@ -93,16 +140,12 @@
     k_le_s = as.integer(k) <= as.integer(s),
     s_lt_n = if (needs_jk) as.integer(s) < as.integer(n) else TRUE
   )
-  meta <- out$meta
-  if (is.null(meta) || !is.list(meta)) meta <- list()
-  meta_name <- meta[["name", exact = TRUE]]
-  meta_n <- meta[["n", exact = TRUE]]
-  meta_kx <- meta[["kx", exact = TRUE]]
-  meta$name <- as.character(if (is.null(meta_name)) name else meta_name)
-  meta_n <- if (is.null(meta_n)) n else meta_n
-  meta_kx <- if (is.null(meta_kx)) kx else meta_kx
-  meta$n <- as.integer(meta_n)
-  meta$kx <- as.integer(meta_kx)
+  meta <- .tuning_validate_meta(
+    meta = out$meta,
+    name = name,
+    n = n,
+    kx = kx
+  )
   list(
     s = as.integer(s),
     meta = meta,
@@ -285,7 +328,7 @@ is_tuning <- function(x) {
 #' @export
 new_tuning <- function(name, eval = NULL, eval_grid = NULL, setup = NULL) {
   .tuning_validate_spec(list(
-    name = as.character(name),
+    name = name,
     eval = eval,
     eval_grid = eval_grid,
     setup = setup
@@ -330,7 +373,9 @@ register_tuning <- function(name, tuning) {
     .abort_bad_arg("name", "must be a non-empty character scalar")
   }
   if (is.function(tuning)) tuning <- as_tuning(tuning, name = name)
-  if (is.list(tuning) && (is.null(tuning$name) || !nzchar(as.character(tuning$name)))) {
+  if (is.list(tuning) && (is.null(tuning$name) ||
+    (is.character(tuning$name) && length(tuning$name) == 1L &&
+      (is.na(tuning$name) || !nzchar(tuning$name))))) {
     tuning$name <- name
   }
   tuning <- .tuning_validate_spec(tuning)
@@ -421,6 +466,7 @@ tuning_eval <- function(
   if (!is_tuning(tun)) {
     .abort_bad_arg("tuning", "must be a tuning spec, registered name, or function")
   }
+  tun <- .tuning_validate_spec(tun)
 
   if (identical(mode, "default")) {
     return(.tuning_eval_default(

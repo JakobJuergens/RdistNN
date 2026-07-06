@@ -27,7 +27,7 @@ np_tdnn(
 }
 \arguments{
 \item{data}{Optional data frame (or tibble) containing covariates and the
-outcome column.}
+outcome column. Column names must be non-missing, non-empty, and unique.}
 
 \item{x_cols}{Names or integer indices of covariate columns in \code{data}.}
 

@@ -239,6 +239,26 @@ test_that("input validation catches common misuse", {
     "either `X0` or `x0`",
     ignore.case = TRUE
   )
+  expect_error(
+    np_tdnn(X = d$X, x0 = c(NA_real_, 0), Y = d$y, s1 = 1L, s2 = 2L, se = FALSE),
+    "x0.*NA",
+    ignore.case = TRUE
+  )
+  bad_X0 <- d$X0
+  bad_X0[1L, 1L] <- Inf
+  expect_error(
+    np_tdnn(X = d$X, X0 = bad_X0, Y = d$y, s1 = 1L, s2 = 2L, se = FALSE),
+    "X0.*non-finite",
+    ignore.case = TRUE
+  )
+  expect_error(
+    np_tdnn(
+      X = d$X, X0 = matrix(numeric(0), nrow = 0L, ncol = ncol(d$X)),
+      Y = d$y, s1 = 1L, s2 = 2L, se = FALSE
+    ),
+    "X0.*at least 1 row",
+    ignore.case = TRUE
+  )
   # Matrix API requires Y
   expect_error(
     np_tdnn(X = d$X, X0 = d$X0, s1 = 1L, s2 = 2L),
@@ -277,6 +297,46 @@ test_that("input validation catches common misuse", {
   expect_error(
     np_tdnn(X = d$X, X0 = d$X0, Y = d$y, s1 = 1.5, s2 = 3L, se = FALSE),
     "integer scalar",
+    ignore.case = TRUE
+  )
+  # Logical controls must be explicit scalar TRUE/FALSE values.
+  expect_error(
+    np_tdnn(X = d$X, X0 = d$X0, Y = d$y, s1 = 1L, s2 = 2L, se = NA),
+    "se.*TRUE or FALSE",
+    ignore.case = TRUE
+  )
+  expect_error(
+    np_tdnn(X = d$X, X0 = d$X0, Y = d$y, s1 = 1L, s2 = 2L, se = "yes"),
+    "se.*TRUE or FALSE",
+    ignore.case = TRUE
+  )
+  expect_error(
+    np_tdnn(X = d$X, X0 = d$X0, Y = d$y, s1 = 1L, s2 = 2L, se = c(TRUE, FALSE)),
+    "se.*TRUE or FALSE",
+    ignore.case = TRUE
+  )
+  expect_error(
+    np_tdnn(
+      X = d$X, X0 = d$X0, Y = d$y,
+      s1 = 1L, s2 = 2L, method = "asymp", se = FALSE, normalize = NA
+    ),
+    "normalize.*TRUE or FALSE",
+    ignore.case = TRUE
+  )
+  expect_error(
+    np_tdnn(
+      X = d$X, X0 = d$X0, Y = d$y,
+      s1 = 1L, s2 = 2L, method = "asymp", se = FALSE, normalize = "yes"
+    ),
+    "normalize.*TRUE or FALSE",
+    ignore.case = TRUE
+  )
+  expect_error(
+    np_tdnn(
+      X = d$X, X0 = d$X0, Y = d$y,
+      s1 = 1L, s2 = 2L, method = "asymp", se = FALSE, normalize = c(TRUE, FALSE)
+    ),
+    "normalize.*TRUE or FALSE",
     ignore.case = TRUE
   )
   # Jackknife feasibility: s2 >= n

@@ -92,6 +92,34 @@ test_that(".resolve_ranking rejects malformed shapes", {
     "Each column of `ranks` must be a permutation",
     fixed = TRUE
   )
+
+  bad_dx_shape <- matrix(0, n - 1L, m)
+  expect_error(.resolve_ranking(list(dx = bad_dx_shape), X, X0), "`dx` must be n x m", fixed = TRUE)
+
+  bad_dx_na <- matrix(0, n, m)
+  bad_dx_na[1L, 1L] <- NA_real_
+  expect_error(.resolve_ranking(list(dx = bad_dx_na), X, X0), "dx.*NA", ignore.case = TRUE)
+
+  bad_dx_inf <- matrix(0, n, m)
+  bad_dx_inf[1L, 1L] <- Inf
+  expect_error(.resolve_ranking(list(dx = bad_dx_inf), X, X0), "dx.*non-finite", ignore.case = TRUE)
+
+  bad_ord_frac <- cbind(seq_len(n), rev(seq_len(n)))
+  storage.mode(bad_ord_frac) <- "double"
+  bad_ord_frac[1L, 1L] <- 1.5
+  expect_error(.resolve_ranking(list(ord = bad_ord_frac), X, X0), "ord.*integer", ignore.case = TRUE)
+
+  bad_ranks_frac <- cbind(seq_len(n), rev(seq_len(n)))
+  storage.mode(bad_ranks_frac) <- "double"
+  bad_ranks_frac[1L, 1L] <- 1.5
+  expect_error(.resolve_ranking(list(ranks = bad_ranks_frac), X, X0), "ranks.*integer", ignore.case = TRUE)
+
+  bad_ranker <- function(X, X0, ctx) {
+    out <- matrix(0, nrow(X), nrow(X0))
+    out[1L, 1L] <- Inf
+    list(dx = out)
+  }
+  expect_error(.resolve_ranking(bad_ranker, X, X0), "dx.*non-finite", ignore.case = TRUE)
 })
 
 test_that(".resolve_weight identifies rank_weight and zero-arg factories", {

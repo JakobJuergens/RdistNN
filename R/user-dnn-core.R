@@ -1,21 +1,45 @@
 # Shared internal helpers for user-level DNN estimators.
 
+.dnn_validate_data_column_names <- function(data, arg = "data") {
+  col_names <- names(data)
+  if (is.null(col_names) || length(col_names) != ncol(data) ||
+      anyNA(col_names) || any(!nzchar(col_names))) {
+    .abort_bad_arg(arg, "must have non-missing, non-empty column names")
+  }
+
+  duplicated_names <- unique(col_names[duplicated(col_names)])
+  if (length(duplicated_names) > 0L) {
+    .abort_bad_arg(
+      arg,
+      "must have unique column names",
+      actual = sprintf(
+        "duplicate column name(s): %s",
+        paste(sprintf("'%s'", duplicated_names), collapse = ", ")
+      )
+    )
+  }
+
+  col_names
+}
+
 .dnn_resolve_data_cols <- function(cols, data, arg, allow_multiple = TRUE) {
   if (is.null(cols)) {
     .abort_bad_arg(arg, "must be provided")
   }
 
+  data_names <- .dnn_validate_data_column_names(data)
+
   if (is.character(cols)) {
     if (length(cols) == 0L || anyNA(cols) || any(!nzchar(cols))) {
       .abort_bad_arg(arg, "must be a non-empty character vector of column names")
     }
-    missing <- setdiff(cols, names(data))
+    missing <- setdiff(cols, data_names)
     if (length(missing) > 0L) {
       stop(sprintf(
         "Column(s) %s (specified by `%s`) not found in `data`.\nAvailable columns: %s",
         paste(sprintf("'%s'", missing), collapse = ", "),
         arg,
-        paste(names(data), collapse = ", ")
+        paste(data_names, collapse = ", ")
       ), call. = FALSE)
     }
     resolved <- cols
@@ -37,7 +61,7 @@
     if (any(idx < 1L | idx > p)) {
       .abort_bad_arg(arg, sprintf("contains out-of-range indices; valid range is 1..%d", p))
     }
-    resolved <- names(data)[idx]
+    resolved <- data_names[idx]
   } else {
     .abort_bad_arg(arg, "must be a character vector of column names or an integer vector of indices")
   }
@@ -62,16 +86,31 @@
 
 .dnn_resolve_targets <- function(x_mat, X0 = NULL, x0 = NULL) {
   if (!is.null(X0) && !is.null(x0)) {
-    stop("Provide either `X0` or `x0`, not both.", call. = FALSE)
+    .abort_bad_arg("X0/x0", "must provide either `X0` or `x0`, not both", quoted = FALSE)
   }
   if (is.null(X0)) {
     if (is.null(x0)) {
-      stop("Provide `X0` (m x p) or a single `x0` (length p).", call. = FALSE)
+      .abort_bad_arg("X0/x0", "must provide `X0` (m x p) or a single `x0` (length p)", quoted = FALSE)
     }
-    x0_vec <- .validate_target_vector(x0, ncol(x_mat), x0_arg = "x0", x_arg = "X")
+    x0_vec <- .validate_target_vector(
+      x0,
+      ncol(x_mat),
+      x0_arg = "x0",
+      x_arg = "X",
+      strict = TRUE,
+      finite = TRUE
+    )
     return(matrix(x0_vec, nrow = 1L))
   }
-  .validate_ncol_relation(x_mat, X0, y_arg = "X0", x_arg = "X", relation = "equal")
+  x0_mat <- .validate_matrix(
+    X0,
+    arg = "X0",
+    min_rows = 1L,
+    min_cols = 1L,
+    numeric = TRUE,
+    finite = TRUE
+  )
+  .validate_ncol_relation(x_mat, x0_mat, y_arg = "X0", x_arg = "X", relation = "equal")
 }
 
 .dnn_x0_with_names <- function(x0_mat, x_mat) {

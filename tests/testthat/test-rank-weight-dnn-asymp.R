@@ -139,6 +139,18 @@ test_that("[errors] input validation triggers appropriate errors", {
   expect_error(dnn_weights_asymp_full_from_ranks(ranks, k = 1, s = 0), "positive integer")
   # s > n: explicit upper-bound check
   expect_error(dnn_weights_asymp_full_from_ranks(ranks, k = 1, s = n + 1), "s <= n")
+  expect_error(
+    dnn_weights_asymp_full_from_ranks(ranks, k = 1, s = 3, normalize = NA),
+    "normalize.*TRUE or FALSE"
+  )
+  expect_error(
+    dnn_weights_asymp_full_from_ranks(ranks, k = 1, s = 3, normalize = "yes"),
+    "normalize.*TRUE or FALSE"
+  )
+  expect_error(
+    dnn_weights_asymp_full_from_ranks(ranks, k = 1, s = 3, normalize = c(TRUE, FALSE)),
+    "normalize.*TRUE or FALSE"
+  )
 })
 
 test_that("[meta] meta fields are correct", {
@@ -167,6 +179,13 @@ test_that("[spec-errors] rank_weight_dnn_asymp validates k and s at construction
   expect_error(rank_weight_dnn_asymp(k = "foo", s = 3L), "integer scalar")
   expect_error(rank_weight_dnn_asymp(k = 1L, s = 2.9), "integer scalar")
   expect_error(rank_weight_dnn_asymp(k = 1L, s = "bar"), "integer scalar")
+  # Logical controls are not silently coerced via isTRUE().
+  expect_error(rank_weight_dnn_asymp(k = 1L, s = 3L, normalize = NA), "normalize.*TRUE or FALSE")
+  expect_error(rank_weight_dnn_asymp(k = 1L, s = 3L, normalize = "yes"), "normalize.*TRUE or FALSE")
+  expect_error(
+    rank_weight_dnn_asymp(k = 1L, s = 3L, normalize = c(TRUE, FALSE)),
+    "normalize.*TRUE or FALSE"
+  )
   # valid call must not error
   expect_no_error(rank_weight_dnn_asymp(k = 2L, s = 3L))
 })

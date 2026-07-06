@@ -15,32 +15,51 @@
 }
 
 .score_fd_step_vec <- function(fd_step, theta, arg = "fd_step") {
-  step <- as.numeric(fd_step)
+  step <- .score_check_fd_step_base(fd_step, arg = arg)
   if (length(step) == 1L) {
-    if (.has_na_only(step)) {
-      .abort_bad_arg(arg, "cannot be `NA`")
-    }
-    if (.has_nonfinite_non_na(step)) {
-      .abort_bad_arg(arg, "cannot be non-finite (`Inf`, `-Inf`, or `NaN`)")
-    }
-    if (step <= 0) {
-      .abort_bad_arg(arg, "must be positive")
-    }
     return(step * pmax(1, abs(theta)))
   }
   if (length(step) != length(theta)) {
     .abort_bad_arg(arg, "must be a scalar or length(theta) vector")
   }
+  step
+}
+
+.score_check_fd_step_base <- function(fd_step, arg = "fd_step") {
+  if (!is.numeric(fd_step) || length(fd_step) < 1L) {
+    .abort_bad_arg(arg, "must be a positive finite numeric scalar or vector")
+  }
+  step <- as.numeric(fd_step)
   if (.has_na_only(step)) {
-    .abort_bad_arg(arg, "cannot contain `NA` values")
+    msg <- if (length(step) == 1L) "cannot be `NA`" else "cannot contain `NA` values"
+    .abort_bad_arg(arg, msg)
   }
   if (.has_nonfinite_non_na(step)) {
-    .abort_bad_arg(arg, "cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`)")
+    msg <- if (length(step) == 1L) {
+      "cannot be non-finite (`Inf`, `-Inf`, or `NaN`)"
+    } else {
+      "cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`)"
+    }
+    .abort_bad_arg(arg, msg)
   }
   if (any(step <= 0)) {
-    .abort_bad_arg(arg, "must contain only positive values")
+    msg <- if (length(step) == 1L) "must be positive" else "must contain only positive values"
+    .abort_bad_arg(arg, msg)
   }
   step
+}
+
+.score_check_fd_scheme <- function(fd_scheme, arg = "fd_scheme") {
+  if (!is.character(fd_scheme) || length(fd_scheme) != 1L ||
+      is.na(fd_scheme) || !(fd_scheme %in% c("central", "forward"))) {
+    .abort_bad_arg(
+      arg,
+      "must be one of: 'central', 'forward'",
+      expected = "central, forward",
+      actual = paste(fd_scheme, collapse = ", ")
+    )
+  }
+  fd_scheme
 }
 
 .score_validate_scalar_numeric <- function(x, label) {
@@ -221,7 +240,7 @@ score_grad <- function(
     }
   }
 
-  scheme <- if (is.null(fd_scheme)) score$fd_scheme else match.arg(fd_scheme, c("central", "forward"))
+  scheme <- .score_check_fd_scheme(if (is.null(fd_scheme)) score$fd_scheme else fd_scheme)
   base_step <- if (is.null(fd_step)) score$fd_step else fd_step
   h <- .score_fd_step_vec(base_step, theta)
 
@@ -284,7 +303,7 @@ score_grad_batch <- function(
     }
   }
 
-  scheme <- if (is.null(fd_scheme)) score$fd_scheme else match.arg(fd_scheme, c("central", "forward"))
+  scheme <- .score_check_fd_scheme(if (is.null(fd_scheme)) score$fd_scheme else fd_scheme)
   base_step <- if (is.null(fd_step)) score$fd_step else fd_step
   h <- .score_fd_step_vec(base_step, theta)
 
@@ -352,6 +371,10 @@ score_diff_path <- function(
     .abort_bad_arg("score", "must be a `ustat_score`")
   }
   method <- match.arg(method)
+  fd_step_eff <- if (is.null(fd_step)) score$fd_step else fd_step
+  fd_step_eff <- .score_check_fd_step_base(fd_step_eff)
+  fd_scheme_eff <- if (is.null(fd_scheme)) score$fd_scheme else fd_scheme
+  fd_scheme_eff <- .score_check_fd_scheme(fd_scheme_eff)
   if (is.null(ctx)) {
     ctx <- score_setup(score, data)
   }
@@ -366,20 +389,20 @@ score_diff_path <- function(
     grad = function(idxs, theta, rng = NULL) {
       score_grad(
         score, idxs, data, theta, ctx = ctx, rng = rng,
-        method = method, fd_step = fd_step, fd_scheme = fd_scheme
+        method = method, fd_step = fd_step_eff, fd_scheme = fd_scheme_eff
       )
     },
     grad_batch = function(subs, theta, rng = NULL) {
       score_grad_batch(
         score, subs, data, theta, ctx = ctx, rng = rng,
-        method = method, fd_step = fd_step, fd_scheme = fd_scheme
+        method = method, fd_step = fd_step_eff, fd_scheme = fd_scheme_eff
       )
     },
     meta = list(
       score_name = score$name,
       method = method,
-      fd_step = if (is.null(fd_step)) score$fd_step else fd_step,
-      fd_scheme = if (is.null(fd_scheme)) score$fd_scheme else fd_scheme
+      fd_step = fd_step_eff,
+      fd_scheme = fd_scheme_eff
     )
   )
   class(out) <- "score_diff_path"

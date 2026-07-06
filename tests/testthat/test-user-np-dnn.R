@@ -214,6 +214,34 @@ test_that("input validation catches common misuse", {
     ignore.case = TRUE
   )
   expect_error(
+    np_dnn(X = d$X, x0 = c(NA_real_, 0), Y = d$y, k = 1L, s = 2L, se = FALSE),
+    "x0.*NA",
+    ignore.case = TRUE
+  )
+  bad_X0 <- d$X0
+  bad_X0[1L, 1L] <- Inf
+  expect_error(
+    np_dnn(X = d$X, X0 = bad_X0, Y = d$y, k = 1L, s = 2L, se = FALSE),
+    "X0.*non-finite",
+    ignore.case = TRUE
+  )
+  expect_error(
+    np_dnn(
+      X = d$X, X0 = matrix(numeric(0), nrow = 0L, ncol = ncol(d$X)),
+      Y = d$y, k = 1L, s = 2L, se = FALSE
+    ),
+    "X0.*at least 1 row",
+    ignore.case = TRUE
+  )
+  expect_error(
+    np_dnn(
+      X = d$X, X0 = data.frame(X1 = "a", X2 = "b"),
+      Y = d$y, k = 1L, s = 2L, se = FALSE
+    ),
+    "X0.*numeric",
+    ignore.case = TRUE
+  )
+  expect_error(
     np_dnn(X = d$X, X0 = d$X0, k = 1L, s = 1L),
     "requires `Y`",
     ignore.case = TRUE
@@ -276,6 +304,30 @@ test_that("input validation catches common misuse", {
   expect_error(
     np_dnn(X = d$X, X0 = d$X0, Y = d$y, k = "foo", s = 3L, se = FALSE),
     "integer scalar"
+  )
+  expect_error(
+    np_dnn(X = d$X, X0 = d$X0, Y = d$y, k = 1L, s = 3L, se = NA),
+    "se.*TRUE or FALSE"
+  )
+  expect_error(
+    np_dnn(X = d$X, X0 = d$X0, Y = d$y, k = 1L, s = 3L, se = "yes"),
+    "se.*TRUE or FALSE"
+  )
+  expect_error(
+    np_dnn(
+      X = d$X, X0 = d$X0, Y = d$y,
+      method = "asymp", k = 1L, s = 3L, se = FALSE,
+      normalize = NA
+    ),
+    "normalize.*TRUE or FALSE"
+  )
+  expect_error(
+    np_dnn(
+      X = d$X, X0 = d$X0, Y = d$y,
+      method = "asymp", k = 1L, s = 3L, se = FALSE,
+      normalize = "yes"
+    ),
+    "normalize.*TRUE or FALSE"
   )
 })
 

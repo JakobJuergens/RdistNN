@@ -69,3 +69,14 @@ test_that("internal validators split NA vs non-finite diagnostics", {
     ignore.case = TRUE
   )
 })
+
+test_that("scalar logical validator rejects silent truthiness coercions", {
+  v_logical <- getFromNamespace(".validate_scalar_logical", "RdistNN")
+
+  expect_identical(v_logical(TRUE, arg = "se"), TRUE)
+  expect_identical(v_logical(FALSE, arg = "normalize"), FALSE)
+  expect_error(v_logical(NA, arg = "se"), "se.*TRUE or FALSE")
+  expect_error(v_logical(c(TRUE, FALSE), arg = "se"), "se.*TRUE or FALSE")
+  expect_error(v_logical("yes", arg = "normalize"), "normalize.*TRUE or FALSE")
+  expect_error(v_logical(1, arg = "normalize"), "normalize.*TRUE or FALSE")
+})

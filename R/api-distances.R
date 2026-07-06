@@ -45,8 +45,32 @@
   }
   d_mat
 }
+.distance_validate_target_matrix <- function(X0, x_mat) {
+  x0_mat <- .validate_matrix(
+    X0,
+    arg = "X0",
+    min_rows = 0L,
+    min_cols = 1L,
+    numeric = TRUE,
+    finite = TRUE
+  )
+  .validate_ncol_relation(x_mat, x0_mat, y_arg = "X0", x_arg = "X", relation = "match")
+}
 .distance_validate_spec <- function(spec) {
   if (!is.list(spec)) .abort_bad_arg("spec", "must be a list")
+  if (!is.null(spec$name) &&
+    (!is.character(spec$name) || length(spec$name) != 1L || is.na(spec$name) || !nzchar(spec$name))) {
+    .abort_bad_arg("name", "must be a non-empty character scalar", quoted = FALSE)
+  }
+  if (!is.null(spec$eval) && !is.function(spec$eval)) {
+    .abort_bad_arg("eval", "must be NULL or a function")
+  }
+  if (!is.null(spec$eval_batch) && !is.function(spec$eval_batch)) {
+    .abort_bad_arg("eval_batch", "must be NULL or a function")
+  }
+  if (!is.null(spec$setup) && !is.function(spec$setup)) {
+    .abort_bad_arg("setup", "must be NULL or a function")
+  }
   if (!(.distance_has_eval(spec) || .distance_has_eval_batch(spec))) {
     .abort_bad_arg("spec", "must provide at least one of `eval` or `eval_batch`")
   }
@@ -90,7 +114,7 @@ is_distance <- function(x) {
 #' @export
 new_distance <- function(name, eval = NULL, eval_batch = NULL, setup = NULL) {
   .distance_validate_spec(list(
-    name = as.character(name),
+    name = name,
     eval = eval,
     eval_batch = eval_batch,
     setup = setup
@@ -149,7 +173,9 @@ register_distance <- function(name, spec) {
     .abort_bad_arg("name", "must be a non-empty character scalar")
   }
   if (is.function(spec)) spec <- as_distance(spec, name = name)
-  if (is.list(spec) && (is.null(spec$name) || !nzchar(as.character(spec$name)))) {
+  if (is.list(spec) && (is.null(spec$name) ||
+    (is.character(spec$name) && length(spec$name) == 1L &&
+      (is.na(spec$name) || !nzchar(spec$name))))) {
     spec$name <- name
   }
   spec <- .distance_validate_spec(spec)
@@ -207,8 +233,9 @@ distance_names <- function() {
 #' @export
 distance_eval <- function(spec, X, x0, ctx = NULL) {
   if (!is_distance(spec)) .abort_bad_arg("spec", "must be a distance")
+  spec <- .distance_validate_spec(spec)
   x_mat <- .validate_matrix_nonempty(X, arg = "X")
-  x0_vec <- .validate_target_vector(x0, ncol(x_mat), x0_arg = "x0", x_arg = "X")
+  x0_vec <- .validate_target_vector(x0, ncol(x_mat), x0_arg = "x0", x_arg = "X", strict = TRUE, finite = TRUE)
   if (is.null(ctx) && is.function(spec$setup)) ctx <- spec$setup(x_mat)
 
   has_eval <- .distance_has_eval(spec)
@@ -249,8 +276,9 @@ distance_eval <- function(spec, X, x0, ctx = NULL) {
 #' @export
 distance_eval_batch <- function(spec, X, X0, ctx = NULL) {
   if (!is_distance(spec)) .abort_bad_arg("spec", "must be a distance")
+  spec <- .distance_validate_spec(spec)
   x_mat <- .validate_matrix_nonempty(X, arg = "X")
-  x0_mat <- .validate_ncol_relation(x_mat, X0, y_arg = "X0", x_arg = "X", relation = "match")
+  x0_mat <- .distance_validate_target_matrix(X0, x_mat)
 
   if (is.null(ctx) && is.function(spec$setup)) ctx <- spec$setup(x_mat)
 

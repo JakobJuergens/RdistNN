@@ -67,6 +67,62 @@ test_that("registry and constructor validation failures are explicit", {
   expect_match(msg, "Got:", fixed = TRUE)
 })
 
+test_that("tuning specs reject malformed names and optional slots early", {
+  ok_eval <- function(...) 4L
+  ok_grid <- function(...) data.frame(s = 4L, stringsAsFactors = FALSE)
+
+  expect_error(
+    new_tuning(name = 1, eval = ok_eval),
+    "name.*non-empty character scalar",
+    ignore.case = TRUE
+  )
+  expect_error(
+    new_tuning(name = c("a", "b"), eval = ok_eval),
+    "name.*non-empty character scalar",
+    ignore.case = TRUE
+  )
+  expect_error(
+    new_tuning(name = NA_character_, eval = ok_eval),
+    "name.*non-empty character scalar",
+    ignore.case = TRUE
+  )
+  expect_error(
+    new_tuning(name = "bad_setup", eval = ok_eval, setup = 1),
+    "setup.*function",
+    ignore.case = TRUE
+  )
+  expect_error(
+    new_tuning(name = "bad_eval", eval = 1, eval_grid = ok_grid),
+    "eval.*function",
+    ignore.case = TRUE
+  )
+  expect_error(
+    new_tuning(name = "bad_eval_grid", eval = ok_eval, eval_grid = 1),
+    "eval_grid.*function",
+    ignore.case = TRUE
+  )
+  expect_error(
+    register_tuning(
+      "bad_inner_name",
+      list(name = c("a", "b"), eval = ok_eval)
+    ),
+    "name.*non-empty character scalar",
+    ignore.case = TRUE
+  )
+
+  raw_bad_setup <- list(
+    name = "raw_bad_setup",
+    setup = 1,
+    eval = ok_eval
+  )
+  expect_true(is_tuning(raw_bad_setup))
+  expect_error(
+    tuning_eval(raw_bad_setup, n = 20L, kx = 2L, k = 1L),
+    "setup.*function",
+    ignore.case = TRUE
+  )
+})
+
 test_that("tuning_eval validates argument types and accepts bare function tuning", {
   expect_error(
     tuning_eval(tuning_dnn_paper(), n = 10.5, kx = 2L, k = 2L),
@@ -162,6 +218,34 @@ test_that("default and grid output validators reject malformed user outputs", {
   expect_error(
     tuning_eval(tun_bad_numeric_inf, n = 50L, kx = 2L, k = 2L, mode = "default"),
     "positive finite integer-like numeric scalar"
+  )
+
+  tun_bad_meta_name <- new_tuning(
+    name = "bad_meta_name",
+    eval = function(...) list(s = 2L, meta = list(name = c("a", "b")))
+  )
+  expect_error(
+    tuning_eval(tun_bad_meta_name, n = 50L, kx = 2L, k = 2L, mode = "default"),
+    "meta.*name.*character scalar",
+    ignore.case = TRUE
+  )
+  tun_bad_meta_n <- new_tuning(
+    name = "bad_meta_n",
+    eval = function(...) list(s = 2L, meta = list(n = "50"))
+  )
+  expect_error(
+    tuning_eval(tun_bad_meta_n, n = 50L, kx = 2L, k = 2L, mode = "default"),
+    "meta\\$n.*integer scalar",
+    ignore.case = TRUE
+  )
+  tun_bad_meta_kx <- new_tuning(
+    name = "bad_meta_kx",
+    eval = function(...) list(s = 2L, meta = list(kx = NA_integer_))
+  )
+  expect_error(
+    tuning_eval(tun_bad_meta_kx, n = 50L, kx = 2L, k = 2L, mode = "default"),
+    "meta\\$kx.*integer scalar",
+    ignore.case = TRUE
   )
 
   tun_grid_not_df <- new_tuning(name = "bad_grid_not_df", eval_grid = function(...) list(s = 2L))

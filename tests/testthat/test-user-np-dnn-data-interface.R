@@ -401,7 +401,43 @@ test_that("out-of-range integer index in x_cols produces informative error", {
 })
 
 # ============================================================================
-# 13. Extended extras parity across interfaces
+# 13. Ambiguous data-frame schemas fail before column extraction
+# ============================================================================
+
+test_that("ambiguous data-frame column-name schemas are rejected", {
+  d <- .make_np_iface_data()
+
+  df_dup <- d$df
+  names(df_dup)[2L] <- names(df_dup)[1L]
+  expect_error(
+    np_dnn(
+      data = df_dup,
+      x_cols = seq_along(d$x_cols),
+      y_col = ncol(df_dup),
+      X0 = d$X0,
+      k = 2L, s = 3L, se = FALSE
+    ),
+    "unique column names",
+    ignore.case = TRUE
+  )
+
+  df_empty <- d$df
+  names(df_empty)[1L] <- ""
+  expect_error(
+    np_dnn(
+      data = df_empty,
+      x_cols = seq_along(d$x_cols),
+      y_col = ncol(df_empty),
+      X0 = d$X0,
+      k = 2L, s = 3L, se = FALSE
+    ),
+    "non-missing, non-empty column names",
+    ignore.case = TRUE
+  )
+})
+
+# ============================================================================
+# 14. Extended extras parity across interfaces
 # ============================================================================
 
 test_that("extended return extras are identical across interfaces", {
@@ -429,7 +465,7 @@ test_that("extended return extras are identical across interfaces", {
 })
 
 # ============================================================================
-# 14. normalize=FALSE parity
+# 15. normalize=FALSE parity
 # ============================================================================
 
 test_that("normalize=FALSE preserves matrix/data-frame equivalence", {
@@ -451,7 +487,7 @@ test_that("normalize=FALSE preserves matrix/data-frame equivalence", {
 })
 
 # ============================================================================
-# 15. Distance spec object parity
+# 16. Distance spec object parity
 # ============================================================================
 
 test_that("distance spec object preserves matrix/data-frame equivalence", {
@@ -471,7 +507,7 @@ test_that("distance spec object preserves matrix/data-frame equivalence", {
 })
 
 # ============================================================================
-# 16. Degenerate shape parity (p=1, m=1)
+# 17. Degenerate shape parity (p=1, m=1)
 # ============================================================================
 
 test_that("p=1,m=1 edge case remains equivalent across interfaces", {

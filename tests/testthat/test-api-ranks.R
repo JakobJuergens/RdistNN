@@ -44,6 +44,41 @@ test_that("new_rank_weight() builds validated specs", {
     new_rank_weight(name = "bad_new_rank"),
     "must provide at least one of `eval` or `eval_batch`"
   )
+  expect_error(
+    new_rank_weight(
+      name = 1,
+      eval = function(ranks, ctx = NULL) rep(1 / length(ranks), length(ranks))
+    ),
+    "name.*non-empty character scalar",
+    ignore.case = TRUE
+  )
+  expect_error(
+    new_rank_weight(
+      name = c("rank_a", "rank_b"),
+      eval = function(ranks, ctx = NULL) rep(1 / length(ranks), length(ranks))
+    ),
+    "name.*non-empty character scalar",
+    ignore.case = TRUE
+  )
+  expect_error(
+    new_rank_weight(name = "bad_eval", eval = 1),
+    "eval.*NULL or a function",
+    ignore.case = TRUE
+  )
+  expect_error(
+    new_rank_weight(name = "bad_batch", eval_batch = 1),
+    "eval_batch.*NULL or a function",
+    ignore.case = TRUE
+  )
+  expect_error(
+    new_rank_weight(
+      name = "bad_setup",
+      eval = function(ranks, ctx = NULL) rep(1 / length(ranks), length(ranks)),
+      setup = 1
+    ),
+    "setup.*NULL or a function",
+    ignore.case = TRUE
+  )
 })
 
 test_that("rank_weight_eval() and rank_weight_eval_batch() work (eval only path)", {
@@ -171,7 +206,7 @@ test_that("input validation: bad ranks and bad specs produce clear errors", {
   expect_error(rank_weight_eval(rw, c(1L, 1L, 2L)), "permutation", ignore.case = TRUE)
 
   # NA
-  expect_error(rank_weight_eval(rw, c(1L, NA_integer_, 3L)), "cannot contain NA", ignore.case = TRUE)
+  expect_error(rank_weight_eval(rw, c(1L, NA_integer_, 3L)), "cannot contain.*NA", ignore.case = TRUE)
 
   # Zero length
   expect_error(rank_weight_eval(rw, integer(0)), "positive length", ignore.case = TRUE)
@@ -199,6 +234,14 @@ test_that("input validation: bad ranks and bad specs produce clear errors", {
   class(rw_bad_batch_shape) <- c("rank_weight", class(rw_bad_batch_shape))
   R <- .rand_ranks_mat(5L, 2L)
   expect_error(rank_weight_eval_batch(rw_bad_batch_shape, R), "finite numeric matrix of shape")
+
+  rw_bad_batch_type <- list(
+    name = "bad_batch_type",
+    eval_batch = function(R, ctx = NULL) matrix("bad", nrow(R), ncol(R))
+  )
+  rw_bad_batch_type$.__kind <- "rank_weight"
+  class(rw_bad_batch_type) <- c("rank_weight", class(rw_bad_batch_type))
+  expect_error(rank_weight_eval_batch(rw_bad_batch_type, R), "finite numeric matrix of shape")
 })
 
 test_that("as_rank_weight handles functions without ctx (and ignores provided ctx)", {
@@ -339,9 +382,15 @@ test_that("integerish numeric ranks are accepted; non-integer permutations rejec
   r_num <- as.numeric(1:5)
   expect_no_error(rank_weight_eval(rw, r_num))
 
-  # non-integer values -> becomes non-permutation after as.integer()
+  # non-integer values must not be accepted by integer truncation.
   r_bad <- c(1, 2, 2.2, 4, 5)
-  expect_error(rank_weight_eval(rw, r_bad), "permutation", ignore.case = TRUE)
+  expect_error(rank_weight_eval(rw, r_bad), "integer ranks", ignore.case = TRUE)
+  r_truncates_to_permutation <- c(1, 2, 3.9, 4, 5)
+  expect_error(
+    rank_weight_eval(rw, r_truncates_to_permutation),
+    "integer ranks",
+    ignore.case = TRUE
+  )
 })
 
 test_that("n = 1 trivial case works (both eval and eval_batch paths)", {
@@ -382,6 +431,21 @@ test_that("register_rank validates malformed specs and normalizes named list spe
   expect_error(
     register_rank("bad_rank_spec", list(name = "bad_rank_spec")),
     "must provide at least one of `eval` or `eval_batch`"
+  )
+  expect_error(
+    register_rank(
+      "bad_rank_name",
+      list(name = 1, eval = function(r, ctx = NULL) rep(1, length(r)))
+    ),
+    "name.*non-empty character scalar",
+    ignore.case = TRUE
+  )
+  expect_error(
+    register_rank(
+      "bad_rank_table",
+      list(eval = function(r, ctx = NULL) rep(1, length(r)), table = 1)
+    ),
+    "spec\\$table.*function"
   )
 
   # malformed name in two-arg form

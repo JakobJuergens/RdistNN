@@ -8,20 +8,20 @@
 jackknife_fast_rank(ranks, a, phi, normalize = TRUE)
 }
 \arguments{
-\item{ranks}{integer matrix (T x (s+1)) of neighbor indices (1-based).
-Each row t lists the first s+1 neighbors of target t.}
+\item{ranks}{Integer matrix (T x (s+1)) of positive neighbor indices
+(1-based). Each row t lists the first s+1 neighbors of target t.}
 
-\item{a}{numeric length-s vector of L-stat coefficients a_1..a_s.}
+\item{a}{Finite numeric length-s vector of L-stat coefficients a_1..a_s.}
 
 \item{phi}{either:
 \itemize{
-\item numeric matrix (n_ref x q): row j is the q-vector phi(j), or
-\item function \verb{function(j, t)} returning a numeric length-q vector (allows
-target dependence).
+\item finite numeric matrix (n_ref x q): row j is the q-vector phi(j), or
+\item function \verb{function(j, t)} returning a finite numeric length-q vector
+(allows target dependence).
 For a scalar \eqn{\phi}, use \code{cbind(y)} as the matrix case.
 }}
 
-\item{normalize}{logical; if TRUE (default) divide by sum(a).}
+\item{normalize}{Scalar logical; if TRUE (default) divide by sum(a).}
 }
 \value{
 list with:

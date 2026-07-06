@@ -90,4 +90,29 @@ run_distance_battery <- function(metric_name, mk_spec, orderer, args = list(),
     expect_error(sp$eval(X, x0, ctx))
     expect_error(sp$eval_batch(X, matrix(x0, 1, byrow = TRUE), ctx))
   })
+
+  test_that(paste0(metric_name, ": non-finite inputs error before distance ranking"), {
+    X <- gen_X()
+    x0 <- gen_x0(p = ncol(X))
+    X_bad <- X
+    X_bad[1, 1] <- Inf
+    x0_bad <- x0
+    x0_bad[1] <- NaN
+
+    sp <- do.call(mk_spec, args)
+    expect_error(sp$eval(X_bad, x0, NULL), "non-finite|NaN", ignore.case = TRUE)
+    expect_error(sp$eval(X, x0_bad, NULL), "non-finite|NaN", ignore.case = TRUE)
+    expect_error(sp$eval_batch(X_bad, matrix(x0, 1, byrow = TRUE), NULL), "non-finite|NaN", ignore.case = TRUE)
+    expect_error(sp$eval_batch(X, matrix(x0_bad, 1, byrow = TRUE), NULL), "non-finite|NaN", ignore.case = TRUE)
+    expect_error(
+      do.call(orderer, c(list(X_bad, x0), args)),
+      "non-finite|NaN",
+      ignore.case = TRUE
+    )
+    expect_error(
+      do.call(orderer, c(list(X, x0_bad), args)),
+      "non-finite|NaN",
+      ignore.case = TRUE
+    )
+  })
 }

@@ -213,12 +213,55 @@
   out
 }
 
+.dnn_candidate_diag_frame <- function(grid, selected) {
+  diag <- grid$diagnostics
+  required <- c(
+    "candidate_id", "computed_key", "status", "reason", "s", "kappa",
+    "ess", "max_weight", "degenerate"
+  )
+  missing <- setdiff(required, names(diag))
+  if (length(missing) > 0L) {
+    .abort_bad_state(sprintf(
+      "`object$tuning_grid$diagnostics` is missing required column(s): %s.",
+      paste(missing, collapse = ", ")
+    ))
+  }
+  if (!("top5_weight_share" %in% names(diag)) && !("top_share" %in% names(diag))) {
+    .abort_bad_state(
+      "`object$tuning_grid$diagnostics` must contain `top5_weight_share` or legacy `top_share`."
+    )
+  }
+
+  diag$candidate_id <- as.character(diag$candidate_id)
+  if (anyNA(diag$candidate_id) || any(!nzchar(diag$candidate_id))) {
+    .abort_bad_state("`object$tuning_grid$diagnostics$candidate_id` must contain non-empty strings.")
+  }
+  duplicated_id <- unique(diag$candidate_id[duplicated(diag$candidate_id)])
+  if (length(duplicated_id) > 0L) {
+    .abort_bad_state(sprintf(
+      "`object$tuning_grid$diagnostics` contains duplicate candidate row(s): %s.",
+      paste(duplicated_id, collapse = ", ")
+    ))
+  }
+
+  selected_id <- as.character(selected$candidate_id)
+  missing_row <- setdiff(selected_id, diag$candidate_id)
+  if (length(missing_row) > 0L) {
+    .abort_bad_state(sprintf(
+      "`object$tuning_grid$diagnostics` is missing row(s) for selected candidate(s): %s.",
+      paste(missing_row, collapse = ", ")
+    ))
+  }
+
+  diag <- diag[diag$candidate_id %in% selected_id, , drop = FALSE]
+  diag$.candidate_order <- match(diag$candidate_id, selected_id)
+  diag[order(diag$.candidate_order), , drop = FALSE]
+}
+
 .dnn_candidate_diagnostics <- function(object, candidates = "all") {
   grid <- .plot_require_grid(object, fn = "diagnostics")
   selected <- .plot_resolve_candidates(object, candidates = candidates, fn = "diagnostics")
-  diag <- grid$diagnostics[grid$diagnostics$candidate_id %in% selected$candidate_id, , drop = FALSE]
-  diag$.candidate_order <- match(diag$candidate_id, selected$candidate_id)
-  diag <- diag[order(diag$.candidate_order), , drop = FALSE]
+  diag <- .dnn_candidate_diag_frame(grid = grid, selected = selected)
   diag$.candidate_order <- NULL
   idx <- match(diag$candidate_id, selected$candidate_id)
   top5 <- if ("top5_weight_share" %in% names(diag)) {

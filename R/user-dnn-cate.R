@@ -34,7 +34,8 @@
 #' `degenerate`; `top_n` is fixed at 5 and is independent of the estimator's
 #' `k`.
 #'
-#' @param data Data frame with covariates and optional nuisance columns.
+#' @param data Data frame with covariates and optional nuisance columns. Column
+#'   names must be non-missing, non-empty, and unique.
 #' @param x_cols Names or indices of covariate columns in `data`.
 #' @param y_col Name or index of the outcome column in `data`.
 #' @param t_col Name or index of the treatment column in `data` (must be 0/1).
@@ -127,6 +128,8 @@ cate_dnn <- function(
   tuning_mode <- match.arg(tuning_mode)
   s_arg <- s
   k <- .validate_scalar_int(k, "k")
+  normalize <- .validate_scalar_logical(normalize, "normalize")
+  se <- .validate_scalar_logical(se, "se")
 
   .warn_unknown_return(return, valid = c("W", "ranks", "ord", "dx", "psi", "nuisance", "ess", "neighbors", "tuning"))
   if (identical(tuning_mode, "grid") && !is.null(s_arg)) {

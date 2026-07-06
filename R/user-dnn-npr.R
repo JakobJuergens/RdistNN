@@ -29,6 +29,7 @@
 #' `top_n` is fixed at 5 and is independent of the estimator's `k`.
 #'
 #' @param data Optional data frame containing covariates and outcome columns.
+#'   Column names must be non-missing, non-empty, and unique.
 #' @param x_cols Names or indices of covariate columns in `data`.
 #' @param y_col Name or index of the outcome column in `data`.
 #' @param y Optional numeric outcome vector of length `n`. In the data-frame
@@ -118,6 +119,8 @@ np_dnn <- function(
   tuning_mode <- match.arg(tuning_mode)
   s_arg <- s
   k <- .validate_scalar_int(k, "k")
+  normalize <- .validate_scalar_logical(normalize, "normalize")
+  se <- .validate_scalar_logical(se, "se")
   .warn_unknown_return(return, valid = c("W", "ranks", "ord", "dx", "y", "ess", "neighbors", "tuning"))
   if (identical(tuning_mode, "grid") && !is.null(s_arg)) {
     .abort_bad_arg(

@@ -91,6 +91,56 @@ new_gmm_model <- function(name,
 #' @export
 is_gmm_model <- function(x) inherits(x, "gmm_model")
 
+.gmm_validate_model_object <- function(model, arg = "model") {
+  if (!is_gmm_model(model)) {
+    .abort_bad_arg(arg, "must be a `gmm_model` object")
+  }
+  if (!is.list(model)) {
+    .abort_bad_arg(arg, "must be a list-based `gmm_model` object")
+  }
+
+  name <- .gmm_validate_nonempty_chr(model$name, "model$name")
+  if (length(name) != 1L) {
+    .abort_bad_arg("model$name", "must be a character scalar")
+  }
+  if (!is.function(model$setup)) {
+    .abort_bad_arg("model$setup", "must be a function")
+  }
+  if (!is.function(model$moment_obs)) {
+    .abort_bad_arg("model$moment_obs", "must be a function")
+  }
+  if (!is.null(model$jacobian_obs) && !is.function(model$jacobian_obs)) {
+    .abort_bad_arg("model$jacobian_obs", "must be NULL or a function")
+  }
+  if (!is.null(model$start) && !is.function(model$start)) {
+    .abort_bad_arg("model$start", "must be NULL or a function")
+  }
+
+  coef_names <- .gmm_validate_nonempty_chr(model$coef_names, "model$coef_names")
+  moment_names <- NULL
+  if (!is.null(model$moment_names)) {
+    moment_names <- .gmm_validate_nonempty_chr(model$moment_names, "model$moment_names")
+  }
+  if (!is.null(model$p)) {
+    p <- .validate_scalar_int(model$p, arg = "model$p", min = 1L)
+    if (p != length(coef_names)) {
+      .abort_bad_arg(
+        "model$p",
+        "must match length(model$coef_names)",
+        expected = sprintf("length(model$coef_names)=%d", length(coef_names)),
+        actual = sprintf("model$p=%d", p)
+      )
+    }
+  }
+
+  model$name <- name
+  model$coef_names <- coef_names
+  model$moment_names <- moment_names
+  model$p <- length(coef_names)
+  class(model) <- union("gmm_model", class(model))
+  model
+}
+
 .gmm_dr_iv_validate_sample <- function(sample, n) {
   if (!is.data.frame(sample)) {
     .abort_bad_arg(

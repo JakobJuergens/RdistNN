@@ -212,6 +212,55 @@ test_that("[errors] ranks diagnostics distinguish NA vs non-finite", {
   storage.mode(ranks_inf) <- "double"
   ranks_inf[1, 1] <- Inf
   expect_error(jackknife_fast_rank(ranks_inf, a, phi_fn), regexp = "ranks.*non-finite")
+
+  ranks_frac <- ranks
+  storage.mode(ranks_frac) <- "double"
+  ranks_frac[1, 1] <- 1.5
+  expect_error(jackknife_fast_rank(ranks_frac, a, PHI), regexp = "ranks.*integer indices")
+})
+
+test_that("[errors] finite-support input validation runs before compiled dispatch", {
+  set.seed(112)
+  Tn <- 4L; n_ref <- 10L; s <- 3L
+  ranks <- t(replicate(Tn, sample(n_ref, s + 1L, replace = FALSE)))
+  a <- runif(s)
+  PHI <- cbind(rnorm(n_ref), rnorm(n_ref))
+
+  expect_error(
+    jackknife_fast_rank(ranks, a, PHI, normalize = NA),
+    "normalize.*TRUE or FALSE"
+  )
+  expect_error(
+    jackknife_fast_rank(ranks, a, PHI, normalize = "yes"),
+    "normalize.*TRUE or FALSE"
+  )
+  expect_error(
+    jackknife_fast_rank(ranks, a, PHI, normalize = c(TRUE, FALSE)),
+    "normalize.*TRUE or FALSE"
+  )
+
+  a_na <- a
+  a_na[1L] <- NA_real_
+  expect_error(jackknife_fast_rank(ranks, a_na, PHI), "a.*NA")
+
+  a_inf <- a
+  a_inf[1L] <- Inf
+  expect_error(jackknife_fast_rank(ranks, a_inf, PHI), "a.*non-finite")
+
+  PHI_bad <- PHI
+  PHI_bad[1L, 1L] <- NA_real_
+  expect_error(jackknife_fast_rank(ranks, a, PHI_bad), "phi.*NA")
+
+  PHI_bad[1L, 1L] <- Inf
+  expect_error(jackknife_fast_rank(ranks, a, PHI_bad), "phi.*non-finite")
+
+  phi_na <- function(j, t) c(NA_real_, 1)
+  expect_error(jackknife_fast_rank(ranks, a, phi_na), "phi\\(j, t\\).*NA")
+
+  phi_bad_length <- function(j, t) {
+    if (t == 1L && j == ranks[1L, 1L]) c(1, 2) else 1
+  }
+  expect_error(jackknife_fast_rank(ranks, a, phi_bad_length), "consistent length")
 })
 
 test_that("[errors] sum(a)=0 with normalize=TRUE raises an error", {

@@ -113,7 +113,7 @@ rank_weight_tdnn_asymp <- function(s1, s2, dim, normalize = TRUE) {
   s2        <- .validate_scalar_int(s2,  "s2")
   dim       <- .validate_scalar_int(dim, "dim")
   if (s1 >= s2) .abort_bad_arg("s1", sprintf("must satisfy s1 < s2 (got s1=%d, s2=%d)", s1, s2))
-  normalize <- isTRUE(normalize)
+  normalize <- .validate_scalar_logical(normalize, "normalize")
 
   .cache <- new.env(parent = emptyenv())
 

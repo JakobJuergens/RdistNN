@@ -253,7 +253,7 @@ test_that("[errors] invalid inputs raise clear errors", {
   n_ref <- 6L
   s <- 2L
   ranks <- t(replicate(Tn, sample(n_ref, s + 1L, replace = FALSE)))
-  a <- c(1, -1)
+  a <- c(1, 2)
   PHI <- matrix(rnorm(n_ref), n_ref, 1)
 
   # K < s+1
@@ -262,12 +262,36 @@ test_that("[errors] invalid inputs raise clear errors", {
 
   # sum(a) == 0 with normalize=TRUE
   a_zero <- c(1, -1)
-  expect_error(jackknife_slow_rank(ranks, a_zero, PHI, normalize = TRUE), "sum\\(a\\) == 0")
+  expect_error(jackknife_slow_rank(ranks, a_zero, PHI, normalize = TRUE), "sum\\(a\\).*0")
 
   # ranks out of PHI range
   ranks_oob <- ranks
   ranks_oob[1, 1] <- n_ref + 1L
   expect_error(jackknife_slow_rank(ranks_oob, a, PHI), "PHI range")
+
+  ranks_frac <- ranks
+  storage.mode(ranks_frac) <- "double"
+  ranks_frac[1L, 1L] <- 1.5
+  expect_error(jackknife_slow_rank(ranks_frac, a, PHI), "integer indices")
+
+  expect_error(jackknife_slow_rank(ranks, a, PHI, normalize = NA), "normalize.*TRUE or FALSE")
+  expect_error(jackknife_slow_rank(ranks, a, PHI, normalize = "yes"), "normalize.*TRUE or FALSE")
+
+  a_bad <- a
+  a_bad[1L] <- Inf
+  expect_error(jackknife_slow_rank(ranks, a_bad, PHI), "a.*non-finite")
+
+  PHI_bad <- PHI
+  PHI_bad[1L, 1L] <- NA_real_
+  expect_error(jackknife_slow_rank(ranks, a, PHI_bad), "phi.*NA")
+
+  phi_na <- function(j, t) NA_real_
+  expect_error(jackknife_slow_rank(ranks, a, phi_na), "phi\\(j, t\\).*NA")
+
+  phi_bad_length <- function(j, t) {
+    if (t == 1L && j == ranks[1L, 1L]) c(1, 2) else 1
+  }
+  expect_error(jackknife_slow_rank(ranks, a, phi_bad_length), "consistent length")
 })
 
 test_that("[det] determinism", {

@@ -58,6 +58,7 @@ dnn_weights_asymp_full_from_ranks <- function(ranks, k, s, normalize = TRUE) {
   s <- .validate_scalar_int(s, "s")
   if (s > n) .abort_bad_arg("s", sprintf("must satisfy s <= n (got s=%d, n=%d)", s, n))
   if (k > s) .abort_bad_arg("k", sprintf("must satisfy k <= s (got k=%d, s=%d)", k, s))
+  normalize <- .validate_scalar_logical(normalize, "normalize")
 
   # ---- asymptotic Beta-increment weights over the j/n grid ----
   j <- seq_len(n)
@@ -72,7 +73,7 @@ dnn_weights_asymp_full_from_ranks <- function(ranks, k, s, normalize = TRUE) {
   w_rank <- as.numeric(rowMeans(inc))
 
   # numerical guard: renormalize if requested
-  if (isTRUE(normalize)) {
+  if (normalize) {
     sw <- sum(w_rank)
     if (!is.finite(sw) || sw <= 0) stop("Internal error: nonpositive total weight.", call. = FALSE)
     if (abs(sw - 1) > 1e-12) w_rank <- w_rank / sw

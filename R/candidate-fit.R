@@ -69,6 +69,113 @@
   row
 }
 
+.candidate_meta_int <- function(object, field) {
+  value <- object$meta[[field, exact = TRUE]]
+  if (is.null(value)) {
+    return(NULL)
+  }
+  if (!is.numeric(value) || length(value) != 1L || !is.finite(value) || value != as.integer(value)) {
+    .abort_bad_state(sprintf("`object$meta$%s` must be an integer scalar.", field))
+  }
+  as.integer(value)
+}
+
+.candidate_expected_m <- function(object) {
+  meta_m <- .candidate_meta_int(object, "m")
+  x0_m <- NULL
+  if (!is.null(object$x0)) {
+    x0_m <- nrow(as.matrix(object$x0))
+  }
+  if (!is.null(meta_m) && !is.null(x0_m) && x0_m != meta_m) {
+    .abort_bad_state(sprintf(
+      "`object$x0` row count must match `object$meta$m` (got nrow(object$x0)=%d, m=%d).",
+      x0_m,
+      meta_m
+    ))
+  }
+  if (!is.null(meta_m)) {
+    return(meta_m)
+  }
+  x0_m
+}
+
+.candidate_validate_estimate_rows <- function(object, rows, id) {
+  required <- c("target_id", "component", "estimate", "se")
+  missing <- setdiff(required, names(rows))
+  if (length(missing) > 0L) {
+    .abort_bad_state(sprintf(
+      "`object$tuning_grid$estimates` is missing required column(s): %s.",
+      paste(missing, collapse = ", ")
+    ))
+  }
+
+  expected_m <- .candidate_expected_m(object)
+  target_id <- suppressWarnings(as.integer(rows$target_id))
+  if (length(target_id) != nrow(rows) || anyNA(target_id)) {
+    .abort_bad_state(sprintf("Estimate rows for candidate '%s' must have integer `target_id` values.", id))
+  }
+  if (!is.null(expected_m)) {
+    invalid <- target_id < 1L | target_id > expected_m
+    if (any(invalid)) {
+      .abort_bad_state(sprintf(
+        "Estimate rows for candidate '%s' have `target_id` outside 1..%d.",
+        id,
+        expected_m
+      ))
+    }
+    missing_target <- setdiff(seq_len(expected_m), unique(target_id))
+    if (length(missing_target) > 0L) {
+      .abort_bad_state(sprintf(
+        "Estimate rows for candidate '%s' are missing target_id value(s): %s.",
+        id,
+        paste(missing_target, collapse = ", ")
+      ))
+    }
+  }
+
+  if (inherits(object, "np_result") || inherits(object, "cate_result")) {
+    duplicated_target <- unique(target_id[duplicated(target_id)])
+    if (length(duplicated_target) > 0L) {
+      .abort_bad_state(sprintf(
+        "Estimate rows for candidate '%s' contain duplicate target_id value(s): %s.",
+        id,
+        paste(duplicated_target, collapse = ", ")
+      ))
+    }
+  }
+
+  if (inherits(object, "plqr_result") && !is.null(object$moment)) {
+    expected_components <- rownames(as.matrix(object$moment))
+    if (!is.null(expected_components)) {
+      component <- as.character(rows$component)
+      if (anyNA(component) || any(!nzchar(component))) {
+        .abort_bad_state(sprintf("Estimate rows for candidate '%s' must have non-empty `component` values.", id))
+      }
+      unknown_component <- setdiff(unique(component), expected_components)
+      if (length(unknown_component) > 0L) {
+        .abort_bad_state(sprintf(
+          "Estimate rows for candidate '%s' contain unknown component value(s): %s.",
+          id,
+          paste(unknown_component, collapse = ", ")
+        ))
+      }
+      pair <- paste(target_id, component, sep = "\r")
+      duplicated_pair <- unique(pair[duplicated(pair)])
+      if (length(duplicated_pair) > 0L) {
+        .abort_bad_state(sprintf("Estimate rows for candidate '%s' contain duplicate target/component rows.", id))
+      }
+      if (!is.null(expected_m)) {
+        expected_pair <- as.vector(outer(seq_len(expected_m), expected_components, paste, sep = "\r"))
+        if (length(setdiff(expected_pair, pair)) > 0L) {
+          .abort_bad_state(sprintf("Estimate rows for candidate '%s' are missing target/component rows.", id))
+        }
+      }
+    }
+  }
+
+  invisible(TRUE)
+}
+
 .candidate_estimates <- function(object, candidate_row) {
   grid <- .candidate_grid_payload(object)
   id <- as.character(candidate_row$candidate_id[[1L]])
@@ -77,6 +184,7 @@
   if (nrow(rows) < 1L) {
     .abort_bad_state(sprintf("No estimates recorded for candidate '%s'.", id))
   }
+  .candidate_validate_estimate_rows(object, rows, id)
   rows
 }
 
@@ -96,6 +204,26 @@
   }
 }
 
+.candidate_validate_cached_ranks <- function(object, ranks) {
+  expected_n <- .candidate_meta_int(object, "n")
+  if (!is.null(expected_n) && nrow(ranks) != expected_n) {
+    .abort_bad_state(sprintf(
+      "Cached ranks row count must match `object$meta$n` (got nrow=%d, n=%d).",
+      nrow(ranks),
+      expected_n
+    ))
+  }
+  expected_m <- .candidate_expected_m(object)
+  if (!is.null(expected_m) && ncol(ranks) != expected_m) {
+    .abort_bad_state(sprintf(
+      "Cached ranks column count must match the number of target points (got ncol=%d, m=%d).",
+      ncol(ranks),
+      expected_m
+    ))
+  }
+  ranks
+}
+
 .candidate_cached_ranks <- function(object) {
   ranks <- NULL
   if (is.list(object$.model) && !is.null(object$.model$ranks)) {
@@ -110,7 +238,7 @@
       quoted = FALSE
     )
   }
-  .rank_check_mat(ranks)
+  .candidate_validate_cached_ranks(object, .rank_check_mat(ranks))
 }
 
 .candidate_weights_from_ranks <- function(object, candidate_row) {
@@ -264,9 +392,35 @@
     return(ids)
   }
   if (is.character(candidates)) {
+    if (length(candidates) < 1L || anyNA(candidates) || any(!nzchar(candidates))) {
+      .abort_bad_arg(
+        "candidates",
+        "must contain one or more non-missing candidate id strings, or be \"all\"",
+        quoted = FALSE
+      )
+    }
+    unknown <- setdiff(candidates, ids)
+    if (length(unknown) > 0L) {
+      .abort_bad_arg(
+        "candidates",
+        sprintf(
+          "unknown candidate id(s): %s; use one of: %s",
+          paste(unknown, collapse = ", "),
+          paste(ids, collapse = ", ")
+        ),
+        quoted = FALSE
+      )
+    }
     return(candidates)
   }
   if (is.numeric(candidates) || is.integer(candidates)) {
+    if (length(candidates) < 1L) {
+      .abort_bad_arg(
+        "candidates",
+        "must contain one or more integer row indices, or be \"all\"",
+        quoted = FALSE
+      )
+    }
     return(vapply(
       candidates,
       function(i) as.character(.candidate_resolve_row(object, i)$candidate_id[[1L]]),

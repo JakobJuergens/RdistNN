@@ -29,7 +29,8 @@ gmm_dnn(
 )
 }
 \arguments{
-\item{data}{Optional data frame containing covariates and model variables.}
+\item{data}{Optional data frame containing covariates and model variables.
+Column names must be non-missing, non-empty, and unique.}
 
 \item{x_cols}{Names or indices of covariate columns in \code{data}.}
 

@@ -1,5 +1,76 @@
 # Methods for cate_result objects.
 
+.cate_validate_prediction_targets <- function(x, arg) {
+  .validate_matrix(
+    x,
+    arg = arg,
+    min_rows = 1L,
+    min_cols = 1L,
+    numeric = TRUE,
+    finite = TRUE
+  )
+}
+
+.cate_validate_prediction_model <- function(model) {
+  if (!is.list(model) || is.null(model$x_mat) || is.null(model$psi)) {
+    .abort_bad_state(paste0(
+      "This object does not contain fitted model state for prediction. ",
+      "Refit with the current cate_dnn() implementation."
+    ))
+  }
+
+  x_mat <- .validate_matrix(
+    model$x_mat,
+    arg = "object$.model$x_mat",
+    min_rows = 1L,
+    min_cols = 1L,
+    numeric = TRUE,
+    finite = TRUE
+  )
+  n <- nrow(x_mat)
+  psi <- .validate_vector_nrow(
+    model$psi,
+    n,
+    arg = "object$.model$psi",
+    ref = "object$.model$x_mat",
+    strict = TRUE,
+    finite = TRUE
+  )
+  k <- .validate_scalar_int(model$k, arg = "object$.model$k", min = 1L)
+  s <- .validate_scalar_int(model$s, arg = "object$.model$s", min = 1L)
+  if (k > s) {
+    .abort_bad_arg(
+      "object$.model$k",
+      sprintf("must satisfy k <= s (got k=%d, s=%d)", k, s),
+      quoted = FALSE
+    )
+  }
+  if (s > n) {
+    .abort_bad_arg(
+      "object$.model$s",
+      "must satisfy s <= n",
+      expected = sprintf("s <= n=%d", n),
+      actual = sprintf("s=%d", s),
+      quoted = FALSE
+    )
+  }
+  if (!is.character(model$method) || length(model$method) != 1L ||
+      is.na(model$method) || !(model$method %in% c("exact", "asymp"))) {
+    .abort_bad_arg("object$.model$method", "must be one of 'exact' or 'asymp'", quoted = FALSE)
+  }
+  if (!is.logical(model$normalize) || length(model$normalize) != 1L || is.na(model$normalize)) {
+    .abort_bad_arg("object$.model$normalize", "must be TRUE or FALSE", quoted = FALSE)
+  }
+
+  model$x_mat <- x_mat
+  model$psi <- psi
+  model$k <- k
+  model$s <- s
+  model$method <- model$method[[1L]]
+  model$normalize <- model$normalize[[1L]]
+  model
+}
+
 .cate_resolve_targets <- function(model, newdata = NULL, X0 = NULL, x0 = NULL) {
   if (!is.null(newdata) && (!is.null(X0) || !is.null(x0))) {
     .abort_bad_arg(
@@ -13,8 +84,9 @@
     if (is.data.frame(newdata) && !is.null(model$x_cols)) {
       x0_mat <- .dnn_col_mat(model$x_cols, data = newdata, arg = "x_cols", out_arg = "newdata")
     } else {
-      x0_mat <- as.matrix(newdata)
+      x0_mat <- .cate_validate_prediction_targets(newdata, arg = "newdata")
     }
+    x0_mat <- .cate_validate_prediction_targets(x0_mat, arg = "newdata")
     return(.validate_ncol_relation(model$x_mat, x0_mat, y_arg = "newdata", x_arg = "X", relation = "match"))
   }
 
@@ -29,10 +101,18 @@
         quoted = FALSE
       )
     }
-    x0_vec <- .validate_target_vector(x0, ncol(model$x_mat), x0_arg = "x0", x_arg = "X")
+    x0_vec <- .validate_target_vector(
+      x0,
+      ncol(model$x_mat),
+      x0_arg = "x0",
+      x_arg = "X",
+      strict = TRUE,
+      finite = TRUE
+    )
     return(matrix(x0_vec, nrow = 1L))
   }
-  .validate_ncol_relation(model$x_mat, X0, y_arg = "X0", x_arg = "X", relation = "equal")
+  x0_mat <- .cate_validate_prediction_targets(X0, arg = "X0")
+  .validate_ncol_relation(model$x_mat, x0_mat, y_arg = "X0", x_arg = "X", relation = "equal")
 }
 
 #' Summarize a `cate_result` object
@@ -135,10 +215,12 @@ confint.cate_result <- function(object, parm = NULL, level = 0.95, ...) {
   idx <- if (is.null(parm)) {
     seq_len(m)
   } else {
-    as.integer(parm)
-  }
-  if (length(idx) == 0L || anyNA(idx) || any(idx < 1L | idx > m)) {
-    .abort_bad_arg("parm", "must contain valid target indices in 1..length(tau)")
+    .validate_index_vector(
+      parm,
+      upper = m,
+      arg = "parm",
+      label = "target indices"
+    )
   }
 
   est <- as.numeric(object$tau[idx])
@@ -185,18 +267,15 @@ predict.cate_result <- function(
   if (!is.numeric(level) || length(level) != 1L || !is.finite(level) || level <= 0 || level >= 1) {
     .abort_bad_arg("level", "must be a numeric scalar in (0,1)")
   }
-
-  model <- object$.model
-  if (!is.list(model) || is.null(model$x_mat) || is.null(model$psi)) {
-    .abort_bad_state(paste0(
-      "This object does not contain fitted model state for prediction. ",
-      "Refit with the current cate_dnn() implementation."
-    ))
+  if (!is.logical(se.fit) || length(se.fit) != 1L || is.na(se.fit)) {
+    .abort_bad_arg("se.fit", "must be TRUE or FALSE")
   }
+
+  model <- .cate_validate_prediction_model(object$.model)
 
   x0_mat <- .cate_resolve_targets(model, newdata = newdata, X0 = X0, x0 = x0)
 
-  need_se <- isTRUE(se.fit) || interval == "confidence"
+  need_se <- se.fit || interval == "confidence"
   wt_return <- if (need_se) c("W", "ranks") else "W"
   wt <- weights_dnn(
     X = model$x_mat,
@@ -239,7 +318,7 @@ predict.cate_result <- function(
   )
 
   if (interval == "none") {
-    if (!isTRUE(se.fit)) {
+    if (!se.fit) {
       return(fit)
     }
     return(list(fit = fit, se.fit = se_hat))
@@ -251,7 +330,7 @@ predict.cate_result <- function(
     lwr = fit - crit * se_hat,
     upr = fit + crit * se_hat
   )
-  if (!isTRUE(se.fit)) {
+  if (!se.fit) {
     return(pred_mat)
   }
   list(fit = pred_mat, se.fit = se_hat)

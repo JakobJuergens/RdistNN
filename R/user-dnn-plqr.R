@@ -67,7 +67,8 @@
 #' is independent of the estimator's `k`.
 #'
 #' @param data Optional data frame containing covariates, regressors, outcome,
-#'   and nuisance columns.
+#'   and nuisance columns. Column names must be non-missing, non-empty, and
+#'   unique.
 #' @param x_cols Names or indices of covariate columns in `data`.
 #' @param D_cols Names or indices of partially linear regressor columns in
 #'   `data`.
@@ -184,6 +185,8 @@ plqr_dnn <- function(
   tuning_mode <- match.arg(tuning_mode)
   s_arg <- s
   k <- .validate_scalar_int(k, "k")
+  normalize <- .validate_scalar_logical(normalize, "normalize")
+  se <- .validate_scalar_logical(se, "se")
   .warn_unknown_return(return, valid = c("W", "ranks", "ord", "dx", "g", "ess", "neighbors", "tuning"))
   if (identical(tuning_mode, "grid") && !is.null(s_arg)) {
     .abort_bad_arg(

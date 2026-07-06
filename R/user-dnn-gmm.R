@@ -161,25 +161,32 @@
   D
 }
 
+.gmm_validate_start_vector <- function(start, p, arg = "start") {
+  if (!is.numeric(start)) {
+    .abort_bad_arg(arg, "must be numeric")
+  }
+  start_vec <- as.numeric(start)
+  if (length(start_vec) != p || anyNA(start_vec) || any(!is.finite(start_vec))) {
+    .abort_bad_arg(
+      arg,
+      "must resolve to a finite numeric vector with length equal to length(coef_names)",
+      expected = sprintf("length=%d", p),
+      actual = sprintf("length=%d", length(start_vec))
+    )
+  }
+  start_vec
+}
+
 .gmm_start_for_target <- function(model, sample, ctx, w, x0, p,
                                   user_start = NULL) {
   if (!is.null(user_start)) {
-    start <- as.numeric(user_start)
-  } else if (!is.null(model$start)) {
+    return(.gmm_validate_start_vector(user_start, p = p, arg = "start"))
+  }
+  if (!is.null(model$start)) {
     start <- model$start(sample = sample, ctx = ctx, w = w, x0 = x0)
-    start <- as.numeric(start)
-  } else {
-    start <- rep(0, p)
+    return(.gmm_validate_start_vector(start, p = p, arg = "model$start()"))
   }
-  if (length(start) != p || anyNA(start) || any(!is.finite(start))) {
-    .abort_bad_arg(
-      "start",
-      "must resolve to a finite numeric vector with length equal to length(coef_names)",
-      expected = sprintf("length=%d", p),
-      actual = sprintf("length=%d", length(start))
-    )
-  }
-  start
+  rep(0, p)
 }
 
 .gmm_fit_one_target <- function(model, sample, ctx, w, x0, n, q, p,
@@ -292,15 +299,7 @@
     return(NULL)
   }
   if (is.null(dim(start))) {
-    start_vec <- as.numeric(start)
-    if (length(start_vec) != p || anyNA(start_vec) || any(!is.finite(start_vec))) {
-      .abort_bad_arg(
-        "start",
-        "must be a finite numeric vector with length equal to length(coef_names)",
-        expected = sprintf("length=%d", p),
-        actual = sprintf("length=%d", length(start_vec))
-      )
-    }
+    start_vec <- .gmm_validate_start_vector(start, p = p, arg = "start")
     return(matrix(start_vec, nrow = p, ncol = m))
   }
 
@@ -347,6 +346,7 @@
 #' finite-population support edge is rank `n - s + k`, not rank `s`.
 #'
 #' @param data Optional data frame containing covariates and model variables.
+#'   Column names must be non-missing, non-empty, and unique.
 #' @param x_cols Names or indices of covariate columns in `data`.
 #' @param X Numeric `n x p` covariate matrix for the matrix interface.
 #' @param X0 Numeric matrix of target points; mutually exclusive with `x0`.
@@ -431,9 +431,7 @@ gmm_dnn <- function(
   k <- .validate_scalar_int(k, "k")
   return <- .gmm_prepare_return(return)
 
-  if (!is_gmm_model(model)) {
-    .abort_bad_arg("model", "must be a `gmm_model` object")
-  }
+  model <- .gmm_validate_model_object(model)
   if (!is.logical(normalize) || length(normalize) != 1L || is.na(normalize)) {
     .abort_bad_arg("normalize", "must be TRUE or FALSE")
   }

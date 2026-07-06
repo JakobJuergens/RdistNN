@@ -38,7 +38,7 @@
 #' and is useful for validation.
 #'
 #' @param data Optional data frame (or tibble) containing covariates and the
-#'   outcome column.
+#'   outcome column. Column names must be non-missing, non-empty, and unique.
 #' @param x_cols Names or integer indices of covariate columns in `data`.
 #' @param y_col Name or integer index of the outcome column in `data`.
 #' @param y Optional numeric outcome vector of length `n`. In the data-frame
@@ -123,6 +123,8 @@ np_tdnn <- function(
   if (s1 >= s2) {
     .abort_bad_arg("s1", sprintf("must satisfy s1 < s2 (got s1=%d, s2=%d)", s1, s2))
   }
+  normalize <- .validate_scalar_logical(normalize, "normalize")
+  se <- .validate_scalar_logical(se, "se")
   .warn_unknown_return(return, valid = c("W", "ranks", "ord", "dx", "y", "ess", "neighbors"))
 
   # ------------------------------------------------------------------

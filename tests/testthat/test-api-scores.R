@@ -67,6 +67,56 @@ test_that("setup and dynamic order resolution work", {
   expect_equal(score_order(sc, 4L, data, ctx), 2L)
 })
 
+test_that("score constructors and dynamic order reject malformed slots early", {
+  expect_error(
+    new_score(name = "bad_order_zero", order = 0L, eval = function(idxs, data, ctx, rng) 0),
+    "order.*positive",
+    ignore.case = TRUE
+  )
+  expect_error(
+    new_score(name = c("a", "b"), order = 1L, eval = function(idxs, data, ctx, rng) 0),
+    "name.*non-empty character scalar",
+    ignore.case = TRUE
+  )
+  expect_error(
+    new_score(name = "bad_setup", order = 1L, setup = 1, eval = function(idxs, data, ctx, rng) 0),
+    "setup.*function",
+    ignore.case = TRUE
+  )
+  expect_error(
+    new_score(name = "bad_eval", order = 1L, eval = 1),
+    "eval.*function",
+    ignore.case = TRUE
+  )
+  expect_error(
+    new_score(name = "bad_eval_batch", order = 1L, eval_batch = 1),
+    "eval_batch.*function",
+    ignore.case = TRUE
+  )
+
+  y <- 1:5
+  sc_dyn_fractional <- new_score(
+    name = "dyn_fractional",
+    order = function(n, data, ctx) 2.5,
+    eval = function(idxs, data, ctx, rng) 0
+  )
+  expect_error(
+    score_order(sc_dyn_fractional, length(y), y, NULL),
+    "score\\$order\\(\\).*integer scalar"
+  )
+
+  sc_dyn_na <- new_score(
+    name = "dyn_na",
+    order = function(n, data, ctx) NA_integer_,
+    eval = function(idxs, data, ctx, rng) 0
+  )
+  expect_error(
+    score_eval(sc_dyn_na, c(1L, 2L), y, NULL),
+    "score\\$order\\(\\).*integer scalar"
+  )
+  expect_error(score_order(sc_dyn_na, 0L, y, NULL), "n.*positive", ignore.case = TRUE)
+})
+
 test_that("eval prefers eval_batch when available; batch-only score routes single subset through batch", {
   set.seed(1)
   n <- 8L
@@ -159,6 +209,71 @@ test_that("subset validation in batch: shape, bounds, and empties are caught", {
     "subs.*non-finite",
     ignore.case = TRUE
   )
+})
+
+test_that("score evaluators validate subsets before calling custom evaluators", {
+  y <- 1:5
+
+  scalar_calls <- 0L
+  sc_scalar_ignores_indices <- new_score(
+    name = "scalar_ignores_indices",
+    order = 2L,
+    eval = function(idxs, data, ctx, rng) {
+      scalar_calls <<- scalar_calls + 1L
+      0
+    }
+  )
+
+  expect_error(
+    score_eval(sc_scalar_ignores_indices, c(1L, 6L), y, NULL),
+    "idxs.*1\\.\\.n",
+    ignore.case = TRUE
+  )
+  expect_error(
+    score_eval(sc_scalar_ignores_indices, c(1, NA_real_), y, NULL),
+    "idxs.*NA",
+    ignore.case = TRUE
+  )
+  expect_error(
+    score_eval(sc_scalar_ignores_indices, c(1, 2.5), y, NULL),
+    "idxs.*integer indices",
+    ignore.case = TRUE
+  )
+  expect_identical(scalar_calls, 0L)
+
+  expect_no_error(score_eval(sc_scalar_ignores_indices, c(2L, 2L), y, NULL))
+  expect_identical(scalar_calls, 1L)
+
+  batch_calls <- 0L
+  sc_batch_ignores_indices <- new_score(
+    name = "batch_ignores_indices",
+    order = 2L,
+    eval_batch = function(subs, data, ctx, rng) {
+      batch_calls <<- batch_calls + 1L
+      rep(0, nrow(subs))
+    }
+  )
+
+  expect_error(
+    score_eval_batch(sc_batch_ignores_indices, matrix(c(1L, 6L), nrow = 1L), y, NULL),
+    "subs.*1\\.\\.n",
+    ignore.case = TRUE
+  )
+  expect_error(
+    score_eval_batch(sc_batch_ignores_indices, matrix(c(1, Inf), nrow = 1L), y, NULL),
+    "subs.*non-finite",
+    ignore.case = TRUE
+  )
+  expect_error(
+    score_eval_batch(sc_batch_ignores_indices, matrix(c(1, 2.5), nrow = 1L), y, NULL),
+    "subs.*integer indices",
+    ignore.case = TRUE
+  )
+  expect_identical(batch_calls, 0L)
+
+  valid_subs <- rbind(c(1L, 1L), c(2L, 5L))
+  expect_equal(score_eval_batch(sc_batch_ignores_indices, valid_subs, y, NULL), c(0, 0))
+  expect_identical(batch_calls, 1L)
 })
 
 test_that("registry: register_score(name, score), get_score(), and list_scores()", {
@@ -339,6 +454,58 @@ test_that("score_diff_path exposes modular value/gradient closures", {
   expect_equal(gb[, 2], c(1, 1), tolerance = 1e-12)
 })
 
+test_that("score_diff_path validates finite-difference overrides before closures are used", {
+  y <- c(3, 4, 6, 9)
+
+  sc <- new_score(
+    name = "path_fd_checks",
+    order = 1L,
+    eval_param = function(idxs, data, theta, ctx, rng) theta[1] * data[idxs],
+    grad = function(idxs, data, theta, ctx, rng) data[idxs]
+  )
+
+  expect_error(
+    score_diff_path(sc, data = y, fd_step = "bad"),
+    "fd_step.*positive finite numeric",
+    ignore.case = TRUE
+  )
+  expect_error(
+    score_diff_path(sc, data = y, fd_step = NA_real_),
+    "fd_step.*NA",
+    ignore.case = TRUE
+  )
+  expect_error(
+    score_diff_path(sc, data = y, fd_step = c(1e-6, Inf)),
+    "fd_step.*non-finite",
+    ignore.case = TRUE
+  )
+  expect_error(
+    score_diff_path(sc, data = y, fd_step = c(1e-6, 0)),
+    "fd_step.*positive",
+    ignore.case = TRUE
+  )
+  expect_error(
+    score_diff_path(sc, data = y, fd_scheme = "backward"),
+    "fd_scheme",
+    ignore.case = TRUE
+  )
+  expect_error(
+    score_diff_path(sc, data = y, fd_scheme = NA_character_),
+    "fd_scheme",
+    ignore.case = TRUE
+  )
+
+  path <- score_diff_path(
+    sc,
+    data = y,
+    method = "fd",
+    fd_step = c(1e-6, 2e-6),
+    fd_scheme = "forward"
+  )
+  expect_equal(path$meta$fd_step, c(1e-6, 2e-6))
+  expect_identical(path$meta$fd_scheme, "forward")
+})
+
 test_that("derivative helpers validate theta and finite-difference controls", {
   sc <- new_score(
     name = "theta_checks",
@@ -353,8 +520,91 @@ test_that("derivative helpers validate theta and finite-difference controls", {
   expect_error(score_grad(sc, 1L, y, 1, method = "fd", fd_step = NA_real_), "cannot be `NA`")
   expect_error(score_grad(sc, 1L, y, 1, method = "fd", fd_step = Inf), "cannot be non-finite")
   expect_error(score_grad(sc, 1L, y, 1, method = "fd", fd_step = -1), "positive")
+  expect_error(
+    score_grad(sc, 1L, y, 1, method = "fd", fd_step = "bad"),
+    "fd_step.*positive finite numeric",
+    ignore.case = TRUE
+  )
+  expect_error(
+    score_grad(sc, 1L, y, 1, method = "fd", fd_step = numeric(0)),
+    "fd_step.*positive finite numeric",
+    ignore.case = TRUE
+  )
+  expect_error(
+    score_grad(sc, 1L, y, c(1, 2), method = "fd", fd_step = c(1e-6, Inf)),
+    "fd_step.*non-finite",
+    ignore.case = TRUE
+  )
+  expect_error(
+    score_grad(sc, 1L, y, 1, method = "fd", fd_scheme = "backward"),
+    "fd_scheme",
+    ignore.case = TRUE
+  )
+  expect_error(
+    score_grad_batch(sc, matrix(1L, nrow = 1L), y, 1, method = "fd", fd_scheme = NA_character_),
+    "fd_scheme",
+    ignore.case = TRUE
+  )
   expect_no_error(score_grad(sc, 1L, y, c(1, 2), method = "fd", fd_step = c(1e-6)))
   expect_error(score_grad(sc, 1L, y, c(1, 2), method = "fd", fd_step = c(1e-6, -1e-6)), "positive")
+})
+
+test_that("analytic gradient outputs are validated for shape and finiteness", {
+  y <- c(1, 2, 3)
+  theta <- c(0.5, -1)
+  subs <- rbind(c(1L, 2L), c(2L, 3L))
+
+  sc_bad_grad_length <- new_score(
+    name = "bad_grad_length",
+    order = 2L,
+    eval_param = function(idxs, data, theta, ctx, rng) theta[1] * sum(data[idxs]) + theta[2],
+    grad = function(idxs, data, theta, ctx, rng) c(1, 2, 3)
+  )
+  expect_error(
+    score_grad(sc_bad_grad_length, c(1L, 2L), y, theta, method = "analytic"),
+    "score\\$grad.*length\\(theta\\)",
+    ignore.case = TRUE
+  )
+
+  sc_bad_grad_nonfinite <- new_score(
+    name = "bad_grad_nonfinite",
+    order = 2L,
+    eval_param = function(idxs, data, theta, ctx, rng) theta[1] * sum(data[idxs]) + theta[2],
+    grad = function(idxs, data, theta, ctx, rng) c(sum(data[idxs]), Inf)
+  )
+  expect_error(
+    score_grad(sc_bad_grad_nonfinite, c(1L, 2L), y, theta, method = "analytic"),
+    "score\\$grad.*finite numeric",
+    ignore.case = TRUE
+  )
+
+  sc_bad_grad_batch_shape <- new_score(
+    name = "bad_grad_batch_shape",
+    order = 2L,
+    eval_param = function(idxs, data, theta, ctx, rng) theta[1] * sum(data[idxs]) + theta[2],
+    grad_batch = function(subs, data, theta, ctx, rng) matrix(1, nrow = nrow(subs), ncol = 1L)
+  )
+  expect_error(
+    score_grad_batch(sc_bad_grad_batch_shape, subs, y, theta, method = "analytic"),
+    "score\\$grad_batch.*K x length\\(theta\\)",
+    ignore.case = TRUE
+  )
+
+  sc_bad_grad_batch_nonfinite <- new_score(
+    name = "bad_grad_batch_nonfinite",
+    order = 2L,
+    eval_param = function(idxs, data, theta, ctx, rng) theta[1] * sum(data[idxs]) + theta[2],
+    grad_batch = function(subs, data, theta, ctx, rng) {
+      out <- cbind(rowSums(matrix(data[subs], nrow = nrow(subs))), rep(1, nrow(subs)))
+      out[2L, 1L] <- NaN
+      out
+    }
+  )
+  expect_error(
+    score_grad_batch(sc_bad_grad_batch_nonfinite, subs, y, theta, method = "analytic"),
+    "score\\$grad_batch.*finite matrix",
+    ignore.case = TRUE
+  )
 })
 
 test_that("finite differences can use eval/eval_batch when they accept theta", {

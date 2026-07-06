@@ -142,7 +142,7 @@ test_that("[eval] errors for non-singleton usage", {
   # eval() with >1 index
   expect_error(
     score_eval(sc, c(1L, 2L), df, ctx),
-    "expects a singleton subset in `eval\\(\\)`",
+    "idxs.*1 elements",
     ignore.case = TRUE
   )
 
@@ -150,14 +150,14 @@ test_that("[eval] errors for non-singleton usage", {
   bad_subs <- cbind(1:5, 2:6)
   expect_error(
     score_eval_batch(sc, bad_subs, df, ctx),
-    "expects `subs` to be an n\\s*x\\s*1 matrix",
+    "subs.*1 columns",
     ignore.case = TRUE
   )
 
-  # eval_batch() with non-matrix should error
+  # eval_batch() treats a vector as one subset, not as a batch of singletons.
   expect_error(
     score_eval_batch(sc, 1:5, df, ctx),
-    "expects `subs` to be an n\\s*x\\s*1 matrix",
+    "idxs.*1 elements",
     ignore.case = TRUE
   )
 })

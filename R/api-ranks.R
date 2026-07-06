@@ -43,7 +43,7 @@ is_rank_weight <- function(x) {
 #' @export
 new_rank_weight <- function(name, eval = NULL, eval_batch = NULL, setup = NULL) {
   .rank_validate_spec(list(
-    name = as.character(name),
+    name = name,
     eval = eval,
     eval_batch = eval_batch,
     setup = setup
@@ -53,12 +53,26 @@ new_rank_weight <- function(name, eval = NULL, eval_batch = NULL, setup = NULL) 
 # Internal shape checks for rank-weight specs and outputs
 .rank_validate_spec <- function(spec) {
   if (!is.list(spec)) .abort_bad_arg("spec", "must be a list")
-  has_eval <- !is.null(spec$eval) && is.function(spec$eval)
-  has_eval_batch <- !is.null(spec$eval_batch) && is.function(spec$eval_batch)
-  has_table <- !is.null(spec$table) && is.function(spec$table)
+  if (!is.null(spec$name) &&
+      (!is.character(spec$name) || length(spec$name) != 1L ||
+       is.na(spec$name) || !nzchar(spec$name))) {
+    .abort_bad_arg("name", "must be a non-empty character scalar", quoted = FALSE)
+  }
+  if (!is.null(spec$eval) && !is.function(spec$eval)) {
+    .abort_bad_arg("eval", "must be NULL or a function")
+  }
+  if (!is.null(spec$eval_batch) && !is.function(spec$eval_batch)) {
+    .abort_bad_arg("eval_batch", "must be NULL or a function")
+  }
+  if (!is.null(spec$setup) && !is.function(spec$setup)) {
+    .abort_bad_arg("setup", "must be NULL or a function")
+  }
   if (!is.null(spec$table) && !is.function(spec$table)) {
     .abort_bad_arg("spec$table", "must be a function", quoted = FALSE)
   }
+  has_eval <- !is.null(spec$eval) && is.function(spec$eval)
+  has_eval_batch <- !is.null(spec$eval_batch) && is.function(spec$eval_batch)
+  has_table <- !is.null(spec$table) && is.function(spec$table)
   if (!(has_eval || has_eval_batch || has_table)) {
     .abort_bad_arg("spec", "must provide at least one of `eval` or `eval_batch`, or `table`")
   }
@@ -170,8 +184,13 @@ register_rank <- function(name, spec) {
     .abort_bad_arg("name", "must be a non-empty character scalar")
   }
   if (is.function(spec)) spec <- as_rank_weight(spec, name = name)
-  if (is.list(spec) && (is.null(spec$name) || !nzchar(as.character(spec$name)))) {
-    spec$name <- name
+  if (is.list(spec)) {
+    missing_name <- is.null(spec$name) ||
+      (is.character(spec$name) && length(spec$name) == 1L &&
+       (is.na(spec$name) || !nzchar(spec$name)))
+    if (missing_name) {
+      spec$name <- name
+    }
   }
   if (is.list(spec)) spec <- .rank_validate_spec(spec)
   if (!is_rank_weight(spec)) .abort_bad_arg("spec", "is not a rank_weight")
@@ -288,7 +307,8 @@ rank_weight_eval_batch <- function(spec, R, ctx = NULL) {
     .abort_bad_arg("spec", "rank_weight spec has neither eval nor eval_batch nor table")
   }
 
-  if (!is.matrix(weight_matrix) || any(!is.finite(weight_matrix)) ||
+  if (!is.matrix(weight_matrix) || !is.numeric(weight_matrix) ||
+    any(!is.finite(weight_matrix)) ||
     nrow(weight_matrix) != nrow(rank_matrix) || ncol(weight_matrix) != ncol(rank_matrix)) {
     got_dim <- if (is.matrix(weight_matrix)) {
       sprintf("%d x %d", nrow(weight_matrix), ncol(weight_matrix))

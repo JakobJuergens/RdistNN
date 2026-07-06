@@ -59,6 +59,75 @@
   as.numeric(x)
 }
 
+.validate_scalar_logical <- function(x, arg = "x") {
+  if (!is.logical(x) || length(x) != 1L || is.na(x)) {
+    .abort_bad_arg(arg, "must be TRUE or FALSE")
+  }
+  x
+}
+
+.validate_finite_numeric_vector <- function(x, arg = "x", min_length = 1L) {
+  min_length <- .validate_scalar_int(min_length, arg = "min_length", min = 0L)
+  if (!is.numeric(x)) {
+    .abort_bad_arg(arg, "must be numeric")
+  }
+  x_vec <- as.numeric(x)
+  if (length(x_vec) < min_length) {
+    .abort_bad_arg(arg, sprintf("must have length at least %d", min_length))
+  }
+  .abort_if_na_or_nonfinite(x_vec, arg = arg)
+  x_vec
+}
+
+.validate_positive_index_matrix <- function(x, arg = "ranks", min_rows = 1L, min_cols = 1L) {
+  min_rows <- .validate_scalar_int(min_rows, arg = "min_rows", min = 0L)
+  min_cols <- .validate_scalar_int(min_cols, arg = "min_cols", min = 0L)
+
+  if (!is.matrix(x)) {
+    .abort_bad_arg(arg, "must be a matrix")
+  }
+  if (!is.numeric(x)) {
+    .abort_bad_arg(arg, "must be numeric or integer")
+  }
+  x_mat <- as.matrix(x)
+  if (nrow(x_mat) < min_rows) {
+    .abort_bad_arg(arg, sprintf("must have at least %d row(s)", min_rows))
+  }
+  if (ncol(x_mat) < min_cols) {
+    .abort_bad_arg(arg, sprintf("must have at least %d column(s)", min_cols))
+  }
+  .abort_if_na_or_nonfinite(x_mat, arg = arg)
+  if (any(x_mat != as.integer(x_mat))) {
+    .abort_bad_arg(arg, "must contain integer indices")
+  }
+  x_int <- matrix(as.integer(x_mat), nrow = nrow(x_mat), ncol = ncol(x_mat))
+  dimnames(x_int) <- dimnames(x_mat)
+  if (any(x_int < 1L)) {
+    .abort_bad_arg(arg, "indices must be >= 1")
+  }
+  x_int
+}
+
+.validate_index_vector <- function(x, upper, arg = "idx", label = "indices") {
+  upper <- .validate_scalar_int(upper, arg = "upper", min = 1L)
+  if (!is.numeric(x)) {
+    .abort_bad_arg(arg, sprintf("must contain valid %s in 1..%d", label, upper), quoted = FALSE)
+  }
+  x_num <- as.numeric(x)
+  if (length(x_num) == 0L) {
+    .abort_bad_arg(arg, sprintf("must contain valid %s in 1..%d", label, upper), quoted = FALSE)
+  }
+  .abort_if_na_or_nonfinite(x_num, arg = arg, quoted = FALSE)
+  if (any(x_num != floor(x_num))) {
+    .abort_bad_arg(arg, sprintf("must contain integer %s", label), quoted = FALSE)
+  }
+  if (any(x_num < 1L | x_num > upper)) {
+    .abort_bad_arg(arg, sprintf("must contain valid %s in 1..%d", label, upper), quoted = FALSE)
+  }
+  idx <- as.integer(x_num)
+  idx
+}
+
 .validate_binary01 <- function(x, arg = "x") {
   x_vec <- as.numeric(x)
   .abort_if_na_or_nonfinite(x_vec, arg = arg, quoted = FALSE)
@@ -255,10 +324,17 @@
 }
 
 .validate_permutation_vector <- function(ranks, arg = "ranks") {
-  ranks <- as.integer(ranks)
+  if (!is.numeric(ranks)) {
+    .abort_bad_arg(arg, "must be numeric or integer ranks")
+  }
+  ranks_num <- as.numeric(ranks)
+  .abort_if_na_or_nonfinite(ranks_num, arg = arg)
+  if (any(ranks_num != as.integer(ranks_num))) {
+    .abort_bad_arg(arg, "must contain integer ranks")
+  }
+  ranks <- as.integer(ranks_num)
   n <- length(ranks)
   if (n == 0L) .abort_bad_arg(arg, "must have positive length")
-  if (anyNA(ranks)) .abort_bad_arg(arg, "cannot contain NA")
   if (!setequal(ranks, seq_len(n))) {
     .abort_bad_arg(arg, "must be a permutation of 1..n")
   }
@@ -267,13 +343,13 @@
 
 .validate_permutation_matrix <- function(rank_matrix, arg = "R", col_arg = "ranks") {
   rank_matrix <- as.matrix(rank_matrix)
-  if (!is.integer(rank_matrix)) storage.mode(rank_matrix) <- "integer"
   if (nrow(rank_matrix) == 0L || ncol(rank_matrix) == 0L) {
     .abort_bad_arg(arg, "must have positive nrow and ncol")
   }
   for (j in seq_len(ncol(rank_matrix))) {
     .validate_permutation_vector(rank_matrix[, j], arg = col_arg)
   }
+  if (!is.integer(rank_matrix)) storage.mode(rank_matrix) <- "integer"
   rank_matrix
 }
 

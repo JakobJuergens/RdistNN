@@ -224,6 +224,76 @@ test_that("summarise_sim_results groups by candidate fields with NA-safe benchma
   expect_true(is.na(bench$s))
 })
 
+test_that("summarise_sim_results returns NA rather than NaN for all-failed groups", {
+  raw <- data.frame(
+    method = c("dnn_oracle", "dnn_oracle", "ols_interact"),
+    design = "dgp1_linear",
+    n = 50L,
+    kx = 2L,
+    k = 1L,
+    tuning_source = "tuning",
+    candidate_id = c("kappa_bad", "kappa_bad", NA_character_),
+    kappa = c(9, 9, NA_real_),
+    s = c(60L, 60L, NA_integer_),
+    seed = c(1L, 2L, 1L),
+    tau_hat = NA_real_,
+    tau0 = 1,
+    bias = NA_real_,
+    sq_err = NA_real_,
+    se = NA_real_,
+    cover = NA_real_,
+    ci_len = NA_real_,
+    neff = NA_real_,
+    status = c("failed", "infeasible", "failed"),
+    stringsAsFactors = FALSE
+  )
+
+  tab <- summarise_sim_results(raw)
+  expect_equal(nrow(tab), 2L)
+  expect_equal(tab$n_reps, c(2L, 1L))
+  expect_equal(tab$n_failed, c(2L, 1L))
+
+  metrics <- c("bias", "rmse", "se_mean", "cover", "ci_len", "neff")
+  metric_values <- unlist(tab[metrics], use.names = FALSE)
+  expect_true(all(is.na(metric_values)))
+  expect_false(any(is.nan(metric_values)))
+})
+
+test_that("summarise_sim_results excludes non-ok rows even if metrics are present", {
+  raw <- data.frame(
+    method = "dnn_oracle",
+    design = "dgp1_linear",
+    n = 50L,
+    kx = 2L,
+    k = 1L,
+    tuning_source = "tuning",
+    candidate_id = "kappa_1",
+    kappa = 1,
+    s = 6L,
+    seed = c(1L, 2L),
+    tau_hat = c(1, 100),
+    tau0 = 1,
+    bias = c(0, 99),
+    sq_err = c(0, 9801),
+    se = c(0.2, 99),
+    cover = c(1, 0),
+    ci_len = c(0.4, 198),
+    neff = c(10, 1),
+    status = c("ok", "failed"),
+    stringsAsFactors = FALSE
+  )
+
+  tab <- summarise_sim_results(raw)
+  expect_equal(tab$n_reps, 2L)
+  expect_equal(tab$n_failed, 1L)
+  expect_equal(tab$bias, 0)
+  expect_equal(tab$rmse, 0)
+  expect_equal(tab$se_mean, 0.2)
+  expect_equal(tab$cover, 1)
+  expect_equal(tab$ci_len, 0.4)
+  expect_equal(tab$neff, 10)
+})
+
 test_that("grid mode requires a tuning object", {
   expect_error(
     sim_cate_one_rep(
