@@ -142,6 +142,7 @@ fit_plqr <- plqr_dnn(
 
 summary(fit_plqr)
 confint(fit_plqr)
+predict(fit_plqr, x0 = c(0.25, -0.25), interval = "confidence")
 fit_plqr$moment
 diagnostics(fit_plqr)
 ```

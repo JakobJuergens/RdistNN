@@ -28,6 +28,8 @@ target;
 \item Estimate local nonparametric means with \code{\link[=np_dnn]{np_dnn()}}.
 \item Estimate local PLQR coefficient surfaces and orthogonal moments with
 \code{\link[=plqr_dnn]{plqr_dnn()}}.
+\item Summarize/predict PLQR fits with \code{\link[=summary.plqr_result]{summary.plqr_result()}},
+\code{\link[=confint.plqr_result]{confint.plqr_result()}}, and \code{\link[=predict.plqr_result]{predict.plqr_result()}}.
 \item Inspect fitted local estimators with \code{\link[=diagnostics]{diagnostics()}}.
 \item Build custom generalized U-statistics with \code{\link[=new_score]{new_score()}},
 \code{\link[=score_eval_batch]{score_eval_batch()}}, and \code{\link[=score_diff_path]{score_diff_path()}}.
@@ -58,7 +60,8 @@ and scores, see \code{vignette("extending", package = "RdistNN")}.
 \seealso{
 \code{\link[=weights_dnn]{weights_dnn()}}, \code{\link[=cate_dnn]{cate_dnn()}}, \code{\link[=np_dnn]{np_dnn()}}, \code{\link[=plqr_dnn]{plqr_dnn()}},
 \code{\link[=diagnostics]{diagnostics()}}, \code{\link[=summary.cate_result]{summary.cate_result()}}, \code{\link[=predict.cate_result]{predict.cate_result()}},
-\code{\link[=new_score]{new_score()}}, \code{\link[=distance_l2]{distance_l2()}}
+\code{\link[=summary.plqr_result]{summary.plqr_result()}}, \code{\link[=predict.plqr_result]{predict.plqr_result()}}, \code{\link[=new_score]{new_score()}},
+\code{\link[=distance_l2]{distance_l2()}}
 }
 \author{
 \strong{Maintainer}: Jakob Juergens \email{info@jakobjuergens.com}

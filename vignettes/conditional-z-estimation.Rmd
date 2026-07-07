@@ -21,7 +21,7 @@ estimators:
 
 - `np_dnn()` for localized conditional means
 - `cate_dnn()` for conditional average treatment effects
-- `plqr_dnn()` for localized orthogonal moments in PLQR
+- `plqr_dnn()` for localized PLQR coefficient surfaces and orthogonal moments
 
 Each wrapper supports:
 
@@ -119,6 +119,7 @@ fit_plqr <- plqr_dnn(
 
 summary(fit_plqr)
 confint(fit_plqr)
+predict(fit_plqr, x0 = c(0.25, -0.25), interval = "confidence")
 fit_plqr$moment
 diagnostics(fit_plqr)
 ```

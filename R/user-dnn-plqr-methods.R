@@ -1,5 +1,198 @@
 # Methods for plqr_result objects.
 
+.plqr_validate_prediction_targets <- function(x, arg) {
+  .validate_matrix(
+    x,
+    arg = arg,
+    min_rows = 1L,
+    min_cols = 1L,
+    numeric = TRUE,
+    finite = TRUE
+  )
+}
+
+.plqr_validate_prediction_model <- function(model) {
+  if (!is.list(model) || is.null(model$x_mat) || is.null(model$d_mat) ||
+      is.null(model$mD_mat) || is.null(model$beta) || is.null(model$tau)) {
+    .abort_bad_state(paste0(
+      "This object does not contain fitted model state for prediction. ",
+      "Refit with the current plqr_dnn() implementation."
+    ))
+  }
+
+  x_mat <- .validate_matrix(
+    model$x_mat,
+    arg = "object$.model$x_mat",
+    min_rows = 1L,
+    min_cols = 1L,
+    numeric = TRUE,
+    finite = TRUE
+  )
+  n <- nrow(x_mat)
+  d_mat <- .validate_matrix(
+    model$d_mat,
+    arg = "object$.model$d_mat",
+    min_rows = 1L,
+    min_cols = 1L,
+    numeric = TRUE,
+    finite = TRUE
+  )
+  mD_mat <- .validate_matrix(
+    model$mD_mat,
+    arg = "object$.model$mD_mat",
+    min_rows = 1L,
+    min_cols = 1L,
+    numeric = TRUE,
+    finite = TRUE
+  )
+  if (nrow(d_mat) != n || nrow(mD_mat) != n) {
+    .abort_bad_arg(
+      "object$.model$d_mat/object$.model$mD_mat",
+      "must have row counts equal to nrow(object$.model$x_mat)",
+      expected = sprintf("nrow(object$.model$x_mat)=%d", n),
+      actual = sprintf(
+        "nrow(object$.model$d_mat)=%d, nrow(object$.model$mD_mat)=%d",
+        nrow(d_mat), nrow(mD_mat)
+      ),
+      quoted = FALSE
+    )
+  }
+  if (ncol(d_mat) != ncol(mD_mat)) {
+    .abort_bad_arg(
+      "object$.model$mD_mat",
+      "must have the same number of columns as object$.model$d_mat",
+      expected = sprintf("ncol(object$.model$d_mat)=%d", ncol(d_mat)),
+      actual = sprintf("ncol(object$.model$mD_mat)=%d", ncol(mD_mat)),
+      quoted = FALSE
+    )
+  }
+
+  beta <- .validate_finite_numeric_vector(
+    model$beta,
+    arg = "object$.model$beta",
+    min_length = 1L
+  )
+  if (length(beta) != ncol(d_mat)) {
+    .abort_bad_arg(
+      "object$.model$beta",
+      "length must equal ncol(object$.model$d_mat)",
+      expected = sprintf("ncol(object$.model$d_mat)=%d", ncol(d_mat)),
+      actual = sprintf("length(object$.model$beta)=%d", length(beta)),
+      quoted = FALSE
+    )
+  }
+  tau <- .validate_scalar_prob(model$tau, arg = "object$.model$tau")
+  k <- .validate_scalar_int(model$k, arg = "object$.model$k", min = 1L)
+  s <- .validate_scalar_int(model$s, arg = "object$.model$s", min = 1L)
+  if (k > s) {
+    .abort_bad_arg(
+      "object$.model$k",
+      sprintf("must satisfy k <= s (got k=%d, s=%d)", k, s),
+      quoted = FALSE
+    )
+  }
+  if (s > n) {
+    .abort_bad_arg(
+      "object$.model$s",
+      "must satisfy s <= n",
+      expected = sprintf("s <= n=%d", n),
+      actual = sprintf("s=%d", s),
+      quoted = FALSE
+    )
+  }
+  if (!is.character(model$method) || length(model$method) != 1L ||
+      is.na(model$method) || !(model$method %in% c("exact", "asymp"))) {
+    .abort_bad_arg("object$.model$method", "must be one of 'exact' or 'asymp'", quoted = FALSE)
+  }
+  if (!is.logical(model$normalize) || length(model$normalize) != 1L || is.na(model$normalize)) {
+    .abort_bad_arg("object$.model$normalize", "must be TRUE or FALSE", quoted = FALSE)
+  }
+
+  density <- if (is.null(model$density)) {
+    NULL
+  } else {
+    .plqr_validate_density(model$density, n, arg = "object$.model$density")
+  }
+  coef_names <- model$coef_names
+  if (is.null(coef_names)) {
+    coef_names <- colnames(d_mat)
+  }
+  if (is.null(coef_names)) {
+    coef_names <- paste0("theta_", seq_len(ncol(d_mat)))
+  }
+  if (!is.character(coef_names) || length(coef_names) != ncol(d_mat) ||
+      anyNA(coef_names) || any(!nzchar(coef_names))) {
+    .abort_bad_arg(
+      "object$.model$coef_names",
+      "must contain one non-empty coefficient name per PLQR coefficient",
+      expected = sprintf("length %d", ncol(d_mat)),
+      quoted = FALSE
+    )
+  }
+
+  model$x_mat <- x_mat
+  model$d_mat <- d_mat
+  model$mD_mat <- mD_mat
+  model$density <- density
+  model$beta <- beta
+  model$tau <- tau
+  model$k <- k
+  model$s <- s
+  model$method <- model$method[[1L]]
+  model$normalize <- model$normalize[[1L]]
+  model$coef_names <- coef_names
+  model
+}
+
+.plqr_resolve_targets <- function(model, newdata = NULL, X0 = NULL, x0 = NULL) {
+  if (!is.null(newdata) && (!is.null(X0) || !is.null(x0))) {
+    .abort_bad_arg(
+      "newdata/X0/x0",
+      "must provide either `newdata` or `X0`/`x0`, not both",
+      quoted = FALSE
+    )
+  }
+
+  if (!is.null(newdata)) {
+    if (is.data.frame(newdata) && !is.null(model$x_cols)) {
+      x0_mat <- .dnn_col_mat(model$x_cols, data = newdata, arg = "x_cols", out_arg = "newdata")
+    } else {
+      x0_mat <- .plqr_validate_prediction_targets(newdata, arg = "newdata")
+    }
+    x0_mat <- .plqr_validate_prediction_targets(x0_mat, arg = "newdata")
+    return(.validate_ncol_relation(model$x_mat, x0_mat, y_arg = "newdata", x_arg = "X", relation = "match"))
+  }
+
+  if (!is.null(X0) && !is.null(x0)) {
+    .abort_bad_arg("X0/x0", "must provide either `X0` or `x0`, not both", quoted = FALSE)
+  }
+  if (is.null(X0)) {
+    if (is.null(x0)) {
+      .abort_bad_arg(
+        "newdata/X0/x0",
+        "must provide `newdata`, `X0`, or a single `x0`",
+        quoted = FALSE
+      )
+    }
+    x0_vec <- .validate_target_vector(
+      x0,
+      ncol(model$x_mat),
+      x0_arg = "x0",
+      x_arg = "X",
+      strict = TRUE,
+      finite = TRUE
+    )
+    return(matrix(x0_vec, nrow = 1L))
+  }
+  x0_mat <- .plqr_validate_prediction_targets(X0, arg = "X0")
+  .validate_ncol_relation(model$x_mat, x0_mat, y_arg = "X0", x_arg = "X", relation = "equal")
+}
+
+.plqr_prediction_theta <- function(beta, m, coef_names, target_names) {
+  theta <- matrix(rep(beta, times = m), nrow = length(beta), ncol = m)
+  .plqr_dimnames_matrix(theta, coef_names, target_names)
+}
+
 .plqr_result_coef_table <- function(object, level = 0.95) {
   if (!is.numeric(level) || length(level) != 1L || !is.finite(level) ||
       level <= 0 || level >= 1) {
@@ -229,4 +422,115 @@ print.summary.plqr_result <- function(x, digits = max(3L, getOption("digits") - 
   coef_tab[num_cols] <- lapply(coef_tab[num_cols], signif, digits = digits)
   print(coef_tab)
   invisible(x)
+}
+
+#' Predict from a `plqr_result` object at new targets
+#'
+#' @param object A `plqr_result` object from [plqr_dnn()].
+#' @param newdata Optional matrix/data frame of target covariates.
+#' @param X0 Optional numeric matrix of targets (rows).
+#' @param x0 Optional numeric vector for a single target.
+#' @param se.fit Logical; if `TRUE`, also return direct coefficient standard
+#'   errors. The fitted object must retain density values from `density` or
+#'   `density_col`.
+#' @param interval One of `"none"` or `"confidence"`.
+#' @param level Confidence level for interval output.
+#' @param ... Not used.
+#'
+#' @return With `interval = "none"` and `se.fit = FALSE`, a coefficient matrix
+#'   with one row per PLQR coefficient and one column per target. With
+#'   `se.fit = TRUE`, a list with `fit` and `se.fit` matrices. With
+#'   `interval = "confidence"`, a list with `fit`, `lwr`, and `upr` matrices,
+#'   and also `se.fit` when requested.
+#' @examples
+#' set.seed(3)
+#' demo <- plqr_demo_data(n = 80, p = 2, p_d = 2, tau = 0.5, seed = 3)
+#' fit <- plqr_dnn(
+#'   data = demo$data,
+#'   x_cols = c("X1", "X2"),
+#'   D_cols = c("D1", "D2"),
+#'   q_col = "q_oracle",
+#'   mD_cols = c("mD1", "mD2"),
+#'   y_col = "Y",
+#'   beta = demo$truth$beta_true,
+#'   tau = 0.5,
+#'   x0 = c(0, 0),
+#'   method = "exact",
+#'   k = 1L, s = 5L,
+#'   se = FALSE
+#' )
+#' predict(fit, x0 = c(0.2, -0.1))
+#' @export
+predict.plqr_result <- function(
+    object,
+    newdata = NULL,
+    X0 = NULL,
+    x0 = NULL,
+    se.fit = FALSE,
+    interval = c("none", "confidence"),
+    level = 0.95,
+    ...) {
+  interval <- match.arg(interval)
+  level <- .validate_scalar_prob(level, arg = "level")
+  se.fit <- .validate_scalar_logical(se.fit, arg = "se.fit")
+
+  model <- .plqr_validate_prediction_model(object$.model)
+  x0_mat <- .plqr_resolve_targets(model, newdata = newdata, X0 = X0, x0 = x0)
+
+  wt <- weights_dnn(
+    X = model$x_mat,
+    X0 = x0_mat,
+    distance = model$distance,
+    method = model$method,
+    k = model$k,
+    s = model$s,
+    normalize = model$normalize,
+    ctx = model$ctx,
+    return = "W"
+  )
+  target_names <- paste0("target_", seq_len(ncol(wt$W)))
+  theta <- .plqr_prediction_theta(
+    beta = model$beta,
+    m = ncol(wt$W),
+    coef_names = model$coef_names,
+    target_names = target_names
+  )
+
+  need_se <- isTRUE(se.fit) || identical(interval, "confidence")
+  if (!need_se) {
+    return(theta)
+  }
+  if (is.null(model$density)) {
+    .abort_bad_state(paste0(
+      "Direct PLQR coefficient standard errors are not available for prediction ",
+      "because this object does not retain density values. Refit with `density` ",
+      "or `density_col`."
+    ))
+  }
+
+  direct_fit <- .plqr_direct_sandwich(
+    d_mat = model$d_mat,
+    mD_mat = model$mD_mat,
+    density_vec = model$density,
+    W = wt$W,
+    tau = model$tau,
+    coef_names = model$coef_names,
+    target_names = target_names
+  )
+  se_hat <- direct_fit$se
+
+  if (identical(interval, "none")) {
+    return(list(fit = theta, se.fit = se_hat))
+  }
+
+  crit <- stats::qnorm(0.5 + level / 2)
+  out <- list(
+    fit = theta,
+    lwr = theta - crit * se_hat,
+    upr = theta + crit * se_hat
+  )
+  if (isTRUE(se.fit)) {
+    out$se.fit <- se_hat
+  }
+  out
 }

@@ -579,6 +579,8 @@ plqr_dnn <- function(
   # calibration checked by plot_calibration().
   out$.model <- list(
     x_mat = x_mat,
+    d_mat = d_mat,
+    mD_mat = mD_mat,
     distance = distance,
     method = method,
     k = k,
@@ -588,7 +590,11 @@ plqr_dnn <- function(
     ranks = if (identical(tuning_mode, "grid")) wt$ranks else NULL,
     d_resid_mat = d_resid_mat,
     below_threshold = as.numeric(y_vec <= as.vector(d_mat %*% beta) + q_vec),
-    density = density_vec
+    density = density_vec,
+    beta = beta,
+    tau = tau,
+    x_cols = if (!is.null(data)) x_cols else NULL,
+    coef_names = coef_names
   )
 
   class(out) <- "plqr_result"

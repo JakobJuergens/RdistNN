@@ -29,7 +29,7 @@ library(RdistNN)
 - User-level localized estimators:
   - `np_dnn()` for nonparametric local means
   - `cate_dnn()` for conditional average treatment effects
-  - `plqr_dnn()` for localized orthogonal PLQR moments
+  - `plqr_dnn()` for localized PLQR coefficient surfaces and orthogonal moments
 - Fitted-object diagnostics via `diagnostics()`
 
 Most user workflows are one of:
@@ -165,6 +165,7 @@ fit_plqr <- plqr_dnn(
 
 summary(fit_plqr)
 confint(fit_plqr)
+predict(fit_plqr, x0 = c(0.25, -0.25), interval = "confidence")
 fit_plqr$moment
 diagnostics(fit_plqr)
 ```

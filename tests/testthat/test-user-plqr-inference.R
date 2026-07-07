@@ -206,3 +206,145 @@ test_that("plqr_dnn validates direct sandwich density inputs", {
     ignore.case = TRUE
   )
 })
+
+test_that("predict.plqr_result returns coefficient surfaces at new targets", {
+  d <- .make_plqr_inference_data(n = 88L, m = 2L)
+  new_X0 <- matrix(rnorm(3L * ncol(d$X)), 3L, ncol(d$X))
+  fit <- plqr_dnn(
+    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+    beta = d$beta, tau = d$tau, density = d$density,
+    X0 = d$X0, method = "exact", k = 2L, s = 9L,
+    se = TRUE
+  )
+  refit <- plqr_dnn(
+    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+    beta = d$beta, tau = d$tau, density = d$density,
+    X0 = new_X0, method = "exact", k = 2L, s = 9L,
+    se = TRUE
+  )
+
+  pred <- predict(fit, X0 = new_X0)
+  expect_equal(pred, refit$theta, tolerance = 1e-12)
+
+  pred_se <- predict(fit, X0 = new_X0, se.fit = TRUE)
+  expect_true(is.list(pred_se))
+  expect_named(pred_se, c("fit", "se.fit"))
+  expect_equal(pred_se$fit, refit$theta, tolerance = 1e-12)
+  expect_equal(pred_se$se.fit, refit$se, tolerance = 1e-12)
+
+  pred_ci <- predict(fit, X0 = new_X0, interval = "confidence")
+  expect_true(is.list(pred_ci))
+  expect_named(pred_ci, c("fit", "lwr", "upr"))
+  z <- stats::qnorm(0.975)
+  expect_equal(pred_ci$fit, refit$theta, tolerance = 1e-12)
+  expect_equal(pred_ci$lwr, refit$theta - z * refit$se, tolerance = 1e-12)
+  expect_equal(pred_ci$upr, refit$theta + z * refit$se, tolerance = 1e-12)
+
+  pred_ci_se <- predict(fit, X0 = new_X0, interval = "confidence", se.fit = TRUE)
+  expect_named(pred_ci_se, c("fit", "lwr", "upr", "se.fit"))
+  expect_equal(pred_ci_se$se.fit, refit$se, tolerance = 1e-12)
+})
+
+test_that("predict.plqr_result accepts single x0 and data-frame newdata", {
+  d <- .make_plqr_inference_data(n = 82L, m = 2L)
+  fit <- plqr_dnn(
+    data = d$df,
+    x_cols = d$x_cols,
+    D_cols = d$D_cols,
+    q_col = "q_oracle",
+    mD_cols = d$mD_cols,
+    y_col = "Y",
+    density_col = "q_density",
+    beta = d$beta,
+    tau = d$tau,
+    X0 = d$X0,
+    method = "exact", k = 2L, s = 9L,
+    se = TRUE
+  )
+
+  pred_x0 <- predict(fit, x0 = d$X0[1L, ])
+  expect_equal(dim(pred_x0), c(length(d$beta), 1L))
+  expect_equal(unname(pred_x0[, 1L]), unname(d$beta), tolerance = 1e-12)
+
+  nd <- data.frame(
+    X1 = d$X0[, 1L],
+    X2 = d$X0[, 2L],
+    extra = seq_len(nrow(d$X0))
+  )
+  pred_df <- predict(fit, newdata = nd, se.fit = TRUE)
+  pred_X0 <- predict(fit, X0 = as.matrix(nd[, d$x_cols, drop = FALSE]), se.fit = TRUE)
+
+  expect_equal(pred_df$fit, pred_X0$fit, tolerance = 1e-12)
+  expect_equal(pred_df$se.fit, pred_X0$se.fit, tolerance = 1e-12)
+})
+
+test_that("predict.plqr_result separates coefficient prediction from inference availability", {
+  d <- .make_plqr_inference_data(n = 75L, m = 2L)
+  new_X0 <- matrix(rnorm(2L * ncol(d$X)), 2L, ncol(d$X))
+  fit <- plqr_dnn(
+    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+    beta = d$beta, tau = d$tau,
+    X0 = d$X0, method = "exact", k = 2L, s = 8L,
+    se = FALSE
+  )
+
+  pred <- predict(fit, X0 = new_X0)
+  expect_equal(
+    unname(pred),
+    matrix(d$beta, nrow = length(d$beta), ncol = nrow(new_X0)),
+    tolerance = 1e-12
+  )
+  expect_error(
+    predict(fit, X0 = new_X0, se.fit = TRUE),
+    "density",
+    ignore.case = TRUE
+  )
+  expect_error(
+    predict(fit, X0 = new_X0, interval = "confidence"),
+    "density",
+    ignore.case = TRUE
+  )
+})
+
+test_that("predict.plqr_result validates inputs and fitted model state", {
+  d <- .make_plqr_inference_data(n = 78L, m = 2L)
+  fit <- plqr_dnn(
+    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+    beta = d$beta, tau = d$tau, density = d$density,
+    X0 = d$X0, method = "exact", k = 2L, s = 8L,
+    se = TRUE
+  )
+
+  expect_error(
+    predict(fit),
+    "newdata.*X0.*x0",
+    ignore.case = TRUE
+  )
+  expect_error(
+    predict(fit, X0 = d$X0, x0 = d$X0[1L, ]),
+    "either `X0` or `x0`",
+    fixed = TRUE
+  )
+  expect_error(
+    predict(fit, newdata = d$X0, X0 = d$X0),
+    "either `newdata` or `X0`/`x0`",
+    fixed = TRUE
+  )
+  expect_error(
+    predict(fit, X0 = d$X0, se.fit = "yes"),
+    "se.fit.*TRUE or FALSE"
+  )
+  expect_error(
+    predict(fit, X0 = d$X0, interval = "confidence", level = 1),
+    "numeric scalar in \\(0,1\\)",
+    ignore.case = TRUE
+  )
+
+  bad_state <- fit
+  bad_state$.model <- NULL
+  expect_error(
+    predict(bad_state, X0 = d$X0),
+    "fitted model state",
+    ignore.case = TRUE
+  )
+})
