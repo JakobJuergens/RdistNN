@@ -316,9 +316,10 @@ test_that("summarise_sim_results: correct aggregation with method column", {
   expect_s3_class(tab, "data.frame")
   # 1 method x 1 design x 1 n x 1 kx = 1 row
   expect_equal(nrow(tab), 1L)
-  # tau_hat and tau0 are per-rep; they are NOT aggregated into the summary
+  # tau_hat remains raw; the summary only records its empirical dispersion.
   expect_true(all(c("method", "design", "n", "kx", "n_reps", "n_failed",
-                    "bias", "rmse", "se_mean", "cover", "ci_len", "neff")
+                    "bias", "rmse", "se_mean", "cover", "ci_len",
+                    "emp_sd", "se_to_sd", "neff")
                   %in% names(tab)))
   expect_false("tau_hat" %in% names(tab))
   expect_false("tau0"    %in% names(tab))
@@ -745,6 +746,8 @@ test_that("summarise_sim_results: n_failed counts NA-metric rows correctly", {
   # Metrics should be computed from the 2 good rows only
   expect_true(is.finite(tab$bias))
   expect_true(is.finite(tab$rmse))
+  expect_true(is.finite(tab$emp_sd))
+  expect_true(is.finite(tab$se_to_sd))
 })
 
 test_that("summarise_sim_results: n_failed = 0 when no NAs present", {

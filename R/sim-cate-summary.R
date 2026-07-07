@@ -17,26 +17,42 @@
   sqrt(mean(x, na.rm = TRUE))
 }
 
+.sim_cate_sd <- function(x) {
+  x <- x[is.finite(x)]
+  if (length(x) < 2L) {
+    return(NA_real_)
+  }
+  stats::sd(x)
+}
+
+.sim_cate_se_to_sd <- function(se_mean, emp_sd) {
+  if (!is.finite(se_mean) || !is.finite(emp_sd) || se_mean <= 0 || emp_sd <= 0) {
+    return(NA_real_)
+  }
+  se_mean / emp_sd
+}
+
 #' Summarise raw per-replicate CATE simulation results
 #'
 #' Aggregates a data.frame of raw replicate-level results (as returned by
 #' [sim_cate_run()]) to one summary row per
 #' `(method, design, n, kx, candidate_id, kappa, s)` cell. Reports bias, RMSE,
-#' mean SE, empirical coverage, mean CI length, and (optionally) mean effective
-#' sample size. Failed or skipped rows are excluded from all averages; their
-#' count is reported in `n_failed`.
+#' mean SE, empirical coverage, mean CI length, empirical sampling dispersion of
+#' `tau_hat`, the ratio of mean SE to empirical dispersion, and (optionally)
+#' mean effective sample size. Failed or skipped rows are excluded from all
+#' averages and dispersion calculations; their count is reported in `n_failed`.
 #'
 #' @param raw A `data.frame` with at least the columns `method`, `design`, `n`,
 #'   `kx`, `candidate_id`, `kappa`, `s`, `bias`, `sq_err`, `se`, `cover`,
-#'   `ci_len`, and `status`. Optional columns `neff` and `tau_hat`/`tau0`
+#'   `ci_len`, and `status`. Optional columns `neff`, `tau_hat`, and `tau0`
 #'   (returned by [sim_cate_run()]) are handled gracefully: `neff` is averaged
-#'   into the summary; `tau_hat` and `tau0` are per-rep quantities and are not
-#'   aggregated (they live only in the raw data).
+#'   into the summary; `tau_hat` is summarized through its empirical standard
+#'   deviation; `tau0` remains a per-rep quantity and is not aggregated.
 #'
 #' @return A `data.frame` with one row per unique group and columns
 #'   `method`, `design`, `n`, `kx`, `candidate_id`, `kappa`, `s`, `n_reps`,
-#'   `n_failed`, `bias`, `rmse`, `se_mean`, `cover`, `ci_len` (and `neff`
-#'   when present in `raw`).
+#'   `n_failed`, `bias`, `rmse`, `se_mean`, `cover`, `ci_len`, `emp_sd`,
+#'   `se_to_sd` (and `neff` when present in `raw`).
 #'
 #' @seealso [sim_cate_run()]
 #'
@@ -57,7 +73,8 @@ summarise_sim_results <- function(raw) {
   if (length(missing) > 0L)
     stop("raw is missing required columns: ", paste(missing, collapse = ", "), call. = FALSE)
 
-  has_neff   <- "neff"   %in% names(raw)
+  has_neff    <- "neff" %in% names(raw)
+  has_tau_hat <- "tau_hat" %in% names(raw)
   group_cols <- c("method", "design", "n", "kx", "candidate_id", "kappa", "s")
 
   cells <- unique(raw[, group_cols, drop = FALSE])
@@ -79,6 +96,9 @@ summarise_sim_results <- function(raw) {
     n_failed <- sum(is.na(sub$status) | sub$status != "ok" | is.na(sub$bias))
     ok <- !is.na(sub$status) & sub$status == "ok" & !is.na(sub$bias)
 
+    se_mean <- .sim_cate_mean(sub$se[ok])
+    emp_sd <- if (has_tau_hat) .sim_cate_sd(sub$tau_hat[ok]) else NA_real_
+
     row <- data.frame(
       design   = cells$design[i],
       n        = cells$n[i],
@@ -90,9 +110,11 @@ summarise_sim_results <- function(raw) {
       n_failed = n_failed,
       bias     = .sim_cate_mean(sub$bias[ok]),
       rmse     = .sim_cate_rmse(sub$sq_err[ok]),
-      se_mean  = .sim_cate_mean(sub$se[ok]),
+      se_mean  = se_mean,
       cover    = .sim_cate_mean(sub$cover[ok]),
       ci_len   = .sim_cate_mean(sub$ci_len[ok]),
+      emp_sd   = emp_sd,
+      se_to_sd = .sim_cate_se_to_sd(se_mean, emp_sd),
       stringsAsFactors = FALSE
     )
     row$method <- cells$method[i]

@@ -186,25 +186,25 @@ test_that("sim_cate_run grid mode shapes total-failure rows by method and candid
 
 test_that("summarise_sim_results groups by candidate fields with NA-safe benchmark groups", {
   raw <- data.frame(
-    method = c("dnn_oracle", "dnn_oracle", "dnn_oracle", "ols_interact"),
+    method = c("dnn_oracle", "dnn_oracle", "dnn_oracle", "dnn_oracle", "ols_interact"),
     design = "dgp1_linear",
     n = 50L,
     kx = 2L,
     k = 1L,
     tuning_source = "tuning",
-    candidate_id = c("kappa_0p75", "kappa_0p75", "kappa_1", NA_character_),
-    kappa = c(0.75, 0.75, 1, NA_real_),
-    s = c(4L, 4L, 6L, NA_integer_),
-    seed = c(1L, 2L, 1L, 1L),
-    tau_hat = c(1, NA, 2, 3),
+    candidate_id = c("kappa_0p75", "kappa_0p75", "kappa_0p75", "kappa_1", NA_character_),
+    kappa = c(0.75, 0.75, 0.75, 1, NA_real_),
+    s = c(4L, 4L, 4L, 6L, NA_integer_),
+    seed = c(1L, 2L, 3L, 1L, 1L),
+    tau_hat = c(1, NA, 3, 2, 3),
     tau0 = 1,
-    bias = c(0, NA, 1, 2),
-    sq_err = c(0, NA, 1, 4),
-    se = c(0.2, NA, 0.3, 0.4),
-    cover = c(1, NA, 0, 0),
-    ci_len = c(0.4, NA, 0.6, 0.8),
-    neff = c(10, NA, 12, NA),
-    status = c("ok", "failed", "ok", "ok"),
+    bias = c(0, NA, 2, 1, 2),
+    sq_err = c(0, NA, 4, 1, 4),
+    se = c(0.2, NA, 0.4, 0.3, 0.4),
+    cover = c(1, NA, 1, 0, 0),
+    ci_len = c(0.4, NA, 0.8, 0.6, 0.8),
+    neff = c(10, NA, 14, 12, NA),
+    status = c("ok", "failed", "ok", "ok", "ok"),
     stringsAsFactors = FALSE
   )
 
@@ -216,10 +216,14 @@ test_that("summarise_sim_results groups by candidate fields with NA-safe benchma
   cand_1 <- tab[!is.na(tab$candidate_id) & tab$candidate_id == "kappa_1", , drop = FALSE]
   bench <- tab[is.na(tab$candidate_id), , drop = FALSE]
 
-  expect_equal(cand_075$n_reps, 2L)
+  expect_equal(cand_075$n_reps, 3L)
   expect_equal(cand_075$n_failed, 1L)
-  expect_equal(cand_075$bias, 0)
+  expect_equal(cand_075$bias, 1)
+  expect_equal(cand_075$emp_sd, stats::sd(c(1, 3)))
+  expect_equal(cand_075$se_to_sd, mean(c(0.2, 0.4)) / stats::sd(c(1, 3)))
   expect_equal(cand_1$n_reps, 1L)
+  expect_true(is.na(cand_1$emp_sd))
+  expect_true(is.na(cand_1$se_to_sd))
   expect_equal(bench$method, "ols_interact")
   expect_true(is.na(bench$s))
 })
@@ -253,7 +257,7 @@ test_that("summarise_sim_results returns NA rather than NaN for all-failed group
   expect_equal(tab$n_reps, c(2L, 1L))
   expect_equal(tab$n_failed, c(2L, 1L))
 
-  metrics <- c("bias", "rmse", "se_mean", "cover", "ci_len", "neff")
+  metrics <- c("bias", "rmse", "se_mean", "cover", "ci_len", "emp_sd", "se_to_sd", "neff")
   metric_values <- unlist(tab[metrics], use.names = FALSE)
   expect_true(all(is.na(metric_values)))
   expect_false(any(is.nan(metric_values)))
@@ -291,6 +295,8 @@ test_that("summarise_sim_results excludes non-ok rows even if metrics are presen
   expect_equal(tab$se_mean, 0.2)
   expect_equal(tab$cover, 1)
   expect_equal(tab$ci_len, 0.4)
+  expect_true(is.na(tab$emp_sd))
+  expect_true(is.na(tab$se_to_sd))
   expect_equal(tab$neff, 10)
 })
 
