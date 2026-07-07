@@ -2,7 +2,7 @@
 % Please edit documentation in R/user-dnn-plqr.R
 \name{plqr_dnn}
 \alias{plqr_dnn}
-\title{PLQR local orthogonal moments via DNN rank weights}
+\title{PLQR local coefficients and orthogonal moments via DNN rank weights}
 \usage{
 plqr_dnn(
   data = NULL,
@@ -18,6 +18,8 @@ plqr_dnn(
   q = NULL,
   mD = NULL,
   Y = NULL,
+  density = NULL,
+  density_col = NULL,
   X0 = NULL,
   x0 = NULL,
   distance = "l2",
@@ -67,6 +69,14 @@ interface.}
 
 \item{Y}{Numeric outcome vector of length \code{n} for the matrix interface.}
 
+\item{density}{Optional positive numeric vector (\code{n}) estimating the
+conditional density of \code{Y} at \verb{D' beta + q}. When supplied with
+\code{se = TRUE}, PLQR uses the direct coefficient sandwich route and returns
+coefficient standard errors in \code{se}.}
+
+\item{density_col}{Optional column name or index in \code{data} containing the
+positive density values used for the direct coefficient sandwich.}
+
 \item{X0}{Numeric matrix (\verb{m x p}) of target points; mutually exclusive with
 \code{x0}.}
 
@@ -115,12 +125,19 @@ inside each size-\code{s} subsample, not the full DNN weight support.}
 An object of class \code{plqr_result} with components:
 \itemize{
 \item \code{moment}: matrix (\verb{p_d x m}) of localized PLQR moments;
-\item \code{se}: optional jackknife standard errors (\verb{p_d x m});
+\item \code{theta}: matrix (\verb{p_d x m}) of supplied coefficient values, repeated
+across targets until a root-solving path is requested in future versions;
+\item \code{se}: optional coefficient standard errors (\verb{p_d x m}) when \code{density}
+or \code{density_col} supplies the direct PLQR sandwich route; otherwise
+optional jackknife standard errors for \code{moment} for backward-compatible
+moment diagnostics;
 \item \code{beta}: the coefficient vector used in the moment map;
 \item \code{tau}: quantile level;
 \item \code{x0}: the \verb{m x p} matrix of evaluation points, with covariate
 column names propagated from the training data when available;
 \item \code{meta}: metadata (\code{n}, \code{m}, \code{p}, \code{p_d}, \code{k}, \code{s}, \code{method}, \code{distance});
+\item when direct coefficient inference is available, \code{vcov}, \code{omega},
+\code{jacobian}, \code{score_covariance}, and \code{neff};
 \item \code{tuning_grid}: in grid mode, a list with \code{candidates}, \code{estimates},
 \code{diagnostics}, and \code{meta} tables. Candidate diagnostics report
 top-5 weight concentration separately from the estimator's \code{k};
@@ -136,7 +153,10 @@ Compute localized orthogonal PLQR moments
     \;\middle|\; X \approx x_0
   \right]
 }
-using DNN rank weights at one or multiple target points.
+using DNN rank weights at one or multiple target points. When positive
+threshold density values are supplied through \code{density} or \code{density_col},
+the same fit reports the direct PLQR coefficient sandwich used for standard
+errors and confidence intervals.
 }
 \details{
 Two interfaces are supported.
@@ -147,7 +167,8 @@ Two interfaces are supported.
 }
 
 No nuisance models are fit internally; this wrapper assumes \code{q_tau(X)} and
-\code{m_D(X)} are supplied.
+\code{m_D(X)} are supplied. Density values for direct coefficient inference are
+also supplied by the user rather than estimated internally.
 
 As in \code{\link[=weights_dnn]{weights_dnn()}}, exact DNN localization uses the full rank permutation
 at each target rather than an \code{s}-nearest-neighbor truncation. The \code{"fast"}
@@ -163,11 +184,13 @@ The payload stores one long-form row per candidate, target, and PLQR moment
 component; the public \code{moment} and \code{se} matrix fields remain anchored to the
 default candidate. Candidate diagnostics include \code{ess}, \code{max_weight},
 \code{top_n}, \code{top5_weight_share}, and \code{degenerate}; \code{top_n} is fixed at 5 and
-is independent of the estimator's \code{k}.
+is independent of the estimator's \code{k}. Direct PLQR sandwich inference from
+\code{density} or \code{density_col} currently uses \code{tuning_mode = "default"} only.
 }
 \examples{
 set.seed(1)
 demo <- plqr_demo_data(n = 120, p = 2, p_d = 2, tau = 0.5, seed = 1)
+demo$data$q_density <- 2
 out <- plqr_dnn(
   data = demo$data,
   x_cols = c("X1", "X2"),
@@ -175,14 +198,15 @@ out <- plqr_dnn(
   q_col = "q_oracle",
   mD_cols = c("mD1", "mD2"),
   y_col = "Y",
+  density_col = "q_density",
   beta = demo$truth$beta_true,
   tau = 0.5,
   x0 = c(0, 0),
   method = "exact",
   k = 1L, s = 3L,
-  se = FALSE
+  se = TRUE
 )
-out$moment
+summary(out)
 }
 \seealso{
 \code{\link[=weights_dnn]{weights_dnn()}}, \code{\link[=score_plqr_component]{score_plqr_component()}}, \code{\link[=plqr_demo_data]{plqr_demo_data()}}.

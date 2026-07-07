@@ -92,11 +92,12 @@ test_that("multi-coefficient frames interleave coefficients within targets", {
     q = as.numeric(df_p$q_oracle),
     mD = as.matrix(df_p[paste0("mD", 1:2)]),
     Y = as.numeric(df_p$Y),
+    density = rep(2, nrow(df_p)),
     beta = demo$truth$beta_true, tau = 0.5,
     X0 = rbind(c(0, 0), c(0.5, -0.5)), k = 1L, s = 8L, se = TRUE
   )
   df <- plot_data_estimates(fit)
-  est <- as.matrix(fit$moment)
+  est <- as.matrix(fit$theta)
   q <- nrow(est)
 
   # Row order: coefficients fastest, targets in blocks.

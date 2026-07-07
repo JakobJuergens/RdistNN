@@ -16,7 +16,8 @@
 #' - Summarize/predict CATE fits with [summary.cate_result()],
 #'   [confint.cate_result()], and [predict.cate_result()].
 #' - Estimate local nonparametric means with [np_dnn()].
-#' - Evaluate local PLQR orthogonal moments with [plqr_dnn()].
+#' - Estimate local PLQR coefficient surfaces and orthogonal moments with
+#'   [plqr_dnn()].
 #' - Inspect fitted local estimators with [diagnostics()].
 #' - Build custom generalized U-statistics with [new_score()],
 #'   [score_eval_batch()], and [score_diff_path()].

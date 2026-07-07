@@ -6,12 +6,11 @@
 #' @keywords internal
 #' @name internal_fastpaths
 #'
-#' @aliases
-#' rustat_jackknife_fast_rank
-#' rustat_dist_l1
-#' rustat_dist_l2
-#' rustat_fast_order
-#' rustat_sort_indices
-#' rustat_dist_l1_order
-#' rustat_dist_l2_order
+#' @aliases rustat_jackknife_fast_rank
+#' @aliases rustat_dist_l1
+#' @aliases rustat_dist_l2
+#' @aliases rustat_fast_order
+#' @aliases rustat_sort_indices
+#' @aliases rustat_dist_l1_order
+#' @aliases rustat_dist_l2_order
 NULL

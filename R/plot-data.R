@@ -129,13 +129,18 @@ plot_data_estimates.cate_result <- function(object, level = 0.95, ...) {
 #' @rdname plot_data_estimates
 #' @export
 plot_data_estimates.plqr_result <- function(object, level = 0.95, ...) {
-  est <- as.matrix(object$moment)
+  est <- if (!is.null(object$theta)) {
+    as.matrix(object$theta)
+  } else {
+    as.matrix(object$moment)
+  }
   coef_names <- rownames(est)
   if (is.null(coef_names)) {
-    coef_names <- paste0("moment_", seq_len(nrow(est)))
+    coef_names <- paste0("theta_", seq_len(nrow(est)))
   }
+  se <- if (identical(object$meta$se_route, "direct_sandwich")) object$se else NULL
   .plot_data_estimates_frame(
-    est = est, se = object$se, x0 = object$x0,
+    est = est, se = se, x0 = object$x0,
     coef_names = coef_names, level = level
   )
 }

@@ -77,11 +77,12 @@ test_that("plot_data_estimates dispatches for cate, plqr, and gmm fits", {
     q = as.numeric(df_p$q_oracle),
     mD = as.matrix(df_p[paste0("mD", 1:2)]),
     Y = as.numeric(df_p$Y),
+    density = rep(2, nrow(df_p)),
     beta = demo$truth$beta_true, tau = 0.5,
     X0 = matrix(0, 2L, 2L), k = 1L, s = 8L, se = TRUE
   )
   df_plqr <- plot_data_estimates(fit_plqr)
-  p_d <- nrow(as.matrix(fit_plqr$moment))
+  p_d <- nrow(as.matrix(fit_plqr$theta))
   expect_identical(nrow(df_plqr), p_d * 2L)
   expect_identical(length(unique(df_plqr$coef)), p_d)
   expect_identical(df_plqr$target_id, rep(1:2, each = p_d))
