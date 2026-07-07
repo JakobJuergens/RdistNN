@@ -430,7 +430,11 @@ plqr_dnn <- function(
   if (!is.null(density_vec) && identical(tuning_mode, "grid")) {
     .abort_bad_arg(
       "tuning_mode",
-      "cannot be \"grid\" when direct PLQR sandwich density values are supplied; use `tuning_mode = \"default\"` or omit `density`/`density_col`",
+      paste0(
+        "cannot be \"grid\" when direct PLQR sandwich density values are ",
+        "supplied; use `tuning_mode = \"default\"` or omit ",
+        "`density`/`density_col`"
+      ),
       quoted = FALSE
     )
   }

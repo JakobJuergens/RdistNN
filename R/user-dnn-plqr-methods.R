@@ -308,7 +308,10 @@ coef.plqr_result <- function(object, ...) {
 vcov.plqr_result <- function(object, target = NULL, ...) {
   if (is.null(object$vcov)) {
     .abort_bad_state(
-      "Direct PLQR variance-covariance matrices are not available. Refit with `density` or `density_col` and `se = TRUE`."
+      paste0(
+        "Direct PLQR variance-covariance matrices are not available. ",
+        "Refit with `density` or `density_col` and `se = TRUE`."
+      )
     )
   }
   if (is.null(target)) {

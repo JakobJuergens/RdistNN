@@ -18,8 +18,8 @@
 #' - Estimate local nonparametric means with [np_dnn()].
 #' - Estimate local PLQR coefficient surfaces and orthogonal moments with
 #'   [plqr_dnn()].
-#' - Summarize/predict PLQR fits with [summary.plqr_result()],
-#'   [confint.plqr_result()], and [predict.plqr_result()].
+#' - Summarize/predict PLQR fits with `summary()`, `confint()`, and
+#'   `predict()` methods.
 #' - Inspect fitted local estimators with [diagnostics()].
 #' - Build custom generalized U-statistics with [new_score()],
 #'   [score_eval_batch()], and [score_diff_path()].
@@ -46,8 +46,7 @@
 #' @aliases RdistNN
 #' @seealso [weights_dnn()], [cate_dnn()], [np_dnn()], [plqr_dnn()],
 #'   [diagnostics()], [summary.cate_result()], [predict.cate_result()],
-#'   [summary.plqr_result()], [predict.plqr_result()], [new_score()],
-#'   [distance_l2()]
+#'   [new_score()], [distance_l2()]
 #' @useDynLib RdistNN, .registration = TRUE
 #' @importFrom stats pbeta plogis rbinom rnorm runif setNames
 "_PACKAGE"

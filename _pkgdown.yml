@@ -161,16 +161,22 @@ reference:
       - print.score_diff_path
       - print.summary.cate_result
       - print.summary.gmm_result
+      - print.summary.plqr_result
       - print.tdnn_np_result
       - print.ustat_score
       - print.weights_result
       - summary.cate_result
       - summary.gmm_result
+      - summary.plqr_result
       - confint.cate_result
       - confint.gmm_result
+      - confint.plqr_result
       - coef.gmm_result
+      - coef.plqr_result
       - vcov.gmm_result
+      - vcov.plqr_result
       - predict.cate_result
+      - predict.plqr_result
 
   - title: Kernel-order tuning
     desc: Tuning specifications, registry helpers, and paper-default rules.
