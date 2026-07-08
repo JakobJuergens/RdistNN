@@ -721,3 +721,138 @@ test_that("print.plqr_result runs without error", {
   txt <- capture.output(print(out))
   expect_true(any(grepl("<plqr_result>", txt, fixed = TRUE)))
 })
+
+test_that("X0 ncol mismatch vs X is rejected", {
+  d <- .make_plqr_data(n = 30L, p = 2L, p_d = 2L, m = 2L, tau = 0.5)
+  expect_error(
+    plqr_dnn(
+      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+      beta = d$beta, tau = d$tau,
+      X0 = matrix(0, 2, ncol(d$X) + 1),
+      distance = "l2", k = 2L, s = 3L, se = FALSE
+    ),
+    regexp = "ncol\\(X0\\) .* ncol\\(X\\)", ignore.case = TRUE
+  )
+})
+
+test_that("se = FALSE bypasses delete-1 jackknife feasibility check for plqr_dnn", {
+  d <- .make_plqr_data(n = 10L, p = 2L, p_d = 1L, m = 2L, tau = 0.5)
+  expect_no_error(
+    plqr_dnn(
+      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+      beta = d$beta, tau = d$tau, X0 = d$X0,
+      distance = "l2", k = 2L, s = nrow(d$X), method = "exact",
+      se = FALSE, jackknife = "loo"
+    )
+  )
+})
+
+test_that("invalid jackknife argument errors clearly for plqr_dnn", {
+  d <- .make_plqr_data(n = 20L, p = 2L, p_d = 1L, m = 3L, tau = 0.5)
+  expect_error(
+    plqr_dnn(
+      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+      beta = d$beta, tau = d$tau, X0 = d$X0,
+      distance = "l2", k = 2L, s = 3L,
+      se = TRUE, jackknife = "bad_option"
+    ),
+    regexp = "one of"
+  )
+})
+
+test_that("constant PLQR moment component implies zero jackknife SE", {
+  d <- .make_plqr_data(n = 18L, p = 2L, p_d = 1L, m = 2L, tau = 0.5)
+  # Force a degenerate case where D == mD everywhere, so g is identically 0
+  # regardless of Y/q/beta, and the fast-jackknife SE on `moment` must be 0.
+  d$mD <- d$D
+  out <- plqr_dnn(
+    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+    beta = d$beta, tau = d$tau, X0 = d$X0,
+    distance = "l2", k = 2L, s = 4L, method = "exact",
+    se = TRUE, jackknife = "fast"
+  )
+  expect_true(all(abs(out$moment) < 1e-12))
+  expect_true(all(abs(out$se) < 1e-12))
+})
+
+test_that("matrix interface reports each missing D/q/mD/Y argument individually", {
+  d <- .make_plqr_data(n = 15L, p = 2L, p_d = 1L, m = 2L, tau = 0.5)
+
+  expect_error(
+    plqr_dnn(X = d$X, q = d$q, mD = d$mD, Y = d$Y, beta = d$beta, tau = d$tau, X0 = d$X0, se = FALSE),
+    regexp = "missing: D", ignore.case = TRUE
+  )
+  expect_error(
+    plqr_dnn(X = d$X, D = d$D, mD = d$mD, Y = d$Y, beta = d$beta, tau = d$tau, X0 = d$X0, se = FALSE),
+    regexp = "missing: q", ignore.case = TRUE
+  )
+  expect_error(
+    plqr_dnn(X = d$X, D = d$D, q = d$q, Y = d$Y, beta = d$beta, tau = d$tau, X0 = d$X0, se = FALSE),
+    regexp = "missing: mD", ignore.case = TRUE
+  )
+  expect_error(
+    plqr_dnn(X = d$X, D = d$D, q = d$q, mD = d$mD, beta = d$beta, tau = d$tau, X0 = d$X0, se = FALSE),
+    regexp = "missing: Y", ignore.case = TRUE
+  )
+})
+
+test_that("data-frame API distinguishes NA vs non-finite x_cols index diagnostics for plqr_dnn", {
+  d <- .make_plqr_data(n = 25L, p = 2L, p_d = 1L, m = 2L, tau = 0.5)
+
+  expect_error(
+    plqr_dnn(
+      data = d$df, x_cols = c(1L, NA_integer_), D_cols = d$D_cols,
+      q_col = "q_oracle", mD_cols = d$mD_cols, y_col = "Y",
+      beta = d$beta, tau = d$tau, X0 = d$X0, k = 2L, s = 3L, se = FALSE
+    ),
+    regexp = "x_cols.*NA", ignore.case = TRUE
+  )
+
+  expect_error(
+    plqr_dnn(
+      data = d$df, x_cols = c(1L, Inf), D_cols = d$D_cols,
+      q_col = "q_oracle", mD_cols = d$mD_cols, y_col = "Y",
+      beta = d$beta, tau = d$tau, X0 = d$X0, k = 2L, s = 3L, se = FALSE
+    ),
+    regexp = "x_cols.*non-finite", ignore.case = TRUE
+  )
+})
+
+test_that("data-frame API distinguishes NA vs non-finite covariate diagnostics for plqr_dnn", {
+  d <- .make_plqr_data(n = 25L, p = 2L, p_d = 1L, m = 2L, tau = 0.5)
+  base <- function(df) {
+    tryCatch(
+      plqr_dnn(
+        data = df, x_cols = d$x_cols, D_cols = d$D_cols,
+        q_col = "q_oracle", mD_cols = d$mD_cols, y_col = "Y",
+        beta = d$beta, tau = d$tau, X0 = d$X0, k = 2L, s = 3L, se = FALSE
+      ),
+      error = conditionMessage
+    )
+  }
+
+  df_na <- d$df
+  df_na[[d$x_cols[[1L]]]][2L] <- NA_real_
+  df_inf <- d$df
+  df_inf[[d$x_cols[[1L]]]][2L] <- Inf
+
+  msg_na <- base(df_na)
+  msg_inf <- base(df_inf)
+
+  expect_match(msg_na, "X.*NA", ignore.case = TRUE)
+  expect_match(msg_inf, "X.*non-finite", ignore.case = TRUE)
+  expect_false(identical(msg_na, msg_inf))
+})
+
+test_that("matrix API rejects non-finite X for plqr_dnn", {
+  d <- .make_plqr_data(n = 20L, p = 2L, p_d = 1L, m = 2L, tau = 0.5)
+  X_bad <- d$X
+  X_bad[3L, 1L] <- Inf
+  expect_error(
+    plqr_dnn(
+      X = X_bad, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+      beta = d$beta, tau = d$tau, X0 = d$X0, k = 2L, s = 3L, se = FALSE
+    ),
+    regexp = "X.*non-finite", ignore.case = TRUE
+  )
+})
