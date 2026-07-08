@@ -44,6 +44,13 @@ and also \code{se.fit} when requested.
 \description{
 Predict from a \code{plqr_result} object at new targets
 }
+\details{
+Coefficient-level standard errors and intervals require the direct PLQR
+sandwich (fit with \code{density} or \code{density_col}); the moment-level jackknife
+SE available on fits without a density input has no proven translation
+into a coefficient-level interval in this package's source theory — see
+\verb{markdown_notes/design/15_plqr_variance_estimation_rationale.md}.
+}
 \examples{
 set.seed(3)
 demo <- plqr_demo_data(n = 80, p = 2, p_d = 2, tau = 0.5, seed = 3)

@@ -23,3 +23,10 @@ A data frame with confidence intervals.
 \description{
 Confidence intervals for \code{plqr_result}
 }
+\details{
+Coefficient-level standard errors and intervals require the direct PLQR
+sandwich (fit with \code{density} or \code{density_col}); the moment-level jackknife
+SE available on fits without a density input has no proven translation
+into a coefficient-level interval in this package's source theory — see
+\verb{markdown_notes/design/15_plqr_variance_estimation_rationale.md}.
+}

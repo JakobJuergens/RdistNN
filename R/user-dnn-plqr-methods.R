@@ -334,6 +334,13 @@ vcov.plqr_result <- function(object, target = NULL, ...) {
 
 #' Confidence intervals for `plqr_result`
 #'
+#' @details
+#' Coefficient-level standard errors and intervals require the direct PLQR
+#' sandwich (fit with `density` or `density_col`); the moment-level jackknife
+#' SE available on fits without a density input has no proven translation
+#' into a coefficient-level interval in this package's source theory — see
+#' `markdown_notes/design/15_plqr_variance_estimation_rationale.md`.
+#'
 #' @param object A `plqr_result` object from [plqr_dnn()].
 #' @param parm Optional coefficient names or indices.
 #' @param level Confidence level.
@@ -389,6 +396,13 @@ confint.plqr_result <- function(object, parm = NULL, level = 0.95,
 
 #' Summarize a `plqr_result`
 #'
+#' @details
+#' Coefficient-level standard errors and intervals require the direct PLQR
+#' sandwich (fit with `density` or `density_col`); the moment-level jackknife
+#' SE available on fits without a density input has no proven translation
+#' into a coefficient-level interval in this package's source theory — see
+#' `markdown_notes/design/15_plqr_variance_estimation_rationale.md`.
+#'
 #' @param object A `plqr_result` object from [plqr_dnn()].
 #' @param level Confidence level.
 #' @param ... Not used.
@@ -428,6 +442,13 @@ print.summary.plqr_result <- function(x, digits = max(3L, getOption("digits") - 
 }
 
 #' Predict from a `plqr_result` object at new targets
+#'
+#' @details
+#' Coefficient-level standard errors and intervals require the direct PLQR
+#' sandwich (fit with `density` or `density_col`); the moment-level jackknife
+#' SE available on fits without a density input has no proven translation
+#' into a coefficient-level interval in this package's source theory — see
+#' `markdown_notes/design/15_plqr_variance_estimation_rationale.md`.
 #'
 #' @param object A `plqr_result` object from [plqr_dnn()].
 #' @param newdata Optional matrix/data frame of target covariates.
@@ -506,8 +527,10 @@ predict.plqr_result <- function(
   if (is.null(model$density)) {
     .abort_bad_state(paste0(
       "Direct PLQR coefficient standard errors are not available for prediction ",
-      "because this object does not retain density values. Refit with `density` ",
-      "or `density_col`."
+      "because this object does not retain density values. The jackknife SE on ",
+      "the moment is not a validated basis for a coefficient-level interval here ",
+      "(see markdown_notes/design/15_plqr_variance_estimation_rationale.md); ",
+      "refit with `density` or `density_col` for coefficient-level inference."
     ))
   }
 
