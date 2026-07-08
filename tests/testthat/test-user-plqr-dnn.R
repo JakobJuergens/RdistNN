@@ -856,3 +856,15 @@ test_that("matrix API rejects non-finite X for plqr_dnn", {
     regexp = "X.*non-finite", ignore.case = TRUE
   )
 })
+
+test_that("data-frame API reports y_col as missing when omitted", {
+  d <- .make_plqr_data(n = 20L, p = 2L, p_d = 1L, m = 2L, tau = 0.5)
+  expect_error(
+    plqr_dnn(
+      data = d$df, x_cols = d$x_cols, D_cols = d$D_cols,
+      q_col = "q_oracle", mD_cols = d$mD_cols,
+      beta = d$beta, tau = d$tau, X0 = d$X0, k = 2L, s = 3L, se = FALSE
+    ),
+    regexp = "missing: y_col", ignore.case = TRUE
+  )
+})

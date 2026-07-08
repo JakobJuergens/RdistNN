@@ -10,7 +10,7 @@ plqr_dnn(
   D_cols = NULL,
   q_col = NULL,
   mD_cols = NULL,
-  y_col = "Y",
+  y_col = NULL,
   beta,
   tau = 0.5,
   X = NULL,
