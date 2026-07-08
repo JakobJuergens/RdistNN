@@ -167,8 +167,21 @@ Two interfaces are supported.
 }
 
 No nuisance models are fit internally; this wrapper assumes \code{q_tau(X)} and
-\code{m_D(X)} are supplied. Density values for direct coefficient inference are
-also supplied by the user rather than estimated internally.
+\code{m_D(X)} are supplied. Despite the \code{q_tau(X)} name (kept for backward
+compatibility), this nuisance plays the role of the partially-linear
+quantile model's nonparametric shape function \eqn{g_0(U)} in the
+conditional Z-estimation theory this estimator implements: the threshold
+is \eqn{D'\beta + g_0(U)}, and \eqn{g_0} alone is not itself a quantile.
+Both \code{q_tau(X)} and \code{m_D(X)} may depend on covariates beyond \code{x_cols}
+(the paper's \eqn{U = (X, Z)}); the package does not restrict their
+domain, since they are supplied pre-computed. Density values for direct
+coefficient inference are also supplied by the user rather than estimated
+internally; they play the role of the paper's local conditional density
+\eqn{q_{0,bx}(D,Z)}, entering only the coefficient Jacobian. See
+\verb{markdown_notes/design/15_plqr_variance_estimation_rationale.md} for the
+full nuisance-notation mapping and for why coefficient-level inference
+requires this direct-sandwich route rather than the jackknife SE used by
+\code{\link[=cate_dnn]{cate_dnn()}}/\code{\link[=np_dnn]{np_dnn()}}.
 
 As in \code{\link[=weights_dnn]{weights_dnn()}}, exact DNN localization uses the full rank permutation
 at each target rather than an \code{s}-nearest-neighbor truncation. The \code{"fast"}

@@ -136,8 +136,21 @@
 #' 2. Matrix interface: pass `X`, `D`, `q`, `mD`, and `Y`.
 #'
 #' No nuisance models are fit internally; this wrapper assumes `q_tau(X)` and
-#' `m_D(X)` are supplied. Density values for direct coefficient inference are
-#' also supplied by the user rather than estimated internally.
+#' `m_D(X)` are supplied. Despite the `q_tau(X)` name (kept for backward
+#' compatibility), this nuisance plays the role of the partially-linear
+#' quantile model's nonparametric shape function \eqn{g_0(U)} in the
+#' conditional Z-estimation theory this estimator implements: the threshold
+#' is \eqn{D'\beta + g_0(U)}, and \eqn{g_0} alone is not itself a quantile.
+#' Both `q_tau(X)` and `m_D(X)` may depend on covariates beyond `x_cols`
+#' (the paper's \eqn{U = (X, Z)}); the package does not restrict their
+#' domain, since they are supplied pre-computed. Density values for direct
+#' coefficient inference are also supplied by the user rather than estimated
+#' internally; they play the role of the paper's local conditional density
+#' \eqn{q_{0,bx}(D,Z)}, entering only the coefficient Jacobian. See
+#' `markdown_notes/design/15_plqr_variance_estimation_rationale.md` for the
+#' full nuisance-notation mapping and for why coefficient-level inference
+#' requires this direct-sandwich route rather than the jackknife SE used by
+#' [cate_dnn()]/[np_dnn()].
 #'
 #' As in [weights_dnn()], exact DNN localization uses the full rank permutation
 #' at each target rather than an `s`-nearest-neighbor truncation. The `"fast"`
