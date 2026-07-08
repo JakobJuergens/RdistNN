@@ -274,6 +274,16 @@ test_that("[inputs/setup] finiteness guards fire at setup", {
   df_bad <- df
   df_bad[[scn$cols$mD[2]]][7] <- -Inf
   expect_error(score_setup(sc, df_bad), "m_D\\(X\\) cannot contain non-finite values", ignore.case = FALSE)
+
+  # X non-finite
+  df_bad <- df
+  df_bad[[scn$x_cols[1]]][4] <- Inf
+  expect_error(score_setup(sc, df_bad), "X cannot contain non-finite values", ignore.case = FALSE)
+
+  # X NA
+  df_bad <- df
+  df_bad[[scn$x_cols[1]]][6] <- NA_real_
+  expect_error(score_setup(sc, df_bad), "X cannot contain `NA` values\\.", ignore.case = FALSE)
 })
 
 test_that("[ratio] where rD_ij != 0, g_i / rD_ij ∈ {tau - 1, tau}", {
