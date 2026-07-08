@@ -9,24 +9,6 @@ skip_if_not(
 
 set.seed(321)
 
-.make_plqr_data <- function(n = 80L, p = 2L, p_d = 2L, m = 4L, tau = 0.5) {
-  demo <- plqr_demo_data(n = n, p = p, p_d = p_d, tau = tau, seed = 1)
-  df <- demo$data
-  X <- as.matrix(df[paste0("X", seq_len(p))])
-  D <- as.matrix(df[paste0("D", seq_len(p_d))])
-  mD <- as.matrix(df[paste0("mD", seq_len(p_d))])
-  q <- as.numeric(df$q_oracle)
-  Y <- as.numeric(df$Y)
-  X0 <- matrix(rnorm(m * p), m, p)
-  list(
-    df = df, X = X, D = D, mD = mD, q = q, Y = Y, X0 = X0,
-    beta = demo$truth$beta_true, tau = tau,
-    x_cols = paste0("X", seq_len(p)),
-    D_cols = paste0("D", seq_len(p_d)),
-    mD_cols = paste0("mD", seq_len(p_d))
-  )
-}
-
 test_that("plqr_dnn matrix API matches direct g-weighted moment identity", {
   d <- .make_plqr_data()
   out <- plqr_dnn(
