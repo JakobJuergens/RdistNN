@@ -171,6 +171,7 @@ reference:
       - confint.cate_result
       - confint.gmm_result
       - confint.plqr_result
+      - coef.cate_result
       - coef.gmm_result
       - coef.plqr_result
       - vcov.gmm_result

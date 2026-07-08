@@ -335,3 +335,14 @@ predict.cate_result <- function(
   }
   list(fit = pred_mat, se.fit = se_hat)
 }
+
+#' Extract coefficients from a `cate_result`
+#'
+#' @param object A `cate_result` object.
+#' @param ... Not used.
+#' @return Named numeric vector of point estimates (`object$tau`), one entry
+#'   per target point.
+#' @export
+coef.cate_result <- function(object, ...) {
+  object$tau
+}

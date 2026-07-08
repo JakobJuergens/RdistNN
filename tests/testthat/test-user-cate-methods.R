@@ -325,3 +325,8 @@ test_that("print.summary.cate_result runs", {
   txt_summary <- capture.output(print(s))
   expect_true(any(grepl("<summary.cate_result>", txt_summary, fixed = TRUE)))
 })
+
+test_that("coef.cate_result returns the tau vector", {
+  obj <- .make_cate_fit(se = FALSE)
+  expect_equal(coef(obj$fit), obj$fit$tau)
+})
