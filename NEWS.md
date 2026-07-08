@@ -2,6 +2,31 @@
 
 ## RdistNN (development)
 
+### PLQR inference, prediction, and tuning-grid mode
+
+- Added the direct PLQR coefficient sandwich (`density`/`density_col`):
+  `plqr_dnn()` now reports coefficient-level `se`, `vcov`, `omega`,
+  `jacobian`, `score_covariance`, and `neff` when a local conditional
+  density is supplied, matching the direct `J, S` sandwich this
+  estimator's source theory specifies (see
+  `markdown_notes/design/15_plqr_variance_estimation_rationale.md`).
+  `confint.plqr_result()` and `summary.plqr_result()` report coefficient
+  inference only through this route.
+- Added `predict.plqr_result()`, including coefficient-level `se.fit`/
+  `interval = "confidence"` support gated on the same direct-sandwich
+  requirement.
+- Added `tuning_mode = c("default", "grid")` to `cate_dnn()`, `np_dnn()`,
+  and `plqr_dnn()`: grid mode evaluates a tuning object's feasible kernel-
+  order candidates and attaches a tidy `tuning_grid` payload
+  (`candidates`, `estimates`, `diagnostics`, `meta`), reusing cached ranks
+  and rank-weight tables rather than refitting per candidate. See
+  `markdown_notes/design/14_integrated_tuning_grid_reuse.md`.
+- Recorded, but deliberately did not build, a PLQR analogue of the
+  `sim-cate-*.R` paper-simulation harness: the Cond_Z_Estimation paper has
+  no PLQR numerical study to mirror, so a simulation harness would require
+  inventing a DGP and comparator methods from scratch. Left as an explicit,
+  flagged future-work item rather than undertaken speculatively.
+
 ### Plotting layer (Phase 3)
 
 - `autoplot()`/`plot()` methods for `plqr_result` (zero-referenced moment
