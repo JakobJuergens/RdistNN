@@ -318,3 +318,76 @@ test_that("predict.plqr_result validates inputs and fitted model state", {
     ignore.case = TRUE
   )
 })
+
+test_that("predict.plqr_result validates fitted model state before computing", {
+  d <- .make_plqr_inference_data(n = 60L, m = 2L)
+  fit <- plqr_dnn(
+    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
+    beta = d$beta, tau = d$tau, X0 = d$X0,
+    method = "exact", k = 2L, s = 6L, se = FALSE
+  )
+
+  bad_x <- fit
+  bad_x$.model$x_mat[1L, 1L] <- Inf
+  expect_error(
+    predict(bad_x, X0 = d$X0),
+    "object$.model$x_mat cannot contain non-finite values",
+    fixed = TRUE
+  )
+
+  bad_d <- fit
+  bad_d$.model$d_mat <- bad_d$.model$d_mat[-1L, , drop = FALSE]
+  expect_error(
+    predict(bad_d, X0 = d$X0),
+    "object$.model$d_mat/object$.model$mD_mat",
+    fixed = TRUE
+  )
+
+  bad_mD_cols <- fit
+  bad_mD_cols$.model$mD_mat <- cbind(bad_mD_cols$.model$mD_mat, 1)
+  expect_error(
+    predict(bad_mD_cols, X0 = d$X0),
+    "object$.model$mD_mat",
+    fixed = TRUE
+  )
+
+  bad_beta <- fit
+  bad_beta$.model$beta <- bad_beta$.model$beta[-1L]
+  expect_error(
+    predict(bad_beta, X0 = d$X0),
+    "object$.model$beta",
+    fixed = TRUE
+  )
+
+  bad_k <- fit
+  bad_k$.model$k <- bad_k$.model$s + 1L
+  expect_error(
+    predict(bad_k, X0 = d$X0),
+    "object$.model$k must satisfy k <= s",
+    fixed = TRUE
+  )
+
+  bad_s <- fit
+  bad_s$.model$s <- nrow(bad_s$.model$x_mat) + 1L
+  expect_error(
+    predict(bad_s, X0 = d$X0),
+    "object$.model$s must satisfy s <= n",
+    fixed = TRUE
+  )
+
+  bad_method <- fit
+  bad_method$.model$method <- "bogus"
+  expect_error(
+    predict(bad_method, X0 = d$X0),
+    "object$.model$method must be one of",
+    fixed = TRUE
+  )
+
+  bad_normalize <- fit
+  bad_normalize$.model$normalize <- NA
+  expect_error(
+    predict(bad_normalize, X0 = d$X0),
+    "object$.model$normalize must be TRUE or FALSE",
+    fixed = TRUE
+  )
+})
