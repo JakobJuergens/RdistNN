@@ -284,7 +284,7 @@
 
 # ── DGP 6: nuisance-efficiency design ────────────────────────────────────────
 
-# Propensity and the legacy Robinson marginal outcome nuisance are aligned with
+# Propensity and the Robinson marginal outcome nuisance are aligned with
 # simple benchmark models.  The DNN simulation methods now use AIPW potential
 # outcome nuisances, so this design mainly remains a full-sample versus
 # cross-fit precision stress test rather than a fully correctly specified
@@ -333,8 +333,8 @@
 #'
 #' Generates a synthetic dataset for the CATE simulation study, including
 #' oracle nuisance quantities \eqn{e}, \eqn{m_0}, \eqn{m_1}, the AIPW score used
-#' by the paper-facing DNN CATE simulations, and the legacy Robinson
-#' pseudo-outcome \eqn{\rho}.
+#' by the paper-facing DNN CATE simulations, and the Robinson pseudo-outcome
+#' \eqn{\rho} used by the Robinson-style estimator route.
 #'
 #' Six designs are available:
 #' \describe{
@@ -393,7 +393,7 @@
 #' \itemize{
 #'   \item `data`: a `data.frame` with columns `X1..Xkx`, `D`, `Y`, and oracle
 #'     nuisances `e_oracle`, `m_oracle`, `m0_oracle`, `m1_oracle`,
-#'     `tau_oracle`, `aipw_oracle`, and legacy `rho_oracle`.
+#'     `tau_oracle`, `aipw_oracle`, and the Robinson pseudo-outcome `rho_oracle`.
 #'   \item `x0`: numeric length-`kx` evaluation point.
 #'   \item `tau_x0`: true treatment effect at `x0`.
 #'   \item `truth`: named list of closures `tau_fn`, `e_fn`, `m0_fn`, `m_fn`.

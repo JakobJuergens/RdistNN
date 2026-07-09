@@ -168,11 +168,13 @@
     return(list(kind = "rank", spec = w))
   }
 
-  # Clear error messages / deprecation for any dist-weight-like inputs
-  if (inherits(weight, "dist_weight") ||
-    (is.list(weight) && identical(weight$.__kind, "dist_weight")) ||
-    (is.list(weight) && (is.function(weight$eval) || is.function(weight$eval_batch)))) {
-    .abort_bad_arg("weight", "dist_weight support has been removed from RdistNN; use a rank_weight")
+  # Distance-style specs (eval/eval_batch lists) are not valid weights.
+  if (is.list(weight) && (is.function(weight$eval) || is.function(weight$eval_batch))) {
+    .abort_bad_arg(
+      "weight",
+      "must be a rank_weight; distance-style specs are not accepted here. Build one with new_rank_weight() or as_rank_weight()",
+      quoted = FALSE
+    )
   }
 
   .abort_bad_arg(

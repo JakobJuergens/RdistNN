@@ -142,7 +142,9 @@ column names propagated from the training data when available;
 \item \code{meta}: metadata (\code{n}, \code{m}, \code{p}, \code{p_d}, \code{k}, \code{s}, \code{method}, \code{distance},
 \code{theta_source = "supplied"}, \code{theta_se_method}, \code{moment_se_method});
 \item when direct coefficient inference is available, \code{theta_vcov},
-\code{theta_omega}, \code{jacobian}, \code{score_covariance}, and \code{neff};
+\code{theta_omega}, \code{jacobian}, \code{score_covariance}, and \code{neff} (the paper's
+effective sample size \eqn{n_{\mathrm{eff}}(x) = 1/\sum_i w_i(x)^2},
+identical to the \code{ess} return extra);
 \item \code{tuning_grid}: in grid mode, a list with \code{candidates}, \code{estimates},
 \code{diagnostics}, and \code{meta} tables. Candidate diagnostics report
 top-5 weight concentration separately from the estimator's \code{k};

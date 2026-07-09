@@ -331,7 +331,9 @@ plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
 #'   - `meta`: metadata (`n`, `m`, `p`, `p_d`, `k`, `s`, `method`, `distance`,
 #'     `theta_source = "supplied"`, `theta_se_method`, `moment_se_method`);
 #'   - when direct coefficient inference is available, `theta_vcov`,
-#'     `theta_omega`, `jacobian`, `score_covariance`, and `neff`;
+#'     `theta_omega`, `jacobian`, `score_covariance`, and `neff` (the paper's
+#'     effective sample size \eqn{n_{\mathrm{eff}}(x) = 1/\sum_i w_i(x)^2},
+#'     identical to the `ess` return extra);
 #'   - `tuning_grid`: in grid mode, a list with `candidates`, `estimates`,
 #'     `diagnostics`, and `meta` tables. Candidate diagnostics report
 #'     top-5 weight concentration separately from the estimator's `k`;

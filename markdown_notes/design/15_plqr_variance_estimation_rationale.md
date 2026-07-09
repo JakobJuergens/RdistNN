@@ -57,26 +57,27 @@ against the paper's formulas during the PLQR-maturity planning pass
 **Consequence for the package's public API:** `confint.plqr_result()` and
 `predict.plqr_result(..., se.fit = TRUE)` only produce coefficient SEs/CIs
 when `density`/`density_col` was supplied at fit time (the direct-sandwich
-route), because that is the only route this repository's theory has proven
-valid. The moment-level jackknife SE (`fit$se` when `density` was not
-supplied) remains available for backward-compatible moment diagnostics, but
-must **not** be treated as a valid basis for a coefficient-level CI on
-`theta` — no theorem in this repository's paper corpus covers that
-translation.
+route, reported in `theta_se`/`theta_vcov`), because that is the only route
+this repository's theory has proven valid. The moment-level jackknife SE
+(`fit$moment_se` when `density` was not supplied) remains available as a
+moment diagnostic, but must **not** be treated as a valid basis for a
+coefficient-level CI on `theta` — no theorem in this repository's paper
+corpus covers that translation.
 
 ## 2. Nuisance notation mapping
 
-RdistNN's PLQR argument names predate the paper's current "coupled-score"
-notation and use a different (looser) naming convention. This table is the
+RdistNN's PLQR argument names were aligned with the paper's current
+"coupled-score" notation in the 2026-07-08 pre-public cleanup
+(`markdown_notes/rdistnn_public_release_cleanup_note.md`). This table is the
 authoritative mapping for anyone connecting code to theory:
 
 | RdistNN name         | Paper symbol                  | Meaning                                                                 | Domain (per paper)          |
 |-----------------------|-------------------------------|--------------------------------------------------------------------------|------------------------------|
-| `q_col` / `q`          | `g_0(U)`                       | Nonparametric partially-linear shape nuisance; enters the threshold as `D'theta + g_0(U)`. It is **not itself a quantile function** — the sum `D'theta_0 + g_0` is the conditional quantile. The name `q_tau(X)` in RdistNN's docs/examples is a legacy label kept for backward compatibility; treat it as `g_0`, not as "the quantile." | `U = (X, Z)`, the full adjustment state — not `X` alone. |
+| `g_col` / `g`          | `g_0(U)`                       | Nonparametric partially-linear shape nuisance; enters the threshold as `D'theta_eval + g_0(U)`. It is **not itself a quantile function** — the sum `D'theta_0 + g_0` is the conditional quantile. (Before the 2026-07-08 pre-public cleanup this input was misleadingly named `q_col`/`q`.) | `U = (X, Z)`, the full adjustment state — not `X` alone. |
 | `mD_cols` / `mD`       | `m_0(U) = E[D \| U]`            | Conditional mean used to residualize the design: `tilde_D = D - m_0(U)`. | `U = (X, Z)` |
 | `density` / `density_col` | `q_{0,bx}(D, Z)`            | Conditional density of `Y` at the fitted quantile value; enters **only** the Jacobian `J(bx)`, never the moment or `S(bx)`. | function of `(D, Z)` given `X = bx` |
 
-Both `q_col`/`q` and `mD_cols`/`mD` are supplied externally by the user
+Both `g_col`/`g` and `mD_cols`/`mD` are supplied externally by the user
 (no nuisance is estimated internally by `plqr_dnn()`), so nothing in the
 implementation actually restricts them to depend on `X` alone — the
 restriction was only in the documentation's phrasing. The roxygen and
