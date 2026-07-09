@@ -32,10 +32,10 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
   fit <- plqr_dnn(
     X = as.matrix(df[paste0("X", 1:2)]),
     D = as.matrix(df[paste0("D", 1:2)]),
-    q = as.numeric(df$q_oracle),
+    g = as.numeric(df$g_oracle),
     mD = as.matrix(df[paste0("mD", 1:2)]),
     Y = as.numeric(df$Y),
-    beta = demo$truth$beta_true, tau = 0.5,
+    theta_eval = demo$truth$theta_true, tau = 0.5,
     X0 = rbind(c(0, 0), c(0.5, 0.5)), k = 1L, s = 8L, se = FALSE
   )
   plot_conditioning(fit)

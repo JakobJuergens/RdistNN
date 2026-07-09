@@ -89,11 +89,11 @@ test_that("multi-coefficient frames interleave coefficients within targets", {
   fit <- plqr_dnn(
     X = as.matrix(df_p[paste0("X", 1:2)]),
     D = as.matrix(df_p[paste0("D", 1:2)]),
-    q = as.numeric(df_p$q_oracle),
+    g = as.numeric(df_p$g_oracle),
     mD = as.matrix(df_p[paste0("mD", 1:2)]),
     Y = as.numeric(df_p$Y),
     density = rep(2, nrow(df_p)),
-    beta = demo$truth$beta_true, tau = 0.5,
+    theta_eval = demo$truth$theta_true, tau = 0.5,
     X0 = rbind(c(0, 0), c(0.5, -0.5)), k = 1L, s = 8L, se = TRUE
   )
   df <- plot_data_estimates(fit)
@@ -105,7 +105,7 @@ test_that("multi-coefficient frames interleave coefficients within targets", {
   for (j in 1:2) {
     block <- df[df$target_id == j, ]
     expect_equal(block$estimate, as.numeric(est[, j]))
-    expect_equal(block$se, as.numeric(as.matrix(fit$se)[, j]))
+    expect_equal(block$se, as.numeric(as.matrix(fit$theta_se)[, j]))
     expect_identical(block$x0_1, rep(unname(fit$x0[j, 1L]), q))
   }
 })
@@ -292,10 +292,10 @@ test_that("PLQR Gram diagnostics satisfy eigenvalue invariants", {
   fit <- plqr_dnn(
     X = as.matrix(df_p[paste0("X", 1:2)]),
     D = as.matrix(df_p[paste0("D", 1:2)]),
-    q = as.numeric(df_p$q_oracle),
+    g = as.numeric(df_p$g_oracle),
     mD = as.matrix(df_p[paste0("mD", 1:2)]),
     Y = as.numeric(df_p$Y),
-    beta = demo$truth$beta_true, tau = 0.5,
+    theta_eval = demo$truth$theta_true, tau = 0.5,
     X0 = rbind(c(0, 0), c(0.5, 0.5)), k = 1L, s = 8L, se = FALSE
   )
   dd <- plot_data_diagnostics(fit)

@@ -1,13 +1,13 @@
 # DNN-based PLQR wrapper (rank-weighted local orthogonal moments)
 
-.plqr_dnn_g_matrix <- function(d_mat, mD_mat, q_vec, y_vec, beta, tau) {
-  thresh <- as.vector(d_mat %*% beta) + q_vec
+.plqr_dnn_score_matrix <- function(d_mat, mD_mat, g_vec, y_vec, theta_eval, tau) {
+  thresh <- as.vector(d_mat %*% theta_eval) + g_vec
   resid <- as.numeric(tau) - as.numeric(y_vec <= thresh)
   (d_mat - mD_mat) * resid
 }
 
 .plqr_dnn_jackknife_se_loo <- function(
-  x_mat, x0_mat, g_mat, distance, method, k, s, normalize, ctx,
+  x_mat, x0_mat, score_mat, distance, method, k, s, normalize, ctx,
   jackknife = c("fast", "loo"),
   precomputed_ranks = NULL
 ) {
@@ -15,17 +15,100 @@
   .dnn_jackknife_se_loo_matrix(
     x_mat = x_mat,
     x0_mat = x0_mat,
-    signal = g_mat,
+    signal = score_mat,
     distance = distance,
     method = method,
     k = k,
     s = s,
     normalize = normalize,
     ctx = ctx,
-    signal_arg = "g",
+    signal_arg = "score",
     jackknife = jackknife,
     precomputed_ranks = precomputed_ranks
   )
+}
+
+#' Observation-level orthogonal PLQR scores at a supplied coefficient
+#'
+#' Computes, for each observation \eqn{i}, the orthogonal PLQR score
+#' \deqn{
+#'   \psi_{i}
+#'   \;=\;
+#'   (\tau - \mathbf{1}\{\,Y_{i} \le D_{i}^{\top}\theta + g_{0}(U_{i})\,\})\,
+#'   (D_{i} - m_{D}(U_{i})) \, ,
+#' }
+#' from supplied nuisance columns. No weights are applied and no localization
+#' is performed; [plqr_dnn()] aggregates these scores with DNN rank weights.
+#'
+#' @param data A \code{data.frame} containing the outcome, regressor, and
+#'   nuisance columns.
+#' @param y_col Name or index of the outcome column in `data`.
+#' @param D_cols Names or indices of partially linear regressor columns in
+#'   `data`.
+#' @param g_col Name or index of the shape-nuisance column in `data` holding
+#'   the values of \eqn{g_0(U)}.
+#' @param mD_cols Names or indices of nuisance columns for `m_D(U)`; must have
+#'   the same length and order as `D_cols`.
+#' @param theta Numeric coefficient vector with length `length(D_cols)`.
+#' @param tau Quantile level in `(0,1)`.
+#'
+#' @return A numeric matrix of size \eqn{n \times p_d} of observation-level
+#'   scores.
+#' @seealso [plqr_dnn()], [plqr_demo_data()].
+#' @examples
+#' demo <- plqr_demo_data(n = 100, p = 2, p_d = 2, tau = 0.5, seed = 1)
+#' scores <- plqr_score_matrix(
+#'   data = demo$data,
+#'   y_col = "Y",
+#'   D_cols = c("D1", "D2"),
+#'   g_col = "g_oracle",
+#'   mD_cols = c("mD1", "mD2"),
+#'   theta = demo$truth$theta_true,
+#'   tau = 0.5
+#' )
+#' head(scores)
+#' @export
+plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
+  if (!is.data.frame(data)) {
+    .abort_bad_arg("data", "must be a data.frame")
+  }
+  if (!is.numeric(theta) || length(theta) < 1L) {
+    .abort_bad_arg("theta", "must be a non-empty numeric vector")
+  }
+  .abort_if_na_or_nonfinite(theta, arg = "theta")
+  theta <- as.numeric(theta)
+  tau <- .validate_scalar_prob(tau, arg = "tau")
+
+  d_mat <- .dnn_col_mat(D_cols, data = data, arg = "D_cols", out_arg = "D")
+  n <- nrow(d_mat)
+  mD_mat <- .dnn_col_mat(mD_cols, data = data, arg = "mD_cols", out_arg = "mD")
+  g_vec <- .dnn_col_vec(g_col, data, n, arg = "g_col", ref = "D_cols")
+  y_vec <- .dnn_col_vec(y_col, data, n, arg = "y_col", ref = "D_cols")
+
+  if (ncol(mD_mat) != ncol(d_mat)) {
+    .abort_bad_arg(
+      "mD_cols",
+      "must have the same length and order as `D_cols`",
+      expected = sprintf("%d columns", ncol(d_mat)),
+      actual = sprintf("%d columns", ncol(mD_mat)),
+      quoted = FALSE
+    )
+  }
+  if (length(theta) != ncol(d_mat)) {
+    .abort_bad_arg(
+      "theta",
+      "length must equal the number of `D_cols` columns",
+      expected = sprintf("length %d", ncol(d_mat)),
+      actual = sprintf("length(theta)=%d", length(theta))
+    )
+  }
+
+  .abort_if_na_or_nonfinite(d_mat, arg = "D_cols")
+  .abort_if_na_or_nonfinite(mD_mat, arg = "mD_cols")
+  .abort_if_na_or_nonfinite(g_vec, arg = "g_col")
+  .abort_if_na_or_nonfinite(y_vec, arg = "y_col")
+
+  .plqr_dnn_score_matrix(d_mat, mD_mat, g_vec, y_vec, theta_eval = theta, tau = tau)
 }
 
 .plqr_validate_density <- function(density, n, arg = "density") {
@@ -62,9 +145,9 @@
 
   score_covariance <- vector("list", m)
   jacobian <- vector("list", m)
-  omega <- vector("list", m)
-  vcov <- vector("list", m)
-  se <- matrix(NA_real_, nrow = p_d, ncol = m)
+  theta_omega <- vector("list", m)
+  theta_vcov <- vector("list", m)
+  theta_se <- matrix(NA_real_, nrow = p_d, ncol = m)
 
   for (j in seq_len(m)) {
     w <- as.numeric(W[, j])
@@ -91,66 +174,68 @@
       omega_j <- (omega_j + t(omega_j)) / 2
       vcov_j <- omega_j / neff[[j]]
       vcov_j <- (vcov_j + t(vcov_j)) / 2
-      se[, j] <- sqrt(pmax(diag(vcov_j), 0))
+      theta_se[, j] <- sqrt(pmax(diag(vcov_j), 0))
     }
     dimnames(omega_j) <- list(coef_names, coef_names)
     dimnames(vcov_j) <- list(coef_names, coef_names)
-    omega[[j]] <- omega_j
-    vcov[[j]] <- vcov_j
+    theta_omega[[j]] <- omega_j
+    theta_vcov[[j]] <- vcov_j
   }
 
-  names(score_covariance) <- names(jacobian) <- names(omega) <-
-    names(vcov) <- target_names
-  se <- .plqr_dimnames_matrix(se, coef_names, target_names)
+  names(score_covariance) <- names(jacobian) <- names(theta_omega) <-
+    names(theta_vcov) <- target_names
+  theta_se <- .plqr_dimnames_matrix(theta_se, coef_names, target_names)
 
   list(
-    se = se,
-    vcov = vcov,
-    omega = omega,
+    theta_se = theta_se,
+    theta_vcov = theta_vcov,
+    theta_omega = theta_omega,
     jacobian = jacobian,
     score_covariance = score_covariance,
     neff = stats::setNames(neff, target_names)
   )
 }
 
-#' PLQR local coefficients and orthogonal moments via DNN rank weights
+#' PLQR local moment evaluation and direct coefficient inference via DNN rank weights
 #'
 #' Compute localized orthogonal PLQR moments
 #' \deqn{
 #'   \mathbb{E}\!\left[
-#'     \left(\tau - \mathbf{1}\{Y \le D^\top \beta + q_{\tau}(X)\}\right)
-#'     \left(D - m_D(X)\right)
+#'     \left(\tau - \mathbf{1}\{Y \le D^\top \theta + g_0(U)\}\right)
+#'     \left(D - m_D(U)\right)
 #'     \;\middle|\; X \approx x_0
 #'   \right]
 #' }
-#' using DNN rank weights at one or multiple target points. When positive
-#' threshold density values are supplied through `density` or `density_col`,
-#' the same fit reports the direct PLQR coefficient sandwich used for standard
-#' errors and confidence intervals.
+#' at a supplied coefficient value `theta_eval`, using DNN rank weights at one
+#' or multiple target points. When positive threshold density values are
+#' supplied through `density` or `density_col`, the same fit reports the
+#' direct PLQR coefficient sandwich used for standard errors and confidence
+#' intervals. No local root solving is performed: `theta` in the result is the
+#' supplied evaluation value (`meta$theta_source = "supplied"`).
 #'
 #' @details
 #' Two interfaces are supported.
 #'
 #' 1. Data-frame interface (recommended): pass `data` with `x_cols`, `D_cols`,
-#'    `q_col`, `mD_cols`, and `y_col`.
-#' 2. Matrix interface: pass `X`, `D`, `q`, `mD`, and `Y`.
+#'    `g_col`, `mD_cols`, and `y_col`.
+#' 2. Matrix interface: pass `X`, `D`, `g`, `mD`, and `Y`.
 #'
-#' No nuisance models are fit internally; this wrapper assumes `q_tau(X)` and
-#' `m_D(X)` are supplied. Despite the `q_tau(X)` name (kept for backward
-#' compatibility), this nuisance plays the role of the partially-linear
-#' quantile model's nonparametric shape function \eqn{g_0(U)} in the
-#' conditional Z-estimation theory this estimator implements: the threshold
-#' is \eqn{D'\beta + g_0(U)}, and \eqn{g_0} alone is not itself a quantile.
-#' Both `q_tau(X)` and `m_D(X)` may depend on covariates beyond `x_cols`
-#' (the paper's \eqn{U = (X, Z)}); the package does not restrict their
-#' domain, since they are supplied pre-computed. Density values for direct
-#' coefficient inference are also supplied by the user rather than estimated
-#' internally; they play the role of the paper's local conditional density
-#' \eqn{q_{0,bx}(D,Z)}, entering only the coefficient Jacobian. See
+#' No nuisance models are fit internally; this wrapper assumes the
+#' partially-linear shape nuisance \eqn{g_0(U)} and the residualizing nuisance
+#' \eqn{m_D(U) = E[D \mid U]} are supplied. The threshold is
+#' \eqn{D'\theta + g_0(U)}; \eqn{g_0} alone is not itself a quantile function.
+#' Both `g` and `mD` may depend on covariates beyond `x_cols` (the paper's
+#' \eqn{U = (X, Z)}); the package does not restrict their domain, since they
+#' are supplied pre-computed. Density values for direct coefficient inference
+#' are also supplied by the user rather than estimated internally; they play
+#' the role of the paper's local conditional density at the threshold,
+#' entering only the coefficient Jacobian. See
 #' `markdown_notes/design/15_plqr_variance_estimation_rationale.md` for the
 #' full nuisance-notation mapping and for why coefficient-level inference
 #' requires this direct-sandwich route rather than the jackknife SE used by
-#' [cate_dnn()]/[np_dnn()].
+#' [cate_dnn()]/[np_dnn()]. Direct coefficient inference requires
+#' `normalize = TRUE`, matching the theorem convention of weights summing to
+#' one per target.
 #'
 #' As in [weights_dnn()], exact DNN localization uses the full rank permutation
 #' at each target rather than an `s`-nearest-neighbor truncation. The `"fast"`
@@ -163,8 +248,8 @@
 #' evaluates the feasible candidates in `tuning`, or the paper default tuning
 #' grid when `tuning` is omitted, and attaches a tidy `tuning_grid` payload.
 #' The payload stores one long-form row per candidate, target, and PLQR moment
-#' component; the public `moment` and `se` matrix fields remain anchored to the
-#' default candidate. Candidate diagnostics include `ess`, `max_weight`,
+#' component; the public `moment` and `moment_se` matrix fields remain anchored
+#' to the default candidate. Candidate diagnostics include `ess`, `max_weight`,
 #' `top_n`, `top5_weight_share`, and `degenerate`; `top_n` is fixed at 5 and
 #' is independent of the estimator's `k`. Direct PLQR sandwich inference from
 #' `density` or `density_col` currently uses `tuning_mode = "default"` only.
@@ -175,24 +260,27 @@
 #' @param x_cols Names or indices of covariate columns in `data`.
 #' @param D_cols Names or indices of partially linear regressor columns in
 #'   `data`.
-#' @param q_col Name or index of the `q_tau(X)` nuisance column in `data`.
-#' @param mD_cols Names or indices of nuisance columns for `m_D(X)`.
+#' @param g_col Name or index of the shape-nuisance column in `data` holding
+#'   the values of \eqn{g_0(U)}.
+#' @param mD_cols Names or indices of nuisance columns for `m_D(U)`.
 #' @param y_col Name or index of the outcome column in `data`.
-#' @param beta Numeric coefficient vector with length `length(D_cols)` (or
-#'   `ncol(D)` in matrix interface).
+#' @param theta_eval Numeric coefficient vector at which the PLQR moment is
+#'   evaluated, with length `length(D_cols)` (or `ncol(D)` in the matrix
+#'   interface). No root solving is performed; the result's `theta` repeats
+#'   this supplied value across targets.
 #' @param tau Quantile level in `(0,1)`.
 #' @param X Numeric matrix (`n x p`) of covariates for the matrix interface.
 #' @param D Numeric matrix (`n x p_d`) of partially linear regressors for the
 #'   matrix interface.
-#' @param q Numeric vector (`n`) with `q_tau(X)` values for the matrix
+#' @param g Numeric vector (`n`) with \eqn{g_0(U)} values for the matrix
 #'   interface.
-#' @param mD Numeric matrix (`n x p_d`) with `m_D(X)` values for the matrix
+#' @param mD Numeric matrix (`n x p_d`) with `m_D(U)` values for the matrix
 #'   interface.
 #' @param Y Numeric outcome vector of length `n` for the matrix interface.
 #' @param density Optional positive numeric vector (`n`) estimating the
-#'   conditional density of `Y` at `D' beta + q`. When supplied with
-#'   `se = TRUE`, PLQR uses the direct coefficient sandwich route and returns
-#'   coefficient standard errors in `se`.
+#'   conditional density of `Y` at the threshold `D' theta_eval + g`. When
+#'   supplied with `se = TRUE`, PLQR uses the direct coefficient sandwich
+#'   route and returns coefficient standard errors in `theta_se`.
 #' @param density_col Optional column name or index in `data` containing the
 #'   positive density values used for the direct coefficient sandwich.
 #' @param X0 Numeric matrix (`m x p`) of target points; mutually exclusive with
@@ -222,46 +310,48 @@
 #'   recomputes leave-one-out weights directly, and `"none"` skips SEs.
 #' @param ctx Optional context passed to distance and ranking components.
 #' @param return Optional extras in addition to the always-returned `moment`,
-#'   `se`, `beta`, `tau`, and `meta`. Allowed values:
-#'   `c("W", "ranks", "ord", "dx", "g", "ess", "neighbors", "tuning")`.
+#'   `theta`, `theta_eval`, `tau`, and `meta`. Allowed values:
+#'   `c("W", "ranks", "ord", "dx", "score", "ess", "neighbors", "tuning")`.
 #'   The `neighbors` extra returns the first `k` nearest observations used
 #'   inside each size-`s` subsample, not the full DNN weight support.
 #'
 #' @return An object of class `plqr_result` with components:
 #'   - `moment`: matrix (`p_d x m`) of localized PLQR moments;
-#'   - `theta`: matrix (`p_d x m`) of supplied coefficient values, repeated
+#'   - `theta`: matrix (`p_d x m`) of the supplied coefficient values, repeated
 #'     across targets until a root-solving path is requested in future versions;
-#'   - `se`: optional coefficient standard errors (`p_d x m`) when `density`
-#'     or `density_col` supplies the direct PLQR sandwich route; otherwise
-#'     optional jackknife standard errors for `moment` for backward-compatible
-#'     moment diagnostics;
-#'   - `beta`: the coefficient vector used in the moment map;
+#'   - `theta_eval`: the supplied coefficient vector used in the moment map;
+#'   - `theta_se`: coefficient standard errors (`p_d x m`), present only when
+#'     `density` or `density_col` supplies the direct PLQR sandwich route;
+#'   - `moment_se`: jackknife standard errors for `moment` (a moment-level
+#'     diagnostic, not coefficient inference), present only when no density is
+#'     supplied and `se = TRUE` with `jackknife != "none"`;
 #'   - `tau`: quantile level;
 #'   - `x0`: the `m x p` matrix of evaluation points, with covariate
 #'     column names propagated from the training data when available;
-#'   - `meta`: metadata (`n`, `m`, `p`, `p_d`, `k`, `s`, `method`, `distance`);
-#'   - when direct coefficient inference is available, `vcov`, `omega`,
-#'     `jacobian`, `score_covariance`, and `neff`;
+#'   - `meta`: metadata (`n`, `m`, `p`, `p_d`, `k`, `s`, `method`, `distance`,
+#'     `theta_source = "supplied"`, `theta_se_method`, `moment_se_method`);
+#'   - when direct coefficient inference is available, `theta_vcov`,
+#'     `theta_omega`, `jacobian`, `score_covariance`, and `neff`;
 #'   - `tuning_grid`: in grid mode, a list with `candidates`, `estimates`,
 #'     `diagnostics`, and `meta` tables. Candidate diagnostics report
 #'     top-5 weight concentration separately from the estimator's `k`;
 #'   - optional extras requested via `return`.
 #'
-#' @seealso [weights_dnn()], [score_plqr_component()], [plqr_demo_data()].
+#' @seealso [weights_dnn()], [plqr_score_matrix()], [plqr_demo_data()].
 #'
 #' @examples
 #' set.seed(1)
 #' demo <- plqr_demo_data(n = 120, p = 2, p_d = 2, tau = 0.5, seed = 1)
-#' demo$data$q_density <- 2
+#' demo$data$density_oracle <- 2
 #' out <- plqr_dnn(
 #'   data = demo$data,
 #'   x_cols = c("X1", "X2"),
 #'   D_cols = c("D1", "D2"),
-#'   q_col = "q_oracle",
+#'   g_col = "g_oracle",
 #'   mD_cols = c("mD1", "mD2"),
 #'   y_col = "Y",
-#'   density_col = "q_density",
-#'   beta = demo$truth$beta_true,
+#'   density_col = "density_oracle",
+#'   theta_eval = demo$truth$theta_true,
 #'   tau = 0.5,
 #'   x0 = c(0, 0),
 #'   method = "exact",
@@ -274,14 +364,14 @@ plqr_dnn <- function(
   data = NULL,
   x_cols = NULL,
   D_cols = NULL,
-  q_col = NULL,
+  g_col = NULL,
   mD_cols = NULL,
   y_col = NULL,
-  beta,
+  theta_eval,
   tau = 0.5,
   X = NULL,
   D = NULL,
-  q = NULL,
+  g = NULL,
   mD = NULL,
   Y = NULL,
   density = NULL,
@@ -307,7 +397,7 @@ plqr_dnn <- function(
   k <- .validate_scalar_int(k, "k")
   normalize <- .validate_scalar_logical(normalize, "normalize")
   se <- .validate_scalar_logical(se, "se")
-  .warn_unknown_return(return, valid = c("W", "ranks", "ord", "dx", "g", "ess", "neighbors", "tuning"))
+  .warn_unknown_return(return, valid = c("W", "ranks", "ord", "dx", "score", "ess", "neighbors", "tuning"))
   if (identical(tuning_mode, "grid") && !is.null(s_arg)) {
     .abort_bad_arg(
       "tuning_mode",
@@ -320,23 +410,23 @@ plqr_dnn <- function(
   }
   tau <- .validate_scalar_prob(tau, arg = "tau")
 
-  if (!is.numeric(beta) || length(beta) < 1L || any(!is.finite(beta))) {
-    .abort_bad_arg("beta", "must be a finite numeric vector")
+  if (!is.numeric(theta_eval) || length(theta_eval) < 1L || any(!is.finite(theta_eval))) {
+    .abort_bad_arg("theta_eval", "must be a finite numeric vector")
   }
-  beta <- as.numeric(beta)
+  theta_eval <- as.numeric(theta_eval)
 
   if (!is.null(data)) {
     if (!is.data.frame(data)) {
       .abort_bad_arg("data", "must be a data.frame")
     }
-    if (is.null(x_cols) || is.null(D_cols) || is.null(q_col) || is.null(mD_cols) || is.null(y_col)) {
-      missing_args <- c("x_cols", "D_cols", "q_col", "mD_cols", "y_col")[
-        c(is.null(x_cols), is.null(D_cols), is.null(q_col), is.null(mD_cols), is.null(y_col))
+    if (is.null(x_cols) || is.null(D_cols) || is.null(g_col) || is.null(mD_cols) || is.null(y_col)) {
+      missing_args <- c("x_cols", "D_cols", "g_col", "mD_cols", "y_col")[
+        c(is.null(x_cols), is.null(D_cols), is.null(g_col), is.null(mD_cols), is.null(y_col))
       ]
       .abort_bad_arg(
-        "x_cols/D_cols/q_col/mD_cols/y_col",
+        "x_cols/D_cols/g_col/mD_cols/y_col",
         "must be provided with `data=` interface",
-        expected = "all of `x_cols`, `D_cols`, `q_col`, `mD_cols`, and `y_col` are non-NULL",
+        expected = "all of `x_cols`, `D_cols`, `g_col`, `mD_cols`, and `y_col` are non-NULL",
         actual = sprintf("missing: %s", paste(missing_args, collapse = ", ")),
         quoted = FALSE
       )
@@ -348,7 +438,7 @@ plqr_dnn <- function(
 
     d_mat <- .dnn_col_mat(D_cols, data = data, arg = "D_cols", out_arg = "D")
     mD_mat <- .dnn_col_mat(mD_cols, data = data, arg = "mD_cols", out_arg = "mD")
-    q_vec <- .dnn_col_vec(q_col, data, n, arg = "q_col", ref = "X")
+    g_vec <- .dnn_col_vec(g_col, data, n, arg = "g_col", ref = "X")
     y_vec <- .dnn_col_vec(y_col, data, n, arg = "y_col", ref = "X")
     if (!is.null(density_col) && !is.null(density)) {
       .abort_bad_arg(
@@ -372,12 +462,12 @@ plqr_dnn <- function(
         expected = "non-NULL `X`, or use the `data=` interface"
       )
     }
-    if (is.null(D) || is.null(q) || is.null(mD) || is.null(Y)) {
-      missing_args <- c("D", "q", "mD", "Y")[c(is.null(D), is.null(q), is.null(mD), is.null(Y))]
+    if (is.null(D) || is.null(g) || is.null(mD) || is.null(Y)) {
+      missing_args <- c("D", "g", "mD", "Y")[c(is.null(D), is.null(g), is.null(mD), is.null(Y))]
       .abort_bad_arg(
-        "D/q/mD/Y",
+        "D/g/mD/Y",
         "must all be provided for the matrix interface",
-        expected = "non-NULL `D`, `q`, `mD`, and `Y`",
+        expected = "non-NULL `D`, `g`, `mD`, and `Y`",
         actual = sprintf("missing: %s", paste(missing_args, collapse = ", ")),
         quoted = FALSE
       )
@@ -389,7 +479,7 @@ plqr_dnn <- function(
 
     d_mat <- .validate_matrix_nonempty(D, arg = "D")
     mD_mat <- .validate_matrix_nonempty(mD, arg = "mD")
-    q_vec <- .validate_vector_nrow(q, n, arg = "q", ref = "X", strict = TRUE)
+    g_vec <- .validate_vector_nrow(g, n, arg = "g", ref = "X", strict = TRUE)
     y_vec <- .validate_vector_nrow(Y, n, arg = "Y", ref = "X", strict = TRUE)
     if (!is.null(density_col)) {
       .abort_bad_arg(
@@ -424,18 +514,18 @@ plqr_dnn <- function(
     )
   }
   p_d <- ncol(d_mat)
-  if (length(beta) != p_d) {
+  if (length(theta_eval) != p_d) {
     .abort_bad_arg(
-      "beta",
+      "theta_eval",
       "length must equal ncol(D)",
       expected = sprintf("ncol(D)=%d", p_d),
-      actual = sprintf("length(beta)=%d", length(beta))
+      actual = sprintf("length(theta_eval)=%d", length(theta_eval))
     )
   }
 
   .abort_if_na_or_nonfinite(d_mat, arg = "D")
-  .abort_if_na_or_nonfinite(mD_mat, arg = "m_D(X)")
-  .abort_if_na_or_nonfinite(q_vec, arg = "q_tau(X)")
+  .abort_if_na_or_nonfinite(mD_mat, arg = "mD")
+  .abort_if_na_or_nonfinite(g_vec, arg = "g")
   .abort_if_na_or_nonfinite(y_vec, arg = "Y")
   if (!is.null(density_vec)) {
     density_vec <- .plqr_validate_density(density_vec, n, arg = "density")
@@ -447,6 +537,17 @@ plqr_dnn <- function(
         "cannot be \"grid\" when direct PLQR sandwich density values are ",
         "supplied; use `tuning_mode = \"default\"` or omit ",
         "`density`/`density_col`"
+      ),
+      quoted = FALSE
+    )
+  }
+  if (!is.null(density_vec) && isTRUE(se) && !isTRUE(normalize)) {
+    .abort_bad_arg(
+      "normalize",
+      paste0(
+        "must be TRUE for direct PLQR coefficient inference; the sandwich ",
+        "formulas assume weights that sum to one per target. Use ",
+        "`normalize = TRUE`, or omit `density`/`density_col`"
       ),
       quoted = FALSE
     )
@@ -489,8 +590,8 @@ plqr_dnn <- function(
   m_out <- weight_fit$m
 
   d_resid_mat <- d_mat - mD_mat
-  g_mat <- .plqr_dnn_g_matrix(d_mat, mD_mat, q_vec, y_vec, beta = beta, tau = tau)
-  moment_hat <- .dnn_estimate_from_signal(g_mat, weight_matrix, n = n, arg = "g")
+  score_mat <- .plqr_dnn_score_matrix(d_mat, mD_mat, g_vec, y_vec, theta_eval = theta_eval, tau = tau)
+  moment_hat <- .dnn_estimate_from_signal(score_mat, weight_matrix, n = n, arg = "score")
   rownames(moment_hat) <- paste0("comp_", seq_len(p_d))
   colnames(moment_hat) <- paste0("target_", seq_len(m_out))
   target_names <- colnames(moment_hat)
@@ -498,10 +599,10 @@ plqr_dnn <- function(
   if (is.null(coef_names)) {
     coef_names <- paste0("theta_", seq_len(p_d))
   }
-  theta_hat <- matrix(rep(beta, times = m_out), nrow = p_d, ncol = m_out)
+  theta_hat <- matrix(rep(theta_eval, times = m_out), nrow = p_d, ncol = m_out)
   theta_hat <- .plqr_dimnames_matrix(theta_hat, coef_names, target_names)
 
-  se_hat <- NULL
+  theta_se <- NULL
   moment_se <- NULL
   direct_fit <- NULL
   direct_available <- !is.null(density_vec)
@@ -515,12 +616,12 @@ plqr_dnn <- function(
       coef_names = coef_names,
       target_names = target_names
     )
-    se_hat <- direct_fit$se
+    theta_se <- direct_fit$theta_se
   } else if (isTRUE(se) && jackknife != "none") {
-    se_hat <- .plqr_dnn_jackknife_se_loo(
+    moment_se <- .plqr_dnn_jackknife_se_loo(
       x_mat = x_mat,
       x0_mat = x0_mat,
-      g_mat = g_mat,
+      score_mat = score_mat,
       distance = distance,
       method = method,
       k = k,
@@ -530,17 +631,16 @@ plqr_dnn <- function(
       jackknife = jackknife,
       precomputed_ranks = wt$ranks
     )
-    rownames(se_hat) <- rownames(moment_hat)
-    colnames(se_hat) <- colnames(moment_hat)
-    moment_se <- se_hat
+    rownames(moment_se) <- rownames(moment_hat)
+    colnames(moment_se) <- colnames(moment_hat)
   }
 
   out <- list(
     moment = moment_hat,
     theta = theta_hat,
-    se = se_hat,
+    theta_se = theta_se,
     moment_se = moment_se,
-    beta = beta,
+    theta_eval = theta_eval,
     tau = tau,
     x0 = .dnn_x0_with_names(x0_mat, x_mat),
     meta = list(
@@ -548,15 +648,15 @@ plqr_dnn <- function(
       k = k, s = s,
       method = method, distance = .dnn_distance_name(distance),
       jackknife = if (isTRUE(se) && !isTRUE(direct_available)) jackknife else "none",
-      se_route = if (isTRUE(se) && isTRUE(direct_available)) "direct_sandwich"
-        else if (isTRUE(se) && jackknife != "none") "moment_jackknife"
-        else "none",
+      theta_source = "supplied",
+      theta_se_method = if (isTRUE(se) && isTRUE(direct_available)) "direct_sandwich" else "none",
+      moment_se_method = if (isTRUE(se) && !isTRUE(direct_available) && jackknife != "none") "jackknife" else "none",
       coef_names = coef_names
     )
   )
   if (!is.null(direct_fit)) {
-    out$vcov <- direct_fit$vcov
-    out$omega <- direct_fit$omega
+    out$theta_vcov <- direct_fit$theta_vcov
+    out$theta_omega <- direct_fit$theta_omega
     out$jacobian <- direct_fit$jacobian
     out$score_covariance <- direct_fit$score_covariance
     out$neff <- direct_fit$neff
@@ -570,16 +670,16 @@ plqr_dnn <- function(
     k = k,
     tuning_payload = tuning_payload
   )
-  if ("g" %in% return) out$g <- g_mat
+  if ("score" %in% return) out$score <- score_mat
   if (identical(tuning_mode, "grid")) {
     out$tuning_grid <- .plqr_dnn_tuning_grid(
       candidates = tuning_payload$grid$candidates,
       ranks = wt$ranks,
       moment_hat = moment_hat,
-      se_hat = se_hat,
+      se_hat = moment_se,
       x_mat = x_mat,
       x0_mat = x0_mat,
-      g_mat = g_mat,
+      score_mat = score_mat,
       distance = distance,
       method = method,
       k = k,
@@ -591,7 +691,7 @@ plqr_dnn <- function(
     )
   }
   # Internal fit state used by diagnostics and calibration plotting.
-  # below_threshold is the indicator 1{Y <= D'beta + q} entering the
+  # below_threshold is the indicator 1{Y <= D'theta_eval + g} entering the
   # quantile score; its weighted mean per target is the local quantile
   # calibration checked by plot_calibration().
   out$.model <- list(
@@ -606,9 +706,9 @@ plqr_dnn <- function(
     ctx = ctx,
     ranks = if (identical(tuning_mode, "grid")) wt$ranks else NULL,
     d_resid_mat = d_resid_mat,
-    below_threshold = as.numeric(y_vec <= as.vector(d_mat %*% beta) + q_vec),
+    below_threshold = as.numeric(y_vec <= as.vector(d_mat %*% theta_eval) + g_vec),
     density = density_vec,
-    beta = beta,
+    theta_eval = theta_eval,
     tau = tau,
     x_cols = if (!is.null(data)) x_cols else NULL,
     coef_names = coef_names
@@ -660,10 +760,10 @@ plqr_dnn <- function(
 }
 
 .plqr_dnn_grid_se_fn <- function(
-  ranks, g_mat, x_mat, x0_mat, distance, method, k, normalize, ctx, jackknife
+  ranks, score_mat, x_mat, x0_mat, distance, method, k, normalize, ctx, jackknife
 ) {
   force(ranks)
-  force(g_mat)
+  force(score_mat)
   force(x_mat)
   force(x0_mat)
   force(distance)
@@ -678,10 +778,10 @@ plqr_dnn <- function(
     se <- if (identical(jackknife, "fast")) {
       spec <- .plqr_dnn_rank_weight_spec(method = method, k = k, s = s, normalize = normalize)
       loo <- if (is.null(tab_jk)) {
-        .dnn_loo_loop(g_mat, ranks, spec)
+        .dnn_loo_loop(score_mat, ranks, spec)
       } else {
         .dnn_loo_prefix(
-          g_mat,
+          score_mat,
           ranks,
           tab_jk,
           tab_full = attr(tab_jk, "tab_full", exact = TRUE)
@@ -689,7 +789,7 @@ plqr_dnn <- function(
       }
       .dnn_jackknife_se_from_loo(
         loo = loo,
-        q = ncol(g_mat),
+        q = ncol(score_mat),
         n = nrow(ranks),
         m = ncol(ranks)
       )
@@ -697,7 +797,7 @@ plqr_dnn <- function(
       .plqr_dnn_jackknife_se_loo(
         x_mat = x_mat,
         x0_mat = x0_mat,
-        g_mat = g_mat,
+        score_mat = score_mat,
         distance = distance,
         method = method,
         k = k,
@@ -770,7 +870,7 @@ plqr_dnn <- function(
   se_hat,
   x_mat,
   x0_mat,
-  g_mat,
+  score_mat,
   distance,
   method,
   k,
@@ -784,7 +884,7 @@ plqr_dnn <- function(
   se_fn <- if (isTRUE(se) && !identical(jackknife, "none")) {
     .plqr_dnn_grid_se_fn(
       ranks = ranks,
-      g_mat = g_mat,
+      score_mat = score_mat,
       x_mat = x_mat,
       x0_mat = x0_mat,
       distance = distance,
@@ -810,7 +910,7 @@ plqr_dnn <- function(
       )
     },
     estimate_fn = function(W, candidate_row) {
-      moment <- .dnn_estimate_from_signal(g_mat, W, n = nrow(x_mat), arg = "g")
+      moment <- .dnn_estimate_from_signal(score_mat, W, n = nrow(x_mat), arg = "score")
       rownames(moment) <- paste0("comp_", seq_len(nrow(moment)))
       colnames(moment) <- paste0("target_", seq_len(ncol(moment)))
       .plqr_dnn_grid_estimates(moment = moment, se = NULL)
@@ -832,7 +932,7 @@ plqr_dnn <- function(
     engine_meta = grid$meta,
     n = nrow(x_mat),
     p = ncol(x_mat),
-    p_d = ncol(g_mat),
+    p_d = ncol(score_mat),
     k = k,
     method = method,
     distance = distance,

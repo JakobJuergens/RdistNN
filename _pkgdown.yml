@@ -108,9 +108,9 @@ reference:
       - rank_weight_eval_batch
       - as_rank_weight
       - is_rank_weight
-      - register_rank
-      - get_rank
-      - rank_names
+      - register_rank_weight
+      - get_rank_weight
+      - rank_weight_names
       - rank_weight_dnn_exact
       - rank_weight_dnn_asymp
       - dnn_weights_exact_full_from_ranks
@@ -214,5 +214,5 @@ reference:
       - np_demo_subsets
       - plqr_demo_data
       - plqr_demo_subsets
-      - plqr_moment
+      - plqr_score_matrix
       - ord_to_ranks

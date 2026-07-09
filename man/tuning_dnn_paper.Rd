@@ -5,16 +5,16 @@
 \title{Paper-default undersmoothing rule for kernel order}
 \usage{
 tuning_dnn_paper(
-  kappa = 1,
-  kappa_grid = c(0.75, 1, 1.25, 1.5),
+  lambda = 1,
+  lambda_grid = c(0.75, 1, 1.25, 1.5),
   rounding = "floor",
   kx_override = NULL
 )
 }
 \arguments{
-\item{kappa}{Numeric scalar tuning constant.}
+\item{lambda}{Numeric scalar tuning constant.}
 
-\item{kappa_grid}{Numeric vector of candidate constants for grid mode.}
+\item{lambda_grid}{Numeric vector of candidate constants for grid mode.}
 
 \item{rounding}{One of \code{"floor"}, \code{"ceiling"}, or \code{"round"}.}
 
@@ -25,8 +25,8 @@ A \code{dnn_tuning} spec.
 }
 \description{
 Builds a tuning spec implementing
-\deqn{s(\kappa) = \lfloor \kappa n^{(k_x+1)/(k_x+2)} \rfloor}
-with default \eqn{\kappa = 1} and optional candidate grid.
+\deqn{s(\lambda) = \lfloor \lambda n^{(k_x+1)/(k_x+2)} \rfloor}
+with default \eqn{\lambda = 1} and optional candidate grid.
 }
 \examples{
 tun <- tuning_dnn_paper()

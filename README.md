@@ -11,23 +11,26 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 [![test-coverage](https://github.com/JakobJuergens/RdistNN/actions/workflows/test-coverage.yaml/badge.svg)](https://github.com/JakobJuergens/RdistNN/actions/workflows/test-coverage.yaml)
 <!-- badges: end -->
 
-**RdistNN** is a modular toolkit for distance-localized estimation with
-DNN rank weights and generalized U-statistics.
+**RdistNN** implements distributional nearest-neighbor (DNN)
+localization for local conditional moment and Z-estimation problems.
 
 - Core distance/rank/weight primitives (`weights_dnn()`,
   `weights_matrix()`, custom registries)
 - User-level wrappers for localized estimation: `np_dnn()`,
-  `cate_dnn()`, `plqr_dnn()`, and `gmm_dnn()`
+  `cate_dnn()`, and `plqr_dnn()`
 - Unified diagnostics for fitted local estimators via `diagnostics()`
-- Built-in post-estimation methods for CATE (`summary()`, `confint()`,
+- Built-in post-estimation methods (`summary()`, `confint()`,
   `predict()`)
 - Fast delete-1 jackknife options (`jackknife = "fast"` and `"loo"`) for
   standard errors
 - Simulation infrastructure for the paper’s CATE study:
   `sim_cate_data()`, `sim_cate_one_rep()`, `sim_cate_run()`,
   `summarise_sim_results()`
-- Local IV-GMM estimator and simulation layer: `gmm_model_dr_iv()`,
-  `gmm_dnn()`, `sim_iv_data()`, `sim_iv_run()`, `iv_demo_data()`
+- Experimental companion functionality: local IV-GMM wrappers and
+  simulation helpers (`gmm_model_dr_iv()`, `gmm_dnn()`, `sim_iv_data()`,
+  `sim_iv_run()`, `iv_demo_data()`) are included for ongoing
+  companion-paper development; their API and theorem alignment may
+  change before the GMM paper is released
 
 > Status: active research package. APIs may continue to evolve.
 
@@ -113,39 +116,48 @@ diagnostics(fit_cate)
 predict(fit_cate, x0 = c(0.2, -0.1), interval = "confidence")
 ```
 
-### 3) Local PLQR Coefficients and Orthogonal Moments (`plqr_dnn`)
+### 3) Local PLQR Orthogonal Moments (`plqr_dnn`)
+
+PLQR support currently evaluates localized orthogonal PLQR moments and
+direct-sandwich coefficient uncertainty at supplied coefficient values.
+Local root-solving for target-specific PLQR coefficients is under
+development. Coefficient-level standard errors and confidence intervals
+require threshold-density values via `density` / `density_col`.
 
 ``` r
 library(RdistNN)
 
 demo_plqr <- plqr_demo_data(n = 250, p = 2, p_d = 2, tau = 0.5, seed = 1)
-demo_plqr$data$q_density <- 2
+demo_plqr$data$density_oracle <- 2 # toy/oracle density for this example only
 
 fit_plqr <- plqr_dnn(
   data = demo_plqr$data,
   x_cols = c("X1", "X2"),
   D_cols = c("D1", "D2"),
-  q_col = "q_oracle",
+  g_col = "g_oracle",
   mD_cols = c("mD1", "mD2"),
   y_col = "Y",
-  density_col = "q_density",
-  beta = demo_plqr$truth$beta_true,
+  density_col = "density_oracle",
+  theta_eval = demo_plqr$truth$theta_true,
   tau = 0.5,
   x0 = c(0, 0),
   distance = "l2",
   method = "exact",
-  k = 1L, s = 3L,
+  k = 1L,
+  tuning = tuning_dnn_paper(),
   se = TRUE,
-  jackknife = "fast",
-  return = c("W", "g", "ess")
+  return = c("W", "score", "ess")
 )
 
 summary(fit_plqr)
 confint(fit_plqr)
 predict(fit_plqr, x0 = c(0.25, -0.25), interval = "confidence")
-fit_plqr$moment
 diagnostics(fit_plqr)
 ```
+
+Without a density input, `plqr_dnn()` still evaluates the localized
+moment and reports `moment_se`, a jackknife **moment diagnostic**; that
+is not coefficient-level inference.
 
 ### 4) CATE Simulation Study
 
@@ -171,7 +183,12 @@ raw <- sim_cate_run(
 summarise_sim_results(raw)
 ```
 
-### 5) Local IV-GMM Estimation and Simulation
+### 5) Local IV-GMM Estimation and Simulation (experimental)
+
+Experimental companion functionality: local IV-GMM wrappers and
+simulation helpers are included for ongoing companion-paper development.
+Their API and theorem alignment may change before the GMM paper is
+released.
 
 ``` r
 library(RdistNN)
@@ -232,7 +249,7 @@ register_distance("linf_demo", function(X, x0, ctx = NULL) {
   apply(abs(X - matrix(x0, nrow(X), ncol(X), byrow = TRUE)), 1L, max)
 })
 
-register_rank("inv_rank_demo", function(ranks) {
+register_rank_weight("inv_rank_demo", function(ranks) {
   w <- 1 / as.numeric(ranks)
   w / sum(w)
 })
@@ -242,7 +259,7 @@ W <- weights_matrix(
   X = X,
   x0 = c(0, 0),
   ranking = "linf_demo",
-  weight = get_rank("inv_rank_demo"),
+  weight = get_rank_weight("inv_rank_demo"),
   return = "W"
 )$W
 dim(W)

@@ -11,7 +11,7 @@ skip_if_not(
   expect_s3_class(candidates, "data.frame")
   expect_true(all(c(
     "candidate_id", "computed_key", "is_default", "feasible",
-    "reason", "status", "kappa", "s"
+    "reason", "status", "lambda", "s"
   ) %in% names(candidates)))
   expect_type(candidates$candidate_id, "character")
   expect_type(candidates$computed_key, "character")
@@ -43,11 +43,11 @@ test_that("manual scalar s gets the common one-row candidate schema", {
   expect_true(candidates$feasible[1L])
   expect_equal(candidates$reason, "ok")
   expect_equal(candidates$status, "ok")
-  expect_true(is.na(candidates$kappa[1L]))
+  expect_true(is.na(candidates$lambda[1L]))
 })
 
 test_that("paper tuning formats candidate ids and identifies the default row", {
-  tun <- tuning_dnn_paper(kappa = 1, kappa_grid = c(0.75, 1, 1.25), rounding = "floor")
+  tun <- tuning_dnn_paper(lambda = 1, lambda_grid = c(0.75, 1, 1.25), rounding = "floor")
   res <- RdistNN:::.dnn_resolve_s(
     s = NULL,
     tuning = tun,
@@ -61,7 +61,7 @@ test_that("paper tuning formats candidate ids and identifies the default row", {
   candidates <- res$tuning$grid$candidates
   .expect_layer3_schema(candidates)
   expect_equal(res$s, 177L)
-  expect_equal(candidates$candidate_id, c("kappa_0p75", "kappa_1", "kappa_1p25"))
+  expect_equal(candidates$candidate_id, c("lambda_0p75", "lambda_1", "lambda_1p25"))
   expect_equal(candidates$computed_key, c("s_133", "s_177", "s_222"))
   expect_equal(candidates$is_default, c(FALSE, TRUE, FALSE))
   expect_true(all(candidates$feasible))
@@ -71,10 +71,10 @@ test_that("paper tuning formats candidate ids and identifies the default row", {
 test_that("duplicate candidate ids are suffixed and duplicate s shares computed keys", {
   tun <- new_tuning(
     name = "duplicate_probe",
-    eval = function(...) list(s = 4L, meta = list(kappa = 1)),
+    eval = function(...) list(s = 4L, meta = list(lambda = 1)),
     eval_grid = function(...) {
       data.frame(
-        kappa = c(1, 1, 1.25, NA, NA),
+        lambda = c(1, 1, 1.25, NA, NA),
         s = c(4L, 4L, 4L, 7L, 7L),
         stringsAsFactors = FALSE
       )
@@ -94,7 +94,7 @@ test_that("duplicate candidate ids are suffixed and duplicate s shares computed 
   .expect_layer3_schema(candidates)
   expect_equal(
     candidates$candidate_id,
-    c("kappa_1", "kappa_1__2", "kappa_1p25", "s_7", "s_7__2")
+    c("lambda_1", "lambda_1__2", "lambda_1p25", "s_7", "s_7__2")
   )
   expect_equal(candidates$computed_key, c("s_4", "s_4", "s_4", "s_7", "s_7"))
   expect_equal(candidates$is_default, c(TRUE, FALSE, FALSE, FALSE, FALSE))
@@ -103,10 +103,10 @@ test_that("duplicate candidate ids are suffixed and duplicate s shares computed 
 test_that("infeasible non-default candidates are recorded in status", {
   tun <- new_tuning(
     name = "infeasible_probe",
-    eval = function(...) list(s = 3L, meta = list(kappa = 1)),
+    eval = function(...) list(s = 3L, meta = list(lambda = 1)),
     eval_grid = function(...) {
       data.frame(
-        kappa = c(0.5, 1, 2),
+        lambda = c(0.5, 1, 2),
         s = c(1L, 3L, 40L),
         stringsAsFactors = FALSE
       )
@@ -133,10 +133,10 @@ test_that("infeasible non-default candidates are recorded in status", {
 test_that("custom grids get a synthetic default row when the default s is absent", {
   tun <- new_tuning(
     name = "synthetic_default_probe",
-    eval = function(...) list(s = 6L, meta = list(kappa = 2)),
+    eval = function(...) list(s = 6L, meta = list(lambda = 2)),
     eval_grid = function(...) {
       data.frame(
-        kappa = c(0.5, 1),
+        lambda = c(0.5, 1),
         s = c(3L, 4L),
         label = c("low", "mid"),
         stringsAsFactors = FALSE
@@ -157,9 +157,9 @@ test_that("custom grids get a synthetic default row when the default s is absent
   .expect_layer3_schema(candidates)
   expect_equal(nrow(candidates), 3L)
   expect_equal(candidates$s, c(6L, 3L, 4L))
-  expect_equal(candidates$candidate_id, c("s_6", "kappa_0p5", "kappa_1"))
+  expect_equal(candidates$candidate_id, c("s_6", "lambda_0p5", "lambda_1"))
   expect_equal(candidates$is_default, c(TRUE, FALSE, FALSE))
-  expect_true(is.na(candidates$kappa[1L]))
+  expect_true(is.na(candidates$lambda[1L]))
   expect_true(is.na(candidates$label[1L]))
 })
 
@@ -177,9 +177,9 @@ test_that("wrappers still evaluate only the default candidate", {
   )
   tun <- new_tuning(
     name = "multi_candidate_no_eval",
-    eval = function(...) list(s = 4L, meta = list(kappa = 1)),
+    eval = function(...) list(s = 4L, meta = list(lambda = 1)),
     eval_grid = function(...) {
-      data.frame(kappa = c(0.75, 1, 1.25), s = c(3L, 4L, 5L), stringsAsFactors = FALSE)
+      data.frame(lambda = c(0.75, 1, 1.25), s = c(3L, 4L, 5L), stringsAsFactors = FALSE)
     }
   )
   set.seed(3107)

@@ -28,7 +28,7 @@ skip_if_not(
 
 .layer4_candidates <- function(
   s_grid = c(1L, 2L, 2L, 4L),
-  kappa_grid = c(0.5, 1, 1.25, 2),
+  lambda_grid = c(0.5, 1, 1.25, 2),
   default_s = 2L,
   default_kappa = 1,
   n = 5L,
@@ -38,10 +38,10 @@ skip_if_not(
 ) {
   tun <- new_tuning(
     name = "layer4_probe",
-    eval = function(...) list(s = default_s, meta = list(kappa = default_kappa)),
+    eval = function(...) list(s = default_s, meta = list(lambda = default_kappa)),
     eval_grid = function(...) {
       data.frame(
-        kappa = kappa_grid,
+        lambda = lambda_grid,
         s = s_grid,
         stringsAsFactors = FALSE
       )
@@ -137,8 +137,8 @@ test_that("grid engine computes duplicate feasible keys once and reports all row
   dup <- out$estimates[out$estimates$computed_key == "s_2", ]
   expect_equal(unique(dup$status), "ok")
   expect_equal(
-    dup$estimate[dup$candidate_id == "kappa_1"],
-    dup$estimate[dup$candidate_id == "kappa_1p25"],
+    dup$estimate[dup$candidate_id == "lambda_1"],
+    dup$estimate[dup$candidate_id == "lambda_1p25"],
     tolerance = 1e-12
   )
   expect_equal(out$meta$n_feasible, 3L)
@@ -217,7 +217,7 @@ test_that("grid engine computes table diagnostics from the rank-weight table", {
   ranks <- .layer4_ranks()
   candidates <- .layer4_candidates(
     s_grid = 3L,
-    kappa_grid = 1,
+    lambda_grid = 1,
     default_s = 3L,
     n = 5L,
     k = 2L,
@@ -247,7 +247,7 @@ test_that("grid engine diagnostic top share is independent of estimator k", {
   ranks <- matrix(as.integer(seq_len(6L)), ncol = 1L)
   candidates <- .layer4_candidates(
     s_grid = 3L,
-    kappa_grid = 1,
+    lambda_grid = 1,
     default_s = 3L,
     n = 6L,
     k = 1L,
@@ -275,7 +275,7 @@ test_that("grid engine falls back to rank_weight_eval_batch when no table is ava
   ranks <- .layer4_ranks()
   candidates <- .layer4_candidates(
     s_grid = 2L,
-    kappa_grid = 1,
+    lambda_grid = 1,
     default_s = 2L,
     n = 5L,
     k = 1L,

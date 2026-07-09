@@ -138,7 +138,7 @@ plot_data_estimates.plqr_result <- function(object, level = 0.95, ...) {
   if (is.null(coef_names)) {
     coef_names <- paste0("theta_", seq_len(nrow(est)))
   }
-  se <- if (identical(object$meta$se_route, "direct_sandwich")) object$se else NULL
+  se <- if (!is.null(object$theta)) object$theta_se else object$moment_se
   .plot_data_estimates_frame(
     est = est, se = se, x0 = object$x0,
     coef_names = coef_names, level = level

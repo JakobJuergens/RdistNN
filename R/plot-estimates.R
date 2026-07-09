@@ -315,11 +315,11 @@ autoplot.cate_result <- function(object, ...) {
 #' @exportS3Method ggplot2::autoplot plqr_result
 autoplot.plqr_result <- function(object, ...) {
   p <- plot_estimates(object, ...)
-  beta_txt <- paste(format(as.numeric(object$beta), digits = 3),
-                    collapse = ", ")
+  theta_txt <- paste(format(as.numeric(object$theta_eval), digits = 3),
+                     collapse = ", ")
   p + ggplot2::labs(
-    subtitle = sprintf("PLQR moments at beta = (%s), tau = %.2f",
-                       beta_txt, object$tau)
+    subtitle = sprintf("PLQR moments at theta_eval = (%s), tau = %.2f",
+                       theta_txt, object$tau)
   )
 }
 

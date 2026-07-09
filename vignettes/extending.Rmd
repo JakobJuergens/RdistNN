@@ -53,7 +53,7 @@ Tuning specs mirror the same constructor/registry style as distances and rank
 weights. The built-in paper default is:
 
 ```{r tuning-paper, eval=FALSE}
-tun <- tuning_dnn_paper(kappa = 1)
+tun <- tuning_dnn_paper(lambda = 1)
 tuning_eval(tun, n = 500, kx = 2, k = 1)
 tuning_eval(tun, n = 500, kx = 2, k = 1, mode = "grid")
 ```
@@ -148,8 +148,8 @@ rw_inv <- as_rank_weight(
   name = "inv_rank"
 )
 
-register_rank("inv_rank", rw_inv)
-rank_names()
+register_rank_weight("inv_rank", rw_inv)
+rank_weight_names()
 ```
 
 ### A Compact-Support Rule

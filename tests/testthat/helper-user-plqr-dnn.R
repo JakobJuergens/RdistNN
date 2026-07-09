@@ -6,12 +6,12 @@
   X <- as.matrix(df[paste0("X", seq_len(p))])
   D <- as.matrix(df[paste0("D", seq_len(p_d))])
   mD <- as.matrix(df[paste0("mD", seq_len(p_d))])
-  q <- as.numeric(df$q_oracle)
+  g <- as.numeric(df$g_oracle)
   Y <- as.numeric(df$Y)
   X0 <- matrix(rnorm(m * p), m, p)
   list(
-    df = df, X = X, D = D, mD = mD, q = q, Y = Y, X0 = X0,
-    beta = demo$truth$beta_true, tau = tau,
+    df = df, X = X, D = D, mD = mD, g = g, Y = Y, X0 = X0,
+    theta_eval = demo$truth$theta_true, tau = tau,
     x_cols = paste0("X", seq_len(p)),
     D_cols = paste0("D", seq_len(p_d)),
     mD_cols = paste0("mD", seq_len(p_d))
@@ -24,14 +24,14 @@
   X <- as.matrix(df[paste0("X", seq_len(p))])
   D <- as.matrix(df[paste0("D", seq_len(p_d))])
   mD <- as.matrix(df[paste0("mD", seq_len(p_d))])
-  q <- as.numeric(df$q_oracle)
+  g <- as.numeric(df$g_oracle)
   Y <- as.numeric(df$Y)
   X0 <- matrix(rnorm(m * p), m, p)
   density <- 0.75 + 0.1 * seq_len(n) / n
-  df$q_density <- density
+  df$density_oracle <- density
   list(
-    df = df, X = X, D = D, mD = mD, q = q, Y = Y, X0 = X0,
-    density = density, beta = demo$truth$beta_true, tau = tau,
+    df = df, X = X, D = D, mD = mD, g = g, Y = Y, X0 = X0,
+    density = density, theta_eval = demo$truth$theta_true, tau = tau,
     x_cols = paste0("X", seq_len(p)),
     D_cols = paste0("D", seq_len(p_d)),
     mD_cols = paste0("mD", seq_len(p_d))

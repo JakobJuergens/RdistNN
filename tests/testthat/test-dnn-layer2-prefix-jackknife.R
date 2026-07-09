@@ -204,16 +204,16 @@ test_that("fast scalar wrappers keep the layer-0 SE contract", {
 
   D <- cbind(1 + d$X[, 1L], -0.25 + d$X[, 2L])
   mD <- cbind(rep(0.5, nrow(d$X)), rep(-0.15, nrow(d$X)))
-  beta <- c(0.35, -0.1)
-  q <- 0.05 + 0.1 * d$X[, 1L]
-  Y <- as.numeric(D %*% beta + q + seq_len(nrow(d$X)) / nrow(d$X) > median(D %*% beta + q))
+  theta <- c(0.35, -0.1)
+  g <- 0.05 + 0.1 * d$X[, 1L]
+  Y <- as.numeric(D %*% theta + g + seq_len(nrow(d$X)) / nrow(d$X) > median(D %*% theta + g))
   plqr <- plqr_dnn(
     X = d$X,
     D = D,
-    q = q,
+    g = g,
     mD = mD,
     Y = Y,
-    beta = beta,
+    theta_eval = theta,
     tau = 0.5,
     X0 = d$X0,
     method = "exact",
@@ -223,11 +223,11 @@ test_that("fast scalar wrappers keep the layer-0 SE contract", {
     jackknife = "fast",
     return = "ranks"
   )
-  g_mat <- RdistNN:::.plqr_dnn_g_matrix(D, mD, q, Y, beta = beta, tau = 0.5)
+  score_mat <- RdistNN:::.plqr_dnn_score_matrix(D, mD, g, Y, theta_eval = theta, tau = 0.5)
   plqr_ref <- .dnn_layer0_fast_jackknife_reference(
     x_mat = d$X,
     x0_mat = d$X0,
-    signal = g_mat,
+    signal = score_mat,
     distance = "l2",
     method = "exact",
     k = 2L,
@@ -236,7 +236,7 @@ test_that("fast scalar wrappers keep the layer-0 SE contract", {
     ctx = NULL,
     precomputed_ranks = plqr$ranks
   )
-  expect_equal(unname(plqr$se), unname(plqr_ref), tolerance = 1e-12)
+  expect_equal(unname(plqr$moment_se), unname(plqr_ref), tolerance = 1e-12)
 })
 
 test_that("loop fallback remains available for rank weights without tables", {

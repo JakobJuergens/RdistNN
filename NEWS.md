@@ -2,6 +2,48 @@
 
 ## RdistNN (development)
 
+### Pre-public breaking cleanup (paper-notation alignment)
+
+This pass deliberately breaks pre-release APIs so the first public version
+matches the conditional Z-estimation paper's notation. No aliases for the
+old names are kept.
+
+- `plqr_dnn()`: renamed the shape-nuisance inputs `q`/`q_col` to `g`/`g_col`
+  (the paper's \(g_0(U)\)) and the coefficient input `beta` to `theta_eval`.
+  The result stores `theta_eval` (the supplied vector) instead of `beta`,
+  and `meta$theta_source = "supplied"` records that no root solving was
+  performed.
+- PLQR standard errors are no longer overloaded: coefficient-level
+  direct-sandwich results live in `theta_se`/`theta_vcov`/`theta_omega`
+  (previously `se`/`vcov`/`omega`), while the jackknife moment diagnostic
+  lives in `moment_se`. `meta$se_route` was replaced by
+  `meta$theta_se_method` and `meta$moment_se_method`.
+- Renamed the PLQR return extra `"g"` to `"score"` (stored as `out$score`),
+  reserving `g` for the shape nuisance.
+- `plqr_demo_data()` now returns `g_oracle`, `theta_true`, `g_fn`, and
+  `g_x0` (previously `q_oracle`, `beta_true`, `q_fn`, `q_x0`).
+- Replaced the demo-bound `plqr_moment()` with the general
+  `plqr_score_matrix(data, y_col, D_cols, g_col, mD_cols, theta, tau)`.
+- `score_plqr_component()` gained an explicit `y_col` argument (the outcome
+  column was hardcoded as `"Y"`), dropped the ignored compatibility-only
+  `k` argument, and now uses `g_col`/`theta` notation throughout.
+- Renamed the rank-weight registry functions: `register_rank()` is now
+  `register_rank_weight()`, `get_rank()` is `get_rank_weight()`, and
+  `rank_names()` is `rank_weight_names()`.
+- Direct PLQR coefficient inference now requires `normalize = TRUE`; fits
+  combining `density`/`density_col`, `se = TRUE`, and `normalize = FALSE`
+  error instead of returning scale-dependent standard errors.
+- Package `Title`/`Description` now lead with distributional
+  nearest-neighbor inference for local conditional moment models rather
+  than generalized U-statistics; the README labels the local IV-GMM layer
+  as experimental companion functionality.
+- Renamed the paper-rule tuning constant from `kappa` to `lambda` to avoid
+  a collision with the paper's own use of kappa:
+  `tuning_dnn_paper(lambda =, lambda_grid =)`, candidate-table column
+  `lambda`, candidate ids `lambda_*`, diagnostics column
+  `tuning_lambda_default`, and the `lambda` column in `sim_cate_*` result
+  and summary tables. No `kappa` alias is kept.
+
 ### PLQR inference, prediction, and tuning-grid mode
 
 - Added the direct PLQR coefficient sandwich (`density`/`density_col`):

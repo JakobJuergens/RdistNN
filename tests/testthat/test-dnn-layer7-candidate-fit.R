@@ -13,10 +13,10 @@ skip_if_not(
 .layer7_tuning <- function(default_s = 4L, s_grid = c(2L, 4L, 6L)) {
   new_tuning(
     name = "layer7_grid",
-    eval = function(...) list(s = default_s, meta = list(kappa = 1)),
+    eval = function(...) list(s = default_s, meta = list(lambda = 1)),
     eval_grid = function(...) {
       data.frame(
-        kappa = c(0.5, 1, 1.5),
+        lambda = c(0.5, 1, 1.5),
         s = s_grid,
         stringsAsFactors = FALSE
       )
@@ -73,7 +73,7 @@ test_that("candidate_fit reconstructs NP candidate views equivalent to scalar fi
     return = c("W", "ranks", "ord", "dx", "ess", "neighbors", "y")
   )
 
-  cand <- fit$tuning_grid$candidates[fit$tuning_grid$candidates$candidate_id == "kappa_1p5", ]
+  cand <- fit$tuning_grid$candidates[fit$tuning_grid$candidates$candidate_id == "lambda_1p5", ]
   view <- candidate_fit(fit, cand$candidate_id)
   ref <- np_dnn(
     X = d$X, X0 = d$X0, Y = d$y,
@@ -105,7 +105,7 @@ test_that("candidate_fit preserves matrix extras for single-target x0 views", {
     return = c("W", "ranks", "ord", "dx", "ess", "neighbors", "y")
   )
 
-  cand <- fit$tuning_grid$candidates[fit$tuning_grid$candidates$candidate_id == "kappa_1p5", ]
+  cand <- fit$tuning_grid$candidates[fit$tuning_grid$candidates$candidate_id == "lambda_1p5", ]
   view <- candidate_fit(fit, cand$candidate_id)
   ref <- np_dnn(
     X = d$X, x0 = x0, Y = d$y,
@@ -138,7 +138,7 @@ test_that("candidate_fit keeps nearest-k neighbors distinct from DNN support", {
     return = c("W", "ranks", "neighbors")
   )
 
-  cand <- fit$tuning_grid$candidates[fit$tuning_grid$candidates$candidate_id == "kappa_1p5", ]
+  cand <- fit$tuning_grid$candidates[fit$tuning_grid$candidates$candidate_id == "lambda_1p5", ]
   view <- candidate_fit(fit, cand$candidate_id)
   ref <- np_dnn(
     X = d$X, X0 = d$X0, Y = d$y,
@@ -171,7 +171,7 @@ test_that("candidate_fit reconstructs CATE candidate views and methods work", {
     return = c("W", "ranks", "ord", "dx", "ess", "psi", "nuisance")
   )
 
-  cand <- fit$tuning_grid$candidates[fit$tuning_grid$candidates$candidate_id == "kappa_1p5", ]
+  cand <- fit$tuning_grid$candidates[fit$tuning_grid$candidates$candidate_id == "lambda_1p5", ]
   view <- candidate_fit(fit, cand$candidate_id)
   ref <- cate_dnn(
     data = d$df, x_cols = d$x_cols,
@@ -209,7 +209,7 @@ test_that("CATE candidate prediction works without retained W but diagnostics re
     return = character(0)
   )
 
-  cand <- fit$tuning_grid$candidates[fit$tuning_grid$candidates$candidate_id == "kappa_1p5", ]
+  cand <- fit$tuning_grid$candidates[fit$tuning_grid$candidates$candidate_id == "lambda_1p5", ]
   view <- candidate_fit(fit, cand$candidate_id)
   ref <- cate_dnn(
     data = d$df, x_cols = d$x_cols,
@@ -293,7 +293,7 @@ test_that("candidate_fit does not attach optional extras absent from the parent 
     return = character(0)
   )
 
-  cand <- fit$tuning_grid$candidates[fit$tuning_grid$candidates$candidate_id == "kappa_1p5", ]
+  cand <- fit$tuning_grid$candidates[fit$tuning_grid$candidates$candidate_id == "lambda_1p5", ]
   view <- candidate_fit(fit, cand$candidate_id)
   ref <- np_dnn(
     X = d$X, X0 = d$X0, Y = d$y,
@@ -323,21 +323,21 @@ test_that("candidate_fit rejects stale cached ranks inconsistent with result dim
   short_ranks <- fit
   short_ranks$.model$ranks <- .layer7_rank_matrix(nrow(d$X) - 1L, nrow(d$X0))
   expect_error(
-    candidate_fit(short_ranks, "kappa_1p5"),
+    candidate_fit(short_ranks, "lambda_1p5"),
     "row count.*object\\$meta\\$n"
   )
 
   few_target_ranks <- fit
   few_target_ranks$.model$ranks <- .layer7_rank_matrix(nrow(d$X), nrow(d$X0) - 1L)
   expect_error(
-    candidate_fit(few_target_ranks, "kappa_1p5"),
+    candidate_fit(few_target_ranks, "lambda_1p5"),
     "column count.*target points"
   )
 
   stale_x0 <- fit
   stale_x0$x0 <- stale_x0$x0[-1L, , drop = FALSE]
   expect_error(
-    candidate_fit(stale_x0, "kappa_1p5"),
+    candidate_fit(stale_x0, "lambda_1p5"),
     "object\\$x0.*object\\$meta\\$m"
   )
 
@@ -345,7 +345,7 @@ test_that("candidate_fit rejects stale cached ranks inconsistent with result dim
   fallback_ranks$.model$ranks <- NULL
   fallback_ranks$ranks <- .layer7_rank_matrix(nrow(d$X) - 1L, nrow(d$X0))
   expect_error(
-    candidate_fit(fallback_ranks, "kappa_1p5"),
+    candidate_fit(fallback_ranks, "lambda_1p5"),
     "row count.*object\\$meta\\$n"
   )
 })
@@ -361,34 +361,34 @@ test_that("candidate_fit rejects stale candidate estimate rows", {
   )
 
   missing_target <- fit
-  drop <- missing_target$tuning_grid$estimates$candidate_id == "kappa_1p5" &
+  drop <- missing_target$tuning_grid$estimates$candidate_id == "lambda_1p5" &
     missing_target$tuning_grid$estimates$target_id == 3L
   missing_target$tuning_grid$estimates <- missing_target$tuning_grid$estimates[!drop, , drop = FALSE]
   expect_error(
-    candidate_fit(missing_target, "kappa_1p5"),
+    candidate_fit(missing_target, "lambda_1p5"),
     "missing target_id"
   )
 
   duplicate_target <- fit
   dup <- duplicate_target$tuning_grid$estimates[
-    duplicate_target$tuning_grid$estimates$candidate_id == "kappa_1p5" &
+    duplicate_target$tuning_grid$estimates$candidate_id == "lambda_1p5" &
       duplicate_target$tuning_grid$estimates$target_id == 1L,
     ,
     drop = FALSE
   ]
   duplicate_target$tuning_grid$estimates <- rbind(duplicate_target$tuning_grid$estimates, dup)
   expect_error(
-    candidate_fit(duplicate_target, "kappa_1p5"),
+    candidate_fit(duplicate_target, "lambda_1p5"),
     "duplicate target_id"
   )
 
   invalid_target <- fit
   invalid_idx <- which(
-    invalid_target$tuning_grid$estimates$candidate_id == "kappa_1p5"
+    invalid_target$tuning_grid$estimates$candidate_id == "lambda_1p5"
   )[[1L]]
   invalid_target$tuning_grid$estimates$target_id[[invalid_idx]] <- 99L
   expect_error(
-    candidate_fit(invalid_target, "kappa_1p5"),
+    candidate_fit(invalid_target, "lambda_1p5"),
     "target_id.*outside 1..3"
   )
 })
@@ -401,7 +401,7 @@ test_that("candidate_fit errors are actionable", {
     se = FALSE
   )
   expect_error(
-    candidate_fit(scalar, "kappa_1"),
+    candidate_fit(scalar, "lambda_1"),
     "tuning_mode = \"grid\""
   )
 
@@ -411,21 +411,21 @@ test_that("candidate_fit errors are actionable", {
     se = FALSE
   )
   expect_error(candidate_fit(fit, "not_a_candidate"), "unknown candidate")
-  expect_error(candidate_fit(fit, c("kappa_1", "kappa_1p5")), "single")
+  expect_error(candidate_fit(fit, c("lambda_1", "lambda_1p5")), "single")
   expect_error(candidate_fit(fit, 0L), "positive integer|row index")
   expect_error(candidate_fit(fit, 99L), "row index must be in 1..")
 
   missing_est <- fit
   missing_est$tuning_grid$estimates <- missing_est$tuning_grid$estimates[
-    missing_est$tuning_grid$estimates$candidate_id != "kappa_1p5",
+    missing_est$tuning_grid$estimates$candidate_id != "lambda_1p5",
     ,
     drop = FALSE
   ]
-  expect_error(candidate_fit(missing_est, "kappa_1p5"), "No estimates recorded")
+  expect_error(candidate_fit(missing_est, "lambda_1p5"), "No estimates recorded")
 
   malformed <- fit
   malformed$tuning_grid$diagnostics <- NULL
-  expect_error(candidate_fit(malformed, "kappa_1"), "tuning_grid.*malformed")
+  expect_error(candidate_fit(malformed, "lambda_1"), "tuning_grid.*malformed")
 
   bad_tun <- .layer7_tuning(default_s = 4L, s_grid = c(1L, 4L, 6L))
   infeasible <- suppressWarnings(np_dnn(

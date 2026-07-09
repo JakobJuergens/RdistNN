@@ -124,9 +124,9 @@
   x0_mat
 }
 
-.dnn_candidate_format_kappa <- function(kappa) {
+.dnn_candidate_format_kappa <- function(lambda) {
   label <- vapply(
-    kappa,
+    lambda,
     function(x) format(x, trim = TRUE, scientific = FALSE),
     character(1L)
   )
@@ -156,13 +156,13 @@
     return(integer(0L))
   }
 
-  default_kappa <- default$meta[["kappa", exact = TRUE]]
-  default_kappa_num <- suppressWarnings(as.numeric(default_kappa))
-  if (!is.null(default_kappa) && length(default_kappa_num) == 1L &&
-      !is.na(default_kappa_num) && is.finite(default_kappa_num)) {
-    kappa <- suppressWarnings(as.numeric(as.character(candidates$kappa)))
-    tol <- sqrt(.Machine$double.eps) * pmax(1, abs(default_kappa_num))
-    idx_kappa <- idx_s[!is.na(kappa[idx_s]) & abs(kappa[idx_s] - default_kappa_num) <= tol]
+  default_kappa <- default$meta[["lambda", exact = TRUE]]
+  default_lambda_num <- suppressWarnings(as.numeric(default_kappa))
+  if (!is.null(default_kappa) && length(default_lambda_num) == 1L &&
+      !is.na(default_lambda_num) && is.finite(default_lambda_num)) {
+    lambda <- suppressWarnings(as.numeric(as.character(candidates$lambda)))
+    tol <- sqrt(.Machine$double.eps) * pmax(1, abs(default_lambda_num))
+    idx_kappa <- idx_s[!is.na(lambda[idx_s]) & abs(lambda[idx_s] - default_lambda_num) <= tol]
     if (length(idx_kappa) > 0L) {
       return(idx_kappa[1L])
     }
@@ -175,7 +175,7 @@
   synthetic <- candidates[NA_integer_, , drop = FALSE]
   rownames(synthetic) <- NULL
   synthetic$s <- as.integer(default$s)
-  synthetic$kappa <- NA_real_
+  synthetic$lambda <- NA_real_
   synthetic$feasible <- TRUE
   synthetic$reason <- "ok"
   rbind(synthetic, candidates)
@@ -201,10 +201,10 @@
   candidates$s <- as.integer(candidates$s)
   candidates$feasible <- as.logical(candidates$feasible)
   candidates$reason <- as.character(candidates$reason)
-  if (!("kappa" %in% names(candidates))) {
-    candidates$kappa <- NA_real_
+  if (!("lambda" %in% names(candidates))) {
+    candidates$lambda <- NA_real_
   }
-  candidates$kappa <- suppressWarnings(as.numeric(as.character(candidates$kappa)))
+  candidates$lambda <- suppressWarnings(as.numeric(as.character(candidates$lambda)))
 
   default_idx <- .dnn_candidate_default_index(candidates, default)
   if (length(default_idx) == 0L) {
@@ -218,16 +218,16 @@
   candidates$computed_key <- sprintf("s_%d", as.integer(candidates$s))
 
   base_ids <- sprintf("s_%d", as.integer(candidates$s))
-  has_kappa <- !is.na(candidates$kappa)
+  has_kappa <- !is.na(candidates$lambda)
   base_ids[has_kappa] <- paste0(
-    "kappa_",
-    .dnn_candidate_format_kappa(candidates$kappa[has_kappa])
+    "lambda_",
+    .dnn_candidate_format_kappa(candidates$lambda[has_kappa])
   )
   candidates$candidate_id <- .dnn_candidate_unique_ids(base_ids)
 
   schema_cols <- c(
     "candidate_id", "computed_key", "is_default", "feasible",
-    "reason", "status", "kappa", "s"
+    "reason", "status", "lambda", "s"
   )
   candidates <- candidates[, c(schema_cols, setdiff(names(candidates), schema_cols)), drop = FALSE]
   rownames(candidates) <- NULL
@@ -271,7 +271,7 @@
     grid <- .dnn_resolve_candidate_schema(
       list(
         candidates = data.frame(
-          kappa = NA_real_,
+          lambda = NA_real_,
           s = as.integer(s_out),
           feasible = TRUE,
           reason = "ok",
@@ -351,10 +351,10 @@
 }
 
 .dnn_grid_candidate_kappa <- function(candidate_row) {
-  if (!("kappa" %in% names(candidate_row))) {
+  if (!("lambda" %in% names(candidate_row))) {
     return(NA_real_)
   }
-  suppressWarnings(as.numeric(candidate_row$kappa[[1L]]))
+  suppressWarnings(as.numeric(candidate_row$lambda[[1L]]))
 }
 
 .dnn_grid_diag_top_n <- function(default = 5L) {
@@ -554,7 +554,7 @@
   data.frame(
     candidate_id = as.character(candidate_row$candidate_id[[1L]]),
     computed_key = as.character(candidate_row$computed_key[[1L]]),
-    kappa = .dnn_grid_candidate_kappa(candidate_row),
+    lambda = .dnn_grid_candidate_kappa(candidate_row),
     s = .dnn_grid_candidate_s(candidate_row),
     target_id = estimates$target_id,
     component = estimates$component,
@@ -595,7 +595,7 @@
   data.frame(
     candidate_id = as.character(candidate_row$candidate_id[[1L]]),
     computed_key = as.character(candidate_row$computed_key[[1L]]),
-    kappa = .dnn_grid_candidate_kappa(candidate_row),
+    lambda = .dnn_grid_candidate_kappa(candidate_row),
     s = .dnn_grid_candidate_s(candidate_row),
     ess = diagnostic$ess[[1L]],
     max_weight = diagnostic$max_weight[[1L]],

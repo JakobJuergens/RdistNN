@@ -162,10 +162,10 @@ test_that("ctx is forwarded to eval / eval_batch", {
   expect_equal(unname(colSums(W2)), rep(1, m), tolerance = 1e-12)
 })
 
-test_that("register_rank(), get_rank(), and rank_names() work", {
-  skip_if_not(exists("register_rank"), "register_rank() not found")
-  skip_if_not(exists("get_rank"), "get_rank() not found")
-  skip_if_not(exists("rank_names"), "rank_names() not found")
+test_that("register_rank_weight(), get_rank_weight(), and rank_weight_names() work", {
+  skip_if_not(exists("register_rank_weight"), "register_rank_weight() not found")
+  skip_if_not(exists("get_rank_weight"), "get_rank_weight() not found")
+  skip_if_not(exists("rank_weight_names"), "rank_weight_names() not found")
 
   # Register via (name, spec function)
   nm_new <- paste0("rw_new_", as.integer(runif(1, 1e6, 2e6)))
@@ -173,17 +173,17 @@ test_that("register_rank(), get_rank(), and rank_names() work", {
     w <- 1 / as.numeric(r)
     w / sum(w)
   }
-  register_rank(nm_new, spec_new)
-  got_new <- get_rank(nm_new)
+  register_rank_weight(nm_new, spec_new)
+  got_new <- get_rank_weight(nm_new)
   expect_true(is_rank_weight(got_new))
   expect_equal(got_new$name, nm_new)
-  expect_true(nm_new %in% rank_names())
+  expect_true(nm_new %in% rank_weight_names())
 
   # Unknown name errors list known entries
-  expect_error(get_rank("__no_such_rank__"), "Unknown rank_weight")
+  expect_error(get_rank_weight("__no_such_rank__"), "Unknown rank_weight")
   msg <- tryCatch(
     {
-      get_rank("__no_such_rank__")
+      get_rank_weight("__no_such_rank__")
       NA_character_
     },
     error = function(e) e$message
@@ -328,7 +328,7 @@ test_that("when both eval and eval_batch exist, eval_batch is preferred (single 
 })
 
 test_that("register_rank overwrite is idempotent and replaces behavior", {
-  skip_if_not(exists("register_rank") && exists("get_rank") && exists("rank_weight_eval"))
+  skip_if_not(exists("register_rank_weight") && exists("get_rank_weight") && exists("rank_weight_eval"))
 
   nm <- paste0("rw_over_", as.integer(runif(1, 1e6, 2e6)))
   spec1 <- function(r) {
@@ -340,13 +340,13 @@ test_that("register_rank overwrite is idempotent and replaces behavior", {
     w / sum(w)
   }
 
-  register_rank(nm, spec1)
+  register_rank_weight(nm, spec1)
   r <- sample.int(8L)
-  w1 <- rank_weight_eval(get_rank(nm), r)
+  w1 <- rank_weight_eval(get_rank_weight(nm), r)
 
   # Overwrite with different behavior
-  register_rank(nm, spec2)
-  w2 <- rank_weight_eval(get_rank(nm), r)
+  register_rank_weight(nm, spec2)
+  w2 <- rank_weight_eval(get_rank_weight(nm), r)
 
   expect_false(isTRUE(all.equal(w1, w2)))
   expect_equal(sum(w2), 1, tolerance = 1e-12)
@@ -429,11 +429,11 @@ test_that("is_rank_weight recognizes list specs flagged with __kind", {
 test_that("register_rank validates malformed specs and normalizes named list specs", {
   # malformed spec: missing eval and eval_batch
   expect_error(
-    register_rank("bad_rank_spec", list(name = "bad_rank_spec")),
+    register_rank_weight("bad_rank_spec", list(name = "bad_rank_spec")),
     "must provide at least one of `eval` or `eval_batch`"
   )
   expect_error(
-    register_rank(
+    register_rank_weight(
       "bad_rank_name",
       list(name = 1, eval = function(r, ctx = NULL) rep(1, length(r)))
     ),
@@ -441,7 +441,7 @@ test_that("register_rank validates malformed specs and normalizes named list spe
     ignore.case = TRUE
   )
   expect_error(
-    register_rank(
+    register_rank_weight(
       "bad_rank_table",
       list(eval = function(r, ctx = NULL) rep(1, length(r)), table = 1)
     ),
@@ -450,7 +450,7 @@ test_that("register_rank validates malformed specs and normalizes named list spe
 
   # malformed name in two-arg form
   expect_error(
-    register_rank("", list(eval = function(r, ctx = NULL) rep(1, length(r)))),
+    register_rank_weight("", list(eval = function(r, ctx = NULL) rep(1, length(r)))),
     "non-empty character scalar"
   )
 
@@ -462,8 +462,8 @@ test_that("register_rank validates malformed specs and normalizes named list spe
       w / sum(w)
     }
   )
-  register_rank(nm, spec)
-  got <- get_rank(nm)
+  register_rank_weight(nm, spec)
+  got <- get_rank_weight(nm)
   expect_true(is_rank_weight(got))
   expect_equal(got$name, nm)
 })

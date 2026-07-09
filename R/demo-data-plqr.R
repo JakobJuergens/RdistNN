@@ -24,19 +24,20 @@
 #'
 #' Generates data for a partially linear quantile regression (PLQR) model
 #' \deqn{
-#'   Q_{\tau}(Y \mid X, D) \;=\; D^{\top}\,\beta_{0}(\tau) \;+\; q_{\tau}(X) \, ,
+#'   Q_{\tau}(Y \mid D, U) \;=\; D^{\top}\,\theta_{0} \;+\; g_{0}(U) \, ,
 #' }
-#' with a user-chosen design for \eqn{q_{\tau}}. Errors follow an Asymmetric
-#' Laplace distribution (ALD) at level \eqn{\tau}, so the conditional
-#' \eqn{\tau}-quantile equals the right-hand side.
+#' with a user-chosen design for the nonparametric shape nuisance
+#' \eqn{g_{0}}; the demo specializes to \eqn{U = X}. Errors follow an
+#' Asymmetric Laplace distribution (ALD) at level \eqn{\tau}, so the
+#' conditional \eqn{\tau}-quantile equals the right-hand side.
 #'
 #' The function also returns the oracle
-#' \eqn{m_{D}(X) \equiv \mathbb{E}[D \mid X]} to build the orthogonal PLQR score
+#' \eqn{m_{D}(U) \equiv \mathbb{E}[D \mid U]} to build the orthogonal PLQR score
 #' \deqn{
-#'   \psi(W;\beta)
+#'   \psi(W;\theta)
 #'   \;=\;
-#'   (\tau - \mathbf{1}\{\,Y \le D^{\top}\beta + q_{\tau}(X)\,\})\,
-#'   (D - m_{D}(X))\, .
+#'   (\tau - \mathbf{1}\{\,Y \le D^{\top}\theta + g_{0}(U)\,\})\,
+#'   (D - m_{D}(U))\, .
 #' }
 #'
 #' @param n Integer; sample size.
@@ -44,26 +45,26 @@
 #' @param p_d Integer; dimension of \eqn{D} (number of partially linear regressors).
 #' @param tau Quantile level in \eqn{(0,1)}.
 #' @param sigma Positive ALD scale for the regression error (larger means noisier \eqn{Y}).
-#' @param design Character; one of \code{"linear"}, \code{"sinusoidal"}, \code{"bump"} for \eqn{q_{\tau}(X)}.
+#' @param design Character; one of \code{"linear"}, \code{"sinusoidal"}, \code{"bump"} for \eqn{g_{0}}.
 #' @param seed Optional integer seed.
 #' @param x0 Optional target point in \eqn{\mathbb{R}^{p}} for localization (defaults to the zero vector).
 #' @param inject Optional, one of \code{NULL}, \code{"na"}, \code{"inf"}; if provided,
 #'   inject a single non-finite into \code{inject_col} at row \code{idx_inject}.
 #'   Useful for testing runtime guards.
 #' @param inject_col Character; which column to corrupt when \code{inject} is not \code{NULL}.
-#'   One of \code{"Y"}, \code{"q_oracle"}, \code{"D1"}, \code{"mD1"}, \code{"rD1"} (extend as needed).
+#'   One of \code{"Y"}, \code{"g_oracle"}, \code{"D1"}, \code{"mD1"}, \code{"rD1"} (extend as needed).
 #' @param idx_inject Integer row index to corrupt (default 3).
 #'
 #' @return A list with:
 #' \itemize{
 #'   \item \code{data}: a \code{data.frame} with columns \code{X1..Xp}, \code{D1..Dp_d}, \code{Y};
-#'         oracle nuisances \code{q_oracle} (the value of \eqn{q_{\tau}(X)}),
+#'         oracle nuisances \code{g_oracle} (the value of \eqn{g_{0}(X)}),
 #'         \code{mD1..mDp_d} (components of \eqn{m_{D}(X)}),
 #'         and residuals \code{rD1..rDp_d} (components of \eqn{D - m_{D}(X)}).
 #'   \item \code{x0}: the target point used.
-#'   \item \code{truth}: a list with \code{beta_true} (length \code{p_d}),
-#'         \code{q_fn(x)} and \code{mD_fn(x)} closures to evaluate ground truth at new \eqn{X}.
-#'   \item \code{q_x0}: the true value \eqn{q_{\tau}(x_{0})}.
+#'   \item \code{truth}: a list with \code{theta_true} (length \code{p_d}),
+#'         \code{g_fn(x)} and \code{mD_fn(x)} closures to evaluate ground truth at new \eqn{X}.
+#'   \item \code{g_x0}: the true value \eqn{g_{0}(x_{0})}.
 #' }
 #'
 #' @examples
@@ -72,8 +73,8 @@
 #'   design = "sinusoidal", seed = 1
 #' )
 #' head(demo$data)
-#' demo$truth$beta_true
-#' demo$q_x0
+#' demo$truth$theta_true
+#' demo$g_x0
 #'
 #' @export
 plqr_demo_data <- function(n = 300,
@@ -85,7 +86,7 @@ plqr_demo_data <- function(n = 300,
                            seed = NULL,
                            x0 = NULL,
                            inject = NULL,
-                           inject_col = c("Y", "q_oracle", "D1", "mD1", "rD1")[1],
+                           inject_col = c("Y", "g_oracle", "D1", "mD1", "rD1")[1],
                            idx_inject = 3L) {
   n <- .validate_scalar_int(n, arg = "n", min = 1L)
   p <- .validate_scalar_int(p, arg = "p", min = 1L)
@@ -107,11 +108,11 @@ plqr_demo_data <- function(n = 300,
   X <- matrix(rnorm(n * p), n, p)
   colnames(X) <- paste0("X", seq_len(p))
 
-  # True beta (partially linear effect at quantile tau)
-  beta_true <- rep(0.5, p_d)
+  # True theta (partially linear effect at quantile tau)
+  theta_true <- rep(0.5, p_d)
 
-  # Nonparametric quantile component q_tau(X)
-  q_fn <- switch(design,
+  # Nonparametric shape nuisance g_0 (evaluated at U = X in the demo)
+  g_fn <- switch(design,
     linear = function(xx) {
       xx <- as.matrix(xx)
       0.5 * xx[, 1]
@@ -129,7 +130,7 @@ plqr_demo_data <- function(n = 300,
       }
     }
   )
-  qX <- q_fn(X)
+  gX <- g_fn(X)
 
   # Partially linear regressors D with oracle E(D | X) = mD(X):
   # simple linear mD with different loadings per column of D
@@ -146,11 +147,11 @@ plqr_demo_data <- function(n = 300,
   # Error with tau-quantile zero
   U <- .r_ald(n, tau = tau, sigma = sigma)
 
-  # Outcome: Y = D^T beta_true + q_tau(X) + U  with Q_tau(U | X, D) = 0
-  Y <- as.vector(D %*% beta_true) + qX + U
+  # Outcome: Y = D^T theta_true + g_0(X) + U  with Q_tau(U | X, D) = 0
+  Y <- as.vector(D %*% theta_true) + gX + U
 
   # Tidy outputs
-  df <- data.frame(X, D, Y = as.numeric(Y), q_oracle = as.numeric(qX))
+  df <- data.frame(X, D, Y = as.numeric(Y), g_oracle = as.numeric(gX))
   for (j in seq_len(p_d)) {
     df[[paste0("mD", j)]] <- mD[, j]
     df[[paste0("rD", j)]] <- D[, j] - mD[, j]
@@ -166,7 +167,7 @@ plqr_demo_data <- function(n = 300,
       .abort_bad_arg("idx_inject", sprintf("must be <= n (got idx_inject=%d, n=%d)", idx_inject, n))
     }
     allowed_inject_cols <- c(
-      "Y", "q_oracle",
+      "Y", "g_oracle",
       paste0("D", seq_len(p_d)[1]),
       paste0("mD", seq_len(p_d)[1]),
       paste0("rD", seq_len(p_d)[1])
@@ -191,66 +192,12 @@ plqr_demo_data <- function(n = 300,
     data = df,
     x0 = as.numeric(x0),
     truth = list(
-      beta_true = as.numeric(beta_true),
-      q_fn = function(xx) q_fn(as.matrix(xx)),
+      theta_true = as.numeric(theta_true),
+      g_fn = function(xx) g_fn(as.matrix(xx)),
       mD_fn = mD_fn
     ),
-    q_x0 = as.numeric(q_fn(matrix(x0, nrow = 1)))
+    g_x0 = as.numeric(g_fn(matrix(x0, nrow = 1)))
   )
-}
-
-#' Orthogonal PLQR moment contributions for a given \eqn{\beta} (oracle nuisances)
-#'
-#' Computes, for each observation \eqn{i}, the orthogonal PLQR moment
-#' \deqn{
-#'   (\tau - \mathbf{1}\{\,Y_{i} \le D_{i}^{\top}\beta + q_{\tau}(X_{i})\,\})\,
-#'   (D_{i} - m_{D}(X_{i})) \, ,
-#' }
-#' where \eqn{m_{D}(X) = \mathbb{E}[D \mid X]} is provided as an oracle nuisance.
-#' This is the vector moment entering the Z-estimation.
-#'
-#' @param df A \code{data.frame} as returned by \code{plqr_demo_data()$data},
-#'   containing columns \code{Y}, \code{D1..Dp_d}, oracle nuisances
-#'   \code{mD1..mDp_d}, and \code{q_oracle}.
-#' @param beta Numeric length-\code{p_d} coefficient vector \eqn{\beta}.
-#' @param tau Quantile level \eqn{\tau} (should match the data-generating level).
-#'
-#' @return A numeric matrix of size \eqn{n \times p_d}.
-#' @examples
-#' demo <- plqr_demo_data(n = 100, p = 2, p_d = 2, tau = 0.5, seed = 1)
-#' plqr_moment(demo$data, beta = demo$truth$beta_true, tau = 0.5)
-#' @export
-plqr_moment <- function(df, beta, tau) {
-  if (!is.data.frame(df)) {
-    .abort_bad_arg("df", "must be a data.frame")
-  }
-  p_d <- sum(grepl("^D[0-9]+$", names(df)))
-  if (!is.numeric(beta)) {
-    .abort_bad_arg("beta", "must be numeric")
-  }
-  if (.has_na_only(beta)) {
-    .abort_bad_arg("beta", "cannot contain `NA` values")
-  }
-  if (.has_nonfinite_non_na(beta)) {
-    .abort_bad_arg("beta", "cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`)")
-  }
-  if (length(beta) != p_d) {
-    .abort_bad_arg(
-      "beta",
-      sprintf(
-        "length must equal number of D-columns (got length(beta)=%d, p_d=%d)",
-        length(beta), p_d
-      )
-    )
-  }
-  tau <- .validate_scalar_prob(tau, arg = "tau")
-  Dmat <- as.matrix(df[paste0("D", seq_len(p_d))])
-  mD <- as.matrix(df[paste0("mD", seq_len(p_d))])
-  rD <- Dmat - mD
-  thresh <- as.vector(Dmat %*% beta) + df$q_oracle
-  ind <- as.numeric(df$Y <= thresh)
-  resid <- (tau - ind)
-  rD * resid
 }
 
 #' Quick helper: sample a batch of subsets (for U-stat / localization experiments)
@@ -272,21 +219,21 @@ plqr_demo_subsets <- function(n, K = 1000L, s = 8L, seed = NULL) {
 #' Ready-made multi-scenario generator for PLQR tests
 #'
 #' Produces a named list of scenarios for unit tests of PLQR scores/moments.
-#' Scenarios include multiple designs and edge/failure cases (non-finite Y/q/mD/rD),
+#' Scenarios include multiple designs and edge/failure cases (non-finite Y/g/mD/rD),
 #' plus dimension/shape guards.
 #'
 #' Each scenario is a list with:
 #' \itemize{
 #'   \item \code{data}: \code{data.frame} with \code{X1..Xp}, \code{D1..Dp_d}, \code{Y},
-#'         \code{q_oracle}, and \code{mD*}/\code{rD*}.
+#'         \code{g_oracle}, and \code{mD*}/\code{rD*}.
 #'   \item \code{x0}: numeric length-\eqn{p}.
 #'   \item \code{x_cols}: character names of X columns (or integer indices).
 #'   \item \code{d_cols}: character names of D columns.
 #'   \item \code{tau}: quantile level used in the DGP.
-#'   \item \code{beta_true}: vector used in the DGP (length \eqn{p_d}).
+#'   \item \code{theta_true}: vector used in the DGP (length \eqn{p_d}).
 #'   \item \code{s}, \code{k}: integers for uniform API.
 #'   \item \code{subs_all}, \code{subs_empty}, \code{subs_bad_ncol}: subset matrices.
-#'   \item \code{cols}: a list mapping standard column aliases: \code{Y}, \code{q}, \code{mD}, \code{rD}.
+#'   \item \code{cols}: a list mapping standard column names: \code{Y}, \code{g}, \code{mD}, \code{rD}.
 #' }
 #'
 #' @param n Integer; number of rows (>= 10 recommended).
@@ -310,7 +257,7 @@ plqr_demo_sets <- function(n = 120L, p = 2L, p_d = 2L) {
   mD_names <- paste0("mD", seq_len(p_d))
   rD_names <- paste0("rD", seq_len(p_d))
 
-  cols <- list(Y = "Y", q = "q_oracle", mD = mD_names, rD = rD_names, D = D_names)
+  cols <- list(Y = "Y", g = "g_oracle", mD = mD_names, rD = rD_names, D = D_names)
 
   make_case <- function(obj) {
     list(
@@ -319,7 +266,7 @@ plqr_demo_sets <- function(n = 120L, p = 2L, p_d = 2L) {
       x_cols = X_names,
       d_cols = D_names,
       tau = attr(obj, "tau"),
-      beta_true = obj$truth$beta_true,
+      theta_true = obj$truth$theta_true,
       s = 1L, k = 1L,
       subs_all = subs_all,
       subs_empty = subs_empty,
@@ -344,11 +291,11 @@ plqr_demo_sets <- function(n = 120L, p = 2L, p_d = 2L) {
     seed = 5, inject = "na", inject_col = "Y", idx_inject = 3L
   )
   attr(nf_Y_na, "tau") <- 0.5
-  nf_q_inf <- plqr_demo_data(n, p, p_d,
+  nf_g_inf <- plqr_demo_data(n, p, p_d,
     tau = 0.5, sigma = 0.5, design = "sinusoidal",
-    seed = 6, inject = "inf", inject_col = "q_oracle", idx_inject = 2L
+    seed = 6, inject = "inf", inject_col = "g_oracle", idx_inject = 2L
   )
-  attr(nf_q_inf, "tau") <- 0.5
+  attr(nf_g_inf, "tau") <- 0.5
   nf_mD_na <- plqr_demo_data(n, p, p_d,
     tau = 0.5, sigma = 0.5, design = "bump",
     seed = 7, inject = "na", inject_col = "mD1", idx_inject = 4L
@@ -370,7 +317,7 @@ plqr_demo_sets <- function(n = 120L, p = 2L, p_d = 2L) {
     ok_bump = make_case(ok_bump),
     ok_clean = make_case(ok_clean),
     nonfinite_Y_na = make_case(nf_Y_na),
-    nonfinite_q_inf = make_case(nf_q_inf),
+    nonfinite_g_inf = make_case(nf_g_inf),
     nonfinite_mD_na = make_case(nf_mD_na),
     nonfinite_rD_inf = make_case(nf_rD_inf),
     bad_x0_dim = list(
@@ -379,7 +326,7 @@ plqr_demo_sets <- function(n = 120L, p = 2L, p_d = 2L) {
       x_cols = X_names,
       d_cols = D_names,
       tau = attr(bad_x0, "tau"),
-      beta_true = bad_x0$truth$beta_true,
+      theta_true = bad_x0$truth$theta_true,
       s = 1L, k = 1L,
       subs_all = subs_all,
       subs_empty = subs_empty,

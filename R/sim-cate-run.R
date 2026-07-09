@@ -33,7 +33,7 @@
 .sim_cate_raw_schema <- function() {
   c(
     "method", "design", "n", "kx", "k", "tuning_source",
-    "candidate_id", "kappa", "s", "seed",
+    "candidate_id", "lambda", "s", "seed",
     .sim_cate_metric_names(),
     "status"
   )
@@ -80,7 +80,7 @@
       alpha = alpha,
       neff = rep(NA_real_, nrow(candidates)),
       candidate_id = candidates$candidate_id,
-      kappa = candidates$kappa,
+      lambda = candidates$lambda,
       s = candidates$s,
       status = "failed"
     ))
@@ -175,7 +175,7 @@
 #' @param n_folds Number of cross-fitting folds for the `dnn_crossfit` method.
 #'
 #' @return A `data.frame` with one or more rows per method and columns
-#'   `method`, `candidate_id`, `kappa`, `s`, `tau_hat`, `tau0`, `bias`,
+#'   `method`, `candidate_id`, `lambda`, `s`, `tau_hat`, `tau0`, `bias`,
 #'   `sq_err`, `se`, `cover` (0/1), `ci_len`, `neff`, and `status`.
 #'   Failed methods have `NA` for all metric columns and `status = "failed"`.
 #'
@@ -271,7 +271,7 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
 #' requested `methods` on the same draw, enabling like-for-like comparisons.
 #' Returns a tidy data.frame of raw per-replicate, per-method results.  Use
 #' [summarise_sim_results()] to aggregate to one row per
-#' `(method, design, n, kx, candidate_id, kappa, s)`.
+#' `(method, design, n, kx, candidate_id, lambda, s)`.
 #'
 #' @section Parallelism:
 #' When the `future.apply` package is installed, the rep loop within each cell
@@ -325,7 +325,7 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
 #' @param verbose Print one progress line per cell (default `TRUE`).
 #'
 #' @return A `data.frame` with raw rows and columns `method`, `design`, `n`,
-#'   `kx`, `k`, `tuning_source`, `candidate_id`, `kappa`, `s`, `seed`,
+#'   `kx`, `k`, `tuning_source`, `candidate_id`, `lambda`, `s`, `seed`,
 #'   `tau_hat`, `tau0`, `bias`, `sq_err`, `se`, `cover`, `ci_len`, `neff`,
 #'   and `status`. Failed entries have `NA` for all metric columns.
 #'

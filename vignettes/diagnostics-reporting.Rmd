@@ -113,17 +113,17 @@ fit_plqr <- plqr_dnn(
   data = demo_plqr$data,
   x_cols = c("X1", "X2"),
   D_cols = c("D1", "D2"),
-  q_col = "q_oracle",
+  g_col = "g_oracle",
   mD_cols = c("mD1", "mD2"),
   y_col = "Y",
-  beta = demo_plqr$truth$beta_true,
+  theta_eval = demo_plqr$truth$theta_true,
   tau = 0.5,
   x0 = demo_plqr$x0,
   method = "exact",
   k = 1L,
   s = 4L,
   se = FALSE,
-  return = c("W", "dx", "g", "ess")
+  return = c("W", "dx", "score", "ess")
 )
 
 d_plqr <- diagnostics(fit_plqr)
@@ -153,7 +153,7 @@ fit_tuned <- np_dnn(
   x0 = demo_np$x0,
   method = "exact",
   k = 1L,
-  tuning = tuning_dnn_paper(kappa = 1.25),
+  tuning = tuning_dnn_paper(lambda = 1.25),
   se = FALSE,
   return = c("W", "tuning")
 )
@@ -164,7 +164,7 @@ d_tuned[, c(
   "tuning_name",
   "tuning_default_s",
   "tuning_grid_n_candidates",
-  "tuning_kappa_default"
+  "tuning_lambda_default"
 )]
 
 attr(d_tuned, "tuning_grid")

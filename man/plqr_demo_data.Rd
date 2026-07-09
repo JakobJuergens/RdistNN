@@ -14,7 +14,7 @@ plqr_demo_data(
   seed = NULL,
   x0 = NULL,
   inject = NULL,
-  inject_col = c("Y", "q_oracle", "D1", "mD1", "rD1")[1],
+  inject_col = c("Y", "g_oracle", "D1", "mD1", "rD1")[1],
   idx_inject = 3L
 )
 }
@@ -29,7 +29,7 @@ plqr_demo_data(
 
 \item{sigma}{Positive ALD scale for the regression error (larger means noisier \eqn{Y}).}
 
-\item{design}{Character; one of \code{"linear"}, \code{"sinusoidal"}, \code{"bump"} for \eqn{q_{\tau}(X)}.}
+\item{design}{Character; one of \code{"linear"}, \code{"sinusoidal"}, \code{"bump"} for \eqn{g_{0}}.}
 
 \item{seed}{Optional integer seed.}
 
@@ -40,7 +40,7 @@ inject a single non-finite into \code{inject_col} at row \code{idx_inject}.
 Useful for testing runtime guards.}
 
 \item{inject_col}{Character; which column to corrupt when \code{inject} is not \code{NULL}.
-One of \code{"Y"}, \code{"q_oracle"}, \code{"D1"}, \code{"mD1"}, \code{"rD1"} (extend as needed).}
+One of \code{"Y"}, \code{"g_oracle"}, \code{"D1"}, \code{"mD1"}, \code{"rD1"} (extend as needed).}
 
 \item{idx_inject}{Integer row index to corrupt (default 3).}
 }
@@ -48,32 +48,33 @@ One of \code{"Y"}, \code{"q_oracle"}, \code{"D1"}, \code{"mD1"}, \code{"rD1"} (e
 A list with:
 \itemize{
 \item \code{data}: a \code{data.frame} with columns \code{X1..Xp}, \code{D1..Dp_d}, \code{Y};
-oracle nuisances \code{q_oracle} (the value of \eqn{q_{\tau}(X)}),
+oracle nuisances \code{g_oracle} (the value of \eqn{g_{0}(X)}),
 \code{mD1..mDp_d} (components of \eqn{m_{D}(X)}),
 and residuals \code{rD1..rDp_d} (components of \eqn{D - m_{D}(X)}).
 \item \code{x0}: the target point used.
-\item \code{truth}: a list with \code{beta_true} (length \code{p_d}),
-\code{q_fn(x)} and \code{mD_fn(x)} closures to evaluate ground truth at new \eqn{X}.
-\item \code{q_x0}: the true value \eqn{q_{\tau}(x_{0})}.
+\item \code{truth}: a list with \code{theta_true} (length \code{p_d}),
+\code{g_fn(x)} and \code{mD_fn(x)} closures to evaluate ground truth at new \eqn{X}.
+\item \code{g_x0}: the true value \eqn{g_{0}(x_{0})}.
 }
 }
 \description{
 Generates data for a partially linear quantile regression (PLQR) model
 \deqn{
-  Q_{\tau}(Y \mid X, D) \;=\; D^{\top}\,\beta_{0}(\tau) \;+\; q_{\tau}(X) \, ,
+  Q_{\tau}(Y \mid D, U) \;=\; D^{\top}\,\theta_{0} \;+\; g_{0}(U) \, ,
 }
-with a user-chosen design for \eqn{q_{\tau}}. Errors follow an Asymmetric
-Laplace distribution (ALD) at level \eqn{\tau}, so the conditional
-\eqn{\tau}-quantile equals the right-hand side.
+with a user-chosen design for the nonparametric shape nuisance
+\eqn{g_{0}}; the demo specializes to \eqn{U = X}. Errors follow an
+Asymmetric Laplace distribution (ALD) at level \eqn{\tau}, so the
+conditional \eqn{\tau}-quantile equals the right-hand side.
 }
 \details{
 The function also returns the oracle
-\eqn{m_{D}(X) \equiv \mathbb{E}[D \mid X]} to build the orthogonal PLQR score
+\eqn{m_{D}(U) \equiv \mathbb{E}[D \mid U]} to build the orthogonal PLQR score
 \deqn{
-  \psi(W;\beta)
+  \psi(W;\theta)
   \;=\;
-  (\tau - \mathbf{1}\{\,Y \le D^{\top}\beta + q_{\tau}(X)\,\})\,
-  (D - m_{D}(X))\, .
+  (\tau - \mathbf{1}\{\,Y \le D^{\top}\theta + g_{0}(U)\,\})\,
+  (D - m_{D}(U))\, .
 }
 }
 \examples{
@@ -82,7 +83,7 @@ demo <- plqr_demo_data(
   design = "sinusoidal", seed = 1
 )
 head(demo$data)
-demo$truth$beta_true
-demo$q_x0
+demo$truth$theta_true
+demo$g_x0
 
 }

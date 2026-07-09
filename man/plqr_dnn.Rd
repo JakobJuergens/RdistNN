@@ -2,20 +2,20 @@
 % Please edit documentation in R/user-dnn-plqr.R
 \name{plqr_dnn}
 \alias{plqr_dnn}
-\title{PLQR local coefficients and orthogonal moments via DNN rank weights}
+\title{PLQR local moment evaluation and direct coefficient inference via DNN rank weights}
 \usage{
 plqr_dnn(
   data = NULL,
   x_cols = NULL,
   D_cols = NULL,
-  q_col = NULL,
+  g_col = NULL,
   mD_cols = NULL,
   y_col = NULL,
-  beta,
+  theta_eval,
   tau = 0.5,
   X = NULL,
   D = NULL,
-  q = NULL,
+  g = NULL,
   mD = NULL,
   Y = NULL,
   density = NULL,
@@ -45,14 +45,17 @@ unique.}
 \item{D_cols}{Names or indices of partially linear regressor columns in
 \code{data}.}
 
-\item{q_col}{Name or index of the \code{q_tau(X)} nuisance column in \code{data}.}
+\item{g_col}{Name or index of the shape-nuisance column in \code{data} holding
+the values of \eqn{g_0(U)}.}
 
-\item{mD_cols}{Names or indices of nuisance columns for \code{m_D(X)}.}
+\item{mD_cols}{Names or indices of nuisance columns for \code{m_D(U)}.}
 
 \item{y_col}{Name or index of the outcome column in \code{data}.}
 
-\item{beta}{Numeric coefficient vector with length \code{length(D_cols)} (or
-\code{ncol(D)} in matrix interface).}
+\item{theta_eval}{Numeric coefficient vector at which the PLQR moment is
+evaluated, with length \code{length(D_cols)} (or \code{ncol(D)} in the matrix
+interface). No root solving is performed; the result's \code{theta} repeats
+this supplied value across targets.}
 
 \item{tau}{Quantile level in \verb{(0,1)}.}
 
@@ -61,18 +64,18 @@ unique.}
 \item{D}{Numeric matrix (\verb{n x p_d}) of partially linear regressors for the
 matrix interface.}
 
-\item{q}{Numeric vector (\code{n}) with \code{q_tau(X)} values for the matrix
+\item{g}{Numeric vector (\code{n}) with \eqn{g_0(U)} values for the matrix
 interface.}
 
-\item{mD}{Numeric matrix (\verb{n x p_d}) with \code{m_D(X)} values for the matrix
+\item{mD}{Numeric matrix (\verb{n x p_d}) with \code{m_D(U)} values for the matrix
 interface.}
 
 \item{Y}{Numeric outcome vector of length \code{n} for the matrix interface.}
 
 \item{density}{Optional positive numeric vector (\code{n}) estimating the
-conditional density of \code{Y} at \verb{D' beta + q}. When supplied with
-\code{se = TRUE}, PLQR uses the direct coefficient sandwich route and returns
-coefficient standard errors in \code{se}.}
+conditional density of \code{Y} at the threshold \verb{D' theta_eval + g}. When
+supplied with \code{se = TRUE}, PLQR uses the direct coefficient sandwich
+route and returns coefficient standard errors in \code{theta_se}.}
 
 \item{density_col}{Optional column name or index in \code{data} containing the
 positive density values used for the direct coefficient sandwich.}
@@ -116,8 +119,8 @@ recomputes leave-one-out weights directly, and \code{"none"} skips SEs.}
 \item{ctx}{Optional context passed to distance and ranking components.}
 
 \item{return}{Optional extras in addition to the always-returned \code{moment},
-\code{se}, \code{beta}, \code{tau}, and \code{meta}. Allowed values:
-\code{c("W", "ranks", "ord", "dx", "g", "ess", "neighbors", "tuning")}.
+\code{theta}, \code{theta_eval}, \code{tau}, and \code{meta}. Allowed values:
+\code{c("W", "ranks", "ord", "dx", "score", "ess", "neighbors", "tuning")}.
 The \code{neighbors} extra returns the first \code{k} nearest observations used
 inside each size-\code{s} subsample, not the full DNN weight support.}
 }
@@ -125,19 +128,21 @@ inside each size-\code{s} subsample, not the full DNN weight support.}
 An object of class \code{plqr_result} with components:
 \itemize{
 \item \code{moment}: matrix (\verb{p_d x m}) of localized PLQR moments;
-\item \code{theta}: matrix (\verb{p_d x m}) of supplied coefficient values, repeated
+\item \code{theta}: matrix (\verb{p_d x m}) of the supplied coefficient values, repeated
 across targets until a root-solving path is requested in future versions;
-\item \code{se}: optional coefficient standard errors (\verb{p_d x m}) when \code{density}
-or \code{density_col} supplies the direct PLQR sandwich route; otherwise
-optional jackknife standard errors for \code{moment} for backward-compatible
-moment diagnostics;
-\item \code{beta}: the coefficient vector used in the moment map;
+\item \code{theta_eval}: the supplied coefficient vector used in the moment map;
+\item \code{theta_se}: coefficient standard errors (\verb{p_d x m}), present only when
+\code{density} or \code{density_col} supplies the direct PLQR sandwich route;
+\item \code{moment_se}: jackknife standard errors for \code{moment} (a moment-level
+diagnostic, not coefficient inference), present only when no density is
+supplied and \code{se = TRUE} with \code{jackknife != "none"};
 \item \code{tau}: quantile level;
 \item \code{x0}: the \verb{m x p} matrix of evaluation points, with covariate
 column names propagated from the training data when available;
-\item \code{meta}: metadata (\code{n}, \code{m}, \code{p}, \code{p_d}, \code{k}, \code{s}, \code{method}, \code{distance});
-\item when direct coefficient inference is available, \code{vcov}, \code{omega},
-\code{jacobian}, \code{score_covariance}, and \code{neff};
+\item \code{meta}: metadata (\code{n}, \code{m}, \code{p}, \code{p_d}, \code{k}, \code{s}, \code{method}, \code{distance},
+\code{theta_source = "supplied"}, \code{theta_se_method}, \code{moment_se_method});
+\item when direct coefficient inference is available, \code{theta_vcov},
+\code{theta_omega}, \code{jacobian}, \code{score_covariance}, and \code{neff};
 \item \code{tuning_grid}: in grid mode, a list with \code{candidates}, \code{estimates},
 \code{diagnostics}, and \code{meta} tables. Candidate diagnostics report
 top-5 weight concentration separately from the estimator's \code{k};
@@ -148,40 +153,42 @@ top-5 weight concentration separately from the estimator's \code{k};
 Compute localized orthogonal PLQR moments
 \deqn{
   \mathbb{E}\!\left[
-    \left(\tau - \mathbf{1}\{Y \le D^\top \beta + q_{\tau}(X)\}\right)
-    \left(D - m_D(X)\right)
+    \left(\tau - \mathbf{1}\{Y \le D^\top \theta + g_0(U)\}\right)
+    \left(D - m_D(U)\right)
     \;\middle|\; X \approx x_0
   \right]
 }
-using DNN rank weights at one or multiple target points. When positive
-threshold density values are supplied through \code{density} or \code{density_col},
-the same fit reports the direct PLQR coefficient sandwich used for standard
-errors and confidence intervals.
+at a supplied coefficient value \code{theta_eval}, using DNN rank weights at one
+or multiple target points. When positive threshold density values are
+supplied through \code{density} or \code{density_col}, the same fit reports the
+direct PLQR coefficient sandwich used for standard errors and confidence
+intervals. No local root solving is performed: \code{theta} in the result is the
+supplied evaluation value (\code{meta$theta_source = "supplied"}).
 }
 \details{
 Two interfaces are supported.
 \enumerate{
 \item Data-frame interface (recommended): pass \code{data} with \code{x_cols}, \code{D_cols},
-\code{q_col}, \code{mD_cols}, and \code{y_col}.
-\item Matrix interface: pass \code{X}, \code{D}, \code{q}, \code{mD}, and \code{Y}.
+\code{g_col}, \code{mD_cols}, and \code{y_col}.
+\item Matrix interface: pass \code{X}, \code{D}, \code{g}, \code{mD}, and \code{Y}.
 }
 
-No nuisance models are fit internally; this wrapper assumes \code{q_tau(X)} and
-\code{m_D(X)} are supplied. Despite the \code{q_tau(X)} name (kept for backward
-compatibility), this nuisance plays the role of the partially-linear
-quantile model's nonparametric shape function \eqn{g_0(U)} in the
-conditional Z-estimation theory this estimator implements: the threshold
-is \eqn{D'\beta + g_0(U)}, and \eqn{g_0} alone is not itself a quantile.
-Both \code{q_tau(X)} and \code{m_D(X)} may depend on covariates beyond \code{x_cols}
-(the paper's \eqn{U = (X, Z)}); the package does not restrict their
-domain, since they are supplied pre-computed. Density values for direct
-coefficient inference are also supplied by the user rather than estimated
-internally; they play the role of the paper's local conditional density
-\eqn{q_{0,bx}(D,Z)}, entering only the coefficient Jacobian. See
+No nuisance models are fit internally; this wrapper assumes the
+partially-linear shape nuisance \eqn{g_0(U)} and the residualizing nuisance
+\eqn{m_D(U) = E[D \mid U]} are supplied. The threshold is
+\eqn{D'\theta + g_0(U)}; \eqn{g_0} alone is not itself a quantile function.
+Both \code{g} and \code{mD} may depend on covariates beyond \code{x_cols} (the paper's
+\eqn{U = (X, Z)}); the package does not restrict their domain, since they
+are supplied pre-computed. Density values for direct coefficient inference
+are also supplied by the user rather than estimated internally; they play
+the role of the paper's local conditional density at the threshold,
+entering only the coefficient Jacobian. See
 \verb{markdown_notes/design/15_plqr_variance_estimation_rationale.md} for the
 full nuisance-notation mapping and for why coefficient-level inference
 requires this direct-sandwich route rather than the jackknife SE used by
-\code{\link[=cate_dnn]{cate_dnn()}}/\code{\link[=np_dnn]{np_dnn()}}.
+\code{\link[=cate_dnn]{cate_dnn()}}/\code{\link[=np_dnn]{np_dnn()}}. Direct coefficient inference requires
+\code{normalize = TRUE}, matching the theorem convention of weights summing to
+one per target.
 
 As in \code{\link[=weights_dnn]{weights_dnn()}}, exact DNN localization uses the full rank permutation
 at each target rather than an \code{s}-nearest-neighbor truncation. The \code{"fast"}
@@ -194,8 +201,8 @@ preserves the ordinary scalar-fit return shape. \code{tuning_mode = "grid"}
 evaluates the feasible candidates in \code{tuning}, or the paper default tuning
 grid when \code{tuning} is omitted, and attaches a tidy \code{tuning_grid} payload.
 The payload stores one long-form row per candidate, target, and PLQR moment
-component; the public \code{moment} and \code{se} matrix fields remain anchored to the
-default candidate. Candidate diagnostics include \code{ess}, \code{max_weight},
+component; the public \code{moment} and \code{moment_se} matrix fields remain anchored
+to the default candidate. Candidate diagnostics include \code{ess}, \code{max_weight},
 \code{top_n}, \code{top5_weight_share}, and \code{degenerate}; \code{top_n} is fixed at 5 and
 is independent of the estimator's \code{k}. Direct PLQR sandwich inference from
 \code{density} or \code{density_col} currently uses \code{tuning_mode = "default"} only.
@@ -203,16 +210,16 @@ is independent of the estimator's \code{k}. Direct PLQR sandwich inference from
 \examples{
 set.seed(1)
 demo <- plqr_demo_data(n = 120, p = 2, p_d = 2, tau = 0.5, seed = 1)
-demo$data$q_density <- 2
+demo$data$density_oracle <- 2
 out <- plqr_dnn(
   data = demo$data,
   x_cols = c("X1", "X2"),
   D_cols = c("D1", "D2"),
-  q_col = "q_oracle",
+  g_col = "g_oracle",
   mD_cols = c("mD1", "mD2"),
   y_col = "Y",
-  density_col = "q_density",
-  beta = demo$truth$beta_true,
+  density_col = "density_oracle",
+  theta_eval = demo$truth$theta_true,
   tau = 0.5,
   x0 = c(0, 0),
   method = "exact",
@@ -222,5 +229,5 @@ out <- plqr_dnn(
 summary(out)
 }
 \seealso{
-\code{\link[=weights_dnn]{weights_dnn()}}, \code{\link[=score_plqr_component]{score_plqr_component()}}, \code{\link[=plqr_demo_data]{plqr_demo_data()}}.
+\code{\link[=weights_dnn]{weights_dnn()}}, \code{\link[=plqr_score_matrix]{plqr_score_matrix()}}, \code{\link[=plqr_demo_data]{plqr_demo_data()}}.
 }

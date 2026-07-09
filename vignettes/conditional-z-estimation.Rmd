@@ -93,28 +93,28 @@ diagnostics(fit_cate)
 predict(fit_cate, x0 = c(0.2, -0.1), interval = "confidence")
 ```
 
-## PLQR Coefficients and Orthogonal Moments (`plqr_dnn`)
+## PLQR Orthogonal Moments and Coefficient Inference (`plqr_dnn`)
 
 ```{r plqr, eval=FALSE}
 demo_plqr <- plqr_demo_data(n = 250, p = 2, p_d = 2, tau = 0.5, seed = 1)
-demo_plqr$data$q_density <- 2
+demo_plqr$data$density_oracle <- 2
 
 fit_plqr <- plqr_dnn(
   data = demo_plqr$data,
   x_cols = c("X1", "X2"),
   D_cols = c("D1", "D2"),
-  q_col = "q_oracle",
+  g_col = "g_oracle",
   mD_cols = c("mD1", "mD2"),
   y_col = "Y",
-  density_col = "q_density",
-  beta = demo_plqr$truth$beta_true,
+  density_col = "density_oracle",
+  theta_eval = demo_plqr$truth$theta_true,
   tau = 0.5,
   x0 = c(0, 0),
   method = "exact",
   k = 1L,
   tuning = tuning_default,
   se = TRUE,
-  return = c("W", "g", "ess", "tuning")
+  return = c("W", "score", "ess", "tuning")
 )
 
 summary(fit_plqr)
@@ -130,17 +130,19 @@ diagnostics(fit_plqr)
 
 $$
 \mathbb{E}\!\left[
-  \left(\tau - \mathbf{1}\{Y \le D^\top \beta + q_\tau(X)\}\right)
-  \left(D - m_D(X)\right)
+  \left(\tau - \mathbf{1}\{Y \le D^\top \theta + g_0(U)\}\right)
+  \left(D - m_D(U)\right)
   \;\middle|\; X \approx x_0
 \right]
 $$
 
-Despite its name, `q_tau(X)` is the partially-linear model's nonparametric
-shape nuisance (paper notation $g_0(U)$), not itself a quantile — the sum
-$D'\theta_0 + g_0$ is the conditional quantile. `m_D(X)` residualizes the
-design ($m_0(U) = E[D \mid U]$). Both are supplied by the user; no nuisance
-model is fit internally.
+at the supplied coefficient value `theta_eval`. Here `g` is the
+partially-linear model's nonparametric shape nuisance (paper notation
+$g_0(U)$), not itself a quantile — the sum $D'\theta_0 + g_0$ is the
+conditional quantile. `mD` residualizes the design
+($m_0(U) = E[D \mid U]$). Both are supplied by the user; no nuisance model
+is fit internally, and no root solving is performed: the result's `theta`
+repeats the supplied `theta_eval` (`meta$theta_source = "supplied"`).
 
 Coefficient-level standard errors and confidence intervals require
 supplying `density`/`density_col` (an estimate of the local conditional
@@ -149,9 +151,10 @@ convenience: the package's source theory (see
 `markdown_notes/design/15_plqr_variance_estimation_rationale.md`) proves
 coefficient-level inference only for this direct sandwich route, not for a
 jackknife SE on the moment. Fits without a density input can still report
-`se` (a jackknife SE on the *moment*, useful as a diagnostic) but
+`moment_se` (a jackknife SE on the *moment*, useful as a diagnostic) but
 `confint()`/`predict(se.fit = TRUE)` will error, by design, until refit
-with a density input.
+with a density input. Coefficient-level results live in `theta_se` /
+`theta_vcov`; the two routes are never mixed in one field.
 
 ## Diagnostics and Reporting
 

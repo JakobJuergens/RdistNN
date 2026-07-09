@@ -176,10 +176,10 @@ as_rank_weight <- function(fun, name = "user_rank_weight") {
 #' @return Invisibly, the registered spec.
 #' @examples
 #' nm <- "tmp_rank_demo"
-#' register_rank(nm, function(ranks) rep(1 / length(ranks), length(ranks)))
-#' nm %in% rank_names()
+#' register_rank_weight(nm, function(ranks) rep(1 / length(ranks), length(ranks)))
+#' nm %in% rank_weight_names()
 #' @export
-register_rank <- function(name, spec) {
+register_rank_weight <- function(name, spec) {
   if (!is.character(name) || length(name) != 1L || !nzchar(name)) {
     .abort_bad_arg("name", "must be a non-empty character scalar")
   }
@@ -202,10 +202,10 @@ register_rank <- function(name, spec) {
 #' @param name Character scalar.
 #' @return A rank_weight spec.
 #' @examples
-#' register_rank("tmp_rank_get", function(ranks) rep(1 / length(ranks), length(ranks)))
-#' is_rank_weight(get_rank("tmp_rank_get"))
+#' register_rank_weight("tmp_rank_get", function(ranks) rep(1 / length(ranks), length(ranks)))
+#' is_rank_weight(get_rank_weight("tmp_rank_get"))
 #' @export
-get_rank <- function(name) {
+get_rank_weight <- function(name) {
   if (!is.character(name) || length(name) != 1L) {
     .abort_bad_arg("name", "must be a character scalar")
   }
@@ -224,9 +224,9 @@ get_rank <- function(name) {
 #' List registered rank_weight names
 #' @return Character vector.
 #' @examples
-#' head(rank_names(), 3)
+#' head(rank_weight_names(), 3)
 #' @export
-rank_names <- function() {
+rank_weight_names <- function() {
   sort(ls(.rank_registry, all.names = FALSE))
 }
 

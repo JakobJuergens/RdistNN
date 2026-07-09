@@ -25,7 +25,7 @@ test_that("np_dnn tuning path matches manual s and exposes tuning payload", {
   expect_equal(fit_tuned$meta$tuning$source, "tuning")
   expect_true(is.list(fit_tuned$tuning$default))
   expect_s3_class(fit_tuned$tuning$grid$candidates, "data.frame")
-  expect_true(all(c("kappa", "s", "feasible", "reason") %in% names(fit_tuned$tuning$grid$candidates)))
+  expect_true(all(c("lambda", "s", "feasible", "reason") %in% names(fit_tuned$tuning$grid$candidates)))
 
   fit_df <- np_dnn(
     data = df, x_cols = c("X1", "X2"), y_col = "Y", x0 = x0,
@@ -60,10 +60,10 @@ test_that("explicit s and tuning conflict is rejected across DNN wrappers", {
       data = demo_plqr$data,
       x_cols = c("X1", "X2"),
       D_cols = c("D1", "D2"),
-      q_col = "q_oracle",
+      g_col = "g_oracle",
       mD_cols = c("mD1", "mD2"),
       y_col = "Y",
-      beta = demo_plqr$truth$beta_true,
+      theta_eval = demo_plqr$truth$theta_true,
       tau = 0.5,
       x0 = demo_plqr$x0,
       k = 2L,
@@ -100,10 +100,10 @@ test_that("cate_dnn and plqr_dnn tuning path matches manual s", {
     data = demo_plqr$data,
     x_cols = c("X1", "X2"),
     D_cols = c("D1", "D2"),
-    q_col = "q_oracle",
+    g_col = "g_oracle",
     mD_cols = c("mD1", "mD2"),
     y_col = "Y",
-    beta = demo_plqr$truth$beta_true,
+    theta_eval = demo_plqr$truth$theta_true,
     tau = 0.5,
     x0 = demo_plqr$x0,
     method = "exact",
@@ -115,10 +115,10 @@ test_that("cate_dnn and plqr_dnn tuning path matches manual s", {
     data = demo_plqr$data,
     x_cols = c("X1", "X2"),
     D_cols = c("D1", "D2"),
-    q_col = "q_oracle",
+    g_col = "g_oracle",
     mD_cols = c("mD1", "mD2"),
     y_col = "Y",
-    beta = demo_plqr$truth$beta_true,
+    theta_eval = demo_plqr$truth$theta_true,
     tau = 0.5,
     x0 = demo_plqr$x0,
     method = "exact",
@@ -196,7 +196,7 @@ test_that("tuning works via registered name and bare function in wrappers", {
   expect_equal(fit_fun$mu, fit_manual$mu, tolerance = 1e-12)
   expect_equal(fit_named$meta$s, 4L)
   expect_equal(fit_fun$meta$s, 4L)
-  expect_true(is.na(fit_fun$tuning$grid$candidates$kappa[1L]))
+  expect_true(is.na(fit_fun$tuning$grid$candidates$lambda[1L]))
   expect_equal(fit_fun$tuning$grid$candidates$s, 4L)
 })
 
@@ -204,7 +204,7 @@ test_that("tuning metadata is attached even when `return` omits tuning payload",
   demo <- np_demo_data(n = 100L, p = 3L, seed = 3L)
   x_mat <- as.matrix(demo$data[, c("X1", "X2", "X3")])
   y_vec <- demo$data$Y
-  tun <- tuning_dnn_paper(kappa = 1.25)
+  tun <- tuning_dnn_paper(lambda = 1.25)
   expected_s <- tuning_eval(tun, n = nrow(x_mat), kx = ncol(x_mat), k = 2L, mode = "default")$s
 
   fit <- np_dnn(
@@ -241,10 +241,10 @@ test_that("tuning infeasibility k > s errors are propagated across wrappers", {
       data = demo_plqr$data,
       x_cols = c("X1", "X2"),
       D_cols = c("D1", "D2"),
-      q_col = "q_oracle",
+      g_col = "g_oracle",
       mD_cols = c("mD1", "mD2"),
       y_col = "Y",
-      beta = demo_plqr$truth$beta_true,
+      theta_eval = demo_plqr$truth$theta_true,
       tau = 0.5,
       x0 = demo_plqr$x0,
       method = "exact",
@@ -287,10 +287,10 @@ test_that("jackknife feasibility failures from tuning (s >= n) error clearly", {
       data = demo_plqr$data,
       x_cols = c("X1", "X2"),
       D_cols = c("D1", "D2"),
-      q_col = "q_oracle",
+      g_col = "g_oracle",
       mD_cols = c("mD1", "mD2"),
       y_col = "Y",
-      beta = demo_plqr$truth$beta_true,
+      theta_eval = demo_plqr$truth$theta_true,
       tau = 0.5,
       x0 = demo_plqr$x0,
       method = "exact",
@@ -308,7 +308,7 @@ test_that("cate_dnn and plqr_dnn expose stable tuning payload with `return = 'tu
   n <- 70L
   x_mat <- matrix(rnorm(n * 2L), nrow = n, ncol = 2L)
   psi <- rnorm(n)
-  tun <- tuning_dnn_paper(kappa = 1.25)
+  tun <- tuning_dnn_paper(lambda = 1.25)
 
   cate_fit <- cate_dnn(
     X = x_mat, x0 = c(0, 0), pseudo_outcome = psi,
@@ -318,17 +318,17 @@ test_that("cate_dnn and plqr_dnn expose stable tuning payload with `return = 'tu
   expect_true(is.list(cate_fit$meta$tuning))
   expect_equal(cate_fit$meta$tuning$source, "tuning")
   expect_s3_class(cate_fit$tuning$grid$candidates, "data.frame")
-  expect_true(all(c("kappa", "s", "feasible", "reason") %in% names(cate_fit$tuning$grid$candidates)))
+  expect_true(all(c("lambda", "s", "feasible", "reason") %in% names(cate_fit$tuning$grid$candidates)))
 
   demo_plqr <- plqr_demo_data(n = 95L, p = 2L, p_d = 2L, tau = 0.5, seed = 10L)
   plqr_fit <- plqr_dnn(
     data = demo_plqr$data,
     x_cols = c("X1", "X2"),
     D_cols = c("D1", "D2"),
-    q_col = "q_oracle",
+    g_col = "g_oracle",
     mD_cols = c("mD1", "mD2"),
     y_col = "Y",
-    beta = demo_plqr$truth$beta_true,
+    theta_eval = demo_plqr$truth$theta_true,
     tau = 0.5,
     x0 = demo_plqr$x0,
     method = "exact",
@@ -340,7 +340,7 @@ test_that("cate_dnn and plqr_dnn expose stable tuning payload with `return = 'tu
   expect_true(is.list(plqr_fit$meta$tuning))
   expect_equal(plqr_fit$meta$tuning$source, "tuning")
   expect_s3_class(plqr_fit$tuning$grid$candidates, "data.frame")
-  expect_true(all(c("kappa", "s", "feasible", "reason") %in% names(plqr_fit$tuning$grid$candidates)))
+  expect_true(all(c("lambda", "s", "feasible", "reason") %in% names(plqr_fit$tuning$grid$candidates)))
 })
 
 test_that("matrix/data-frame interface parity is preserved with tuning enabled", {
@@ -368,10 +368,10 @@ test_that("matrix/data-frame interface parity is preserved with tuning enabled",
   out_plqr_mat <- plqr_dnn(
     X = as.matrix(plqr_demo$data[, c("X1", "X2")]),
     D = as.matrix(plqr_demo$data[, c("D1", "D2")]),
-    q = plqr_demo$data$q_oracle,
+    g = plqr_demo$data$g_oracle,
     mD = as.matrix(plqr_demo$data[, c("mD1", "mD2")]),
     Y = plqr_demo$data$Y,
-    beta = plqr_demo$truth$beta_true,
+    theta_eval = plqr_demo$truth$theta_true,
     tau = 0.5,
     x0 = plqr_demo$x0,
     method = "exact",
@@ -383,10 +383,10 @@ test_that("matrix/data-frame interface parity is preserved with tuning enabled",
     data = plqr_demo$data,
     x_cols = c("X1", "X2"),
     D_cols = c("D1", "D2"),
-    q_col = "q_oracle",
+    g_col = "g_oracle",
     mD_cols = c("mD1", "mD2"),
     y_col = "Y",
-    beta = plqr_demo$truth$beta_true,
+    theta_eval = plqr_demo$truth$theta_true,
     tau = 0.5,
     x0 = plqr_demo$x0,
     method = "exact",

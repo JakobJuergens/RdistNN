@@ -1,9 +1,9 @@
 # tests/testthat/test-score-plqr.R
 # -------------------------------------------------------------------
 # PLQR component score — PURE per-observation score only (no weights/USTAT)
-# For any subset S, the kernel returns sum_{i in S} g_i where
-#   g_i = (tau - 1{Y_i <= D_i' beta + q(X_i)}) * (D_{i,j} - mD_{i,j}).
-# This suite matches the implementation in R/score-plqr-component.R.
+# For any subset S, the kernel returns sum_{i in S} psi_i where
+#   psi_i = (tau - 1{Y_i <= D_i' theta + g(U_i)}) * (D_{i,j} - mD_{i,j}).
+# This suite matches the implementation in R/score-plqr.R.
 # It uses plqr_demo_sets() if available, with a fallback mini generator.
 # -------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ testthat::local_edition(3)
   if (nrow(subs) == 0L) {
     return(numeric(0L))
   }
-  gi <- ctx$g
+  gi <- ctx$score
   rowSums(matrix(gi[subs], nrow = nrow(subs), ncol = ncol(subs)))
 }
 
@@ -50,12 +50,12 @@ testthat::local_edition(3)
   # D = mD + noise
   D <- mD + matrix(rnorm(n * p_d, sd = 0.7), n, p_d)
   colnames(D) <- paste0("D", seq_len(p_d))
-  # q_tau(X)
-  q_oracle <- 0.5 * sin(X[, 1]) + if (p >= 2) 0.25 * X[, 2]^2 else 0
-  # beta and Y
-  beta_true <- rep(0.5, p_d)
-  Y <- as.vector(D %*% beta_true) + q_oracle + rnorm(n, sd = 0.6)
-  df <- data.frame(X, D, Y = Y, q_oracle = q_oracle, check.names = FALSE)
+  # g_0(X)
+  g_oracle <- 0.5 * sin(X[, 1]) + if (p >= 2) 0.25 * X[, 2]^2 else 0
+  # theta and Y
+  theta_true <- rep(0.5, p_d)
+  Y <- as.vector(D %*% theta_true) + g_oracle + rnorm(n, sd = 0.6)
+  df <- data.frame(X, D, Y = Y, g_oracle = g_oracle, check.names = FALSE)
   # Also include residual rD columns (useful in some checks)
   for (j in seq_len(p_d)) df[[paste0("rD", j)]] <- df[[paste0("D", j)]] - mD[, j]
   list(
@@ -63,11 +63,11 @@ testthat::local_edition(3)
     x0 = rep(0, p),
     x_cols = paste0("X", seq_len(p)),
     d_cols = paste0("D", seq_len(p_d)),
-    beta_true = beta_true,
+    theta_true = theta_true,
     tau = tau,
     cols = list(
       Y = "Y",
-      q = "q_oracle",
+      g = "g_oracle",
       mD = paste0("mD", seq_len(p_d)),
       rD = paste0("rD", seq_len(p_d))
     ),
@@ -98,7 +98,7 @@ psi_tau <- function(u, tau) tau - as.numeric(u <= 0)
 
 # --- tests -----------------------------------------------------------
 
-test_that("[factory] validates tau, beta length, j range, D/mD lengths, and s,k", {
+test_that("[factory] validates tau, theta length, j range, D/mD lengths, and s", {
   fx <- .get_plqr_fx(n = 80, p = 2, p_d = 2)
   scn <- fx$ok_linear
 
@@ -106,20 +106,20 @@ test_that("[factory] validates tau, beta length, j range, D/mD lengths, and s,k"
   x_cols <- scn$x_cols
   D_cols <- scn$d_cols
   mD_cols <- scn$cols$mD
-  q_col <- scn$cols$q
+  g_col <- scn$cols$g
   tau <- scn$tau
 
   # tau outside (0,1)
   expect_error(
-    score_plqr_component(x0, x_cols, D_cols, q_col, mD_cols,
-      beta = rep(0, length(D_cols)), j = 1L, tau = 1, s = 1, k = 1
+    score_plqr_component(x0, x_cols, D_cols, g_col, mD_cols, y_col = "Y",
+      theta = rep(0, length(D_cols)), j = 1L, tau = 1, s = 1
     ),
     "`tau` must be a numeric scalar in \\(0,1\\)\\.",
     ignore.case = FALSE
   )
   expect_error(
-    score_plqr_component(x0, x_cols, D_cols, q_col, mD_cols,
-      beta = rep(0, length(D_cols)), j = 1L, tau = -1e-3, s = 1, k = 1
+    score_plqr_component(x0, x_cols, D_cols, g_col, mD_cols, y_col = "Y",
+      theta = rep(0, length(D_cols)), j = 1L, tau = -1e-3, s = 1
     ),
     "`tau` must be a numeric scalar in \\(0,1\\)\\.",
     ignore.case = FALSE
@@ -127,25 +127,25 @@ test_that("[factory] validates tau, beta length, j range, D/mD lengths, and s,k"
 
   # s, k must be positive integers
   expect_error(
-    score_plqr_component(x0, x_cols, D_cols, q_col, mD_cols,
-      beta = rep(0, length(D_cols)), j = 1L, tau = tau, s = 0, k = 1
+    score_plqr_component(x0, x_cols, D_cols, g_col, mD_cols, y_col = "Y",
+      theta = rep(0, length(D_cols)), j = 1L, tau = tau, s = 0
     ),
     "`s` must be a positive integer\\.",
     ignore.case = FALSE
   )
+  # `k` was a compatibility-only argument and has been removed
   expect_error(
-    score_plqr_component(x0, x_cols, D_cols, q_col, mD_cols,
-      beta = rep(0, length(D_cols)), j = 1L, tau = tau, s = 1, k = 0
+    score_plqr_component(x0, x_cols, D_cols, g_col, mD_cols, y_col = "Y",
+      theta = rep(0, length(D_cols)), j = 1L, tau = tau, s = 1, k = 1
     ),
-    "`k` must be a positive integer\\.",
-    ignore.case = FALSE
+    "unused argument"
   )
 
   # D_cols non-empty
   expect_error(
     score_plqr_component(x0, x_cols,
-      D_cols = character(0), q_col, mD_cols,
-      beta = numeric(0), j = 1L, tau = tau, s = 1, k = 1
+      D_cols = character(0), g_col, mD_cols, y_col = "Y",
+      theta = numeric(0), j = 1L, tau = tau, s = 1
     ),
     "`D_cols` must be a non-empty vector of columns\\.",
     ignore.case = FALSE
@@ -153,27 +153,27 @@ test_that("[factory] validates tau, beta length, j range, D/mD lengths, and s,k"
 
   # mD length mismatch
   expect_error(
-    score_plqr_component(x0, x_cols, D_cols, q_col, mD_cols[-1],
-      beta = rep(0, length(D_cols)), j = 1L, tau = tau, s = 1, k = 1
+    score_plqr_component(x0, x_cols, D_cols, g_col, mD_cols[-1], y_col = "Y",
+      theta = rep(0, length(D_cols)), j = 1L, tau = tau, s = 1
     ),
     "`mD_cols` must have the same length and order as `D_cols`\\.",
     ignore.case = FALSE
   )
 
-  # beta length mismatch
+  # theta length mismatch
   expect_error(
-    score_plqr_component(x0, x_cols, D_cols, q_col, mD_cols,
-      beta = numeric(length(D_cols) + 1L), j = 1L, tau = tau, s = 1, k = 1
+    score_plqr_component(x0, x_cols, D_cols, g_col, mD_cols, y_col = "Y",
+      theta = numeric(length(D_cols) + 1L), j = 1L, tau = tau, s = 1
     ),
-    "beta.*length.*must equal length\\(D_cols\\)",
+    "theta.*length.*must equal length\\(D_cols\\)",
     ignore.case = TRUE
   )
 
   # j out of range
   expect_error(
-    score_plqr_component(x0, x_cols, D_cols, q_col, mD_cols,
-      beta = rep(0, length(D_cols)), j = length(D_cols) + 1L,
-      tau = tau, s = 1, k = 1
+    score_plqr_component(x0, x_cols, D_cols, g_col, mD_cols, y_col = "Y",
+      theta = rep(0, length(D_cols)), j = length(D_cols) + 1L,
+      tau = tau, s = 1
     ),
     "`j` must be an integer in 1..length\\(D_cols\\)",
     ignore.case = TRUE
@@ -185,8 +185,8 @@ test_that("[order] reported order equals chosen s", {
   scn <- fx$ok_sinusoid
 
   for (ss in c(1L, 3L, 7L)) {
-    sc <- score_plqr_component(scn$x0, scn$x_cols, scn$d_cols, scn$cols$q, scn$cols$mD,
-      beta = scn$beta_true, j = 1L, tau = scn$tau, s = ss, k = 1L
+    sc <- score_plqr_component(scn$x0, scn$x_cols, scn$d_cols, scn$cols$g, scn$cols$mD,
+      y_col = scn$cols$Y, theta = scn$theta_true, j = 1L, tau = scn$tau, s = ss
     )
     ctx <- .setup_safe(sc, scn$data)
     expect_identical(sc$order(nrow(scn$data), scn$data, ctx), as.integer(ss))
@@ -198,8 +198,8 @@ test_that("[eval] matches direct formula for singletons (character x_cols)", {
   scn <- fx$ok_linear
 
   df <- scn$data
-  sc <- score_plqr_component(scn$x0, scn$x_cols, scn$d_cols, scn$cols$q, scn$cols$mD,
-    beta = scn$beta_true, j = 1L, tau = scn$tau, s = 1, k = 1
+  sc <- score_plqr_component(scn$x0, scn$x_cols, scn$d_cols, scn$cols$g, scn$cols$mD,
+    y_col = scn$cols$Y, theta = scn$theta_true, j = 1L, tau = scn$tau, s = 1
   )
   ctx <- .setup_safe(sc, df)
 
@@ -207,7 +207,7 @@ test_that("[eval] matches direct formula for singletons (character x_cols)", {
   vals <- .eval_batch_safe(sc, subs1, df, ctx)
 
   Dmat <- as.matrix(df[scn$d_cols])
-  thr <- as.vector(Dmat %*% scn$beta_true) + df[[scn$cols$q]]
+  thr <- as.vector(Dmat %*% scn$theta_true) + df[[scn$cols$g]]
   u <- df[[scn$cols$Y]] - thr
   rDj <- df[[scn$cols$rD[1]]]
   gR <- psi_tau(u, scn$tau) * rDj
@@ -224,8 +224,8 @@ test_that("[eval] multi-column subsets sum g across subset rows", {
   scn <- fx$ok_bump
 
   df <- scn$data
-  sc <- score_plqr_component(scn$x0, seq_along(scn$x_cols), scn$d_cols, scn$cols$q, scn$cols$mD,
-    beta = rep(0.1, length(scn$d_cols)), j = 2L, tau = scn$tau, s = 2, k = 1
+  sc <- score_plqr_component(scn$x0, seq_along(scn$x_cols), scn$d_cols, scn$cols$g, scn$cols$mD,
+    y_col = scn$cols$Y, theta = rep(0.1, length(scn$d_cols)), j = 2L, tau = scn$tau, s = 2
   )
   ctx <- .setup_safe(sc, df)
 
@@ -234,7 +234,7 @@ test_that("[eval] multi-column subsets sum g across subset rows", {
 
   # Direct row sums using the g-definition
   Dmat <- as.matrix(df[scn$d_cols])
-  thr <- as.vector(Dmat %*% rep(0.1, length(scn$d_cols))) + df[[scn$cols$q]]
+  thr <- as.vector(Dmat %*% rep(0.1, length(scn$d_cols))) + df[[scn$cols$g]]
   u <- df[[scn$cols$Y]] - thr
   rDj <- df[[scn$cols$rD[2]]]
   g <- psi_tau(u, scn$tau) * rDj
@@ -251,15 +251,15 @@ test_that("[inputs/setup] finiteness guards fire at setup", {
   # Y non-finite
   df_bad <- df
   df_bad[[scn$cols$Y]][3] <- NA_real_
-  sc <- score_plqr_component(scn$x0, scn$x_cols, scn$d_cols, scn$cols$q, scn$cols$mD,
-    beta = scn$beta_true, j = 1L, tau = scn$tau, s = 1, k = 1
+  sc <- score_plqr_component(scn$x0, scn$x_cols, scn$d_cols, scn$cols$g, scn$cols$mD,
+    y_col = scn$cols$Y, theta = scn$theta_true, j = 1L, tau = scn$tau, s = 1
   )
   expect_error(score_setup(sc, df_bad), "Y cannot contain `NA` values\\.", ignore.case = FALSE)
 
-  # q non-finite
+  # g non-finite
   df_bad <- df
-  df_bad[[scn$cols$q]][2] <- Inf
-  expect_error(score_setup(sc, df_bad), "q_tau\\(X\\) cannot contain non-finite values", ignore.case = FALSE)
+  df_bad[[scn$cols$g]][2] <- Inf
+  expect_error(score_setup(sc, df_bad), "g cannot contain non-finite values", ignore.case = FALSE)
 
   # D non-finite
   df_bad <- df
@@ -273,7 +273,7 @@ test_that("[inputs/setup] finiteness guards fire at setup", {
   }
   df_bad <- df
   df_bad[[scn$cols$mD[2]]][7] <- -Inf
-  expect_error(score_setup(sc, df_bad), "m_D\\(X\\) cannot contain non-finite values", ignore.case = FALSE)
+  expect_error(score_setup(sc, df_bad), "mD cannot contain non-finite values", ignore.case = FALSE)
 
   # X non-finite
   df_bad <- df
@@ -286,13 +286,13 @@ test_that("[inputs/setup] finiteness guards fire at setup", {
   expect_error(score_setup(sc, df_bad), "X cannot contain `NA` values\\.", ignore.case = FALSE)
 })
 
-test_that("[ratio] where rD_ij != 0, g_i / rD_ij ∈ {tau - 1, tau}", {
+test_that("[ratio] where rD_ij != 0, psi_i / rD_ij ∈ {tau - 1, tau}", {
   fx <- .get_plqr_fx(n = 110, p = 2, p_d = 2)
   scn <- fx$ok_linear
 
   df <- scn$data
-  sc <- score_plqr_component(scn$x0, scn$x_cols, scn$d_cols, scn$cols$q, scn$cols$mD,
-    beta = scn$beta_true, j = 1L, tau = scn$tau, s = 1, k = 1
+  sc <- score_plqr_component(scn$x0, scn$x_cols, scn$d_cols, scn$cols$g, scn$cols$mD,
+    y_col = scn$cols$Y, theta = scn$theta_true, j = 1L, tau = scn$tau, s = 1
   )
   ctx <- .setup_safe(sc, df)
   vals <- .eval_batch_safe(sc, matrix(seq_len(nrow(df)), ncol = 1L), df, ctx)
@@ -308,8 +308,8 @@ test_that("[object] score object shape and flags", {
   fx <- .get_plqr_fx(n = 50, p = 2, p_d = 1)
   scn <- fx$ok_linear
 
-  sc <- score_plqr_component(scn$x0, scn$x_cols, scn$d_cols, scn$cols$q, scn$cols$mD,
-    beta = scn$beta_true, j = 1L, tau = scn$tau, s = 5L, k = 1L
+  sc <- score_plqr_component(scn$x0, scn$x_cols, scn$d_cols, scn$cols$g, scn$cols$mD,
+    y_col = scn$cols$Y, theta = scn$theta_true, j = 1L, tau = scn$tau, s = 5L
   )
   expect_true(inherits(sc, "ustat_score"))
   expect_type(sc$eval, "closure")
@@ -323,8 +323,8 @@ test_that("[parity] compiled batch (if actually callable) equals direct row sums
   scn <- fx$ok_linear
 
   df <- scn$data
-  sc <- score_plqr_component(scn$x0, scn$x_cols, scn$d_cols, scn$cols$q, scn$cols$mD,
-    beta = scn$beta_true, j = 2L, tau = scn$tau, s = 3, k = 1
+  sc <- score_plqr_component(scn$x0, scn$x_cols, scn$d_cols, scn$cols$g, scn$cols$mD,
+    y_col = scn$cols$Y, theta = scn$theta_true, j = 2L, tau = scn$tau, s = 3
   )
   ctx <- .setup_safe(sc, df)
 
@@ -337,8 +337,8 @@ test_that("[parity] compiled batch (if actually callable) equals direct row sums
   if (inherits(out_try, "try-error")) {
     testthat::skip("Compiled helper not available at runtime; skipping parity check.")
   } else {
-    # Direct row sums of g using ctx$g (already computed by setup)
-    gR <- rowSums(matrix(ctx$g[subs], nrow = nrow(subs), ncol = ncol(subs)))
+    # Direct row sums of the score using ctx$score (already computed by setup)
+    gR <- rowSums(matrix(ctx$score[subs], nrow = nrow(subs), ncol = ncol(subs)))
     expect_equal(out_try, gR, tolerance = 1e-12)
   }
 })

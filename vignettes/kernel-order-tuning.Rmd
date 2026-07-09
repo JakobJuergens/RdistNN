@@ -26,11 +26,11 @@ library(RdistNN)
 The built-in rule is:
 
 \[
-s(\kappa) = \left\lfloor \kappa\, n^{(k_x+1)/(k_x+2)} \right\rfloor
+s(\lambda) = \left\lfloor \lambda\, n^{(k_x+1)/(k_x+2)} \right\rfloor
 \]
 
-with default `kappa = 1` and default grid
-`kappa_grid = c(0.75, 1, 1.25, 1.5)`.
+with default `lambda = 1` and default grid
+`lambda_grid = c(0.75, 1, 1.25, 1.5)`.
 
 ```{r paper-default}
 tun <- tuning_dnn_paper()
@@ -64,7 +64,7 @@ meta_rule <- new_tuning(
     list(
       s = floor(0.9 * n ^ ((kx + 1) / (kx + 2))),
       meta = list(
-        kappa = 0.9,
+        lambda = 0.9,
         formula = "0.9 * n^((kx + 1)/(kx + 2))",
         rounding = "floor"
       )

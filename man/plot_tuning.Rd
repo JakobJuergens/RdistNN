@@ -84,7 +84,7 @@ A ggplot object.
 }
 \description{
 Evaluates or reuses the candidate kernel orders of a tuning grid
-(default: the paper rule's kappa grid via \code{\link[=tuning_dnn_paper]{tuning_dnn_paper()}}, always
+(default: the paper rule's lambda grid via \code{\link[=tuning_dnn_paper]{tuning_dnn_paper()}}, always
 including the fitted \code{s}) and plots the estimates with confidence
 bounds against \code{s}, marking the fitted kernel order with a filled point
 and a dotted guide. For grid fits, the stored \code{tuning_grid} payload is

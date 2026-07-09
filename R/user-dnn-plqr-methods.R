@@ -13,7 +13,7 @@
 
 .plqr_validate_prediction_model <- function(model) {
   if (!is.list(model) || is.null(model$x_mat) || is.null(model$d_mat) ||
-      is.null(model$mD_mat) || is.null(model$beta) || is.null(model$tau)) {
+      is.null(model$mD_mat) || is.null(model$theta_eval) || is.null(model$tau)) {
     .abort_bad_state(paste0(
       "This object does not contain fitted model state for prediction. ",
       "Refit with the current plqr_dnn() implementation."
@@ -67,17 +67,17 @@
     )
   }
 
-  beta <- .validate_finite_numeric_vector(
-    model$beta,
-    arg = "object$.model$beta",
+  theta_eval <- .validate_finite_numeric_vector(
+    model$theta_eval,
+    arg = "object$.model$theta_eval",
     min_length = 1L
   )
-  if (length(beta) != ncol(d_mat)) {
+  if (length(theta_eval) != ncol(d_mat)) {
     .abort_bad_arg(
-      "object$.model$beta",
+      "object$.model$theta_eval",
       "length must equal ncol(object$.model$d_mat)",
       expected = sprintf("ncol(object$.model$d_mat)=%d", ncol(d_mat)),
-      actual = sprintf("length(object$.model$beta)=%d", length(beta)),
+      actual = sprintf("length(object$.model$theta_eval)=%d", length(theta_eval)),
       quoted = FALSE
     )
   }
@@ -134,7 +134,7 @@
   model$d_mat <- d_mat
   model$mD_mat <- mD_mat
   model$density <- density
-  model$beta <- beta
+  model$theta_eval <- theta_eval
   model$tau <- tau
   model$k <- k
   model$s <- s
@@ -188,8 +188,8 @@
   .validate_ncol_relation(model$x_mat, x0_mat, y_arg = "X0", x_arg = "X", relation = "equal")
 }
 
-.plqr_prediction_theta <- function(beta, m, coef_names, target_names) {
-  theta <- matrix(rep(beta, times = m), nrow = length(beta), ncol = m)
+.plqr_prediction_theta <- function(theta_eval, m, coef_names, target_names) {
+  theta <- matrix(rep(theta_eval, times = m), nrow = length(theta_eval), ncol = m)
   .plqr_dimnames_matrix(theta, coef_names, target_names)
 }
 
@@ -202,8 +202,8 @@
   theta <- as.matrix(object$theta)
   p <- nrow(theta)
   m <- ncol(theta)
-  has_inference <- identical(object$meta$se_route, "direct_sandwich") &&
-    is.matrix(object$se) && all(dim(object$se) == dim(theta))
+  has_inference <- identical(object$meta$theta_se_method, "direct_sandwich") &&
+    is.matrix(object$theta_se) && all(dim(object$theta_se) == dim(theta))
   crit <- stats::qnorm(0.5 + level / 2)
 
   coef_names <- rownames(theta)
@@ -220,7 +220,7 @@
   for (target in seq_len(m)) {
     for (coef_idx in seq_len(p)) {
       est <- theta[coef_idx, target]
-      se_val <- if (has_inference) object$se[coef_idx, target] else NA_real_
+      se_val <- if (has_inference) object$theta_se[coef_idx, target] else NA_real_
       stat <- if (is.finite(se_val) && se_val > 0) est / se_val else NA_real_
       pval <- if (is.finite(stat)) 2 * stats::pnorm(-abs(stat)) else NA_real_
       rows[[idx]] <- data.frame(
@@ -252,8 +252,8 @@ print.plqr_result <- function(x, ...) {
     ", m=", x$meta$m, "\n",
     sep = ""
   )
-  cat("  model : tau=", x$tau, ", beta=[",
-    paste0(round(x$beta, 4), collapse = ", "),
+  cat("  model : tau=", x$tau, ", theta_eval=[",
+    paste0(round(x$theta_eval, 4), collapse = ", "),
     "]\n",
     sep = ""
   )
@@ -262,9 +262,9 @@ print.plqr_result <- function(x, ...) {
     sep = ""
   )
   if (!is.null(x$theta)) {
-    cat("  est   : theta[,1] = ",
+    cat("  theta : supplied evaluation value; theta[,1] = ",
       paste0(round(x$theta[, 1], 4), collapse = ", "),
-      if (identical(x$meta$se_route, "direct_sandwich")) {
+      if (identical(x$meta$theta_se_method, "direct_sandwich")) {
         "  (coefficient SEs available)\n"
       } else {
         "  (coefficient SEs not available)\n"
@@ -274,7 +274,7 @@ print.plqr_result <- function(x, ...) {
   }
   moment_note <- if (!is.null(x$moment_se)) {
     "  (moment SEs available)\n"
-  } else if (identical(x$meta$se_route, "direct_sandwich")) {
+  } else if (identical(x$meta$theta_se_method, "direct_sandwich")) {
     "  (coefficient SEs reported above)\n"
   } else {
     "  (moment SEs not requested)\n"
@@ -306,7 +306,7 @@ coef.plqr_result <- function(object, ...) {
 #' @return A covariance matrix or list of covariance matrices.
 #' @export
 vcov.plqr_result <- function(object, target = NULL, ...) {
-  if (is.null(object$vcov)) {
+  if (is.null(object$theta_vcov)) {
     .abort_bad_state(
       paste0(
         "Direct PLQR variance-covariance matrices are not available. ",
@@ -315,21 +315,21 @@ vcov.plqr_result <- function(object, target = NULL, ...) {
     )
   }
   if (is.null(target)) {
-    if (length(object$vcov) == 1L) {
-      return(object$vcov[[1L]])
+    if (length(object$theta_vcov) == 1L) {
+      return(object$theta_vcov[[1L]])
     }
-    return(object$vcov)
+    return(object$theta_vcov)
   }
   target <- .validate_scalar_int(target, arg = "target", min = 1L)
-  if (target > length(object$vcov)) {
+  if (target > length(object$theta_vcov)) {
     .abort_bad_arg(
       "target",
       "must select an existing target",
-      expected = sprintf("1..%d", length(object$vcov)),
+      expected = sprintf("1..%d", length(object$theta_vcov)),
       actual = sprintf("target=%d", target)
     )
   }
-  object$vcov[[target]]
+  object$theta_vcov[[target]]
 }
 
 #' Confidence intervals for `plqr_result`
@@ -350,7 +350,7 @@ vcov.plqr_result <- function(object, target = NULL, ...) {
 #' @export
 confint.plqr_result <- function(object, parm = NULL, level = 0.95,
                                 target = NULL, ...) {
-  if (is.null(object$vcov) || !identical(object$meta$se_route, "direct_sandwich")) {
+  if (is.null(object$theta_vcov) || !identical(object$meta$theta_se_method, "direct_sandwich")) {
     .abort_bad_state(
       "Direct PLQR coefficient intervals are not available. Refit with `density` or `density_col` and `se = TRUE`."
     )
@@ -413,8 +413,8 @@ summary.plqr_result <- function(object, level = 0.95, ...) {
     coefficients = .plqr_result_coef_table(object, level = level),
     moment = as.matrix(object$moment),
     level = level,
-    has_inference = identical(object$meta$se_route, "direct_sandwich") &&
-      !is.null(object$vcov),
+    has_inference = identical(object$meta$theta_se_method, "direct_sandwich") &&
+      !is.null(object$theta_vcov),
     meta = object$meta
   )
   class(out) <- "summary.plqr_result"
@@ -473,10 +473,10 @@ print.summary.plqr_result <- function(x, digits = max(3L, getOption("digits") - 
 #'   data = demo$data,
 #'   x_cols = c("X1", "X2"),
 #'   D_cols = c("D1", "D2"),
-#'   q_col = "q_oracle",
+#'   g_col = "g_oracle",
 #'   mD_cols = c("mD1", "mD2"),
 #'   y_col = "Y",
-#'   beta = demo$truth$beta_true,
+#'   theta_eval = demo$truth$theta_true,
 #'   tau = 0.5,
 #'   x0 = c(0, 0),
 #'   method = "exact",
@@ -514,7 +514,7 @@ predict.plqr_result <- function(
   )
   target_names <- paste0("target_", seq_len(ncol(wt$W)))
   theta <- .plqr_prediction_theta(
-    beta = model$beta,
+    theta_eval = model$theta_eval,
     m = ncol(wt$W),
     coef_names = model$coef_names,
     target_names = target_names
@@ -543,7 +543,7 @@ predict.plqr_result <- function(
     coef_names = model$coef_names,
     target_names = target_names
   )
-  se_hat <- direct_fit$se
+  se_hat <- direct_fit$theta_se
 
   if (identical(interval, "none")) {
     return(list(fit = theta, se.fit = se_hat))

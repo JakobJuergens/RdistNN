@@ -244,13 +244,13 @@ utils::globalVariables(".data")
 
 .plot_candidate_label <- function(candidate_row) {
   s <- as.integer(candidate_row$s[[1L]])
-  kappa <- if ("kappa" %in% names(candidate_row)) {
-    suppressWarnings(as.numeric(candidate_row$kappa[[1L]]))
+  lambda <- if ("lambda" %in% names(candidate_row)) {
+    suppressWarnings(as.numeric(candidate_row$lambda[[1L]]))
   } else {
     NA_real_
   }
-  if (!is.na(kappa) && is.finite(kappa)) {
-    sprintf("kappa = %s (s = %d)", .plot_format_candidate_value(kappa), s)
+  if (!is.na(lambda) && is.finite(lambda)) {
+    sprintf("lambda = %s (s = %d)", .plot_format_candidate_value(lambda), s)
   } else {
     sprintf("s = %d", s)
   }
@@ -405,7 +405,7 @@ utils::globalVariables(".data")
     candidate_id = rows$candidate_id,
     candidate_label = ok$candidate_label[idx],
     computed_key = rows$computed_key,
-    kappa = rows$kappa,
+    lambda = rows$lambda,
     s = as.integer(rows$s),
     is_default = as.logical(ok$is_default[idx]),
     target_id = as.integer(rows$target_id),

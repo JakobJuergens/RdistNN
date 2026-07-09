@@ -10,10 +10,10 @@ skip_if_not(
 .layer8_tuning <- function(default_s = 6L, s_grid = c(4L, 6L, 8L)) {
   new_tuning(
     name = "layer8_grid",
-    eval = function(...) list(s = default_s, meta = list(kappa = 1)),
+    eval = function(...) list(s = default_s, meta = list(lambda = 1)),
     eval_grid = function(...) {
       data.frame(
-        kappa = c(0.75, 1, 1.25),
+        lambda = c(0.75, 1, 1.25),
         s = s_grid,
         stringsAsFactors = FALSE
       )
@@ -23,7 +23,7 @@ skip_if_not(
 
 .layer8_raw_schema <- c(
   "method", "design", "n", "kx", "k", "tuning_source",
-  "candidate_id", "kappa", "s", "seed",
+  "candidate_id", "lambda", "s", "seed",
   "tau_hat", "tau0", "bias", "sq_err", "se", "cover", "ci_len", "neff",
   "status"
 )
@@ -46,7 +46,7 @@ test_that("sim_cate_one_rep grid mode emits DNN candidate rows matching scalar r
 
   expect_s3_class(grid, "data.frame")
   expect_equal(nrow(grid), 3L)
-  expect_true(all(c("candidate_id", "kappa", "s", "status") %in% names(grid)))
+  expect_true(all(c("candidate_id", "lambda", "s", "status") %in% names(grid)))
   expect_equal(grid$method, rep("dnn_oracle", 3L))
   expect_equal(grid$status, rep("ok", 3L))
   expect_false(anyNA(grid$candidate_id))
@@ -124,7 +124,7 @@ test_that("sim_cate_run grid mode uses raw schema and does not duplicate benchma
   expect_equal(nrow(bench), 2L)
   expect_equal(as.integer(table(dnn$seed)), rep(3L, 2L))
   expect_true(all(is.na(bench$candidate_id)))
-  expect_true(all(is.na(bench$kappa)))
+  expect_true(all(is.na(bench$lambda)))
   expect_true(all(is.na(bench$s)))
   expect_equal(bench$status, rep("ok", 2L))
 })
@@ -192,8 +192,8 @@ test_that("summarise_sim_results groups by candidate fields with NA-safe benchma
     kx = 2L,
     k = 1L,
     tuning_source = "tuning",
-    candidate_id = c("kappa_0p75", "kappa_0p75", "kappa_0p75", "kappa_1", NA_character_),
-    kappa = c(0.75, 0.75, 0.75, 1, NA_real_),
+    candidate_id = c("lambda_0p75", "lambda_0p75", "lambda_0p75", "lambda_1", NA_character_),
+    lambda = c(0.75, 0.75, 0.75, 1, NA_real_),
     s = c(4L, 4L, 4L, 6L, NA_integer_),
     seed = c(1L, 2L, 3L, 1L, 1L),
     tau_hat = c(1, NA, 3, 2, 3),
@@ -210,10 +210,10 @@ test_that("summarise_sim_results groups by candidate fields with NA-safe benchma
 
   tab <- summarise_sim_results(raw)
   expect_equal(nrow(tab), 3L)
-  expect_true(all(c("candidate_id", "kappa", "s") %in% names(tab)))
+  expect_true(all(c("candidate_id", "lambda", "s") %in% names(tab)))
 
-  cand_075 <- tab[!is.na(tab$candidate_id) & tab$candidate_id == "kappa_0p75", , drop = FALSE]
-  cand_1 <- tab[!is.na(tab$candidate_id) & tab$candidate_id == "kappa_1", , drop = FALSE]
+  cand_075 <- tab[!is.na(tab$candidate_id) & tab$candidate_id == "lambda_0p75", , drop = FALSE]
+  cand_1 <- tab[!is.na(tab$candidate_id) & tab$candidate_id == "lambda_1", , drop = FALSE]
   bench <- tab[is.na(tab$candidate_id), , drop = FALSE]
 
   expect_equal(cand_075$n_reps, 3L)
@@ -236,8 +236,8 @@ test_that("summarise_sim_results returns NA rather than NaN for all-failed group
     kx = 2L,
     k = 1L,
     tuning_source = "tuning",
-    candidate_id = c("kappa_bad", "kappa_bad", NA_character_),
-    kappa = c(9, 9, NA_real_),
+    candidate_id = c("lambda_bad", "lambda_bad", NA_character_),
+    lambda = c(9, 9, NA_real_),
     s = c(60L, 60L, NA_integer_),
     seed = c(1L, 2L, 1L),
     tau_hat = NA_real_,
@@ -271,8 +271,8 @@ test_that("summarise_sim_results excludes non-ok rows even if metrics are presen
     kx = 2L,
     k = 1L,
     tuning_source = "tuning",
-    candidate_id = "kappa_1",
-    kappa = 1,
+    candidate_id = "lambda_1",
+    lambda = 1,
     s = 6L,
     seed = c(1L, 2L),
     tau_hat = c(1, 100),

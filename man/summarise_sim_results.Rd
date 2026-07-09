@@ -8,7 +8,7 @@ summarise_sim_results(raw)
 }
 \arguments{
 \item{raw}{A \code{data.frame} with at least the columns \code{method}, \code{design}, \code{n},
-\code{kx}, \code{candidate_id}, \code{kappa}, \code{s}, \code{bias}, \code{sq_err}, \code{se}, \code{cover},
+\code{kx}, \code{candidate_id}, \code{lambda}, \code{s}, \code{bias}, \code{sq_err}, \code{se}, \code{cover},
 \code{ci_len}, and \code{status}. Optional columns \code{neff}, \code{tau_hat}, and \code{tau0}
 (returned by \code{\link[=sim_cate_run]{sim_cate_run()}}) are handled gracefully: \code{neff} is averaged
 into the summary; \code{tau_hat} is summarized through its empirical standard
@@ -16,14 +16,14 @@ deviation; \code{tau0} remains a per-rep quantity and is not aggregated.}
 }
 \value{
 A \code{data.frame} with one row per unique group and columns
-\code{method}, \code{design}, \code{n}, \code{kx}, \code{candidate_id}, \code{kappa}, \code{s}, \code{n_reps},
+\code{method}, \code{design}, \code{n}, \code{kx}, \code{candidate_id}, \code{lambda}, \code{s}, \code{n_reps},
 \code{n_failed}, \code{bias}, \code{rmse}, \code{se_mean}, \code{cover}, \code{ci_len}, \code{emp_sd},
 \code{se_to_sd} (and \code{neff} when present in \code{raw}).
 }
 \description{
 Aggregates a data.frame of raw replicate-level results (as returned by
 \code{\link[=sim_cate_run]{sim_cate_run()}}) to one summary row per
-\verb{(method, design, n, kx, candidate_id, kappa, s)} cell. Reports bias, RMSE,
+\verb{(method, design, n, kx, candidate_id, lambda, s)} cell. Reports bias, RMSE,
 mean SE, empirical coverage, mean CI length, empirical sampling dispersion of
 \code{tau_hat}, the ratio of mean SE to empirical dispersion, and (optionally)
 mean effective sample size. Failed or skipped rows are excluded from all

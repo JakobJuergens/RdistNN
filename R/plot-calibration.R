@@ -5,14 +5,14 @@
 #' Plot local quantile calibration for PLQR fits
 #'
 #' For each target, the weighted share of observations below the quantile
-#' threshold, `sum_i w_ij 1{Y_i <= D_i' beta + q_i}`, is plotted against
+#' threshold, `sum_i w_ij 1{Y_i <= D_i' theta + g_i}`, is plotted against
 #' the nominal level `tau` with a reference band
 #' `tau +/- z * sqrt(tau (1 - tau) / n_eff)`. Shares outside the band flag
-#' local miscalibration of the supplied `beta` or first stages — the
+#' local miscalibration of the supplied `theta_eval` or first stages — the
 #' applied reading of the quantile moment condition.
 #'
 #' The below-threshold indicator is stored on the fit; alternatively,
-#' supply `residuals` (`Y - D' beta - q`, length `n`), whose non-positive
+#' supply `residuals` (`Y - D' theta - g`, length `n`), whose non-positive
 #' entries define the indicator.
 #'
 #' @param object A `plqr_result` with the weight matrix `W` stored (the
@@ -31,10 +31,10 @@
 #'   fit <- plqr_dnn(
 #'     X = as.matrix(df[paste0("X", 1:2)]),
 #'     D = as.matrix(df[paste0("D", 1:2)]),
-#'     q = as.numeric(df$q_oracle),
+#'     g = as.numeric(df$g_oracle),
 #'     mD = as.matrix(df[paste0("mD", 1:2)]),
 #'     Y = as.numeric(df$Y),
-#'     beta = demo$truth$beta_true, tau = 0.5,
+#'     theta_eval = demo$truth$theta_true, tau = 0.5,
 #'     X0 = rbind(c(0, 0), c(0.5, 0.5)), k = 1L, s = 8L, se = FALSE
 #'   )
 #'   plot_calibration(fit)
@@ -83,7 +83,7 @@ plot_calibration <- function(object, residuals = NULL, level = 0.95, ...) {
       "residuals",
       paste0(
         "is required: this fit predates stored calibration indicators; ",
-        "refit, or supply `residuals` (Y - D'beta - q, length n)"
+        "refit, or supply `residuals` (Y - D'theta - g, length n)"
       ),
       quoted = FALSE
     )

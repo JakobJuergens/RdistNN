@@ -12,15 +12,15 @@ set.seed(321)
 test_that("plqr_dnn matrix API matches direct g-weighted moment identity", {
   d <- .make_plqr_data()
   out <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau,
     X0 = d$X0, distance = "l2",
     method = "exact", k = 2L, s = 3L, se = FALSE,
     return = "W"
   )
 
-  g <- (d$tau - as.numeric(d$Y <= as.vector(d$D %*% d$beta) + d$q)) * (d$D - d$mD)
-  manual <- crossprod(g, out$W)
+  score <- (d$tau - as.numeric(d$Y <= as.vector(d$D %*% d$theta_eval) + d$g)) * (d$D - d$mD)
+  manual <- crossprod(score, out$W)
 
   expect_s3_class(out, "plqr_result")
   expect_equal(dim(out$moment), c(ncol(d$D), nrow(d$X0)))
@@ -35,10 +35,10 @@ test_that("data-frame and matrix APIs agree for plqr_dnn", {
     data = d$df,
     x_cols = d$x_cols,
     D_cols = d$D_cols,
-    q_col = "q_oracle",
+    g_col = "g_oracle",
     mD_cols = d$mD_cols,
     y_col = "Y",
-    beta = d$beta,
+    theta_eval = d$theta_eval,
     tau = d$tau,
     X0 = d$X0,
     k = 2L, s = 3L, method = "exact", se = FALSE
@@ -47,17 +47,17 @@ test_that("data-frame and matrix APIs agree for plqr_dnn", {
     data = d$df,
     x_cols = match(d$x_cols, nms),
     D_cols = match(d$D_cols, nms),
-    q_col = match("q_oracle", nms),
+    g_col = match("g_oracle", nms),
     mD_cols = match(d$mD_cols, nms),
     y_col = match("Y", nms),
-    beta = d$beta,
+    theta_eval = d$theta_eval,
     tau = d$tau,
     X0 = d$X0,
     k = 2L, s = 3L, method = "exact", se = FALSE
   )
   out_m <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau,
     X0 = d$X0,
     k = 2L, s = 3L, method = "exact", se = FALSE
   )
@@ -71,50 +71,50 @@ test_that("plqr_dnn interfaces agree for exact method with fast jackknife", {
   nms <- names(d$df)
 
   out_mat <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     method = "exact", k = 2L, s = 3L, se = TRUE, jackknife = "fast"
   )
   out_df_name <- plqr_dnn(
-    data = d$df, x_cols = d$x_cols, D_cols = d$D_cols, q_col = "q_oracle",
+    data = d$df, x_cols = d$x_cols, D_cols = d$D_cols, g_col = "g_oracle",
     mD_cols = d$mD_cols, y_col = "Y",
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     method = "exact", k = 2L, s = 3L, se = TRUE, jackknife = "fast"
   )
   out_df_idx <- plqr_dnn(
     data = d$df,
     x_cols = match(d$x_cols, nms),
     D_cols = match(d$D_cols, nms),
-    q_col = match("q_oracle", nms),
+    g_col = match("g_oracle", nms),
     mD_cols = match(d$mD_cols, nms),
     y_col = match("Y", nms),
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     method = "exact", k = 2L, s = 3L, se = TRUE, jackknife = "fast"
   )
 
   expect_equal(out_df_name$moment, out_mat$moment, tolerance = 1e-12)
-  expect_equal(out_df_name$se, out_mat$se, tolerance = 1e-12)
+  expect_equal(out_df_name$moment_se, out_mat$moment_se, tolerance = 1e-12)
   expect_equal(out_df_idx$moment, out_mat$moment, tolerance = 1e-12)
-  expect_equal(out_df_idx$se, out_mat$se, tolerance = 1e-12)
+  expect_equal(out_df_idx$moment_se, out_mat$moment_se, tolerance = 1e-12)
 })
 
 test_that("plqr_dnn interfaces agree for exact method with loo jackknife", {
   d <- .make_plqr_data(n = 40L, p = 2L, p_d = 2L, m = 2L, tau = 0.5)
 
   out_mat <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     method = "exact", k = 1L, s = 2L, se = TRUE, jackknife = "loo"
   )
   out_df <- plqr_dnn(
-    data = d$df, x_cols = d$x_cols, D_cols = d$D_cols, q_col = "q_oracle",
+    data = d$df, x_cols = d$x_cols, D_cols = d$D_cols, g_col = "g_oracle",
     mD_cols = d$mD_cols, y_col = "Y",
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     method = "exact", k = 1L, s = 2L, se = TRUE, jackknife = "loo"
   )
 
   expect_equal(out_df$moment, out_mat$moment, tolerance = 1e-12)
-  expect_equal(out_df$se, out_mat$se, tolerance = 1e-12)
+  expect_equal(out_df$moment_se, out_mat$moment_se, tolerance = 1e-12)
 })
 
 test_that("plqr_dnn interfaces agree for asymp method with fast jackknife", {
@@ -122,31 +122,31 @@ test_that("plqr_dnn interfaces agree for asymp method with fast jackknife", {
   nms <- names(d$df)
 
   out_mat <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     method = "asymp", k = 2L, s = 4L, se = TRUE, jackknife = "fast"
   )
   out_df_name <- plqr_dnn(
-    data = d$df, x_cols = d$x_cols, D_cols = d$D_cols, q_col = "q_oracle",
+    data = d$df, x_cols = d$x_cols, D_cols = d$D_cols, g_col = "g_oracle",
     mD_cols = d$mD_cols, y_col = "Y",
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     method = "asymp", k = 2L, s = 4L, se = TRUE, jackknife = "fast"
   )
   out_df_idx <- plqr_dnn(
     data = d$df,
     x_cols = match(d$x_cols, nms),
     D_cols = match(d$D_cols, nms),
-    q_col = match("q_oracle", nms),
+    g_col = match("g_oracle", nms),
     mD_cols = match(d$mD_cols, nms),
     y_col = match("Y", nms),
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     method = "asymp", k = 2L, s = 4L, se = TRUE, jackknife = "fast"
   )
 
   expect_equal(out_df_name$moment, out_mat$moment, tolerance = 1e-12)
-  expect_equal(out_df_name$se, out_mat$se, tolerance = 1e-12)
+  expect_equal(out_df_name$moment_se, out_mat$moment_se, tolerance = 1e-12)
   expect_equal(out_df_idx$moment, out_mat$moment, tolerance = 1e-12)
-  expect_equal(out_df_idx$se, out_mat$se, tolerance = 1e-12)
+  expect_equal(out_df_idx$moment_se, out_mat$moment_se, tolerance = 1e-12)
 })
 
 test_that("plqr_dnn x0 path agrees across matrix and data interfaces", {
@@ -154,14 +154,14 @@ test_that("plqr_dnn x0 path agrees across matrix and data interfaces", {
   j <- 3L
 
   out_mat <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, x0 = d$X0[j, ],
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, x0 = d$X0[j, ],
     method = "exact", k = 2L, s = 3L, se = FALSE
   )
   out_df <- plqr_dnn(
-    data = d$df, x_cols = d$x_cols, D_cols = d$D_cols, q_col = "q_oracle",
+    data = d$df, x_cols = d$x_cols, D_cols = d$D_cols, g_col = "g_oracle",
     mD_cols = d$mD_cols, y_col = "Y",
-    beta = d$beta, tau = d$tau, x0 = d$X0[j, ],
+    theta_eval = d$theta_eval, tau = d$tau, x0 = d$X0[j, ],
     method = "exact", k = 2L, s = 3L, se = FALSE
   )
 
@@ -172,17 +172,17 @@ test_that("plqr_dnn return extras and meta are identical across interfaces", {
   d <- .make_plqr_data(n = 56L, p = 2L, p_d = 2L, m = 3L, tau = 0.5)
 
   out_mat <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     method = "exact", k = 3L, s = 4L, se = FALSE,
-    return = c("W", "ranks", "ord", "dx", "g", "ess", "neighbors")
+    return = c("W", "ranks", "ord", "dx", "score", "ess", "neighbors")
   )
   out_df <- plqr_dnn(
-    data = d$df, x_cols = d$x_cols, D_cols = d$D_cols, q_col = "q_oracle",
+    data = d$df, x_cols = d$x_cols, D_cols = d$D_cols, g_col = "g_oracle",
     mD_cols = d$mD_cols, y_col = "Y",
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     method = "exact", k = 3L, s = 4L, se = FALSE,
-    return = c("W", "ranks", "ord", "dx", "g", "ess", "neighbors")
+    return = c("W", "ranks", "ord", "dx", "score", "ess", "neighbors")
   )
 
   expect_equal(out_df$moment, out_mat$moment, tolerance = 1e-12)
@@ -190,7 +190,7 @@ test_that("plqr_dnn return extras and meta are identical across interfaces", {
   expect_equal(out_df$ranks, out_mat$ranks)
   expect_equal(out_df$ord, out_mat$ord)
   expect_equal(out_df$dx, out_mat$dx, tolerance = 1e-12)
-  expect_equal(out_df$g, out_mat$g, tolerance = 1e-12)
+  expect_equal(out_df$score, out_mat$score, tolerance = 1e-12)
   expect_equal(out_df$ess, out_mat$ess, tolerance = 1e-12)
   expect_equal(out_df$neighbors, out_mat$neighbors)
 
@@ -209,14 +209,14 @@ test_that("plqr_dnn preserves interface equivalence with distance spec object", 
   dist_spec <- distance_l2()
 
   out_mat <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     distance = dist_spec, method = "exact", k = 2L, s = 3L, se = FALSE
   )
   out_df <- plqr_dnn(
-    data = d$df, x_cols = d$x_cols, D_cols = d$D_cols, q_col = "q_oracle",
+    data = d$df, x_cols = d$x_cols, D_cols = d$D_cols, g_col = "g_oracle",
     mD_cols = d$mD_cols, y_col = "Y",
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     distance = dist_spec, method = "exact", k = 2L, s = 3L, se = FALSE
   )
 
@@ -228,15 +228,15 @@ test_that("plqr_dnn tibble input matches data.frame input", {
   d <- .make_plqr_data(n = 42L, p = 2L, p_d = 2L, m = 3L, tau = 0.5)
 
   out_df <- plqr_dnn(
-    data = d$df, x_cols = d$x_cols, D_cols = d$D_cols, q_col = "q_oracle",
+    data = d$df, x_cols = d$x_cols, D_cols = d$D_cols, g_col = "g_oracle",
     mD_cols = d$mD_cols, y_col = "Y",
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     method = "exact", k = 2L, s = 3L, se = FALSE
   )
   out_tbl <- plqr_dnn(
-    data = tibble::as_tibble(d$df), x_cols = d$x_cols, D_cols = d$D_cols, q_col = "q_oracle",
+    data = tibble::as_tibble(d$df), x_cols = d$x_cols, D_cols = d$D_cols, g_col = "g_oracle",
     mD_cols = d$mD_cols, y_col = "Y",
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     method = "exact", k = 2L, s = 3L, se = FALSE
   )
 
@@ -254,10 +254,10 @@ test_that("plqr_dnn rejects ambiguous data-frame column-name schemas", {
       data = df_dup,
       x_cols = match(d$x_cols, nms),
       D_cols = match(d$D_cols, nms),
-      q_col = match("q_oracle", nms),
+      g_col = match("g_oracle", nms),
       mD_cols = match(d$mD_cols, nms),
       y_col = match("Y", nms),
-      beta = d$beta,
+      theta_eval = d$theta_eval,
       tau = d$tau,
       X0 = d$X0,
       k = 1L, s = 2L, se = FALSE
@@ -271,96 +271,96 @@ test_that("plqr_dnn interface equivalence holds in p=1, p_d=1, m=1 edge case", {
   d <- .make_plqr_data(n = 38L, p = 1L, p_d = 1L, m = 1L, tau = 0.5)
 
   out_mat <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     method = "exact", k = 1L, s = 2L, se = FALSE,
-    return = c("W", "g")
+    return = c("W", "score")
   )
   out_df <- plqr_dnn(
-    data = d$df, x_cols = d$x_cols, D_cols = d$D_cols, q_col = "q_oracle",
+    data = d$df, x_cols = d$x_cols, D_cols = d$D_cols, g_col = "g_oracle",
     mD_cols = d$mD_cols, y_col = "Y",
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     method = "exact", k = 1L, s = 2L, se = FALSE,
-    return = c("W", "g")
+    return = c("W", "score")
   )
 
   expect_equal(out_df$moment, out_mat$moment, tolerance = 1e-12)
   expect_equal(out_df$W, out_mat$W, tolerance = 1e-12)
-  expect_equal(out_df$g, out_mat$g, tolerance = 1e-12)
+  expect_equal(out_df$score, out_mat$score, tolerance = 1e-12)
 })
 
 test_that("plqr_dnn returns finite jackknife SEs with expected shape", {
   d <- .make_plqr_data(n = 50L, p = 2L, p_d = 2L, m = 2L, tau = 0.5)
   out <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau,
     X0 = d$X0,
     k = 2L, s = 3L, method = "exact", se = TRUE, jackknife = "loo"
   )
 
-  expect_true(is.matrix(out$se))
-  expect_equal(dim(out$se), dim(out$moment))
-  expect_true(all(is.finite(out$se)))
-  expect_true(all(out$se >= 0))
+  expect_true(is.matrix(out$moment_se))
+  expect_equal(dim(out$moment_se), dim(out$moment))
+  expect_true(all(is.finite(out$moment_se)))
+  expect_true(all(out$moment_se >= 0))
 })
 
 test_that("default jackknife mode uses fast path and matches loo reference", {
   d <- .make_plqr_data(n = 45L, p = 2L, p_d = 2L, m = 2L, tau = 0.5)
 
   out_default <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     k = 2L, s = 3L, method = "exact", se = TRUE
   )
   out_fast <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     k = 2L, s = 3L, method = "exact", se = TRUE, jackknife = "fast"
   )
   out_loo <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     k = 2L, s = 3L, method = "exact", se = TRUE, jackknife = "loo"
   )
 
   expect_equal(out_default$moment, out_fast$moment, tolerance = 1e-12)
-  expect_equal(out_default$se, out_fast$se, tolerance = 1e-12)
-  expect_equal(out_fast$se, out_loo$se, tolerance = 1e-12)
+  expect_equal(out_default$moment_se, out_fast$moment_se, tolerance = 1e-12)
+  expect_equal(out_fast$moment_se, out_loo$moment_se, tolerance = 1e-12)
 })
 
 test_that("asymp method fast and loo jackknife paths agree", {
   d <- .make_plqr_data(n = 48L, p = 2L, p_d = 2L, m = 2L, tau = 0.5)
 
   out_fast <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     method = "asymp", k = 2L, s = 3L, se = TRUE, jackknife = "fast"
   )
   out_loo <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     method = "asymp", k = 2L, s = 3L, se = TRUE, jackknife = "loo"
   )
 
   expect_equal(out_fast$moment, out_loo$moment, tolerance = 1e-12)
-  expect_equal(out_fast$se, out_loo$se, tolerance = 1e-12)
+  expect_equal(out_fast$moment_se, out_loo$moment_se, tolerance = 1e-12)
 })
 
 test_that("return extras are populated consistently for plqr_dnn", {
   d <- .make_plqr_data(n = 55L, p = 2L, p_d = 2L, m = 3L, tau = 0.5)
   out <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     method = "exact", k = 3L, s = 4L, se = FALSE,
-    return = c("W", "ranks", "ord", "dx", "g", "ess", "neighbors")
+    return = c("W", "ranks", "ord", "dx", "score", "ess", "neighbors")
   )
 
   expect_equal(dim(out$W), c(nrow(d$X), nrow(d$X0)))
   if (!is.null(out$ranks)) expect_equal(dim(out$ranks), c(nrow(d$X), nrow(d$X0)))
   if (!is.null(out$ord)) expect_equal(dim(out$ord), c(nrow(d$X), nrow(d$X0)))
   if (!is.null(out$dx)) expect_equal(dim(out$dx), c(nrow(d$X), nrow(d$X0)))
-  expect_equal(dim(out$g), dim(d$D))
-  expect_equal(unname(out$moment), unname(crossprod(out$g, out$W)), tolerance = 1e-12)
+  expect_equal(dim(out$score), dim(d$D))
+  expect_equal(unname(out$moment), unname(crossprod(out$score, out$W)), tolerance = 1e-12)
   expect_equal(out$ess, 1 / colSums(out$W^2), tolerance = 1e-12)
   expect_equal(dim(out$neighbors), c(3L, nrow(d$X0)))
   expect_true(all(out$neighbors >= 1 & out$neighbors <= nrow(d$X)))
@@ -377,13 +377,13 @@ test_that("x0 path matches corresponding single target from X0", {
   j <- 2L
 
   out_X0 <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     k = 2L, s = 3L, method = "exact", se = FALSE
   )
   out_x0 <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, x0 = d$X0[j, ],
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, x0 = d$X0[j, ],
     k = 2L, s = 3L, method = "exact", se = FALSE
   )
 
@@ -394,23 +394,23 @@ test_that("x0 path matches corresponding single target from X0", {
   )
 })
 
-test_that("plqr_dnn validation catches shape and beta issues", {
+test_that("plqr_dnn validation catches shape and theta_eval issues", {
   d <- .make_plqr_data(n = 30L, p = 2L, p_d = 2L, m = 2L, tau = 0.5)
 
   expect_error(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta[-1], tau = d$tau, X0 = d$X0,
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval[-1], tau = d$tau, X0 = d$X0,
       k = 1L, s = 2L, se = FALSE
     ),
-    "beta.*ncol\\(D\\)",
+    "theta_eval.*ncol\\(D\\)",
     ignore.case = TRUE
   )
 
   expect_error(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = d$mD[, 1, drop = FALSE], Y = d$Y,
-      beta = d$beta, tau = d$tau, X0 = d$X0,
+      X = d$X, D = d$D, g = d$g, mD = d$mD[, 1, drop = FALSE], Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
       k = 1L, s = 2L, se = FALSE
     ),
     "match ncol\\(D\\)|same number of columns",
@@ -419,8 +419,8 @@ test_that("plqr_dnn validation catches shape and beta issues", {
 
   expect_error(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = d$tau, X0 = d$X0,
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
       k = 1L, s = nrow(d$X), se = TRUE, jackknife = "loo"
     ),
     "s < n",
@@ -428,8 +428,8 @@ test_that("plqr_dnn validation catches shape and beta issues", {
   )
   expect_error(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = 1, X0 = d$X0,
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = 1, X0 = d$X0,
       k = 1L, s = 2L, se = FALSE
     ),
     "numeric scalar in \\(0,1\\)",
@@ -437,8 +437,8 @@ test_that("plqr_dnn validation catches shape and beta issues", {
   )
   expect_error(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = d$tau, X0 = d$X0, x0 = d$X0[1, ],
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0, x0 = d$X0[1, ],
       k = 1L, s = 2L, se = FALSE
     ),
     "either `X0` or `x0`",
@@ -446,8 +446,8 @@ test_that("plqr_dnn validation catches shape and beta issues", {
   )
   expect_error(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = d$tau, x0 = c(NA_real_, 0),
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, x0 = c(NA_real_, 0),
       k = 1L, s = 2L, se = FALSE
     ),
     "x0.*NA",
@@ -457,8 +457,8 @@ test_that("plqr_dnn validation catches shape and beta issues", {
   bad_X0[1L, 1L] <- Inf
   expect_error(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = d$tau, X0 = bad_X0,
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, X0 = bad_X0,
       k = 1L, s = 2L, se = FALSE
     ),
     "X0.*non-finite",
@@ -466,8 +466,8 @@ test_that("plqr_dnn validation catches shape and beta issues", {
   )
   expect_error(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = d$tau,
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau,
       X0 = matrix(numeric(0), nrow = 0L, ncol = ncol(d$X)),
       k = 1L, s = 2L, se = FALSE
     ),
@@ -479,12 +479,12 @@ test_that("plqr_dnn validation catches shape and beta issues", {
       data = d$df,
       x_cols = d$x_cols,
       D_cols = d$D_cols,
-      beta = d$beta,
+      theta_eval = d$theta_eval,
       tau = d$tau,
       X0 = d$X0,
       k = 1L, s = 2L, se = FALSE
     ),
-    "x_cols.*D_cols.*q_col.*mD_cols.*y_col",
+    "x_cols.*D_cols.*g_col.*mD_cols.*y_col",
     ignore.case = TRUE
   )
   expect_error(
@@ -492,10 +492,10 @@ test_that("plqr_dnn validation catches shape and beta issues", {
       data = d$df,
       x_cols = d$x_cols,
       D_cols = c(d$D_cols[1], "D_missing"),
-      q_col = "q_oracle",
+      g_col = "g_oracle",
       mD_cols = d$mD_cols,
       y_col = "Y",
-      beta = d$beta,
+      theta_eval = d$theta_eval,
       tau = d$tau,
       X0 = d$X0,
       k = 1L, s = 2L, se = FALSE
@@ -510,10 +510,10 @@ test_that("plqr_dnn validation catches shape and beta issues", {
       data = df_bad_mD,
       x_cols = d$x_cols,
       D_cols = d$D_cols,
-      q_col = "q_oracle",
+      g_col = "g_oracle",
       mD_cols = d$mD_cols,
       y_col = "Y",
-      beta = d$beta,
+      theta_eval = d$theta_eval,
       tau = d$tau,
       X0 = d$X0,
       k = 1L, s = 2L, se = FALSE
@@ -524,56 +524,56 @@ test_that("plqr_dnn validation catches shape and beta issues", {
   # k and s validation at entry point
   expect_error(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = d$tau, X0 = d$X0,
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
       k = 0L, s = 3L, se = FALSE
     ),
     "positive integer"
   )
   expect_error(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = d$tau, X0 = d$X0,
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
       k = 3L, s = 2L, se = FALSE
     ),
     "k <= s"
   )
   expect_error(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = d$tau, X0 = d$X0,
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
       k = 1.5, s = 3L, se = FALSE
     ),
     "integer scalar"
   )
   expect_error(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = d$tau, X0 = d$X0,
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
       k = "foo", s = 3L, se = FALSE
     ),
     "integer scalar"
   )
   expect_error(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = d$tau, X0 = d$X0,
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
       k = 1L, s = 3L, se = NA
     ),
     "se.*TRUE or FALSE"
   )
   expect_error(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = d$tau, X0 = d$X0,
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
       k = 1L, s = 3L, se = "yes"
     ),
     "se.*TRUE or FALSE"
   )
   expect_error(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = d$tau, X0 = d$X0,
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
       method = "asymp", k = 1L, s = 3L, se = FALSE,
       normalize = NA
     ),
@@ -581,8 +581,8 @@ test_that("plqr_dnn validation catches shape and beta issues", {
   )
   expect_error(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = d$tau, X0 = d$X0,
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
       method = "asymp", k = 1L, s = 3L, se = FALSE,
       normalize = "yes"
     ),
@@ -595,8 +595,8 @@ test_that("plqr_dnn shape diagnostics include expected and actual values", {
   msg <- tryCatch(
     {
       plqr_dnn(
-        X = d$X, D = d$D[-1, , drop = FALSE], q = d$q, mD = d$mD, Y = d$Y,
-        beta = d$beta, tau = d$tau, X0 = d$X0,
+        X = d$X, D = d$D[-1, , drop = FALSE], g = d$g, mD = d$mD, Y = d$Y,
+        theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
         k = 1L, s = 2L, se = FALSE
       )
       ""
@@ -614,8 +614,8 @@ test_that("plqr_dnn matrix API distinguishes NA vs non-finite diagnostics", {
   D_na[1, 1] <- NA_real_
   expect_error(
     plqr_dnn(
-      X = d$X, D = D_na, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = d$tau, X0 = d$X0,
+      X = d$X, D = D_na, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
       k = 1L, s = 2L, se = FALSE
     ),
     "D.*NA",
@@ -626,23 +626,23 @@ test_that("plqr_dnn matrix API distinguishes NA vs non-finite diagnostics", {
   D_inf[1, 1] <- Inf
   expect_error(
     plqr_dnn(
-      X = d$X, D = D_inf, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = d$tau, X0 = d$X0,
+      X = d$X, D = D_inf, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
       k = 1L, s = 2L, se = FALSE
     ),
     "D.*non-finite",
     ignore.case = TRUE
   )
 
-  q_na <- d$q
-  q_na[2] <- NA_real_
+  g_na <- d$g
+  g_na[2] <- NA_real_
   expect_error(
     plqr_dnn(
-      X = d$X, D = d$D, q = q_na, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = d$tau, X0 = d$X0,
+      X = d$X, D = d$D, g = g_na, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
       k = 1L, s = 2L, se = FALSE
     ),
-    "q_tau\\(X\\).*NA",
+    "g.*NA",
     ignore.case = TRUE
   )
 
@@ -650,8 +650,8 @@ test_that("plqr_dnn matrix API distinguishes NA vs non-finite diagnostics", {
   mD_inf[2, 1] <- Inf
   expect_error(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = mD_inf, Y = d$Y,
-      beta = d$beta, tau = d$tau, X0 = d$X0,
+      X = d$X, D = d$D, g = d$g, mD = mD_inf, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
       k = 1L, s = 2L, se = FALSE
     ),
     "mD.*non-finite",
@@ -662,8 +662,8 @@ test_that("plqr_dnn matrix API distinguishes NA vs non-finite diagnostics", {
   y_inf[3] <- Inf
   expect_error(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = y_inf,
-      beta = d$beta, tau = d$tau, X0 = d$X0,
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = y_inf,
+      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
       k = 1L, s = 2L, se = FALSE
     ),
     "Y.*non-finite",
@@ -671,22 +671,28 @@ test_that("plqr_dnn matrix API distinguishes NA vs non-finite diagnostics", {
   )
 })
 
-test_that("plqr_moment distinguishes NA vs non-finite beta diagnostics", {
+test_that("plqr_score_matrix distinguishes NA vs non-finite theta diagnostics", {
   d <- .make_plqr_data(n = 30L, p = 2L, p_d = 2L, m = 1L, tau = 0.5)
 
-  beta_na <- d$beta
-  beta_na[1] <- NA_real_
+  theta_na <- d$theta_eval
+  theta_na[1] <- NA_real_
   expect_error(
-    plqr_moment(d$df, beta = beta_na, tau = d$tau),
-    "beta.*NA",
+    plqr_score_matrix(
+      data = d$df, y_col = "Y", D_cols = d$D_cols, g_col = "g_oracle",
+      mD_cols = d$mD_cols, theta = theta_na, tau = d$tau
+    ),
+    "theta.*NA",
     ignore.case = TRUE
   )
 
-  beta_inf <- d$beta
-  beta_inf[1] <- Inf
+  theta_inf <- d$theta_eval
+  theta_inf[1] <- Inf
   expect_error(
-    plqr_moment(d$df, beta = beta_inf, tau = d$tau),
-    "beta.*non-finite",
+    plqr_score_matrix(
+      data = d$df, y_col = "Y", D_cols = d$D_cols, g_col = "g_oracle",
+      mD_cols = d$mD_cols, theta = theta_inf, tau = d$tau
+    ),
+    "theta.*non-finite",
     ignore.case = TRUE
   )
 })
@@ -695,18 +701,18 @@ test_that("plqr_dnn warns on unknown return values", {
   d <- .make_plqr_data(n = 35L, p = 2L, p_d = 2L, m = 2L, tau = 0.5)
   expect_warning(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = d$tau, X0 = d$X0,
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
       k = 1L, s = 2L, se = FALSE, return = c("W", "typo")
     ),
     "Unknown `return` value"
   )
   expect_no_warning(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = d$tau, X0 = d$X0,
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
       k = 1L, s = 2L, se = FALSE,
-      return = c("W", "ranks", "ord", "dx", "g", "ess", "neighbors")
+      return = c("W", "ranks", "ord", "dx", "score", "ess", "neighbors")
     )
   )
 })
@@ -714,8 +720,8 @@ test_that("plqr_dnn warns on unknown return values", {
 test_that("print.plqr_result runs without error", {
   d <- .make_plqr_data(n = 35L, p = 2L, p_d = 2L, m = 1L, tau = 0.5)
   out <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     k = 1L, s = 2L, se = FALSE
   )
   txt <- capture.output(print(out))
@@ -726,8 +732,8 @@ test_that("X0 ncol mismatch vs X is rejected", {
   d <- .make_plqr_data(n = 30L, p = 2L, p_d = 2L, m = 2L, tau = 0.5)
   expect_error(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = d$tau,
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau,
       X0 = matrix(0, 2, ncol(d$X) + 1),
       distance = "l2", k = 2L, s = 3L, se = FALSE
     ),
@@ -739,8 +745,8 @@ test_that("se = FALSE bypasses delete-1 jackknife feasibility check for plqr_dnn
   d <- .make_plqr_data(n = 10L, p = 2L, p_d = 1L, m = 2L, tau = 0.5)
   expect_no_error(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = d$tau, X0 = d$X0,
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
       distance = "l2", k = 2L, s = nrow(d$X), method = "exact",
       se = FALSE, jackknife = "loo"
     )
@@ -751,8 +757,8 @@ test_that("invalid jackknife argument errors clearly for plqr_dnn", {
   d <- .make_plqr_data(n = 20L, p = 2L, p_d = 1L, m = 3L, tau = 0.5)
   expect_error(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = d$tau, X0 = d$X0,
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
       distance = "l2", k = 2L, s = 3L,
       se = TRUE, jackknife = "bad_option"
     ),
@@ -762,36 +768,37 @@ test_that("invalid jackknife argument errors clearly for plqr_dnn", {
 
 test_that("constant PLQR moment component implies zero jackknife SE", {
   d <- .make_plqr_data(n = 18L, p = 2L, p_d = 1L, m = 2L, tau = 0.5)
-  # Force a degenerate case where D == mD everywhere, so g is identically 0
-  # regardless of Y/q/beta, and the fast-jackknife SE on `moment` must be 0.
+  # Force a degenerate case where D == mD everywhere, so the score is
+  # identically 0 regardless of Y/g/theta, and the fast-jackknife SE on
+  # `moment` must be 0.
   d$mD <- d$D
   out <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     distance = "l2", k = 2L, s = 4L, method = "exact",
     se = TRUE, jackknife = "fast"
   )
   expect_true(all(abs(out$moment) < 1e-12))
-  expect_true(all(abs(out$se) < 1e-12))
+  expect_true(all(abs(out$moment_se) < 1e-12))
 })
 
-test_that("matrix interface reports each missing D/q/mD/Y argument individually", {
+test_that("matrix interface reports each missing D/g/mD/Y argument individually", {
   d <- .make_plqr_data(n = 15L, p = 2L, p_d = 1L, m = 2L, tau = 0.5)
 
   expect_error(
-    plqr_dnn(X = d$X, q = d$q, mD = d$mD, Y = d$Y, beta = d$beta, tau = d$tau, X0 = d$X0, se = FALSE),
+    plqr_dnn(X = d$X, g = d$g, mD = d$mD, Y = d$Y, theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0, se = FALSE),
     regexp = "missing: D", ignore.case = TRUE
   )
   expect_error(
-    plqr_dnn(X = d$X, D = d$D, mD = d$mD, Y = d$Y, beta = d$beta, tau = d$tau, X0 = d$X0, se = FALSE),
-    regexp = "missing: q", ignore.case = TRUE
+    plqr_dnn(X = d$X, D = d$D, mD = d$mD, Y = d$Y, theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0, se = FALSE),
+    regexp = "missing: g", ignore.case = TRUE
   )
   expect_error(
-    plqr_dnn(X = d$X, D = d$D, q = d$q, Y = d$Y, beta = d$beta, tau = d$tau, X0 = d$X0, se = FALSE),
+    plqr_dnn(X = d$X, D = d$D, g = d$g, Y = d$Y, theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0, se = FALSE),
     regexp = "missing: mD", ignore.case = TRUE
   )
   expect_error(
-    plqr_dnn(X = d$X, D = d$D, q = d$q, mD = d$mD, beta = d$beta, tau = d$tau, X0 = d$X0, se = FALSE),
+    plqr_dnn(X = d$X, D = d$D, g = d$g, mD = d$mD, theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0, se = FALSE),
     regexp = "missing: Y", ignore.case = TRUE
   )
 })
@@ -802,8 +809,8 @@ test_that("data-frame API distinguishes NA vs non-finite x_cols index diagnostic
   expect_error(
     plqr_dnn(
       data = d$df, x_cols = c(1L, NA_integer_), D_cols = d$D_cols,
-      q_col = "q_oracle", mD_cols = d$mD_cols, y_col = "Y",
-      beta = d$beta, tau = d$tau, X0 = d$X0, k = 2L, s = 3L, se = FALSE
+      g_col = "g_oracle", mD_cols = d$mD_cols, y_col = "Y",
+      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0, k = 2L, s = 3L, se = FALSE
     ),
     regexp = "x_cols.*NA", ignore.case = TRUE
   )
@@ -811,8 +818,8 @@ test_that("data-frame API distinguishes NA vs non-finite x_cols index diagnostic
   expect_error(
     plqr_dnn(
       data = d$df, x_cols = c(1L, Inf), D_cols = d$D_cols,
-      q_col = "q_oracle", mD_cols = d$mD_cols, y_col = "Y",
-      beta = d$beta, tau = d$tau, X0 = d$X0, k = 2L, s = 3L, se = FALSE
+      g_col = "g_oracle", mD_cols = d$mD_cols, y_col = "Y",
+      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0, k = 2L, s = 3L, se = FALSE
     ),
     regexp = "x_cols.*non-finite", ignore.case = TRUE
   )
@@ -824,8 +831,8 @@ test_that("data-frame API distinguishes NA vs non-finite covariate diagnostics f
     tryCatch(
       plqr_dnn(
         data = df, x_cols = d$x_cols, D_cols = d$D_cols,
-        q_col = "q_oracle", mD_cols = d$mD_cols, y_col = "Y",
-        beta = d$beta, tau = d$tau, X0 = d$X0, k = 2L, s = 3L, se = FALSE
+        g_col = "g_oracle", mD_cols = d$mD_cols, y_col = "Y",
+        theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0, k = 2L, s = 3L, se = FALSE
       ),
       error = conditionMessage
     )
@@ -850,8 +857,8 @@ test_that("matrix API rejects non-finite X for plqr_dnn", {
   X_bad[3L, 1L] <- Inf
   expect_error(
     plqr_dnn(
-      X = X_bad, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = d$tau, X0 = d$X0, k = 2L, s = 3L, se = FALSE
+      X = X_bad, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0, k = 2L, s = 3L, se = FALSE
     ),
     regexp = "X.*non-finite", ignore.case = TRUE
   )
@@ -862,9 +869,30 @@ test_that("data-frame API reports y_col as missing when omitted", {
   expect_error(
     plqr_dnn(
       data = d$df, x_cols = d$x_cols, D_cols = d$D_cols,
-      q_col = "q_oracle", mD_cols = d$mD_cols,
-      beta = d$beta, tau = d$tau, X0 = d$X0, k = 2L, s = 3L, se = FALSE
+      g_col = "g_oracle", mD_cols = d$mD_cols,
+      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0, k = 2L, s = 3L, se = FALSE
     ),
     regexp = "missing: y_col", ignore.case = TRUE
+  )
+})
+
+test_that("removed legacy PLQR argument names fail instead of aliasing", {
+  d <- .make_plqr_data(n = 20L, p = 2L, p_d = 1L, m = 1L, tau = 0.5)
+  expect_error(
+    plqr_dnn(
+      X = d$X, D = d$D, q = d$g, mD = d$mD, Y = d$Y,
+      beta = d$theta_eval, tau = d$tau, X0 = d$X0,
+      k = 1L, s = 2L, se = FALSE
+    ),
+    "unused argument"
+  )
+  expect_error(
+    plqr_dnn(
+      data = d$df, x_cols = d$x_cols, D_cols = d$D_cols,
+      q_col = "g_oracle", mD_cols = d$mD_cols, y_col = "Y",
+      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
+      k = 1L, s = 2L, se = FALSE
+    ),
+    "unused argument"
   )
 })

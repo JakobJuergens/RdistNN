@@ -70,7 +70,7 @@ Default: \code{"dnn_oracle"}.}
 }
 \value{
 A \code{data.frame} with raw rows and columns \code{method}, \code{design}, \code{n},
-\code{kx}, \code{k}, \code{tuning_source}, \code{candidate_id}, \code{kappa}, \code{s}, \code{seed},
+\code{kx}, \code{k}, \code{tuning_source}, \code{candidate_id}, \code{lambda}, \code{s}, \code{seed},
 \code{tau_hat}, \code{tau0}, \code{bias}, \code{sq_err}, \code{se}, \code{cover}, \code{ci_len}, \code{neff},
 and \code{status}. Failed entries have \code{NA} for all metric columns.
 }
@@ -81,7 +81,7 @@ runs \code{n_reps} independent Monte Carlo replications for each cell using
 requested \code{methods} on the same draw, enabling like-for-like comparisons.
 Returns a tidy data.frame of raw per-replicate, per-method results.  Use
 \code{\link[=summarise_sim_results]{summarise_sim_results()}} to aggregate to one row per
-\verb{(method, design, n, kx, candidate_id, kappa, s)}.
+\verb{(method, design, n, kx, candidate_id, lambda, s)}.
 }
 \section{Parallelism}{
 

@@ -50,9 +50,9 @@ test_that("plqr_dnn and gmm_dnn default s follows the paper rule", {
   D <- as.matrix(df[paste0("D", 1:2)])
   mD <- as.matrix(df[paste0("mD", 1:2)])
   fit_plqr <- plqr_dnn(
-    X = X, D = D, q = as.numeric(df$q_oracle), mD = mD,
+    X = X, D = D, g = as.numeric(df$g_oracle), mD = mD,
     Y = as.numeric(df$Y),
-    beta = demo$truth$beta_true, tau = 0.5,
+    theta_eval = demo$truth$theta_true, tau = 0.5,
     X0 = matrix(0, 1L, 2L), se = FALSE, return = "tuning"
   )
   expect_identical(fit_plqr$meta$s, .paper_s(nrow(X), ncol(X)))

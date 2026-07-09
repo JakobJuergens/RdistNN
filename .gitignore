@@ -23,3 +23,6 @@ src/symbols.rds
 docs_local_ci_check/
 GH_logs/run_*.log
 README.html
+
+# Local agent tooling artifacts
+.superpowers/

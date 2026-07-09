@@ -40,7 +40,7 @@
       tuning_default_s = rep(NA_integer_, m),
       tuning_grid_available = rep(NA, m),
       tuning_grid_n_candidates = rep(NA_integer_, m),
-      tuning_kappa_default = rep(NA_real_, m)
+      tuning_lambda_default = rep(NA_real_, m)
     ))
   }
 
@@ -64,8 +64,8 @@
   has_grid <- !is.null(tuning_payload$grid$candidates) &&
     is.data.frame(tuning_payload$grid$candidates)
   grid_n <- if (isTRUE(has_grid)) nrow(tuning_payload$grid$candidates) else NA_integer_
-  kappa <- if (!is.null(tuning_payload$default$meta$kappa)) {
-    as.numeric(tuning_payload$default$meta$kappa)
+  lambda <- if (!is.null(tuning_payload$default$meta$lambda)) {
+    as.numeric(tuning_payload$default$meta$lambda)
   } else {
     NA_real_
   }
@@ -76,7 +76,7 @@
     tuning_default_s = rep(default_s, m),
     tuning_grid_available = rep(has_grid, m),
     tuning_grid_n_candidates = rep(as.integer(grid_n), m),
-    tuning_kappa_default = rep(kappa, m)
+    tuning_lambda_default = rep(lambda, m)
   )
 }
 
@@ -175,7 +175,7 @@
     tuning_default_s = tuning$tuning_default_s,
     tuning_grid_available = tuning$tuning_grid_available,
     tuning_grid_n_candidates = tuning$tuning_grid_n_candidates,
-    tuning_kappa_default = tuning$tuning_kappa_default,
+    tuning_lambda_default = tuning$tuning_lambda_default,
     stringsAsFactors = FALSE
   )
   rownames(out) <- out$target_id
@@ -216,7 +216,7 @@
 .dnn_candidate_diag_frame <- function(grid, selected) {
   diag <- grid$diagnostics
   required <- c(
-    "candidate_id", "computed_key", "status", "reason", "s", "kappa",
+    "candidate_id", "computed_key", "status", "reason", "s", "lambda",
     "ess", "max_weight", "degenerate"
   )
   missing <- setdiff(required, names(diag))
@@ -282,7 +282,7 @@
     p = rep(if (!is.null(meta$p)) as.integer(meta$p) else NA_integer_, nrow(diag)),
     k = rep(if (!is.null(meta$k)) as.integer(meta$k) else NA_integer_, nrow(diag)),
     s = as.integer(diag$s),
-    kappa = suppressWarnings(as.numeric(diag$kappa)),
+    lambda = suppressWarnings(as.numeric(diag$lambda)),
     method = rep(if (!is.null(meta$method)) as.character(meta$method) else NA_character_, nrow(diag)),
     distance = rep(if (!is.null(meta$distance)) as.character(meta$distance) else NA_character_, nrow(diag)),
     n_eff = as.numeric(diag$ess),
@@ -312,6 +312,17 @@
 #' are ordinary nearest-rank scale summaries; `radius_rank_s` is not the DNN
 #' support radius. For exact DNN fits the finite-population support edge is
 #' rank `n - s + k`.
+#'
+#' PLQR fits additionally report residualized-design Gram conditioning
+#' (`gram_min_eig`, `gram_condition_number`) and, when direct-sandwich
+#' coefficient inference is available, target-level Jacobian conditioning:
+#' `jacobian_available`, `jacobian_min_singular_value`,
+#' `jacobian_condition_number`, `jacobian_rank`, weighted-support density
+#' summaries (`density_min_weighted`, `density_median_weighted`,
+#' `density_max_weighted`), and `theta_vcov_available`. A target can have an
+#' acceptable residualized Gram but an ill-conditioned density-weighted
+#' Jacobian, so coefficient-inference reliability should be judged from the
+#' Jacobian block.
 #'
 #' @param object A fitted estimator object, currently an object returned by
 #'   [np_dnn()], [cate_dnn()], or [plqr_dnn()].
@@ -349,10 +360,10 @@
 #'   data = demo_plqr$data,
 #'   x_cols = c("X1", "X2"),
 #'   D_cols = "D1",
-#'   q_col = "q_oracle",
+#'   g_col = "g_oracle",
 #'   mD_cols = "mD1",
 #'   y_col = "Y",
-#'   beta = demo_plqr$truth$beta_true,
+#'   theta_eval = demo_plqr$truth$theta_true,
 #'   x0 = demo_plqr$x0,
 #'   se = FALSE
 #' )

@@ -1,5 +1,12 @@
 # Integrated tuning-grid reuse for DNN wrappers
 
+> **Naming note (2026-07-08):** the paper-rule tuning constant was renamed
+> from `kappa` to `lambda` across the package (argument `lambda`,
+> `lambda_grid`, candidate column `lambda`, candidate ids `lambda_*`) to
+> avoid a collision with the paper's own use of kappa. This note has been
+> updated in place to use the new name.
+
+
 *Created: 2026-07-05. Revised: 2026-07-05, after a code-level review of the
 tuning, weight, jackknife, plotting, and simulation layers. This revision
 resolves the previously open design questions, corrects the runtime analysis,
@@ -15,19 +22,19 @@ implementation must be recorded back here.*
 
 This note records the package-side design for evaluating a grid of DNN kernel
 orders without rerunning the entire estimator workflow for each value of
-`kappa` or `s`.
+`lambda` or `s`.
 
 The immediate motivation is the corrected CATE simulation workflow for the
 conditional Z-estimation paper. After correcting the paper-facing simulations
-to use `k = 1`, the old grid of `kappa` values is less informative than it
+to use `k = 1`, the old grid of `lambda` values is less informative than it
 looked under the mistaken `k = 5` setup. The manuscript simulation code now
-needs a larger grid of `kappa` values to show the bias-variance and
+needs a larger grid of `lambda` values to show the bias-variance and
 localization tradeoff as `s` varies. Running that grid by launching a complete
-simulation run per `kappa` is wasteful, because many expensive pieces do not
+simulation run per `lambda` is wasteful, because many expensive pieces do not
 depend on `s`.
 
 The same issue is not merely a simulation inconvenience. Empirical users will
-naturally want sensitivity checks over plausible `kappa` values. The package
+naturally want sensitivity checks over plausible `lambda` values. The package
 should make that workflow ergonomic and fast enough to use routinely.
 
 ---
@@ -37,7 +44,7 @@ should make that workflow ergonomic and fast enough to use routinely.
 > **Decision 1 — integrated mode, not a parallel API.** Grid evaluation is a
 > mode of the existing estimators and simulation functions. Do not create new
 > exported functions whose names encode grid-specific signatures, such as
-> `cate_dnn_grid()`, `np_dnn_kappa_grid()`, or `sim_cate_kappa_grid_run()`.
+> `cate_dnn_grid()`, `np_dnn_lambda_grid()`, or `sim_cate_lambda_grid_run()`.
 >
 > **Decision 2 — algebraic groundwork first.** Before any grid work, make
 > rank-to-weight tables first-class in the `rank_weight` contract and replace
@@ -68,9 +75,9 @@ section against the code before writing anything.
 
 ### 3.1 Tuning layer (`R/api-tuning.R`)
 
-`tuning_dnn_paper()` stores both a default `kappa` (used to choose the primary
-`s`) and a `kappa_grid` (used by `tuning_eval(..., mode = "grid")`).
-`tuning_eval()` returns candidate metadata with `kappa`, `s`, `feasible`, and
+`tuning_dnn_paper()` stores both a default `lambda` (used to choose the primary
+`s`) and a `lambda_grid` (used by `tuning_eval(..., mode = "grid")`).
+`tuning_eval()` returns candidate metadata with `lambda`, `s`, `feasible`, and
 `reason`, and its grid validator (`.tuning_validate_grid_output()`) already
 computes per-candidate feasibility from `k <= s` and, when a jackknife is
 requested, `s < n`.
@@ -159,7 +166,7 @@ Registered methods implement
 positionally through an `na_row` template in `sim_cate_one_rep()`.
 `sim_cate_run()` resolves one scalar `s` per cell (from `s_fn` or
 `tuning_eval(mode = "default")`) and prepends cell identity columns. The
-external kappa-grid workaround in the paper repository loops over whole
+external lambda-grid workaround in the paper repository loops over whole
 `sim_cate_run()` calls.
 
 ### 3.7 Plotting (`R/plot-tuning.R`)
@@ -330,9 +337,9 @@ Do not add one-off exported functions such as:
 - `cate_dnn_grid()`;
 - `np_dnn_grid()`;
 - `plqr_dnn_grid()`;
-- `cate_dnn_kappa_grid()`;
-- `sim_cate_kappa_grid_run()`;
-- `weights_dnn_kappa_grid()`.
+- `cate_dnn_lambda_grid()`;
+- `sim_cate_lambda_grid_run()`;
+- `weights_dnn_lambda_grid()`.
 
 Those names solve the immediate problem by duplicating the public surface, and
 they create long-run problems: every estimator would need a scalar and a grid
@@ -390,7 +397,7 @@ tuning_mode = c("default", "grid")
 This name is **decided** (previously open): it is explicit, short, parallel to
 the existing `tuning` argument, and mirrors `tuning_eval(mode =)`. The mode
 lives **outside** the tuning object, deliberately: the same tuning spec (for
-example the paper spec with its `kappa_grid`) must be usable for a scalar fit
+example the paper spec with its `lambda_grid`) must be usable for a scalar fit
 and for a sensitivity fit without rebuilding the spec, and simulations must be
 able to flip the mode without touching the spec.
 
@@ -403,7 +410,7 @@ resolve it with `match.arg()`.
 - `tuning_mode = "grid"`, `tuning` supplied: resolve candidates from the
   tuning object; evaluate all feasible candidates.
 - `tuning_mode = "grid"`, no `tuning`: use `tuning_dnn_paper()` — and
-  therefore its default `kappa_grid` — exactly as the scalar default path
+  therefore its default `lambda_grid` — exactly as the scalar default path
   already falls back to the paper rule inside `.dnn_resolve_s()`. This is the
   intended ergonomic path for a quick sensitivity check and requires no new
   logic.
@@ -415,10 +422,10 @@ resolve it with `match.arg()`.
 ### 6.3 Explicit `s` stays scalar
 
 The public wrappers keep scalar `s`. Users who want a grid use `tuning`.
-A raw vector `s = c(15, 23, 31, 47)` lacks the `kappa` labels, formula
+A raw vector `s = c(15, 23, 31, 47)` lacks the `lambda` labels, formula
 metadata, feasibility metadata, and default-candidate semantics of the tuning
 API. If vector-valued `s` is ever added, it must be translated into the
-internal candidate schema of Section 6.5 (as a manual grid with `kappa = NA`)
+internal candidate schema of Section 6.5 (as a manual grid with `lambda = NA`)
 and must not produce a separate return shape. Deferred; see Section 17.
 
 ### 6.4 Return shape
@@ -443,7 +450,7 @@ Grid mode adds exactly one additive payload, `fit$tuning_grid` (name
 | column         | type      | semantics                                              |
 |----------------|-----------|--------------------------------------------------------|
 | `candidate_id` | character | key into `candidates`                                  |
-| `kappa`        | numeric   | `NA` for manual grids                                  |
+| `lambda`        | numeric   | `NA` for manual grids                                  |
 | `s`            | integer   | candidate kernel order                                 |
 | `target_id`    | integer   | row index into `fit$x0` (1..m)                         |
 | `component`    | character | `NA` for NP/CATE; moment-component name for PLQR       |
@@ -484,7 +491,7 @@ list-of-fits view on demand.
 ### 6.5 Candidate schema (engine-facing)
 
 The candidate table is where generality is cheap now and expensive later. The
-DNN wrappers are tuned by one `s` derived from `kappa`, but the package
+DNN wrappers are tuned by one `s` derived from `lambda`, but the package
 already ships TDNN wrappers with two scales `(s1, s2)`, and a `(k, s)` grid is
 a plausible future request. Therefore the **engine** interprets only generic
 columns and treats estimator-specific tuning columns as opaque labels:
@@ -497,15 +504,15 @@ columns and treats estimator-specific tuning columns as opaque labels:
 | `feasible`     | logical   | yes                   | from the tuning validator                              |
 | `reason`       | character | yes                   | `"ok"` or the infeasibility reason                     |
 | `status`       | character | yes                   | filled by the engine: `"ok"`, `"infeasible"`, `"failed"` |
-| `kappa`        | numeric   | no                    | DNN wrappers; `NA` for manual grids                    |
+| `lambda`        | numeric   | no                    | DNN wrappers; `NA` for manual grids                    |
 | `s`            | integer   | no*                   | DNN wrappers (*used by the DNN weight provider, not by the engine core) |
 
 Candidate-id rules (must be deterministic, locale-safe, filename-safe):
 
-- tuning grids with `kappa`: `"kappa_" %+% gsub("-", "m", gsub("\\.", "p",
-  format(kappa, trim = TRUE, scientific = FALSE)))` — e.g. `kappa_0p75`,
-  `kappa_2`;
-- manual / `NA`-kappa rows: `sprintf("s_%d", s)`;
+- tuning grids with `lambda`: `"lambda_" %+% gsub("-", "m", gsub("\\.", "p",
+  format(lambda, trim = TRUE, scientific = FALSE)))` — e.g. `lambda_0p75`,
+  `lambda_2`;
+- manual / `NA`-lambda rows: `sprintf("s_%d", s)`;
 - collisions (identical formatted labels): append `"__2"`, `"__3"`, … in row
   order. Ids must be unique within one fit but need not be globally unique.
 
@@ -519,7 +526,7 @@ downstream code has a single path regardless of mode.
 ### 6.6 Per-candidate fit views: `candidate_fit()`
 
 A natural alternative shape for a grid fit is a list with one entry per
-candidate — one full result object per `s` (or per `kappa`, depending on the
+candidate — one full result object per `s` (or per `lambda`, depending on the
 preferred labeling). That shape is **rejected as the stored representation**
 but **provided as an on-demand view**. Rejected as storage because:
 
@@ -602,7 +609,7 @@ contract):
 
 This policy deliberately treats "feasible for the point estimate but not for
 the jackknife" as infeasible when `se = TRUE`. A candidate with `s >= n` is
-useless for the paper's coverage-versus-`kappa` analysis, and a finer status
+useless for the paper's coverage-versus-`lambda` analysis, and a finer status
 taxonomy ("estimated, no SE") can be added later without breaking the schema
 (new `status` value) if a real use case appears.
 
@@ -683,11 +690,11 @@ full schema of Section 6.5. Concretely, its return value stays
 `list(s, tuning, tuning_used)` with `tuning$grid$candidates` gaining
 `candidate_id`, `computed_key`, `is_default`, `status` (initialized `"ok"` /
 `"infeasible"` from `feasible`). Marking `is_default`: the row whose `s`
-equals the default resolution and, among ties, the one whose `kappa` equals
-the tuning object's default `kappa` when that column is available; if no grid
+equals the default resolution and, among ties, the one whose `lambda` equals
+the tuning object's default `lambda` when that column is available; if no grid
 row matches the default `s` (possible with hand-written `eval_grid`
 functions), **prepend** a synthetic default row flagged
-`is_default = TRUE, kappa = NA` so grid mode always contains the anchor
+`is_default = TRUE, lambda = NA` so grid mode always contains the anchor
 candidate.
 
 Scalar calls keep returning the same scalar `s` and a one-row candidate table.
@@ -888,7 +895,7 @@ Comparison-native plot functions gain one shared argument:
 ```r
 candidates = "default"   # default: current behavior, default candidate only
 candidates = "all"       # all evaluated candidates
-candidates = c("kappa_0p75", "kappa_1p5")   # explicit candidate ids
+candidates = c("lambda_0p75", "lambda_1p5")   # explicit candidate ids
 ```
 
 Rules:
@@ -910,7 +917,7 @@ Candidates are an **ordered discrete series** (ordered by `s`, ascending),
 not an unordered factor:
 
 - default mapping is color/linetype with legend labels of the form
-  `"kappa = 0.75 (s = 23)"` (falling back to `"s = 23"` for `NA`-kappa
+  `"lambda = 0.75 (s = 23)"` (falling back to `"s = 23"` for `NA`-lambda
   candidates), legend title `"candidate"`, following the palette conventions
   in `plot-common.R`;
 - when a plot already binds color to something else, candidates map to
@@ -968,20 +975,20 @@ plumbing. New contract for every registered `.method_XXX()`:
 ```r
 .method_XXX(dgp, x_cols, k, s, tuning, tuning_mode, alpha, ...)
   -> data.frame, one or more rows, columns:
-     candidate_id (chr), kappa (dbl), s (int),
+     candidate_id (chr), lambda (dbl), s (int),
      tau_hat, tau0, bias, sq_err, se, cover, ci_len, neff (dbl),
      status (chr: "ok" | "failed" | "infeasible")
 ```
 
 - **DNN methods** in scalar mode call the estimator with scalar `s` exactly
-  as today and emit one row (`candidate_id = NA`, `kappa` from the tuning
+  as today and emit one row (`candidate_id = NA`, `lambda` from the tuning
   metadata when available, `s` = the scalar value, `status = "ok"`). In grid
   mode they call e.g. `cate_dnn(..., tuning = tuning, tuning_mode = "grid",
   se = TRUE, jackknife = "fast")` and emit one row per candidate directly
   from `fit$tuning_grid` (point estimates and SEs from `estimates`, `neff`
   from `diagnostics$ess`), including `status` for skipped candidates.
 - **Non-DNN benchmarks** ignore `tuning`/`tuning_mode`, run **once** per
-  replicate, and emit **one** row with `candidate_id = NA`, `kappa = NA`,
+  replicate, and emit **one** row with `candidate_id = NA`, `lambda = NA`,
   `s = NA`.
 - A method-level failure is caught in `sim_cate_one_rep()` as today and
   yields one all-`NA` metrics row with `status = "failed"`.
@@ -997,7 +1004,7 @@ set:
 
 ```
 method, design, n, kx, k, tuning_source,
-candidate_id, kappa, s,
+candidate_id, lambda, s,
 seed,
 tau_hat, tau0, bias, sq_err, se, cover, ci_len, neff,
 status
@@ -1040,7 +1047,7 @@ decided**. Repeated benchmark rows silently inflate replicate counts in any
 naive downstream aggregation — a footgun for the paper tables. Broadcasting
 benchmark results across candidates for a comparison plot is one join in the
 summary/plot layer, where it belongs. `dnn_crossfit` must not refit folds per
-`kappa`; the fold assignment and nuisance fits happen before the candidate
+`lambda`; the fold assignment and nuisance fits happen before the candidate
 loop by construction (they precede the single `cate_dnn()` call).
 
 ### 10.5 RNG neutrality (contract, not accident)
@@ -1049,14 +1056,14 @@ The candidate loop must not consume RNG. DNN estimation is deterministic
 given the data, and `dnn_crossfit`'s fold `sample()` happens before
 estimation, so the property holds by construction — but it is elevated to a
 tested contract: **per-candidate results in grid mode must match an external
-per-`kappa` run with the same seed exactly** (not just to tolerance — the
+per-`lambda` run with the same seed exactly** (not just to tolerance — the
 arithmetic is identical). This is also the migration check for retiring the
-external kappa-grid runners in the conditional Z-estimation repository
+external lambda-grid runners in the conditional Z-estimation repository
 (Section 18).
 
 ### 10.6 `summarise_sim_results()`
 
-Update the grouping to `(method, design, n, kx, candidate_id, kappa, s)` with
+Update the grouping to `(method, design, n, kx, candidate_id, lambda, s)` with
 `NA`-safe grouping, keep `n_failed` semantics (now derivable from `status`),
 and add nothing else in Phase 2. Plot-facing convenience (candidate-versus-
 benchmark broadcasting) is a summary-layer helper, added only when the paper
@@ -1175,7 +1182,7 @@ Deliverables: data.frame method contract; `tuning_mode` on `sim_cate_run()` /
 `sim_cate_one_rep()`; candidate-level raw rows with the Section 10.2 schema;
 updated `summarise_sim_results()`.
 
-Acceptance: RNG-neutrality parity test versus external per-`kappa` runs;
+Acceptance: RNG-neutrality parity test versus external per-`lambda` runs;
 benchmark single-row rule; nuisance-reuse test with a counted mock. This is
 the step that matters most for the conditional Z-estimation paper.
 
@@ -1253,7 +1260,7 @@ retained reference implementations, not stored constants.
 - `return = "W"` refers to the default candidate in grid mode;
 - `tuning_mode = "grid"` + explicit `s` errors; grid mode without `tuning`
   uses the paper default grid;
-- candidate-id determinism (formatting, `NA`-kappa fallback, collision
+- candidate-id determinism (formatting, `NA`-lambda fallback, collision
   suffixes);
 - `candidate_fit()` parity: the view for candidate `s` equals a scalar call
   with that `s` in all public fields (estimate, `se`, `meta$s`, recomputed
@@ -1270,7 +1277,7 @@ retained reference implementations, not stored constants.
 
 - grid mode draws one dataset per replicate and returns stable candidate-level
   rows with the Section 10.2 schema;
-- grid-mode candidate rows match external per-`kappa` runs seed-for-seed
+- grid-mode candidate rows match external per-`lambda` runs seed-for-seed
   (exact equality — RNG-neutrality contract);
 - benchmarks appear once per replicate with `candidate_id = NA` and are not
   refit per candidate;
@@ -1302,7 +1309,7 @@ retained reference implementations, not stored constants.
 User-facing documentation must say:
 
 - the ordinary estimator call still evaluates the default `s`;
-- `tuning = tuning_dnn_paper(kappa_grid = ...)` defines candidate values, and
+- `tuning = tuning_dnn_paper(lambda_grid = ...)` defines candidate values, and
   `tuning_mode = "grid"` evaluates the feasible ones efficiently, reusing
   ranks, tables, and pseudo-outcomes;
 - on the fast-jackknife path, per-candidate SEs are cheap;
@@ -1319,7 +1326,7 @@ User-facing documentation must say:
 
 The CATE simulation documentation must state that grid mode is the preferred
 way to run paper sensitivity checks once implemented, and must document the
-raw-schema change of Section 10.2. External looping over `kappa` remains
+raw-schema change of Section 10.2. External looping over `lambda` remains
 valid for backwards compatibility but is no longer the recommended route.
 
 `_pkgdown.yml` gains reference entries for `candidate_fit()` and
@@ -1382,21 +1389,21 @@ Still open, deliberately deferred:
 
 ## 18. Implication for the Conditional Z Paper Simulations
 
-The current manuscript-side workaround loops over `kappa` externally (the
-PowerShell kappa-grid runners in the paper repository). That remains
+The current manuscript-side workaround loops over `lambda` externally (the
+PowerShell lambda-grid runners in the paper repository). That remains
 acceptable for pilots and for validating the expanded grid, but it is not the
 right long-run route.
 
 After Phases 0–2 land in RdistNN, the paper simulation runner should move to:
 
 - one simulation cell per design, `n`, `kx`, method set, and replicate block;
-- one `tuning_dnn_paper(kappa_grid = ...)` object passed into the DNN methods
+- one `tuning_dnn_paper(lambda_grid = ...)` object passed into the DNN methods
   with `tuning_mode = "grid"`;
 - candidate-level rows emitted by the package;
-- no repeated nuisance fitting or rank ordering across `kappa` values.
+- no repeated nuisance fitting or rank ordering across `lambda` values.
 
 The RNG-neutrality contract (Section 10.5) gives the migration check:
-grid-mode candidate rows must reproduce the external per-`kappa` runs
+grid-mode candidate rows must reproduce the external per-`lambda` runs
 seed-for-seed before the external runners are retired. The integrated route
 also makes the paper output more internally coherent: candidate rows share
 the same dataset draws and nuisance estimates by construction, which is the
@@ -1643,7 +1650,7 @@ before native multi-candidate diagnostics and plots are built.
 
 ### Layer 8: CATE simulation grid integration
 
-Purpose: move the paper simulation off external per-`kappa` reruns and onto
+Purpose: move the paper simulation off external per-`lambda` reruns and onto
 the integrated package path.
 
 Scope:
@@ -1659,7 +1666,7 @@ Scope:
 
 Exit criteria:
 
-- candidate rows match external per-`kappa` runs seed-for-seed;
+- candidate rows match external per-`lambda` runs seed-for-seed;
 - DGP draws, fold assignments, and nuisance fits are not repeated per
   candidate;
 - benchmark rows are not duplicated across candidates;

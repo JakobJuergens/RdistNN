@@ -51,6 +51,18 @@ are ordinary nearest-rank scale summaries; \code{radius_rank_s} is not the DNN
 support radius. For exact DNN fits the finite-population support edge is
 rank \code{n - s + k}.
 }
+\details{
+PLQR fits additionally report residualized-design Gram conditioning
+(\code{gram_min_eig}, \code{gram_condition_number}) and, when direct-sandwich
+coefficient inference is available, target-level Jacobian conditioning:
+\code{jacobian_available}, \code{jacobian_min_singular_value},
+\code{jacobian_condition_number}, \code{jacobian_rank}, weighted-support density
+summaries (\code{density_min_weighted}, \code{density_median_weighted},
+\code{density_max_weighted}), and \code{theta_vcov_available}. A target can have an
+acceptable residualized Gram but an ill-conditioned density-weighted
+Jacobian, so coefficient-inference reliability should be judged from the
+Jacobian block.
+}
 \examples{
 set.seed(1)
 x_mat <- matrix(rnorm(40 * 2), 40, 2)
@@ -76,10 +88,10 @@ fit_plqr <- plqr_dnn(
   data = demo_plqr$data,
   x_cols = c("X1", "X2"),
   D_cols = "D1",
-  q_col = "q_oracle",
+  g_col = "g_oracle",
   mD_cols = "mD1",
   y_col = "Y",
-  beta = demo_plqr$truth$beta_true,
+  theta_eval = demo_plqr$truth$theta_true,
   x0 = demo_plqr$x0,
   se = FALSE
 )

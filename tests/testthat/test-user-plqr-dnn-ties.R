@@ -26,15 +26,15 @@ test_that("deterministic ties in distances lead to deterministic ordering and st
 
   D <- matrix(rnorm(n * p_d), n, p_d)
   mD <- matrix(rnorm(n * p_d), n, p_d)
-  q <- rnorm(n)
+  g <- rnorm(n)
   Y <- rnorm(n)
-  beta <- rep(0.3, p_d)
+  theta <- rep(0.3, p_d)
 
   # k = s is intentional here (uniform weights make tie ordering the only
   # source of variation), so the degenerate-localization warning is expected.
   out <- suppressWarnings(plqr_dnn(
-    X = X, D = D, q = q, mD = mD, Y = Y,
-    beta = beta, tau = 0.5, X0 = X0,
+    X = X, D = D, g = g, mD = mD, Y = Y,
+    theta_eval = theta, tau = 0.5, X0 = X0,
     distance = "l2", k = 3L, s = 3L, method = "exact",
     se = FALSE, return = c("W", "ord")
   ))
@@ -46,8 +46,8 @@ test_that("deterministic ties in distances lead to deterministic ordering and st
   expect_equal(out$ord[, 1], exp_ord1)
 
   out2 <- suppressWarnings(plqr_dnn(
-    X = X, D = D, q = q, mD = mD, Y = Y,
-    beta = beta, tau = 0.5, X0 = X0,
+    X = X, D = D, g = g, mD = mD, Y = Y,
+    theta_eval = theta, tau = 0.5, X0 = X0,
     distance = "l2", k = 3L, s = 3L, method = "exact",
     se = FALSE
   ))

@@ -59,6 +59,78 @@
   )
 }
 
+.plqr_jacobian_diagnostics <- function(object, W, rank_tol = sqrt(.Machine$double.eps)) {
+  w_mat <- as.matrix(W)
+  m <- ncol(w_mat)
+
+  jacobian_available <- rep(FALSE, m)
+  jacobian_min_singular_value <- rep(NA_real_, m)
+  jacobian_condition_number <- rep(NA_real_, m)
+  jacobian_rank <- rep(NA_integer_, m)
+  density_min_weighted <- rep(NA_real_, m)
+  density_median_weighted <- rep(NA_real_, m)
+  density_max_weighted <- rep(NA_real_, m)
+  theta_vcov_available <- rep(FALSE, m)
+
+  jacobian <- object$jacobian
+  if (is.list(jacobian) && length(jacobian) == m) {
+    for (j in seq_len(m)) {
+      J <- jacobian[[j]]
+      if (!is.matrix(J) || !is.numeric(J) || any(!is.finite(J))) {
+        next
+      }
+      jacobian_available[j] <- TRUE
+      sv <- svd(J, nu = 0L, nv = 0L)$d
+      jacobian_min_singular_value[j] <- min(sv)
+      jacobian_rank[j] <- sum(sv > rank_tol * max(sv, 1))
+      jacobian_condition_number[j] <- if (min(sv) <= rank_tol) {
+        Inf
+      } else {
+        max(sv) / min(sv)
+      }
+    }
+  }
+
+  theta_vcov <- object$theta_vcov
+  if (is.list(theta_vcov) && length(theta_vcov) == m) {
+    theta_vcov_available <- vapply(
+      theta_vcov,
+      function(v) is.matrix(v) && is.numeric(v) && all(is.finite(v)),
+      logical(1L)
+    )
+  }
+
+  model <- object$.model
+  density <- if (is.list(model)) model$density else NULL
+  if (is.numeric(density) && length(density) == nrow(w_mat)) {
+    support_tol <- sqrt(.Machine$double.eps)
+    for (j in seq_len(m)) {
+      support <- as.numeric(w_mat[, j]) > support_tol
+      if (any(support)) {
+        density_min_weighted[j] <- min(density[support])
+        density_max_weighted[j] <- max(density[support])
+        density_median_weighted[j] <- .dnn_weighted_quantile(
+          density[support],
+          as.numeric(w_mat[support, j]),
+          prob = 0.5
+        )
+      }
+    }
+  }
+
+  data.frame(
+    jacobian_available = jacobian_available,
+    jacobian_min_singular_value = jacobian_min_singular_value,
+    jacobian_condition_number = jacobian_condition_number,
+    jacobian_rank = jacobian_rank,
+    density_min_weighted = density_min_weighted,
+    density_median_weighted = density_median_weighted,
+    density_max_weighted = density_max_weighted,
+    theta_vcov_available = theta_vcov_available,
+    stringsAsFactors = FALSE
+  )
+}
+
 #' @name diagnostics
 #' @export
 diagnostics.plqr_result <- function(object, candidates = "default", ...) {
@@ -73,5 +145,6 @@ diagnostics.plqr_result <- function(object, candidates = "default", ...) {
   )
   model <- object$.model
   d_resid_mat <- if (is.list(model)) model$d_resid_mat else NULL
-  .dnn_diag_append(out, .plqr_gram_diagnostics(object$W, d_resid_mat = d_resid_mat))
+  out <- .dnn_diag_append(out, .plqr_gram_diagnostics(object$W, d_resid_mat = d_resid_mat))
+  .dnn_diag_append(out, .plqr_jacobian_diagnostics(object, W = object$W))
 }

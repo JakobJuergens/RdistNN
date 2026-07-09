@@ -34,10 +34,10 @@ skip_if_not(
 .layer10_tuning <- function(default_s = 5L, s_grid = c(1L, 3L, 5L, 7L)) {
   new_tuning(
     name = "layer10_grid",
-    eval = function(...) list(s = default_s, meta = list(kappa = 1)),
+    eval = function(...) list(s = default_s, meta = list(lambda = 1)),
     eval_grid = function(...) {
       data.frame(
-        kappa = c(0.4, 0.7, 1, 1.4),
+        lambda = c(0.4, 0.7, 1, 1.4),
         s = s_grid,
         stringsAsFactors = FALSE
       )
@@ -82,10 +82,10 @@ skip_if_not(
   suppressWarnings(plqr_dnn(
     X = as.matrix(df[paste0("X", 1:2)]),
     D = as.matrix(df[paste0("D", 1:2)]),
-    q = as.numeric(df$q_oracle),
+    g = as.numeric(df$g_oracle),
     mD = as.matrix(df[paste0("mD", 1:2)]),
     Y = as.numeric(df$Y),
-    beta = demo$truth$beta_true, tau = 0.5,
+    theta_eval = demo$truth$theta_true, tau = 0.5,
     X0 = cbind(seq(-0.5, 0.5, length.out = 4L), 0),
     method = "exact", k = 2L, tuning = .layer10_tuning(),
     tuning_mode = "grid", se = TRUE, jackknife = "fast",
@@ -145,9 +145,9 @@ test_that("candidate estimate plots use tuning_grid rows, labels, and compact dr
   expect_true("GeomLine" %in% .layer10_geoms(p))
   expect_equal(
     levels(p$data$candidate_label),
-    c("kappa = 0.7 (s = 3)", "kappa = 1 (s = 5)", "kappa = 1.4 (s = 7)")
+    c("lambda = 0.7 (s = 3)", "lambda = 1 (s = 5)", "lambda = 1.4 (s = 7)")
   )
-  expect_identical(tail(unique(p$data$candidate_id), 1L), "kappa_1")
+  expect_identical(tail(unique(p$data$candidate_id), 1L), "lambda_1")
 
   scalar <- np_dnn(
     X = .layer10_np_data()$X,

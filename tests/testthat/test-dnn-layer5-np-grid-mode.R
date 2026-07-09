@@ -18,10 +18,10 @@ skip_if_not(
 .layer5_np_tuning <- function(default_s = 4L, s_grid = c(2L, 4L, 4L, 6L)) {
   new_tuning(
     name = "layer5_np_grid",
-    eval = function(...) list(s = default_s, meta = list(kappa = 1)),
+    eval = function(...) list(s = default_s, meta = list(lambda = 1)),
     eval_grid = function(...) {
       data.frame(
-        kappa = c(0.5, 1, 1.25, 1.5),
+        lambda = c(0.5, 1, 1.25, 1.5),
         s = s_grid,
         stringsAsFactors = FALSE
       )
@@ -130,8 +130,8 @@ test_that("np_dnn grid mode candidate rows match separate scalar fits", {
 
   dup <- grid$tuning_grid$estimates[grid$tuning_grid$estimates$computed_key == "s_4", ]
   expect_equal(
-    dup$estimate[dup$candidate_id == "kappa_1"],
-    dup$estimate[dup$candidate_id == "kappa_1p25"],
+    dup$estimate[dup$candidate_id == "lambda_1"],
+    dup$estimate[dup$candidate_id == "lambda_1p25"],
     tolerance = 0
   )
 })
@@ -198,7 +198,7 @@ test_that("np_dnn grid mode rejects explicit s and can use the paper default gri
   )
 
   expect_true(is.list(grid$tuning_grid))
-  expect_equal(grid$tuning_grid$candidates$kappa, c(0.75, 1, 1.25, 1.5))
+  expect_equal(grid$tuning_grid$candidates$lambda, c(0.75, 1, 1.25, 1.5))
   expect_equal(grid$tuning_grid$meta$name, "paper_undersmooth")
   expect_equal(grid$meta$tuning$source, "paper_default")
 })

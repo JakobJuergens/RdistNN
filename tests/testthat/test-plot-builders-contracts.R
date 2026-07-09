@@ -148,10 +148,10 @@ test_that("multi-coefficient fits facet by coefficient with free scales", {
   fit_plqr <- plqr_dnn(
     X = as.matrix(df_p[paste0("X", 1:2)]),
     D = as.matrix(df_p[paste0("D", 1:2)]),
-    q = as.numeric(df_p$q_oracle),
+    g = as.numeric(df_p$g_oracle),
     mD = as.matrix(df_p[paste0("mD", 1:2)]),
     Y = as.numeric(df_p$Y),
-    beta = demo$truth$beta_true, tau = 0.5,
+    theta_eval = demo$truth$theta_true, tau = 0.5,
     X0 = rbind(c(0, 0), c(0.5, 0.5)), k = 1L, s = 8L, se = TRUE
   )
   p <- plot_estimates(fit_plqr)

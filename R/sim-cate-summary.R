@@ -36,21 +36,21 @@
 #'
 #' Aggregates a data.frame of raw replicate-level results (as returned by
 #' [sim_cate_run()]) to one summary row per
-#' `(method, design, n, kx, candidate_id, kappa, s)` cell. Reports bias, RMSE,
+#' `(method, design, n, kx, candidate_id, lambda, s)` cell. Reports bias, RMSE,
 #' mean SE, empirical coverage, mean CI length, empirical sampling dispersion of
 #' `tau_hat`, the ratio of mean SE to empirical dispersion, and (optionally)
 #' mean effective sample size. Failed or skipped rows are excluded from all
 #' averages and dispersion calculations; their count is reported in `n_failed`.
 #'
 #' @param raw A `data.frame` with at least the columns `method`, `design`, `n`,
-#'   `kx`, `candidate_id`, `kappa`, `s`, `bias`, `sq_err`, `se`, `cover`,
+#'   `kx`, `candidate_id`, `lambda`, `s`, `bias`, `sq_err`, `se`, `cover`,
 #'   `ci_len`, and `status`. Optional columns `neff`, `tau_hat`, and `tau0`
 #'   (returned by [sim_cate_run()]) are handled gracefully: `neff` is averaged
 #'   into the summary; `tau_hat` is summarized through its empirical standard
 #'   deviation; `tau0` remains a per-rep quantity and is not aggregated.
 #'
 #' @return A `data.frame` with one row per unique group and columns
-#'   `method`, `design`, `n`, `kx`, `candidate_id`, `kappa`, `s`, `n_reps`,
+#'   `method`, `design`, `n`, `kx`, `candidate_id`, `lambda`, `s`, `n_reps`,
 #'   `n_failed`, `bias`, `rmse`, `se_mean`, `cover`, `ci_len`, `emp_sd`,
 #'   `se_to_sd` (and `neff` when present in `raw`).
 #'
@@ -66,7 +66,7 @@
 #' @export
 summarise_sim_results <- function(raw) {
   required <- c(
-    "method", "design", "n", "kx", "candidate_id", "kappa", "s",
+    "method", "design", "n", "kx", "candidate_id", "lambda", "s",
     "bias", "sq_err", "se", "cover", "ci_len", "status"
   )
   missing  <- setdiff(required, names(raw))
@@ -75,7 +75,7 @@ summarise_sim_results <- function(raw) {
 
   has_neff    <- "neff" %in% names(raw)
   has_tau_hat <- "tau_hat" %in% names(raw)
-  group_cols <- c("method", "design", "n", "kx", "candidate_id", "kappa", "s")
+  group_cols <- c("method", "design", "n", "kx", "candidate_id", "lambda", "s")
 
   cells <- unique(raw[, group_cols, drop = FALSE])
   cells <- cells[do.call(order, unname(as.list(cells[, group_cols, drop = FALSE]))),
@@ -104,7 +104,7 @@ summarise_sim_results <- function(raw) {
       n        = cells$n[i],
       kx       = cells$kx[i],
       candidate_id = cells$candidate_id[i],
-      kappa    = cells$kappa[i],
+      lambda    = cells$lambda[i],
       s        = cells$s[i],
       n_reps   = nrow(sub),
       n_failed = n_failed,
@@ -126,7 +126,7 @@ summarise_sim_results <- function(raw) {
   rownames(result) <- NULL
 
   # Put method first; neff last.
-  id_cols     <- c("method", "design", "n", "kx", "candidate_id", "kappa", "s")
+  id_cols     <- c("method", "design", "n", "kx", "candidate_id", "lambda", "s")
   other_cols  <- setdiff(names(result), id_cols)
   result      <- result[, c(id_cols, other_cols), drop = FALSE]
   result

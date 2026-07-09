@@ -266,8 +266,8 @@
   if (is.null(payload$default$meta) || !is.list(payload$default$meta)) {
     payload$default$meta <- list()
   }
-  payload$default$meta$kappa <- if ("kappa" %in% names(candidate_row)) {
-    suppressWarnings(as.numeric(candidate_row$kappa[[1L]]))
+  payload$default$meta$lambda <- if ("lambda" %in% names(candidate_row)) {
+    suppressWarnings(as.numeric(candidate_row$lambda[[1L]]))
   } else {
     NA_real_
   }
@@ -377,7 +377,9 @@
   rows <- .candidate_estimates(object, row)
   out <- object
   out$moment <- .candidate_value_matrix(rows, "estimate", object$moment)
-  out$se <- if (all(is.na(rows$se))) {
+  # Grid mode carries moment-level jackknife SEs only; direct coefficient
+  # inference is unavailable with tuning_mode = "grid".
+  out$moment_se <- if (all(is.na(rows$se))) {
     NULL
   } else {
     .candidate_value_matrix(rows, "se", object$moment)

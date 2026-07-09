@@ -161,7 +161,7 @@
   }
   if (is.numeric(out) && length(out) > 0L) {
     out <- data.frame(
-      kappa = NA_real_,
+      lambda = NA_real_,
       s = .tuning_validate_s_grid_output(out, arg = "tuning$eval_grid()"),
       stringsAsFactors = FALSE
     )
@@ -287,7 +287,7 @@
     ctx = ctx
   )
   .tuning_validate_grid_output(
-    data.frame(kappa = NA_real_, s = def$s, stringsAsFactors = FALSE),
+    data.frame(lambda = NA_real_, s = def$s, stringsAsFactors = FALSE),
     n = n,
     kx = kx,
     k = k,
@@ -493,11 +493,11 @@ tuning_eval <- function(
 #' Paper-default undersmoothing rule for kernel order
 #'
 #' Builds a tuning spec implementing
-#' \deqn{s(\kappa) = \lfloor \kappa n^{(k_x+1)/(k_x+2)} \rfloor}
-#' with default \eqn{\kappa = 1} and optional candidate grid.
+#' \deqn{s(\lambda) = \lfloor \lambda n^{(k_x+1)/(k_x+2)} \rfloor}
+#' with default \eqn{\lambda = 1} and optional candidate grid.
 #'
-#' @param kappa Numeric scalar tuning constant.
-#' @param kappa_grid Numeric vector of candidate constants for grid mode.
+#' @param lambda Numeric scalar tuning constant.
+#' @param lambda_grid Numeric vector of candidate constants for grid mode.
 #' @param rounding One of `"floor"`, `"ceiling"`, or `"round"`.
 #' @param kx_override Optional positive integer to override runtime `kx`.
 #' @return A `dnn_tuning` spec.
@@ -506,16 +506,16 @@ tuning_eval <- function(
 #' tuning_eval(tun, n = 1000, kx = 2, k = 1)
 #' @export
 tuning_dnn_paper <- function(
-  kappa = 1,
-  kappa_grid = c(0.75, 1, 1.25, 1.5),
+  lambda = 1,
+  lambda_grid = c(0.75, 1, 1.25, 1.5),
   rounding = "floor",
   kx_override = NULL
 ) {
-  if (!is.numeric(kappa) || length(kappa) != 1L || !is.finite(kappa) || kappa <= 0) {
-    .abort_bad_arg("kappa", "must be a positive finite numeric scalar")
+  if (!is.numeric(lambda) || length(lambda) != 1L || !is.finite(lambda) || lambda <= 0) {
+    .abort_bad_arg("lambda", "must be a positive finite numeric scalar")
   }
-  if (!is.numeric(kappa_grid) || length(kappa_grid) < 1L || any(!is.finite(kappa_grid)) || any(kappa_grid <= 0)) {
-    .abort_bad_arg("kappa_grid", "must be a positive finite numeric vector")
+  if (!is.numeric(lambda_grid) || length(lambda_grid) < 1L || any(!is.finite(lambda_grid)) || any(lambda_grid <= 0)) {
+    .abort_bad_arg("lambda_grid", "must be a positive finite numeric vector")
   }
   rounding <- match.arg(rounding, choices = c("floor", "ceiling", "round"))
   if (!is.null(kx_override)) {
@@ -534,20 +534,20 @@ tuning_dnn_paper <- function(
   new_tuning(
     name = "paper_undersmooth",
     eval = function(n, kx, k, se, jackknife, ctx = NULL) {
-      s <- .compute_s(n = n, kx = kx, kap = kappa)
+      s <- .compute_s(n = n, kx = kx, kap = lambda)
       list(
         s = s,
         meta = list(
-          kappa = as.numeric(kappa),
-          formula = "kappa * n^((kx + 1)/(kx + 2))",
+          lambda = as.numeric(lambda),
+          formula = "lambda * n^((kx + 1)/(kx + 2))",
           rounding = rounding
         )
       )
     },
     eval_grid = function(n, kx, k, se, jackknife, ctx = NULL) {
-      s_vec <- vapply(kappa_grid, function(kap) .compute_s(n = n, kx = kx, kap = kap), integer(1L))
+      s_vec <- vapply(lambda_grid, function(kap) .compute_s(n = n, kx = kx, kap = kap), integer(1L))
       data.frame(
-        kappa = as.numeric(kappa_grid),
+        lambda = as.numeric(lambda_grid),
         s = as.integer(s_vec),
         stringsAsFactors = FALSE
       )

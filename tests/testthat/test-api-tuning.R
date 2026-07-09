@@ -13,7 +13,7 @@ test_that("new_tuning()/as_tuning()/is_tuning() support eval and eval_grid specs
   tun_grid_only <- new_tuning(
     name = "grid_only",
     eval_grid = function(n, kx, k, se, jackknife, ctx = NULL) {
-      data.frame(kappa = c(0.8, 1.1), s = c(5L, 7L), stringsAsFactors = FALSE)
+      data.frame(lambda = c(0.8, 1.1), s = c(5L, 7L), stringsAsFactors = FALSE)
     }
   )
   expect_true(is_tuning(tun_grid_only))
@@ -256,7 +256,7 @@ test_that("default and grid output validators reject malformed user outputs", {
 
   tun_grid_missing_s <- new_tuning(
     name = "bad_grid_missing_s",
-    eval_grid = function(...) data.frame(kappa = 1, stringsAsFactors = FALSE)
+    eval_grid = function(...) data.frame(lambda = 1, stringsAsFactors = FALSE)
   )
   expect_error(
     tuning_eval(tun_grid_missing_s, n = 50L, kx = 2L, k = 2L, mode = "grid"),
@@ -265,7 +265,7 @@ test_that("default and grid output validators reject malformed user outputs", {
 
   tun_grid_bad_s <- new_tuning(
     name = "bad_grid_s",
-    eval_grid = function(...) data.frame(kappa = 1, s = 2.5, stringsAsFactors = FALSE)
+    eval_grid = function(...) data.frame(lambda = 1, s = 2.5, stringsAsFactors = FALSE)
   )
   expect_error(
     tuning_eval(tun_grid_bad_s, n = 50L, kx = 2L, k = 2L, mode = "grid"),
@@ -309,7 +309,7 @@ test_that("feasibility flags and grid reasons are deterministic and correctly pr
     name = "feasibility_probe",
     eval = function(...) list(s = 2L),
     eval_grid = function(...) {
-      data.frame(kappa = c(0.5, 1.0, 1.5), s = c(1L, 5L, 3L), stringsAsFactors = FALSE)
+      data.frame(lambda = c(0.5, 1.0, 1.5), s = c(1L, 5L, 3L), stringsAsFactors = FALSE)
     }
   )
 
@@ -337,7 +337,7 @@ test_that("eval-only and grid-only tunings use documented fallback behavior", {
   tun_eval_only <- new_tuning(name = "eval_only", eval = function(...) list(s = 8L))
   out_grid <- tuning_eval(tun_eval_only, n = 100L, kx = 2L, k = 3L, mode = "grid")
   expect_equal(nrow(out_grid$candidates), 1L)
-  expect_true(is.na(out_grid$candidates$kappa[1L]))
+  expect_true(is.na(out_grid$candidates$lambda[1L]))
   expect_equal(out_grid$candidates$s, 8L)
 
   tun_grid_empty <- new_tuning(
@@ -353,13 +353,13 @@ test_that("eval-only and grid-only tunings use documented fallback behavior", {
 test_that("paper_undersmooth default and grid are deterministic", {
   out_default <- tuning_eval("paper_undersmooth", n = 1000L, kx = 2L, k = 5L, mode = "default")
   expect_equal(out_default$s, 177L)
-  expect_equal(out_default$meta$kappa, 1)
+  expect_equal(out_default$meta$lambda, 1)
   expect_equal(out_default$meta$rounding, "floor")
-  expect_equal(out_default$meta$formula, "kappa * n^((kx + 1)/(kx + 2))")
+  expect_equal(out_default$meta$formula, "lambda * n^((kx + 1)/(kx + 2))")
 
   out_grid <- tuning_eval("paper_undersmooth", n = 1000L, kx = 2L, k = 5L, mode = "grid")
   expect_s3_class(out_grid$candidates, "data.frame")
-  expect_equal(out_grid$candidates$kappa, c(0.75, 1, 1.25, 1.5))
+  expect_equal(out_grid$candidates$lambda, c(0.75, 1, 1.25, 1.5))
   expect_equal(out_grid$candidates$s, c(133L, 177L, 222L, 266L))
   expect_true(all(out_grid$candidates$feasible))
 })
@@ -384,7 +384,7 @@ test_that("paper_undersmooth supports rounding choices and kx_override", {
 })
 
 test_that("paper_undersmooth input validation is explicit", {
-  expect_error(tuning_dnn_paper(kappa = 0), "positive finite numeric scalar")
-  expect_error(tuning_dnn_paper(kappa_grid = c(0.5, 0)), "positive finite numeric vector")
+  expect_error(tuning_dnn_paper(lambda = 0), "positive finite numeric scalar")
+  expect_error(tuning_dnn_paper(lambda_grid = c(0.5, 0)), "positive finite numeric vector")
   expect_error(tuning_dnn_paper(kx_override = 2.5), "integer scalar")
 })

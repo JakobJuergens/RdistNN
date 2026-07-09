@@ -176,8 +176,8 @@ test_that("rank-weight validation accepts table-only specs through the registry"
     }
   )
 
-  register_rank(nm, spec)
-  got <- get_rank(nm)
+  register_rank_weight(nm, spec)
+  got <- get_rank_weight(nm)
   expect_true(is_rank_weight(got))
 
   R <- .layer1_rank_matrix(n = 6L, m = 2L, seed = 454L)

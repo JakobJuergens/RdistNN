@@ -8,13 +8,13 @@ score_plqr_component(
   x0,
   x_cols,
   D_cols,
-  q_col,
+  g_col,
   mD_cols,
-  beta,
+  y_col,
+  theta,
   j = 1L,
   tau = 0.5,
-  s,
-  k = 1L
+  s
 )
 }
 \arguments{
@@ -27,14 +27,17 @@ checks against \code{x_cols}; not used in the kernel.}
 \item{D_cols}{Integer or character indices of the \eqn{D} columns in
 \code{data} (length \eqn{p_d}).}
 
-\item{q_col}{Character; name of the \eqn{q_{\tau}(X)} column in \code{data}.}
+\item{g_col}{Character; name of the column in \code{data} holding the
+shape-nuisance values \eqn{g_0(U)}.}
 
-\item{mD_cols}{Integer or character indices of the \eqn{m_{D}(X)} columns in
+\item{mD_cols}{Integer or character indices of the \eqn{m_{D}(U)} columns in
 \code{data}; must have the same length and order as \code{D_cols}. The
-\eqn{j}-th column represents \eqn{m_{D,ij}(X)}.}
+\eqn{j}-th column represents \eqn{m_{D,ij}(U)}.}
 
-\item{beta}{Numeric vector of length \code{length(D_cols)} giving the fixed
-coefficient vector \eqn{\beta}.}
+\item{y_col}{Name or index of the outcome column in \code{data}.}
+
+\item{theta}{Numeric vector of length \code{length(D_cols)} giving the fixed
+coefficient vector \eqn{\theta}.}
 
 \item{j}{Integer component index in \eqn{1,\ldots,\mathrm{length}(D\_cols)}.}
 
@@ -42,44 +45,42 @@ coefficient vector \eqn{\beta}.}
 
 \item{s}{Integer kernel order (subset size). Recorded in the score metadata;
 not used internally by this pure score.}
-
-\item{k}{Integer kept for API compatibility with other scores; ignored here.}
 }
 \value{
 An \code{ustat_score} object whose \code{$setup} stores the vector
-\code{g} of contributions in the context, and whose \code{$eval}/\code{$eval_batch}
-return subset sums of \code{g} (no weights applied).
+\code{score} of contributions in the context, and whose
+\code{$eval}/\code{$eval_batch} return subset sums of \code{score}
+(no weights applied).
 }
 \description{
 Constructs a \strong{pure-score} kernel for PLQR diagnostics that stores the
-per-observation contributions
+per-observation score contributions
 \deqn{
-  g_{i}
+  \psi_{i}
   \;=\;
-  \Bigl(\tau - \mathbf{1}\{\,Y_{i} \le D_{i}^{\top}\beta + q_{\tau}(X_{i})\,\}\Bigr)\,
-  \bigl(D_{i,j} - m_{D,ij}(X_{i})\bigr)\,,
+  \Bigl(\tau - \mathbf{1}\{\,Y_{i} \le D_{i}^{\top}\theta + g_{0}(U_{i})\,\}\Bigr)\,
+  \bigl(D_{i,j} - m_{D,ij}(U_{i})\bigr)\,,
 }
-and returns subset sums \eqn{\sum_{i \in S} g_i} in \code{eval}/\code{eval_batch}.
+and returns subset sums \eqn{\sum_{i \in S} \psi_i} in \code{eval}/\code{eval_batch}.
 This score performs \strong{no} nearest-neighbor ordering or L-stat weighting;
 any aggregation/weights are handled outside the score layer.
 }
 \examples{
-\dontshow{if (TRUE) withAutoprint(\{ # examplesIf}
 demo <- plqr_demo_data(n = 200, p = 3, p_d = 2, tau = 0.5, seed = 1)
 sc <- score_plqr_component(
   x0      = rep(0, 3),
   x_cols  = paste0("X", 1:3),
   D_cols  = paste0("D", 1:2),
-  q_col   = "q_oracle",
+  g_col   = "g_oracle",
   mD_cols = paste0("mD", 1:2),
-  beta    = demo$truth$beta_true,
+  y_col   = "Y",
+  theta   = demo$truth$theta_true,
   j       = 1L,
   tau     = 0.5,
-  s       = 5,
-  k       = 1
+  s       = 5
 )
 ctx <- score_setup(sc, demo$data)
 subs <- cate_demo_subsets(n = nrow(demo$data), K = 3, s = 5, seed = 1)
 score_eval_batch(sc, subs, demo$data, ctx)
-\dontshow{\}) # examplesIf}
+
 }

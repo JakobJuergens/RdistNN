@@ -10,8 +10,8 @@ skip_if_not(
 test_that("plqr_dnn computes direct PLQR sandwich from supplied density", {
   d <- .make_plqr_inference_data()
   fit <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, density = d$density,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, density = d$density,
     X0 = d$X0, method = "exact", k = 2L, s = 10L,
     se = TRUE, return = "W"
   )
@@ -19,22 +19,24 @@ test_that("plqr_dnn computes direct PLQR sandwich from supplied density", {
   expect_s3_class(fit, "plqr_result")
   expect_equal(
     unname(fit$theta),
-    matrix(d$beta, nrow = length(d$beta), ncol = nrow(d$X0))
+    matrix(d$theta_eval, nrow = length(d$theta_eval), ncol = nrow(d$X0))
   )
   expect_equal(length(fit$score_covariance), nrow(d$X0))
   expect_equal(length(fit$jacobian), nrow(d$X0))
-  expect_equal(length(fit$omega), nrow(d$X0))
-  expect_equal(length(fit$vcov), nrow(d$X0))
-  expect_equal(dim(fit$se), c(length(d$beta), nrow(d$X0)))
+  expect_equal(length(fit$theta_omega), nrow(d$X0))
+  expect_equal(length(fit$theta_vcov), nrow(d$X0))
+  expect_equal(dim(fit$theta_se), c(length(d$theta_eval), nrow(d$X0)))
 
   manual <- .manual_plqr_sandwich(d, fit$W[, 1L])
   expect_equal(unname(fit$score_covariance[[1L]]), unname(manual$S), tolerance = 1e-12)
   expect_equal(unname(fit$jacobian[[1L]]), unname(manual$J), tolerance = 1e-12)
-  expect_equal(unname(fit$omega[[1L]]), unname(manual$omega), tolerance = 1e-10)
-  expect_equal(unname(fit$vcov[[1L]]), unname(manual$vcov), tolerance = 1e-10)
-  expect_equal(unname(fit$se[, 1L]), unname(sqrt(diag(manual$vcov))), tolerance = 1e-10)
+  expect_equal(unname(fit$theta_omega[[1L]]), unname(manual$omega), tolerance = 1e-10)
+  expect_equal(unname(fit$theta_vcov[[1L]]), unname(manual$vcov), tolerance = 1e-10)
+  expect_equal(unname(fit$theta_se[, 1L]), unname(sqrt(diag(manual$vcov))), tolerance = 1e-10)
   expect_equal(unname(fit$neff), unname(1 / colSums(fit$W^2)), tolerance = 1e-12)
-  expect_identical(fit$meta$se_route, "direct_sandwich")
+  expect_identical(fit$meta$theta_se_method, "direct_sandwich")
+  expect_identical(fit$meta$moment_se_method, "none")
+  expect_identical(fit$meta$theta_source, "supplied")
 
   txt <- capture.output(print(fit))
   expect_true(any(grepl("coefficient SEs available", txt, fixed = TRUE)))
@@ -45,8 +47,8 @@ test_that("plqr_dnn direct sandwich agrees across matrix and data-frame interfac
   d <- .make_plqr_inference_data(n = 80L, m = 3L)
 
   fit_mat <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, density = d$density,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, density = d$density,
     X0 = d$X0, method = "exact", k = 2L, s = 9L,
     se = TRUE
   )
@@ -54,11 +56,11 @@ test_that("plqr_dnn direct sandwich agrees across matrix and data-frame interfac
     data = d$df,
     x_cols = d$x_cols,
     D_cols = d$D_cols,
-    q_col = "q_oracle",
+    g_col = "g_oracle",
     mD_cols = d$mD_cols,
     y_col = "Y",
-    density_col = "q_density",
-    beta = d$beta,
+    density_col = "density_oracle",
+    theta_eval = d$theta_eval,
     tau = d$tau,
     X0 = d$X0,
     method = "exact", k = 2L, s = 9L,
@@ -67,24 +69,24 @@ test_that("plqr_dnn direct sandwich agrees across matrix and data-frame interfac
 
   expect_equal(fit_df$moment, fit_mat$moment, tolerance = 1e-12)
   expect_equal(fit_df$theta, fit_mat$theta, tolerance = 1e-12)
-  expect_equal(fit_df$se, fit_mat$se, tolerance = 1e-12)
+  expect_equal(fit_df$theta_se, fit_mat$theta_se, tolerance = 1e-12)
   expect_equal(fit_df$neff, fit_mat$neff, tolerance = 1e-12)
   expect_equal(fit_df$jacobian, fit_mat$jacobian, tolerance = 1e-12)
   expect_equal(fit_df$score_covariance, fit_mat$score_covariance, tolerance = 1e-12)
-  expect_equal(fit_df$vcov, fit_mat$vcov, tolerance = 1e-12)
+  expect_equal(fit_df$theta_vcov, fit_mat$theta_vcov, tolerance = 1e-12)
 })
 
 test_that("plqr_result methods report coefficient inference when direct sandwich is available", {
   d <- .make_plqr_inference_data(n = 85L, m = 2L)
   fit <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, density = d$density,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, density = d$density,
     X0 = d$X0, method = "exact", k = 2L, s = 9L,
     se = TRUE
   )
 
   expect_equal(coef(fit), fit$theta)
-  expect_equal(vcov(fit, target = 1L), fit$vcov[[1L]])
+  expect_equal(vcov(fit, target = 1L), fit$theta_vcov[[1L]])
 
   s <- summary(fit)
   expect_s3_class(s, "summary.plqr_result")
@@ -93,7 +95,7 @@ test_that("plqr_result methods report coefficient inference when direct sandwich
     colnames(s$coefficients),
     c("target", "term", "estimate", "std.error", "statistic", "p.value", "conf.low", "conf.high")
   )
-  expect_equal(nrow(s$coefficients), length(d$beta) * nrow(d$X0))
+  expect_equal(nrow(s$coefficients), length(d$theta_eval) * nrow(d$X0))
   expect_true(all(is.finite(s$coefficients$std.error)))
 
   ci <- confint(fit, parm = 1L, target = 2L)
@@ -106,8 +108,8 @@ test_that("plqr_result methods report coefficient inference when direct sandwich
 test_that("plqr_result methods fail clearly when direct sandwich is unavailable", {
   d <- .make_plqr_inference_data(n = 70L, m = 1L)
   fit <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau,
     X0 = d$X0, method = "exact", k = 2L, s = 8L,
     se = FALSE
   )
@@ -126,8 +128,8 @@ test_that("plqr_dnn validates direct sandwich density inputs", {
 
   expect_error(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = d$tau, density = d$density[-1L],
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, density = d$density[-1L],
       X0 = d$X0, method = "exact", k = 1L, s = 6L, se = FALSE
     ),
     "density.*length",
@@ -138,8 +140,8 @@ test_that("plqr_dnn validates direct sandwich density inputs", {
   density_zero[1L] <- 0
   expect_error(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = d$tau, density = density_zero,
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, density = density_zero,
       X0 = d$X0, method = "exact", k = 1L, s = 6L, se = FALSE
     ),
     "density.*positive",
@@ -151,11 +153,11 @@ test_that("plqr_dnn validates direct sandwich density inputs", {
       data = d$df,
       x_cols = d$x_cols,
       D_cols = d$D_cols,
-      q_col = "q_oracle",
+      g_col = "g_oracle",
       mD_cols = d$mD_cols,
       y_col = "Y",
       density_col = "missing_density",
-      beta = d$beta,
+      theta_eval = d$theta_eval,
       tau = d$tau,
       X0 = d$X0,
       method = "exact", k = 1L, s = 6L, se = FALSE
@@ -166,13 +168,24 @@ test_that("plqr_dnn validates direct sandwich density inputs", {
 
   expect_error(
     plqr_dnn(
-      X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-      beta = d$beta, tau = d$tau, density = d$density,
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, density = d$density,
       X0 = d$X0, method = "exact", k = 1L,
       tuning_mode = "grid",
       se = TRUE
     ),
     "tuning_mode.*density",
+    ignore.case = TRUE
+  )
+
+  expect_error(
+    plqr_dnn(
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, density = d$density,
+      X0 = d$X0, method = "asymp", k = 1L, s = 6L,
+      normalize = FALSE, se = TRUE
+    ),
+    "normalize.*direct PLQR coefficient inference",
     ignore.case = TRUE
   )
 })
@@ -181,14 +194,14 @@ test_that("predict.plqr_result returns coefficient surfaces at new targets", {
   d <- .make_plqr_inference_data(n = 88L, m = 2L)
   new_X0 <- matrix(rnorm(3L * ncol(d$X)), 3L, ncol(d$X))
   fit <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, density = d$density,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, density = d$density,
     X0 = d$X0, method = "exact", k = 2L, s = 9L,
     se = TRUE
   )
   refit <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, density = d$density,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, density = d$density,
     X0 = new_X0, method = "exact", k = 2L, s = 9L,
     se = TRUE
   )
@@ -200,19 +213,19 @@ test_that("predict.plqr_result returns coefficient surfaces at new targets", {
   expect_true(is.list(pred_se))
   expect_named(pred_se, c("fit", "se.fit"))
   expect_equal(pred_se$fit, refit$theta, tolerance = 1e-12)
-  expect_equal(pred_se$se.fit, refit$se, tolerance = 1e-12)
+  expect_equal(pred_se$se.fit, refit$theta_se, tolerance = 1e-12)
 
   pred_ci <- predict(fit, X0 = new_X0, interval = "confidence")
   expect_true(is.list(pred_ci))
   expect_named(pred_ci, c("fit", "lwr", "upr"))
   z <- stats::qnorm(0.975)
   expect_equal(pred_ci$fit, refit$theta, tolerance = 1e-12)
-  expect_equal(pred_ci$lwr, refit$theta - z * refit$se, tolerance = 1e-12)
-  expect_equal(pred_ci$upr, refit$theta + z * refit$se, tolerance = 1e-12)
+  expect_equal(pred_ci$lwr, refit$theta - z * refit$theta_se, tolerance = 1e-12)
+  expect_equal(pred_ci$upr, refit$theta + z * refit$theta_se, tolerance = 1e-12)
 
   pred_ci_se <- predict(fit, X0 = new_X0, interval = "confidence", se.fit = TRUE)
   expect_named(pred_ci_se, c("fit", "lwr", "upr", "se.fit"))
-  expect_equal(pred_ci_se$se.fit, refit$se, tolerance = 1e-12)
+  expect_equal(pred_ci_se$se.fit, refit$theta_se, tolerance = 1e-12)
 })
 
 test_that("predict.plqr_result accepts single x0 and data-frame newdata", {
@@ -221,11 +234,11 @@ test_that("predict.plqr_result accepts single x0 and data-frame newdata", {
     data = d$df,
     x_cols = d$x_cols,
     D_cols = d$D_cols,
-    q_col = "q_oracle",
+    g_col = "g_oracle",
     mD_cols = d$mD_cols,
     y_col = "Y",
-    density_col = "q_density",
-    beta = d$beta,
+    density_col = "density_oracle",
+    theta_eval = d$theta_eval,
     tau = d$tau,
     X0 = d$X0,
     method = "exact", k = 2L, s = 9L,
@@ -233,8 +246,8 @@ test_that("predict.plqr_result accepts single x0 and data-frame newdata", {
   )
 
   pred_x0 <- predict(fit, x0 = d$X0[1L, ])
-  expect_equal(dim(pred_x0), c(length(d$beta), 1L))
-  expect_equal(unname(pred_x0[, 1L]), unname(d$beta), tolerance = 1e-12)
+  expect_equal(dim(pred_x0), c(length(d$theta_eval), 1L))
+  expect_equal(unname(pred_x0[, 1L]), unname(d$theta_eval), tolerance = 1e-12)
 
   nd <- data.frame(
     X1 = d$X0[, 1L],
@@ -252,8 +265,8 @@ test_that("predict.plqr_result separates coefficient prediction from inference a
   d <- .make_plqr_inference_data(n = 75L, m = 2L)
   new_X0 <- matrix(rnorm(2L * ncol(d$X)), 2L, ncol(d$X))
   fit <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau,
     X0 = d$X0, method = "exact", k = 2L, s = 8L,
     se = FALSE
   )
@@ -261,7 +274,7 @@ test_that("predict.plqr_result separates coefficient prediction from inference a
   pred <- predict(fit, X0 = new_X0)
   expect_equal(
     unname(pred),
-    matrix(d$beta, nrow = length(d$beta), ncol = nrow(new_X0)),
+    matrix(d$theta_eval, nrow = length(d$theta_eval), ncol = nrow(new_X0)),
     tolerance = 1e-12
   )
   expect_error(
@@ -279,8 +292,8 @@ test_that("predict.plqr_result separates coefficient prediction from inference a
 test_that("predict.plqr_result validates inputs and fitted model state", {
   d <- .make_plqr_inference_data(n = 78L, m = 2L)
   fit <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, density = d$density,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, density = d$density,
     X0 = d$X0, method = "exact", k = 2L, s = 8L,
     se = TRUE
   )
@@ -322,8 +335,8 @@ test_that("predict.plqr_result validates inputs and fitted model state", {
 test_that("predict.plqr_result validates fitted model state before computing", {
   d <- .make_plqr_inference_data(n = 60L, m = 2L)
   fit <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     method = "exact", k = 2L, s = 6L, se = FALSE
   )
 
@@ -351,11 +364,11 @@ test_that("predict.plqr_result validates fitted model state before computing", {
     fixed = TRUE
   )
 
-  bad_beta <- fit
-  bad_beta$.model$beta <- bad_beta$.model$beta[-1L]
+  bad_theta <- fit
+  bad_theta$.model$theta_eval <- bad_theta$.model$theta_eval[-1L]
   expect_error(
-    predict(bad_beta, X0 = d$X0),
-    "object$.model$beta",
+    predict(bad_theta, X0 = d$X0),
+    "object$.model$theta_eval",
     fixed = TRUE
   )
 
@@ -390,4 +403,65 @@ test_that("predict.plqr_result validates fitted model state before computing", {
     "object$.model$normalize must be TRUE or FALSE",
     fixed = TRUE
   )
+})
+
+test_that("diagnostics report target-level Jacobian conditioning for direct-sandwich fits", {
+  d <- .make_plqr_inference_data(n = 70L, m = 2L)
+  fit <- plqr_dnn(
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, density = d$density,
+    X0 = d$X0, method = "exact", k = 2L, s = 8L,
+    se = TRUE, return = "W"
+  )
+  dd <- diagnostics(fit)
+
+  cols <- c(
+    "jacobian_available", "jacobian_min_singular_value",
+    "jacobian_condition_number", "jacobian_rank",
+    "density_min_weighted", "density_median_weighted",
+    "density_max_weighted", "theta_vcov_available"
+  )
+  expect_true(all(cols %in% names(dd)))
+  expect_true(all(dd$jacobian_available))
+  expect_true(all(is.finite(dd$jacobian_min_singular_value)))
+  expect_true(all(dd$jacobian_min_singular_value > 0))
+  expect_true(all(is.finite(dd$jacobian_condition_number)))
+  expect_true(all(dd$jacobian_rank == length(d$theta_eval)))
+  expect_true(all(dd$theta_vcov_available))
+  expect_true(all(dd$density_min_weighted >= min(d$density)))
+  expect_true(all(dd$density_max_weighted <= max(d$density)))
+  expect_true(all(is.finite(dd$density_median_weighted)))
+})
+
+test_that("diagnostics flag singular PLQR Jacobians and unavailable coefficient inference", {
+  d <- .make_plqr_inference_data(n = 60L, m = 1L)
+  # D == mD makes the residualized design identically zero, so J is singular.
+  d_singular <- d
+  d_singular$mD <- d_singular$D
+  fit <- suppressWarnings(plqr_dnn(
+    X = d_singular$X, D = d_singular$D, g = d_singular$g,
+    mD = d_singular$mD, Y = d_singular$Y,
+    theta_eval = d_singular$theta_eval, tau = d_singular$tau,
+    density = d_singular$density,
+    X0 = d_singular$X0, method = "exact", k = 2L, s = 8L,
+    se = TRUE, return = "W"
+  ))
+  dd <- diagnostics(fit)
+
+  expect_true(all(dd$jacobian_available))
+  expect_true(all(dd$jacobian_condition_number == Inf))
+  expect_true(all(dd$jacobian_rank == 0L))
+  expect_false(any(dd$theta_vcov_available))
+
+  # Fits without density report the Jacobian block as unavailable.
+  fit_no_density <- plqr_dnn(
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau,
+    X0 = d$X0, method = "exact", k = 2L, s = 8L,
+    se = FALSE, return = "W"
+  )
+  dd_no <- diagnostics(fit_no_density)
+  expect_false(any(dd_no$jacobian_available))
+  expect_true(all(is.na(dd_no$jacobian_min_singular_value)))
+  expect_false(any(dd_no$theta_vcov_available))
 })

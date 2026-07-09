@@ -34,10 +34,10 @@ set.seed(777)
 .diag_grid_tuning <- function(default_s = 4L, s_grid = c(2L, 4L, 6L)) {
   new_tuning(
     name = "diag_grid",
-    eval = function(...) list(s = default_s, meta = list(kappa = 1)),
+    eval = function(...) list(s = default_s, meta = list(lambda = 1)),
     eval_grid = function(...) {
       data.frame(
-        kappa = c(0.5, 1, 1.5),
+        lambda = c(0.5, 1, 1.5),
         s = s_grid,
         stringsAsFactors = FALSE
       )
@@ -238,7 +238,7 @@ test_that("diagnostics(np_result) includes tuning metadata summary", {
   demo <- np_demo_data(n = 80L, p = 2L, seed = 19L)
   x_mat <- as.matrix(demo$data[, c("X1", "X2")])
   y_vec <- demo$data$Y
-  tun <- tuning_dnn_paper(kappa = 1.25)
+  tun <- tuning_dnn_paper(lambda = 1.25)
 
   fit <- np_dnn(
     X = x_mat, x0 = demo$x0, Y = y_vec,
@@ -252,7 +252,7 @@ test_that("diagnostics(np_result) includes tuning metadata summary", {
   expect_true(all(d$tuning_grid_available))
   expect_true(all(d$tuning_default_s == fit$meta$s))
   expect_true(all(d$tuning_grid_n_candidates == nrow(attr(d, "tuning_grid"))))
-  expect_true(all(d$tuning_kappa_default == 1.25))
+  expect_true(all(d$tuning_lambda_default == 1.25))
 })
 
 test_that("candidate grid diagnostics are available without retained default W", {
@@ -486,10 +486,10 @@ test_that("diagnostics(plqr_result) reports residual-regressor Gram diagnostics"
     data = demo$data,
     x_cols = c("X1", "X2"),
     D_cols = "D1",
-    q_col = "q_oracle",
+    g_col = "g_oracle",
     mD_cols = "mD1",
     y_col = "Y",
-    beta = demo$truth$beta_true,
+    theta_eval = demo$truth$theta_true,
     tau = 0.5,
     x0 = demo$x0,
     method = "exact",
@@ -522,10 +522,10 @@ test_that("diagnostics(plqr_result) reports multi-column and singular Gram diagn
     data = demo$data,
     x_cols = c("X1", "X2"),
     D_cols = c("D1", "D2"),
-    q_col = "q_oracle",
+    g_col = "g_oracle",
     mD_cols = c("mD1", "mD2"),
     y_col = "Y",
-    beta = demo$truth$beta_true,
+    theta_eval = demo$truth$theta_true,
     tau = 0.5,
     x0 = demo$x0,
     method = "exact",
@@ -559,10 +559,10 @@ test_that("diagnostics(plqr_result) validates retained residual-regressor state"
     data = demo$data,
     x_cols = c("X1", "X2"),
     D_cols = c("D1", "D2"),
-    q_col = "q_oracle",
+    g_col = "g_oracle",
     mD_cols = c("mD1", "mD2"),
     y_col = "Y",
-    beta = demo$truth$beta_true,
+    theta_eval = demo$truth$theta_true,
     tau = 0.5,
     x0 = demo$x0,
     method = "exact",
@@ -617,10 +617,10 @@ test_that("print.dnn_diagnostics runs", {
     data = demo_plqr$data,
     x_cols = c("X1", "X2"),
     D_cols = "D1",
-    q_col = "q_oracle",
+    g_col = "g_oracle",
     mD_cols = "mD1",
     y_col = "Y",
-    beta = demo_plqr$truth$beta_true,
+    theta_eval = demo_plqr$truth$theta_true,
     x0 = demo_plqr$x0,
     method = "exact",
     k = 2L,

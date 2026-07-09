@@ -13,10 +13,10 @@ skip_if_not(
 .layer9_plqr_tuning <- function(default_s = 5L, s_grid = c(3L, 5L, 5L, 7L)) {
   new_tuning(
     name = "layer9_plqr_grid",
-    eval = function(...) list(s = default_s, meta = list(kappa = 1)),
+    eval = function(...) list(s = default_s, meta = list(lambda = 1)),
     eval_grid = function(...) {
       data.frame(
-        kappa = c(0.6, 1, 1.25, 1.5),
+        lambda = c(0.6, 1, 1.25, 1.5),
         s = s_grid,
         stringsAsFactors = FALSE
       )
@@ -36,11 +36,11 @@ skip_if_not(
     df = df,
     X = as.matrix(df[paste0("X", seq_len(p))]),
     D = as.matrix(df[paste0("D", seq_len(p_d))]),
-    q = as.numeric(df$q_oracle),
+    g = as.numeric(df$g_oracle),
     mD = as.matrix(df[paste0("mD", seq_len(p_d))]),
     Y = as.numeric(df$Y),
     X0 = X0,
-    beta = demo$truth$beta_true,
+    theta_eval = demo$truth$theta_true,
     tau = 0.5,
     x_cols = paste0("X", seq_len(p)),
     D_cols = paste0("D", seq_len(p_d)),
@@ -50,8 +50,8 @@ skip_if_not(
 
 .layer9_do_plqr <- function(d, ...) {
   plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     ...
   )
 }
@@ -123,7 +123,7 @@ skip_if_not(
     m = ncol(ref$moment)
   )
   expect_equal(got_moment, ref$moment, tolerance = 1e-12, info = candidate_id)
-  expect_equal(got_se, ref$se, tolerance = 1e-12, info = candidate_id)
+  expect_equal(got_se, ref$moment_se, tolerance = 1e-12, info = candidate_id)
 }
 
 test_that("plqr_dnn grid mode preserves default-candidate fields and long-form rows", {
@@ -134,22 +134,22 @@ test_that("plqr_dnn grid mode preserves default-candidate fields and long-form r
     d,
     method = "exact", k = 1L, tuning = tun,
     se = TRUE, jackknife = "fast",
-    return = c("W", "ranks", "ess", "g", "tuning")
+    return = c("W", "ranks", "ess", "score", "tuning")
   )
   grid <- .layer9_do_plqr(
     d,
     method = "exact", k = 1L, tuning = tun, tuning_mode = "grid",
     se = TRUE, jackknife = "fast",
-    return = c("W", "ranks", "ess", "g", "tuning")
+    return = c("W", "ranks", "ess", "score", "tuning")
   )
 
   expect_s3_class(grid, "plqr_result")
   expect_equal(grid$moment, scalar$moment, tolerance = 0)
-  expect_equal(grid$se, scalar$se, tolerance = 0)
+  expect_equal(grid$moment_se, scalar$moment_se, tolerance = 0)
   expect_equal(grid$W, scalar$W, tolerance = 0)
   expect_equal(grid$ranks, scalar$ranks, tolerance = 0)
   expect_equal(grid$ess, scalar$ess, tolerance = 0)
-  expect_equal(grid$g, scalar$g, tolerance = 0)
+  expect_equal(grid$score, scalar$score, tolerance = 0)
   expect_equal(grid$meta$s, scalar$meta$s)
   expect_equal(grid$meta$tuning, scalar$meta$tuning)
 
@@ -194,13 +194,13 @@ test_that("plqr_dnn grid mode candidate rows match separate scalar fits", {
 
   dup <- grid$tuning_grid$estimates[grid$tuning_grid$estimates$computed_key == "s_5", ]
   expect_equal(
-    dup$estimate[dup$candidate_id == "kappa_1"],
-    dup$estimate[dup$candidate_id == "kappa_1p25"],
+    dup$estimate[dup$candidate_id == "lambda_1"],
+    dup$estimate[dup$candidate_id == "lambda_1p25"],
     tolerance = 0
   )
   expect_equal(
-    dup$se[dup$candidate_id == "kappa_1"],
-    dup$se[dup$candidate_id == "kappa_1p25"],
+    dup$se[dup$candidate_id == "lambda_1"],
+    dup$se[dup$candidate_id == "lambda_1p25"],
     tolerance = 0
   )
 })
@@ -226,33 +226,33 @@ test_that("candidate_fit reconstructs PLQR candidate views", {
     d,
     method = "exact", k = 1L, tuning = tun, tuning_mode = "grid",
     se = TRUE, jackknife = "fast",
-    return = c("W", "ranks", "ord", "dx", "ess", "g")
+    return = c("W", "ranks", "ord", "dx", "ess", "score")
   )
 
-  cand <- fit$tuning_grid$candidates[fit$tuning_grid$candidates$candidate_id == "kappa_1p5", ]
+  cand <- fit$tuning_grid$candidates[fit$tuning_grid$candidates$candidate_id == "lambda_1p5", ]
   view <- candidate_fit(fit, cand$candidate_id)
   ref <- .layer9_do_plqr(
     d,
     method = "exact", k = 1L, s = cand$s,
     se = TRUE, jackknife = "fast",
-    return = c("W", "ranks", "ord", "dx", "ess", "g")
+    return = c("W", "ranks", "ord", "dx", "ess", "score")
   )
 
   expect_s3_class(view, "plqr_result")
   expect_equal(view$moment, ref$moment, tolerance = 1e-12)
-  expect_equal(view$se, ref$se, tolerance = 1e-12)
+  expect_equal(view$moment_se, ref$moment_se, tolerance = 1e-12)
   expect_equal(view$W, ref$W, tolerance = 1e-12)
   expect_equal(view$ess, ref$ess, tolerance = 1e-12)
   expect_equal(view$ranks, ref$ranks, tolerance = 0)
   expect_equal(view$ord, ref$ord, tolerance = 0)
   expect_equal(view$dx, ref$dx, tolerance = 1e-12)
-  expect_equal(view$g, ref$g, tolerance = 0)
+  expect_equal(view$score, ref$score, tolerance = 0)
   expect_equal(view$meta$s, ref$meta$s)
   expect_equal(view$meta$candidate_id, cand$candidate_id)
   expect_null(view$tuning_grid)
 
-  views <- candidate_fits(fit, candidates = c("kappa_1p5", "kappa_1"))
-  expect_equal(names(views), c("kappa_1p5", "kappa_1"))
+  views <- candidate_fits(fit, candidates = c("lambda_1p5", "lambda_1"))
+  expect_equal(names(views), c("lambda_1p5", "lambda_1"))
   expect_equal(views[[1L]], view)
 })
 
@@ -266,18 +266,18 @@ test_that("candidate_fit rejects stale PLQR target/component estimate rows", {
   )
 
   missing_component <- fit
-  drop <- missing_component$tuning_grid$estimates$candidate_id == "kappa_1p5" &
+  drop <- missing_component$tuning_grid$estimates$candidate_id == "lambda_1p5" &
     missing_component$tuning_grid$estimates$target_id == 1L &
     missing_component$tuning_grid$estimates$component == "comp_2"
   missing_component$tuning_grid$estimates <- missing_component$tuning_grid$estimates[!drop, , drop = FALSE]
   expect_error(
-    candidate_fit(missing_component, "kappa_1p5"),
+    candidate_fit(missing_component, "lambda_1p5"),
     "missing target/component rows"
   )
 
   duplicate_component <- fit
   dup <- duplicate_component$tuning_grid$estimates[
-    duplicate_component$tuning_grid$estimates$candidate_id == "kappa_1p5" &
+    duplicate_component$tuning_grid$estimates$candidate_id == "lambda_1p5" &
       duplicate_component$tuning_grid$estimates$target_id == 1L &
       duplicate_component$tuning_grid$estimates$component == "comp_1",
     ,
@@ -285,19 +285,19 @@ test_that("candidate_fit rejects stale PLQR target/component estimate rows", {
   ]
   duplicate_component$tuning_grid$estimates <- rbind(duplicate_component$tuning_grid$estimates, dup)
   expect_error(
-    candidate_fit(duplicate_component, "kappa_1p5"),
+    candidate_fit(duplicate_component, "lambda_1p5"),
     "duplicate target/component rows"
   )
 
   unknown_component <- fit
   idx <- which(
-    unknown_component$tuning_grid$estimates$candidate_id == "kappa_1p5" &
+    unknown_component$tuning_grid$estimates$candidate_id == "lambda_1p5" &
       unknown_component$tuning_grid$estimates$target_id == 1L &
       unknown_component$tuning_grid$estimates$component == "comp_1"
   )[[1L]]
   unknown_component$tuning_grid$estimates$component[[idx]] <- "not_a_component"
   expect_error(
-    candidate_fit(unknown_component, "kappa_1p5"),
+    candidate_fit(unknown_component, "lambda_1p5"),
     "unknown component"
   )
 })
@@ -321,7 +321,7 @@ test_that("plqr_dnn grid mode rejects explicit s and records infeasible candidat
     return = character(0)
   )
   expect_true(is.list(grid$tuning_grid))
-  expect_equal(grid$tuning_grid$candidates$kappa, c(0.75, 1, 1.25, 1.5))
+  expect_equal(grid$tuning_grid$candidates$lambda, c(0.75, 1, 1.25, 1.5))
   expect_equal(grid$tuning_grid$meta$name, "paper_undersmooth")
   expect_equal(grid$meta$tuning$source, "paper_default")
 

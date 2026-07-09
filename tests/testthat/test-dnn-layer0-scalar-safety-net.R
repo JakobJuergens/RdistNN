@@ -144,17 +144,17 @@ test_that("layer 0 reference locks plqr_dnn scalar moment, SE matrix, and extras
   d <- .make_layer0_boundary_data(n = n, p = p, m = m)
   D <- cbind(1 + d$X[, 1], -0.5 + d$X[, 2])
   mD <- cbind(rep(0.75, n), rep(-0.25, n))
-  beta <- c(0.4, -0.2)
-  q <- 0.1 + 0.2 * d$X[, 1]
-  Y <- as.numeric(D %*% beta + q + seq_len(n) / n > median(D %*% beta + q))
+  theta <- c(0.4, -0.2)
+  g <- 0.1 + 0.2 * d$X[, 1]
+  Y <- as.numeric(D %*% theta + g + seq_len(n) / n > median(D %*% theta + g))
 
   out <- plqr_dnn(
     X = d$X,
     D = D,
-    q = q,
+    g = g,
     mD = mD,
     Y = Y,
-    beta = beta,
+    theta_eval = theta,
     tau = 0.5,
     X0 = d$X0,
     method = "exact",
@@ -162,14 +162,14 @@ test_that("layer 0 reference locks plqr_dnn scalar moment, SE matrix, and extras
     s = 5L,
     se = TRUE,
     jackknife = "fast",
-    return = c("W", "ranks", "ord", "dx", "g", "ess", "neighbors")
+    return = c("W", "ranks", "ord", "dx", "score", "ess", "neighbors")
   )
 
-  g_mat <- RdistNN:::.plqr_dnn_g_matrix(D, mD, q, Y, beta = beta, tau = 0.5)
+  score_mat <- RdistNN:::.plqr_dnn_score_matrix(D, mD, g, Y, theta_eval = theta, tau = 0.5)
   ref_se <- .dnn_layer0_fast_jackknife_reference(
     x_mat = d$X,
     x0_mat = d$X0,
-    signal = g_mat,
+    signal = score_mat,
     distance = "l2",
     method = "exact",
     k = 2L,
@@ -180,15 +180,15 @@ test_that("layer 0 reference locks plqr_dnn scalar moment, SE matrix, and extras
   )
 
   expect_s3_class(out, "plqr_result")
-  expect_equal(unname(out$moment), unname(crossprod(g_mat, out$W)), tolerance = 1e-12)
-  expect_equal(unname(out$se), unname(ref_se), tolerance = 1e-12)
+  expect_equal(unname(out$moment), unname(crossprod(score_mat, out$W)), tolerance = 1e-12)
+  expect_equal(unname(out$moment_se), unname(ref_se), tolerance = 1e-12)
   expect_equal(dim(out$moment), c(p_d, m))
-  expect_equal(dim(out$se), c(p_d, m))
+  expect_equal(dim(out$moment_se), c(p_d, m))
   expect_equal(dim(out$W), c(nrow(d$X), nrow(d$X0)))
   expect_equal(dim(out$ranks), dim(out$W))
   expect_equal(dim(out$ord), dim(out$W))
   expect_equal(dim(out$dx), dim(out$W))
-  expect_equal(out$g, g_mat, tolerance = 1e-12)
+  expect_equal(out$score, score_mat, tolerance = 1e-12)
   expect_equal(out$ess, 1 / colSums(out$W^2), tolerance = 1e-12)
   expect_equal(dim(out$neighbors), c(2L, nrow(d$X0)))
   .expect_layer0_ties_and_rank_boundaries(out$ranks, out$dx)
@@ -198,8 +198,8 @@ test_that("layer 0 important scalar error paths remain stable across wrappers", 
   d <- .make_layer0_boundary_data(n = 12L, m = 2L)
   D <- cbind(1 + d$X[, 1], -0.5 + d$X[, 2])
   mD <- matrix(0, nrow = nrow(d$X), ncol = 2L)
-  beta <- c(0.4, -0.2)
-  q <- rep(0, nrow(d$X))
+  theta <- c(0.4, -0.2)
+  g <- rep(0, nrow(d$X))
   Y <- d$y
 
   expect_error(
@@ -212,8 +212,8 @@ test_that("layer 0 important scalar error paths remain stable across wrappers", 
   )
   expect_error(
     plqr_dnn(
-      X = d$X, D = D, q = q, mD = mD, Y = Y,
-      beta = beta, X0 = d$X0, x0 = d$X0[1L, ],
+      X = d$X, D = D, g = g, mD = mD, Y = Y,
+      theta_eval = theta, X0 = d$X0, x0 = d$X0[1L, ],
       k = 1L, s = 2L, se = FALSE
     ),
     "either `X0` or `x0`",

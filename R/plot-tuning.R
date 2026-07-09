@@ -142,9 +142,9 @@
   ))
 }
 
-.plot_tuning_plqr_g <- function(object) {
-  if (!is.null(object$g)) {
-    return(as.matrix(object$g))
+.plot_tuning_plqr_score <- function(object) {
+  if (!is.null(object$score)) {
+    return(as.matrix(object$score))
   }
   model <- object$.model
   if (!is.list(model) || is.null(model$d_resid_mat) ||
@@ -171,16 +171,16 @@
       quoted = FALSE
     )
   }
-  g_mat <- .plot_tuning_plqr_g(object)
+  score_mat <- .plot_tuning_plqr_score(object)
   payload <- .plot_tuning_payload(object, tuning = tuning, se = se)
   suppressWarnings(.plqr_dnn_tuning_grid(
     candidates = payload$grid$candidates,
     ranks = .plot_tuning_ranks(object),
     moment_hat = object$moment,
-    se_hat = object$se,
+    se_hat = object$moment_se,
     x_mat = model$x_mat,
     x0_mat = as.matrix(object$x0),
-    g_mat = g_mat,
+    score_mat = score_mat,
     distance = model$distance,
     method = model$method,
     k = object$meta$k,
@@ -289,7 +289,7 @@
 #' Plot estimate sensitivity to the kernel order
 #'
 #' Evaluates or reuses the candidate kernel orders of a tuning grid
-#' (default: the paper rule's kappa grid via [tuning_dnn_paper()], always
+#' (default: the paper rule's lambda grid via [tuning_dnn_paper()], always
 #' including the fitted `s`) and plots the estimates with confidence
 #' bounds against `s`, marking the fitted kernel order with a filled point
 #' and a dotted guide. For grid fits, the stored `tuning_grid` payload is

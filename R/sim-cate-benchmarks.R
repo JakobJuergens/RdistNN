@@ -12,7 +12,7 @@
 #     ...    -- method-specific extra arguments (absorbed silently if unused)
 #
 #   Returns a data.frame with one or more rows:
-#     candidate_id, kappa, s, tau_hat, tau0, bias, sq_err, se, cover, ci_len,
+#     candidate_id, lambda, s, tau_hat, tau0, bias, sq_err, se, cover, ci_len,
 #     neff, status
 #
 #   tau_hat / tau0   -- raw estimate and truth; self-contained for downstream
@@ -31,7 +31,7 @@
 }
 
 .sim_cate_row_names <- function() {
-  c("candidate_id", "kappa", "s", .sim_cate_metric_names(), "status")
+  c("candidate_id", "lambda", "s", .sim_cate_metric_names(), "status")
 }
 
 .sim_recycle <- function(x, n) {
@@ -51,20 +51,20 @@
   alpha,
   neff = NA_real_,
   candidate_id = NA_character_,
-  kappa = NA_real_,
+  lambda = NA_real_,
   s = NA_integer_,
   status = "ok"
 ) {
   n_out <- max(
     length(tau_hat), length(se_hat), length(tau0), length(neff),
-    length(candidate_id), length(kappa), length(s), length(status)
+    length(candidate_id), length(lambda), length(s), length(status)
   )
   tau_hat <- as.numeric(.sim_recycle(tau_hat, n_out))
   se_hat <- as.numeric(.sim_recycle(se_hat, n_out))
   tau0 <- as.numeric(.sim_recycle(tau0, n_out))
   neff <- as.numeric(.sim_recycle(neff, n_out))
   candidate_id <- as.character(.sim_recycle(candidate_id, n_out))
-  kappa <- as.numeric(.sim_recycle(kappa, n_out))
+  lambda <- as.numeric(.sim_recycle(lambda, n_out))
   s <- as.integer(.sim_recycle(s, n_out))
   status <- as.character(.sim_recycle(status, n_out))
 
@@ -80,7 +80,7 @@
 
   data.frame(
     candidate_id = candidate_id,
-    kappa = kappa,
+    lambda = lambda,
     s = s,
     tau_hat = tau_hat,
     tau0 = tau0,
@@ -112,10 +112,10 @@
     ),
     error = function(e) NULL
   )
-  if (is.null(default) || is.null(default$meta$kappa)) {
+  if (is.null(default) || is.null(default$meta$lambda)) {
     return(NA_real_)
   }
-  out <- suppressWarnings(as.numeric(default$meta$kappa))
+  out <- suppressWarnings(as.numeric(default$meta$lambda))
   if (length(out) != 1L || !is.finite(out)) NA_real_ else out
 }
 
@@ -134,7 +134,7 @@
     alpha = alpha,
     neff = diag$ess[diag_idx],
     candidate_id = candidates$candidate_id,
-    kappa = candidates$kappa,
+    lambda = candidates$lambda,
     s = candidates$s,
     status = candidates$status
   )
@@ -176,7 +176,7 @@
   .sim_metric(
     fit$tau, fit$se, dgp$tau_x0, alpha,
     neff = fit$ess,
-    kappa = .sim_cate_default_kappa(tuning, nrow(dgp$data), length(x_cols), k),
+    lambda = .sim_cate_default_kappa(tuning, nrow(dgp$data), length(x_cols), k),
     s = s
   )
 }
@@ -263,7 +263,7 @@
   .sim_metric(
     fit$tau, fit$se, dgp$tau_x0, alpha,
     neff = fit$ess,
-    kappa = .sim_cate_default_kappa(tuning, nrow(dat), length(x_cols), k),
+    lambda = .sim_cate_default_kappa(tuning, nrow(dat), length(x_cols), k),
     s = s
   )
 }
@@ -336,7 +336,7 @@
   .sim_metric(
     fit$tau, fit$se, dgp$tau_x0, alpha,
     neff = fit$ess,
-    kappa = .sim_cate_default_kappa(tuning, nrow(dat), length(x_cols), k),
+    lambda = .sim_cate_default_kappa(tuning, nrow(dat), length(x_cols), k),
     s = s
   )
 }
@@ -380,7 +380,7 @@
   .sim_metric(
     fit$tau, fit$se, dgp$tau_x0, alpha,
     neff = fit$ess,
-    kappa = .sim_cate_default_kappa(tuning, nrow(dgp$data), length(x_cols), k),
+    lambda = .sim_cate_default_kappa(tuning, nrow(dgp$data), length(x_cols), k),
     s = s
   )
 }

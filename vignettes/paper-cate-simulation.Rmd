@@ -28,7 +28,7 @@ paper-facing orchestration layer on top of these package functions:
 
 - chunked resumable runs with run manifests and generated run READMEs,
 - the separate nuisance-efficiency launcher, and
-- fixed-`\kappa` sweep wrappers that write one output folder per `\kappa`.
+- fixed-`\lambda` sweep wrappers that write one output folder per `\lambda`.
 
 To access that script after installing the package:
 
@@ -85,7 +85,7 @@ The following runs 5 replications per cell over a tiny grid to illustrate the
 workflow. The manuscript-facing main production grid uses `n_reps = 10000`,
 `n_vals = c(100, 250, 500, 1000)`, and the retained designs
 `dgp1_linear`, `dgp2_nonlinear`, `dgp4_clustered`, and `dgp5_correlated`.
-The focused nuisance-efficiency comparison and the fixed-`\kappa` sweeps are
+The focused nuisance-efficiency comparison and the fixed-`\lambda` sweeps are
 driven from the manuscript repo rather than this package vignette.
 
 ```{r small-run}
@@ -170,7 +170,7 @@ Results are written to `./results/sim_cate_raw.rds` and
 
 This package-side script is the manuscript-facing **main-grid** baseline only.
 If you want the chunked manuscript output with manifests, the nuisance-efficiency
-run, or the `\kappa`-sweep folders, use the launchers in
+run, or the `\lambda`-sweep folders, use the launchers in
 `Cond_Z_Estimation/Codes/Simulations/`.
 
 ## Competitor benchmarks

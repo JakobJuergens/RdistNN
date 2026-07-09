@@ -67,9 +67,9 @@ test_that("plqr_dnn, gmm_dnn, and tdnn_np store x0", {
   X0 <- matrix(rnorm(4L), 2L, 2L)
 
   fit_plqr <- plqr_dnn(
-    X = X, D = D, q = as.numeric(df$q_oracle), mD = mD,
+    X = X, D = D, g = as.numeric(df$g_oracle), mD = mD,
     Y = as.numeric(df$Y),
-    beta = demo$truth$beta_true, tau = 0.5,
+    theta_eval = demo$truth$theta_true, tau = 0.5,
     X0 = X0, k = 1L, s = 8L, se = FALSE
   )
   .x0_expectations(fit_plqr, 2L, 2L, colnames_expected = c("X1", "X2"))

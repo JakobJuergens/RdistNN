@@ -13,10 +13,10 @@
   plqr_dnn(
     X = as.matrix(df[paste0("X", 1:2)]),
     D = as.matrix(df[paste0("D", 1:2)]),
-    q = as.numeric(df$q_oracle),
+    g = as.numeric(df$g_oracle),
     mD = as.matrix(df[paste0("mD", 1:2)]),
     Y = as.numeric(df$Y),
-    beta = demo$truth$beta_true, tau = 0.5,
+    theta_eval = demo$truth$theta_true, tau = 0.5,
     X0 = cbind(seq(-0.5, 0.5, length.out = m), 0),
     k = 1L, s = 10L, se = se
   )
@@ -41,7 +41,7 @@ test_that("plqr and gmm autoplot methods carry class-specific dressing", {
 
   # PLQR moments get the zero reference line and the beta/tau subtitle.
   expect_true("GeomHline" %in% .p3_geoms(p))
-  expect_match(p$labels$subtitle, "PLQR moments at beta")
+  expect_match(p$labels$subtitle, "PLQR moments at theta_eval")
   expect_match(p$labels$subtitle, "tau = 0.50", fixed = TRUE)
   expect_identical(class(p$facet)[1L], "FacetWrap")
 
@@ -125,8 +125,8 @@ test_that("plot_calibration reproduces the weighted indicator share", {
   demo <- plqr_demo_data(n = 90L, p = 2L, p_d = 2L, tau = 0.5, seed = 101L)
   df <- demo$data
   r <- as.numeric(df$Y) -
-    as.vector(as.matrix(df[paste0("D", 1:2)]) %*% demo$truth$beta_true) -
-    as.numeric(df$q_oracle)
+    as.vector(as.matrix(df[paste0("D", 1:2)]) %*% demo$truth$theta_true) -
+    as.numeric(df$g_oracle)
   p_arg <- plot_calibration(fit_old, residuals = r)
   expect_equal(p_arg$data$share, share_ref)
 

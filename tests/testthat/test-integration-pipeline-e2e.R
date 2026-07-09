@@ -152,11 +152,11 @@ test_that("end-to-end robustness: ctx invariance, registration-by-name, x0 path,
 
   # (2) Registration-by-name path equals passing spec directly
   register_distance("cosine_test_e2e", cosine_spec)
-  register_rank("exp_decay_0.25", rw)
+  register_rank_weight("exp_decay_0.25", rw)
   W_by_name <- weights_matrix(
     X, X0,
     ranking = "cosine_test_e2e",
-    weight = get_rank("exp_decay_0.25"),
+    weight = get_rank_weight("exp_decay_0.25"),
     return = c("W", "ranks", "ord", "dx")
   )
   expect_equal(W_by_name$dx, W_with_ctx$dx, tolerance = 1e-12)
@@ -334,9 +334,9 @@ test_that("robustness++: distance_eval fallback, rank_weight_eval fallback, and 
   after_d <- sort(distance_names())
   expect_true(setequal(after_d, union(before_d, c("dist_batch_only_e2e"))))
 
-  before_r <- sort(rank_names())
-  register_rank("rw_batch_only", rw_batch_only)
-  register_rank("rw_batch_only", rw_batch_only) # again
-  after_r <- sort(rank_names())
+  before_r <- sort(rank_weight_names())
+  register_rank_weight("rw_batch_only", rw_batch_only)
+  register_rank_weight("rw_batch_only", rw_batch_only) # again
+  after_r <- sort(rank_weight_names())
   expect_true(setequal(after_r, union(before_r, c("rw_batch_only"))))
 })

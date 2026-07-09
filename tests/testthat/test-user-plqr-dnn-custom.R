@@ -36,12 +36,12 @@ test_that("custom distance works in plqr_dnn; custom rank_weight works via weigh
     k = 3L, s = 6L, method = "exact",
     return = "W"
   )
-  g_manual <- (d$tau - as.numeric(d$Y <= as.vector(d$D %*% d$beta) + d$q)) * (d$D - d$mD)
-  moment_manual <- crossprod(g_manual, wt$W)
+  score_manual <- (d$tau - as.numeric(d$Y <= as.vector(d$D %*% d$theta_eval) + d$g)) * (d$D - d$mD)
+  moment_manual <- crossprod(score_manual, wt$W)
 
   out1 <- plqr_dnn(
-    X = d$X, D = d$D, q = d$q, mD = d$mD, Y = d$Y,
-    beta = d$beta, tau = d$tau, X0 = d$X0,
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
     distance = nm, k = 3L, s = 6L, method = "exact",
     se = FALSE, return = "W"
   )
@@ -62,8 +62,8 @@ test_that("custom distance works in plqr_dnn; custom rank_weight works via weigh
 
   W1 <- rank_weight_eval_batch(rw1, RKS)
   W2 <- rank_weight_eval_batch(rw2, RKS)
-  moment_rw1 <- crossprod(g_manual, W1)
-  moment_rw2 <- crossprod(g_manual, W2)
+  moment_rw1 <- crossprod(score_manual, W1)
+  moment_rw2 <- crossprod(score_manual, W2)
 
   expect_true(all(abs(colSums(W1) - 1) < 1e-12))
   expect_true(all(abs(colSums(W2) - 1) < 1e-12))

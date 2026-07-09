@@ -44,9 +44,9 @@ test_that("visual baselines for the core panels", {
 
   grid_tuning <- new_tuning(
     name = "vdiffr_grid",
-    eval = function(...) list(s = 15L, meta = list(kappa = 1)),
+    eval = function(...) list(s = 15L, meta = list(lambda = 1)),
     eval_grid = function(...) data.frame(
-      kappa = c(0.75, 1, 1.25),
+      lambda = c(0.75, 1, 1.25),
       s = c(10L, 15L, 20L),
       stringsAsFactors = FALSE
     )
@@ -66,10 +66,10 @@ test_that("visual baselines for the core panels", {
   fit_plqr <- plqr_dnn(
     X = as.matrix(dfp[paste0("X", 1:2)]),
     D = as.matrix(dfp[paste0("D", 1:2)]),
-    q = as.numeric(dfp$q_oracle),
+    g = as.numeric(dfp$g_oracle),
     mD = as.matrix(dfp[paste0("mD", 1:2)]),
     Y = as.numeric(dfp$Y),
-    beta = demo$truth$beta_true, tau = 0.5,
+    theta_eval = demo$truth$theta_true, tau = 0.5,
     X0 = cbind(seq(-0.5, 0.5, length.out = 5L), 0),
     k = 1L, s = 10L, se = TRUE
   )
