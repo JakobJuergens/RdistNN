@@ -67,5 +67,6 @@ jobs:
       logs_dir: GH_logs/alignment-guardrails
       artifact_pattern: debug-alignment-guardrails-*
       harvested_artifact_name: harvested-alignment-guardrails-logs
-      commit_logs: ${{ github.event_name != 'pull_request' }}
+      # Logs live in workflow artifacts only; the source tree stays clean.
+      commit_logs: false
     secrets: inherit

@@ -191,37 +191,9 @@ jobs:
           path: ${{ steps.makezip.outputs.zip_path }}
           retention-days: 7
 
-      - name: Replace the single archive in archives/source.zip
-        if: steps.makezip.outputs.skip == 'false'
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p archives
-          # Remove everything except an optional .gitkeep, then replace with the new zip
-          find archives -mindepth 1 -not -name '.gitkeep' -print -delete || true
-          cp "${{ steps.makezip.outputs.zip_path }}" "archives/source.zip"
-
-      - name: Commit and push
-        if: steps.makezip.outputs.skip == 'false'
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add archives/source.zip
-          git commit -m "chore(archive): update source.zip [skip ci]" || exit 0
-          BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          # The branch can move between checkout and push (human pushes,
-          # other bots): rebase and retry instead of failing the run.
-          for attempt in 1 2 3; do
-            if git push origin "HEAD:$BRANCH"; then
-              exit 0
-            fi
-            echo "push rejected (attempt $attempt); rebasing onto origin/$BRANCH"
-            git fetch origin "$BRANCH"
-            git rebase "origin/$BRANCH"
-          done
-          git push origin "HEAD:$BRANCH"
+      # The snapshot zip is published as a workflow artifact only (see the
+      # upload step above); generated archives are no longer committed to
+      # the source tree.
 
       - name: Upload debug artifact (snapshot workspace)
         if: failure()
@@ -242,5 +214,6 @@ jobs:
       logs_dir: GH_logs/package-snapshot
       artifact_pattern: debug-package-snapshot-*
       harvested_artifact_name: harvested-package-snapshot-logs
-      commit_logs: true
+      # Logs live in workflow artifacts only; the source tree stays clean.
+      commit_logs: false
     secrets: inherit

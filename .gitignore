@@ -21,7 +21,10 @@ src/symbols.rds
 
 # Local troubleshooting outputs (do not commit)
 docs_local_ci_check/
-GH_logs/run_*.log
+
+# Generated CI logs and archives: workflow artifacts only, never tracked.
+GH_logs/
+archives/
 README.html
 
 # Local agent tooling artifacts

@@ -70,5 +70,6 @@ jobs:
       logs_dir: GH_logs/rcmdcheck
       artifact_pattern: debug-rcmdcheck-*
       harvested_artifact_name: harvested-rcmdcheck-logs
-      commit_logs: ${{ github.event_name != 'pull_request' }}
+      # Logs live in workflow artifacts only; the source tree stays clean.
+      commit_logs: false
     secrets: inherit

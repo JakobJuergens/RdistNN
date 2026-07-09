@@ -69,5 +69,6 @@ jobs:
       logs_dir: GH_logs/pkgdown
       artifact_pattern: debug-pkgdown-*
       harvested_artifact_name: harvested-pkgdown-logs
-      commit_logs: ${{ github.event_name != 'release' }}
+      # Logs live in workflow artifacts only; the source tree stays clean.
+      commit_logs: false
     secrets: inherit

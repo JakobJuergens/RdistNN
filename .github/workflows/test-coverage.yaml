@@ -86,5 +86,6 @@ jobs:
       logs_dir: GH_logs/test-coverage
       artifact_pattern: debug-test-coverage-*
       harvested_artifact_name: harvested-test-coverage-logs
-      commit_logs: true
+      # Logs live in workflow artifacts only; the source tree stays clean.
+      commit_logs: false
     secrets: inherit
