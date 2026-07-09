@@ -136,32 +136,53 @@ plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
   x
 }
 
-.plqr_direct_sandwich <- function(d_mat, mD_mat, density_vec, W, tau,
-                                  coef_names, target_names) {
-  d_resid_mat <- d_mat - mD_mat
-  p_d <- ncol(d_mat)
-  m <- ncol(W)
-  neff <- as.numeric(1 / colSums(W^2))
+# The direct-sandwich theorem convention assumes weights that sum to one per
+# target; unnormalized weights would make coefficient SEs scale-dependent.
+.plqr_validate_normalized_weights <- function(W, tol = 1e-8) {
+  col_sums <- colSums(as.matrix(W))
+  if (any(!is.finite(col_sums)) || any(abs(col_sums - 1) > tol)) {
+    .abort_bad_state(
+      "Direct PLQR sandwich requires normalized weight columns (each summing to 1)."
+    )
+  }
+  invisible(NULL)
+}
 
-  score_covariance <- vector("list", m)
+# Density-backed bread of the PLQR coefficient sandwich: per-target Jacobian
+# J(x) = sum_i w_i f_i tilde_D_i D_i' plus effective sample sizes.
+.plqr_direct_bread <- function(d_mat, mD_mat, density_vec, W,
+                               coef_names, target_names) {
+  d_resid_mat <- d_mat - mD_mat
+  m <- ncol(W)
   jacobian <- vector("list", m)
+  for (j in seq_len(m)) {
+    J <- crossprod(d_resid_mat, d_mat * as.numeric(density_vec * W[, j]))
+    dimnames(J) <- list(coef_names, coef_names)
+    jacobian[[j]] <- J
+  }
+  names(jacobian) <- target_names
+  list(
+    jacobian = jacobian,
+    neff = stats::setNames(as.numeric(1 / colSums(W^2)), target_names)
+  )
+}
+
+# Sandwich J^-1 meat J^-T per target. `meat_is_vcov = FALSE` treats the meat
+# as an asymptotic score covariance (analytic route): omega = J^-1 S J^-T and
+# vcov = omega / neff. `meat_is_vcov = TRUE` treats the meat as a direct
+# estimate of Var(moment) (jackknife route): vcov = J^-1 meat J^-T and
+# omega = vcov * neff.
+.plqr_sandwich_from_meat <- function(jacobian, meat, neff,
+                                     coef_names, target_names,
+                                     meat_is_vcov) {
+  m <- length(jacobian)
+  p_d <- length(coef_names)
   theta_omega <- vector("list", m)
   theta_vcov <- vector("list", m)
   theta_se <- matrix(NA_real_, nrow = p_d, ncol = m)
 
   for (j in seq_len(m)) {
-    w <- as.numeric(W[, j])
-    S <- as.numeric(tau) * (1 - as.numeric(tau)) *
-      crossprod(d_resid_mat, d_resid_mat * w)
-    S <- (S + t(S)) / 2
-    J <- crossprod(d_resid_mat, d_mat * as.numeric(density_vec * w))
-
-    dimnames(S) <- list(coef_names, coef_names)
-    dimnames(J) <- list(coef_names, coef_names)
-    score_covariance[[j]] <- S
-    jacobian[[j]] <- J
-
-    J_inv <- .plqr_safe_solve(J)
+    J_inv <- .plqr_safe_solve(jacobian[[j]])
     if (is.null(J_inv) || any(!is.finite(J_inv))) {
       warning(sprintf(
         "plqr_dnn: direct PLQR Jacobian is singular at target %d; coefficient SEs set to NA.",
@@ -170,10 +191,15 @@ plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
       omega_j <- matrix(NA_real_, nrow = p_d, ncol = p_d)
       vcov_j <- matrix(NA_real_, nrow = p_d, ncol = p_d)
     } else {
-      omega_j <- J_inv %*% S %*% t(J_inv)
-      omega_j <- (omega_j + t(omega_j)) / 2
-      vcov_j <- omega_j / neff[[j]]
-      vcov_j <- (vcov_j + t(vcov_j)) / 2
+      sandwiched <- J_inv %*% meat[[j]] %*% t(J_inv)
+      sandwiched <- (sandwiched + t(sandwiched)) / 2
+      if (isTRUE(meat_is_vcov)) {
+        vcov_j <- sandwiched
+        omega_j <- sandwiched * neff[[j]]
+      } else {
+        omega_j <- sandwiched
+        vcov_j <- sandwiched / neff[[j]]
+      }
       theta_se[, j] <- sqrt(pmax(diag(vcov_j), 0))
     }
     dimnames(omega_j) <- list(coef_names, coef_names)
@@ -182,17 +208,119 @@ plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
     theta_vcov[[j]] <- vcov_j
   }
 
-  names(score_covariance) <- names(jacobian) <- names(theta_omega) <-
-    names(theta_vcov) <- target_names
-  theta_se <- .plqr_dimnames_matrix(theta_se, coef_names, target_names)
-
+  names(theta_omega) <- names(theta_vcov) <- target_names
   list(
-    theta_se = theta_se,
+    theta_se = .plqr_dimnames_matrix(theta_se, coef_names, target_names),
     theta_vcov = theta_vcov,
-    theta_omega = theta_omega,
-    jacobian = jacobian,
-    score_covariance = score_covariance,
-    neff = stats::setNames(neff, target_names)
+    theta_omega = theta_omega
+  )
+}
+
+.plqr_direct_sandwich <- function(d_mat, mD_mat, density_vec, W, tau,
+                                  coef_names, target_names) {
+  .plqr_validate_normalized_weights(W)
+  d_resid_mat <- d_mat - mD_mat
+  m <- ncol(W)
+
+  bread <- .plqr_direct_bread(
+    d_mat = d_mat,
+    mD_mat = mD_mat,
+    density_vec = density_vec,
+    W = W,
+    coef_names = coef_names,
+    target_names = target_names
+  )
+
+  score_covariance <- vector("list", m)
+  for (j in seq_len(m)) {
+    S <- as.numeric(tau) * (1 - as.numeric(tau)) *
+      crossprod(d_resid_mat, d_resid_mat * as.numeric(W[, j]))
+    S <- (S + t(S)) / 2
+    dimnames(S) <- list(coef_names, coef_names)
+    score_covariance[[j]] <- S
+  }
+  names(score_covariance) <- target_names
+
+  sandwich <- .plqr_sandwich_from_meat(
+    jacobian = bread$jacobian,
+    meat = score_covariance,
+    neff = bread$neff,
+    coef_names = coef_names,
+    target_names = target_names,
+    meat_is_vcov = FALSE
+  )
+
+  c(
+    sandwich,
+    list(
+      jacobian = bread$jacobian,
+      score_covariance = score_covariance,
+      neff = bread$neff
+    )
+  )
+}
+
+# Jackknife-meat coefficient sandwich: full delete-1 covariance of the
+# localized vector moment as the meat, density-backed bread unchanged.
+.plqr_jackknife_meat_sandwich <- function(
+  x_mat, x0_mat, score_mat, d_mat, mD_mat, density_vec, W,
+  distance, method, k, s, normalize, ctx, jackknife,
+  precomputed_ranks, coef_names, target_names
+) {
+  .plqr_validate_normalized_weights(W)
+
+  loo <- .dnn_jackknife_loo_array(
+    x_mat = x_mat,
+    x0_mat = x0_mat,
+    signal = score_mat,
+    distance = distance,
+    method = method,
+    k = k,
+    s = s,
+    normalize = normalize,
+    ctx = ctx,
+    signal_arg = "score",
+    jackknife = jackknife,
+    precomputed_ranks = precomputed_ranks
+  )
+  jk <- .dnn_jackknife_vcov_from_loo(
+    loo = loo,
+    q = ncol(score_mat),
+    n = nrow(x_mat),
+    m = ncol(W)
+  )
+  moment_vcov <- lapply(jk$vcov, function(v) {
+    dimnames(v) <- list(coef_names, coef_names)
+    v
+  })
+  names(moment_vcov) <- target_names
+  moment_se <- .plqr_dimnames_matrix(jk$se, coef_names, target_names)
+
+  bread <- .plqr_direct_bread(
+    d_mat = d_mat,
+    mD_mat = mD_mat,
+    density_vec = density_vec,
+    W = W,
+    coef_names = coef_names,
+    target_names = target_names
+  )
+  sandwich <- .plqr_sandwich_from_meat(
+    jacobian = bread$jacobian,
+    meat = moment_vcov,
+    neff = bread$neff,
+    coef_names = coef_names,
+    target_names = target_names,
+    meat_is_vcov = TRUE
+  )
+
+  c(
+    sandwich,
+    list(
+      jacobian = bread$jacobian,
+      neff = bread$neff,
+      moment_vcov = moment_vcov,
+      moment_se = moment_se
+    )
   )
 }
 
@@ -236,6 +364,14 @@ plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
 #' [cate_dnn()]/[np_dnn()]. Direct coefficient inference requires
 #' `normalize = TRUE`, matching the theorem convention of weights summing to
 #' one per target.
+#'
+#' With a density input, the coefficient sandwich supports two meat
+#' estimators (`theta_meat`): the analytic score covariance (default) and
+#' the full delete-1 jackknife covariance of the localized vector moment.
+#' The bread is density-backed in both routes; only the meat changes. A
+#' componentwise `moment_se` alone is never coefficient inference — see
+#' `markdown_notes/design/15_plqr_variance_estimation_rationale.md` for the
+#' route table.
 #'
 #' As in [weights_dnn()], exact DNN localization uses the full rank permutation
 #' at each target rather than an `s`-nearest-neighbor truncation. The `"fast"`
@@ -308,6 +444,15 @@ plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
 #' @param jackknife One of `"fast"`, `"loo"`, or `"none"`. `"fast"` (default)
 #'   uses cached full-sample ranks with delete-1 rank updates, `"loo"`
 #'   recomputes leave-one-out weights directly, and `"none"` skips SEs.
+#' @param theta_meat Meat estimator for the coefficient sandwich when
+#'   `density`/`density_col` is supplied. `"analytic"` (default) uses the
+#'   analytic score covariance
+#'   \eqn{S(x) = \tau(1-\tau)\sum_i w_i \tilde D_i \tilde D_i'};
+#'   `"jackknife"` uses the full delete-1 jackknife covariance of the
+#'   localized vector moment (`moment_vcov`) as the meat, so
+#'   \eqn{\widehat V_\theta = J^{-1} \widehat S_{JK} J^{-T}}. The bread is
+#'   density-backed in both routes. `"jackknife"` requires
+#'   `density`/`density_col`, `se = TRUE`, and `jackknife != "none"`.
 #' @param ctx Optional context passed to distance and ranking components.
 #' @param return Optional extras in addition to the always-returned `moment`,
 #'   `theta`, `theta_eval`, `tau`, and `meta`. Allowed values:
@@ -322,18 +467,25 @@ plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
 #'   - `theta_eval`: the supplied coefficient vector used in the moment map;
 #'   - `theta_se`: coefficient standard errors (`p_d x m`), present only when
 #'     `density` or `density_col` supplies the direct PLQR sandwich route;
-#'   - `moment_se`: jackknife standard errors for `moment` (a moment-level
-#'     diagnostic, not coefficient inference), present only when no density is
-#'     supplied and `se = TRUE` with `jackknife != "none"`;
+#'   - `moment_se`: componentwise jackknife standard errors for `moment`.
+#'     Present when no density is supplied and `se = TRUE` with
+#'     `jackknife != "none"` (moment-level diagnostic only), and when
+#'     `theta_meat = "jackknife"` (as the diagonal of `moment_vcov`). A
+#'     componentwise `moment_se` is never by itself coefficient inference;
+#'   - `moment_vcov`: with `theta_meat = "jackknife"`, the full delete-1
+#'     jackknife covariance of the localized vector moment, one `p_d x p_d`
+#'     matrix per target — the sandwich meat;
 #'   - `tau`: quantile level;
 #'   - `x0`: the `m x p` matrix of evaluation points, with covariate
 #'     column names propagated from the training data when available;
 #'   - `meta`: metadata (`n`, `m`, `p`, `p_d`, `k`, `s`, `method`, `distance`,
-#'     `theta_source = "supplied"`, `theta_se_method`, `moment_se_method`);
+#'     `theta_source = "supplied"`, `theta_se_method`, `theta_meat_method`,
+#'     `moment_se_method`);
 #'   - when direct coefficient inference is available, `theta_vcov`,
-#'     `theta_omega`, `jacobian`, `score_covariance`, and `neff` (the paper's
+#'     `theta_omega`, `jacobian`, and `neff` (the paper's
 #'     effective sample size \eqn{n_{\mathrm{eff}}(x) = 1/\sum_i w_i(x)^2},
-#'     identical to the `ess` return extra);
+#'     identical to the `ess` return extra), plus `score_covariance` (the
+#'     analytic meat) when `theta_meat = "analytic"`;
 #'   - `tuning_grid`: in grid mode, a list with `candidates`, `estimates`,
 #'     `diagnostics`, and `meta` tables. Candidate diagnostics report
 #'     top-5 weight concentration separately from the estimator's `k`;
@@ -389,11 +541,13 @@ plqr_dnn <- function(
   normalize = TRUE,
   se = TRUE,
   jackknife = c("fast", "loo", "none"),
+  theta_meat = c("analytic", "jackknife"),
   ctx = NULL,
   return = c("W")
 ) {
   method <- match.arg(method)
   jackknife <- match.arg(jackknife)
+  theta_meat <- match.arg(theta_meat)
   tuning_mode <- match.arg(tuning_mode)
   s_arg <- s
   k <- .validate_scalar_int(k, "k")
@@ -554,6 +708,36 @@ plqr_dnn <- function(
       quoted = FALSE
     )
   }
+  if (identical(theta_meat, "jackknife")) {
+    if (is.null(density_vec)) {
+      .abort_bad_arg(
+        "theta_meat",
+        paste0(
+          "= \"jackknife\" requires threshold-density values via `density` ",
+          "or `density_col`; the jackknife supplies the sandwich meat, but ",
+          "the bread is always density-backed"
+        ),
+        quoted = FALSE
+      )
+    }
+    if (!isTRUE(se)) {
+      .abort_bad_arg(
+        "theta_meat",
+        "= \"jackknife\" requires `se = TRUE`",
+        quoted = FALSE
+      )
+    }
+    if (identical(jackknife, "none")) {
+      .abort_bad_arg(
+        "theta_meat",
+        paste0(
+          "= \"jackknife\" requires `jackknife = \"fast\"` or ",
+          "`jackknife = \"loo\"` to compute the moment covariance"
+        ),
+        quoted = FALSE
+      )
+    }
+  }
 
   s_resolved <- .dnn_resolve_s(
     s = s_arg,
@@ -609,15 +793,38 @@ plqr_dnn <- function(
   direct_fit <- NULL
   direct_available <- !is.null(density_vec)
   if (isTRUE(se) && isTRUE(direct_available)) {
-    direct_fit <- .plqr_direct_sandwich(
-      d_mat = d_mat,
-      mD_mat = mD_mat,
-      density_vec = density_vec,
-      W = weight_matrix,
-      tau = tau,
-      coef_names = coef_names,
-      target_names = target_names
-    )
+    if (identical(theta_meat, "jackknife")) {
+      direct_fit <- .plqr_jackknife_meat_sandwich(
+        x_mat = x_mat,
+        x0_mat = x0_mat,
+        score_mat = score_mat,
+        d_mat = d_mat,
+        mD_mat = mD_mat,
+        density_vec = density_vec,
+        W = weight_matrix,
+        distance = distance,
+        method = method,
+        k = k,
+        s = s,
+        normalize = normalize,
+        ctx = ctx,
+        jackknife = jackknife,
+        precomputed_ranks = wt$ranks,
+        coef_names = coef_names,
+        target_names = target_names
+      )
+      moment_se <- direct_fit$moment_se
+    } else {
+      direct_fit <- .plqr_direct_sandwich(
+        d_mat = d_mat,
+        mD_mat = mD_mat,
+        density_vec = density_vec,
+        W = weight_matrix,
+        tau = tau,
+        coef_names = coef_names,
+        target_names = target_names
+      )
+    }
     theta_se <- direct_fit$theta_se
   } else if (isTRUE(se) && jackknife != "none") {
     moment_se <- .plqr_dnn_jackknife_se_loo(
@@ -637,6 +844,8 @@ plqr_dnn <- function(
     colnames(moment_se) <- colnames(moment_hat)
   }
 
+  theta_meat_method <- if (isTRUE(se) && isTRUE(direct_available)) theta_meat else "none"
+  moment_se_available <- !is.null(moment_se)
   out <- list(
     moment = moment_hat,
     theta = theta_hat,
@@ -649,10 +858,11 @@ plqr_dnn <- function(
       n = n, m = m_out, p = p, p_d = p_d,
       k = k, s = s,
       method = method, distance = .dnn_distance_name(distance),
-      jackknife = if (isTRUE(se) && !isTRUE(direct_available)) jackknife else "none",
+      jackknife = if (isTRUE(se) && (!isTRUE(direct_available) || identical(theta_meat, "jackknife"))) jackknife else "none",
       theta_source = "supplied",
       theta_se_method = if (isTRUE(se) && isTRUE(direct_available)) "direct_sandwich" else "none",
-      moment_se_method = if (isTRUE(se) && !isTRUE(direct_available) && jackknife != "none") "jackknife" else "none",
+      theta_meat_method = theta_meat_method,
+      moment_se_method = if (moment_se_available) "jackknife" else "none",
       coef_names = coef_names
     )
   )
@@ -661,6 +871,7 @@ plqr_dnn <- function(
     out$theta_omega <- direct_fit$theta_omega
     out$jacobian <- direct_fit$jacobian
     out$score_covariance <- direct_fit$score_covariance
+    out$moment_vcov <- direct_fit$moment_vcov
     out$neff <- direct_fit$neff
   }
   if (tuning_used) out$meta$tuning <- tuning_payload

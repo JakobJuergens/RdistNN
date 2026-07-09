@@ -949,7 +949,32 @@
   loo
 }
 
-.dnn_jackknife_se_loo_matrix <- function(
+# Full delete-1 jackknife covariance of a vector estimate per target.
+# `loo` uses the same layout as .dnn_jackknife_se_from_loo (n x m for q = 1,
+# n x q x m otherwise); the scaling convention ((n-1)/n) matches the
+# componentwise SEs, so sqrt(diag(vcov[[j]])) equals the SE matrix column.
+.dnn_jackknife_vcov_from_loo <- function(loo, q, n, m) {
+  vcov <- vector("list", m)
+  se <- matrix(NA_real_, nrow = q, ncol = m)
+  for (j in seq_len(m)) {
+    mj <- if (q == 1L) {
+      matrix(loo[, j], nrow = n, ncol = 1L)
+    } else {
+      matrix(loo[, , j], nrow = n, ncol = q)
+    }
+    centered <- sweep(mj, 2L, colMeans(mj), FUN = "-")
+    v <- ((n - 1) / n) * crossprod(centered)
+    v <- (v + t(v)) / 2
+    vcov[[j]] <- v
+    se[, j] <- sqrt(pmax(diag(v), 0))
+  }
+  list(vcov = vcov, se = se)
+}
+
+# Raw delete-1 leave-one-out estimates for a (possibly multi-component)
+# signal at every target: n x m matrix for one component, n x q x m array
+# otherwise. Shared by the componentwise-SE and full-covariance routes.
+.dnn_jackknife_loo_array <- function(
   x_mat, x0_mat, signal, distance, method, k, s, normalize, ctx,
   signal_arg = "signal",
   jackknife = c("fast", "loo"),
@@ -1003,7 +1028,7 @@
       tab_full <- .rank_weight_table(rw, n)
       .dnn_loo_prefix(sig, ranks_full, tab_jk, tab_full = tab_full)
     }
-    return(.dnn_jackknife_se_from_loo(loo = loo, q = q, n = n, m = m))
+    return(loo)
   }
 
   if (q == 1L) {
@@ -1023,7 +1048,7 @@
       )
       loo[i, ] <- as.numeric(crossprod(sig[keep, 1L], wt_i$W))
     }
-    return(.dnn_jackknife_se_from_loo(loo = loo, q = q, n = n, m = m))
+    return(loo)
   }
 
   loo <- array(NA_real_, dim = c(n, q, m))
@@ -1042,5 +1067,31 @@
     )
     loo[i, , ] <- crossprod(sig[keep, , drop = FALSE], wt_i$W)
   }
-  .dnn_jackknife_se_from_loo(loo = loo, q = q, n = n, m = m)
+  loo
+}
+
+.dnn_jackknife_se_loo_matrix <- function(
+  x_mat, x0_mat, signal, distance, method, k, s, normalize, ctx,
+  signal_arg = "signal",
+  jackknife = c("fast", "loo"),
+  precomputed_ranks = NULL
+) {
+  jackknife <- match.arg(jackknife)
+  n <- nrow(x_mat)
+  sig <- .dnn_signal_matrix(signal, n = n, arg = signal_arg)
+  loo <- .dnn_jackknife_loo_array(
+    x_mat = x_mat,
+    x0_mat = x0_mat,
+    signal = sig,
+    distance = distance,
+    method = method,
+    k = k,
+    s = s,
+    normalize = normalize,
+    ctx = ctx,
+    signal_arg = signal_arg,
+    jackknife = jackknife,
+    precomputed_ranks = precomputed_ranks
+  )
+  .dnn_jackknife_se_from_loo(loo = loo, q = ncol(sig), n = n, m = nrow(x0_mat))
 }

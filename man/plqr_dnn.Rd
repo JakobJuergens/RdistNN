@@ -31,6 +31,7 @@ plqr_dnn(
   normalize = TRUE,
   se = TRUE,
   jackknife = c("fast", "loo", "none"),
+  theta_meat = c("analytic", "jackknife"),
   ctx = NULL,
   return = c("W")
 )
@@ -116,6 +117,16 @@ in \code{tuning_grid}. Grid mode cannot be combined with explicit \code{s}.}
 uses cached full-sample ranks with delete-1 rank updates, \code{"loo"}
 recomputes leave-one-out weights directly, and \code{"none"} skips SEs.}
 
+\item{theta_meat}{Meat estimator for the coefficient sandwich when
+\code{density}/\code{density_col} is supplied. \code{"analytic"} (default) uses the
+analytic score covariance
+\eqn{S(x) = \tau(1-\tau)\sum_i w_i \tilde D_i \tilde D_i'};
+\code{"jackknife"} uses the full delete-1 jackknife covariance of the
+localized vector moment (\code{moment_vcov}) as the meat, so
+\eqn{\widehat V_\theta = J^{-1} \widehat S_{JK} J^{-T}}. The bread is
+density-backed in both routes. \code{"jackknife"} requires
+\code{density}/\code{density_col}, \code{se = TRUE}, and \code{jackknife != "none"}.}
+
 \item{ctx}{Optional context passed to distance and ranking components.}
 
 \item{return}{Optional extras in addition to the always-returned \code{moment},
@@ -133,18 +144,25 @@ across targets until a root-solving path is requested in future versions;
 \item \code{theta_eval}: the supplied coefficient vector used in the moment map;
 \item \code{theta_se}: coefficient standard errors (\verb{p_d x m}), present only when
 \code{density} or \code{density_col} supplies the direct PLQR sandwich route;
-\item \code{moment_se}: jackknife standard errors for \code{moment} (a moment-level
-diagnostic, not coefficient inference), present only when no density is
-supplied and \code{se = TRUE} with \code{jackknife != "none"};
+\item \code{moment_se}: componentwise jackknife standard errors for \code{moment}.
+Present when no density is supplied and \code{se = TRUE} with
+\code{jackknife != "none"} (moment-level diagnostic only), and when
+\code{theta_meat = "jackknife"} (as the diagonal of \code{moment_vcov}). A
+componentwise \code{moment_se} is never by itself coefficient inference;
+\item \code{moment_vcov}: with \code{theta_meat = "jackknife"}, the full delete-1
+jackknife covariance of the localized vector moment, one \verb{p_d x p_d}
+matrix per target — the sandwich meat;
 \item \code{tau}: quantile level;
 \item \code{x0}: the \verb{m x p} matrix of evaluation points, with covariate
 column names propagated from the training data when available;
 \item \code{meta}: metadata (\code{n}, \code{m}, \code{p}, \code{p_d}, \code{k}, \code{s}, \code{method}, \code{distance},
-\code{theta_source = "supplied"}, \code{theta_se_method}, \code{moment_se_method});
+\code{theta_source = "supplied"}, \code{theta_se_method}, \code{theta_meat_method},
+\code{moment_se_method});
 \item when direct coefficient inference is available, \code{theta_vcov},
-\code{theta_omega}, \code{jacobian}, \code{score_covariance}, and \code{neff} (the paper's
+\code{theta_omega}, \code{jacobian}, and \code{neff} (the paper's
 effective sample size \eqn{n_{\mathrm{eff}}(x) = 1/\sum_i w_i(x)^2},
-identical to the \code{ess} return extra);
+identical to the \code{ess} return extra), plus \code{score_covariance} (the
+analytic meat) when \code{theta_meat = "analytic"};
 \item \code{tuning_grid}: in grid mode, a list with \code{candidates}, \code{estimates},
 \code{diagnostics}, and \code{meta} tables. Candidate diagnostics report
 top-5 weight concentration separately from the estimator's \code{k};
@@ -191,6 +209,14 @@ requires this direct-sandwich route rather than the jackknife SE used by
 \code{\link[=cate_dnn]{cate_dnn()}}/\code{\link[=np_dnn]{np_dnn()}}. Direct coefficient inference requires
 \code{normalize = TRUE}, matching the theorem convention of weights summing to
 one per target.
+
+With a density input, the coefficient sandwich supports two meat
+estimators (\code{theta_meat}): the analytic score covariance (default) and
+the full delete-1 jackknife covariance of the localized vector moment.
+The bread is density-backed in both routes; only the meat changes. A
+componentwise \code{moment_se} alone is never coefficient inference — see
+\verb{markdown_notes/design/15_plqr_variance_estimation_rationale.md} for the
+route table.
 
 As in \code{\link[=weights_dnn]{weights_dnn()}}, exact DNN localization uses the full rank permutation
 at each target rather than an \code{s}-nearest-neighbor truncation. The \code{"fast"}

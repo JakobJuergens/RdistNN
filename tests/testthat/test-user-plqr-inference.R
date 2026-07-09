@@ -465,3 +465,43 @@ test_that("diagnostics flag singular PLQR Jacobians and unavailable coefficient 
   expect_true(all(is.na(dd_no$jacobian_min_singular_value)))
   expect_false(any(dd_no$theta_vcov_available))
 })
+
+test_that("direct sandwich internals reject unnormalized weights", {
+  d <- .make_plqr_inference_data(n = 40L, m = 1L)
+  fit <- plqr_dnn(
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, density = d$density,
+    X0 = d$X0, method = "exact", k = 2L, s = 6L,
+    se = TRUE, return = "W"
+  )
+
+  # Rescaled weight columns must fail clearly rather than silently producing
+  # scale-dependent coefficient SEs.
+  expect_error(
+    RdistNN:::.plqr_direct_sandwich(
+      d_mat = d$D, mD_mat = d$mD, density_vec = d$density,
+      W = 2 * fit$W, tau = d$tau,
+      coef_names = colnames(d$D), target_names = "target_1"
+    ),
+    "normalized weight columns",
+    ignore.case = TRUE
+  )
+
+  # The jackknife-meat route shares the same internal guard.
+  W_corrupt <- fit$W
+  W_corrupt[1L, 1L] <- W_corrupt[1L, 1L] + 0.5
+  expect_error(
+    RdistNN:::.plqr_jackknife_meat_sandwich(
+      x_mat = d$X, x0_mat = d$X0,
+      score_mat = (d$tau - as.numeric(d$Y <= as.vector(d$D %*% d$theta_eval) + d$g)) * (d$D - d$mD),
+      d_mat = d$D, mD_mat = d$mD, density_vec = d$density,
+      W = W_corrupt,
+      distance = "l2", method = "exact", k = 2L, s = 6L,
+      normalize = TRUE, ctx = NULL, jackknife = "fast",
+      precomputed_ranks = NULL,
+      coef_names = colnames(d$D), target_names = "target_1"
+    ),
+    "normalized weight columns",
+    ignore.case = TRUE
+  )
+})
