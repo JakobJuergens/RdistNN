@@ -1,4 +1,4 @@
-# Phase 0 of the plotting layer (markdown_notes/plotting_layer_implementation_plan.md):
+# Phase 0 of the plotting layer (markdown_notes/archive/completed_plans_2026-07-09/plotting_layer_implementation_plan.md):
 # every fitted result object stores the evaluation-point matrix `x0` so that
 # downstream consumers (plotting, reporting) can reconstruct target profiles.
 

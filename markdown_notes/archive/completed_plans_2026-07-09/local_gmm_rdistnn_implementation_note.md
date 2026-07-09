@@ -1,3 +1,7 @@
+> **Status (2026-07-09): implemented and archived.** `gmm_dnn()` and
+> `gmm_model_dr_iv()` exist as experimental companion APIs, following the
+> estimator-layer design in this note.
+
 # Local GMM for `RdistNN`: implementation note
 
 Date: 2026-03-30

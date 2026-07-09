@@ -1,3 +1,10 @@
+> **Status (2026-07-09): completed and archived.** The diagnostics layer
+> landed 2026-04-26, and the remaining tuning-sensitivity follow-up this
+> note carries was closed by the integrated tuning-grid work (design note
+> 14; `tuning_mode = "grid"`, `candidate_fit()`, `plot_tuning()`).
+> Code identifiers reflect pre-2026-07-08 API names (e.g. `kappa`, now
+> `lambda`).
+
 # Diagnostics and Reporting Implementation Plan
 
 *Created: 2026-04-10. Updated: 2026-04-26 after the public diagnostics layer landed. Status: historical implementation plan plus the remaining tuning-sensitivity follow-up.*

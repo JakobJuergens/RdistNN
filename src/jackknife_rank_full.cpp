@@ -27,7 +27,7 @@ using namespace Rcpp;
 // Both passes are O(n) per (t, qq), giving O(n * m * q) total.
 //
 // This is the algorithm described in the implementation note
-// (tdnn_rdistnn_implementation_plan.md, "Phase 2") and applies equally to
+// (markdown_notes/archive/completed_plans_2026-07-09/tdnn_rdistnn_implementation_plan.md, "Phase 2") and applies equally to
 // exact DNN, asymptotic DNN, exact TDNN, and asymptotic TDNN — any rule
 // whose rank-weight table can be precomputed outside this function.
 //

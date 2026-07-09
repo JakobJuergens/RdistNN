@@ -1,6 +1,20 @@
 # RdistNN package audit note: application completeness, remaining gaps, and implementation priorities
 
-*Created: 2026-04-09. Updated: 2026-04-26 after the diagnostics layer landed and the manuscript-facing simulation orchestration moved into `Cond_Z_Estimation/Codes/Simulations/`.*
+*Created: 2026-04-09. Updated: 2026-04-26 after the diagnostics layer landed and the manuscript-facing simulation orchestration moved into `Cond_Z_Estimation/Codes/Simulations/`. Updated: 2026-07-09 in the markdown consolidation pass.*
+
+> **Status (2026-07-09):** this is now a largely historical audit note. Since
+> the 2026-04-26 update, the following have all landed: the integrated
+> tuning-grid sensitivity workflow (design note 14; `tuning_mode = "grid"`,
+> `candidate_fit()`, `plot_tuning()`, candidate-level `diagnostics()`), the
+> plotting layer (`R/plot-*.R`), PLQR maturity parity plus the direct-sandwich
+> variance rationale (design note 15), the pre-public breaking cleanup and
+> namespace pruning (paper-aligned names `g`/`theta_eval`/`theta_se`/
+> `moment_se`, tuning constant `lambda`), and the paper-repo migration.
+> Completed plans are archived under
+> `markdown_notes/archive/completed_plans_2026-07-09/`. The live pre-public
+> roadmap is `markdown_notes/rdistnn_next_overhaul_remaining_tasks.md`; the
+> only major item below that remains genuinely open is the long-term general
+> conditional Z-estimation front end (section 5).
 
 ## Purpose
 
@@ -221,9 +235,15 @@ So this is not “nice to have.” It is the missing paper-facing layer that sit
 
 ---
 
-# 4. Secondary paper-facing gap: sensitivity-grid workflow
+# 4. Secondary paper-facing gap: sensitivity-grid workflow (closed 2026-07-06)
 
-This section is now the live package-side follow-up for simulation work. The manuscript repo already owns the baseline and fixed-`\kappa` run orchestration; what remains package-side is a reusable sensitivity/reporting helper rather than new baseline-simulation infrastructure.
+Status update, 2026-07-09: this gap is closed. The integrated tuning-grid
+workflow of design note 14 (`tuning_mode = "grid"` in the user wrappers,
+candidate-level `diagnostics()`, `candidate_fit()`/`candidate_fits()`, and
+`plot_tuning()`) is exactly the reusable sensitivity/reporting layer this
+section asked for, and the paper repo's launchers now consume it. The text
+below is design history. (The tuning constant discussed as `\kappa` here has
+since been renamed `lambda`.)
 
 The tuning infrastructure now supports candidate grids, but there is not yet a high-level workflow that uses those grids to evaluate stability of the estimate and its inferential objects.
 
@@ -857,20 +877,25 @@ It has moved beyond being just a collection of low-level DNN components. It now 
 
 So the package is **not far away** from being a strong paper-facing implementation.
 
-However, the most important remaining simulation-facing gap is no longer diagnostics itself. It is the **tuning-grid sensitivity / stability layer** that would sit on top of the current diagnostics and tuning APIs.
+The tuning-grid sensitivity / stability layer flagged here landed as the
+integrated tuning-grid workflow (design note 14), so the simulation-facing
+agenda in this note is complete.
 
-That is the next thing to fix.
-
-If that layer is implemented well, the package will feel much closer to complete for the actual paper applications and for the second-stage fixed-`\kappa` simulation agenda.
-
-If you later want the package to fully embody the general framework of the paper, the next major step after that is a **general localized conditional Z-estimation front end** built on the score API.
+If you later want the package to fully embody the general framework of the paper, the next major step is a **general localized conditional Z-estimation front end** built on the score API.
 
 ---
 
-## Short priority summary
+## Short priority summary (updated 2026-07-09)
 
-1. **Add tuning-grid sensitivity summaries**
-2. **Integrate diagnostics into summary/print more fully**
-3. **Package empirical application workflows if needed**
-4. **Later: build a full general conditional Z-estimation front end**
-5. **Only after that: think about nuisance-fitting convenience**
+1. ~~Add tuning-grid sensitivity summaries~~ — landed (design note 14).
+2. ~~Integrate diagnostics into summary/print more fully~~ — landed with the
+   diagnostics/plotting layers.
+3. **Package empirical application workflows if needed** — open; the SIPP
+   401k application scaffold now lives in the paper repo.
+4. **Later: build a full general conditional Z-estimation front end** — open,
+   long-term.
+5. **Only after that: think about nuisance-fitting convenience** — open,
+   long-term.
+
+For the near-term pre-public work, see
+`markdown_notes/rdistnn_next_overhaul_remaining_tasks.md`.

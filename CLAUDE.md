@@ -3,9 +3,11 @@
 Read `AGENTS.md` first.
 
 `AGENTS.md` is the canonical repository instruction file for coding agents in
-this repo. The package design standards, interface rules, validation contract,
-and cleanup plan are defined there and in the linked files under
-`markdown_notes/design/`.
+this repo. The package design standards, interface rules, and validation
+contract are defined there and in the linked files under
+`markdown_notes/design/`; the live pre-public roadmap is
+`markdown_notes/rdistnn_next_overhaul_remaining_tasks.md`, and completed plans
+are archived under `markdown_notes/archive/`.
 
 Before changing code, especially in exported functions or shared helpers, follow
 `AGENTS.md` and its required read order.

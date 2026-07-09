@@ -25,6 +25,21 @@ also read as relevant:
 - `markdown_notes/design/11_examples_vignettes_and_pkgdown_policy.md`
 - `markdown_notes/design/12_release_and_ci_policy.md`
 
+For tuning-grid work read `markdown_notes/design/14_integrated_tuning_grid_reuse.md`;
+for PLQR inference work read `markdown_notes/design/15_plqr_variance_estimation_rationale.md`.
+
+## Markdown note layout
+
+- `markdown_notes/design/` is the canonical, ordered design-policy corpus.
+- `markdown_notes/rdistnn_next_overhaul_remaining_tasks.md` is the live
+  pre-public roadmap; read it before starting new package work.
+- `markdown_notes/RdistNN_implementation_note.md` is a historical audit note;
+  only its long-term framework items (general conditional Z front end) are
+  still open.
+- Completed or superseded implementation plans are archived with status
+  headers under `markdown_notes/archive/`; treat them as provenance, not as
+  live instructions — they largely predate the 2026-07-08 API renames.
+
 ## Repository-wide non-negotiable rules
 
 - User-facing high-level estimators may accept either:

@@ -380,6 +380,13 @@ per target.
 
 ### 6.3 Singular Jacobian tests
 
+> **Status (2026-07-09): mostly done.** Items 1 and 2 are covered by the
+> Jacobian-diagnostics tests added on 2026-07-08 in
+> `tests/testthat/test-user-plqr-inference.R` (singular `J` via `D == mD`
+> gives `Inf` condition number, rank 0, `theta_vcov_available = FALSE`, and
+> a no-density fit reports the block unavailable). Item 3 (a *nearly*
+> singular fixture, finite but large condition number) is still open.
+
 Add tests for:
 
 1. singular `J` produces `theta_se = NA` and `theta_vcov_available = FALSE`;
@@ -560,6 +567,16 @@ Then trigger GitHub Actions manually on the final code commit, not on a log-upda
 ---
 
 ## 13. Cross-repository compatibility sweep
+
+> **Status (2026-07-09): done for the two paper repositories.**
+> `Cond_Z_Estimation` was migrated in its commit `34e6e32`
+> (launchers renamed to `*_lambda_grid.ps1`, `SIM_TUNING_LAMBDA*` env vars,
+> `--lambda` CLI args, lambda columns/tags), using the reader-side
+> translation this section prefers: `simviz_normalize_legacy_tbl()` /
+> `simviz_normalize_legacy_config()` normalize kappa-era archives on load,
+> validated against `paper_main_v1_extkappa_grid`. `Cond_GMM_with_DNN` was
+> searched for every term below and uses none of them. Website/software
+> examples remain to be checked when they exist.
 
 Before finalizing the package API, search the paper repositories for old names and changed columns.
 

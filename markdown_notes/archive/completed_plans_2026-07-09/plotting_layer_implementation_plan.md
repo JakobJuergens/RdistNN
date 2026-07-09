@@ -1,3 +1,8 @@
+> **Status (2026-07-09): completed and archived.** The header below says
+> "no plotting code exists yet"; that was true at drafting. The plotting
+> layer has since fully landed (`R/plot-*.R`, phases 0-3, vdiffr
+> baselines). Code identifiers reflect the pre-2026-07-08 API names.
+
 # Plotting Layer Implementation Plan
 
 Created: 2026-07-02.

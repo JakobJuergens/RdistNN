@@ -1,3 +1,9 @@
+> **Status (2026-07-09): implemented and archived.** The `sim_iv_*` layer
+> this note designs exists in the package as experimental companion
+> functionality. The 2026-07-08/09 cleanup later removed the `tau_x0` /
+> `truth$tau_fn` / `tau_oracle` aliases discussed here; theta is the only
+> IV target naming.
+
 # IV simulation integration for `RdistNN`
 
 Date: 2026-05-13

@@ -1,3 +1,9 @@
+> **Status (2026-07-09): implemented and archived.** The TDNN rank-weight
+> layer, `np_tdnn()`, and the fast jackknife described here are all
+> implemented. The 2026-07-08 namespace pruning later made the raw
+> `tdnn_rank_table_*` and `dnn_weights_tdnn_*_full_from_ranks` helpers
+> internal; the public surface is `rank_weight_tdnn_*()` / `weights_tdnn*()`.
+
 # TDNN for `RdistNN`: weight layer and fast jackknife plan
 
 Date: 2026-03-30

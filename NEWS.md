@@ -180,7 +180,7 @@ old names are kept.
   cumulative shares and distances when stored; `plot_data_diagnostics()`
   returns the per-target diagnostics frame with an integer `target_id`
   aligned with the other extractors.
-- Design and phase plan: `markdown_notes/plotting_layer_implementation_plan.md`.
+- Design and phase plan: `markdown_notes/archive/completed_plans_2026-07-09/plotting_layer_implementation_plan.md`.
 
 ### Fitted objects store evaluation points
 
@@ -188,7 +188,7 @@ old names are kept.
   result objects now include `x0`, the `m x p` matrix of evaluation
   points, with covariate column names propagated from the training data
   when the targets carry none. This is Phase 0 of the plotting layer
-  (`markdown_notes/plotting_layer_implementation_plan.md`): profile
+  (`markdown_notes/archive/completed_plans_2026-07-09/plotting_layer_implementation_plan.md`): profile
   plots need the target coordinates, which were previously not stored.
 
 ### Breaking change: default kernel order `s`

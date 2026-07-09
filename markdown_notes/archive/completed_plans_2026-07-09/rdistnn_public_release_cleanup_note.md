@@ -1,3 +1,12 @@
+> **Status (2026-07-09): implemented and archived.** The breaking pre-public
+> cleanup this note plans was implemented in RdistNN commits `3c0eba4`,
+> `6e74f9a`, `e0fe61b`, and `0d5b5ca` (2026-07-08), and the paper-repo
+> migration landed in `Cond_Z_Estimation` commit `34e6e32` (2026-07-09).
+> Section 24 (tracked `GH_logs/` artifacts) and section 25 (notation
+> vignette) were deliberately deferred; they and all other remaining work
+> are tracked in `markdown_notes/rdistnn_next_overhaul_remaining_tasks.md`.
+> This file is retained for provenance and uses pre-rename naming throughout.
+
 # RdistNN Public-Release Cleanup: Legacy Compatibility, Naming, and Paper-Notation Alignment
 
 **Created:** 2026-07-08  

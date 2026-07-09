@@ -3,7 +3,7 @@
 # Design contract: every extractor returns a plain data.frame that the
 # ggplot2-based builders (later phases) consume, and that users can consume
 # directly to build their own figures. No plotting dependency is used here.
-# See markdown_notes/plotting_layer_implementation_plan.md.
+# See markdown_notes/archive/completed_plans_2026-07-09/plotting_layer_implementation_plan.md.
 
 # ── Internal helpers ──────────────────────────────────────────────────────────
 

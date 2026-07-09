@@ -3,7 +3,7 @@
 # ggplot2 is a suggested dependency: every public builder guards through
 # .plot_require_ggplot2() and fails with an actionable message when it is
 # not installed. All helpers here are internal.
-# See markdown_notes/plotting_layer_implementation_plan.md.
+# See markdown_notes/archive/completed_plans_2026-07-09/plotting_layer_implementation_plan.md.
 
 # The `.data` pronoun inside ggplot2::aes() is supplied by the tidy-eval
 # data mask at run time; this declaration only silences the R CMD check

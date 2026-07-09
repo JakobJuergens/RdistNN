@@ -1,3 +1,11 @@
+> **Status (2026-07-09): completed and archived.** This plan was implemented
+> and merged on 2026-07-08 (see design note 15 for the resulting variance
+> rationale). The checkbox states below were not maintained during
+> execution; treat the plan text as historical provenance. Note that the
+> 2026-07-08 pre-public cleanup subsequently renamed the PLQR API surface
+> (`q_col`->`g_col`, `beta`->`theta_eval`, `se`->`theta_se`/`moment_se`),
+> so code identifiers in this note reflect the pre-rename API.
+
 # PLQR Maturity Parity Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
