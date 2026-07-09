@@ -127,22 +127,37 @@ plot_data_estimates.cate_result <- function(object, level = 0.95, ...) {
 }
 
 #' @rdname plot_data_estimates
+#' @param quantity For `plqr_result` fits, which quantity to extract:
+#'   `"moment"` (default) uses the localized PLQR moments and their
+#'   jackknife `moment_se`; `"theta"` uses the supplied coefficient values
+#'   (repeated `theta_eval`) and the direct-sandwich `theta_se`. While no
+#'   root solver exists, moments are the target-specific quantity, so they
+#'   are the default. The choice is recorded in `attr(., "quantity")`.
 #' @export
-plot_data_estimates.plqr_result <- function(object, level = 0.95, ...) {
-  est <- if (!is.null(object$theta)) {
-    as.matrix(object$theta)
+plot_data_estimates.plqr_result <- function(object, level = 0.95,
+                                            quantity = c("moment", "theta"),
+                                            ...) {
+  quantity <- match.arg(quantity)
+  if (identical(quantity, "theta")) {
+    est <- as.matrix(object$theta)
+    se <- object$theta_se
   } else {
-    as.matrix(object$moment)
+    est <- as.matrix(object$moment)
+    se <- object$moment_se
   }
   coef_names <- rownames(est)
   if (is.null(coef_names)) {
-    coef_names <- paste0("theta_", seq_len(nrow(est)))
+    coef_names <- paste0(
+      if (identical(quantity, "theta")) "theta_" else "comp_",
+      seq_len(nrow(est))
+    )
   }
-  se <- if (!is.null(object$theta)) object$theta_se else object$moment_se
-  .plot_data_estimates_frame(
+  out <- .plot_data_estimates_frame(
     est = est, se = se, x0 = object$x0,
     coef_names = coef_names, level = level
   )
+  attr(out, "quantity") <- quantity
+  out
 }
 
 #' @rdname plot_data_estimates

@@ -215,13 +215,18 @@
     target_names <- paste0("target_", seq_len(m))
   }
 
+  # A z-statistic and p-value for a supplied evaluation value would read as
+  # a test of an estimated coefficient; suppress them unless a future
+  # root-solving mode sets theta_source = "local_root".
+  supplied <- identical(object$meta$theta_source, "supplied")
+
   rows <- vector("list", p * m)
   idx <- 1L
   for (target in seq_len(m)) {
     for (coef_idx in seq_len(p)) {
       est <- theta[coef_idx, target]
       se_val <- if (has_inference) object$theta_se[coef_idx, target] else NA_real_
-      stat <- if (is.finite(se_val) && se_val > 0) est / se_val else NA_real_
+      stat <- if (!supplied && is.finite(se_val) && se_val > 0) est / se_val else NA_real_
       pval <- if (is.finite(stat)) 2 * stats::pnorm(-abs(stat)) else NA_real_
       rows[[idx]] <- data.frame(
         target = target_names[[target]],
@@ -289,12 +294,20 @@ print.plqr_result <- function(x, ...) {
 
 #' Extract coefficients from a `plqr_result`
 #'
+#' Returns the coefficient value represented by the object. For current
+#' [plqr_dnn()] fits this is the supplied `theta_eval` repeated across
+#' targets (`meta$theta_source = "supplied"`); no local PLQR root is
+#' solved. The source is attached as `attr(., "theta_source")`.
+#'
 #' @param object A `plqr_result` object.
 #' @param ... Not used.
-#' @return Matrix of PLQR coefficient values.
+#' @return Matrix of PLQR coefficient values with a `theta_source`
+#'   attribute.
 #' @export
 coef.plqr_result <- function(object, ...) {
-  object$theta
+  out <- object$theta
+  attr(out, "theta_source") <- object$meta$theta_source
+  out
 }
 
 #' Variance-covariance matrices for `plqr_result`
@@ -341,12 +354,18 @@ vcov.plqr_result <- function(object, target = NULL, ...) {
 #' into a coefficient-level interval in this package's source theory — see
 #' `markdown_notes/design/15_plqr_variance_estimation_rationale.md`.
 #'
+#' Intervals are centered at the coefficient value the object represents:
+#' for current fits the supplied `theta_eval`
+#' (`meta$theta_source = "supplied"`), not an estimated local root. The
+#' source is attached as `attr(., "theta_source")`.
+#'
 #' @param object A `plqr_result` object from [plqr_dnn()].
 #' @param parm Optional coefficient names or indices.
 #' @param level Confidence level.
 #' @param target Optional target indices.
 #' @param ... Not used.
-#' @return A data frame with confidence intervals.
+#' @return A data frame with confidence intervals and a `theta_source`
+#'   attribute.
 #' @export
 confint.plqr_result <- function(object, parm = NULL, level = 0.95,
                                 target = NULL, ...) {
@@ -391,6 +410,7 @@ confint.plqr_result <- function(object, parm = NULL, level = 0.95,
 
   out <- tab[, c("target", "term", "conf.low", "conf.high"), drop = FALSE]
   rownames(out) <- NULL
+  attr(out, "theta_source") <- object$meta$theta_source
   out
 }
 
@@ -415,6 +435,7 @@ summary.plqr_result <- function(object, level = 0.95, ...) {
     level = level,
     has_inference = identical(object$meta$theta_se_method, "direct_sandwich") &&
       !is.null(object$theta_vcov),
+    theta_source = object$meta$theta_source,
     meta = object$meta
   )
   class(out) <- "summary.plqr_result"
@@ -431,6 +452,14 @@ summary.plqr_result <- function(object, level = 0.95, ...) {
 print.summary.plqr_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
   cat("<summary.plqr_result>\n", sep = "")
   cat("  targets: ", length(unique(x$coefficients$target)), "\n", sep = "")
+  if (identical(x$theta_source, "supplied")) {
+    cat(
+      "  theta_source: supplied; no local PLQR root solving was performed\n",
+      sep = ""
+    )
+  } else if (!is.null(x$theta_source)) {
+    cat("  theta_source: ", x$theta_source, "\n", sep = "")
+  }
   if (!isTRUE(x$has_inference)) {
     cat("  note   : direct coefficient standard errors are not available.\n", sep = "")
   }
@@ -444,11 +473,20 @@ print.summary.plqr_result <- function(x, digits = max(3L, getOption("digits") - 
 #' Predict from a `plqr_result` object at new targets
 #'
 #' @details
+#' The returned fit matrix repeats the supplied `theta_eval`
+#' (`meta$theta_source = "supplied"`). Target-specific variation enters only
+#' through the DNN weights and the resulting direct-sandwich standard
+#' errors; no target-specific PLQR root is solved.
+#'
 #' Coefficient-level standard errors and intervals require the direct PLQR
-#' sandwich (fit with `density` or `density_col`); the moment-level jackknife
-#' SE available on fits without a density input has no proven translation
-#' into a coefficient-level interval in this package's source theory — see
+#' sandwich (fit with `density` or `density_col`); a componentwise
+#' moment-level jackknife SE on a fit without a density input is not by
+#' itself a coefficient-level interval — see
 #' `markdown_notes/design/15_plqr_variance_estimation_rationale.md`.
+#' Prediction standard errors always use the analytic sandwich meat,
+#' regardless of the fit's `theta_meat` choice, because the fitted object
+#' does not retain the outcome data needed to re-run the jackknife at new
+#' targets.
 #'
 #' @param object A `plqr_result` object from [plqr_dnn()].
 #' @param newdata Optional matrix/data frame of target covariates.
@@ -465,7 +503,8 @@ print.summary.plqr_result <- function(x, digits = max(3L, getOption("digits") - 
 #'   with one row per PLQR coefficient and one column per target. With
 #'   `se.fit = TRUE`, a list with `fit` and `se.fit` matrices. With
 #'   `interval = "confidence"`, a list with `fit`, `lwr`, and `upr` matrices,
-#'   and also `se.fit` when requested.
+#'   and also `se.fit` when requested. The coefficient source is attached to
+#'   the fit as `attr(., "theta_source")`.
 #' @examples
 #' set.seed(3)
 #' demo <- plqr_demo_data(n = 80, p = 2, p_d = 2, tau = 0.5, seed = 3)
@@ -519,6 +558,8 @@ predict.plqr_result <- function(
     coef_names = model$coef_names,
     target_names = target_names
   )
+
+  attr(theta, "theta_source") <- object$meta$theta_source
 
   need_se <- isTRUE(se.fit) || identical(interval, "confidence")
   if (!need_se) {

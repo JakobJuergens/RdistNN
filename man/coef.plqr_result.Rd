@@ -12,8 +12,12 @@
 \item{...}{Not used.}
 }
 \value{
-Matrix of PLQR coefficient values.
+Matrix of PLQR coefficient values with a \code{theta_source}
+attribute.
 }
 \description{
-Extract coefficients from a \code{plqr_result}
+Returns the coefficient value represented by the object. For current
+\code{\link[=plqr_dnn]{plqr_dnn()}} fits this is the supplied \code{theta_eval} repeated across
+targets (\code{meta$theta_source = "supplied"}); no local PLQR root is
+solved. The source is attached as \code{attr(., "theta_source")}.
 }

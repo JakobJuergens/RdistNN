@@ -39,17 +39,27 @@ With \code{interval = "none"} and \code{se.fit = FALSE}, a coefficient matrix
 with one row per PLQR coefficient and one column per target. With
 \code{se.fit = TRUE}, a list with \code{fit} and \code{se.fit} matrices. With
 \code{interval = "confidence"}, a list with \code{fit}, \code{lwr}, and \code{upr} matrices,
-and also \code{se.fit} when requested.
+and also \code{se.fit} when requested. The coefficient source is attached to
+the fit as \code{attr(., "theta_source")}.
 }
 \description{
 Predict from a \code{plqr_result} object at new targets
 }
 \details{
+The returned fit matrix repeats the supplied \code{theta_eval}
+(\code{meta$theta_source = "supplied"}). Target-specific variation enters only
+through the DNN weights and the resulting direct-sandwich standard
+errors; no target-specific PLQR root is solved.
+
 Coefficient-level standard errors and intervals require the direct PLQR
-sandwich (fit with \code{density} or \code{density_col}); the moment-level jackknife
-SE available on fits without a density input has no proven translation
-into a coefficient-level interval in this package's source theory — see
+sandwich (fit with \code{density} or \code{density_col}); a componentwise
+moment-level jackknife SE on a fit without a density input is not by
+itself a coefficient-level interval — see
 \verb{markdown_notes/design/15_plqr_variance_estimation_rationale.md}.
+Prediction standard errors always use the analytic sandwich meat,
+regardless of the fit's \code{theta_meat} choice, because the fitted object
+does not retain the outcome data needed to re-run the jackknife at new
+targets.
 }
 \examples{
 set.seed(3)

@@ -68,7 +68,7 @@ plot_estimates <- function(object, level = 0.95,
     ))
   }
 
-  df <- plot_data_estimates(object, level = level)
+  df <- plot_data_estimates(object, level = level, ...)
   m <- length(unique(df$target_id))
   n_coef <- length(unique(df$coef))
   axis <- .plot_profile_axis(df, x_var = x_var)
@@ -90,8 +90,11 @@ plot_estimates <- function(object, level = 0.95,
   if (nzchar(honesty)) captions <- c(captions, honesty)
 
   # Zero reference lines are mandatory where zero is meaningful (plan
-  # 3.0): treatment effects and PLQR moment coordinates.
-  zero_line <- inherits(object, "cate_result") || inherits(object, "plqr_result")
+  # 3.0): treatment effects and PLQR moment coordinates. Supplied-theta
+  # PLQR plots get no automatic zero line; zero is not a meaningful
+  # reference for an arbitrary evaluation value.
+  zero_line <- inherits(object, "cate_result") ||
+    (inherits(object, "plqr_result") && !identical(attr(df, "quantity"), "theta"))
 
   if (mode == "forest") {
     labs_map <- .plot_target_labels(df)

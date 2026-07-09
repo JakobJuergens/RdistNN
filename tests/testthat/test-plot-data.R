@@ -86,7 +86,16 @@ test_that("plot_data_estimates dispatches for cate, plqr, and gmm fits", {
   expect_identical(nrow(df_plqr), p_d * 2L)
   expect_identical(length(unique(df_plqr$coef)), p_d)
   expect_identical(df_plqr$target_id, rep(1:2, each = p_d))
-  expect_false(anyNA(df_plqr$se))
+  # Default PLQR quantity is the localized moment (no root solver exists);
+  # this analytic-meat fit stores theta_se but no moment_se.
+  expect_identical(attr(df_plqr, "quantity"), "moment")
+  expect_equal(df_plqr$estimate, as.numeric(as.matrix(fit_plqr$moment)))
+  expect_true(all(is.na(df_plqr$se)))
+
+  df_plqr_theta <- plot_data_estimates(fit_plqr, quantity = "theta")
+  expect_identical(attr(df_plqr_theta, "quantity"), "theta")
+  expect_equal(df_plqr_theta$estimate, as.numeric(as.matrix(fit_plqr$theta)))
+  expect_false(anyNA(df_plqr_theta$se))
 
   dgp <- sim_iv_data("dgp2_iv_homog_overid", n = 100L, kx = 2L, q = 2L,
                      seed = 8L)

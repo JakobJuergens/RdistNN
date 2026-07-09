@@ -30,9 +30,18 @@ conditional Z-estimation for free:
 > broader questions." (`Main_End.tex:9-13`)
 
 The PLQR moment (a quantile check-function score) is exactly this
-unresolved case. There is no proof anywhere in this repository's source
-papers that a delete-1 jackknife SE on the PLQR *moment* has a valid
-translation into a coefficient-level (`theta`) confidence interval.
+unresolved case for the *componentwise* route: a componentwise jackknife
+SE for the localized PLQR moment is not by itself a coefficient-level SE,
+and no theorem in this repository's source papers turns one into a
+coefficient CI. Coefficient inference always requires a
+bread/meat/bread sandwich. The bread remains density-backed in all
+coefficient-inference routes. The meat can be estimated either by the
+analytic PLQR formula
+`S = tau(1-tau) sum_i w_i tilde_D_i tilde_D_i'` or by a **full vector
+jackknife covariance** of the localized PLQR moment (`moment_vcov`),
+which is a valid candidate meat once sandwiched with the density-backed
+bread. The package must — and does — distinguish moment diagnostics from
+jackknife-meat coefficient inference.
 
 `Cond_Z_Estimation`'s active "coupled-score" theory
 (`Paper/Parts/coupled_score/05_Applications/05b_Coupled_Nonsmooth_Applications.tex`)
@@ -56,13 +65,25 @@ against the paper's formulas during the PLQR-maturity planning pass
 
 **Consequence for the package's public API:** `confint.plqr_result()` and
 `predict.plqr_result(..., se.fit = TRUE)` only produce coefficient SEs/CIs
-when `density`/`density_col` was supplied at fit time (the direct-sandwich
-route, reported in `theta_se`/`theta_vcov`), because that is the only route
-this repository's theory has proven valid. The moment-level jackknife SE
-(`fit$moment_se` when `density` was not supplied) remains available as a
-moment diagnostic, but must **not** be treated as a valid basis for a
-coefficient-level CI on `theta` — no theorem in this repository's paper
-corpus covers that translation.
+when `density`/`density_col` was supplied at fit time, because every valid
+coefficient route needs the density-backed bread. Two meat estimators are
+supported through `plqr_dnn(theta_meat = )`:
+
+| Route | Bread | Meat | Coefficient inference? | Package fields |
+|---|---|---|---|---|
+| Analytic direct sandwich (`theta_meat = "analytic"`, default) | density-backed `jacobian` | analytic `score_covariance` | yes | `theta_vcov`, `theta_se`, `theta_omega` |
+| Jackknife-meat sandwich (`theta_meat = "jackknife"`) | density-backed `jacobian` | full `moment_vcov` (delete-1 covariance of the localized vector moment) | yes | `moment_vcov`, `theta_vcov`, `theta_se`, `theta_omega` |
+| Moment diagnostic only (no density input) | none | componentwise `moment_se` | **no** | `moment_se` |
+
+The componentwise moment-level jackknife SE (`fit$moment_se` when
+`density` was not supplied) remains available as a moment diagnostic, but
+must **not** be treated as a valid basis for a coefficient-level CI on
+`theta` by itself — the covariance structure across moment components is
+lost, and no theorem covers that shortcut. The scaling conventions are
+aligned so that under `theta_meat = "jackknife"`,
+`moment_se = sqrt(diag(moment_vcov[[j]]))` and
+`theta_vcov[[j]] = J^{-1} moment_vcov[[j]] J^{-T}` with
+`theta_omega[[j]] = theta_vcov[[j]] * neff[[j]]`.
 
 ## 2. Nuisance notation mapping
 
@@ -90,6 +111,8 @@ This note does not attempt to prove Hájek dominance or jackknife
 consistency for the PLQR score kernel — per `Main_End.tex`, that remains
 open in the source papers. It only records why the package's existing
 `confint`/`predict` gating on `density`/`density_col` is the theoretically
-correct behavior, not a placeholder limitation, so a future contributor
-does not "fix" the asymmetry with `cate_dnn()` by adding an unproven
-jackknife-based coefficient CI.
+correct behavior, not a placeholder limitation. Future contributors should
+avoid **componentwise moment-SE shortcuts** to coefficient CIs; a full
+jackknife-meat sandwich route (the `theta_meat = "jackknife"` route above)
+is legitimate when paired with the density-backed bread, appropriate
+tests, and theory-facing documentation.

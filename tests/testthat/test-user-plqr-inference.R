@@ -85,7 +85,7 @@ test_that("plqr_result methods report coefficient inference when direct sandwich
     se = TRUE
   )
 
-  expect_equal(coef(fit), fit$theta)
+  expect_equal(coef(fit), fit$theta, ignore_attr = "theta_source")
   expect_equal(vcov(fit, target = 1L), fit$theta_vcov[[1L]])
 
   s <- summary(fit)
@@ -207,21 +207,21 @@ test_that("predict.plqr_result returns coefficient surfaces at new targets", {
   )
 
   pred <- predict(fit, X0 = new_X0)
-  expect_equal(pred, refit$theta, tolerance = 1e-12)
+  expect_equal(pred, refit$theta, tolerance = 1e-12, ignore_attr = "theta_source")
 
   pred_se <- predict(fit, X0 = new_X0, se.fit = TRUE)
   expect_true(is.list(pred_se))
   expect_named(pred_se, c("fit", "se.fit"))
-  expect_equal(pred_se$fit, refit$theta, tolerance = 1e-12)
+  expect_equal(pred_se$fit, refit$theta, tolerance = 1e-12, ignore_attr = "theta_source")
   expect_equal(pred_se$se.fit, refit$theta_se, tolerance = 1e-12)
 
   pred_ci <- predict(fit, X0 = new_X0, interval = "confidence")
   expect_true(is.list(pred_ci))
   expect_named(pred_ci, c("fit", "lwr", "upr"))
   z <- stats::qnorm(0.975)
-  expect_equal(pred_ci$fit, refit$theta, tolerance = 1e-12)
-  expect_equal(pred_ci$lwr, refit$theta - z * refit$theta_se, tolerance = 1e-12)
-  expect_equal(pred_ci$upr, refit$theta + z * refit$theta_se, tolerance = 1e-12)
+  expect_equal(pred_ci$fit, refit$theta, tolerance = 1e-12, ignore_attr = "theta_source")
+  expect_equal(pred_ci$lwr, refit$theta - z * refit$theta_se, tolerance = 1e-12, ignore_attr = "theta_source")
+  expect_equal(pred_ci$upr, refit$theta + z * refit$theta_se, tolerance = 1e-12, ignore_attr = "theta_source")
 
   pred_ci_se <- predict(fit, X0 = new_X0, interval = "confidence", se.fit = TRUE)
   expect_named(pred_ci_se, c("fit", "lwr", "upr", "se.fit"))
@@ -275,7 +275,8 @@ test_that("predict.plqr_result separates coefficient prediction from inference a
   expect_equal(
     unname(pred),
     matrix(d$theta_eval, nrow = length(d$theta_eval), ncol = nrow(new_X0)),
-    tolerance = 1e-12
+    tolerance = 1e-12,
+    ignore_attr = "theta_source"
   )
   expect_error(
     predict(fit, X0 = new_X0, se.fit = TRUE),
@@ -504,4 +505,34 @@ test_that("direct sandwich internals reject unnormalized weights", {
     "normalized weight columns",
     ignore.case = TRUE
   )
+})
+
+test_that("PLQR S3 methods expose supplied-theta semantics", {
+  d <- .make_plqr_inference_data(n = 60L, m = 2L)
+  fit <- plqr_dnn(
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, density = d$density,
+    X0 = d$X0, method = "exact", k = 2L, s = 8L,
+    se = TRUE
+  )
+
+  s <- summary(fit)
+  expect_identical(s$theta_source, "supplied")
+  expect_true(all(is.na(s$coefficients$statistic)))
+  expect_true(all(is.na(s$coefficients$p.value)))
+  expect_true(all(is.finite(s$coefficients$std.error)))
+  txt <- capture.output(print(s))
+  expect_true(any(grepl(
+    "theta_source: supplied; no local PLQR root solving was performed",
+    txt,
+    fixed = TRUE
+  )))
+
+  expect_identical(attr(coef(fit), "theta_source"), "supplied")
+  expect_identical(attr(confint(fit), "theta_source"), "supplied")
+
+  pred <- predict(fit, X0 = d$X0)
+  expect_identical(attr(pred, "theta_source"), "supplied")
+  pred_se <- predict(fit, X0 = d$X0, se.fit = TRUE)
+  expect_identical(attr(pred_se$fit, "theta_source"), "supplied")
 })

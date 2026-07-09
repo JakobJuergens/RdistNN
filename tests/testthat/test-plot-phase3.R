@@ -246,3 +246,63 @@ test_that("plot_tuning evaluates candidate grids and marks the fit", {
   fit_old$.model$x_mat <- NULL
   expect_error(plot_tuning(fit_old), "re-estimate")
 })
+
+test_that("PLQR plot quantity controls zero lines and plotted values", {
+  skip_if_not_installed("ggplot2")
+  fit <- .p3_plqr_fit()
+  geoms_of <- function(p) vapply(p$layers, function(l) class(l$geom)[1L], character(1L))
+
+  # Default: localized moments with a zero reference line.
+  p_moment <- plot_estimates(fit)
+  expect_true(any(c("GeomHline", "GeomVline") %in% geoms_of(p_moment)))
+  expect_equal(
+    sort(unique(p_moment$data$estimate)),
+    sort(unique(as.numeric(as.matrix(fit$moment)))),
+    tolerance = 1e-12
+  )
+
+  # Supplied-theta plots: repeated theta_eval, no automatic zero line.
+  p_theta <- plot_estimates(fit, quantity = "theta")
+  expect_false(any(c("GeomHline", "GeomVline") %in% geoms_of(p_theta)))
+  expect_equal(
+    sort(unique(p_theta$data$estimate)),
+    sort(unique(as.numeric(as.matrix(fit$theta)))),
+    tolerance = 1e-12
+  )
+})
+
+test_that("candidate-grid PLQR plot data stays in moment coordinates", {
+  skip_if_not_installed("ggplot2")
+  demo <- plqr_demo_data(n = 70, p = 2, p_d = 2, tau = 0.5, seed = 21)
+  df <- demo$data
+  fit <- plqr_dnn(
+    X = as.matrix(df[paste0("X", 1:2)]),
+    D = as.matrix(df[paste0("D", 1:2)]),
+    g = as.numeric(df$g_oracle),
+    mD = as.matrix(df[paste0("mD", 1:2)]),
+    Y = as.numeric(df$Y),
+    theta_eval = demo$truth$theta_true, tau = 0.5,
+    X0 = rbind(c(0, 0), c(0.4, -0.4)), k = 1L,
+    tuning_mode = "grid", se = FALSE,
+    return = c("W", "ranks")
+  )
+
+  payload <- RdistNN:::.plot_candidate_estimates_frame(
+    object = fit,
+    candidates = "all",
+    level = 0.95,
+    fn = "plot_estimates"
+  )
+  grid_est <- fit$tuning_grid$estimates
+  expect_true(all(payload$data$estimate %in% grid_est$estimate))
+  # The default candidate rows are the fit's localized moments, not theta.
+  default_id <- fit$tuning_grid$candidates$candidate_id[
+    fit$tuning_grid$candidates$is_default
+  ][1L]
+  default_rows <- payload$data[payload$data$candidate_id == default_id, ]
+  expect_equal(
+    sort(default_rows$estimate),
+    sort(as.numeric(as.matrix(fit$moment))),
+    tolerance = 1e-12
+  )
+})

@@ -17,7 +17,7 @@ plot_data_estimates(object, level = 0.95, ...)
 
 \method{plot_data_estimates}{cate_result}(object, level = 0.95, ...)
 
-\method{plot_data_estimates}{plqr_result}(object, level = 0.95, ...)
+\method{plot_data_estimates}{plqr_result}(object, level = 0.95, quantity = c("moment", "theta"), ...)
 
 \method{plot_data_estimates}{gmm_result}(object, level = 0.95, ...)
 }
@@ -29,6 +29,13 @@ plot_data_estimates(object, level = 0.95, ...)
 \item{level}{Confidence level for the normal bounds (default \code{0.95}).}
 
 \item{...}{Passed to methods; not used.}
+
+\item{quantity}{For \code{plqr_result} fits, which quantity to extract:
+\code{"moment"} (default) uses the localized PLQR moments and their
+jackknife \code{moment_se}; \code{"theta"} uses the supplied coefficient values
+(repeated \code{theta_eval}) and the direct-sandwich \code{theta_se}. While no
+root solver exists, moments are the target-specific quantity, so they
+are the default. The choice is recorded in \code{attr(., "quantity")}.}
 }
 \value{
 A \code{data.frame} with columns \code{target_id} (integer, \verb{1..m}),

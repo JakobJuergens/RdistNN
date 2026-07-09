@@ -18,7 +18,8 @@
 \item{...}{Not used.}
 }
 \value{
-A data frame with confidence intervals.
+A data frame with confidence intervals and a \code{theta_source}
+attribute.
 }
 \description{
 Confidence intervals for \code{plqr_result}
@@ -29,4 +30,9 @@ sandwich (fit with \code{density} or \code{density_col}); the moment-level jackk
 SE available on fits without a density input has no proven translation
 into a coefficient-level interval in this package's source theory — see
 \verb{markdown_notes/design/15_plqr_variance_estimation_rationale.md}.
+
+Intervals are centered at the coefficient value the object represents:
+for current fits the supplied \code{theta_eval}
+(\code{meta$theta_source = "supplied"}), not an estimated local root. The
+source is attached as \code{attr(., "theta_source")}.
 }
