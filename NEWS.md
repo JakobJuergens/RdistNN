@@ -2,6 +2,35 @@
 
 ## RdistNN (development)
 
+### PLQR jackknife-meat inference, supplied-theta semantics, and plot defaults
+
+- `plqr_dnn()` gains `theta_meat = c("analytic", "jackknife")`: with
+  `"jackknife"`, the full delete-1 jackknife covariance of the localized
+  vector moment (`moment_vcov`) is used as the coefficient-sandwich meat
+  with the density-backed bread. `meta$theta_meat_method` records the
+  route; design note 15 now carries the full route table.
+- Supplied-theta semantics are explicit across the PLQR S3 methods:
+  `summary()` prints `theta_source` and suppresses `statistic`/`p.value`
+  for supplied evaluation values; `coef()`, `confint()`, and `predict()`
+  attach a `theta_source` attribute and document that current fits repeat
+  the supplied `theta_eval`.
+- PLQR estimate plots default to moment coordinates:
+  `plot_data_estimates()`/`plot_estimates()` accept
+  `quantity = c("moment", "theta")`, zero reference lines are drawn for
+  moment plots only, and candidate-grid plots stay in moment coordinates.
+- `.plqr_direct_sandwich()` and the jackknife-meat route internally
+  require normalized weight columns, failing clearly on rescaled or
+  corrupted weight matrices.
+- PLQR Jacobian diagnostics rename `density_min_weighted` /
+  `density_max_weighted` to `density_min_support` / `density_max_support`
+  (they are support extrema) and add the weighted mean
+  `density_mean_weighted`.
+- `plqr_demo_data()` now ships a true oracle threshold density:
+  `data$density_oracle` and `truth$density_fn`, with the ALD error
+  generator made density-continuous at the quantile
+  (`f(0) = 4 tau (1 - tau) / sigma`; `tau = 0.5` draws are unchanged).
+  README and vignette examples use it instead of a hand-set constant.
+
 ### Pre-public breaking cleanup (paper-notation alignment)
 
 This pass deliberately breaks pre-release APIs so the first public version
@@ -69,10 +98,10 @@ old names are kept.
 ### PLQR inference, prediction, and tuning-grid mode
 
 - Added the direct PLQR coefficient sandwich (`density`/`density_col`):
-  `plqr_dnn()` now reports coefficient-level `se`, `vcov`, `omega`,
-  `jacobian`, `score_covariance`, and `neff` when a local conditional
-  density is supplied, matching the direct `J, S` sandwich this
-  estimator's source theory specifies (see
+  `plqr_dnn()` now reports coefficient-level `theta_se`, `theta_vcov`,
+  `theta_omega`, `jacobian`, `score_covariance`, and `neff` when a local
+  conditional density is supplied, matching the direct `J, S` sandwich
+  this estimator's source theory specifies (see
   `markdown_notes/design/15_plqr_variance_estimation_rationale.md`).
   `confint.plqr_result()` and `summary.plqr_result()` report coefficient
   inference only through this route.
@@ -94,7 +123,7 @@ old names are kept.
 ### Plotting layer (Phase 3)
 
 - `autoplot()`/`plot()` methods for `plqr_result` (zero-referenced moment
-  facets with a beta/tau subtitle) and `gmm_result` (coefficient facets
+  facets with a theta_eval/tau subtitle) and `gmm_result` (coefficient facets
   with the model name); zero reference lines are now drawn for PLQR
   moments as well as CATE effects.
 - `plot_conditioning()` for PLQR fits: smallest Gram eigenvalue and log10

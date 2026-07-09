@@ -97,7 +97,8 @@ predict(fit_cate, x0 = c(0.2, -0.1), interval = "confidence")
 
 ```{r plqr, eval=FALSE}
 demo_plqr <- plqr_demo_data(n = 250, p = 2, p_d = 2, tau = 0.5, seed = 1)
-demo_plqr$data$density_oracle <- 2
+# demo_plqr$data$density_oracle holds the true threshold density of the
+# demo DGP (constant, 4 * tau * (1 - tau) / sigma).
 
 fit_plqr <- plqr_dnn(
   data = demo_plqr$data,
@@ -147,14 +148,18 @@ repeats the supplied `theta_eval` (`meta$theta_source = "supplied"`).
 Coefficient-level standard errors and confidence intervals require
 supplying `density`/`density_col` (an estimate of the local conditional
 density of `Y` at the fitted quantile). This is not an optional
-convenience: the package's source theory (see
-`markdown_notes/design/15_plqr_variance_estimation_rationale.md`) proves
-coefficient-level inference only for this direct sandwich route, not for a
-jackknife SE on the moment. Fits without a density input can still report
-`moment_se` (a jackknife SE on the *moment*, useful as a diagnostic) but
-`confint()`/`predict(se.fit = TRUE)` will error, by design, until refit
-with a density input. Coefficient-level results live in `theta_se` /
-`theta_vcov`; the two routes are never mixed in one field.
+convenience: every valid coefficient route needs the density-backed
+sandwich bread (see
+`markdown_notes/design/15_plqr_variance_estimation_rationale.md`). Two
+coefficient-meat routes are available through `theta_meat`: the analytic
+score covariance (default) and a full delete-1 jackknife covariance of
+the localized vector moment (`theta_meat = "jackknife"`, stored in
+`moment_vcov`). A fit without a density input can still report
+`moment_se` (a componentwise jackknife SE on the *moment*, useful as a
+diagnostic) but `confint()`/`predict(se.fit = TRUE)` will error, by
+design, until refit with a density input — a componentwise `moment_se`
+alone is never coefficient inference. Coefficient-level results live in
+`theta_se` / `theta_vcov`; the routes are never mixed in one field.
 
 ## Diagnostics and Reporting
 

@@ -50,10 +50,17 @@ A list with:
 \item \code{data}: a \code{data.frame} with columns \code{X1..Xp}, \code{D1..Dp_d}, \code{Y};
 oracle nuisances \code{g_oracle} (the value of \eqn{g_{0}(X)}),
 \code{mD1..mDp_d} (components of \eqn{m_{D}(X)}),
-and residuals \code{rD1..rDp_d} (components of \eqn{D - m_{D}(X)}).
+residuals \code{rD1..rDp_d} (components of \eqn{D - m_{D}(X)}),
+and \code{density_oracle}, the true conditional density of
+\eqn{Y} at the quantile threshold. Because the demo's ALD errors
+are independent of \eqn{(X, D)} and homoskedastic, this density
+is constant, \eqn{f(0) = 4\tau(1-\tau)/\sigma}.
 \item \code{x0}: the target point used.
 \item \code{truth}: a list with \code{theta_true} (length \code{p_d}),
-\code{g_fn(x)} and \code{mD_fn(x)} closures to evaluate ground truth at new \eqn{X}.
+\code{g_fn(x)} and \code{mD_fn(x)} closures to evaluate ground truth at new \eqn{X},
+and \code{density_fn(v)}, the error density at signed distance
+\eqn{v} from the quantile threshold (\code{density_fn(0)} is the
+\code{density_oracle} value).
 \item \code{g_x0}: the true value \eqn{g_{0}(x_{0})}.
 }
 }

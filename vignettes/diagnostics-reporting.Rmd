@@ -116,13 +116,14 @@ fit_plqr <- plqr_dnn(
   g_col = "g_oracle",
   mD_cols = c("mD1", "mD2"),
   y_col = "Y",
+  density_col = "density_oracle",
   theta_eval = demo_plqr$truth$theta_true,
   tau = 0.5,
   x0 = demo_plqr$x0,
   method = "exact",
   k = 1L,
   s = 4L,
-  se = FALSE,
+  se = TRUE,
   return = c("W", "dx", "score", "ess")
 )
 
@@ -131,8 +132,10 @@ d_plqr[, c(
   "target_id",
   "n_eff",
   "gram_min_eig",
-  "gram_max_eig",
-  "gram_condition_number"
+  "gram_condition_number",
+  "jacobian_min_singular_value",
+  "jacobian_condition_number",
+  "theta_vcov_available"
 )]
 ```
 

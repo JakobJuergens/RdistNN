@@ -33,6 +33,18 @@ knitr::opts_chunk$set(
 
 > Status: active research package. APIs may continue to evolve.
 
+## API tiers
+
+Not all exported functions carry the same stability promise:
+
+| Tier | Meaning | Examples | Public docs |
+|---|---|---|---|
+| Stable user API | expected to survive the public release | `weights_dnn()`, `np_dnn()`, `cate_dnn()`, `plqr_dnn()`, `diagnostics()`, `tuning_dnn_paper()` | README + main reference groups |
+| Developer API | extension points for custom components | distance / rank-weight / score specs and registries | "Developer API" reference groups |
+| Paper replication API | tied to the paper's simulation study | `sim_cate_*`, `summarise_sim_results()` | replication reference group + vignette |
+| Experimental companion API | may change before the companion papers are released | `gmm_dnn()`, `sim_iv_*`, TDNN/jackknife infrastructure | "Experimental"/"Advanced" reference groups |
+| Internal | not exported | low-level distance/order/rank-table plumbing | none |
+
 For exact DNN weights, the package works with the full rank permutation at each
 target. Exact single-scale DNN has finite-population support through rank
 `n - s + k`; in the paper-default `k = 1` case this is `n - s + 1`.
@@ -71,6 +83,7 @@ fit_np <- np_dnn(
   x0 = c(0, 0),
   distance = "l2",
   method = "exact",
+  # Toy choice for a tiny example; use tuning_dnn_paper() in paper-style runs.
   k = 1L, s = 3L,
   se = TRUE,
   jackknife = "fast",
@@ -102,6 +115,7 @@ fit_cate <- cate_dnn(
   e_col = "e_oracle",
   distance = "l2",
   method = "exact",
+  # Toy choice for a tiny example; use tuning_dnn_paper() in paper-style runs.
   k = 1L, s = 3L,
   se = TRUE,
   jackknife = "fast",
@@ -126,7 +140,8 @@ require threshold-density values via `density` / `density_col`.
 library(RdistNN)
 
 demo_plqr <- plqr_demo_data(n = 250, p = 2, p_d = 2, tau = 0.5, seed = 1)
-demo_plqr$data$density_oracle <- 2 # toy/oracle density for this example only
+# demo_plqr$data already includes density_oracle, the true (constant)
+# conditional density of Y at the quantile threshold for the demo DGP.
 
 fit_plqr <- plqr_dnn(
   data = demo_plqr$data,
@@ -181,61 +196,13 @@ raw <- sim_cate_run(
 summarise_sim_results(raw)
 ```
 
-### 5) Local IV-GMM Estimation and Simulation (experimental)
+### 5) Local IV-GMM (experimental)
 
-Experimental companion functionality: local IV-GMM wrappers and simulation
-helpers are included for ongoing companion-paper development. Their API and
-theorem alignment may change before the GMM paper is released.
-
-```{r, eval = FALSE}
-library(RdistNN)
-
-# Draw one local IV-GMM dataset with two valid instruments
-iv <- sim_iv_data(
-  "dgp2_iv_homog_overid",
-  n = 300,
-  kx = 2,
-  q = 2,
-  seed = 1
-)
-
-names(iv$data)
-iv$theta_x0
-
-model_iv <- gmm_model_dr_iv(
-  z_cols = c("Z1", "Z2"),
-  pi_cols = c("piZ1_oracle", "piZ2_oracle"),
-  muY_col = "muY_oracle",
-  muD_col = "muD_oracle"
-)
-
-fit_iv <- gmm_dnn(
-  data = iv$data,
-  x_cols = c("X1", "X2"),
-  x0 = iv$x0,
-  model = model_iv,
-  k = 1L, s = 12L,
-  return = "ess"
-)
-
-fit_iv$theta
-fit_iv$J
-
-# Smaller demo-data wrapper for examples and tests
-demo_iv <- iv_demo_data(n = 120, p = 2, q = 2, design = "homog", seed = 1)
-head(demo_iv$data)
-
-# Small Monte Carlo grid
-raw_iv <- sim_iv_run(
-  designs = "dgp2_iv_homog_overid",
-  n_vals = 300L,
-  q_vals = 2L,
-  n_reps = 5L,
-  methods = c("dnn_iv_oracle", "iv_oracle"),
-  verbose = FALSE
-)
-summarise_iv_results(raw_iv)
-```
+Experimental local IV-GMM wrappers (`gmm_model_dr_iv()`, `gmm_dnn()`) and
+simulation helpers (`sim_iv_*`, `iv_demo_data()`) are included for
+companion-paper development. Their API may change before the GMM paper is
+released. See `vignette("local-iv-estimation", package = "RdistNN")` for
+the full workflow.
 
 ### 6) Custom Distances, Rank Weights, and Scores
 

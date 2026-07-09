@@ -496,7 +496,6 @@ plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
 #' @examples
 #' set.seed(1)
 #' demo <- plqr_demo_data(n = 120, p = 2, p_d = 2, tau = 0.5, seed = 1)
-#' demo$data$density_oracle <- 2
 #' out <- plqr_dnn(
 #'   data = demo$data,
 #'   x_cols = c("X1", "X2"),

@@ -307,9 +307,10 @@
 #' (`gram_min_eig`, `gram_condition_number`) and, when direct-sandwich
 #' coefficient inference is available, target-level Jacobian conditioning:
 #' `jacobian_available`, `jacobian_min_singular_value`,
-#' `jacobian_condition_number`, `jacobian_rank`, weighted-support density
-#' summaries (`density_min_weighted`, `density_median_weighted`,
-#' `density_max_weighted`), and `theta_vcov_available`. A target can have an
+#' `jacobian_condition_number`, `jacobian_rank`, density summaries over the
+#' weight support (`density_min_support`, `density_max_support`, plus the
+#' weighted `density_mean_weighted` and `density_median_weighted`), and
+#' `theta_vcov_available`. A target can have an
 #' acceptable residualized Gram but an ill-conditioned density-weighted
 #' Jacobian, so coefficient-inference reliability should be judged from the
 #' Jacobian block.

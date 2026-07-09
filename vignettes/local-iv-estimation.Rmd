@@ -17,6 +17,11 @@ library(RdistNN)
 
 ## Overview
 
+> **Experimental companion functionality.** The local IV-GMM layer exists
+> for ongoing companion-paper development; its API and theorem alignment
+> may change before the GMM paper is released. It is not at the maturity
+> level of `np_dnn()`, `cate_dnn()`, or `plqr_dnn()`.
+
 This vignette shows the local IV-GMM workflow built on `gmm_dnn()`. The example
 uses the doubly robust IV moment model created by `gmm_model_dr_iv()` and the IV
 simulation DGPs exposed through `sim_iv_data()`.

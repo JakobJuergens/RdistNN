@@ -67,9 +67,10 @@
   jacobian_min_singular_value <- rep(NA_real_, m)
   jacobian_condition_number <- rep(NA_real_, m)
   jacobian_rank <- rep(NA_integer_, m)
-  density_min_weighted <- rep(NA_real_, m)
+  density_min_support <- rep(NA_real_, m)
+  density_mean_weighted <- rep(NA_real_, m)
   density_median_weighted <- rep(NA_real_, m)
-  density_max_weighted <- rep(NA_real_, m)
+  density_max_support <- rep(NA_real_, m)
   theta_vcov_available <- rep(FALSE, m)
 
   jacobian <- object$jacobian
@@ -105,13 +106,17 @@
   if (is.numeric(density) && length(density) == nrow(w_mat)) {
     support_tol <- sqrt(.Machine$double.eps)
     for (j in seq_len(m)) {
-      support <- as.numeric(w_mat[, j]) > support_tol
+      w_j <- as.numeric(w_mat[, j])
+      support <- w_j > support_tol
       if (any(support)) {
-        density_min_weighted[j] <- min(density[support])
-        density_max_weighted[j] <- max(density[support])
+        # Support extrema: plain min/max of the density over observations
+        # carrying weight, not weighted statistics.
+        density_min_support[j] <- min(density[support])
+        density_max_support[j] <- max(density[support])
+        density_mean_weighted[j] <- sum(w_j * density)
         density_median_weighted[j] <- .dnn_weighted_quantile(
           density[support],
-          as.numeric(w_mat[support, j]),
+          w_j[support],
           prob = 0.5
         )
       }
@@ -123,9 +128,10 @@
     jacobian_min_singular_value = jacobian_min_singular_value,
     jacobian_condition_number = jacobian_condition_number,
     jacobian_rank = jacobian_rank,
-    density_min_weighted = density_min_weighted,
+    density_min_support = density_min_support,
+    density_mean_weighted = density_mean_weighted,
     density_median_weighted = density_median_weighted,
-    density_max_weighted = density_max_weighted,
+    density_max_support = density_max_support,
     theta_vcov_available = theta_vcov_available,
     stringsAsFactors = FALSE
   )

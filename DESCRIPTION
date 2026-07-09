@@ -12,8 +12,9 @@ Description: Implements distributional nearest-neighbor weights and
     evaluation, with tuning-grid diagnostics and paper-replication tools.
     Lower-level generalized U-statistic and jackknife utilities are included
     as supporting infrastructure. Uses compiled C++ fast paths when available
-    and falls back to robust batched R evaluation otherwise, with variance
-    estimation via delete-1 jackknife.
+    and falls back to robust batched R evaluation otherwise, with
+    estimator-specific inference routes, including delete-one jackknife
+    diagnostics and direct sandwich covariance estimates.
 License: GPL (>= 3)
 Depends:
     R (>= 4.1.0)

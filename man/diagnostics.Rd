@@ -56,9 +56,10 @@ PLQR fits additionally report residualized-design Gram conditioning
 (\code{gram_min_eig}, \code{gram_condition_number}) and, when direct-sandwich
 coefficient inference is available, target-level Jacobian conditioning:
 \code{jacobian_available}, \code{jacobian_min_singular_value},
-\code{jacobian_condition_number}, \code{jacobian_rank}, weighted-support density
-summaries (\code{density_min_weighted}, \code{density_median_weighted},
-\code{density_max_weighted}), and \code{theta_vcov_available}. A target can have an
+\code{jacobian_condition_number}, \code{jacobian_rank}, density summaries over the
+weight support (\code{density_min_support}, \code{density_max_support}, plus the
+weighted \code{density_mean_weighted} and \code{density_median_weighted}), and
+\code{theta_vcov_available}. A target can have an
 acceptable residualized Gram but an ill-conditioned density-weighted
 Jacobian, so coefficient-inference reliability should be judged from the
 Jacobian block.

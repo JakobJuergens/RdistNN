@@ -419,8 +419,9 @@ test_that("diagnostics report target-level Jacobian conditioning for direct-sand
   cols <- c(
     "jacobian_available", "jacobian_min_singular_value",
     "jacobian_condition_number", "jacobian_rank",
-    "density_min_weighted", "density_median_weighted",
-    "density_max_weighted", "theta_vcov_available"
+    "density_min_support", "density_mean_weighted",
+    "density_median_weighted", "density_max_support",
+    "theta_vcov_available"
   )
   expect_true(all(cols %in% names(dd)))
   expect_true(all(dd$jacobian_available))
@@ -429,8 +430,15 @@ test_that("diagnostics report target-level Jacobian conditioning for direct-sand
   expect_true(all(is.finite(dd$jacobian_condition_number)))
   expect_true(all(dd$jacobian_rank == length(d$theta_eval)))
   expect_true(all(dd$theta_vcov_available))
-  expect_true(all(dd$density_min_weighted >= min(d$density)))
-  expect_true(all(dd$density_max_weighted <= max(d$density)))
+  expect_true(all(dd$density_min_support >= min(d$density)))
+  expect_true(all(dd$density_max_support <= max(d$density)))
+  expect_equal(
+    dd$density_mean_weighted,
+    as.numeric(crossprod(fit$W, d$density)),
+    tolerance = 1e-12
+  )
+  expect_true(all(dd$density_mean_weighted >= dd$density_min_support))
+  expect_true(all(dd$density_mean_weighted <= dd$density_max_support))
   expect_true(all(is.finite(dd$density_median_weighted)))
 })
 
@@ -465,6 +473,24 @@ test_that("diagnostics flag singular PLQR Jacobians and unavailable coefficient 
   expect_false(any(dd_no$jacobian_available))
   expect_true(all(is.na(dd_no$jacobian_min_singular_value)))
   expect_false(any(dd_no$theta_vcov_available))
+})
+
+test_that("nearly singular PLQR Jacobians report large condition numbers", {
+  d <- .make_plqr_inference_data(n = 60L, m = 1L)
+  # Make the second residualized column an almost-exact copy of the first so
+  # J is finite-rank but ill-conditioned rather than exactly singular.
+  eps <- 1e-7
+  d$D[, 2L] <- d$D[, 1L] + eps * d$D[, 2L]
+  d$mD[, 2L] <- d$mD[, 1L] + eps * d$mD[, 2L]
+  fit <- plqr_dnn(
+    X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+    theta_eval = d$theta_eval, tau = d$tau, density = d$density,
+    X0 = d$X0, method = "exact", k = 2L, s = 8L,
+    se = TRUE, return = "W"
+  )
+  dd <- diagnostics(fit)
+  expect_true(all(dd$jacobian_available))
+  expect_true(all(dd$jacobian_condition_number > 1e6))
 })
 
 test_that("direct sandwich internals reject unnormalized weights", {
