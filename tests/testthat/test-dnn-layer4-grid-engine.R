@@ -305,7 +305,13 @@ test_that("later layers wire plqr wrappers while plotting stays outside the grid
   expect_true("tuning_mode" %in% names(formals(plqr_dnn)))
 
   source_dir <- normalizePath(file.path(testthat::test_path(), "..", "..", "R"), mustWork = FALSE)
-  skip_if_not(dir.exists(source_dir), "source R directory not available in installed-package checks")
+  # Under covr the tests run against the installed layout, where R/ exists
+  # but holds the lazy-load database rather than the .R sources — require a
+  # known source file, not just the directory.
+  skip_if_not(
+    file.exists(file.path(source_dir, "user-dnn-core.R")),
+    "source R directory not available in installed-package checks"
+  )
   source_refs <- unlist(lapply(
     list.files(source_dir, pattern = "[.]R$", full.names = TRUE),
     function(path) {

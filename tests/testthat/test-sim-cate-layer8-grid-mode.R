@@ -61,7 +61,11 @@ test_that("sim_cate_one_rep grid mode emits DNN candidate rows matching scalar r
     expect_true(is.na(scalar$candidate_id))
     expect_equal(grid$tau_hat[[i]], scalar$tau_hat[[1L]], tolerance = 0)
     expect_equal(grid$se[[i]], scalar$se[[1L]], tolerance = 0)
-    expect_equal(grid$neff[[i]], scalar$neff[[1L]], tolerance = 0)
+    # neff is computed from the rank-weight table in grid mode but from the
+    # realized weight columns in scalar mode; the summation orders differ,
+    # so bitwise equality does not hold on platforms without extended-
+    # precision accumulation (ARM64 macOS).
+    expect_equal(grid$neff[[i]], scalar$neff[[1L]], tolerance = 1e-12)
   }
 })
 
@@ -95,7 +99,8 @@ test_that("sim_cate_one_rep grid mode reuses one cross-fit score across candidat
     )
     expect_equal(grid$tau_hat[[i]], scalar$tau_hat[[1L]], tolerance = 0)
     expect_equal(grid$se[[i]], scalar$se[[1L]], tolerance = 0)
-    expect_equal(grid$neff[[i]], scalar$neff[[1L]], tolerance = 0)
+    # See the note above on cross-path neff summation order.
+    expect_equal(grid$neff[[i]], scalar$neff[[1L]], tolerance = 1e-12)
   }
 })
 
