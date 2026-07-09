@@ -46,7 +46,8 @@
 #' out <- dnn_weights_exact_full_from_ranks(ranks, k = k, s = s)
 #' sum(out$w) # 1
 #' sum(out$w_rank) # 1
-#' @export
+#' @keywords internal
+#' @noRd
 dnn_weights_exact_full_from_ranks <- function(ranks, k, s) {
   # ---- validate ranks ----
   if (is.null(ranks)) stop("`ranks` must be provided.", call. = FALSE)

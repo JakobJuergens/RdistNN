@@ -91,14 +91,6 @@ reference:
       - distance_l2_scaled
       - distance_l1_scaled
       - distance_mahalanobis
-      - dist_l2
-      - dist_l1
-      - dist_l2_scaled
-      - dist_l1_scaled
-      - order_by_l2
-      - order_by_l1
-      - order_by_l2_scaled
-      - order_by_l1_scaled
 
   - title: Rank → Weight mappings
     desc: S3 spec for converting ranks to weights, plus DNN rank-weights.
@@ -113,14 +105,8 @@ reference:
       - rank_weight_names
       - rank_weight_dnn_exact
       - rank_weight_dnn_asymp
-      - dnn_weights_exact_full_from_ranks
-      - dnn_weights_asymp_full_from_ranks
       - rank_weight_tdnn_exact
       - rank_weight_tdnn_asymp
-      - dnn_weights_tdnn_exact_full_from_ranks
-      - dnn_weights_tdnn_asymp_full_from_ranks
-      - tdnn_rank_table_exact
-      - tdnn_rank_table_asymp
 
   - title: Jackknife (leave-one-out)
     desc: Fast C++ path with auto fallback, slow oracle, and DNN wrappers.
@@ -215,4 +201,3 @@ reference:
       - plqr_demo_data
       - plqr_demo_subsets
       - plqr_score_matrix
-      - ord_to_ranks

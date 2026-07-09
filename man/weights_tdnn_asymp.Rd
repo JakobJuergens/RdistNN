@@ -48,7 +48,7 @@ A \code{weights_result} object (same structure as
 }
 \description{
 Computes Demirkaya two-scale DNN (TDNN) weights using the asymptotic
-rank-weight table (\code{\link[=tdnn_rank_table_asymp]{tdnn_rank_table_asymp()}}).  Full rank support: all
+rank-weight table (\code{tdnn_rank_table_asymp()}).  Full rank support: all
 \code{n} observations receive non-zero weight (though some are negative).
 }
 \examples{

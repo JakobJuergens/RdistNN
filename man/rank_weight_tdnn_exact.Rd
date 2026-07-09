@@ -20,7 +20,7 @@ A \code{rank_weight} spec (list with class \code{"rank_weight"}).
 }
 \description{
 Returns a \code{rank_weight} spec whose \code{eval_batch} uses the exact TDNN rank
-table from \code{\link[=tdnn_rank_table_exact]{tdnn_rank_table_exact()}}.  The rank table is computed once per
+table from \code{tdnn_rank_table_exact()}.  The rank table is computed once per
 sample size \code{n} and cached inside the spec closure, so calling
 \code{\link[=rank_weight_eval_batch]{rank_weight_eval_batch()}} repeatedly on rank matrices of the same size
 does not recompute the table.
@@ -39,6 +39,6 @@ W <- rank_weight_eval_batch(rw, R)
 colSums(W)  # c(1, 1)
 }
 \seealso{
-\code{\link[=rank_weight_tdnn_asymp]{rank_weight_tdnn_asymp()}}, \code{\link[=tdnn_rank_table_exact]{tdnn_rank_table_exact()}},
+\code{\link[=rank_weight_tdnn_asymp]{rank_weight_tdnn_asymp()}}, \code{tdnn_rank_table_exact()},
 \code{\link[=weights_tdnn_exact]{weights_tdnn_exact()}}
 }

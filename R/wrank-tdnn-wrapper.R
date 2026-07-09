@@ -18,7 +18,7 @@
 #' Rank-weight spec: TDNN exact (Demirkaya two-scale DNN, k = 1)
 #'
 #' Returns a `rank_weight` spec whose `eval_batch` uses the exact TDNN rank
-#' table from [tdnn_rank_table_exact()].  The rank table is computed once per
+#' table from `tdnn_rank_table_exact()`.  The rank table is computed once per
 #' sample size `n` and cached inside the spec closure, so calling
 #' [rank_weight_eval_batch()] repeatedly on rank matrices of the same size
 #' does not recompute the table.
@@ -36,7 +36,7 @@
 #'
 #' @return A \code{rank_weight} spec (list with class \code{"rank_weight"}).
 #'
-#' @seealso [rank_weight_tdnn_asymp()], [tdnn_rank_table_exact()],
+#' @seealso [rank_weight_tdnn_asymp()], `tdnn_rank_table_exact()`,
 #'   [weights_tdnn_exact()]
 #'
 #' @examples
@@ -86,7 +86,7 @@ rank_weight_tdnn_exact <- function(s1, s2, dim) {
 #' Rank-weight spec: TDNN asymptotic (Demirkaya two-scale DNN, k = 1)
 #'
 #' Returns a `rank_weight` spec whose `eval_batch` uses the asymptotic TDNN
-#' rank table from [tdnn_rank_table_asymp()].  Structurally identical to
+#' rank table from `tdnn_rank_table_asymp()`.  Structurally identical to
 #' [rank_weight_tdnn_exact()] but uses the Beta order-statistic approximation,
 #' which gives full rank support (all n entries are non-zero).
 #'
@@ -98,7 +98,7 @@ rank_weight_tdnn_exact <- function(s1, s2, dim) {
 #'
 #' @return A \code{rank_weight} spec (list with class \code{"rank_weight"}).
 #'
-#' @seealso [rank_weight_tdnn_exact()], [tdnn_rank_table_asymp()],
+#' @seealso [rank_weight_tdnn_exact()], `tdnn_rank_table_asymp()`,
 #'   [weights_tdnn_asymp()]
 #'
 #' @examples

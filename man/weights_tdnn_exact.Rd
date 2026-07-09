@@ -44,7 +44,7 @@ A \code{weights_result} object (same structure as
 }
 \description{
 Computes Demirkaya two-scale DNN (TDNN) weights using the exact rank-weight
-table (\code{\link[=tdnn_rank_table_exact]{tdnn_rank_table_exact()}}).  TDNN is a signed linear combination of
+table (\code{tdnn_rank_table_exact()}).  TDNN is a signed linear combination of
 two single-scale exact DNN tables at orders \code{s1} and \code{s2}; the combination
 coefficients are chosen to cancel the leading bias term in the DNN MSE
 expansion.

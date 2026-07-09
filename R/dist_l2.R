@@ -21,7 +21,8 @@
 #' @examples
 #' X <- matrix(rnorm(12), 4, 3)
 #' dist_l2(X, c(0, 0, 0))
-#' @export
+#' @keywords internal
+#' @noRd
 dist_l2 <- function(X, x0, squared = FALSE) {
   .assert_no_na(X, x0)
   X <- as.matrix(X)
@@ -42,7 +43,8 @@ dist_l2 <- function(X, x0, squared = FALSE) {
 #' @examples
 #' X <- matrix(rnorm(10), 5, 2)
 #' order_by_l2(X, c(0, 0))
-#' @export
+#' @keywords internal
+#' @noRd
 order_by_l2 <- function(X, x0, squared = FALSE) {
   .assert_no_na(X, x0)
   X <- as.matrix(X)
@@ -115,7 +117,8 @@ distance_l2 <- function(squared = FALSE) {
 #' @examples
 #' X <- matrix(rnorm(12), 4, 3)
 #' dist_l2_scaled(X, c(0, 0, 0), inv_s = c(1, 2, 0.5))
-#' @export
+#' @keywords internal
+#' @noRd
 dist_l2_scaled <- function(X, x0, inv_s, squared = FALSE) {
   .assert_no_na(X, x0)
   X <- as.matrix(X)
@@ -227,7 +230,7 @@ distance_l2_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
 #'
 #' Computes per-column scales (or uses `scale_vec` for `"custom"`), then
 #' prefers a compiled fast path if available. Otherwise computes distances
-#' via [dist_l2_scaled()] and orders deterministically.
+#' via `dist_l2_scaled()` and orders deterministically.
 #'
 #' @param X Numeric matrix \eqn{n \times p}.
 #' @param x0 Numeric vector of length \eqn{p}.
@@ -237,7 +240,8 @@ distance_l2_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
 #' @examples
 #' X <- matrix(rnorm(10), 5, 2)
 #' order_by_l2_scaled(X, c(0, 0), rule = "sd")
-#' @export
+#' @keywords internal
+#' @noRd
 order_by_l2_scaled <- function(X, x0,
                                rule = c("sd", "mad", "iqr", "range", "custom"),
                                scale_vec = NULL, eps = 1e-12,

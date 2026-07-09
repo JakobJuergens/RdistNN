@@ -21,7 +21,7 @@ A \code{rank_weight} spec (list with class \code{"rank_weight"}).
 }
 \description{
 Returns a \code{rank_weight} spec whose \code{eval_batch} uses the asymptotic TDNN
-rank table from \code{\link[=tdnn_rank_table_asymp]{tdnn_rank_table_asymp()}}.  Structurally identical to
+rank table from \code{tdnn_rank_table_asymp()}.  Structurally identical to
 \code{\link[=rank_weight_tdnn_exact]{rank_weight_tdnn_exact()}} but uses the Beta order-statistic approximation,
 which gives full rank support (all n entries are non-zero).
 }
@@ -33,6 +33,6 @@ W <- rank_weight_eval_batch(rw, R)
 colSums(W)  # c(1, 1)
 }
 \seealso{
-\code{\link[=rank_weight_tdnn_exact]{rank_weight_tdnn_exact()}}, \code{\link[=tdnn_rank_table_asymp]{tdnn_rank_table_asymp()}},
+\code{\link[=rank_weight_tdnn_exact]{rank_weight_tdnn_exact()}}, \code{tdnn_rank_table_asymp()},
 \code{\link[=weights_tdnn_asymp]{weights_tdnn_asymp()}}
 }

@@ -4,7 +4,8 @@
 #' @return Integer ranks vector `r` where `r[i]` is the rank of item `i`.
 #' @examples
 #' ord_to_ranks(c(3L, 1L, 2L))
-#' @export
+#' @keywords internal
+#' @noRd
 ord_to_ranks <- function(ord) {
   ord <- as.integer(ord)
   n <- length(ord)

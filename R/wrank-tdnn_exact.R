@@ -90,7 +90,7 @@
 #'   weights \code{w_rank[1:n]} (rank 1 = nearest).  Entries sum to 1 but
 #'   some can be negative.
 #'
-#' @seealso [tdnn_rank_table_asymp()], [dnn_weights_tdnn_exact_full_from_ranks()],
+#' @seealso `tdnn_rank_table_asymp()`, `dnn_weights_tdnn_exact_full_from_ranks()`,
 #'   [rank_weight_tdnn_exact()]
 #'
 #' @examples
@@ -98,7 +98,8 @@
 #' w <- tdnn_rank_table_exact(n, s1, s2, d)
 #' sum(w)          # 1
 #' any(w < 0)      # TRUE (bias-correction weights)
-#' @export
+#' @keywords internal
+#' @noRd
 tdnn_rank_table_exact <- function(n, s1, s2, dim) {
   n   <- as.integer(n)
   s1  <- as.integer(s1)
@@ -129,7 +130,7 @@ tdnn_rank_table_exact <- function(n, s1, s2, dim) {
 #' Exact TDNN weights from ranks (Demirkaya two-scale DNN, k = 1)
 #'
 #' Given a rank permutation `ranks`, computes the TDNN weight for each
-#' observation using the exact rank-weight table from [tdnn_rank_table_exact()].
+#' observation using the exact rank-weight table from `tdnn_rank_table_exact()`.
 #'
 #' @param ranks Integer permutation of \code{1:n}; \code{ranks[i]} is the
 #'   rank (1 = nearest) of observation \code{i} relative to the target.
@@ -146,8 +147,8 @@ tdnn_rank_table_exact <- function(n, s1, s2, dim) {
 #'     and \code{scalars} (the bias-correction coefficients \eqn{w_1^*, w_2^*}).
 #' }
 #'
-#' @seealso [tdnn_rank_table_exact()], [rank_weight_tdnn_exact()],
-#'   [dnn_weights_tdnn_asymp_full_from_ranks()]
+#' @seealso `tdnn_rank_table_exact()`, [rank_weight_tdnn_exact()],
+#'   `dnn_weights_tdnn_asymp_full_from_ranks()`
 #'
 #' @examples
 #' set.seed(1)
@@ -155,7 +156,8 @@ tdnn_rank_table_exact <- function(n, s1, s2, dim) {
 #' out <- dnn_weights_tdnn_exact_full_from_ranks(ranks, s1 = 3L, s2 = 6L, dim = 2L)
 #' sum(out$w)        # 1
 #' any(out$w < 0)    # TRUE
-#' @export
+#' @keywords internal
+#' @noRd
 dnn_weights_tdnn_exact_full_from_ranks <- function(ranks, s1, s2, dim) {
   if (is.null(ranks)) stop("`ranks` must be provided.", call. = FALSE)
   if (!is.integer(ranks)) ranks <- as.integer(ranks)

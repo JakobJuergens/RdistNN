@@ -34,5 +34,5 @@ dspec$eval_batch(X, X0)
 
 }
 \seealso{
-\code{\link[=distance_l1_scaled]{distance_l1_scaled()}}, \code{\link[=dist_l1]{dist_l1()}}, \code{\link[=dist_l1_scaled]{dist_l1_scaled()}}
+\code{\link[=distance_l1_scaled]{distance_l1_scaled()}}, \code{dist_l1()}, \code{dist_l1_scaled()}
 }

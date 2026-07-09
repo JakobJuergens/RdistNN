@@ -422,7 +422,7 @@ weights_dnn <- function(
 #' TDNN weights (exact, k = 1), distance-based ranking
 #'
 #' Computes Demirkaya two-scale DNN (TDNN) weights using the exact rank-weight
-#' table ([tdnn_rank_table_exact()]).  TDNN is a signed linear combination of
+#' table (`tdnn_rank_table_exact()`).  TDNN is a signed linear combination of
 #' two single-scale exact DNN tables at orders `s1` and `s2`; the combination
 #' coefficients are chosen to cancel the leading bias term in the DNN MSE
 #' expansion.
@@ -479,7 +479,7 @@ weights_tdnn_exact <- function(
 #' TDNN weights (asymptotic, k = 1), distance-based ranking
 #'
 #' Computes Demirkaya two-scale DNN (TDNN) weights using the asymptotic
-#' rank-weight table ([tdnn_rank_table_asymp()]).  Full rank support: all
+#' rank-weight table (`tdnn_rank_table_asymp()`).  Full rank support: all
 #' `n` observations receive non-zero weight (though some are negative).
 #'
 #' @inheritParams weights_tdnn_exact

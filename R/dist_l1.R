@@ -26,8 +26,9 @@
 #' x0 <- c(0, 1, -1)
 #' dist_l1(X, x0)
 #'
-#' @seealso [dist_l2()], [dist_l1_scaled()], [distance_l1()], [order_by_l1()]
-#' @export
+#' @seealso `dist_l2()`, `dist_l1_scaled()`, [distance_l1()], `order_by_l1()`
+#' @keywords internal
+#' @noRd
 dist_l1 <- function(X, x0) {
   .assert_no_na(X, x0)
   X <- as.matrix(X)
@@ -58,8 +59,9 @@ dist_l1 <- function(X, x0) {
 #' x0 <- c(0, 0)
 #' order_by_l1(X, x0)
 #'
-#' @seealso [order_by_l1_scaled()], [dist_l1()]
-#' @export
+#' @seealso `order_by_l1_scaled()`, `dist_l1()`
+#' @keywords internal
+#' @noRd
 order_by_l1 <- function(X, x0) {
   .assert_no_na(X, x0)
   X <- as.matrix(X)
@@ -98,7 +100,7 @@ order_by_l1 <- function(X, x0) {
 #' dspec$eval(X, X0[1, ])
 #' dspec$eval_batch(X, X0)
 #'
-#' @seealso [distance_l1_scaled()], [dist_l1()], [dist_l1_scaled()]
+#' @seealso [distance_l1_scaled()], `dist_l1()`, `dist_l1_scaled()`
 #' @export
 distance_l1 <- function() {
   list(
@@ -131,7 +133,7 @@ distance_l1 <- function() {
 #'
 #' Computes \eqn{\|(X_{i,\cdot} - x_0) \odot \mathrm{inv\_s}\|_1} for each row.
 #' A compiled fast path is used when available; else inputs are rescaled
-#' in R and passed to [dist_l1()].
+#' in R and passed to `dist_l1()`.
 #'
 #' @inheritParams dist_l1
 #' @param inv_s Numeric vector of length \eqn{p} with elementwise scales
@@ -141,7 +143,8 @@ distance_l1 <- function() {
 #' @examples
 #' X <- matrix(rnorm(12), 4, 3)
 #' dist_l1_scaled(X, c(0, 0, 0), inv_s = c(1, 2, 0.5))
-#' @export
+#' @keywords internal
+#' @noRd
 dist_l1_scaled <- function(X, x0, inv_s) {
   .assert_no_na(X, x0)
   X <- as.matrix(X)
@@ -251,7 +254,7 @@ distance_l1_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
 #'
 #' Computes per-column scales (or uses `scale_vec` for `"custom"`), then
 #' prefers a compiled fast path if available. Otherwise computes distances
-#' via [dist_l1_scaled()] and orders with a deterministic tie rule.
+#' via `dist_l1_scaled()` and orders with a deterministic tie rule.
 #'
 #' @param X Numeric matrix \eqn{n \times p}.
 #' @param x0 Numeric vector of length \eqn{p}.
@@ -270,8 +273,9 @@ distance_l1_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
 #' x0 <- c(0, 0)
 #' order_by_l1_scaled(X, x0, rule = "sd")
 #'
-#' @seealso [order_by_l1()], [dist_l1_scaled()]
-#' @export
+#' @seealso `order_by_l1()`, `dist_l1_scaled()`
+#' @keywords internal
+#' @noRd
 order_by_l1_scaled <- function(X, x0,
                                rule = c("sd", "mad", "iqr", "range", "custom"),
                                scale_vec = NULL, eps = 1e-12) {

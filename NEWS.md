@@ -56,6 +56,15 @@ old names are kept.
   PLQR quantile level.
 - Exported-function documentation no longer names internal compiled
   `rustat_*` symbols; compiled fast paths are described generically.
+- Pruned the public namespace: the raw distance calculators and order
+  helpers (`dist_l1()`, `dist_l2()`, `dist_l1_scaled()`, `dist_l2_scaled()`,
+  `order_by_l1()`, `order_by_l2()`, `order_by_l1_scaled()`,
+  `order_by_l2_scaled()`), the rank-to-weight plumbing
+  (`dnn_weights_*_full_from_ranks()`, `tdnn_rank_table_exact()`,
+  `tdnn_rank_table_asymp()`), and `ord_to_ranks()` are now internal.
+  Use the `distance_*()` spec constructors and the `rank_weight_*()` /
+  `weights_*()` layers instead; the internal implementations remain
+  test-covered.
 
 ### PLQR inference, prediction, and tuning-grid mode
 

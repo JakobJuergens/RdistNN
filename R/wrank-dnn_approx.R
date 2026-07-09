@@ -43,7 +43,8 @@
 #' out <- dnn_weights_asymp_full_from_ranks(ranks, k = k, s = s)
 #' sum(out$w) # 1
 #' sum(out$w_rank) # 1
-#' @export
+#' @keywords internal
+#' @noRd
 dnn_weights_asymp_full_from_ranks <- function(ranks, k, s, normalize = TRUE) {
   # ---- validate ranks ----
   if (is.null(ranks)) stop("`ranks` must be provided.", call. = FALSE)

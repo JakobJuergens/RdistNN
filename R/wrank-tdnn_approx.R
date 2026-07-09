@@ -44,7 +44,7 @@
 #'
 #' Computes the rank-order weight sequence for the two-scale DNN (TDNN)
 #' estimator using the Beta order-statistic approximation for the underlying
-#' single-scale tables.  Structurally identical to [tdnn_rank_table_exact()]
+#' single-scale tables.  Structurally identical to `tdnn_rank_table_exact()`
 #' but uses the asymptotic approximation, which gives full rank support
 #' (all `n` entries are non-zero).
 #'
@@ -53,7 +53,7 @@
 #'
 #' where \eqn{\Delta_j\text{Beta}(1, s) = F_{\text{Beta}(1,s)}(j/n) -
 #' F_{\text{Beta}(1,s)}((j-1)/n)} and the bias-correction scalars
-#' \eqn{w_1^*, w_2^*} are the same as in [tdnn_rank_table_exact()].
+#' \eqn{w_1^*, w_2^*} are the same as in `tdnn_rank_table_exact()`.
 #'
 #' @param n Positive integer; sample size.
 #' @param s1 Positive integer; smaller U-statistic order (\code{s1 < s2 <= n}).
@@ -66,7 +66,7 @@
 #'   asymptotic weights \code{w_rank[1:n]}.  Entries sum to 1 but some can
 #'   be negative.
 #'
-#' @seealso [tdnn_rank_table_exact()], [dnn_weights_tdnn_asymp_full_from_ranks()],
+#' @seealso `tdnn_rank_table_exact()`, `dnn_weights_tdnn_asymp_full_from_ranks()`,
 #'   [rank_weight_tdnn_asymp()]
 #'
 #' @examples
@@ -74,7 +74,8 @@
 #' w <- tdnn_rank_table_asymp(n, s1, s2, d)
 #' sum(w)      # 1
 #' any(w < 0)  # TRUE
-#' @export
+#' @keywords internal
+#' @noRd
 tdnn_rank_table_asymp <- function(n, s1, s2, dim, normalize = TRUE) {
   n   <- as.integer(n)
   s1  <- as.integer(s1)
@@ -108,7 +109,7 @@ tdnn_rank_table_asymp <- function(n, s1, s2, dim, normalize = TRUE) {
 #'
 #' Given a rank permutation `ranks`, computes the TDNN weight for each
 #' observation using the asymptotic rank-weight table from
-#' [tdnn_rank_table_asymp()].
+#' `tdnn_rank_table_asymp()`.
 #'
 #' @param ranks Integer permutation of \code{1:n}; \code{ranks[i]} is the
 #'   rank (1 = nearest) of observation \code{i} relative to the target.
@@ -126,8 +127,8 @@ tdnn_rank_table_asymp <- function(n, s1, s2, dim, normalize = TRUE) {
 #'     \code{normalize}, and \code{scalars}.
 #' }
 #'
-#' @seealso [tdnn_rank_table_asymp()], [rank_weight_tdnn_asymp()],
-#'   [dnn_weights_tdnn_exact_full_from_ranks()]
+#' @seealso `tdnn_rank_table_asymp()`, [rank_weight_tdnn_asymp()],
+#'   `dnn_weights_tdnn_exact_full_from_ranks()`
 #'
 #' @examples
 #' set.seed(1)
@@ -135,7 +136,8 @@ tdnn_rank_table_asymp <- function(n, s1, s2, dim, normalize = TRUE) {
 #' out <- dnn_weights_tdnn_asymp_full_from_ranks(ranks, s1 = 3L, s2 = 6L, dim = 2L)
 #' sum(out$w)        # 1
 #' any(out$w < 0)    # TRUE
-#' @export
+#' @keywords internal
+#' @noRd
 dnn_weights_tdnn_asymp_full_from_ranks <- function(ranks, s1, s2, dim,
                                                     normalize = TRUE) {
   if (is.null(ranks)) stop("`ranks` must be provided.", call. = FALSE)
