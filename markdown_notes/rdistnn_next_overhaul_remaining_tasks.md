@@ -6,6 +6,17 @@
 **Audience:** author-facing and Codex-facing  
 **Purpose:** This note lists only tasks still worth doing next. It intentionally omits items already completed by the recent cleanup commits.
 
+> **Status (2026-07-10): implemented.** All sections of this note landed in
+> RdistNN commits `620bd20` (jackknife-meat route, internal weight guard),
+> `4994439` (design note 15 routes, supplied-theta S3 semantics, moment-first
+> plotting), `0d982af` (diagnostics polish, oracle demo density, docs cleanup,
+> API tiers), `08ab3e3` (GH_logs/archives untracked, bot commit paths
+> disabled), and `af59c7d` (platform-robust CI fixes surfaced by the manually
+> dispatched full matrix). `devtools::check()` is clean and the full CI matrix
+> (R-CMD-check across five platforms, test-coverage, lint-style,
+> alignment-guardrails, pkgdown) was dispatched on the release candidate.
+
+
 ---
 
 ## 0. Current assumptions
