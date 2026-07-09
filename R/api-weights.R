@@ -172,7 +172,10 @@
   if (is.list(weight) && (is.function(weight$eval) || is.function(weight$eval_batch))) {
     .abort_bad_arg(
       "weight",
-      "must be a rank_weight; distance-style specs are not accepted here. Build one with new_rank_weight() or as_rank_weight()",
+      paste0(
+        "must be a rank_weight; distance-style specs are not accepted here. ",
+        "Build one with new_rank_weight() or as_rank_weight()"
+      ),
       quoted = FALSE
     )
   }

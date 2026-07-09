@@ -858,7 +858,12 @@ plqr_dnn <- function(
       n = n, m = m_out, p = p, p_d = p_d,
       k = k, s = s,
       method = method, distance = .dnn_distance_name(distance),
-      jackknife = if (isTRUE(se) && (!isTRUE(direct_available) || identical(theta_meat, "jackknife"))) jackknife else "none",
+      jackknife = if (isTRUE(se) &&
+        (!isTRUE(direct_available) || identical(theta_meat, "jackknife"))) {
+        jackknife
+      } else {
+        "none"
+      },
       theta_source = "supplied",
       theta_se_method = if (isTRUE(se) && isTRUE(direct_available)) "direct_sandwich" else "none",
       theta_meat_method = theta_meat_method,
