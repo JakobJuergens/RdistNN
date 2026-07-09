@@ -71,7 +71,7 @@ iv_demo_data <- function(n = 200,
     allowed <- c(
       "Y", "D", paste0("Z", seq_len(out$q)),
       paste0("piZ", seq_len(out$q), "_oracle"),
-      "muY_oracle", "muD_oracle", "theta_oracle", "tau_oracle"
+      "muY_oracle", "muD_oracle", "theta_oracle"
     )
     if (!inject_col %in% allowed) {
       stop(sprintf(
@@ -107,8 +107,7 @@ iv_demo_sets <- function(n = 80L, p = 2L, q = 2L) {
     pi = paste0("piZ", seq_len(q), "_oracle"),
     muY = "muY_oracle",
     muD = "muD_oracle",
-    theta = "theta_oracle",
-    tau = "tau_oracle"
+    theta = "theta_oracle"
   )
 
   make_case <- function(dd) {
@@ -117,7 +116,6 @@ iv_demo_sets <- function(n = 80L, p = 2L, q = 2L) {
       x0 = dd$x0,
       q = dd$q,
       theta_x0 = dd$theta_x0,
-      tau_x0 = dd$tau_x0,
       x_cols = cols$X,
       z_cols = cols$Z,
       cols = cols

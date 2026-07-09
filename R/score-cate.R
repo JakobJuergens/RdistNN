@@ -10,8 +10,8 @@
 #' This score does **not** perform any nearest-neighbor ordering, kernel
 #' weighting, or L-stat aggregation. Any weighting/averaging of subset
 #' evaluations is handled outside the score layer (e.g., by the rank-/distance-
-#' weight modules). The arguments \code{x0}, \code{x_cols}, \code{s}, \code{k}
-#' are accepted for API consistency and basic dimension checks; only \eqn{\rho}
+#' weight modules). The arguments \code{x0}, \code{x_cols}, and \code{s} are
+#' accepted for API consistency and basic dimension checks; only \eqn{\rho}
 #' is used to construct the score.
 #'
 #' @param x0 Numeric length-\eqn{p} target point. Used only to check that
@@ -22,8 +22,6 @@
 #' @param s Integer subset size (kernel order). Recorded in the score metadata;
 #'   the pure kernel internally computes \eqn{\sum_{i \in S} \rho_i} for any
 #'   subset \eqn{S} of size \eqn{s}.
-#' @param k Integer included for interface compatibility with other scores; it
-#'   is ignored here.
 #' @param rho_col Optional name of the column in \code{data} that contains the
 #'   pseudo-outcome \eqn{\rho}. If \code{NULL}, supply \code{rho}.
 #' @param rho Optional numeric vector (length \eqn{n}) of \eqn{\rho} values to
@@ -42,7 +40,7 @@
 #' demo <- cate_demo_data(n = 200, p = 2, design = "hetero", seed = 1)
 #' sc <- score_cate_rho(
 #'   x0 = rep(0, 2), x_cols = paste0("X", 1:2),
-#'   s = 5, k = 1, rho_col = "rho_oracle"
+#'   s = 5, rho_col = "rho_oracle"
 #' )
 #' ctx <- score_setup(sc, demo$data)
 #' subs <- cate_demo_subsets(n = nrow(demo$data), K = 3, s = 5, seed = 1)
@@ -50,7 +48,7 @@
 #'
 #' @export
 score_cate_rho <- function(
-  x0, x_cols, s, k = 1L,
+  x0, x_cols, s,
   rho_col = NULL, rho = NULL
 ) {
   # XOR: exactly one of rho_col or rho
@@ -58,7 +56,6 @@ score_cate_rho <- function(
     stop("Provide exactly one of 'rho_col' or 'rho' (mutually exclusive).", call. = FALSE)
   }
   s <- .validate_scalar_int(s, arg = "s", min = 1L)
-  k <- .validate_scalar_int(k, arg = "k", min = 1L)
 
   new_score(
     name = "cate_rho_purescore",

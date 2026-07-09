@@ -16,8 +16,8 @@ Numeric vector of length \eqn{n} with L1 distances.
 }
 \description{
 Computes \eqn{d_i = \|X_{i,\cdot} - x_0\|_1} for each row \eqn{i=1,\dots,n}.
-If the compiled symbol \code{rustat_dist_l1()} is registered (via Rcpp), it is
-used; otherwise a vectorised R fallback is used.
+A compiled fast path is used when available; otherwise a vectorised R
+fallback is used.
 }
 \examples{
 set.seed(1)

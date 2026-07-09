@@ -4,7 +4,7 @@
 \alias{score_cate_rho}
 \title{CATE score from a precomputed pseudo-outcome \eqn{\rho} (pure score; no weights)}
 \usage{
-score_cate_rho(x0, x_cols, s, k = 1L, rho_col = NULL, rho = NULL)
+score_cate_rho(x0, x_cols, s, rho_col = NULL, rho = NULL)
 }
 \arguments{
 \item{x0}{Numeric length-\eqn{p} target point. Used only to check that
@@ -17,9 +17,6 @@ kernel itself.}
 \item{s}{Integer subset size (kernel order). Recorded in the score metadata;
 the pure kernel internally computes \eqn{\sum_{i \in S} \rho_i} for any
 subset \eqn{S} of size \eqn{s}.}
-
-\item{k}{Integer included for interface compatibility with other scores; it
-is ignored here.}
 
 \item{rho_col}{Optional name of the column in \code{data} that contains the
 pseudo-outcome \eqn{\rho}. If \code{NULL}, supply \code{rho}.}
@@ -49,15 +46,15 @@ contribution is \deqn{g_i \equiv \rho_i\,,} and for a subset
 This score does \strong{not} perform any nearest-neighbor ordering, kernel
 weighting, or L-stat aggregation. Any weighting/averaging of subset
 evaluations is handled outside the score layer (e.g., by the rank-/distance-
-weight modules). The arguments \code{x0}, \code{x_cols}, \code{s}, \code{k}
-are accepted for API consistency and basic dimension checks; only \eqn{\rho}
+weight modules). The arguments \code{x0}, \code{x_cols}, and \code{s} are
+accepted for API consistency and basic dimension checks; only \eqn{\rho}
 is used to construct the score.
 }
 \examples{
 demo <- cate_demo_data(n = 200, p = 2, design = "hetero", seed = 1)
 sc <- score_cate_rho(
   x0 = rep(0, 2), x_cols = paste0("X", 1:2),
-  s = 5, k = 1, rho_col = "rho_oracle"
+  s = 5, rho_col = "rho_oracle"
 )
 ctx <- score_setup(sc, demo$data)
 subs <- cate_demo_subsets(n = nrow(demo$data), K = 3, s = 5, seed = 1)

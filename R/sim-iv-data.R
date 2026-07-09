@@ -192,7 +192,6 @@
                    muY_oracle = as.numeric(muY_fn(X)),
                    muD_oracle = as.numeric(muD),
                    theta_oracle = as.numeric(theta_true),
-                   tau_oracle = as.numeric(theta_true),
                    check.names = FALSE)
   names(df)[seq_len(p)] <- x_names
   names(df)[p + 2L + seq_len(q)] <- z_names
@@ -205,10 +204,8 @@
     x0 = as.numeric(x0),
     q = as.integer(q),
     theta_x0 = theta_x0,
-    tau_x0 = theta_x0,
     truth = list(
       theta_fn = theta_fn,
-      tau_fn = theta_fn,
       pi_fn = pi_fn,
       muD_fn = muD_fn,
       muY_fn = muY_fn,
@@ -371,13 +368,11 @@
 #' @return A list with:
 #' \itemize{
 #'   \item `data`: a `data.frame` with `X1..Xkx`, `Y`, `D`, `Z1..Zq`, oracle
-#'     nuisance columns `piZ*_oracle`, `muY_oracle`, `muD_oracle`, and target
-#'     columns `theta_oracle`/`tau_oracle`.
+#'     nuisance columns `piZ*_oracle`, `muY_oracle`, `muD_oracle`, and the
+#'     target column `theta_oracle`.
 #'   \item `x0`: numeric length-`kx` evaluation point.
 #'   \item `q`: realized number of instruments.
 #'   \item `theta_x0`: true local IV target at `x0`.
-#'   \item `tau_x0`: alias for `theta_x0` while the estimator naming is
-#'     finalized.
 #'   \item `truth`: named list of oracle functions.
 #' }
 #'

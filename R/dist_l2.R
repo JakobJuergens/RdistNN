@@ -137,7 +137,7 @@ dist_l2_scaled <- function(X, x0, inv_s, squared = FALSE) {
 #' Scaled L2 distance spec (one-time setup + eval/batch)
 #'
 #' Builder that computes per-column scales once (`setup(X)`) and reuses them in
-#' `eval()` / `eval_batch()`. Uses `rustat_dist_l2_scaled_batch()` if present.
+#' `eval()` / `eval_batch()`. Uses a compiled fast path when available.
 #'
 #' @param rule Scaling rule: `"sd"`, `"mad"`, `"iqr"`, `"range"`, or `"custom"`.
 #' @param scale_vec Optional numeric vector of length \eqn{p} for
@@ -225,9 +225,9 @@ distance_l2_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
 # -----------------------------------------------------------------------------
 #' Order rows by scaled L2 (stable ties)
 #'
-#' Computes per-column scales (or uses `scale_vec` for `"custom"`), then prefers
-#' compiled `rustat_order_by_l2_scaled()` if available. Otherwise computes
-#' distances via [dist_l2_scaled()] and orders deterministically.
+#' Computes per-column scales (or uses `scale_vec` for `"custom"`), then
+#' prefers a compiled fast path if available. Otherwise computes distances
+#' via [dist_l2_scaled()] and orders deterministically.
 #'
 #' @param X Numeric matrix \eqn{n \times p}.
 #' @param x0 Numeric vector of length \eqn{p}.

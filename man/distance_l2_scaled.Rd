@@ -26,7 +26,7 @@ A list with \code{name}, \code{setup()}, \code{eval()}, and \code{eval_batch()}.
 }
 \description{
 Builder that computes per-column scales once (\code{setup(X)}) and reuses them in
-\code{eval()} / \code{eval_batch()}. Uses \code{rustat_dist_l2_scaled_batch()} if present.
+\code{eval()} / \code{eval_batch()}. Uses a compiled fast path when available.
 }
 \examples{
 X <- matrix(rnorm(12), 4, 3)

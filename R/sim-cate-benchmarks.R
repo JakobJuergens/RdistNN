@@ -96,7 +96,7 @@
   )
 }
 
-.sim_cate_default_kappa <- function(tuning, n, kx, k) {
+.sim_cate_default_lambda <- function(tuning, n, kx, k) {
   if (is.null(tuning)) {
     return(NA_real_)
   }
@@ -176,7 +176,7 @@
   .sim_metric(
     fit$tau, fit$se, dgp$tau_x0, alpha,
     neff = fit$ess,
-    lambda = .sim_cate_default_kappa(tuning, nrow(dgp$data), length(x_cols), k),
+    lambda = .sim_cate_default_lambda(tuning, nrow(dgp$data), length(x_cols), k),
     s = s
   )
 }
@@ -263,7 +263,7 @@
   .sim_metric(
     fit$tau, fit$se, dgp$tau_x0, alpha,
     neff = fit$ess,
-    lambda = .sim_cate_default_kappa(tuning, nrow(dat), length(x_cols), k),
+    lambda = .sim_cate_default_lambda(tuning, nrow(dat), length(x_cols), k),
     s = s
   )
 }
@@ -336,7 +336,7 @@
   .sim_metric(
     fit$tau, fit$se, dgp$tau_x0, alpha,
     neff = fit$ess,
-    lambda = .sim_cate_default_kappa(tuning, nrow(dat), length(x_cols), k),
+    lambda = .sim_cate_default_lambda(tuning, nrow(dat), length(x_cols), k),
     s = s
   )
 }
@@ -380,7 +380,7 @@
   .sim_metric(
     fit$tau, fit$se, dgp$tau_x0, alpha,
     neff = fit$ess,
-    lambda = .sim_cate_default_kappa(tuning, nrow(dgp$data), length(x_cols), k),
+    lambda = .sim_cate_default_lambda(tuning, nrow(dgp$data), length(x_cols), k),
     s = s
   )
 }

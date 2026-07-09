@@ -124,7 +124,7 @@
   x0_mat
 }
 
-.dnn_candidate_format_kappa <- function(lambda) {
+.dnn_candidate_format_lambda <- function(lambda) {
   label <- vapply(
     lambda,
     function(x) format(x, trim = TRUE, scientific = FALSE),
@@ -156,15 +156,15 @@
     return(integer(0L))
   }
 
-  default_kappa <- default$meta[["lambda", exact = TRUE]]
-  default_lambda_num <- suppressWarnings(as.numeric(default_kappa))
-  if (!is.null(default_kappa) && length(default_lambda_num) == 1L &&
+  default_lambda <- default$meta[["lambda", exact = TRUE]]
+  default_lambda_num <- suppressWarnings(as.numeric(default_lambda))
+  if (!is.null(default_lambda) && length(default_lambda_num) == 1L &&
       !is.na(default_lambda_num) && is.finite(default_lambda_num)) {
     lambda <- suppressWarnings(as.numeric(as.character(candidates$lambda)))
     tol <- sqrt(.Machine$double.eps) * pmax(1, abs(default_lambda_num))
-    idx_kappa <- idx_s[!is.na(lambda[idx_s]) & abs(lambda[idx_s] - default_lambda_num) <= tol]
-    if (length(idx_kappa) > 0L) {
-      return(idx_kappa[1L])
+    idx_lambda <- idx_s[!is.na(lambda[idx_s]) & abs(lambda[idx_s] - default_lambda_num) <= tol]
+    if (length(idx_lambda) > 0L) {
+      return(idx_lambda[1L])
     }
   }
 
@@ -218,10 +218,10 @@
   candidates$computed_key <- sprintf("s_%d", as.integer(candidates$s))
 
   base_ids <- sprintf("s_%d", as.integer(candidates$s))
-  has_kappa <- !is.na(candidates$lambda)
-  base_ids[has_kappa] <- paste0(
+  has_lambda <- !is.na(candidates$lambda)
+  base_ids[has_lambda] <- paste0(
     "lambda_",
-    .dnn_candidate_format_kappa(candidates$lambda[has_kappa])
+    .dnn_candidate_format_lambda(candidates$lambda[has_lambda])
   )
   candidates$candidate_id <- .dnn_candidate_unique_ids(base_ids)
 
@@ -350,7 +350,7 @@
   as.integer(candidate_row$s[[1L]])
 }
 
-.dnn_grid_candidate_kappa <- function(candidate_row) {
+.dnn_grid_candidate_lambda <- function(candidate_row) {
   if (!("lambda" %in% names(candidate_row))) {
     return(NA_real_)
   }
@@ -473,7 +473,6 @@
       max_weight = NA_real_,
       top_n = as.integer(top_n),
       top5_weight_share = NA_real_,
-      top_share = NA_real_,
       degenerate = NA,
       stringsAsFactors = FALSE
     ))
@@ -482,17 +481,16 @@
   abs_tab <- abs(tab)
   denom <- sum(abs_tab)
   ess <- 1 / sum(tab^2)
-  top_share <- NA_real_
+  top5_share <- NA_real_
   if (!is.na(top_n) && denom > 0) {
     top_n_use <- min(length(tab), as.integer(top_n))
-    top_share <- sum(abs_tab[seq_len(top_n_use)]) / denom
+    top5_share <- sum(abs_tab[seq_len(top_n_use)]) / denom
   }
   data.frame(
     ess = ess,
     max_weight = max(abs_tab),
     top_n = as.integer(top_n),
-    top5_weight_share = top_share,
-    top_share = top_share,
+    top5_weight_share = top5_share,
     degenerate = ess >= 0.9 * n,
     stringsAsFactors = FALSE
   )
@@ -554,7 +552,7 @@
   data.frame(
     candidate_id = as.character(candidate_row$candidate_id[[1L]]),
     computed_key = as.character(candidate_row$computed_key[[1L]]),
-    lambda = .dnn_grid_candidate_kappa(candidate_row),
+    lambda = .dnn_grid_candidate_lambda(candidate_row),
     s = .dnn_grid_candidate_s(candidate_row),
     target_id = estimates$target_id,
     component = estimates$component,
@@ -573,7 +571,6 @@
     max_weight = NA_real_,
     top_n = as.integer(top_n),
     top5_weight_share = NA_real_,
-    top_share = NA_real_,
     degenerate = NA,
     stringsAsFactors = FALSE
   )
@@ -587,21 +584,16 @@
 }
 
 .dnn_grid_attach_diagnostic_candidate <- function(diagnostic, candidate_row) {
-  top5 <- .dnn_grid_diag_field(
-    diagnostic,
-    "top5_weight_share",
-    .dnn_grid_diag_field(diagnostic, "top_share", NA_real_)
-  )
+  top5 <- .dnn_grid_diag_field(diagnostic, "top5_weight_share", NA_real_)
   data.frame(
     candidate_id = as.character(candidate_row$candidate_id[[1L]]),
     computed_key = as.character(candidate_row$computed_key[[1L]]),
-    lambda = .dnn_grid_candidate_kappa(candidate_row),
+    lambda = .dnn_grid_candidate_lambda(candidate_row),
     s = .dnn_grid_candidate_s(candidate_row),
     ess = diagnostic$ess[[1L]],
     max_weight = diagnostic$max_weight[[1L]],
     top_n = .dnn_grid_diag_field(diagnostic, "top_n", .dnn_grid_diag_top_n()),
     top5_weight_share = top5,
-    top_share = .dnn_grid_diag_field(diagnostic, "top_share", top5),
     degenerate = diagnostic$degenerate[[1L]],
     status = as.character(candidate_row$status[[1L]]),
     reason = as.character(candidate_row$reason[[1L]]),

@@ -35,7 +35,7 @@ testthat::local_edition(3)
     data = df,
     x0 = rep(0, p),
     x_cols = colnames(X),
-    s = 1L, k = 1L,
+    s = 1L,
     subs_all = matrix(seq_len(n), ncol = 1L),
     subs_empty = matrix(integer(0), ncol = 1L),
     subs_2col = cbind(seq_len(n), rev(seq_len(n))),
@@ -60,13 +60,13 @@ test_that("[factory] XOR (rho vs rho_col), positive s and k, and setup dimension
 
   # Must supply exactly one of rho or rho_col
   expect_error(
-    score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 1L, k = 1L),
+    score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 1L),
     "exactly one|mutually exclusive",
     ignore.case = TRUE
   )
   expect_error(
     score_cate_rho(
-      x0 = scn$x0, x_cols = scn$x_cols, s = 1L, k = 1L,
+      x0 = scn$x0, x_cols = scn$x_cols, s = 1L,
       rho = scn$data[[rho_col]], rho_col = rho_col
     ),
     "exactly one|mutually exclusive",
@@ -75,21 +75,20 @@ test_that("[factory] XOR (rho vs rho_col), positive s and k, and setup dimension
 
   # s must be positive integer (no enforcement to s == 1)
   expect_error(
-    score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 0L, k = 1L, rho_col = rho_col),
+    score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 0L, rho_col = rho_col),
     "`s` must be a positive integer\\.",
     ignore.case = FALSE
   )
 
-  # k must be positive integer
+  # `k` was a compatibility-only argument and has been removed
   expect_error(
-    score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 1L, k = 0L, rho_col = rho_col),
-    "`k` must be a positive integer\\.",
-    ignore.case = FALSE
+    score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 1L, k = 1L, rho_col = rho_col),
+    "unused argument"
   )
 
   # x0 length mismatch (setup-time)
   sc_badx0 <- score_cate_rho(
-    x0 = rep(0, length(scn$x_cols) + 1L), x_cols = scn$x_cols, s = 1L, k = 1L, rho_col = rho_col
+    x0 = rep(0, length(scn$x_cols) + 1L), x_cols = scn$x_cols, s = 1L, rho_col = rho_col
   )
   expect_error(score_setup(sc_badx0, scn$data),
     "x0 length must equal ncol\\(X\\)\\.",
@@ -98,7 +97,7 @@ test_that("[factory] XOR (rho vs rho_col), positive s and k, and setup dimension
 
   # rho length mismatch (setup-time) via external vector
   sc_bad_r <- score_cate_rho(
-    x0 = scn$x0, x_cols = scn$x_cols, s = 1L, k = 1L, rho = scn$data[[rho_col]][-1]
+    x0 = scn$x0, x_cols = scn$x_cols, s = 1L, rho = scn$data[[rho_col]][-1]
   )
   expect_error(score_setup(sc_bad_r, scn$data),
     "rho length must equal nrow\\(data\\)\\.",
@@ -112,7 +111,7 @@ test_that("[order] reported order equals chosen s (test s = 1 and s = 5)", {
   rho_col <- scn$cols$rho
 
   for (ss in c(1L, 5L)) {
-    sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = ss, k = 1L, rho_col = rho_col)
+    sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = ss, rho_col = rho_col)
     ctx <- score_setup(sc, scn$data)
     expect_identical(sc$order(nrow(scn$data), scn$data, ctx), as.integer(ss))
   }
@@ -123,7 +122,7 @@ test_that("[eval] singletons return exactly rho_i (rho_col path) with robust bat
   scn <- fx[[1L]]
   rho_col <- scn$cols$rho
 
-  sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 1L, k = 1L, rho_col = rho_col)
+  sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 1L, rho_col = rho_col)
   ctx <- score_setup(sc, scn$data)
 
   subs1 <- matrix(seq_len(nrow(scn$data)), ncol = 1L)
@@ -144,7 +143,7 @@ test_that("[eval] general subsets (multi-column) sum per-row rho", {
   rho_col <- scn$cols$rho
 
   # Use s=2 behavior (but eval/eval_batch just sum over provided columns)
-  sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 2L, k = 1L, rho_col = rho_col)
+  sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 2L, rho_col = rho_col)
   ctx <- score_setup(sc, scn$data)
 
   subs2 <- if (!is.null(scn$subs_2col)) scn$subs_2col else cbind(seq_len(nrow(scn$data)), rev(seq_len(nrow(scn$data))))
@@ -166,7 +165,7 @@ test_that("[inputs] integer x_cols indexing works", {
   scn <- fx[[1L]]
   rho_col <- scn$cols$rho
 
-  sc <- score_cate_rho(x0 = scn$x0, x_cols = seq_along(scn$x_cols), s = 1L, k = 1L, rho_col = rho_col)
+  sc <- score_cate_rho(x0 = scn$x0, x_cols = seq_along(scn$x_cols), s = 1L, rho_col = rho_col)
   ctx <- score_setup(sc, scn$data)
 
   subs1 <- matrix(seq_len(nrow(scn$data)), ncol = 1L)
@@ -184,7 +183,7 @@ test_that("[invalid g] NA in rho triggers NA-specific errors on evaluation", {
   df_bad <- scn$data
   df_bad[[rho_col]][2] <- NA_real_
 
-  sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 3L, k = 1L, rho_col = rho_col)
+  sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 3L, rho_col = rho_col)
   ctx <- score_setup(sc, df_bad)
 
   # eval(): must pass an order-s subset that includes the bad index.
@@ -203,7 +202,7 @@ test_that("[invalid g] non-finite rho triggers non-finite-specific errors on eva
   df_bad <- scn$data
   df_bad[[rho_col]][5] <- Inf
 
-  sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 3L, k = 1L, rho_col = rho_col)
+  sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 3L, rho_col = rho_col)
   ctx <- score_setup(sc, df_bad)
 
   expect_error(score_eval(sc, c(3L, 4L, 5L), df_bad, ctx), "g contains non-finite values", ignore.case = FALSE)
@@ -217,7 +216,7 @@ test_that("[object] basic shape/flags", {
   scn <- fx[[1L]]
   rho <- scn$data[[scn$cols$rho]]
 
-  sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 4L, k = 1L, rho = rho)
+  sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 4L, rho = rho)
   expect_true(inherits(sc, "ustat_score"))
   expect_type(sc$eval, "closure")
   expect_type(sc$eval_batch, "closure")
@@ -230,7 +229,7 @@ test_that("[parity] compiled batch (if actually callable) equals direct row sums
   scn <- fx[[1L]]
   rho_col <- scn$cols$rho
 
-  sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 3L, k = 1L, rho_col = rho_col)
+  sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 3L, rho_col = rho_col)
   ctx <- score_setup(sc, scn$data)
 
   # try compiled; if the shared object isn't actually loaded, skip

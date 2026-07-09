@@ -17,7 +17,7 @@
 # ./results/sim_cate_table.csv in the current working directory.
 # This package-side script mirrors the manuscript-facing main production grid
 # only. The chunked manifest layer, the nuisance-efficiency run, and the
-# fixed-kappa sweep wrappers live in Cond_Z_Estimation/Codes/Simulations/.
+# fixed-lambda sweep wrappers live in Cond_Z_Estimation/Codes/Simulations/.
 
 library(RdistNN)
 

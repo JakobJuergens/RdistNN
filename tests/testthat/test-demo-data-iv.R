@@ -1,14 +1,14 @@
 test_that("iv_demo_data: returns expected schema", {
   demo <- iv_demo_data(n = 80L, p = 2L, q = 2L, design = "homog", seed = 1L)
   expect_type(demo, "list")
-  expect_named(demo, c("data", "x0", "q", "theta_x0", "tau_x0", "truth"))
+  expect_named(demo, c("data", "x0", "q", "theta_x0", "truth"))
   expect_s3_class(demo$data, "data.frame")
   expect_equal(nrow(demo$data), 80L)
   expect_equal(demo$q, 2L)
   expect_true(all(c(
     "X1", "X2", "Y", "D", "Z1", "Z2",
     "piZ1_oracle", "piZ2_oracle",
-    "muY_oracle", "muD_oracle", "theta_oracle", "tau_oracle"
+    "muY_oracle", "muD_oracle", "theta_oracle"
   ) %in% names(demo$data)))
 })
 

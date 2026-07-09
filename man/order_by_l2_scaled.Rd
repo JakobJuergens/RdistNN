@@ -31,9 +31,9 @@ order_by_l2_scaled(
 A list with \code{dx} and \code{ord}.
 }
 \description{
-Computes per-column scales (or uses \code{scale_vec} for \code{"custom"}), then prefers
-compiled \code{rustat_order_by_l2_scaled()} if available. Otherwise computes
-distances via \code{\link[=dist_l2_scaled]{dist_l2_scaled()}} and orders deterministically.
+Computes per-column scales (or uses \code{scale_vec} for \code{"custom"}), then
+prefers a compiled fast path if available. Otherwise computes distances
+via \code{\link[=dist_l2_scaled]{dist_l2_scaled()}} and orders deterministically.
 }
 \examples{
 X <- matrix(rnorm(10), 5, 2)

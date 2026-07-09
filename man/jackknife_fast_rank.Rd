@@ -48,8 +48,8 @@ helper directly for exact DNN weights. Those wrappers keep the full rank
 matrix and reevaluate the DNN rank-weight rule after delete-one updates.
 \itemize{
 \item If \code{phi} is a numeric \strong{matrix} (n_ref x q) with rows \code{phi[j, ] = phi(j)} and
-the compiled symbol \code{rustat_jackknife_fast_rank()} is available, this calls
-the \strong{C++ fast path}.
+the package was compiled with C++ support, this calls the \strong{C++ fast
+path}.
 \item Otherwise, it uses a general \strong{R fallback} that also supports target-dependent
 per-neighbor contributions via a function \code{phi(j, t)}.
 }

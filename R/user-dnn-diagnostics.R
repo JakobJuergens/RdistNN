@@ -217,7 +217,7 @@
   diag <- grid$diagnostics
   required <- c(
     "candidate_id", "computed_key", "status", "reason", "s", "lambda",
-    "ess", "max_weight", "degenerate"
+    "ess", "max_weight", "top5_weight_share", "degenerate"
   )
   missing <- setdiff(required, names(diag))
   if (length(missing) > 0L) {
@@ -226,12 +226,6 @@
       paste(missing, collapse = ", ")
     ))
   }
-  if (!("top5_weight_share" %in% names(diag)) && !("top_share" %in% names(diag))) {
-    .abort_bad_state(
-      "`object$tuning_grid$diagnostics` must contain `top5_weight_share` or legacy `top_share`."
-    )
-  }
-
   diag$candidate_id <- as.character(diag$candidate_id)
   if (anyNA(diag$candidate_id) || any(!nzchar(diag$candidate_id))) {
     .abort_bad_state("`object$tuning_grid$diagnostics$candidate_id` must contain non-empty strings.")
@@ -264,11 +258,7 @@
   diag <- .dnn_candidate_diag_frame(grid = grid, selected = selected)
   diag$.candidate_order <- NULL
   idx <- match(diag$candidate_id, selected$candidate_id)
-  top5 <- if ("top5_weight_share" %in% names(diag)) {
-    as.numeric(diag$top5_weight_share)
-  } else {
-    as.numeric(diag$top_share)
-  }
+  top5 <- as.numeric(diag$top5_weight_share)
 
   meta <- object$meta
   out <- data.frame(

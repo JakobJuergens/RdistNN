@@ -43,6 +43,19 @@ old names are kept.
   `lambda`, candidate ids `lambda_*`, diagnostics column
   `tuning_lambda_default`, and the `lambda` column in `sim_cate_*` result
   and summary tables. No `kappa` alias is kept.
+- Removed the ignored compatibility-only `k` argument from
+  `score_cate_rho()` and `score_np_y()`, matching the same cleanup in
+  `score_plqr_component()`.
+- Tuning-grid diagnostics payloads no longer carry the legacy duplicate
+  `top_share` column; `top5_weight_share` is the single concentration
+  field, and `diagnostics()` no longer accepts legacy payloads without it.
+- The experimental IV layer no longer aliases its target as tau:
+  `sim_iv_data()`/`iv_demo_data()` drop `tau_x0`, `truth$tau_fn`, and the
+  duplicate `tau_oracle` data column, keeping `theta_x0`/`theta_fn`/
+  `theta_oracle` only. `tau` remains reserved for the CATE target and the
+  PLQR quantile level.
+- Exported-function documentation no longer names internal compiled
+  `rustat_*` symbols; compiled fast paths are described generically.
 
 ### PLQR inference, prediction, and tuning-grid mode
 

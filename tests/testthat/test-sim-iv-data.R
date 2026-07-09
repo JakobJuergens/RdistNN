@@ -15,20 +15,19 @@ test_that("sim_iv_data: output schema is correct for each design", {
       "X1", "X2", "Y", "D",
       paste0("Z", seq_len(q)),
       paste0("piZ", seq_len(q), "_oracle"),
-      "muY_oracle", "muD_oracle", "theta_oracle", "tau_oracle"
+      "muY_oracle", "muD_oracle", "theta_oracle"
     )
 
     expect_type(dgp, "list")
-    expect_named(dgp, c("data", "x0", "q", "theta_x0", "tau_x0", "truth"))
+    expect_named(dgp, c("data", "x0", "q", "theta_x0", "truth"))
     expect_s3_class(dgp$data, "data.frame")
     expect_equal(nrow(dgp$data), 80L)
     expect_true(all(expected_cols %in% names(dgp$data)), info = des)
     expect_length(dgp$x0, 2L)
-    expect_equal(dgp$theta_x0, dgp$tau_x0)
     expect_true(is.finite(dgp$theta_x0))
     expect_true(all(is.finite(unlist(dgp$data[, c(
       paste0("piZ", seq_len(q), "_oracle"),
-      "muY_oracle", "muD_oracle", "theta_oracle", "tau_oracle"
+      "muY_oracle", "muD_oracle", "theta_oracle"
     )]))))
   }
 })
@@ -114,7 +113,6 @@ test_that("sim_iv_data: truth functions have stable vectorized contracts", {
     expect_true(all(muD_x >= 0 & muD_x <= 1), info = des)
     expect_true(all(is.finite(muY_x)), info = des)
     expect_true(all(is.finite(theta_x)), info = des)
-    expect_equal(dgp$truth$tau_fn(xx), theta_x, info = des)
     expect_equal(length(dgp$truth$instrument_type), dgp$q, info = des)
   }
 })

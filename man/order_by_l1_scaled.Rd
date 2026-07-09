@@ -32,9 +32,9 @@ A list with:
 }
 }
 \description{
-Computes per-column scales (or uses \code{scale_vec} for \code{"custom"}), then prefers
-compiled \code{rustat_order_by_l1_scaled()} if available. Otherwise computes
-distances via \code{\link[=dist_l1_scaled]{dist_l1_scaled()}} and orders with a deterministic tie rule.
+Computes per-column scales (or uses \code{scale_vec} for \code{"custom"}), then
+prefers a compiled fast path if available. Otherwise computes distances
+via \code{\link[=dist_l1_scaled]{dist_l1_scaled()}} and orders with a deterministic tie rule.
 }
 \examples{
 set.seed(6)

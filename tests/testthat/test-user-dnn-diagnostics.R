@@ -347,10 +347,9 @@ test_that("candidate grid diagnostics validate selections and stale grid rows", 
 
   missing_top_share <- fit
   missing_top_share$tuning_grid$diagnostics$top5_weight_share <- NULL
-  missing_top_share$tuning_grid$diagnostics$top_share <- NULL
   expect_error(
     diagnostics(missing_top_share, candidates = ok_id),
-    "top5_weight_share.*top_share"
+    "top5_weight_share"
   )
 })
 

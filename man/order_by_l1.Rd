@@ -19,8 +19,8 @@ A list with:
 }
 }
 \description{
-Returns distances and a stable ordering. If \code{rustat_order_by_l1()} exists,
-it is used; otherwise \code{order(dx, seq_along(dx))} provides a deterministic
+Returns distances and a stable ordering. A compiled fast path is used when
+available; otherwise \code{order(dx, seq_along(dx))} provides a deterministic
 tie-break.
 }
 \examples{

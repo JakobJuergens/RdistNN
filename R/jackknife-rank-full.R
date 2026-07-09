@@ -83,10 +83,9 @@
 #'     \eqn{n-1} (i.e. for each leave-one-out sub-sample).
 #' }
 #'
-#' When the compiled symbol `rustat_jackknife_rank_full` is available (package
-#' compiled with C++ support), the C++ engine is used.  Otherwise the
-#' function falls back silently to a pure-R implementation of the same
-#' algorithm.
+#' When the package was compiled with C++ support, the C++ engine is used.
+#' Otherwise the function falls back silently to a pure-R implementation of
+#' the same algorithm.
 #'
 #' @param ranks Integer matrix (\eqn{n \times m}); column \eqn{t} is a
 #'   permutation of \code{1:n} giving the rank of each observation for

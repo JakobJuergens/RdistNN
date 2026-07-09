@@ -16,8 +16,8 @@ A list with:
 }
 \description{
 Returns a spec with \code{eval()} and \code{eval_batch()} closures for L1 distances.
-The compiled paths (\code{rustat_dist_l1()}, \code{rustat_dist_l1_batch()}) are used
-when available; otherwise R fallbacks are used.
+Compiled fast paths are used when available; otherwise R fallbacks are
+used.
 }
 \section{Batch evaluation}{
 

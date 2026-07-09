@@ -5,7 +5,7 @@
 \title{Nonparametric regression \strong{singleton} score from observed outcome \eqn{Y}
 (order-1 pure score; no weights)}
 \usage{
-score_np_y(x0, x_cols, s = 1, k = 1L, y_col = NULL, y = NULL)
+score_np_y(x0, x_cols, s = 1, y_col = NULL, y = NULL)
 }
 \arguments{
 \item{x0}{Numeric length-\eqn{p} target point. Used only to check that
@@ -16,8 +16,6 @@ used for dimension checks with \code{x0}.}
 
 \item{s}{Intended subset size (kernel order). \strong{Must be 1}; otherwise an error
 is thrown.}
-
-\item{k}{Integer included for interface compatibility with other scores; ignored.}
 
 \item{y_col}{Optional name of the column in \code{data} that contains the response
 \eqn{Y}. If \code{NULL}, supply \code{y}.}
@@ -43,7 +41,7 @@ aggregation. Any weighting/averaging of subset evaluations is handled outside
 the score layer (e.g., by rank-/distance-weight modules).
 }
 \details{
-The arguments \code{x0}, \code{x_cols}, \code{s}, \code{k} are accepted for API
+The arguments \code{x0}, \code{x_cols}, and \code{s} are accepted for API
 consistency and basic dimension checks; only \eqn{Y} is used to construct the
 score. This factory \strong{enforces} \code{s = 1}.
 }
@@ -57,7 +55,7 @@ dat$Y <- with(dat, X1 - 2 * X2 + rnorm(n))
 sc <- score_np_y(
   x0 = c(0, 0),
   x_cols = c("X1", "X2"),
-  s = 1L, k = 1L,
+  s = 1L,
   y_col = "Y"
 )
 ctx <- score_setup(sc, dat)

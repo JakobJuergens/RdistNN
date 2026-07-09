@@ -15,8 +15,8 @@
 #' matrix and reevaluate the DNN rank-weight rule after delete-one updates.
 #'
 #' - If `phi` is a numeric **matrix** (n_ref x q) with rows `phi[j, ] = phi(j)` and
-#'   the compiled symbol `rustat_jackknife_fast_rank()` is available, this calls
-#'   the **C++ fast path**.
+#'   the package was compiled with C++ support, this calls the **C++ fast
+#'   path**.
 #' - Otherwise, it uses a general **R fallback** that also supports target-dependent
 #'   per-neighbor contributions via a function `phi(j, t)`.
 #'

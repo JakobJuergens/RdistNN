@@ -8,7 +8,7 @@
 #' aggregation. Any weighting/averaging of subset evaluations is handled outside
 #' the score layer (e.g., by rank-/distance-weight modules).
 #'
-#' The arguments \code{x0}, \code{x_cols}, \code{s}, \code{k} are accepted for API
+#' The arguments \code{x0}, \code{x_cols}, and \code{s} are accepted for API
 #' consistency and basic dimension checks; only \eqn{Y} is used to construct the
 #' score. This factory **enforces** \code{s = 1}.
 #'
@@ -18,7 +18,6 @@
 #'   used for dimension checks with \code{x0}.
 #' @param s Intended subset size (kernel order). **Must be 1**; otherwise an error
 #'   is thrown.
-#' @param k Integer included for interface compatibility with other scores; ignored.
 #' @param y_col Optional name of the column in \code{data} that contains the response
 #'   \eqn{Y}. If \code{NULL}, supply \code{y}.
 #' @param y Optional numeric vector (length \eqn{n}) of \eqn{Y} values to use when
@@ -42,7 +41,7 @@
 #' sc <- score_np_y(
 #'   x0 = c(0, 0),
 #'   x_cols = c("X1", "X2"),
-#'   s = 1L, k = 1L,
+#'   s = 1L,
 #'   y_col = "Y"
 #' )
 #' ctx <- score_setup(sc, dat)
@@ -51,7 +50,7 @@
 #'
 #' @export
 score_np_y <- function(
-  x0, x_cols, s = 1, k = 1L,
+  x0, x_cols, s = 1,
   y_col = NULL, y = NULL
 ) {
   # XOR: exactly one of y_col or y
@@ -62,7 +61,6 @@ score_np_y <- function(
   if (!is.numeric(s) || length(s) != 1L || s != 1L) {
     stop("`score_np_y` is a singleton (order-1) score: require `s = 1`.", call. = FALSE)
   }
-  k <- .validate_scalar_int(k, arg = "k", min = 1L)
 
   new_score(
     name = "np_y_singleton_purescore",

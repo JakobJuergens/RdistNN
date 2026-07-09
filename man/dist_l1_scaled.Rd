@@ -19,7 +19,7 @@ Numeric vector of length \eqn{n}.
 }
 \description{
 Computes \eqn{\|(X_{i,\cdot} - x_0) \odot \mathrm{inv\_s}\|_1} for each row.
-If \code{rustat_dist_l1_scaled()} exists it is used; else inputs are rescaled
+A compiled fast path is used when available; else inputs are rescaled
 in R and passed to \code{\link[=dist_l1]{dist_l1()}}.
 }
 \examples{

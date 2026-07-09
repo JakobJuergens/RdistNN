@@ -51,10 +51,9 @@ tables:
 \eqn{n-1} (i.e. for each leave-one-out sub-sample).
 }
 
-When the compiled symbol \code{rustat_jackknife_rank_full} is available (package
-compiled with C++ support), the C++ engine is used.  Otherwise the
-function falls back silently to a pure-R implementation of the same
-algorithm.
+When the package was compiled with C++ support, the C++ engine is used.
+Otherwise the function falls back silently to a pure-R implementation of
+the same algorithm.
 }
 \examples{
 set.seed(1)

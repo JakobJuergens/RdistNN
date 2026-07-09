@@ -4,7 +4,7 @@
 # -------------------------------------------------------------------
 
 # --- Internal: Asymmetric Laplace draws (location 0, scale = sigma, asymmetry = tau) ----
-# Ensures Q_tau(U) = 0, i.e., the tau-quantile of U is zero.
+# Ensures the tau-quantile of the returned draws is zero.
 .r_ald <- function(n, tau = 0.5, sigma = 1) {
   n <- .validate_scalar_int(n, arg = "n", min = 1L)
   tau <- .validate_scalar_prob(tau, arg = "tau")
@@ -136,8 +136,8 @@ plqr_demo_data <- function(n = 300,
   # simple linear mD with different loadings per column of D
   Gamma <- matrix(0, nrow = p, ncol = p_d)
   for (j in seq_len(p_d)) {
-    g <- c(0.6, -0.4, rep(0, max(0, p - 2L))) + (j - 1) * 0.2
-    Gamma[, j] <- g[seq_len(p)]
+    loadings <- c(0.6, -0.4, rep(0, max(0, p - 2L))) + (j - 1) * 0.2
+    Gamma[, j] <- loadings[seq_len(p)]
   }
   mD <- X %*% Gamma # n x p_d
   V <- matrix(rnorm(n * p_d, sd = 0.6), n, p_d)
@@ -145,10 +145,10 @@ plqr_demo_data <- function(n = 300,
   colnames(D) <- paste0("D", seq_len(p_d))
 
   # Error with tau-quantile zero
-  U <- .r_ald(n, tau = tau, sigma = sigma)
+  eps <- .r_ald(n, tau = tau, sigma = sigma)
 
-  # Outcome: Y = D^T theta_true + g_0(X) + U  with Q_tau(U | X, D) = 0
-  Y <- as.vector(D %*% theta_true) + gX + U
+  # Outcome: Y = D^T theta_true + g_0(X) + eps  with Q_tau(eps | X, D) = 0
+  Y <- as.vector(D %*% theta_true) + gX + eps
 
   # Tidy outputs
   df <- data.frame(X, D, Y = as.numeric(Y), g_oracle = as.numeric(gX))

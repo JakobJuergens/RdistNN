@@ -62,12 +62,12 @@ skip_if_not(
 
 .layer6_expect_fixed_top5_diagnostics <- function(grid) {
   diag <- grid$tuning_grid$diagnostics
-  expect_true(all(c("top_n", "top5_weight_share", "top_share") %in% names(diag)))
+  expect_true(all(c("top_n", "top5_weight_share") %in% names(diag)))
+  expect_false("top_share" %in% names(diag))
   expect_equal(diag$top_n, rep(5L, nrow(diag)))
 
   ok_idx <- which(diag$status == "ok")
   expect_gt(length(ok_idx), 0L)
-  expect_equal(diag$top5_weight_share[ok_idx], diag$top_share[ok_idx], tolerance = 1e-12)
 
   differs_from_estimator_k <- logical(length(ok_idx))
   for (pos in seq_along(ok_idx)) {

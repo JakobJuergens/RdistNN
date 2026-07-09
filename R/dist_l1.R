@@ -12,8 +12,8 @@
 #' Fast L1 (Manhattan) distance to a single query point
 #'
 #' Computes \eqn{d_i = \|X_{i,\cdot} - x_0\|_1} for each row \eqn{i=1,\dots,n}.
-#' If the compiled symbol `rustat_dist_l1()` is registered (via Rcpp), it is
-#' used; otherwise a vectorised R fallback is used.
+#' A compiled fast path is used when available; otherwise a vectorised R
+#' fallback is used.
 #'
 #' @param X Numeric matrix \eqn{n \times p}. Each row is an observation.
 #' @param x0 Numeric vector of length \eqn{p}. The query point.
@@ -43,8 +43,8 @@ dist_l1 <- function(X, x0) {
 # -----------------------------------------------------------------------------
 #' Order rows by L1 distance to a point (stable ties)
 #'
-#' Returns distances and a stable ordering. If `rustat_order_by_l1()` exists,
-#' it is used; otherwise `order(dx, seq_along(dx))` provides a deterministic
+#' Returns distances and a stable ordering. A compiled fast path is used when
+#' available; otherwise `order(dx, seq_along(dx))` provides a deterministic
 #' tie-break.
 #'
 #' @inheritParams dist_l1
@@ -79,8 +79,8 @@ order_by_l1 <- function(X, x0) {
 #' L1 distance spec (single and batched evaluation)
 #'
 #' Returns a spec with `eval()` and `eval_batch()` closures for L1 distances.
-#' The compiled paths (`rustat_dist_l1()`, `rustat_dist_l1_batch()`) are used
-#' when available; otherwise R fallbacks are used.
+#' Compiled fast paths are used when available; otherwise R fallbacks are
+#' used.
 #'
 #' @return A list with:
 #' * `name`: `"l1"`
@@ -130,7 +130,7 @@ distance_l1 <- function() {
 #' Scaled L1 distance (per-coordinate scaling)
 #'
 #' Computes \eqn{\|(X_{i,\cdot} - x_0) \odot \mathrm{inv\_s}\|_1} for each row.
-#' If `rustat_dist_l1_scaled()` exists it is used; else inputs are rescaled
+#' A compiled fast path is used when available; else inputs are rescaled
 #' in R and passed to [dist_l1()].
 #'
 #' @inheritParams dist_l1
@@ -163,7 +163,7 @@ dist_l1_scaled <- function(X, x0, inv_s) {
 #' Scaled L1 distance spec (one-time setup + eval/batch)
 #'
 #' Builder that computes per-column scales once (`setup(X)`) and reuses them in
-#' `eval()` / `eval_batch()`. Uses `rustat_dist_l1_scaled_batch()` if present.
+#' `eval()` / `eval_batch()`. Uses a compiled fast path when available.
 #'
 #' @param rule Scaling rule: `"sd"`, `"mad"`, `"iqr"`, `"range"`, or `"custom"`.
 #' @param scale_vec Optional numeric vector of length \eqn{p} for
@@ -249,9 +249,9 @@ distance_l1_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
 # -----------------------------------------------------------------------------
 #' Order rows by scaled L1 (stable ties)
 #'
-#' Computes per-column scales (or uses `scale_vec` for `"custom"`), then prefers
-#' compiled `rustat_order_by_l1_scaled()` if available. Otherwise computes
-#' distances via [dist_l1_scaled()] and orders with a deterministic tie rule.
+#' Computes per-column scales (or uses `scale_vec` for `"custom"`), then
+#' prefers a compiled fast path if available. Otherwise computes distances
+#' via [dist_l1_scaled()] and orders with a deterministic tie rule.
 #'
 #' @param X Numeric matrix \eqn{n \times p}.
 #' @param x0 Numeric vector of length \eqn{p}.

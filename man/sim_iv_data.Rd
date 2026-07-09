@@ -45,13 +45,11 @@ is used by \code{"dgp5_iv_correlated_instruments"}.}
 A list with:
 \itemize{
 \item \code{data}: a \code{data.frame} with \code{X1..Xkx}, \code{Y}, \code{D}, \code{Z1..Zq}, oracle
-nuisance columns \verb{piZ*_oracle}, \code{muY_oracle}, \code{muD_oracle}, and target
-columns \code{theta_oracle}/\code{tau_oracle}.
+nuisance columns \verb{piZ*_oracle}, \code{muY_oracle}, \code{muD_oracle}, and the
+target column \code{theta_oracle}.
 \item \code{x0}: numeric length-\code{kx} evaluation point.
 \item \code{q}: realized number of instruments.
 \item \code{theta_x0}: true local IV target at \code{x0}.
-\item \code{tau_x0}: alias for \code{theta_x0} while the estimator naming is
-finalized.
 \item \code{truth}: named list of oracle functions.
 }
 }
