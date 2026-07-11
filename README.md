@@ -198,6 +198,12 @@ raw <- sim_cate_run(
 summarise_sim_results(raw)
 ```
 
+For DNN and local-constant rows, the raw and summary outputs also expose the
+localized truth, branch drift, centered estimator remainder, physical neighborhood
+radius, arm-specific effective sample sizes, and studentized finite-sample
+shape. These fields distinguish localization error from nuisance-fitting error
+instead of treating coverage as a single undifferentiated diagnostic.
+
 ### 5) Local IV-GMM (experimental)
 
 Experimental local IV-GMM wrappers (`gmm_model_dr_iv()`, `gmm_dnn()`)

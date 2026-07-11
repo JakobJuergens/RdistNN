@@ -32,6 +32,28 @@
   se_mean / emp_sd
 }
 
+.sim_cate_quantile <- function(x, probability) {
+  x <- x[is.finite(x)]
+  if (length(x) == 0L) return(NA_real_)
+  as.numeric(stats::quantile(x, probs = probability, names = FALSE, type = 8))
+}
+
+.sim_cate_skewness <- function(x) {
+  x <- x[is.finite(x)]
+  if (length(x) < 3L) return(NA_real_)
+  centered <- x - mean(x)
+  scale <- sqrt(mean(centered^2))
+  if (!is.finite(scale) || scale <= 0) NA_real_ else mean((centered / scale)^3)
+}
+
+.sim_cate_excess_kurtosis <- function(x) {
+  x <- x[is.finite(x)]
+  if (length(x) < 4L) return(NA_real_)
+  centered <- x - mean(x)
+  scale <- sqrt(mean(centered^2))
+  if (!is.finite(scale) || scale <= 0) NA_real_ else mean((centered / scale)^4) - 3
+}
+
 #' Summarise raw per-replicate CATE simulation results
 #'
 #' Aggregates a data.frame of raw replicate-level results (as returned by
@@ -39,8 +61,12 @@
 #' `(method, design, n, kx, candidate_id, lambda, s)` cell. Reports bias, RMSE,
 #' mean SE, empirical coverage, mean CI length, empirical sampling dispersion of
 #' `tau_hat`, the ratio of mean SE to empirical dispersion, and (optionally)
-#' mean effective sample size. Failed or skipped rows are excluded from all
-#' averages and dispersion calculations; their count is reported in `n_failed`.
+#' mean effective sample size. When the raw rows carry localization diagnostics,
+#' the summary also reports the point-to-localized-branch drift, centered
+#' estimator remainder, physical neighborhood radius, arm-specific effective sample
+#' sizes, and shape diagnostics for the studentized statistic. Failed or
+#' skipped rows are excluded from all averages and dispersion calculations;
+#' their count is reported in `n_failed`.
 #'
 #' @param raw A `data.frame` with at least the columns `method`, `design`, `n`,
 #'   `kx`, `candidate_id`, `lambda`, `s`, `bias`, `sq_err`, `se`, `cover`,
@@ -52,7 +78,8 @@
 #' @return A `data.frame` with one row per unique group and columns
 #'   `method`, `design`, `n`, `kx`, `candidate_id`, `lambda`, `s`, `n_reps`,
 #'   `n_failed`, `bias`, `rmse`, `se_mean`, `cover`, `ci_len`, `emp_sd`,
-#'   `se_to_sd` (and `neff` when present in `raw`).
+#'   `se_to_sd`, `bias_to_se`, localization, support, and studentized-shape
+#'   diagnostics (and `neff` when present in `raw`).
 #'
 #' @seealso [sim_cate_run()]
 #'
@@ -117,6 +144,44 @@ summarise_sim_results <- function(raw) {
       se_to_sd = .sim_cate_se_to_sd(se_mean, emp_sd),
       stringsAsFactors = FALSE
     )
+    diagnostic_mean <- function(name) {
+      if (!name %in% names(sub)) NA_real_ else .sim_cate_mean(sub[[name]][ok])
+    }
+    diagnostic_quantile <- function(name, probability) {
+      if (!name %in% names(sub)) NA_real_ else .sim_cate_quantile(sub[[name]][ok], probability)
+    }
+    studentized <- if ("studentized_error" %in% names(sub)) {
+      sub$studentized_error[ok]
+    } else {
+      numeric()
+    }
+    row$bias_to_se <- if (is.finite(row$bias) && is.finite(se_mean) && se_mean > 0) {
+      row$bias / se_mean
+    } else {
+      NA_real_
+    }
+    row$localized_truth_mean <- diagnostic_mean("localized_truth")
+    row$branch_drift <- diagnostic_mean("branch_drift")
+    row$estimator_remainder <- diagnostic_mean("estimator_remainder")
+    row$score_sd0 <- diagnostic_mean("score_sd0")
+    row$standardized_branch_drift <- diagnostic_mean("standardized_branch_drift")
+    row$physical_radius_90_mean <- diagnostic_mean("physical_radius_90")
+    row$physical_radius_90_p25 <- diagnostic_quantile("physical_radius_90", 0.25)
+    row$physical_radius_90_p50 <- diagnostic_quantile("physical_radius_90", 0.50)
+    row$physical_radius_90_p75 <- diagnostic_quantile("physical_radius_90", 0.75)
+    row$treated_ess <- diagnostic_mean("treated_ess")
+    row$control_ess <- diagnostic_mean("control_ess")
+    row$top5_score_share <- diagnostic_mean("top5_score_share")
+    row$studentized_mean <- .sim_cate_mean(studentized)
+    row$studentized_sd <- .sim_cate_sd(studentized)
+    row$studentized_skewness <- .sim_cate_skewness(studentized)
+    row$studentized_excess_kurtosis <- .sim_cate_excess_kurtosis(studentized)
+    row$studentized_q025 <- .sim_cate_quantile(studentized, 0.025)
+    row$studentized_q05 <- .sim_cate_quantile(studentized, 0.05)
+    row$studentized_q50 <- .sim_cate_quantile(studentized, 0.50)
+    row$studentized_q95 <- .sim_cate_quantile(studentized, 0.95)
+    row$studentized_q975 <- .sim_cate_quantile(studentized, 0.975)
+    row$studentized_abs_q95 <- .sim_cate_quantile(abs(studentized), 0.95)
     row$method <- cells$method[i]
     if (has_neff)   row$neff   <- .sim_cate_mean(sub$neff[ok])
     out[[i]] <- row

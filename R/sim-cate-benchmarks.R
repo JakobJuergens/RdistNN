@@ -27,7 +27,12 @@
 # ── Shared metric constructors ────────────────────────────────────────────────
 
 .sim_cate_metric_names <- function() {
-  c("tau_hat", "tau0", "bias", "sq_err", "se", "cover", "ci_len", "neff")
+  c(
+    "tau_hat", "tau0", "bias", "sq_err", "se", "cover", "ci_len", "neff",
+    "localized_truth", "branch_drift", "estimator_remainder",
+    "studentized_error", "score_sd0", "standardized_branch_drift",
+    "physical_radius_90", "treated_ess", "control_ess", "top5_score_share"
+  )
 }
 
 .sim_cate_row_names <- function() {
@@ -53,7 +58,8 @@
   candidate_id = NA_character_,
   lambda = NA_real_,
   s = NA_integer_,
-  status = "ok"
+  status = "ok",
+  diagnostics = NULL
 ) {
   n_out <- max(
     length(tau_hat), length(se_hat), length(tau0), length(neff),
@@ -78,7 +84,7 @@
     )
   }
 
-  data.frame(
+  out <- data.frame(
     candidate_id = candidate_id,
     lambda = lambda,
     s = s,
@@ -93,6 +99,113 @@
     status = status,
     stringsAsFactors = FALSE,
     row.names = NULL
+  )
+
+  diagnostic_names <- c(
+    "localized_truth", "branch_drift", "estimator_remainder",
+    "studentized_error", "score_sd0", "standardized_branch_drift",
+    "physical_radius_90", "treated_ess", "control_ess", "top5_score_share"
+  )
+  for (name in diagnostic_names) {
+    out[[name]] <- NA_real_
+  }
+  if (!is.null(diagnostics)) {
+    if (!is.data.frame(diagnostics)) {
+      diagnostics <- as.data.frame(diagnostics, stringsAsFactors = FALSE)
+    }
+    unknown <- setdiff(names(diagnostics), diagnostic_names)
+    if (length(unknown) > 0L) {
+      .abort_bad_state(sprintf(
+        "Simulation diagnostics contain unknown column(s): %s.",
+        paste(unknown, collapse = ", ")
+      ))
+    }
+    if (!nrow(diagnostics) %in% c(1L, n_out)) {
+      .abort_bad_state(sprintf(
+        "Simulation diagnostics must have one row or %d rows; got %d.",
+        n_out,
+        nrow(diagnostics)
+      ))
+    }
+    for (name in names(diagnostics)) {
+      out[[name]] <- as.numeric(.sim_recycle(diagnostics[[name]], n_out))
+    }
+  }
+  out[, c(
+    "candidate_id", "lambda", "s", "tau_hat", "tau0", "bias", "sq_err",
+    "se", "cover", "ci_len", "neff", diagnostic_names, "status"
+  ), drop = FALSE]
+}
+
+.sim_cate_weight_diagnostics <- function(dgp, x_cols, W, signal, tau_hat,
+                                          se_hat, neff, radius_mass = 0.90) {
+  W <- as.matrix(W)
+  signal <- as.numeric(signal)
+  tau_hat <- as.numeric(tau_hat)
+  se_hat <- as.numeric(se_hat)
+  neff <- as.numeric(neff)
+  n <- nrow(W)
+  m <- ncol(W)
+  if (length(signal) != n || nrow(dgp$data) != n) {
+    .abort_bad_state("Simulation diagnostic inputs must share the DGP row count.")
+  }
+  tau_hat <- .sim_recycle(tau_hat, m)
+  se_hat <- .sim_recycle(se_hat, m)
+  neff <- .sim_recycle(neff, m)
+  col_sums <- colSums(W)
+  if (any(!is.finite(W)) || any(!is.finite(col_sums)) || any(col_sums <= 0)) {
+    .abort_bad_state("Simulation diagnostic weights must be finite with positive column sums.")
+  }
+  W <- sweep(W, 2L, col_sums, FUN = "/")
+
+  x_mat <- as.matrix(dgp$data[, x_cols, drop = FALSE])
+  distance <- sqrt(rowSums(sweep(x_mat, 2L, dgp$x0, FUN = "-")^2))
+  ord <- order(distance)
+  radius_90 <- vapply(seq_len(m), function(j) {
+    idx <- which(cumsum(W[ord, j]) >= radius_mass)[1L]
+    distance[ord[[idx]]]
+  }, numeric(1L))
+
+  arm_ess <- function(arm) {
+    idx <- dgp$data$D == arm
+    vapply(seq_len(m), function(j) {
+      w <- W[idx, j]
+      if (length(w) == 0L || sum(w^2) <= 0) NA_real_ else sum(w)^2 / sum(w^2)
+    }, numeric(1L))
+  }
+  top5_score_share <- vapply(seq_len(m), function(j) {
+    contribution <- abs(W[, j] * (signal - tau_hat[[j]]))
+    total <- sum(contribution)
+    if (!is.finite(total) || total <= 0) return(NA_real_)
+    sum(sort(contribution, decreasing = TRUE)[seq_len(min(5L, n))]) / total
+  }, numeric(1L))
+
+  localized_truth <- as.numeric(crossprod(W, dgp$data$tau_oracle))
+  branch_drift <- localized_truth - dgp$tau_x0
+  score_sd0 <- rep(as.numeric(dgp$truth$score_sd_x0), m)
+  studentized_error <- ifelse(
+    is.finite(se_hat) & se_hat > 0,
+    (tau_hat - dgp$tau_x0) / se_hat,
+    NA_real_
+  )
+  standardized_branch_drift <- ifelse(
+    is.finite(neff) & neff > 0 & is.finite(score_sd0) & score_sd0 > 0,
+    sqrt(neff) * branch_drift / score_sd0,
+    NA_real_
+  )
+
+  data.frame(
+    localized_truth = localized_truth,
+    branch_drift = branch_drift,
+    estimator_remainder = tau_hat - localized_truth,
+    studentized_error = studentized_error,
+    score_sd0 = score_sd0,
+    standardized_branch_drift = standardized_branch_drift,
+    physical_radius_90 = radius_90,
+    treated_ess = arm_ess(1L),
+    control_ess = arm_ess(0L),
+    top5_score_share = top5_score_share,
+    stringsAsFactors = FALSE
   )
 }
 
@@ -119,24 +232,74 @@
   if (length(out) != 1L || !is.finite(out)) NA_real_ else out
 }
 
-.sim_cate_dnn_grid_metrics <- function(fit, tau0, alpha) {
+.sim_cate_dnn_grid_metrics <- function(fit, dgp, x_cols, signal, alpha) {
   grid <- fit$tuning_grid
   candidates <- grid$candidates
   est <- grid$estimates
   diag <- grid$diagnostics
   est_idx <- match(candidates$candidate_id, est$candidate_id)
   diag_idx <- match(candidates$candidate_id, diag$candidate_id)
+  diagnostics <- data.frame(
+    localized_truth = rep(NA_real_, nrow(candidates)),
+    branch_drift = NA_real_,
+    estimator_remainder = NA_real_,
+    studentized_error = NA_real_,
+    score_sd0 = NA_real_,
+    standardized_branch_drift = NA_real_,
+    physical_radius_90 = NA_real_,
+    treated_ess = NA_real_,
+    control_ess = NA_real_,
+    top5_score_share = NA_real_
+  )
+  ok <- which(candidates$status == "ok")
+  for (i in ok) {
+    candidate <- candidate_fit(fit, candidates$candidate_id[[i]])
+    candidate_diag <- .sim_cate_weight_diagnostics(
+      dgp = dgp,
+      x_cols = x_cols,
+      W = candidate$W,
+      signal = signal,
+      tau_hat = candidate$tau,
+      se_hat = candidate$se,
+      neff = candidate$ess
+    )
+    diagnostics[i, ] <- candidate_diag[1L, names(diagnostics), drop = FALSE]
+  }
 
   .sim_metric(
     tau_hat = est$estimate[est_idx],
     se_hat = est$se[est_idx],
-    tau0 = tau0,
+    tau0 = dgp$tau_x0,
     alpha = alpha,
     neff = diag$ess[diag_idx],
     candidate_id = candidates$candidate_id,
     lambda = candidates$lambda,
     s = candidates$s,
-    status = candidates$status
+    status = candidates$status,
+    diagnostics = diagnostics
+  )
+}
+
+.sim_cate_dnn_scalar_metrics <- function(fit, dgp, x_cols, signal, alpha,
+                                          lambda, s) {
+  diagnostics <- .sim_cate_weight_diagnostics(
+    dgp = dgp,
+    x_cols = x_cols,
+    W = fit$W,
+    signal = signal,
+    tau_hat = fit$tau,
+    se_hat = fit$se,
+    neff = fit$ess
+  )
+  .sim_metric(
+    fit$tau,
+    fit$se,
+    dgp$tau_x0,
+    alpha,
+    neff = fit$ess,
+    lambda = lambda,
+    s = s,
+    diagnostics = diagnostics
   )
 }
 
@@ -158,9 +321,11 @@
       tuning_mode    = "grid",
       se             = TRUE,
       jackknife      = "fast",
-      return         = "ess"
+      return         = c("ess", "W", "ranks")
     )
-    return(.sim_cate_dnn_grid_metrics(fit, dgp$tau_x0, alpha))
+    return(.sim_cate_dnn_grid_metrics(
+      fit, dgp, x_cols, dgp$data$aipw_oracle, alpha
+    ))
   }
 
   fit <- cate_dnn(
@@ -171,11 +336,14 @@
     s              = s,
     se             = TRUE,
     jackknife      = "fast",
-    return         = "ess"
+    return         = c("ess", "W")
   )
-  .sim_metric(
-    fit$tau, fit$se, dgp$tau_x0, alpha,
-    neff = fit$ess,
+  .sim_cate_dnn_scalar_metrics(
+    fit = fit,
+    dgp = dgp,
+    x_cols = x_cols,
+    signal = dgp$data$aipw_oracle,
+    alpha = alpha,
     lambda = .sim_cate_default_lambda(tuning, nrow(dgp$data), length(x_cols), k),
     s = s
   )
@@ -245,9 +413,9 @@
       tuning_mode    = "grid",
       se             = TRUE,
       jackknife      = "fast",
-      return         = "ess"
+      return         = c("ess", "W", "ranks")
     )
-    return(.sim_cate_dnn_grid_metrics(fit, dgp$tau_x0, alpha))
+    return(.sim_cate_dnn_grid_metrics(fit, dgp, x_cols, aipw_fs, alpha))
   }
 
   fit <- cate_dnn(
@@ -258,11 +426,14 @@
     s              = s,
     se             = TRUE,
     jackknife      = "fast",
-    return         = "ess"
+    return         = c("ess", "W")
   )
-  .sim_metric(
-    fit$tau, fit$se, dgp$tau_x0, alpha,
-    neff = fit$ess,
+  .sim_cate_dnn_scalar_metrics(
+    fit = fit,
+    dgp = dgp,
+    x_cols = x_cols,
+    signal = aipw_fs,
+    alpha = alpha,
     lambda = .sim_cate_default_lambda(tuning, nrow(dat), length(x_cols), k),
     s = s
   )
@@ -318,9 +489,9 @@
       tuning_mode    = "grid",
       se             = TRUE,
       jackknife      = "fast",
-      return         = "ess"
+      return         = c("ess", "W", "ranks")
     )
-    return(.sim_cate_dnn_grid_metrics(fit, dgp$tau_x0, alpha))
+    return(.sim_cate_dnn_grid_metrics(fit, dgp, x_cols, aipw_cf, alpha))
   }
 
   fit <- cate_dnn(
@@ -331,11 +502,14 @@
     s              = s,
     se             = TRUE,
     jackknife      = "fast",
-    return         = "ess"
+    return         = c("ess", "W")
   )
-  .sim_metric(
-    fit$tau, fit$se, dgp$tau_x0, alpha,
-    neff = fit$ess,
+  .sim_cate_dnn_scalar_metrics(
+    fit = fit,
+    dgp = dgp,
+    x_cols = x_cols,
+    signal = aipw_cf,
+    alpha = alpha,
     lambda = .sim_cate_default_lambda(tuning, nrow(dat), length(x_cols), k),
     s = s
   )
@@ -361,9 +535,11 @@
       distance       = "mahalanobis",
       se             = TRUE,
       jackknife      = "fast",
-      return         = "ess"
+      return         = c("ess", "W", "ranks")
     )
-    return(.sim_cate_dnn_grid_metrics(fit, dgp$tau_x0, alpha))
+    return(.sim_cate_dnn_grid_metrics(
+      fit, dgp, x_cols, dgp$data$aipw_oracle, alpha
+    ))
   }
 
   fit <- cate_dnn(
@@ -375,11 +551,14 @@
     distance       = "mahalanobis",
     se             = TRUE,
     jackknife      = "fast",
-    return         = "ess"
+    return         = c("ess", "W")
   )
-  .sim_metric(
-    fit$tau, fit$se, dgp$tau_x0, alpha,
-    neff = fit$ess,
+  .sim_cate_dnn_scalar_metrics(
+    fit = fit,
+    dgp = dgp,
+    x_cols = x_cols,
+    signal = dgp$data$aipw_oracle,
+    alpha = alpha,
     lambda = .sim_cate_default_lambda(tuning, nrow(dgp$data), length(x_cols), k),
     s = s
   )
@@ -420,8 +599,25 @@
   se_hat <- sqrt((n - 1L) / n * sum((tau_loo - tau_hat)^2))
 
   neff <- K_sum^2 / sum(K_vals^2)
+  W <- matrix(K_vals / K_sum, ncol = 1L)
+  diagnostics <- .sim_cate_weight_diagnostics(
+    dgp = dgp,
+    x_cols = x_cols,
+    W = W,
+    signal = aipw,
+    tau_hat = tau_hat,
+    se_hat = se_hat,
+    neff = neff
+  )
 
-  .sim_metric(tau_hat, se_hat, dgp$tau_x0, alpha, neff = neff)
+  .sim_metric(
+    tau_hat,
+    se_hat,
+    dgp$tau_x0,
+    alpha,
+    neff = neff,
+    diagnostics = diagnostics
+  )
 }
 
 # ── OLS with treatment-covariate interactions ─────────────────────────────────

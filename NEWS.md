@@ -2,6 +2,18 @@
 
 ## RdistNN (development)
 
+### Theory-facing CATE simulation diagnostics
+
+- The CATE simulation now decomposes DNN error into realized localized-branch
+  drift and estimator remainder, and records the corresponding root-effective-
+  sample-size standardized drift.
+- Weight-based simulation rows now report a physical 90-percent-mass radius,
+  treated and control effective sample sizes, score-contribution concentration,
+  and the studentized error. `summarise_sim_results()` adds finite-sample
+  studentized quantiles, skewness, excess kurtosis, and support summaries.
+- Integrated tuning-grid rows compute these diagnostics separately for every
+  candidate while retaining shared-draw and shared-fitted-state parity.
+
 ### PLQR jackknife-meat inference, supplied-theta semantics, and plot defaults
 
 - `plqr_dnn()` gains `theta_meat = c("analytic", "jackknife")`: with

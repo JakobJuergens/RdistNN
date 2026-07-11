@@ -176,7 +176,11 @@
 #'
 #' @return A `data.frame` with one or more rows per method and columns
 #'   `method`, `candidate_id`, `lambda`, `s`, `tau_hat`, `tau0`, `bias`,
-#'   `sq_err`, `se`, `cover` (0/1), `ci_len`, `neff`, and `status`.
+#'   `sq_err`, `se`, `cover` (0/1), `ci_len`, `neff`, and `status`. Methods
+#'   with explicit localization weights also report the realized localized
+#'   truth, branch drift, estimator remainder, studentized error, physical
+#'   90-percent-mass radius, treatment-arm effective sample sizes, and the
+#'   top-five score-contribution share.
 #'   Failed methods have `NA` for all metric columns and `status = "failed"`.
 #'
 #' @examples
@@ -327,7 +331,9 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
 #' @return A `data.frame` with raw rows and columns `method`, `design`, `n`,
 #'   `kx`, `k`, `tuning_source`, `candidate_id`, `lambda`, `s`, `seed`,
 #'   `tau_hat`, `tau0`, `bias`, `sq_err`, `se`, `cover`, `ci_len`, `neff`,
-#'   and `status`. Failed entries have `NA` for all metric columns.
+#'   localization and studentization diagnostics described in
+#'   [sim_cate_one_rep()], and `status`. Failed entries have `NA` for all
+#'   metric columns.
 #'
 #' @seealso [sim_cate_one_rep()], [summarise_sim_results()], [sim_cate_methods()]
 #'

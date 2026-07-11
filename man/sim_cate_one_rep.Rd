@@ -54,7 +54,11 @@ DNN candidate while non-DNN benchmarks remain one row per replicate.}
 \value{
 A \code{data.frame} with one or more rows per method and columns
 \code{method}, \code{candidate_id}, \code{lambda}, \code{s}, \code{tau_hat}, \code{tau0}, \code{bias},
-\code{sq_err}, \code{se}, \code{cover} (0/1), \code{ci_len}, \code{neff}, and \code{status}.
+\code{sq_err}, \code{se}, \code{cover} (0/1), \code{ci_len}, \code{neff}, and \code{status}. Methods
+with explicit localization weights also report the realized localized
+truth, branch drift, estimator remainder, studentized error, physical
+90-percent-mass radius, treatment-arm effective sample sizes, and the
+top-five score-contribution share.
 Failed methods have \code{NA} for all metric columns and \code{status = "failed"}.
 }
 \description{

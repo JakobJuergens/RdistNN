@@ -18,7 +18,8 @@ deviation; \code{tau0} remains a per-rep quantity and is not aggregated.}
 A \code{data.frame} with one row per unique group and columns
 \code{method}, \code{design}, \code{n}, \code{kx}, \code{candidate_id}, \code{lambda}, \code{s}, \code{n_reps},
 \code{n_failed}, \code{bias}, \code{rmse}, \code{se_mean}, \code{cover}, \code{ci_len}, \code{emp_sd},
-\code{se_to_sd} (and \code{neff} when present in \code{raw}).
+\code{se_to_sd}, \code{bias_to_se}, localization, support, and studentized-shape
+diagnostics (and \code{neff} when present in \code{raw}).
 }
 \description{
 Aggregates a data.frame of raw replicate-level results (as returned by
@@ -26,8 +27,12 @@ Aggregates a data.frame of raw replicate-level results (as returned by
 \verb{(method, design, n, kx, candidate_id, lambda, s)} cell. Reports bias, RMSE,
 mean SE, empirical coverage, mean CI length, empirical sampling dispersion of
 \code{tau_hat}, the ratio of mean SE to empirical dispersion, and (optionally)
-mean effective sample size. Failed or skipped rows are excluded from all
-averages and dispersion calculations; their count is reported in \code{n_failed}.
+mean effective sample size. When the raw rows carry localization diagnostics,
+the summary also reports the point-to-localized-branch drift, centered
+estimator remainder, physical neighborhood radius, arm-specific effective sample
+sizes, and shape diagnostics for the studentized statistic. Failed or
+skipped rows are excluded from all averages and dispersion calculations;
+their count is reported in \code{n_failed}.
 }
 \examples{
 \dontrun{

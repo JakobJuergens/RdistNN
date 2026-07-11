@@ -72,7 +72,9 @@ Default: \code{"dnn_oracle"}.}
 A \code{data.frame} with raw rows and columns \code{method}, \code{design}, \code{n},
 \code{kx}, \code{k}, \code{tuning_source}, \code{candidate_id}, \code{lambda}, \code{s}, \code{seed},
 \code{tau_hat}, \code{tau0}, \code{bias}, \code{sq_err}, \code{se}, \code{cover}, \code{ci_len}, \code{neff},
-and \code{status}. Failed entries have \code{NA} for all metric columns.
+localization and studentization diagnostics described in
+\code{\link[=sim_cate_one_rep]{sim_cate_one_rep()}}, and \code{status}. Failed entries have \code{NA} for all
+metric columns.
 }
 \description{
 Expands a grid of DGP designs, sample sizes, and covariate dimensions, then

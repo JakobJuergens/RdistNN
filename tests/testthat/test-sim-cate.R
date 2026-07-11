@@ -46,7 +46,13 @@ test_that("sim_cate_data: output schema is correct for each design", {
 
     expect_length(dgp$x0, 2L)
     expect_type(dgp$tau_x0, "double")
-    expect_named(dgp$truth, c("tau_fn", "e_fn", "m0_fn", "m_fn"))
+    expect_named(
+      dgp$truth,
+      c("tau_fn", "e_fn", "m0_fn", "sigma", "score_sd_x0", "m_fn")
+    )
+    expect_equal(dgp$truth$sigma, 0.5)
+    expect_true(is.finite(dgp$truth$score_sd_x0))
+    expect_gt(dgp$truth$score_sd_x0, 0)
   }
 })
 
@@ -672,6 +678,57 @@ test_that("sim_cate_one_rep: all six core methods run together without error", {
                  "local_constant", "ols_interact"))
   expect_true(all(is.finite(r$tau_hat)))
   expect_true(all(r$se > 0))
+})
+
+test_that("sim_cate_one_rep exposes the theorem-facing DNN decomposition", {
+  r <- sim_cate_one_rep(
+    n = 160L, kx = 2L, k = 1L, s = 24L,
+    design = "dgp2_nonlinear",
+    methods = c("dnn_oracle", "dnn_fullsample", "dnn_crossfit", "local_constant"),
+    seed = 706L
+  )
+  diagnostics <- c(
+    "localized_truth", "branch_drift", "estimator_remainder",
+    "studentized_error", "score_sd0", "standardized_branch_drift",
+    "physical_radius_90", "treated_ess", "control_ess", "top5_score_share"
+  )
+  expect_true(all(diagnostics %in% names(r)))
+  expect_true(all(is.finite(as.matrix(r[, diagnostics]))))
+  expect_equal(r$bias, r$branch_drift + r$estimator_remainder, tolerance = 1e-12)
+  expect_equal(r$studentized_error, r$bias / r$se, tolerance = 1e-12)
+
+  dnn <- r[grepl("^dnn_", r$method), , drop = FALSE]
+  expect_equal(length(unique(dnn$localized_truth)), 1L)
+  expect_equal(length(unique(dnn$branch_drift)), 1L)
+  expect_equal(length(unique(dnn$physical_radius_90)), 1L)
+  expect_equal(length(unique(dnn$treated_ess)), 1L)
+  expect_equal(length(unique(dnn$control_ess)), 1L)
+})
+
+test_that("summarise_sim_results reports branch, radius, and studentized shape", {
+  raw <- sim_cate_run(
+    designs = "dgp2_nonlinear",
+    n_vals = 160L,
+    kx_vals = 2L,
+    n_reps = 12L,
+    master_seed = 707L,
+    k = 1L,
+    s_fn = function(n, kx) 24L,
+    methods = c("dnn_fullsample", "dnn_oracle"),
+    verbose = FALSE
+  )
+  tab <- summarise_sim_results(raw)
+  required <- c(
+    "bias_to_se", "localized_truth_mean", "branch_drift",
+    "estimator_remainder", "standardized_branch_drift",
+    "physical_radius_90_mean", "physical_radius_90_p25",
+    "physical_radius_90_p50", "physical_radius_90_p75",
+    "studentized_mean", "studentized_sd", "studentized_skewness",
+    "studentized_excess_kurtosis", "studentized_q025", "studentized_q975"
+  )
+  expect_true(all(required %in% names(tab)))
+  expect_true(all(is.finite(as.matrix(tab[, required]))))
+  expect_equal(tab$bias, tab$branch_drift + tab$estimator_remainder, tolerance = 1e-12)
 })
 
 # ── sim_cate_methods registry ─────────────────────────────────────────────────

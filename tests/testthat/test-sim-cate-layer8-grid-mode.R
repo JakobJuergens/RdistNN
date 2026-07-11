@@ -25,6 +25,9 @@ skip_if_not(
   "method", "design", "n", "kx", "k", "tuning_source",
   "candidate_id", "lambda", "s", "seed",
   "tau_hat", "tau0", "bias", "sq_err", "se", "cover", "ci_len", "neff",
+  "localized_truth", "branch_drift", "estimator_remainder",
+  "studentized_error", "score_sd0", "standardized_branch_drift",
+  "physical_radius_90", "treated_ess", "control_ess", "top5_score_share",
   "status"
 )
 
@@ -66,6 +69,9 @@ test_that("sim_cate_one_rep grid mode emits DNN candidate rows matching scalar r
     # so bitwise equality does not hold on platforms without extended-
     # precision accumulation (ARM64 macOS).
     expect_equal(grid$neff[[i]], scalar$neff[[1L]], tolerance = 1e-12)
+    expect_equal(grid$localized_truth[[i]], scalar$localized_truth[[1L]], tolerance = 1e-12)
+    expect_equal(grid$branch_drift[[i]], scalar$branch_drift[[1L]], tolerance = 1e-12)
+    expect_equal(grid$physical_radius_90[[i]], scalar$physical_radius_90[[1L]], tolerance = 1e-12)
   }
 })
 
@@ -101,6 +107,9 @@ test_that("sim_cate_one_rep grid mode reuses one cross-fit score across candidat
     expect_equal(grid$se[[i]], scalar$se[[1L]], tolerance = 0)
     # See the note above on cross-path neff summation order.
     expect_equal(grid$neff[[i]], scalar$neff[[1L]], tolerance = 1e-12)
+    expect_equal(grid$localized_truth[[i]], scalar$localized_truth[[1L]], tolerance = 1e-12)
+    expect_equal(grid$branch_drift[[i]], scalar$branch_drift[[1L]], tolerance = 1e-12)
+    expect_equal(grid$physical_radius_90[[i]], scalar$physical_radius_90[[1L]], tolerance = 1e-12)
   }
 })
 

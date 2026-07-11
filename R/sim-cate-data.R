@@ -42,13 +42,15 @@
 }
 
 .sim_cate_assemble <- function(X, D, Y, e_true, m0_true, tau_true,
-                                tau_fn, e_fn, x0,
+                                tau_fn, e_fn, x0, sigma,
                                 m0_fn = .sim_cate_m0) {
   m1_true <- m0_true + tau_true
   m_true  <- m0_true + e_true * tau_true
   rho     <- .sim_cate_pseudo(D, Y, e_true, m_true)
   aipw    <- .sim_cate_aipw(D, Y, e_true, m0_true, m1_true)
   p       <- ncol(X)
+  e_x0    <- as.numeric(e_fn(matrix(x0, nrow = 1L)))
+  score_sd_x0 <- as.numeric(sigma * sqrt(1 / e_x0 + 1 / (1 - e_x0)))
 
   df <- data.frame(
     X,
@@ -72,6 +74,8 @@
       tau_fn = tau_fn,
       e_fn   = e_fn,
       m0_fn  = m0_fn,
+      sigma = as.numeric(sigma),
+      score_sd_x0 = score_sd_x0,
       m_fn   = function(xx) {
         xx <- as.matrix(xx)
         m0_fn(xx) + e_fn(xx) * tau_fn(xx)
@@ -106,7 +110,10 @@
   D        <- stats::rbinom(n, 1L, e_true)
   Y        <- m0_true + D * tau_true + stats::rnorm(n, sd = sigma)
 
-  .sim_cate_assemble(X, D, Y, e_true, m0_true, tau_true, tau_fn, e_fn, x0)
+  .sim_cate_assemble(
+    X, D, Y, e_true, m0_true, tau_true, tau_fn, e_fn, x0,
+    sigma = sigma
+  )
 }
 
 # ── DGP 2: nonlinear (sinusoidal) CATE ───────────────────────────────────────
@@ -131,7 +138,10 @@
   D        <- stats::rbinom(n, 1L, e_true)
   Y        <- m0_true + D * tau_true + stats::rnorm(n, sd = sigma)
 
-  .sim_cate_assemble(X, D, Y, e_true, m0_true, tau_true, tau_fn, e_fn, x0)
+  .sim_cate_assemble(
+    X, D, Y, e_true, m0_true, tau_true, tau_fn, e_fn, x0,
+    sigma = sigma
+  )
 }
 
 # ── DGP 3: sparse overlap ────────────────────────────────────────────────────
@@ -164,7 +174,10 @@
   D        <- stats::rbinom(n, 1L, e_true)
   Y        <- m0_true + D * tau_true + stats::rnorm(n, sd = sigma)
 
-  .sim_cate_assemble(X, D, Y, e_true, m0_true, tau_true, tau_fn, e_fn, x0)
+  .sim_cate_assemble(
+    X, D, Y, e_true, m0_true, tau_true, tau_fn, e_fn, x0,
+    sigma = sigma
+  )
 }
 
 # ── DGP 4: clustered (mixture) covariate design ──────────────────────────────
@@ -236,7 +249,10 @@
   D        <- stats::rbinom(n, 1L, e_true)
   Y        <- m0_true + D * tau_true + stats::rnorm(n, sd = sigma)
 
-  .sim_cate_assemble(X, D, Y, e_true, m0_true, tau_true, tau_fn, e_fn, x0)
+  .sim_cate_assemble(
+    X, D, Y, e_true, m0_true, tau_true, tau_fn, e_fn, x0,
+    sigma = sigma
+  )
 }
 
 # ── DGP 5: correlated covariates ─────────────────────────────────────────────
@@ -279,7 +295,10 @@
   D        <- stats::rbinom(n, 1L, e_true)
   Y        <- m0_true + D * tau_true + stats::rnorm(n, sd = sigma)
 
-  .sim_cate_assemble(X, D, Y, e_true, m0_true, tau_true, tau_fn, e_fn, x0)
+  .sim_cate_assemble(
+    X, D, Y, e_true, m0_true, tau_true, tau_fn, e_fn, x0,
+    sigma = sigma
+  )
 }
 
 # ── DGP 6: nuisance-efficiency design ────────────────────────────────────────
@@ -324,7 +343,7 @@
   Y        <- m0_true + D * tau_true + stats::rnorm(n, sd = sigma)
 
   .sim_cate_assemble(X, D, Y, e_true, m0_true, tau_true,
-                     tau_fn, e_fn, x0, m0_fn = m0_fn)
+                     tau_fn, e_fn, x0, m0_fn = m0_fn, sigma = sigma)
 }
 
 # ── Public dispatcher ─────────────────────────────────────────────────────────
