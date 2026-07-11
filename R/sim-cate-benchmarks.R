@@ -180,6 +180,9 @@
     sum(sort(contribution, decreasing = TRUE)[seq_len(min(5L, n))]) / total
   }, numeric(1L))
 
+  # `localized_truth` is the realized DNN-weighted truth, not the deterministic
+  # population branch. `branch_drift` is retained as a historical output name;
+  # it stores realized localization drift.
   localized_truth <- as.numeric(crossprod(W, dgp$data$tau_oracle))
   branch_drift <- localized_truth - dgp$tau_x0
   score_sd0 <- rep(as.numeric(dgp$truth$score_sd_x0), m)

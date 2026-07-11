@@ -199,10 +199,17 @@ summarise_sim_results(raw)
 ```
 
 For DNN and local-constant rows, the raw and summary outputs also expose the
-localized truth, branch drift, centered estimator remainder, physical neighborhood
-radius, arm-specific effective sample sizes, and studentized finite-sample
-shape. These fields distinguish localization error from nuisance-fitting error
-instead of treating coverage as a single undifferentiated diagnostic.
+realized DNN-weighted truth, realized localization drift, estimator remainder,
+physical neighborhood radius, arm-specific effective sample sizes, and
+studentized finite-sample shape. The weighted truth
+`sum_i W_i,s(x0) tau_0(X_i)` is random and is not the deterministic population
+branch `alpha_s(x0)`. With `x0` and `(n, s)` fixed, expectation over the i.i.d.
+covariate sample and complete-DNN exchangeability give
+`E[sum_i W_i,s(x0) tau_0(X_i)] = alpha_s(x0)`. The estimator remainder combines
+centered score variation with fitted-state effects; paired feasible/oracle
+comparisons isolate the latter. These fields keep localization, score variation,
+and nuisance fitting distinct instead of treating coverage as a single
+undifferentiated diagnostic.
 
 ### 5) Local IV-GMM (experimental)
 

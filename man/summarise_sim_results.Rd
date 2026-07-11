@@ -28,11 +28,16 @@ Aggregates a data.frame of raw replicate-level results (as returned by
 mean SE, empirical coverage, mean CI length, empirical sampling dispersion of
 \code{tau_hat}, the ratio of mean SE to empirical dispersion, and (optionally)
 mean effective sample size. When the raw rows carry localization diagnostics,
-the summary also reports the point-to-localized-branch drift, centered
-estimator remainder, physical neighborhood radius, arm-specific effective sample
+the summary also reports mean realized localization drift, the mean estimator
+remainder, physical neighborhood radius, arm-specific effective sample
 sizes, and shape diagnostics for the studentized statistic. Failed or
 skipped rows are excluded from all averages and dispersion calculations;
-their count is reported in \code{n_failed}.
+their count is reported in \code{n_failed}. Here \code{localized_truth} is the realized
+DNN-weighted truth, not the deterministic population branch. Under
+complete-DNN exchangeability its expectation equals \eqn{\alpha_s(x_0)}, so
+mean realized localization drift estimates the population branch
+displacement. The estimator remainder contains centered score variation and
+fitted-state effects.
 }
 \examples{
 \dontrun{

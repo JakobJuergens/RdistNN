@@ -177,10 +177,18 @@
 #' @return A `data.frame` with one or more rows per method and columns
 #'   `method`, `candidate_id`, `lambda`, `s`, `tau_hat`, `tau0`, `bias`,
 #'   `sq_err`, `se`, `cover` (0/1), `ci_len`, `neff`, and `status`. Methods
-#'   with explicit localization weights also report the realized localized
-#'   truth, branch drift, estimator remainder, studentized error, physical
+#'   with explicit localization weights also report the realized DNN-weighted
+#'   truth, realized localization drift, estimator remainder, studentized error, physical
 #'   90-percent-mass radius, treatment-arm effective sample sizes, and the
-#'   top-five score-contribution share.
+#'   top-five score-contribution share. The `localized_truth` field is the
+#'   finite-sample object \eqn{\sum_i W_{i,s}(x_0)\tau_0(X_i)}, not the
+#'   deterministic population branch. With \eqn{x_0} and \eqn{(n,s)} fixed,
+#'   expectation over the i.i.d. covariate sample and complete-DNN
+#'   exchangeability give
+#'   \deqn{E(\mathrm{localized\_truth})=\alpha_s(x_0).}
+#'   The historical `branch_drift` field name is retained for compatibility;
+#'   it stores realized localization drift. The estimator remainder combines
+#'   centered score variation with fitted-state effects.
 #'   Failed methods have `NA` for all metric columns and `status = "failed"`.
 #'
 #' @examples
