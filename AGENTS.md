@@ -31,14 +31,15 @@ for PLQR inference work read `markdown_notes/design/15_plqr_variance_estimation_
 ## Markdown note layout
 
 - `markdown_notes/design/` is the canonical, ordered design-policy corpus.
-- `markdown_notes/rdistnn_next_overhaul_remaining_tasks.md` is the live
-  pre-public roadmap; read it before starting new package work.
-- `markdown_notes/RdistNN_implementation_note.md` is a historical audit note;
-  only its long-term framework items (general conditional Z front end) are
-  still open.
+- `markdown_notes/rdistnn_roadmap.md` is the compact live roadmap; read it
+  before starting new package work. The pre-public overhaul is implemented;
+  the remaining open items are the public notation page and long-term
+  framework work (general conditional Z front end).
 - Completed or superseded implementation plans are archived with status
-  headers under `markdown_notes/archive/`; treat them as provenance, not as
-  live instructions — they largely predate the 2026-07-08 API renames.
+  headers under `markdown_notes/archive/` (packets dated 2026-07-09 and
+  2026-07-11, including the implemented pre-public roadmap and the historical
+  package audit note); treat them as provenance, not as live instructions —
+  they largely predate the 2026-07-08 API renames.
 
 ## Repository-wide non-negotiable rules
 

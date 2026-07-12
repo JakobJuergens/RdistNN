@@ -7,7 +7,9 @@ status header recording when and how it was completed. They are retained
 for provenance only and generally use pre-2026-07-08 API naming
 (`kappa`, `q_col`, `beta`, `se`/`vcov`/`omega`, `register_rank`, ...).
 
-The live roadmap is `markdown_notes/rdistnn_next_overhaul_remaining_tasks.md`.
+The live roadmap is `markdown_notes/rdistnn_roadmap.md` (the successor
+roadmap `rdistnn_next_overhaul_remaining_tasks.md` was implemented 2026-07-10
+and is archived in `../completed_plans_2026-07-11/`).
 The canonical design policy corpus remains `markdown_notes/design/`.
 
 Contents:

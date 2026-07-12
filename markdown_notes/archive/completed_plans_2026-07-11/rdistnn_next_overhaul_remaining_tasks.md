@@ -6,6 +6,11 @@
 **Audience:** author-facing and Codex-facing  
 **Purpose:** This note lists only tasks still worth doing next. It intentionally omits items already completed by the recent cleanup commits.
 
+> **Status (2026-07-11): archived** in the post-overhaul markdown
+> consolidation. One caveat: the public notation page deferred from the
+> cleanup note's section 25 was never carried into this roadmap and remains
+> open; it is now tracked in `markdown_notes/rdistnn_roadmap.md`.
+>
 > **Status (2026-07-10): implemented.** All sections of this note landed in
 > RdistNN commits `620bd20` (jackknife-meat route, internal weight guard),
 > `4994439` (design note 15 routes, supplied-theta S3 semantics, moment-first

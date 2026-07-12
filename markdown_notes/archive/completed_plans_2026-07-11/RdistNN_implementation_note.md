@@ -2,6 +2,12 @@
 
 *Created: 2026-04-09. Updated: 2026-04-26 after the diagnostics layer landed and the manuscript-facing simulation orchestration moved into `Cond_Z_Estimation/Codes/Simulations/`. Updated: 2026-07-09 in the markdown consolidation pass.*
 
+> **Status (2026-07-11): archived.** The still-open long-term items below
+> (general conditional Z front end, nuisance-fitting convenience,
+> empirical-application packaging) were promoted to the compact live roadmap
+> `markdown_notes/rdistnn_roadmap.md`; everything else in this note is
+> implemented history.
+>
 > **Status (2026-07-09):** this is now a largely historical audit note. Since
 > the 2026-04-26 update, the following have all landed: the integrated
 > tuning-grid sensitivity workflow (design note 14; `tuning_mode = "grid"`,
