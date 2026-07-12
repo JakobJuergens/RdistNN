@@ -12,7 +12,7 @@ sim_cate_run(
   n_reps = 500L,
   master_seed = 42L,
   k = 1L,
-  s_fn = function(n, kx) floor(n^((kx + 1L)/(kx + 2L))),
+  s_fn = function(n, kx) floor(0.4 * n^((kx + 1L)/(kx + 2L))),
   tuning = NULL,
   tuning_mode = c("default", "grid"),
   methods = "dnn_oracle",
@@ -43,8 +43,8 @@ The fixed-\code{k} extension is essentially direct, but the current paper
 derivations are written for \code{k = 1}.}
 
 \item{s_fn}{Function \code{f(n, kx)} returning the integer kernel order.
-Default satisfies the undersmoothing condition
-\eqn{s \asymp n^{(k_x+1)/(k_x+2)}}.}
+The finite-sample default is
+\eqn{s = \lfloor 0.4 n^{(k_x+1)/(k_x+2)} \rfloor}.}
 
 \item{tuning}{Optional kernel-order tuning specification. When supplied,
 \code{s} is resolved per simulation cell from \code{tuning_eval(..., mode = "default")}

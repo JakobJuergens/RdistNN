@@ -177,6 +177,12 @@ predict(fit_plqr, x0 = c(0.25, -0.25), interval = "confidence")
 diagnostics(fit_plqr)
 ```
 
+`tuning_dnn_paper()` uses the paper's finite-sample default `lambda = 0.4`
+and sensitivity grid `c(0.3, 0.4, 0.5, 0.75)`, with
+`s(lambda) = floor(lambda * n^((kx + 1)/(kx + 2)))`. Explicit `lambda`,
+`lambda_grid`, fixed `s`, and custom tuning specifications remain supported;
+`lambda = 1` is the more aggressive localization benchmark used in the paper.
+
 Without a density input, `plqr_dnn()` still evaluates the localized
 moment and reports `moment_se`, a jackknife **moment diagnostic**; that
 is not coefficient-level inference.

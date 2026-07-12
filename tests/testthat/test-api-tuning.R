@@ -352,35 +352,35 @@ test_that("eval-only and grid-only tunings use documented fallback behavior", {
 
 test_that("paper_undersmooth default and grid are deterministic", {
   out_default <- tuning_eval("paper_undersmooth", n = 1000L, kx = 2L, k = 5L, mode = "default")
-  expect_equal(out_default$s, 177L)
-  expect_equal(out_default$meta$lambda, 1)
+  expect_equal(out_default$s, 71L)
+  expect_equal(out_default$meta$lambda, 0.4)
   expect_equal(out_default$meta$rounding, "floor")
   expect_equal(out_default$meta$formula, "lambda * n^((kx + 1)/(kx + 2))")
 
   out_grid <- tuning_eval("paper_undersmooth", n = 1000L, kx = 2L, k = 5L, mode = "grid")
   expect_s3_class(out_grid$candidates, "data.frame")
-  expect_equal(out_grid$candidates$lambda, c(0.75, 1, 1.25, 1.5))
-  expect_equal(out_grid$candidates$s, c(133L, 177L, 222L, 266L))
+  expect_equal(out_grid$candidates$lambda, c(0.3, 0.4, 0.5, 0.75))
+  expect_equal(out_grid$candidates$s, c(53L, 71L, 88L, 133L))
   expect_true(all(out_grid$candidates$feasible))
 })
 
 test_that("paper_undersmooth supports rounding choices and kx_override", {
   expect_equal(
     tuning_eval(tuning_dnn_paper(rounding = "floor"), n = 50L, kx = 1L, k = 2L)$s,
-    13L
+    5L
   )
   expect_equal(
     tuning_eval(tuning_dnn_paper(rounding = "ceiling"), n = 50L, kx = 1L, k = 2L)$s,
-    14L
+    6L
   )
   expect_equal(
     tuning_eval(tuning_dnn_paper(rounding = "round"), n = 50L, kx = 1L, k = 2L)$s,
-    14L
+    5L
   )
 
   tun_kx_override <- tuning_dnn_paper(kx_override = 5L)
   out_override <- tuning_eval(tun_kx_override, n = 100L, kx = 2L, k = 2L)
-  expect_equal(out_override$s, 51L)
+  expect_equal(out_override$s, 20L)
 })
 
 test_that("paper_undersmooth input validation is explicit", {

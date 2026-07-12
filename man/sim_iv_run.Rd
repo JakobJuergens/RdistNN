@@ -14,7 +14,7 @@ sim_iv_run(
   n_reps = 500L,
   master_seed = 42L,
   k = 1L,
-  s_fn = function(n, kx) floor(n^((kx + 1L)/(kx + 2L))),
+  s_fn = function(n, kx) floor(0.4 * n^((kx + 1L)/(kx + 2L))),
   tuning = NULL,
   methods = "dnn_iv_oracle",
   alpha = 0.05,
@@ -40,7 +40,8 @@ just-identified design is run once with realized \code{q = 1}.}
 
 \item{k}{Integer DNN neighbor count.}
 
-\item{s_fn}{Function \code{f(n, kx)} returning kernel order.}
+\item{s_fn}{Function \code{f(n, kx)} returning kernel order. The finite-sample
+default is \eqn{\lfloor 0.4 n^{(k_x+1)/(k_x+2)} \rfloor}.}
 
 \item{tuning}{Optional tuning specification.  When supplied, omit \code{s_fn}.}
 

@@ -1,8 +1,8 @@
 # inst/paper-replication/cate/run.R
 #
 # Full paper replication script for the CATE simulation study.
-# Reference: "Robust Inference for Conditional Z-Estimation via
-#            Distributional Nearest Neighbors" (Juergens)
+# Reference: the conditional Z-estimation working paper listed by
+#            citation("RdistNN").
 #            Paper/Parts/05_Applications/05b_CATE_Simulation.tex
 #
 # Assumes RdistNN is installed.  Run from any working directory:
@@ -35,7 +35,7 @@ PAPER_GRID <- list(
   n_reps      = 10000L,
   master_seed = 42L,
   k           = 1L,  # one-nearest-neighbor DNN kernel used in the paper theory
-  s_fn        = function(n, kx) floor(n^((kx + 1L) / (kx + 2L))),
+  s_fn        = function(n, kx) floor(0.4 * n^((kx + 1L) / (kx + 2L))),
   # Main manuscript comparison: same-sample DNN, cross-fitted DNN, fixed-
   # bandwidth local constant, and interaction OLS. Diagnostic oracle /
   # Mahalanobis variants remain available in the package but are not part of the

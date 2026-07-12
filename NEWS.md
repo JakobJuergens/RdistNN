@@ -2,8 +2,19 @@
 
 ## RdistNN (development)
 
+### Paper tuning defaults
+
+- `tuning_dnn_paper()` now uses the paper's finite-sample default
+  `lambda = 0.4` and sensitivity grid `c(0.3, 0.4, 0.5, 0.75)`, while
+  preserving `s(lambda) = floor(lambda * n^((kx + 1)/(kx + 2)))` and all
+  explicit tuning overrides.
+
 ### Theory-facing CATE simulation diagnostics
 
+- User-facing `diagnostics(cate_result)` now reuses the paper-simulation
+  definitions for the ordinary-Euclidean 90-percent weight-mass radius,
+  normalized treated/control arm ESS, and top-five absolute weighted
+  score-contribution share, with explicit availability fields.
 - The CATE simulation now decomposes DNN error into realized localized-branch
   drift and estimator remainder, and records the corresponding root-effective-
   sample-size standardized drift.
@@ -239,7 +250,7 @@ old names are kept.
   localization (every target point silently received the global weighted
   mean). When both `s` and `tuning` are omitted, `s` is now resolved from
   the paper undersmoothing rule `tuning_dnn_paper()`,
-  `s = floor(n^((kx + 1)/(kx + 2)))`, matching the default already used by
+  `s = floor(0.4 * n^((kx + 1)/(kx + 2)))`, matching the current default used by
   the Stata companion (`cate_dnn.ado`). The resolved rule is recorded in
   `meta$tuning` with `source = "paper_default"`. Calls that passed `s`
   explicitly are unaffected.

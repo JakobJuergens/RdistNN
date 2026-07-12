@@ -5,8 +5,8 @@
 \title{Paper-default undersmoothing rule for kernel order}
 \usage{
 tuning_dnn_paper(
-  lambda = 1,
-  lambda_grid = c(0.75, 1, 1.25, 1.5),
+  lambda = 0.4,
+  lambda_grid = c(0.3, 0.4, 0.5, 0.75),
   rounding = "floor",
   kx_override = NULL
 )
@@ -26,7 +26,7 @@ A \code{dnn_tuning} spec.
 \description{
 Builds a tuning spec implementing
 \deqn{s(\lambda) = \lfloor \lambda n^{(k_x+1)/(k_x+2)} \rfloor}
-with default \eqn{\lambda = 1} and optional candidate grid.
+with finite-sample default \eqn{\lambda = 0.4} and optional candidate grid.
 }
 \examples{
 tun <- tuning_dnn_paper()

@@ -321,7 +321,7 @@ test_that("plqr_dnn grid mode rejects explicit s and records infeasible candidat
     return = character(0)
   )
   expect_true(is.list(grid$tuning_grid))
-  expect_equal(grid$tuning_grid$candidates$lambda, c(0.75, 1, 1.25, 1.5))
+  expect_equal(grid$tuning_grid$candidates$lambda, c(0.3, 0.4, 0.5, 0.75))
   expect_equal(grid$tuning_grid$meta$name, "paper_undersmooth")
   expect_equal(grid$meta$tuning$source, "paper_default")
 

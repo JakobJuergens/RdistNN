@@ -319,8 +319,8 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
 #'   The fixed-`k` extension is essentially direct, but the current paper
 #'   derivations are written for `k = 1`.
 #' @param s_fn Function `f(n, kx)` returning the integer kernel order.
-#'   Default satisfies the undersmoothing condition
-#'   \eqn{s \asymp n^{(k_x+1)/(k_x+2)}}.
+#'   The finite-sample default is
+#'   \eqn{s = \lfloor 0.4 n^{(k_x+1)/(k_x+2)} \rfloor}.
 #' @param tuning Optional kernel-order tuning specification. When supplied,
 #'   `s` is resolved per simulation cell from `tuning_eval(..., mode = "default")`
 #'   and `s_fn` must be omitted.
@@ -370,7 +370,7 @@ sim_cate_run <- function(
     n_reps      = 500L,
     master_seed = 42L,
     k           = 1L,
-    s_fn        = function(n, kx) floor(n^((kx + 1L) / (kx + 2L))),
+    s_fn        = function(n, kx) floor(0.4 * n^((kx + 1L) / (kx + 2L))),
     tuning      = NULL,
     tuning_mode = c("default", "grid"),
     methods     = "dnn_oracle",
@@ -397,7 +397,7 @@ sim_cate_run <- function(
     )
   }
   if (is.null(tuning) && is.null(s_fn_arg)) {
-    s_fn <- function(n, kx) floor(n^((kx + 1L) / (kx + 2L)))
+    s_fn <- function(n, kx) floor(0.4 * n^((kx + 1L) / (kx + 2L)))
   } else if (is.null(tuning)) {
     s_fn <- s_fn_arg
   }

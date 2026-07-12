@@ -145,7 +145,7 @@ test_that("omitted s resolves to the paper default; explicit s keeps the manual 
     return = "tuning"
   )
 
-  s_paper <- as.integer(floor(40^(3 / 4)))
+  s_paper <- as.integer(floor(0.4 * 40^(3 / 4)))
   expect_equal(fit$meta$s, s_paper)
   expect_true(is.list(fit$meta$tuning))
   expect_equal(fit$tuning$source, "paper_default")

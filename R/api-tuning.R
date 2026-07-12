@@ -494,7 +494,7 @@ tuning_eval <- function(
 #'
 #' Builds a tuning spec implementing
 #' \deqn{s(\lambda) = \lfloor \lambda n^{(k_x+1)/(k_x+2)} \rfloor}
-#' with default \eqn{\lambda = 1} and optional candidate grid.
+#' with finite-sample default \eqn{\lambda = 0.4} and optional candidate grid.
 #'
 #' @param lambda Numeric scalar tuning constant.
 #' @param lambda_grid Numeric vector of candidate constants for grid mode.
@@ -506,8 +506,8 @@ tuning_eval <- function(
 #' tuning_eval(tun, n = 1000, kx = 2, k = 1)
 #' @export
 tuning_dnn_paper <- function(
-  lambda = 1,
-  lambda_grid = c(0.75, 1, 1.25, 1.5),
+  lambda = 0.4,
+  lambda_grid = c(0.3, 0.4, 0.5, 0.75),
   rounding = "floor",
   kx_override = NULL
 ) {

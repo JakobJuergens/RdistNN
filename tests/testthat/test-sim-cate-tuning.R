@@ -9,7 +9,7 @@ test_that("sim_cate_run tuning matches legacy s_fn for paper default", {
   )
 
   raw_fn <- suppressWarnings(do.call(sim_cate_run, c(base_args, list(
-    s_fn = function(n, kx) floor(n^((kx + 1L) / (kx + 2L)))
+    s_fn = function(n, kx) floor(0.4 * n^((kx + 1L) / (kx + 2L)))
   ))))
   raw_tun <- suppressWarnings(do.call(sim_cate_run, c(base_args, list(
     tuning = tuning_dnn_paper()
@@ -29,7 +29,7 @@ test_that("sim_cate_run rejects simultaneous tuning and s_fn", {
       n_reps = 1L,
       master_seed = 1L,
       tuning = tuning_dnn_paper(),
-      s_fn = function(n, kx) floor(n^((kx + 1L) / (kx + 2L))),
+      s_fn = function(n, kx) floor(0.4 * n^((kx + 1L) / (kx + 2L))),
       verbose = FALSE
     ),
     "cannot provide both `tuning` and `s_fn`"
@@ -113,7 +113,7 @@ test_that("sim_cate_run default s_fn path is unchanged by tuning feature", {
 
   raw_default <- suppressWarnings(do.call(sim_cate_run, base))
   raw_explicit <- suppressWarnings(do.call(sim_cate_run, c(base, list(
-    s_fn = function(n, kx) floor(n^((kx + 1L) / (kx + 2L)))
+    s_fn = function(n, kx) floor(0.4 * n^((kx + 1L) / (kx + 2L)))
   ))))
 
   expect_equal(raw_default$s, raw_explicit$s)

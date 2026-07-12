@@ -241,7 +241,7 @@
   tuning_source <- "tuning"
   if (is.null(tuning) && is.null(s)) {
     # Neither `s` nor `tuning` supplied: default to the paper undersmoothing
-    # rule s = floor(n^((kx + 1)/(kx + 2))) via tuning_dnn_paper(). A fixed
+    # rule s = floor(0.4 * n^((kx + 1)/(kx + 2))) via tuning_dnn_paper(). A fixed
     # constant default (for example s = 1) yields uniform weights and hence
     # no localization at all, so it must never be the silent default.
     tuning <- tuning_dnn_paper()

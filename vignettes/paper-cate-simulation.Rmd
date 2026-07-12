@@ -17,11 +17,11 @@ library(RdistNN)
 
 ## Overview
 
-This vignette documents the simulation infrastructure for the paper
-*"Robust Inference for Conditional Z-Estimation via Distributional Nearest
-Neighbors"* (Juergens). It shows how to use the package-level simulation
-functions on a small synthetic example. The full Monte Carlo run for the paper
-main grid is in `inst/paper-replication/cate/run.R`.
+This vignette documents the simulation infrastructure for the companion
+conditional Z-estimation paper listed by `citation("RdistNN")`. It shows how to
+use the package-level simulation functions on a small synthetic example. The
+full Monte Carlo run for the paper main grid is in
+`inst/paper-replication/cate/run.R`.
 
 The manuscript repo `Cond_Z_Estimation/Codes/Simulations/` now provides the
 paper-facing orchestration layer on top of these package functions:

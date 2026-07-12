@@ -13,7 +13,7 @@ iv_paper_grid <- function(smoke = identical(Sys.getenv("RDISTNN_IV_SMOKE"), "1")
       n_reps = 2L,
       master_seed = 42L,
       k = 1L,
-      s_fn = function(n, kx) floor(n^((kx + 1L) / (kx + 2L))),
+      s_fn = function(n, kx) floor(0.4 * n^((kx + 1L) / (kx + 2L))),
       methods = "iv_oracle",
       alpha = 0.05,
       sigma = 0.5,
@@ -36,7 +36,7 @@ iv_paper_grid <- function(smoke = identical(Sys.getenv("RDISTNN_IV_SMOKE"), "1")
     n_reps = 10000L,
     master_seed = 42L,
     k = 1L,
-    s_fn = function(n, kx) floor(n^((kx + 1L) / (kx + 2L))),
+    s_fn = function(n, kx) floor(0.4 * n^((kx + 1L) / (kx + 2L))),
     methods = c(
       "dnn_iv_fullsample",
       "dnn_iv_crossfit",

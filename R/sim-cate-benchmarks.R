@@ -158,30 +158,15 @@
   }
   W <- sweep(W, 2L, col_sums, FUN = "/")
 
-  x_mat <- as.matrix(dgp$data[, x_cols, drop = FALSE])
-  # This support diagnostic deliberately uses ordinary Euclidean distance in
-  # the original X coordinates after W has been formed. It is therefore a
-  # common physical-radius scale even when Mahalanobis distance ranked neighbors.
-  distance <- sqrt(rowSums(sweep(x_mat, 2L, dgp$x0, FUN = "-")^2))
-  ord <- order(distance)
-  radius_90 <- vapply(seq_len(m), function(j) {
-    idx <- which(cumsum(W[ord, j]) >= radius_mass)[1L]
-    distance[ord[[idx]]]
-  }, numeric(1L))
-
-  arm_ess <- function(arm) {
-    idx <- dgp$data$D == arm
-    vapply(seq_len(m), function(j) {
-      w <- W[idx, j]
-      if (length(w) == 0L || sum(w^2) <= 0) NA_real_ else sum(w)^2 / sum(w^2)
-    }, numeric(1L))
-  }
-  top5_score_share <- vapply(seq_len(m), function(j) {
-    contribution <- abs(W[, j] * (signal - tau_hat[[j]]))
-    total <- sum(contribution)
-    if (!is.finite(total) || total <= 0) return(NA_real_)
-    sum(sort(contribution, decreasing = TRUE)[seq_len(min(5L, n))]) / total
-  }, numeric(1L))
+  paper_diag <- .cate_paper_diagnostics(
+    W = W,
+    x_mat = as.matrix(dgp$data[, x_cols, drop = FALSE]),
+    x0_mat = matrix(dgp$x0, nrow = 1L),
+    signal = signal,
+    tau_hat = tau_hat,
+    t_vec = dgp$data$D,
+    radius_mass = radius_mass
+  )
 
   # `localized_truth` is the realized DNN-weighted truth, not the deterministic
   # population branch. `branch_drift` is retained as a historical output name;
@@ -207,10 +192,10 @@
     studentized_error = studentized_error,
     score_sd0 = score_sd0,
     standardized_branch_drift = standardized_branch_drift,
-    physical_radius_90 = radius_90,
-    treated_ess = arm_ess(1L),
-    control_ess = arm_ess(0L),
-    top5_score_share = top5_score_share,
+    physical_radius_90 = paper_diag$physical_radius_90,
+    treated_ess = paper_diag$treated_ess,
+    control_ess = paper_diag$control_ess,
+    top5_score_share = paper_diag$top5_score_share,
     stringsAsFactors = FALSE
   )
 }

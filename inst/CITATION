@@ -21,6 +21,15 @@ bibentry(
 # Optional: working-paper references (use 'Misc' if not in a journal yet)
 bibentry(
   bibtype = "Misc",
+  title   = "Orthogonal Inference for Conditional Z-Estimation without Cross-Fitting: A Distributional Nearest-Neighbor Approach",
+  author  = person("Jakob", "Juergens"),
+  year    = "2026",
+  howpublished = "Working paper",
+  url     = "https://github.com/JakobJuergens/Cond_Z_Estimation"
+)
+
+bibentry(
+  bibtype = "Misc",
   title   = "Jackknife for Hájek-Dominated Generalized U-Statistics",
   author  = person("Jakob", "Juergens"),
   year    = "2025",

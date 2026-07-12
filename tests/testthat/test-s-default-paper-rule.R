@@ -5,11 +5,11 @@
 # localization at all (every target point receives the global weighted mean).
 # These tests pin the corrected behavior: when both `s` and `tuning` are
 # omitted, `s` must resolve to the paper undersmoothing rule
-# s = floor(n^((kx + 1)/(kx + 2))) via tuning_dnn_paper(), matching the
+# s = floor(0.4 * n^((kx + 1)/(kx + 2))) via tuning_dnn_paper(), matching the
 # default implemented in the Stata companion (cate_dnn.ado).  They are the
 # `s`-analogue of test-k1-documentation-defaults.R.
 
-.paper_s <- function(n, kx) as.integer(floor(n^((kx + 1) / (kx + 2))))
+.paper_s <- function(n, kx) as.integer(floor(0.4 * n^((kx + 1) / (kx + 2))))
 
 test_that("np_dnn default s follows the paper rule and records provenance", {
   set.seed(11)
@@ -108,12 +108,12 @@ test_that("degenerate (near-uniform) weights trigger a warning", {
 })
 
 test_that("R default agrees with the Stata companion default formula", {
-  # RdistNN_stata/src/cate_dnn.ado uses: floor(n^((kx + 1)/(kx + 2))).
+  # RdistNN_stata uses: floor(0.4 * n^((kx + 1)/(kx + 2))).
   for (n in c(100L, 250L, 500L, 1000L)) {
     for (kx in c(1L, 2L, 3L)) {
       expect_identical(
         tuning_eval("paper_undersmooth", n = n, kx = kx, k = 1L)$s,
-        as.integer(floor(n^((kx + 1) / (kx + 2))))
+        as.integer(floor(0.4 * n^((kx + 1) / (kx + 2))))
       )
     }
   }

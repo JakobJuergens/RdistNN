@@ -1,8 +1,7 @@
 # sim-cate-data.R
 # Data-generating processes for the CATE simulation study.
 #
-# Six DGPs from the paper "Robust Inference for Conditional Z-Estimation via
-# Distributional Nearest Neighbors":
+# Six DGPs from the companion conditional Z-estimation paper:
 #
 #   dgp1_linear          -- linear tau, logistic propensity; correctly specified
 #                           for OLS-interaction benchmark

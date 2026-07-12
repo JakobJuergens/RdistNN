@@ -159,7 +159,8 @@ sim_iv_one_rep <- function(n, kx, q, k, s, design,
 #' @param n_reps Number of Monte Carlo replications per cell.
 #' @param master_seed Seed used to generate replicate seeds.
 #' @param k Integer DNN neighbor count.
-#' @param s_fn Function `f(n, kx)` returning kernel order.
+#' @param s_fn Function `f(n, kx)` returning kernel order. The finite-sample
+#'   default is \eqn{\lfloor 0.4 n^{(k_x+1)/(k_x+2)} \rfloor}.
 #' @param tuning Optional tuning specification.  When supplied, omit `s_fn`.
 #' @param methods Character vector of methods; see [sim_iv_methods()].
 #' @param alpha Nominal test size.
@@ -193,7 +194,7 @@ sim_iv_run <- function(
     n_reps = 500L,
     master_seed = 42L,
     k = 1L,
-    s_fn = function(n, kx) floor(n^((kx + 1L) / (kx + 2L))),
+    s_fn = function(n, kx) floor(0.4 * n^((kx + 1L) / (kx + 2L))),
     tuning = NULL,
     methods = "dnn_iv_oracle",
     alpha = 0.05,
@@ -218,7 +219,7 @@ sim_iv_run <- function(
     )
   }
   if (is.null(tuning) && is.null(s_fn_arg)) {
-    s_fn <- function(n, kx) floor(n^((kx + 1L) / (kx + 2L)))
+    s_fn <- function(n, kx) floor(0.4 * n^((kx + 1L) / (kx + 2L)))
   } else if (is.null(tuning)) {
     s_fn <- s_fn_arg
   }
