@@ -159,6 +159,9 @@
   W <- sweep(W, 2L, col_sums, FUN = "/")
 
   x_mat <- as.matrix(dgp$data[, x_cols, drop = FALSE])
+  # This support diagnostic deliberately uses ordinary Euclidean distance in
+  # the original X coordinates after W has been formed. It is therefore a
+  # common physical-radius scale even when Mahalanobis distance ranked neighbors.
   distance <- sqrt(rowSums(sweep(x_mat, 2L, dgp$x0, FUN = "-")^2))
   ord <- order(distance)
   radius_90 <- vapply(seq_len(m), function(j) {
