@@ -12,7 +12,10 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 <!-- badges: end -->
 
 **RdistNN** implements distributional nearest-neighbor (DNN)
-localization for local conditional moment and Z-estimation problems.
+localization for local conditional moment and Z-estimation problems. The
+pre-public interface overhaul is implemented; the package now uses
+consistent estimator, tuning, diagnostic, plotting, and simulation
+contracts across its primary workflows.
 
 - Core distance/rank/weight primitives (`weights_dnn()`,
   `weights_matrix()`, custom registries)
@@ -21,6 +24,10 @@ localization for local conditional moment and Z-estimation problems.
 - Unified diagnostics for fitted local estimators via `diagnostics()`
 - Built-in post-estimation methods (`summary()`, `confint()`,
   `predict()`)
+- Tuning-grid inspection through `candidate_fit()`, `candidate_fits()`,
+  and `plot_tuning()`
+- ggplot2 postestimation views for estimates, overlap, weights,
+  influence, conditioning, calibration, and dashboards
 - Fast delete-1 jackknife options (`jackknife = "fast"` and `"loo"`) for
   standard errors
 - Simulation infrastructure for the paper’s CATE study:
@@ -38,13 +45,13 @@ localization for local conditional moment and Z-estimation problems.
 
 Not all exported functions carry the same stability promise:
 
-| Tier                       | Meaning                                             | Examples                                                                                       | Public docs                                |
-|----------------------------|-----------------------------------------------------|------------------------------------------------------------------------------------------------|--------------------------------------------|
-| Stable user API            | expected to survive the public release              | `weights_dnn()`, `np_dnn()`, `cate_dnn()`, `plqr_dnn()`, `diagnostics()`, `tuning_dnn_paper()` | README + main reference groups             |
-| Developer API              | extension points for custom components              | distance / rank-weight / score specs and registries                                            | “Developer API” reference groups           |
-| Paper replication API      | tied to the paper’s simulation study                | `sim_cate_*`, `summarise_sim_results()`                                                        | replication reference group + vignette     |
-| Experimental companion API | may change before the companion papers are released | `gmm_dnn()`, `sim_iv_*`, TDNN/jackknife infrastructure                                         | “Experimental”/“Advanced” reference groups |
-| Internal                   | not exported                                        | low-level distance/order/rank-table plumbing                                                   | none                                       |
+| Tier | Meaning | Examples | Public docs |
+|----|----|----|----|
+| Stable user API | expected to survive the public release | `weights_dnn()`, `np_dnn()`, `cate_dnn()`, `plqr_dnn()`, fitted-object methods, diagnostics, tuning, and plotting helpers | README + main reference groups |
+| Developer API | extension points for custom components | distance / rank-weight / score specs and registries | “Developer API” reference groups |
+| Paper replication API | tied to the paper’s simulation study | `sim_cate_*`, `summarise_sim_results()` | replication reference group + vignette |
+| Experimental companion API | may change before the companion papers are released | `gmm_dnn()`, `sim_iv_*`, TDNN/jackknife infrastructure | “Experimental”/“Advanced” reference groups |
+| Internal | not exported | low-level distance/order/rank-table plumbing | none |
 
 For exact DNN weights, the package works with the full rank permutation
 at each target. Exact single-scale DNN has finite-population support
@@ -198,18 +205,18 @@ raw <- sim_cate_run(
 summarise_sim_results(raw)
 ```
 
-For DNN and local-constant rows, the raw and summary outputs also expose the
-realized DNN-weighted truth, realized localization drift, estimator remainder,
-physical neighborhood radius, arm-specific effective sample sizes, and
-studentized finite-sample shape. The weighted truth
-`sum_i W_i,s(x0) tau_0(X_i)` is random and is not the deterministic population
-branch `alpha_s(x0)`. With `x0` and `(n, s)` fixed, expectation over the i.i.d.
-covariate sample and complete-DNN exchangeability give
-`E[sum_i W_i,s(x0) tau_0(X_i)] = alpha_s(x0)`. The estimator remainder combines
-centered score variation with fitted-state effects; paired feasible/oracle
-comparisons isolate the latter. These fields keep localization, score variation,
-and nuisance fitting distinct instead of treating coverage as a single
-undifferentiated diagnostic.
+For DNN and local-constant rows, the raw and summary outputs also expose
+the realized DNN-weighted truth, realized localization drift, estimator
+remainder, physical neighborhood radius, arm-specific effective sample
+sizes, and studentized finite-sample shape. The weighted truth
+`sum_i W_i,s(x0) tau_0(X_i)` is random and is not the deterministic
+population branch `alpha_s(x0)`. With `x0` and `(n, s)` fixed,
+expectation over the i.i.d. covariate sample and complete-DNN
+exchangeability give `E[sum_i W_i,s(x0) tau_0(X_i)] = alpha_s(x0)`. The
+estimator remainder combines centered score variation with fitted-state
+effects; paired feasible/oracle comparisons isolate the latter. These
+fields keep localization, score variation, and nuisance fitting distinct
+instead of treating coverage as a single undifferentiated diagnostic.
 
 ### 5) Local IV-GMM (experimental)
 
@@ -295,6 +302,15 @@ plot(fit)
 
 <img src="man/figures/README-cate-profile-1.png" alt="" width="100%" />
 
+The plotting surface mirrors the fitted-object diagnostic contract:
+`plot_estimates()` handles coefficient profiles and intervals,
+`plot_overlap()` shows local treatment and propensity support,
+`plot_influence()` identifies high-contribution observations,
+`plot_tuning()` compares feasible tuning candidates, and
+`plot_dashboard()` assembles the main review panels.
+`plot_conditioning()` and `plot_calibration()` provide specialized
+PLQR/GMM views.
+
 Weight-geometry views show what the estimator averaged over:
 `plot_weights(fit, type = "kernel")` draws the effective data-driven
 kernel (weight against distance), `type = "profile"` the decay by rank,
@@ -327,7 +343,11 @@ figures.
 - Engine selection is automatic: compiled code is used when available,
   otherwise robust R fallbacks are used.
 - Deterministic tie handling is built in for reproducibility.
-- Tests use `testthat` (edition 3). Run `devtools::test()`.
+- Tests use `testthat` (edition 3). Run `devtools::test()` for the suite
+  and `devtools::check()` for the release gate.
+- The remaining pre-public documentation item is a dedicated notation
+  and package-conventions article; the general conditional-Z front end
+  and package-level SIPP workflow are longer-term work.
 - Rebuild this README from source with `devtools::build_readme()`.
 
 ## Getting Help
