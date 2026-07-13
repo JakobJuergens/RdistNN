@@ -671,13 +671,20 @@
 # parallelizes over replications, so letting each forest fit use all cores would
 # oversubscribe the machine badly on local multisession runs.
 
+.sim_cate_grf_available <- function() {
+  requireNamespace("grf", quietly = TRUE)
+}
+
 .method_causal_forest <- function(dgp, x_cols, alpha, ...) {
-  if (!requireNamespace("grf", quietly = TRUE)) {
+  if (!.sim_cate_grf_available()) {
     warning("grf not available; causal_forest returns NA.", call. = FALSE)
+    metadata <- .sim_cate_method_metadata("causal_forest")
     return(.sim_metric(
-      NA_real_, NA_real_, dgp$tau_x0, alpha, status = "failed",
-      method_variant = "grf_oracle_nuisance", forest_nuisance = "oracle",
-      y_hat_supplied = TRUE, w_hat_supplied = TRUE
+      NA_real_, NA_real_, NA_real_, alpha, status = "failed",
+      method_variant = metadata$method_variant,
+      forest_nuisance = metadata$forest_nuisance,
+      y_hat_supplied = metadata$y_hat_supplied,
+      w_hat_supplied = metadata$w_hat_supplied
     ))
   }
   dat    <- dgp$data
@@ -715,13 +722,15 @@
 # parallelism lives outside this method.
 
 .method_llf <- function(dgp, x_cols, alpha, ll_lambda = 0.1, ...) {
-  if (!requireNamespace("grf", quietly = TRUE)) {
+  if (!.sim_cate_grf_available()) {
     warning("grf not available; llf returns NA.", call. = FALSE)
+    metadata <- .sim_cate_method_metadata("llf")
     return(.sim_metric(
-      NA_real_, NA_real_, dgp$tau_x0, alpha, status = "failed",
-      method_variant = "grf_local_linear_oracle_nuisance",
-      forest_nuisance = "oracle", y_hat_supplied = TRUE,
-      w_hat_supplied = TRUE
+      NA_real_, NA_real_, NA_real_, alpha, status = "failed",
+      method_variant = metadata$method_variant,
+      forest_nuisance = metadata$forest_nuisance,
+      y_hat_supplied = metadata$y_hat_supplied,
+      w_hat_supplied = metadata$w_hat_supplied
     ))
   }
   dat    <- dgp$data
@@ -743,6 +752,7 @@
     cf,
     newdata                    = x0_mat,
     ll.lambda                  = ll_lambda,
+    ll.weight.penalty          = FALSE,
     estimate.variance          = TRUE,
     linear.correction.variables = seq_len(kx),
     num.threads                = 1L

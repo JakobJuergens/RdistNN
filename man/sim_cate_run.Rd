@@ -72,9 +72,15 @@ Default: \code{"dnn_oracle"}.}
 A \code{data.frame} with raw rows and columns \code{method}, \code{design}, \code{n},
 \code{kx}, \code{k}, \code{tuning_source}, \code{candidate_id}, \code{lambda}, \code{s}, \code{seed},
 \code{tau_hat}, \code{tau0}, \code{bias}, \code{sq_err}, \code{se}, \code{cover}, \code{ci_len}, \code{neff},
+\code{method_variant}, \code{forest_nuisance}, \code{y_hat_supplied}, and
+\code{w_hat_supplied}, plus the
 localization and studentization diagnostics described in
-\code{\link[=sim_cate_one_rep]{sim_cate_one_rep()}}, and \code{status}. Failed entries have \code{NA} for all
-metric columns.
+\code{\link[=sim_cate_one_rep]{sim_cate_one_rep()}} and \code{status}. The GRF fields identify whether the
+forest used oracle nuisances (\code{"oracle"}), common externally estimated
+nuisances (\code{"common_external"}), or internally estimated nuisances
+(\code{"internal"}), and whether \code{Y.hat} and \code{W.hat} were supplied. Non-GRF
+methods carry typed missing values for these fields. Failed entries have
+\code{NA} for all metric columns.
 }
 \description{
 Expands a grid of DGP designs, sample sizes, and covariate dimensions, then
@@ -105,7 +111,8 @@ Without \code{future.apply} the function falls back silently to sequential
 
 Each replicate is wrapped in \code{tryCatch}.  A total rep failure (e.g. DGP
 draw error) records \code{NA} for all metrics and all methods and emits a warning;
-per-method failures are handled inside \code{\link[=sim_cate_one_rep]{sim_cate_one_rep()}}.
+per-method failures are handled inside \code{\link[=sim_cate_one_rep]{sim_cate_one_rep()}}. Registered GRF
+route metadata is retained in both replacement paths.
 \code{\link[=summarise_sim_results]{summarise_sim_results()}} reports \code{n_failed} per candidate-aware group.
 }
 

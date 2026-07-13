@@ -28,6 +28,7 @@ skip_if_not(
   "localized_truth", "branch_drift", "estimator_remainder",
   "studentized_error", "score_sd0", "standardized_branch_drift",
   "physical_radius_90", "treated_ess", "control_ess", "top5_score_share",
+  "method_variant", "forest_nuisance", "y_hat_supplied", "w_hat_supplied",
   "status"
 )
 
@@ -196,6 +197,14 @@ test_that("sim_cate_run grid mode shapes total-failure rows by method and candid
   expect_equal(raw$status, rep("failed", 4L))
   expect_true(all(is.na(raw$tau_hat)))
   expect_true(all(is.na(raw$s[raw$method == "ols_interact"])))
+  dnn <- raw[raw$method == "dnn_oracle", , drop = FALSE]
+  expect_equal(nrow(dnn), 3L)
+  expect_false(anyNA(dnn$candidate_id))
+  expect_equal(dnn$s, c(4L, 6L, 8L))
+  expect_true(all(is.na(dnn$method_variant)))
+  expect_true(all(is.na(dnn$forest_nuisance)))
+  expect_true(all(is.na(dnn$y_hat_supplied)))
+  expect_true(all(is.na(dnn$w_hat_supplied)))
 })
 
 test_that("summarise_sim_results groups by candidate fields with NA-safe benchmark groups", {

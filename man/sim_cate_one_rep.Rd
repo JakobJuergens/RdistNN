@@ -70,7 +70,9 @@ exchangeability give
 The historical \code{branch_drift} field name is retained for compatibility;
 it stores realized localization drift. The estimator remainder combines
 centered score variation with fitted-state effects.
-Failed methods have \code{NA} for all metric columns and \code{status = "failed"}.
+Failed methods have \code{NA} for all metric columns and \code{status = "failed"};
+registered route metadata is retained when it is known from the selected
+method.
 }
 \description{
 Draws one dataset from the named DGP (via \code{\link[=sim_cate_data]{sim_cate_data()}}), then runs each

@@ -12,19 +12,25 @@ summarise_sim_results(raw)
 \code{ci_len}, and \code{status}. Optional columns \code{neff}, \code{tau_hat}, and \code{tau0}
 (returned by \code{\link[=sim_cate_run]{sim_cate_run()}}) are handled gracefully: \code{neff} is averaged
 into the summary; \code{tau_hat} is summarized through its empirical standard
-deviation; \code{tau0} remains a per-rep quantity and is not aggregated.}
+deviation; \code{tau0} remains a per-rep quantity and is not aggregated. When
+present, \code{method_variant}, \code{forest_nuisance}, \code{y_hat_supplied}, and
+\code{w_hat_supplied} extend the grouping key. Older raw objects without these
+fields receive typed missing metadata; no nuisance route is inferred.}
 }
 \value{
 A \code{data.frame} with one row per unique group and columns
 \code{method}, \code{design}, \code{n}, \code{kx}, \code{candidate_id}, \code{lambda}, \code{s}, \code{n_reps},
 \code{n_failed}, \code{bias}, \code{rmse}, \code{se_mean}, \code{cover}, \code{ci_len}, \code{emp_sd},
 \code{se_to_sd}, \code{bias_to_se}, localization, support, and studentized-shape
-diagnostics (and \code{neff} when present in \code{raw}).
+diagnostics (and \code{neff} when present in \code{raw}). The output always includes
+the four GRF route fields, with typed missing values when they were absent
+from \code{raw} or do not apply.
 }
 \description{
 Aggregates a data.frame of raw replicate-level results (as returned by
 \code{\link[=sim_cate_run]{sim_cate_run()}}) to one summary row per
-\verb{(method, design, n, kx, candidate_id, lambda, s)} cell. Reports bias, RMSE,
+\verb{(method, design, n, kx, candidate_id, lambda, s)} cell and, when present,
+per GRF nuisance configuration. Reports bias, RMSE,
 mean SE, empirical coverage, mean CI length, empirical sampling dispersion of
 \code{tau_hat}, the ratio of mean SE to empirical dispersion, and (optionally)
 mean effective sample size. When the raw rows carry localization diagnostics,

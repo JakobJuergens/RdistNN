@@ -35,12 +35,40 @@
     "method", "design", "n", "kx", "k", "tuning_source",
     "candidate_id", "lambda", "s", "seed",
     .sim_cate_metric_names(),
+    "method_variant", "forest_nuisance", "y_hat_supplied",
+    "w_hat_supplied",
     "status"
   )
 }
 
 .sim_cate_is_dnn_method <- function(method) {
   grepl("^dnn_", method)
+}
+
+.sim_cate_method_metadata <- function(method) {
+  .get_sim_method(method)
+  if (identical(method, "causal_forest")) {
+    return(list(
+      method_variant = "grf_oracle_nuisance",
+      forest_nuisance = "oracle",
+      y_hat_supplied = TRUE,
+      w_hat_supplied = TRUE
+    ))
+  }
+  if (identical(method, "llf")) {
+    return(list(
+      method_variant = "grf_local_linear_oracle_nuisance",
+      forest_nuisance = "oracle",
+      y_hat_supplied = TRUE,
+      w_hat_supplied = TRUE
+    ))
+  }
+  list(
+    method_variant = NA_character_,
+    forest_nuisance = NA_character_,
+    y_hat_supplied = NA,
+    w_hat_supplied = NA
+  )
 }
 
 .sim_cate_tuning_default <- function(tuning, n, kx, k) {
@@ -70,6 +98,7 @@
 
 .sim_cate_failure_rows <- function(method, n, kx, k, s, tuning, tuning_mode,
                                    alpha, by_candidate = FALSE) {
+  metadata <- .sim_cate_method_metadata(method)
   if (isTRUE(by_candidate) && identical(tuning_mode, "grid") &&
       .sim_cate_is_dnn_method(method)) {
     candidates <- .sim_cate_grid_candidates(tuning = tuning, n = n, kx = kx, k = k)
@@ -82,6 +111,10 @@
       candidate_id = candidates$candidate_id,
       lambda = candidates$lambda,
       s = candidates$s,
+      method_variant = metadata$method_variant,
+      forest_nuisance = metadata$forest_nuisance,
+      y_hat_supplied = metadata$y_hat_supplied,
+      w_hat_supplied = metadata$w_hat_supplied,
       status = "failed"
     ))
   }
@@ -92,6 +125,10 @@
     tau0 = NA_real_,
     alpha = alpha,
     s = if (.sim_cate_is_dnn_method(method)) s else NA_integer_,
+    method_variant = metadata$method_variant,
+    forest_nuisance = metadata$forest_nuisance,
+    y_hat_supplied = metadata$y_hat_supplied,
+    w_hat_supplied = metadata$w_hat_supplied,
     status = "failed"
   )
 }
@@ -115,6 +152,10 @@
       }
     }
   }
+  res$method_variant <- as.character(res$method_variant)
+  res$forest_nuisance <- as.character(res$forest_nuisance)
+  res$y_hat_supplied <- as.logical(res$y_hat_supplied)
+  res$w_hat_supplied <- as.logical(res$w_hat_supplied)
   res[, .sim_cate_row_names(), drop = FALSE]
 }
 
@@ -146,6 +187,7 @@
 
 .sim_cate_add_cell_columns <- function(result, method, d, n, kx, k,
                                        tuning_source, seed) {
+  result <- .sim_cate_normalize_method_rows(result)
   result$method <- method
   result$design <- d
   result$n <- n
@@ -200,7 +242,9 @@
 #'   The historical `branch_drift` field name is retained for compatibility;
 #'   it stores realized localization drift. The estimator remainder combines
 #'   centered score variation with fitted-state effects.
-#'   Failed methods have `NA` for all metric columns and `status = "failed"`.
+#'   Failed methods have `NA` for all metric columns and `status = "failed"`;
+#'   registered route metadata is retained when it is known from the selected
+#'   method.
 #'
 #' @examples
 #' rep1 <- sim_cate_one_rep(
@@ -244,10 +288,10 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
     s <- .sim_cate_tuning_default(tuning = tuning, n = n, kx = kx, k = k)$s
   }
 
+  fns <- lapply(methods, .get_sim_method)
   dgp    <- sim_cate_data(design, n = n, kx = kx,
                           sigma = sigma, clip = clip, seed = seed)
   x_cols <- paste0("X", seq_len(kx))
-  fns <- lapply(methods, .get_sim_method)
 
   rows <- lapply(seq_along(methods), function(i) {
     meth <- methods[[i]]
@@ -314,7 +358,8 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
 #' @section Fault tolerance:
 #' Each replicate is wrapped in `tryCatch`.  A total rep failure (e.g. DGP
 #' draw error) records `NA` for all metrics and all methods and emits a warning;
-#' per-method failures are handled inside [sim_cate_one_rep()].
+#' per-method failures are handled inside [sim_cate_one_rep()]. Registered GRF
+#' route metadata is retained in both replacement paths.
 #' [summarise_sim_results()] reports `n_failed` per candidate-aware group.
 #'
 #' @param designs Character vector of DGP names.
@@ -350,9 +395,15 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
 #' @return A `data.frame` with raw rows and columns `method`, `design`, `n`,
 #'   `kx`, `k`, `tuning_source`, `candidate_id`, `lambda`, `s`, `seed`,
 #'   `tau_hat`, `tau0`, `bias`, `sq_err`, `se`, `cover`, `ci_len`, `neff`,
+#'   `method_variant`, `forest_nuisance`, `y_hat_supplied`, and
+#'   `w_hat_supplied`, plus the
 #'   localization and studentization diagnostics described in
-#'   [sim_cate_one_rep()], and `status`. Failed entries have `NA` for all
-#'   metric columns.
+#'   [sim_cate_one_rep()] and `status`. The GRF fields identify whether the
+#'   forest used oracle nuisances (`"oracle"`), common externally estimated
+#'   nuisances (`"common_external"`), or internally estimated nuisances
+#'   (`"internal"`), and whether `Y.hat` and `W.hat` were supplied. Non-GRF
+#'   methods carry typed missing values for these fields. Failed entries have
+#'   `NA` for all metric columns.
 #'
 #' @seealso [sim_cate_one_rep()], [summarise_sim_results()], [sim_cate_methods()]
 #'
@@ -412,6 +463,7 @@ sim_cate_run <- function(
   } else if (is.null(tuning)) {
     s_fn <- s_fn_arg
   }
+  invisible(lapply(methods, .get_sim_method))
 
   # Rep-level parallel map: future_lapply when available, lapply otherwise.
   # Use future.seed = TRUE for parallel-safe reproducible RNG streams in the

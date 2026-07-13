@@ -9,30 +9,30 @@ pkg_ver <- tryCatch(
 
 bibentry(
   bibtype = "Manual",
-  title   = "RdistNN: Modular distances and DNN weight engines for U-statistics",
+  title   = "Distributional Nearest-Neighbor Inference for Local Conditional Moment Models",
   author  = c(
     person("Jakob", "Juergens")
   ),
-  year    = "2025",
+  year    = "2026",
   note    = sprintf("R package version %s", pkg_ver),
   url     = "https://jakobjuergens.github.io/RdistNN/"
 )
 
-# Optional: working-paper references (use 'Misc' if not in a journal yet)
 bibentry(
   bibtype = "Misc",
-  title   = "Orthogonal Inference for Conditional Z-Estimation without Cross-Fitting: A Distributional Nearest-Neighbor Approach",
-  author  = person("Jakob", "Juergens"),
+  title   = "Robust Inference for Conditional Z-Estimation via Distributional Nearest Neighbors",
+  author  = person("Jakob R.", "Juergens"),
   year    = "2026",
   howpublished = "Working paper",
-  url     = "https://github.com/JakobJuergens/Cond_Z_Estimation"
+  url     = "https://jakobjuergens.com/research/#conditional-z-estimation-dnn"
 )
 
 bibentry(
   bibtype = "Misc",
-  title   = "Jackknife for Hájek-Dominated Generalized U-Statistics",
-  author  = person("Jakob", "Juergens"),
+  title   = "Jackknife Variance Estimation for Hájek-Dominated Generalized U-Statistics",
+  author  = person("Jakob R.", "Juergens"),
   year    = "2025",
-  howpublished = "Working paper",
-  url     = "https://arxiv.org/abs/2509.12356"  # replace with actual
+  howpublished = "arXiv preprint arXiv:2509.12356",
+  doi     = "10.48550/arXiv.2509.12356",
+  url     = "https://arxiv.org/abs/2509.12356"
 )

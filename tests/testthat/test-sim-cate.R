@@ -259,10 +259,14 @@ test_that("sim_cate_run: no future.apply RNG misuse warning", {
 })
 
 test_that("grf-missing benchmark warnings are emitted without call metadata", {
-  skip_if(requireNamespace("grf", quietly = TRUE), "grf installed; missing-package warning path not active")
+  testthat::local_mocked_bindings(
+    .sim_cate_grf_available = function() FALSE,
+    .package = "RdistNN"
+  )
 
   m_cf <- getFromNamespace(".method_causal_forest", "RdistNN")
   m_llf <- getFromNamespace(".method_llf", "RdistNN")
+  metric_names <- getFromNamespace(".sim_cate_metric_names", "RdistNN")()
   dgp <- sim_cate_data("dgp1_linear", n = 40L, kx = 2L, seed = 11L)
   x_cols <- grep("^X", names(dgp$data), value = TRUE)
 
@@ -277,13 +281,15 @@ test_that("grf-missing benchmark warnings are emitted without call metadata", {
   expect_s3_class(w_cf, "warning")
   expect_match(conditionMessage(w_cf), "grf not available; causal_forest returns NA\\.")
   expect_null(conditionCall(w_cf))
+  expect_identical(cf_result$status, "failed")
+  expect_true(all(is.na(cf_result[, metric_names, drop = FALSE])))
   expect_identical(cf_result$method_variant, "grf_oracle_nuisance")
   expect_identical(cf_result$forest_nuisance, "oracle")
   expect_true(cf_result$y_hat_supplied)
   expect_true(cf_result$w_hat_supplied)
 
   w_llf <- NULL
-  withCallingHandlers(
+  llf_result <- withCallingHandlers(
     m_llf(dgp, x_cols = x_cols, alpha = 0.05),
     warning = function(w) {
       w_llf <<- w
@@ -293,6 +299,81 @@ test_that("grf-missing benchmark warnings are emitted without call metadata", {
   expect_s3_class(w_llf, "warning")
   expect_match(conditionMessage(w_llf), "grf not available; llf returns NA\\.")
   expect_null(conditionCall(w_llf))
+  expect_identical(llf_result$status, "failed")
+  expect_true(all(is.na(llf_result[, metric_names, drop = FALSE])))
+  expect_identical(llf_result$method_variant, "grf_local_linear_oracle_nuisance")
+  expect_identical(llf_result$forest_nuisance, "oracle")
+  expect_true(llf_result$y_hat_supplied)
+  expect_true(llf_result$w_hat_supplied)
+})
+
+test_that("method runtime failures retain registered GRF identity", {
+  original_get <- getFromNamespace(".get_sim_method", "RdistNN")
+  testthat::local_mocked_bindings(
+    .get_sim_method = function(name) {
+      if (identical(name, "causal_forest")) {
+        return(function(...) stop("injected GRF runtime failure", call. = FALSE))
+      }
+      original_get(name)
+    },
+    .package = "RdistNN"
+  )
+
+  failed <- NULL
+  expect_warning(
+    failed <- sim_cate_one_rep(
+      n = 40L, kx = 2L, k = 1L, s = 6L,
+      design = "dgp1_linear", methods = "causal_forest", seed = 122L
+    ),
+    "injected GRF runtime failure"
+  )
+  metric_names <- getFromNamespace(".sim_cate_metric_names", "RdistNN")()
+
+  expect_identical(failed$status, "failed")
+  expect_true(all(is.na(failed[, metric_names, drop = FALSE])))
+  expect_identical(failed$method_variant, "grf_oracle_nuisance")
+  expect_identical(failed$forest_nuisance, "oracle")
+  expect_true(failed$y_hat_supplied)
+  expect_true(failed$w_hat_supplied)
+})
+
+test_that("outer replicate failures retain registered GRF identity", {
+  failed <- NULL
+  expect_warning(
+    failed <- sim_cate_run(
+      designs = "bad_design", n_vals = 40L, kx_vals = 2L,
+      n_reps = 1L, master_seed = 123L, methods = "causal_forest",
+      verbose = FALSE
+    ),
+    "rep seed"
+  )
+  metric_names <- getFromNamespace(".sim_cate_metric_names", "RdistNN")()
+
+  expect_identical(failed$status, "failed")
+  expect_true(all(is.na(failed[, metric_names, drop = FALSE])))
+  expect_identical(failed$method_variant, "grf_oracle_nuisance")
+  expect_identical(failed$forest_nuisance, "oracle")
+  expect_true(failed$y_hat_supplied)
+  expect_true(failed$w_hat_supplied)
+})
+
+test_that("unknown simulation methods are rejected before failure shaping", {
+  resolver <- getFromNamespace(".sim_cate_method_metadata", "RdistNN")
+  expect_error(resolver("not_registered"), "Unknown simulation method")
+  expect_error(
+    sim_cate_one_rep(
+      n = 40L, kx = 2L, k = 1L, s = 6L,
+      design = "dgp1_linear", methods = "not_registered", seed = 124L
+    ),
+    "Unknown simulation method"
+  )
+  expect_error(
+    sim_cate_run(
+      designs = "bad_design", n_vals = 40L, kx_vals = 2L,
+      n_reps = 1L, methods = "not_registered", verbose = FALSE
+    ),
+    "Unknown simulation method"
+  )
 })
 
 test_that("GRF comparator metadata identifies supplied oracle nuisances", {
@@ -323,6 +404,70 @@ test_that("sim_cate_run: multi-method produces one row per method per rep", {
   # 1 design x 1 n x 1 kx x 2 reps x 2 methods = 4
   expect_equal(nrow(raw), 4L)
   expect_true(all(c("dnn_oracle", "ols_interact") %in% raw$method))
+})
+
+test_that("sim_cate_run raw schema includes typed GRF nuisance-route fields", {
+  schema <- getFromNamespace(".sim_cate_raw_schema", "RdistNN")()
+  route_fields <- c(
+    "method_variant", "forest_nuisance", "y_hat_supplied", "w_hat_supplied"
+  )
+
+  expect_true(all(route_fields %in% schema))
+  expect_lt(max(match(route_fields, schema)), match("status", schema))
+})
+
+test_that("sim_cate_run preserves GRF oracle nuisance metadata", {
+  skip_if_not_installed("grf")
+  raw <- sim_cate_run(
+    designs = "dgp1_linear",
+    n_vals = 80L,
+    kx_vals = 2L,
+    n_reps = 1L,
+    master_seed = 120L,
+    methods = "causal_forest",
+    verbose = FALSE
+  )
+  successful <- raw[raw$status == "ok", , drop = FALSE]
+
+  expect_gt(nrow(successful), 0L)
+  expect_true(all(successful$method_variant == "grf_oracle_nuisance"))
+  expect_true(all(successful$forest_nuisance == "oracle"))
+  expect_true(all(successful$y_hat_supplied))
+  expect_true(all(successful$w_hat_supplied))
+  expect_type(raw$method_variant, "character")
+  expect_type(raw$forest_nuisance, "character")
+  expect_type(raw$y_hat_supplied, "logical")
+  expect_type(raw$w_hat_supplied, "logical")
+})
+
+test_that("sim_cate_run keeps GRF metadata and typed missing DNN metadata", {
+  skip_if_not_installed("grf")
+  raw <- sim_cate_run(
+    designs = "dgp1_linear",
+    n_vals = 80L,
+    kx_vals = 2L,
+    n_reps = 1L,
+    master_seed = 121L,
+    methods = c("dnn_oracle", "causal_forest"),
+    verbose = FALSE
+  )
+  grf_row <- raw[raw$method == "causal_forest" & raw$status == "ok", , drop = FALSE]
+  dnn_row <- raw[raw$method == "dnn_oracle" & raw$status == "ok", , drop = FALSE]
+
+  expect_gt(nrow(grf_row), 0L)
+  expect_true(all(grf_row$method_variant == "grf_oracle_nuisance"))
+  expect_true(all(grf_row$forest_nuisance == "oracle"))
+  expect_true(all(grf_row$y_hat_supplied))
+  expect_true(all(grf_row$w_hat_supplied))
+  expect_gt(nrow(dnn_row), 0L)
+  expect_true(all(is.na(dnn_row$method_variant)))
+  expect_true(all(is.na(dnn_row$forest_nuisance)))
+  expect_true(all(is.na(dnn_row$y_hat_supplied)))
+  expect_true(all(is.na(dnn_row$w_hat_supplied)))
+  expect_type(dnn_row$method_variant, "character")
+  expect_type(dnn_row$forest_nuisance, "character")
+  expect_type(dnn_row$y_hat_supplied, "logical")
+  expect_type(dnn_row$w_hat_supplied, "logical")
 })
 
 test_that("summarise_sim_results: correct aggregation with method column", {
@@ -367,6 +512,100 @@ test_that("summarise_sim_results: multi-method returns one row per method", {
   tab <- summarise_sim_results(raw)
   expect_equal(nrow(tab), 2L)
   expect_true(all(c("dnn_oracle", "ols_interact") %in% tab$method))
+})
+
+test_that("summarise_sim_results separates and retains GRF nuisance routes", {
+  raw <- data.frame(
+    method = "causal_forest",
+    design = "dgp1_linear",
+    n = 100L,
+    kx = 2L,
+    candidate_id = NA_character_,
+    lambda = NA_real_,
+    s = NA_integer_,
+    bias = c(0.1, 0.2, -0.1, -0.2),
+    sq_err = c(0.01, 0.04, 0.01, 0.04),
+    se = c(0.2, 0.2, 0.3, 0.3),
+    cover = c(1, 1, 0, 1),
+    ci_len = c(0.8, 0.8, 1.2, 1.2),
+    status = "ok",
+    method_variant = rep(
+      c("grf_oracle_nuisance", "grf_internal_nuisance"), each = 2L
+    ),
+    forest_nuisance = rep(c("oracle", "internal"), each = 2L),
+    y_hat_supplied = rep(c(TRUE, FALSE), each = 2L),
+    w_hat_supplied = rep(c(TRUE, FALSE), each = 2L),
+    stringsAsFactors = FALSE
+  )
+
+  tab <- summarise_sim_results(raw)
+  oracle <- tab[tab$forest_nuisance == "oracle", , drop = FALSE]
+  internal <- tab[tab$forest_nuisance == "internal", , drop = FALSE]
+
+  expect_equal(nrow(tab), 2L)
+  expect_equal(oracle$n_reps, 2L)
+  expect_identical(oracle$method_variant, "grf_oracle_nuisance")
+  expect_identical(oracle$forest_nuisance, "oracle")
+  expect_true(oracle$y_hat_supplied)
+  expect_true(oracle$w_hat_supplied)
+  expect_equal(internal$n_reps, 2L)
+  expect_identical(internal$method_variant, "grf_internal_nuisance")
+  expect_identical(internal$forest_nuisance, "internal")
+  expect_false(internal$y_hat_supplied)
+  expect_false(internal$w_hat_supplied)
+})
+
+test_that("summarise_sim_results preserves non-GRF and legacy raw behavior", {
+  raw <- data.frame(
+    method = rep("dnn_oracle", 2L),
+    design = "dgp1_linear",
+    n = 100L,
+    kx = 2L,
+    candidate_id = NA_character_,
+    lambda = NA_real_,
+    s = 12L,
+    bias = c(0.1, -0.1),
+    sq_err = c(0.01, 0.01),
+    se = c(0.2, 0.2),
+    cover = c(1, 1),
+    ci_len = c(0.8, 0.8),
+    status = "ok",
+    method_variant = NA_character_,
+    forest_nuisance = NA_character_,
+    y_hat_supplied = NA,
+    w_hat_supplied = NA,
+    stringsAsFactors = FALSE
+  )
+
+  tab <- summarise_sim_results(raw)
+
+  expect_equal(nrow(tab), 1L)
+  expect_identical(tab$method, "dnn_oracle")
+  expect_equal(tab$n_reps, 2L)
+  expect_true(is.na(tab$method_variant))
+  expect_true(is.na(tab$forest_nuisance))
+  expect_true(is.na(tab$y_hat_supplied))
+  expect_true(is.na(tab$w_hat_supplied))
+  expect_type(tab$method_variant, "character")
+  expect_type(tab$forest_nuisance, "character")
+  expect_type(tab$y_hat_supplied, "logical")
+  expect_type(tab$w_hat_supplied, "logical")
+
+  route_cols <- c(
+    "method_variant", "forest_nuisance", "y_hat_supplied", "w_hat_supplied"
+  )
+  legacy <- raw[, setdiff(names(raw), route_cols), drop = FALSE]
+  legacy$method <- "causal_forest"
+  legacy_tab <- NULL
+  expect_no_warning(legacy_tab <- summarise_sim_results(legacy))
+
+  expect_equal(nrow(legacy_tab), 1L)
+  expect_identical(legacy_tab$method, "causal_forest")
+  expect_true(all(is.na(legacy_tab[, route_cols, drop = FALSE])))
+  expect_type(legacy_tab$method_variant, "character")
+  expect_type(legacy_tab$forest_nuisance, "character")
+  expect_type(legacy_tab$y_hat_supplied, "logical")
+  expect_type(legacy_tab$w_hat_supplied, "logical")
 })
 
 test_that("summarise_sim_results: error on missing columns", {

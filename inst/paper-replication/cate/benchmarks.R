@@ -84,11 +84,11 @@ one_rep_llf <- function(n, kx, design, alpha = 0.05, seed = NULL,
   d <- .bench_draw(n, kx, design, sigma, clip, seed)
   if (!is.null(seed)) set.seed(seed)
 
-  cf  <- grf::causal_forest(X = d$X, Y = d$Y, W = d$D,
-                             ll.lambda = 0.1, ll.weight.penalty = FALSE, ...)
+  cf  <- grf::causal_forest(X = d$X, Y = d$Y, W = d$D, ...)
   pred <- stats::predict(cf, newdata = matrix(d$x0, nrow = 1L),
                          ll.lambda = 0.1, estimate.variance = TRUE,
-                         linear.correction.variables = seq_len(kx))
+                         linear.correction.variables = seq_len(kx),
+                         ll.weight.penalty = FALSE)
   tau_hat <- pred$predictions[1L]
   se_hat  <- sqrt(pred$variance.estimates[1L])
 

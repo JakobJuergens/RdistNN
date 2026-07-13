@@ -58,7 +58,8 @@
 #'
 #' Aggregates a data.frame of raw replicate-level results (as returned by
 #' [sim_cate_run()]) to one summary row per
-#' `(method, design, n, kx, candidate_id, lambda, s)` cell. Reports bias, RMSE,
+#' `(method, design, n, kx, candidate_id, lambda, s)` cell and, when present,
+#' per GRF nuisance configuration. Reports bias, RMSE,
 #' mean SE, empirical coverage, mean CI length, empirical sampling dispersion of
 #' `tau_hat`, the ratio of mean SE to empirical dispersion, and (optionally)
 #' mean effective sample size. When the raw rows carry localization diagnostics,
@@ -78,13 +79,18 @@
 #'   `ci_len`, and `status`. Optional columns `neff`, `tau_hat`, and `tau0`
 #'   (returned by [sim_cate_run()]) are handled gracefully: `neff` is averaged
 #'   into the summary; `tau_hat` is summarized through its empirical standard
-#'   deviation; `tau0` remains a per-rep quantity and is not aggregated.
+#'   deviation; `tau0` remains a per-rep quantity and is not aggregated. When
+#'   present, `method_variant`, `forest_nuisance`, `y_hat_supplied`, and
+#'   `w_hat_supplied` extend the grouping key. Older raw objects without these
+#'   fields receive typed missing metadata; no nuisance route is inferred.
 #'
 #' @return A `data.frame` with one row per unique group and columns
 #'   `method`, `design`, `n`, `kx`, `candidate_id`, `lambda`, `s`, `n_reps`,
 #'   `n_failed`, `bias`, `rmse`, `se_mean`, `cover`, `ci_len`, `emp_sd`,
 #'   `se_to_sd`, `bias_to_se`, localization, support, and studentized-shape
-#'   diagnostics (and `neff` when present in `raw`).
+#'   diagnostics (and `neff` when present in `raw`). The output always includes
+#'   the four GRF route fields, with typed missing values when they were absent
+#'   from `raw` or do not apply.
 #'
 #' @seealso [sim_cate_run()]
 #'
@@ -105,9 +111,27 @@ summarise_sim_results <- function(raw) {
   if (length(missing) > 0L)
     stop("raw is missing required columns: ", paste(missing, collapse = ", "), call. = FALSE)
 
+  route_cols <- c(
+    "method_variant", "forest_nuisance", "y_hat_supplied", "w_hat_supplied"
+  )
+  route_defaults <- list(NA_character_, NA_character_, NA, NA)
+  for (j in seq_along(route_cols)) {
+    col <- route_cols[[j]]
+    if (!col %in% names(raw)) {
+      raw[[col]] <- rep(route_defaults[[j]], nrow(raw))
+    }
+  }
+  raw$method_variant <- as.character(raw$method_variant)
+  raw$forest_nuisance <- as.character(raw$forest_nuisance)
+  raw$y_hat_supplied <- as.logical(raw$y_hat_supplied)
+  raw$w_hat_supplied <- as.logical(raw$w_hat_supplied)
+
   has_neff    <- "neff" %in% names(raw)
   has_tau_hat <- "tau_hat" %in% names(raw)
-  group_cols <- c("method", "design", "n", "kx", "candidate_id", "lambda", "s")
+  group_cols <- c(
+    "method", "design", "n", "kx", "candidate_id", "lambda", "s",
+    route_cols
+  )
 
   cells <- unique(raw[, group_cols, drop = FALSE])
   cells <- cells[do.call(order, unname(as.list(cells[, group_cols, drop = FALSE]))),
@@ -188,6 +212,7 @@ summarise_sim_results <- function(raw) {
     row$studentized_q975 <- .sim_cate_quantile(studentized, 0.975)
     row$studentized_abs_q95 <- .sim_cate_quantile(abs(studentized), 0.95)
     row$method <- cells$method[i]
+    for (col in route_cols) row[[col]] <- cells[[col]][i]
     if (has_neff)   row$neff   <- .sim_cate_mean(sub$neff[ok])
     out[[i]] <- row
   }
@@ -196,7 +221,10 @@ summarise_sim_results <- function(raw) {
   rownames(result) <- NULL
 
   # Put method first; neff last.
-  id_cols     <- c("method", "design", "n", "kx", "candidate_id", "lambda", "s")
+  id_cols <- c(
+    "method", "design", "n", "kx", "candidate_id", "lambda", "s",
+    route_cols
+  )
   other_cols  <- setdiff(names(result), id_cols)
   result      <- result[, c(id_cols, other_cols), drop = FALSE]
   result
