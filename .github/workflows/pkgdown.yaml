@@ -23,7 +23,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - uses: r-lib/actions/setup-pandoc@v2
 
@@ -42,7 +42,7 @@ jobs:
 
       - name: Upload debug artifact (pkgdown workspace)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: debug-pkgdown-site
           path: |
@@ -55,7 +55,7 @@ jobs:
           retention-days: 14
 
       - name: Deploy to GitHub pages 🚀
-        uses: JamesIves/github-pages-deploy-action@v4.5.0
+        uses: JamesIves/github-pages-deploy-action@d92aa235d04922e8f08b40ce78cc5442fcfbfa2f # v4.8.0
         with:
           clean: false
           branch: gh-pages
