@@ -53,6 +53,11 @@
 #' @param m1_col Name or index for \eqn{E[Y(1)\mid X]} (full AIPW interface).
 #' @param m_col Name or index for \eqn{E[Y\mid X]} (Robinson interface).
 #' @param e_col Name or index for propensity \eqn{P(T=1\mid X)}.
+#' @param clip Finite propensity clipping constant in `(0, 0.5)`, default
+#'   `1e-8`. Raw nuisance propensities must be finite and lie in `[0, 1]`;
+#'   nuisance-based AIPW and Robinson scores use
+#'   `pmin(pmax(e, clip), 1 - clip)`. This argument does not alter a supplied
+#'   `pseudo_outcome`.
 #' @param pseudo_outcome Numeric vector of length `n`. If supplied, nuisance
 #'   columns are not required.
 #' @param X Numeric matrix (`n x p`) for the matrix interface.
@@ -122,6 +127,7 @@ cate_dnn <- function(
   m_col = NULL, e_col = NULL,
   pseudo_outcome = NULL,
   X = NULL, X0 = NULL, x0 = NULL,
+  clip = 1e-8,
   distance = "l2",
   method = c("exact", "asymp"),
   k = 1L, s = NULL,
@@ -140,6 +146,11 @@ cate_dnn <- function(
   k <- .validate_scalar_int(k, "k")
   normalize <- .validate_scalar_logical(normalize, "normalize")
   se <- .validate_scalar_logical(se, "se")
+  if (!is.numeric(clip) || length(clip) != 1L || is.na(clip) ||
+      !is.finite(clip) || clip <= 0 || clip >= 0.5) {
+    .abort_bad_arg("clip", "must be a finite numeric scalar in (0, 0.5)")
+  }
+  clip <- as.numeric(clip)
 
   .warn_unknown_return(return, valid = c("W", "ranks", "ord", "dx", "psi", "nuisance", "ess", "neighbors", "tuning"))
   if (identical(tuning_mode, "grid") && !is.null(s_arg)) {
@@ -152,7 +163,7 @@ cate_dnn <- function(
       quoted = FALSE
     )
   }
-  t_vec <- e <- m0 <- m1 <- m <- NULL
+  t_vec <- e_used <- m0 <- m1 <- m <- NULL
 
   # Dispatch: data-frame API vs matrix API.
   if (!is.null(data)) {
@@ -200,8 +211,10 @@ cate_dnn <- function(
       y_vec <- .dnn_col_vec(y_col,  data, n, arg = "y_col",  ref = "data")
       t_vec <- .dnn_col_vec(t_col,  data, n, arg = "t_col",  ref = "data")
       t_vec <- .validate_binary01(t_vec, arg = "t_col")
-      e     <- .dnn_col_vec(e_col,  data, n, arg = "e_col",  ref = "data")
-      den   <- pmax(e * (1 - e), 1e-8)
+      e_raw <- .dnn_col_vec(e_col, data, n, arg = "e_col", ref = "data")
+      e_used <- .cate_validate_and_clip_propensity(
+        e_raw, n = n, clip = clip, arg = "e_col"
+      )
 
       if (has_aipw) {
         # Full doubly-robust AIPW pseudo-outcome:
@@ -216,7 +229,8 @@ cate_dnn <- function(
           d = t_vec,
           m1hat = m1,
           m0hat = m0,
-          ehat = e
+          ehat = e_used,
+          clip = clip
         )
       } else {
         # Robinson-form: (Y - m(X))(T - e) / (e(1-e))
@@ -225,8 +239,9 @@ cate_dnn <- function(
         psi <- cate_rho_rlearner(
           y = y_vec,
           d = t_vec,
-          ehat = e,
-          mhat = m
+          ehat = e_used,
+          mhat = m,
+          clip = clip
         )
       }
     }
@@ -317,6 +332,10 @@ cate_dnn <- function(
       jackknife = if (isTRUE(se)) jackknife else "none"
     )
   )
+  if (!is.null(e_used)) {
+    out$meta$propensity_clip <- clip
+    out$meta$propensity_version <- "clipped"
+  }
   if (tuning_used) out$meta$tuning <- tuning_payload
   out <- .dnn_attach_common_extras(
     out,
@@ -328,10 +347,10 @@ cate_dnn <- function(
   )
   if ("psi" %in% return) out$psi <- psi
   if ("nuisance" %in% return) {
-    if (!is.null(m0) && !is.null(m1) && !is.null(e)) {
-      out$nuisance <- list(m0 = m0, m1 = m1, e = e)
-    } else if (!is.null(m) && !is.null(e)) {
-      out$nuisance <- list(m = m, e = e)
+    if (!is.null(m0) && !is.null(m1) && !is.null(e_used)) {
+      out$nuisance <- list(m0 = m0, m1 = m1, e = e_used)
+    } else if (!is.null(m) && !is.null(e_used)) {
+      out$nuisance <- list(m = m, e = e_used)
     }
   }
   if (identical(tuning_mode, "grid")) {
@@ -359,7 +378,9 @@ cate_dnn <- function(
     x_mat = x_mat,
     psi = psi,
     t_vec = t_vec,
-    e = e,
+    e = e_used,
+    propensity_clip = if (!is.null(e_used)) clip else NULL,
+    propensity_version = if (!is.null(e_used)) "clipped" else NULL,
     x_cols = if (!is.null(data)) x_cols else NULL,
     distance = distance,
     method = method,

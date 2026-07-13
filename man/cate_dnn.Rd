@@ -17,6 +17,7 @@ cate_dnn(
   X = NULL,
   X0 = NULL,
   x0 = NULL,
+  clip = 1e-08,
   distance = "l2",
   method = c("exact", "asymp"),
   k = 1L,
@@ -57,6 +58,12 @@ columns are not required.}
 \code{x0}.}
 
 \item{x0}{Numeric vector of length \code{p} for a single target point.}
+
+\item{clip}{Finite propensity clipping constant in \verb{(0, 0.5)}, default
+\code{1e-8}. Raw nuisance propensities must be finite and lie in \verb{[0, 1]};
+nuisance-based AIPW and Robinson scores use
+\code{pmin(pmax(e, clip), 1 - clip)}. This argument does not alter a supplied
+\code{pseudo_outcome}.}
 
 \item{distance}{Distance name or specification (for example \code{"l2"}).}
 

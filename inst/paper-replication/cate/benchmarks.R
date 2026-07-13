@@ -6,7 +6,8 @@
 # Each estimator follows the same interface as sim_cate_one_rep():
 #
 #   one_rep_XXX(n, kx, design, alpha, seed, sigma, clip)
-#     -> named numeric vector: bias, sq_err, se, cover, ci_len
+#     -> named numeric vector: bias, sq_err, se, cover, ci_len, with GRF
+#        nuisance-route metadata attached for forest estimators
 #        (neff is not meaningful for non-DNN methods)
 #
 # All competitor packages are listed under Suggests in DESCRIPTION and loaded
@@ -52,7 +53,7 @@ library(RdistNN)
     ci_len = 2 * z * se_hat)
 }
 
-# ── Modern: causal forest (Wager–Athey) ──────────────────────────────────────
+# ── Modern GRF causal forest with internally estimated nuisances ─────────────
 
 #' @param ... Forwarded to grf::causal_forest
 one_rep_causal_forest <- function(n, kx, design, alpha = 0.05, seed = NULL,
@@ -67,7 +68,12 @@ one_rep_causal_forest <- function(n, kx, design, alpha = 0.05, seed = NULL,
   tau_hat <- pred$predictions[1L]
   se_hat  <- sqrt(pred$variance.estimates[1L])
 
-  .bench_result(tau_hat, se_hat, d$tau0, alpha)
+  out <- .bench_result(tau_hat, se_hat, d$tau0, alpha)
+  attr(out, "method_variant") <- "grf_internal_nuisance"
+  attr(out, "forest_nuisance") <- "internal"
+  attr(out, "y_hat_supplied") <- FALSE
+  attr(out, "w_hat_supplied") <- FALSE
+  out
 }
 
 # ── Modern: local linear forest (Friedberg et al.) ───────────────────────────
@@ -86,7 +92,12 @@ one_rep_llf <- function(n, kx, design, alpha = 0.05, seed = NULL,
   tau_hat <- pred$predictions[1L]
   se_hat  <- sqrt(pred$variance.estimates[1L])
 
-  .bench_result(tau_hat, se_hat, d$tau0, alpha)
+  out <- .bench_result(tau_hat, se_hat, d$tau0, alpha)
+  attr(out, "method_variant") <- "grf_local_linear_internal_nuisance"
+  attr(out, "forest_nuisance") <- "internal"
+  attr(out, "y_hat_supplied") <- FALSE
+  attr(out, "w_hat_supplied") <- FALSE
+  out
 }
 
 # ── Classical: naive OLS (Y ~ T + X) ─────────────────────────────────────────
@@ -191,6 +202,23 @@ run_benchmarks <- function(grid) {
 
       out[[idx]] <- data.frame(
         method  = nm,
+        method_label = if (nm == "causal_forest") {
+          "Causal forest (GRF, internal nuisances)"
+        } else if (nm == "llf") {
+          "Local linear forest (GRF, internal nuisances)"
+        } else {
+          nm
+        },
+        method_variant = if (nm == "causal_forest") {
+          "grf_internal_nuisance"
+        } else if (nm == "llf") {
+          "grf_local_linear_internal_nuisance"
+        } else {
+          NA_character_
+        },
+        forest_nuisance = if (nm %in% c("causal_forest", "llf")) "internal" else NA_character_,
+        y_hat_supplied = if (nm %in% c("causal_forest", "llf")) FALSE else NA,
+        w_hat_supplied = if (nm %in% c("causal_forest", "llf")) FALSE else NA,
         design  = d,
         n       = n,
         kx      = kx,

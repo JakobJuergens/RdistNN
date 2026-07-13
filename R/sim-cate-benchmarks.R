@@ -36,7 +36,11 @@
 }
 
 .sim_cate_row_names <- function() {
-  c("candidate_id", "lambda", "s", .sim_cate_metric_names(), "status")
+  c(
+    "candidate_id", "lambda", "s", .sim_cate_metric_names(),
+    "method_variant", "forest_nuisance", "y_hat_supplied",
+    "w_hat_supplied", "status"
+  )
 }
 
 .sim_recycle <- function(x, n) {
@@ -59,11 +63,17 @@
   lambda = NA_real_,
   s = NA_integer_,
   status = "ok",
-  diagnostics = NULL
+  diagnostics = NULL,
+  method_variant = NA_character_,
+  forest_nuisance = NA_character_,
+  y_hat_supplied = NA,
+  w_hat_supplied = NA
 ) {
   n_out <- max(
     length(tau_hat), length(se_hat), length(tau0), length(neff),
-    length(candidate_id), length(lambda), length(s), length(status)
+    length(candidate_id), length(lambda), length(s), length(status),
+    length(method_variant), length(forest_nuisance),
+    length(y_hat_supplied), length(w_hat_supplied)
   )
   tau_hat <- as.numeric(.sim_recycle(tau_hat, n_out))
   se_hat <- as.numeric(.sim_recycle(se_hat, n_out))
@@ -73,6 +83,10 @@
   lambda <- as.numeric(.sim_recycle(lambda, n_out))
   s <- as.integer(.sim_recycle(s, n_out))
   status <- as.character(.sim_recycle(status, n_out))
+  method_variant <- as.character(.sim_recycle(method_variant, n_out))
+  forest_nuisance <- as.character(.sim_recycle(forest_nuisance, n_out))
+  y_hat_supplied <- as.logical(.sim_recycle(y_hat_supplied, n_out))
+  w_hat_supplied <- as.logical(.sim_recycle(w_hat_supplied, n_out))
 
   z <- stats::qnorm(1 - alpha / 2)
   finite <- is.finite(tau_hat) & is.finite(se_hat) & se_hat > 0
@@ -96,6 +110,10 @@
     cover = covered,
     ci_len = as.numeric(2 * z * se_hat),
     neff = neff,
+    method_variant = method_variant,
+    forest_nuisance = forest_nuisance,
+    y_hat_supplied = y_hat_supplied,
+    w_hat_supplied = w_hat_supplied,
     status = status,
     stringsAsFactors = FALSE,
     row.names = NULL
@@ -133,7 +151,9 @@
   }
   out[, c(
     "candidate_id", "lambda", "s", "tau_hat", "tau0", "bias", "sq_err",
-    "se", "cover", "ci_len", "neff", diagnostic_names, "status"
+    "se", "cover", "ci_len", "neff", diagnostic_names,
+    "method_variant", "forest_nuisance", "y_hat_supplied",
+    "w_hat_supplied", "status"
   ), drop = FALSE]
 }
 
@@ -642,9 +662,11 @@
 }
 
 # ── GRF causal forest ─────────────────────────────────────────────────────────
-# Uses oracle nuisances (Y.hat = m_oracle, W.hat = e_oracle) to isolate
-# the estimator's adaptation capability from first-stage quality.
-# Primary comparison for the paper's self-normalisation / power claim.
+# Uses externally supplied oracle nuisances (Y.hat = m_oracle,
+# W.hat = e_oracle) to compare localization and forest inference while holding
+# first-stage nuisance quality fixed. This is the modern
+# Robinson-orthogonalized GRF estimator with explicit nuisance inputs, not a
+# reproduction of the historical original causal-forest algorithm.
 # Use one GRF thread per Monte Carlo worker: the outer simulation harness
 # parallelizes over replications, so letting each forest fit use all cores would
 # oversubscribe the machine badly on local multisession runs.
@@ -652,7 +674,11 @@
 .method_causal_forest <- function(dgp, x_cols, alpha, ...) {
   if (!requireNamespace("grf", quietly = TRUE)) {
     warning("grf not available; causal_forest returns NA.", call. = FALSE)
-    return(.sim_metric(NA_real_, NA_real_, dgp$tau_x0, alpha, status = "failed"))
+    return(.sim_metric(
+      NA_real_, NA_real_, dgp$tau_x0, alpha, status = "failed",
+      method_variant = "grf_oracle_nuisance", forest_nuisance = "oracle",
+      y_hat_supplied = TRUE, w_hat_supplied = TRUE
+    ))
   }
   dat    <- dgp$data
   X      <- as.matrix(dat[, x_cols])
@@ -675,7 +701,11 @@
   tau_hat <- pred$predictions[1L]
   se_hat  <- sqrt(pred$variance.estimates[1L])
 
-  .sim_metric(tau_hat, se_hat, dgp$tau_x0, alpha)
+  .sim_metric(
+    tau_hat, se_hat, dgp$tau_x0, alpha,
+    method_variant = "grf_oracle_nuisance", forest_nuisance = "oracle",
+    y_hat_supplied = TRUE, w_hat_supplied = TRUE
+  )
 }
 
 # ── GRF local linear forest ───────────────────────────────────────────────────
@@ -687,7 +717,12 @@
 .method_llf <- function(dgp, x_cols, alpha, ll_lambda = 0.1, ...) {
   if (!requireNamespace("grf", quietly = TRUE)) {
     warning("grf not available; llf returns NA.", call. = FALSE)
-    return(.sim_metric(NA_real_, NA_real_, dgp$tau_x0, alpha, status = "failed"))
+    return(.sim_metric(
+      NA_real_, NA_real_, dgp$tau_x0, alpha, status = "failed",
+      method_variant = "grf_local_linear_oracle_nuisance",
+      forest_nuisance = "oracle", y_hat_supplied = TRUE,
+      w_hat_supplied = TRUE
+    ))
   }
   dat    <- dgp$data
   X      <- as.matrix(dat[, x_cols])
@@ -715,7 +750,12 @@
   tau_hat <- pred$predictions[1L]
   se_hat  <- sqrt(pred$variance.estimates[1L])
 
-  .sim_metric(tau_hat, se_hat, dgp$tau_x0, alpha)
+  .sim_metric(
+    tau_hat, se_hat, dgp$tau_x0, alpha,
+    method_variant = "grf_local_linear_oracle_nuisance",
+    forest_nuisance = "oracle", y_hat_supplied = TRUE,
+    w_hat_supplied = TRUE
+  )
 }
 
 # ── Registry ──────────────────────────────────────────────────────────────────
@@ -753,7 +793,7 @@
 #' | `local_constant`    | Nadaraya-Watson smoother on the oracle AIPW score |
 #' | `ols_interact`      | OLS with D*X interactions, delta-method SE at x0 |
 #' | `causal_forest`     | GRF causal forest, oracle nuisances (requires **grf**) |
-#' | `llf`               | GRF causal forest with local-linear corrections (requires **grf**) |
+#' | `llf`               | GRF causal forest with local-linear corrections and oracle nuisances (requires **grf**) |
 #'
 #' @return Character vector of registered method names.
 #'

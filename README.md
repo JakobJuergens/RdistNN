@@ -179,6 +179,11 @@ quantities, cross-fitted or out-of-fold predictions, and full-sample
 predictions from learners for which the paper’s rate and stability
 conditions are credible.
 
+For nuisance-based AIPW and Robinson scores, raw supplied propensities must be
+finite and lie in `[0, 1]`. `cate_dnn()` clips them to
+`[clip, 1 - clip]` with `clip = 1e-8` by default, and the clipped values are
+the values retained for diagnostics; supplied pseudo-outcomes are unchanged.
+
 ### 3) Local PLQR Orthogonal Moments (`plqr_dnn`)
 
 PLQR support currently evaluates localized orthogonal PLQR moments and

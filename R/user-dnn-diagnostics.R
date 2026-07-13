@@ -9,10 +9,17 @@
   if (!is.numeric(x) || !is.numeric(w) || length(x) != length(w)) {
     return(NA_real_)
   }
+  if (!is.numeric(prob) || length(prob) != 1L || is.na(prob) ||
+      !is.finite(prob) || prob < 0 || prob > 1) {
+    return(NA_real_)
+  }
   if (.has_na_only(x) || .has_nonfinite_non_na(x)) {
     return(NA_real_)
   }
   if (.has_na_only(w) || .has_nonfinite_non_na(w)) {
+    return(NA_real_)
+  }
+  if (any(w < 0)) {
     return(NA_real_)
   }
 
@@ -21,7 +28,7 @@
     return(NA_real_)
   }
 
-  ord <- order(x)
+  ord <- order(x, seq_along(x))
   x_ord <- as.numeric(x[ord])
   w_ord <- as.numeric(w[ord])
   cum_w <- cumsum(w_ord) / sum(w_ord)

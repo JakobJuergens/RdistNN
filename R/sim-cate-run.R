@@ -104,7 +104,15 @@
   missing <- setdiff(.sim_cate_row_names(), names(res))
   if (length(missing) > 0L) {
     for (col in missing) {
-      res[[col]] <- if (identical(col, "status")) "ok" else NA_real_
+      res[[col]] <- if (identical(col, "status")) {
+        "ok"
+      } else if (col %in% c("method_variant", "forest_nuisance")) {
+        NA_character_
+      } else if (col %in% c("y_hat_supplied", "w_hat_supplied")) {
+        NA
+      } else {
+        NA_real_
+      }
     }
   }
   res[, .sim_cate_row_names(), drop = FALSE]
@@ -177,6 +185,9 @@
 #' @return A `data.frame` with one or more rows per method and columns
 #'   `method`, `candidate_id`, `lambda`, `s`, `tau_hat`, `tau0`, `bias`,
 #'   `sq_err`, `se`, `cover` (0/1), `ci_len`, `neff`, and `status`. Methods
+#'   based on GRF also record `method_variant`, `forest_nuisance`, and whether
+#'   `Y.hat` and `W.hat` were supplied. The maintained `causal_forest` route
+#'   uses externally supplied oracle nuisance inputs.
 #'   with explicit localization weights also report the realized DNN-weighted
 #'   truth, realized localization drift, estimator remainder, studentized error, physical
 #'   90-percent-mass radius, treatment-arm effective sample sizes, and the

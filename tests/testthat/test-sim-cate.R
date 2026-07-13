@@ -267,7 +267,7 @@ test_that("grf-missing benchmark warnings are emitted without call metadata", {
   x_cols <- grep("^X", names(dgp$data), value = TRUE)
 
   w_cf <- NULL
-  withCallingHandlers(
+  cf_result <- withCallingHandlers(
     m_cf(dgp, x_cols = x_cols, alpha = 0.05),
     warning = function(w) {
       w_cf <<- w
@@ -277,6 +277,10 @@ test_that("grf-missing benchmark warnings are emitted without call metadata", {
   expect_s3_class(w_cf, "warning")
   expect_match(conditionMessage(w_cf), "grf not available; causal_forest returns NA\\.")
   expect_null(conditionCall(w_cf))
+  expect_identical(cf_result$method_variant, "grf_oracle_nuisance")
+  expect_identical(cf_result$forest_nuisance, "oracle")
+  expect_true(cf_result$y_hat_supplied)
+  expect_true(cf_result$w_hat_supplied)
 
   w_llf <- NULL
   withCallingHandlers(
@@ -289,6 +293,19 @@ test_that("grf-missing benchmark warnings are emitted without call metadata", {
   expect_s3_class(w_llf, "warning")
   expect_match(conditionMessage(w_llf), "grf not available; llf returns NA\\.")
   expect_null(conditionCall(w_llf))
+})
+
+test_that("GRF comparator metadata identifies supplied oracle nuisances", {
+  skip_if_not_installed("grf")
+  method <- getFromNamespace(".method_causal_forest", "RdistNN")
+  dgp <- sim_cate_data("dgp1_linear", n = 80L, kx = 2L, seed = 119L)
+  x_cols <- grep("^X", names(dgp$data), value = TRUE)
+  result <- method(dgp, x_cols = x_cols, alpha = 0.05)
+
+  expect_identical(result$method_variant, "grf_oracle_nuisance")
+  expect_identical(result$forest_nuisance, "oracle")
+  expect_true(result$y_hat_supplied)
+  expect_true(result$w_hat_supplied)
 })
 
 test_that("sim_cate_run: multi-method produces one row per method per rep", {

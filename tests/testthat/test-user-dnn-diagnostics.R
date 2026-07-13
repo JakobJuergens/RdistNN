@@ -26,6 +26,25 @@ set.seed(777)
   x_ord[which(cw >= prob)[1L]]
 }
 
+test_that("weighted empirical quantiles respect exact and machine-scale boundaries", {
+  expect_equal(.dnn_weighted_quantile(1:10, rep(0.1, 10), 0.1), 1)
+  expect_equal(.dnn_weighted_quantile(1:10, rep(0.1, 10), 0.5), 5)
+  expect_equal(.dnn_weighted_quantile(1:10, rep(0.1, 10), 0.9), 9)
+
+  ulp_below_half <- .Machine$double.eps / 4
+  expect_equal(
+    .dnn_weighted_quantile(1:2, c(0.5 - ulp_below_half, 0.5 + ulp_below_half), 0.5),
+    2
+  )
+  expect_equal(
+    .dnn_weighted_quantile(1:2, c(0.5 + ulp_below_half, 0.5 - ulp_below_half), 0.5),
+    1
+  )
+  expect_true(is.na(.dnn_weighted_quantile(1:2, c(0.5, 0.5), Inf)))
+  expect_true(is.na(.dnn_weighted_quantile(1:2, c(-0.5, 1.5), 0.5)))
+  expect_true(is.na(.dnn_weighted_quantile(1:2, c(0, 0), 0.5)))
+})
+
 .diag_weighted_sd <- function(x, w) {
   mu <- sum(x * w) / sum(w)
   sqrt(sum(w * (x - mu)^2) / sum(w))

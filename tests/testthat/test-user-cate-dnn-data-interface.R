@@ -503,3 +503,106 @@ test_that("tibble input matches data.frame input on pseudo_outcome path", {
 
   expect_equal(out_tbl$tau, out_df$tau, tolerance = 1e-12)
 })
+
+test_that("propensity score constructors validate raw values and use the clipping contract", {
+  aipw <- getFromNamespace("cate_rho_aipw", "RdistNN")
+  robinson <- getFromNamespace("cate_rho_rlearner", "RdistNN")
+  e_raw <- c(0, 1, 1e-12, 1 - 1e-12, 0.2, 0.8)
+  clip <- 1e-8
+  e_used <- pmin(pmax(e_raw, clip), 1 - clip)
+  y <- c(1.2, -0.3, 0.7, 2.1, -1.4, 0.9)
+  d <- c(1, 0, 1, 0, 1, 0)
+  m0 <- seq(-0.2, 0.3, length.out = length(y))
+  m1 <- m0 + 0.75
+  m <- m0 + e_used * (m1 - m0)
+
+  expect_equal(
+    aipw(y, d, m1, m0, e_raw),
+    m1 - m0 + d * (y - m1) / e_used -
+      (1 - d) * (y - m0) / (1 - e_used),
+    tolerance = 1e-12
+  )
+  expect_equal(
+    robinson(y, d, e_raw, m),
+    (d - e_used) * (y - m) / (e_used * (1 - e_used)),
+    tolerance = 1e-12
+  )
+
+  for (bad in list(c(e_raw[-1], NA_real_), c(e_raw[-1], Inf),
+                   c(e_raw[-1], -1e-12), c(e_raw[-1], 1 + 1e-12))) {
+    expect_error(aipw(y, d, m1, m0, bad), "ehat")
+    expect_error(robinson(y, d, bad, m), "ehat")
+  }
+  for (bad_clip in c(NA_real_, Inf, 0, 0.5, -1e-8)) {
+    expect_error(aipw(y, d, m1, m0, e_raw, clip = bad_clip), "clip")
+    expect_error(robinson(y, d, e_raw, m, clip = bad_clip), "clip")
+  }
+})
+
+test_that("cate_dnn stores and diagnoses the propensity used by the score", {
+  d <- .make_df_data(n = 7L, m = 1L, seed = 112L)
+  d$df$e_edge <- c(0, 1, 1e-12, 1 - 1e-12, 0.2, 0.5, 0.8)
+  clip <- 1e-6
+  e_used <- pmin(pmax(d$df$e_edge, clip), 1 - clip)
+  fit <- cate_dnn(
+    data = d$df, x_cols = d$x_cols,
+    y_col = "Y", t_col = "D", m0_col = "m0_oracle",
+    m1_col = "m1_oracle", e_col = "e_edge",
+    X0 = d$X0, clip = clip, k = 1L, s = 1L, se = FALSE,
+    return = c("W", "psi", "nuisance")
+  )
+
+  expect_equal(fit$nuisance$e, e_used, tolerance = 0)
+  expect_identical(fit$meta$propensity_version, "clipped")
+  expect_equal(fit$meta$propensity_clip, clip)
+  expect_equal(fit$.model$e, e_used, tolerance = 0)
+  expect_equal(
+    fit$psi,
+    getFromNamespace("cate_rho_aipw", "RdistNN")(
+      d$df$Y, d$df$D, d$df$m1_oracle, d$df$m0_oracle,
+      d$df$e_edge, clip = clip
+    ),
+    tolerance = 1e-12
+  )
+  diag <- diagnostics(fit)
+  expect_equal(diag$weighted_mean_propensity, mean(e_used), tolerance = 1e-12)
+  expect_equal(diag$weighted_propensity_q10, min(e_used), tolerance = 1e-12)
+  expect_equal(diag$weighted_propensity_q90, sort(e_used)[7L], tolerance = 1e-12)
+
+  fit_pseudo <- cate_dnn(
+    X = as.matrix(d$df[, d$x_cols]), X0 = d$X0,
+    pseudo_outcome = seq_len(nrow(d$df)), clip = clip,
+    k = 1L, s = 1L, se = FALSE, return = "psi"
+  )
+  expect_equal(fit_pseudo$psi, seq_len(nrow(d$df)), tolerance = 0)
+  expect_null(fit_pseudo$meta$propensity_clip)
+})
+
+test_that("cate_dnn rejects invalid raw propensities before clipping", {
+  d <- .make_df_data(n = 20L, m = 1L, seed = 113L)
+  run <- function(e) {
+    dat <- d$df
+    dat$e_bad <- e
+    cate_dnn(
+      data = dat, x_cols = d$x_cols,
+      y_col = "Y", t_col = "D", m_col = "m_oracle", e_col = "e_bad",
+      X0 = d$X0, k = 1L, s = 2L, se = FALSE
+    )
+  }
+
+  for (bad in list(replace(d$df$e_oracle, 1L, NA_real_),
+                   replace(d$df$e_oracle, 1L, Inf),
+                   replace(d$df$e_oracle, 1L, -1e-12),
+                   replace(d$df$e_oracle, 1L, 1 + 1e-12))) {
+    expect_error(run(bad), "e_col")
+  }
+  for (bad_clip in c(NA_real_, Inf, 0, 0.5, -1e-8)) {
+    expect_error(
+      cate_dnn(
+        data = d$df, x_cols = d$x_cols, pseudo_outcome = d$psi_aipw,
+        X0 = d$X0, clip = bad_clip, k = 1L, s = 2L, se = FALSE
+      ),
+      "clip"
+    )
+  }
+})

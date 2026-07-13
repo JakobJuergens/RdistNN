@@ -23,7 +23,7 @@ Returns the names of all estimator methods registered for use with
    \code{local_constant} \tab Nadaraya-Watson smoother on the oracle AIPW score \cr
    \code{ols_interact} \tab OLS with D*X interactions, delta-method SE at x0 \cr
    \code{causal_forest} \tab GRF causal forest, oracle nuisances (requires \strong{grf}) \cr
-   \code{llf} \tab GRF causal forest with local-linear corrections (requires \strong{grf}) \cr
+   \code{llf} \tab GRF causal forest with local-linear corrections and oracle nuisances (requires \strong{grf}) \cr
 }
 }
 \examples{

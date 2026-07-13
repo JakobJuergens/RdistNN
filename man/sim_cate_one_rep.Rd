@@ -55,6 +55,9 @@ DNN candidate while non-DNN benchmarks remain one row per replicate.}
 A \code{data.frame} with one or more rows per method and columns
 \code{method}, \code{candidate_id}, \code{lambda}, \code{s}, \code{tau_hat}, \code{tau0}, \code{bias},
 \code{sq_err}, \code{se}, \code{cover} (0/1), \code{ci_len}, \code{neff}, and \code{status}. Methods
+based on GRF also record \code{method_variant}, \code{forest_nuisance}, and whether
+\code{Y.hat} and \code{W.hat} were supplied. The maintained \code{causal_forest} route
+uses externally supplied oracle nuisance inputs.
 with explicit localization weights also report the realized DNN-weighted
 truth, realized localization drift, estimator remainder, studentized error, physical
 90-percent-mass radius, treatment-arm effective sample sizes, and the

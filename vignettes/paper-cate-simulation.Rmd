@@ -175,11 +175,14 @@ run, or the `\lambda`-sweep folders, use the launchers in
 
 ## Competitor benchmarks
 
-Stub implementations of causal forest, local linear forest, naive OLS, and
-interaction OLS are in
-`inst/paper-replication/cate/benchmarks.R`.  These are not part of the package
-core; they use `requireNamespace()` and require optional packages
-(`grf`, etc.) listed under `Suggests` in `DESCRIPTION`.
+Optional causal-forest, local-linear-forest, naive-OLS, and interaction-OLS
+benchmarks are in `inst/paper-replication/cate/benchmarks.R`.  In this
+standalone helper, the GRF routes estimate their nuisance functions internally
+and record `forest_nuisance = "internal"`.  By contrast, the package simulation
+registry's `causal_forest` and `llf` routes supply oracle outcome and propensity
+nuisances and record `forest_nuisance = "oracle"`.  These benchmarks are not
+part of the package core; they use `requireNamespace()` and require optional
+packages (`grf`, etc.) listed under `Suggests` in `DESCRIPTION`.
 
 ```{r benchmarks-path, eval = FALSE}
 system.file("paper-replication/cate/benchmarks.R", package = "RdistNN")
