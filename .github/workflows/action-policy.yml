@@ -31,8 +31,8 @@ jobs:
         run: |
           set -euo pipefail
           mapfile -t violations < <(
-            grep -RhoE '^[[:space:]]*uses:[[:space:]]*[^[:space:]#]+' .github/workflows \
-              | sed -E 's/^[[:space:]]*uses:[[:space:]]*//' \
+            grep -RhoE '^[[:space:]]*(-[[:space:]]+)?uses:[[:space:]]*[^[:space:]#]+' .github/workflows \
+              | sed -E 's/^[[:space:]]*(-[[:space:]]+)?uses:[[:space:]]*//' \
               | grep -vE '^(\./|docker://)' \
               | grep -vE '@[0-9a-fA-F]{40}$' || true
           )
@@ -40,4 +40,3 @@ jobs:
             printf 'Mutable external action reference: %s\n' "${violations[@]}"
             exit 1
           fi
-
