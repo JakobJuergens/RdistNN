@@ -29,6 +29,10 @@ Before tagging or calling a state release-ready, ensure:
 - vignettes and examples reflect the preferred current API;
 - no known generated-file drift remains.
 
+The compiled release matrix covers Linux x86-64, Windows x86-64, macOS arm64,
+and macOS x86-64. Linux additionally exercises R devel, release, and oldrel.
+Each job verifies that the runner architecture matches its matrix label.
+
 ## 4. CI as regression protection
 
 CI should guard the package against:
@@ -46,6 +50,13 @@ Examples:
 - `RcppExports.*` out of sync with compiled-interface source.
 
 Generated-file drift should fail fast.
+
+Local agent settings, paper PDF snapshots, check directories, package
+tarballs, rendered README HTML, harvested logs, and generated archives are not
+repository source. Keep them ignored and untracked. Workflow artifacts must
+declare finite retention, and workflows must not commit generated logs or
+archives back to the default branch. The alignment workflow enforces this
+contract through `tools/ci/check_repository_hygiene.R`.
 
 ## 6. Coverage expectations
 

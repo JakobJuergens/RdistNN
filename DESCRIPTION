@@ -11,9 +11,10 @@ Description: Implements distributional nearest-neighbor weights and
     average treatment effects, and partially linear quantile-regression moment
     evaluation, with tuning-grid diagnostics and paper-replication tools.
     Lower-level generalized U-statistic and jackknife utilities are included
-    as supporting infrastructure. Uses compiled C++ fast paths when available
-    and falls back to robust batched R evaluation otherwise, with
-    estimator-specific inference routes, including delete-one jackknife
+    as supporting infrastructure. Uses compiled C++ fast paths with robust
+    batched R fallbacks for supported algorithms; source installation still
+    requires a C++17 toolchain. The package also includes estimator-specific
+    inference routes, including delete-one jackknife
     diagnostics and direct sandwich covariance estimates.
 License: GPL (>= 3)
 Depends:
@@ -48,7 +49,9 @@ SystemRequirements: C++17
 Encoding: UTF-8
 ByteCompile: true
 Roxygen: list(markdown = TRUE)
-URL: https://JakobJuergens.github.io/RdistNN/
+URL: https://JakobJuergens.github.io/RdistNN/,
+    https://github.com/JakobJuergens/RdistNN
+BugReports: https://github.com/JakobJuergens/RdistNN/issues
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 Config/roxygen2/version: 8.0.0

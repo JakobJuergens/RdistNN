@@ -360,7 +360,7 @@
 #' @param s Integer kernel order (undersmoothing parameter), or `NULL`. When
 #'   both `s` and `tuning` are `NULL` (the default), `s` is resolved from the
 #'   paper undersmoothing rule [tuning_dnn_paper()],
-#'   \eqn{s = \lfloor n^{(k_x+1)/(k_x+2)} \rfloor}. Note that small fixed
+#'   \eqn{s = \lfloor 0.4 n^{(k_x+1)/(k_x+2)} \rfloor}. Note that small fixed
 #'   values such as `s = 1` (or `k = s`) yield uniform weights and hence no
 #'   localization; a warning is emitted in that case.
 #' @param tuning Optional kernel-order tuning specification.  When supplied,

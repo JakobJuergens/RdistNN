@@ -17,7 +17,7 @@ on:
       - '.github/workflows/package-snapshot.yml'
 
 permissions:
-  contents: write
+  contents: read
   actions: read
 
 concurrency:
@@ -37,7 +37,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           WINDOW_HOURS: "12"
-          TARGET_JOB_NAME: "zip-and-commit"
+          TARGET_JOB_NAME: "zip-and-upload"
           CURRENT_RUN_ID: ${{ github.run_id }}
           EVENT_NAME: ${{ github.event_name }}
           REF_NAME: ${{ github.ref_name }}
@@ -144,7 +144,7 @@ jobs:
             echo "- decision: allow heavy jobs" >> "$GITHUB_STEP_SUMMARY"
           fi
 
-  zip-and-commit:
+  zip-and-upload:
     needs: cooldown_gate
     if: ${{ needs.cooldown_gate.outputs.should_run == 'true' && github.actor != 'github-actions[bot]' }}
     runs-on: ubuntu-latest
@@ -207,13 +207,10 @@ jobs:
           retention-days: 14
 
   save_logs:
-    if: ${{ needs.cooldown_gate.outputs.should_run == 'true' && !cancelled() && always() && needs.zip-and-commit.result != 'success' && github.actor != 'github-actions[bot]' }}
-    needs: [cooldown_gate, zip-and-commit]
+    if: ${{ needs.cooldown_gate.outputs.should_run == 'true' && !cancelled() && always() && needs.zip-and-upload.result != 'success' && github.actor != 'github-actions[bot]' }}
+    needs: [cooldown_gate, zip-and-upload]
     uses: ./.github/workflows/harvest-failure-logs.yml
     with:
       logs_dir: GH_logs/package-snapshot
       artifact_pattern: debug-package-snapshot-*
       harvested_artifact_name: harvested-package-snapshot-logs
-      # Logs live in workflow artifacts only; the source tree stays clean.
-      commit_logs: false
-    secrets: inherit

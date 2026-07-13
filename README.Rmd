@@ -35,6 +35,9 @@ knitr::opts_chunk$set(
 
 > Status: active research package. APIs may continue to evolve.
 
+This package accompanies
+[Orthogonal Inference for Conditional Z-Estimation without Cross-Fitting](https://github.com/JakobJuergens/Cond_Z_Estimation).
+
 ## API tiers
 
 Not all exported functions carry the same stability promise:
@@ -67,6 +70,27 @@ Install the development version from GitHub:
 # install.packages("pak")
 pak::pak("JakobJuergens/RdistNN")
 ```
+
+## Platform compatibility
+
+R package binaries install without a local compiler when a matching binary is
+available. Installation from source requires a working C++17 toolchain and
+`Rcpp` on Windows, macOS, and Linux. OpenMP is optional: the package uses R's
+portable `SHLIB_OPENMP_CXXFLAGS`, so compiled kernels run serially on toolchains
+where R does not provide OpenMP flags.
+
+The package includes R implementations for supported distance, score, and
+jackknife operations and uses them when the corresponding compiled fast path
+is unavailable at runtime. Set `options(RdistNN.use_compiled = FALSE)` to force
+those R paths for reproducibility or diagnosis; CI checks compiled/fallback
+parity on every supported platform. Those algorithmic fallbacks do not turn
+the package into a no-compiler source package: the package itself contains
+registered C++ code and must still be compiled when installed from source.
+
+The full GitHub Actions release matrix covers Linux x86-64, Windows x86-64,
+macOS arm64, and macOS x86-64, plus R release, devel, and oldrel on Linux.
+Pull requests, pushes to the default branch, and manual runs all execute the
+full matrix so platform regressions are blocked before merge.
 
 ## Quick Start
 
@@ -130,6 +154,18 @@ diagnostics(fit_cate)
 predict(fit_cate, x0 = c(0.2, -0.1), interval = "confidence")
 ```
 
+#### CATE inference contract
+
+Neyman orthogonality controls first-order population nuisance drift. It does
+not, by itself, validate arbitrary nuisance predictions estimated on the same
+observations used by `cate_dnn()`. Valid full-sample reuse additionally
+requires the nuisance-rate and full-state stability conditions in the paper.
+`cate_dnn()` computes the estimator and requested jackknife procedure but
+cannot diagnose whether an arbitrary learner satisfies those conditions.
+Supported inputs include oracle quantities, cross-fitted or out-of-fold
+predictions, and full-sample predictions from learners for which the paper's
+rate and stability conditions are credible.
+
 ### 3) Local PLQR Orthogonal Moments (`plqr_dnn`)
 
 PLQR support currently evaluates localized orthogonal PLQR moments and
@@ -169,6 +205,12 @@ confint(fit_plqr)
 predict(fit_plqr, x0 = c(0.25, -0.25), interval = "confidence")
 diagnostics(fit_plqr)
 ```
+
+`tuning_dnn_paper()` uses the paper's finite-sample default `lambda = 0.4`
+and sensitivity grid `c(0.3, 0.4, 0.5, 0.75)`, with
+`s(lambda) = floor(lambda * n^((kx + 1)/(kx + 2)))`. Explicit `lambda`,
+`lambda_grid`, fixed `s`, and custom tuning specifications remain supported;
+`lambda = 1` is a more aggressive localization benchmark.
 
 Without a density input, `plqr_dnn()` still evaluates the localized moment
 and reports `moment_se`, a jackknife **moment diagnostic**; that is not

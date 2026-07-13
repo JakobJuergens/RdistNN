@@ -6,7 +6,7 @@ on:
   pull_request:
 
 permissions:
-  contents: write
+  contents: read
   actions: read
 
 concurrency:
@@ -35,6 +35,9 @@ jobs:
 
       - name: Check test dependency declarations
         run: Rscript tools/ci/check_tests_declared_deps.R
+
+      - name: Check repository hygiene
+        run: Rscript tools/ci/check_repository_hygiene.R
 
       - name: Check pkgdown reference coverage
         run: Rscript tools/ci/check_pkgdown_reference_coverage.R
@@ -67,6 +70,3 @@ jobs:
       logs_dir: GH_logs/alignment-guardrails
       artifact_pattern: debug-alignment-guardrails-*
       harvested_artifact_name: harvested-alignment-guardrails-logs
-      # Logs live in workflow artifacts only; the source tree stays clean.
-      commit_logs: false
-    secrets: inherit

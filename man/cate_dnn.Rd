@@ -68,7 +68,7 @@ paper theory uses \code{k = 1} (the default).}
 \item{s}{Integer kernel order (undersmoothing parameter), or \code{NULL}. When
 both \code{s} and \code{tuning} are \code{NULL} (the default), \code{s} is resolved from the
 paper undersmoothing rule \code{\link[=tuning_dnn_paper]{tuning_dnn_paper()}},
-\eqn{s = \lfloor n^{(k_x+1)/(k_x+2)} \rfloor}. Note that small fixed
+\eqn{s = \lfloor 0.4 n^{(k_x+1)/(k_x+2)} \rfloor}. Note that small fixed
 values such as \code{s = 1} (or \code{k = s}) yield uniform weights and hence no
 localization; a warning is emitted in that case.}
 
@@ -146,6 +146,16 @@ candidate. Full per-candidate weight matrices are not stored. Candidate
 diagnostics include \code{ess}, \code{max_weight}, \code{top_n}, \code{top5_weight_share}, and
 \code{degenerate}; \code{top_n} is fixed at 5 and is independent of the estimator's
 \code{k}.
+
+Neyman orthogonality controls first-order population nuisance drift, but it
+does not by itself validate arbitrary nuisance predictions fitted on the
+same observations used for localization and inference. Valid full-sample
+reuse additionally requires the nuisance-rate and full-state stability
+conditions in the accompanying paper. This function computes the estimator
+and its requested jackknife procedure; it cannot diagnose whether an
+arbitrary learner satisfies those conditions. Supply oracle quantities,
+cross-fitted or out-of-fold predictions, or full-sample predictions from a
+learner for which the paper's rate and stability conditions are credible.
 }
 \examples{
 set.seed(1)

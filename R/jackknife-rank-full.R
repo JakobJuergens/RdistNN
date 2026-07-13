@@ -147,8 +147,9 @@ jackknife_rank_full <- function(ranks, PHI, wn, wnm1) {
   if (nrow(PHI) != n)
     stop("`PHI` must have nrow(ranks) rows.", call. = FALSE)
 
-  if (exists("rustat_jackknife_rank_full", mode = "function")) {
-    return(rustat_jackknife_rank_full(ranks, PHI, wn, wnm1))
+  cpp <- .rdistnn_compiled_fun("rustat_jackknife_rank_full")
+  if (!is.null(cpp)) {
+    return(cpp(ranks, PHI, wn, wnm1))
   }
 
   .jackknife_rank_full_R(ranks, PHI, wn, wnm1)

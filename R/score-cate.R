@@ -94,8 +94,9 @@ score_cate_rho <- function(
         return(numeric(0L))
       }
 
-      if (exists("rustat_subset_row_sums_g", mode = "function")) {
-        return(rustat_subset_row_sums_g(subs, gi))
+      cpp <- .rdistnn_compiled_fun("rustat_subset_row_sums_g")
+      if (!is.null(cpp)) {
+        return(cpp(subs, gi))
       }
       rowSums(matrix(gi[subs], nrow = nrow(subs), ncol = ncol(subs)))
     },

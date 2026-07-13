@@ -1,6 +1,6 @@
 # RdistNN news
 
-## RdistNN (development)
+## RdistNN 0.1.0
 
 ### Paper tuning defaults
 
@@ -8,6 +8,29 @@
   `lambda = 0.4` and sensitivity grid `c(0.3, 0.4, 0.5, 0.75)`, while
   preserving `s(lambda) = floor(lambda * n^((kx + 1)/(kx + 2)))` and all
   explicit tuning overrides.
+
+### Pre-release documentation and metadata
+
+- Corrected the `np_dnn()`, `cate_dnn()`, `plqr_dnn()`, and `gmm_dnn()` help
+  pages so their automatic-order formula includes the finite-sample
+  `lambda = 0.4` multiplier used by the implementation.
+- Added the CATE inference contract to the README and command help:
+  orthogonality controls first-order population nuisance drift, while
+  same-sample reuse separately requires the paper's nuisance-rate and
+  full-state stability conditions.
+- Added the current paper link, repository and issue-tracker metadata, and
+  explicit build exclusions for local check, archive, and rendered-README
+  outputs.
+- Expanded release CI to run on default-branch pushes and to cover both Apple
+  Silicon and Intel macOS alongside Windows and Linux. Clarified that OpenMP is
+  optional at runtime but source installation still requires C++17.
+- Added `options(RdistNN.use_compiled = FALSE)` as a single switch for forcing
+  supported R distance, score, and jackknife fallbacks, with compiled/fallback
+  parity tests in the cross-platform matrix.
+- Removed local agent settings and paper PDF snapshots from version control,
+  eliminated the dormant CI log-commit path, tightened default workflow
+  permissions, and added a repository-hygiene guard for generated artifacts
+  and finite artifact retention.
 
 ### Theory-facing CATE simulation diagnostics
 

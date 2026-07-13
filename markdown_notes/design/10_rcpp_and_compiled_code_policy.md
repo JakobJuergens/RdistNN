@@ -67,6 +67,12 @@ When an R fallback and a compiled path both exist, they must agree on:
 
 Compiled code should not quietly drift from the reference behavior.
 
+The package-wide diagnostic switch is
+`options(RdistNN.use_compiled = FALSE)`. Internal compiled dispatch must
+respect that switch and use the corresponding R implementation. This is an
+algorithm-selection control, not a no-compiler installation mode: source
+installation still compiles the package's registered C++ code.
+
 ## 6. Error-surface policy
 
 User-facing errors should usually be raised from R, not only from C++.
@@ -113,6 +119,9 @@ Rules:
 ## 10. Testing requirement
 
 Any new compiled path must come with tests that compare it to the reference path.
+
+The supported CI matrix must execute the compiled/fallback parity suite on
+Linux x86-64, Windows x86-64, macOS arm64, and macOS x86-64.
 
 At minimum, test:
 - one ordinary valid case;

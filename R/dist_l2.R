@@ -28,7 +28,7 @@ dist_l2 <- function(X, x0, squared = FALSE) {
   X <- as.matrix(X)
   x0 <- .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X", finite = TRUE)
 
-  cpp <- get0("rustat_dist_l2", mode = "function")
+  cpp <- .rdistnn_compiled_fun("rustat_dist_l2")
   if (!is.null(cpp)) {
     return(cpp(X, x0, isTRUE(squared)))
   }
@@ -50,7 +50,7 @@ order_by_l2 <- function(X, x0, squared = FALSE) {
   X <- as.matrix(X)
   x0 <- .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X", finite = TRUE)
 
-  cpp <- get0("rustat_order_by_l2", mode = "function")
+  cpp <- .rdistnn_compiled_fun("rustat_order_by_l2")
   if (!is.null(cpp)) {
     return(cpp(X, x0, isTRUE(squared)))
   }
@@ -93,7 +93,7 @@ distance_l2 <- function(squared = FALSE) {
       .assert_no_na(X0)
       X0 <- .validate_ncol_relation(X, X0, y_arg = "X0", x_arg = "X", relation = "match")
 
-      cpp <- get0("rustat_dist_l2_batch", mode = "function")
+      cpp <- .rdistnn_compiled_fun("rustat_dist_l2_batch")
       if (!is.null(cpp)) {
         return(cpp(X, X0, isTRUE(squared)))
       }
@@ -126,7 +126,7 @@ dist_l2_scaled <- function(X, x0, inv_s, squared = FALSE) {
   x0 <- validated$x0
   inv_s <- validated$inv_s
 
-  cpp <- get0("rustat_dist_l2_scaled", mode = "function")
+  cpp <- .rdistnn_compiled_fun("rustat_dist_l2_scaled")
   if (!is.null(cpp)) {
     return(cpp(X, x0, inv_s, isTRUE(squared)))
   }
@@ -181,7 +181,7 @@ distance_l2_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
       x0 <- validated$x0
       inv_s <- validated$inv_s
 
-      cpp <- get0("rustat_dist_l2_scaled", mode = "function")
+      cpp <- .rdistnn_compiled_fun("rustat_dist_l2_scaled")
       if (!is.null(cpp)) {
         return(cpp(X, x0, inv_s, isTRUE(squared)))
       }
@@ -213,7 +213,7 @@ distance_l2_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
         stop("inv_s length must equal ncol(X).", call. = FALSE)
       }
 
-      cpp <- get0("rustat_dist_l2_scaled_batch", mode = "function")
+      cpp <- .rdistnn_compiled_fun("rustat_dist_l2_scaled_batch")
       if (!is.null(cpp)) {
         return(cpp(X, X0, inv_s, isTRUE(squared)))
       }
@@ -257,7 +257,7 @@ order_by_l2_scaled <- function(X, x0,
     .compute_inv_scale(X, rule, scale_vec, eps)
   }
 
-  cpp <- get0("rustat_order_by_l2_scaled", mode = "function")
+  cpp <- .rdistnn_compiled_fun("rustat_order_by_l2_scaled")
   if (!is.null(cpp)) {
     return(cpp(X, x0, as.numeric(inv_s), isTRUE(squared)))
   }

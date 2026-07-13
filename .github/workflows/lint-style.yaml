@@ -6,7 +6,7 @@ on:
   pull_request:
 
 permissions:
-  contents: write
+  contents: read
   actions: read
 
 concurrency:
@@ -102,6 +102,3 @@ jobs:
     with:
       logs_dir: GH_logs/lint-style
       harvested_artifact_name: harvested-lint-style-logs
-      # Logs live in workflow artifacts only; the source tree stays clean.
-      commit_logs: false
-    secrets: inherit

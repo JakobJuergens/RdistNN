@@ -56,7 +56,7 @@ paper theory uses \code{k = 1} (the default).}
 \item{s}{Integer kernel order (undersmoothing parameter), or \code{NULL}. When
 both \code{s} and \code{tuning} are \code{NULL} (the default), \code{s} is resolved from the
 paper undersmoothing rule \code{\link[=tuning_dnn_paper]{tuning_dnn_paper()}},
-\eqn{s = \lfloor n^{(k_x+1)/(k_x+2)} \rfloor}. Note that small fixed
+\eqn{s = \lfloor 0.4 n^{(k_x+1)/(k_x+2)} \rfloor}. Note that small fixed
 values such as \code{s = 1} (or \code{k = s}) yield uniform weights and hence no
 localization; a warning is emitted in that case.}
 

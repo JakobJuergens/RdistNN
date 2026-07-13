@@ -7,6 +7,10 @@
 ^\.RData$
 ^\.Ruserdata$
 ^\.\.Rcheck$
+^RdistNN\.Rcheck$
+^RdistNN_[0-9.]+\.tar\.gz$
+^docs_local_ci_check$
+^README\.html$
 ^vign_test$
 ^LICENSE\.md$
 ^README\.Rmd$

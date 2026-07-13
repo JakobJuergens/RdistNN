@@ -143,10 +143,11 @@ score_plqr_component <- function(
       # ---- compute and stash the score contributions ----
       score <- NULL
       ptr_ctx <- NULL
-      if (exists("rustat_plqr_ctx_create", mode = "function") &&
-        exists("rustat_plqr_g_all", mode = "function")) {
+      ctx_create <- .rdistnn_compiled_fun("rustat_plqr_ctx_create")
+      g_all <- .rdistnn_compiled_fun("rustat_plqr_g_all")
+      if (!is.null(ctx_create) && !is.null(g_all)) {
         # CORRECT argument order + include j
-        ptr_ctx <- rustat_plqr_ctx_create(
+        ptr_ctx <- ctx_create(
           Y, # NumericVector
           D, # NumericMatrix
           gx, # NumericVector
@@ -155,7 +156,7 @@ score_plqr_component <- function(
           as.numeric(tau),
           as.integer(j)
         )
-        score <- as.numeric(rustat_plqr_g_all(ptr_ctx))
+        score <- as.numeric(g_all(ptr_ctx))
       } else {
         # R fallback
         thr <- as.vector(D %*% as.numeric(theta)) + gx
@@ -190,8 +191,9 @@ score_plqr_component <- function(
         return(numeric(0L))
       }
 
-      if (exists("rustat_subset_row_sums_g", mode = "function")) {
-        return(rustat_subset_row_sums_g(subs, psi))
+      cpp <- .rdistnn_compiled_fun("rustat_subset_row_sums_g")
+      if (!is.null(cpp)) {
+        return(cpp(subs, psi))
       }
       rowSums(matrix(psi[subs], nrow = nrow(subs), ncol = ncol(subs)))
     },

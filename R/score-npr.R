@@ -97,8 +97,9 @@ score_np_y <- function(
         return(numeric(0L))
       }
 
-      if (exists("rustat_subset_row_sums_g", mode = "function")) {
-        return(rustat_subset_row_sums_g(subs, ctx$g))
+      cpp <- .rdistnn_compiled_fun("rustat_subset_row_sums_g")
+      if (!is.null(cpp)) {
+        return(cpp(subs, ctx$g))
       }
       as.numeric(ctx$g[subs[, 1L]])
     },

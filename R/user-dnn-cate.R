@@ -34,6 +34,16 @@
 #' `degenerate`; `top_n` is fixed at 5 and is independent of the estimator's
 #' `k`.
 #'
+#' Neyman orthogonality controls first-order population nuisance drift, but it
+#' does not by itself validate arbitrary nuisance predictions fitted on the
+#' same observations used for localization and inference. Valid full-sample
+#' reuse additionally requires the nuisance-rate and full-state stability
+#' conditions in the accompanying paper. This function computes the estimator
+#' and its requested jackknife procedure; it cannot diagnose whether an
+#' arbitrary learner satisfies those conditions. Supply oracle quantities,
+#' cross-fitted or out-of-fold predictions, or full-sample predictions from a
+#' learner for which the paper's rate and stability conditions are credible.
+#'
 #' @param data Data frame with covariates and optional nuisance columns. Column
 #'   names must be non-missing, non-empty, and unique.
 #' @param x_cols Names or indices of covariate columns in `data`.
@@ -56,7 +66,7 @@
 #' @param s Integer kernel order (undersmoothing parameter), or `NULL`. When
 #'   both `s` and `tuning` are `NULL` (the default), `s` is resolved from the
 #'   paper undersmoothing rule [tuning_dnn_paper()],
-#'   \eqn{s = \lfloor n^{(k_x+1)/(k_x+2)} \rfloor}. Note that small fixed
+#'   \eqn{s = \lfloor 0.4 n^{(k_x+1)/(k_x+2)} \rfloor}. Note that small fixed
 #'   values such as `s = 1` (or `k = s`) yield uniform weights and hence no
 #'   localization; a warning is emitted in that case.
 #' @param tuning Optional kernel-order tuning specification. When supplied,

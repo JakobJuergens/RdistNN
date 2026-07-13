@@ -54,8 +54,9 @@ jackknife_fast_rank <- function(ranks, a, phi, normalize = TRUE) {
   # Prefer compiled path when phi is matrix and the symbol is present
   if (is.matrix(phi) && is.numeric(phi)) {
     PHI <- .jackknife_validate_phi_matrix(phi, ranks, arg = "phi")
-    if (exists("rustat_jackknife_fast_rank", mode = "function")) {
-      return(rustat_jackknife_fast_rank(ranks, a, PHI, normalize))
+    cpp <- .rdistnn_compiled_fun("rustat_jackknife_fast_rank")
+    if (!is.null(cpp)) {
+      return(cpp(ranks, a, PHI, normalize))
     }
     return(.jackknife_fast_rank_R(ranks = ranks, a = a, phi = PHI, normalize = normalize))
   }
