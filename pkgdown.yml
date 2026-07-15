@@ -1,0 +1,18 @@
+pandoc: 3.8.3
+pkgdown: 2.2.1
+pkgdown_sha: ~
+articles:
+  conditional-z-estimation: conditional-z-estimation.html
+  diagnostics-reporting: diagnostics-reporting.html
+  dnn-weights: dnn-weights.html
+  extending: extending.html
+  getting-started: getting-started.html
+  jackknife-gen-ustats: jackknife-gen-ustats.html
+  kernel-order-tuning: kernel-order-tuning.html
+  local-iv-estimation: local-iv-estimation.html
+  paper-cate-simulation: paper-cate-simulation.html
+  visualising-fits: visualising-fits.html
+last_built: 2026-07-13T03:33Z
+urls:
+  reference: https://JakobJuergens.github.io/RdistNN/reference
+  article: https://JakobJuergens.github.io/RdistNN/articles

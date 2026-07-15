@@ -1,0 +1,273 @@
+# Getting started with RdistNN
+
+``` r
+
+library(RdistNN)
+```
+
+## Overview
+
+`RdistNN` provides:
+
+- Distance specifications and registries
+  ([`new_distance()`](https://JakobJuergens.github.io/RdistNN/reference/new_distance.md),
+  [`register_distance()`](https://JakobJuergens.github.io/RdistNN/reference/register_distance.md))
+- Rank-weight specifications and registries
+  ([`new_rank_weight()`](https://JakobJuergens.github.io/RdistNN/reference/new_rank_weight.md),
+  [`register_rank_weight()`](https://JakobJuergens.github.io/RdistNN/reference/register_rank_weight.md))
+- Score specifications and differentiation helpers
+  ([`new_score()`](https://JakobJuergens.github.io/RdistNN/reference/new_score.md),
+  [`score_eval_batch()`](https://JakobJuergens.github.io/RdistNN/reference/score_eval_batch.md),
+  [`score_diff_path()`](https://JakobJuergens.github.io/RdistNN/reference/score_diff_path.md))
+- DNN weight constructors
+  ([`weights_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/weights_dnn.md),
+  [`weights_dnn_exact()`](https://JakobJuergens.github.io/RdistNN/reference/weights_dnn_exact.md),
+  [`weights_dnn_asymp()`](https://JakobJuergens.github.io/RdistNN/reference/weights_dnn_asymp.md))
+- User-level localized estimators:
+  - [`np_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_dnn.md)
+    for nonparametric local means
+  - [`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md)
+    for conditional average treatment effects
+  - [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md)
+    for localized PLQR coefficient surfaces and orthogonal moments
+- Fitted-object diagnostics via
+  [`diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/diagnostics.md)
+
+Most user workflows are one of:
+
+1.  Build weights directly and combine with your own signal.
+2.  Use one of the user-level wrappers above.
+3.  Customize distance and rank-weight rules through registries.
+4.  Build your own score kernels and localized estimators on top of the
+    same modular API.
+
+## 1) Compute DNN Weights
+
+``` r
+
+set.seed(1)
+n <- 120
+p <- 2
+X <- matrix(rnorm(n * p), n, p)
+X0 <- matrix(rnorm(6), 3, p)
+
+# Exact finite-sample DNN weights
+wt_exact <- weights_dnn(
+  X = X, X0 = X0,
+  distance = "l2",
+  method = "exact",
+  k = 1L, s = 3L,
+  return = c("W", "ranks", "ord")
+)
+
+# Asymptotic DNN weights
+wt_asymp <- weights_dnn(
+  X = X, X0 = X0,
+  distance = "l2",
+  method = "asymp",
+  k = 1L, s = 3L,
+  normalize = TRUE,
+  return = "W"
+)
+
+dim(wt_exact$W)
+```
+
+For exact DNN weights, the package uses the full rank permutation at
+each target. This is not an `s`-nearest-neighbor truncation. In rank
+order, the exact finite-population support is `j <= n - s + k`, and in
+particular `j <= n - s + 1` when `k = 1`. When requested, the
+`neighbors` extra reports the first `k` nearest observations, not the
+full DNN weight support.
+
+## 2) Local Nonparametric Regression with `np_dnn()`
+
+``` r
+
+demo_np <- np_demo_data(n = 250, p = 2, design = "sinusoidal", seed = 1)
+
+fit_np <- np_dnn(
+  data = demo_np$data,
+  x_cols = c("X1", "X2"),
+  y_col = "Y",
+  x0 = c(0, 0),
+  method = "exact",
+  k = 1L, s = 3L,
+  se = TRUE,
+  jackknife = "fast",
+  return = c("W", "ess", "neighbors")
+)
+
+fit_np$mu
+fit_np$se
+diagnostics(fit_np)
+```
+
+`jackknife` can be:
+
+- `"fast"`: delete-1 updates from full-sample ranks (default)
+- `"loo"`: direct leave-one-out recomputation
+- `"none"`: skip standard errors
+
+## 3) CATE with `cate_dnn()` and Post-estimation Methods
+
+``` r
+
+demo_cate <- cate_demo_data(n = 300, p = 2, design = "hetero", seed = 1)
+df <- demo_cate$data
+df$m1_oracle <- df$m0_oracle + df$tau_oracle
+
+fit_cate <- cate_dnn(
+  data = df,
+  x_cols = c("X1", "X2"),
+  y_col = "Y",
+  t_col = "D",
+  m0_col = "m0_oracle",
+  m1_col = "m1_oracle",
+  e_col = "e_oracle",
+  x0 = c(0, 0),
+  method = "exact",
+  k = 1L, s = 3L,
+  se = TRUE,
+  return = c("W", "psi", "nuisance")
+)
+
+summary(fit_cate)
+confint(fit_cate)
+diagnostics(fit_cate)
+predict(fit_cate, x0 = c(0.2, -0.1), interval = "confidence")
+```
+
+[`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md)
+supports:
+
+- Matrix interface: pass `X`, `X0`/`x0`, and `pseudo_outcome`
+- Data-frame interface:
+  - Full AIPW: `y_col`, `t_col`, `e_col`, `m0_col`, `m1_col`
+  - Robinson-style: `y_col`, `t_col`, `e_col`, `m_col`
+
+## 4) Local PLQR Moments and Coefficient Inference with `plqr_dnn()`
+
+``` r
+
+demo_plqr <- plqr_demo_data(n = 250, p = 2, p_d = 2, tau = 0.5, seed = 1)
+# density_oracle ships with the demo data: the true threshold density.
+
+fit_plqr <- plqr_dnn(
+  data = demo_plqr$data,
+  x_cols = c("X1", "X2"),
+  D_cols = c("D1", "D2"),
+  g_col = "g_oracle",
+  mD_cols = c("mD1", "mD2"),
+  y_col = "Y",
+  density_col = "density_oracle",
+  theta_eval = demo_plqr$truth$theta_true,
+  tau = 0.5,
+  x0 = c(0, 0),
+  method = "exact",
+  k = 1L, s = 3L,
+  se = TRUE,
+  return = c("W", "score", "ess")
+)
+
+summary(fit_plqr)
+confint(fit_plqr)
+predict(fit_plqr, x0 = c(0.25, -0.25), interval = "confidence")
+fit_plqr$moment
+diagnostics(fit_plqr)
+```
+
+## 5) Fitted-Object Diagnostics
+
+[`diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/diagnostics.md)
+adds a compact reporting layer on top of fitted local estimators. It
+uses retained objects rather than refitting:
+
+- all supported fits report weight concentration diagnostics such as
+  `n_eff` and top-weight shares;
+- NP fits add localized outcome summaries;
+- CATE fits add treated/control overlap and propensity summaries when
+  treatment and propensity state are available;
+- PLQR fits add residual-regressor Gram conditioning diagnostics.
+
+``` r
+
+d_np <- diagnostics(fit_np)
+d_cate <- diagnostics(fit_cate)
+d_plqr <- diagnostics(fit_plqr)
+
+d_np[, c("target_id", "n_eff", "weighted_mean_y", "weighted_sd_y")]
+d_cate[, c("target_id", "treated_mass", "control_mass", "treated_share")]
+d_plqr[, c("target_id", "gram_min_eig", "gram_condition_number")]
+```
+
+Diagnostics require retained weights. The default `return = "W"` keeps
+weights; if you omit them, refit with `return` including `"W"`.
+
+## 6) Customize Distance and Rank Rules
+
+``` r
+
+register_distance("linf_demo", function(X, x0, ctx = NULL) {
+  apply(abs(X - matrix(x0, nrow(X), ncol(X), byrow = TRUE)), 1L, max)
+})
+
+register_rank_weight("inv_rank_demo", function(ranks) {
+  w <- 1 / as.numeric(ranks)
+  w / sum(w)
+})
+
+X <- as.matrix(np_demo_data(n = 80, p = 2, seed = 1)$data[, c("X1", "X2")])
+
+out <- weights_matrix(
+  X = X,
+  x0 = c(0, 0),
+  ranking = "linf_demo",
+  weight = get_rank_weight("inv_rank_demo"),
+  return = c("W", "ranks")
+)
+dim(out$W)
+```
+
+## 7) Minimal Custom Score
+
+``` r
+
+sc_affine <- new_score(
+  name = "affine_order1",
+  order = 1L,
+  eval_param = function(idxs, data, theta, ctx, rng = NULL) {
+    theta[1] * data$Y[idxs] + theta[2]
+  },
+  grad = function(idxs, data, theta, ctx, rng = NULL) {
+    c(data$Y[idxs], 1)
+  }
+)
+
+df <- data.frame(Y = c(1, 2, 4))
+path <- score_diff_path(sc_affine, data = df, method = "auto")
+
+path$value(2L, theta = c(0.5, 1))
+path$grad(2L, theta = c(0.5, 1))
+```
+
+When you move beyond the built-in wrappers:
+
+- implement a custom distance if the notion of closeness changes;
+- implement a custom rank weight if the ranking stays the same but the
+  localization profile changes;
+- implement a custom score if the target moment or estimating equation
+  changes.
+
+The full extension workflow, including `setup()`, `eval_batch()`,
+parameter-aware scores, and debugging with
+`return = c("dx", "ord", "ranks")`, is in
+[`vignette("extending", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/extending.md).
+
+## Next Steps
+
+- [`vignette("dnn-weights", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.md)
+- [`vignette("diagnostics-reporting", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/diagnostics-reporting.md)
+- [`vignette("conditional-z-estimation", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md)
+- [`vignette("extending", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/extending.md)
+- [`vignette("jackknife-gen-ustats", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/jackknife-gen-ustats.md)

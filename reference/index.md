@@ -1,0 +1,428 @@
+# Package index
+
+## Package overview
+
+- [`RdistNN-package`](https://JakobJuergens.github.io/RdistNN/reference/RdistNN-package.md)
+  [`RdistNN`](https://JakobJuergens.github.io/RdistNN/reference/RdistNN-package.md)
+  : RdistNN: Distance-Based Building Blocks for Localized U-Statistics
+
+## Stable user API — estimators and weights
+
+The primary entry points expected to survive the public release:
+user-level estimators plus the DNN weight builders.
+
+- [`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md)
+  : CATE via DNN rank weights (orthogonalized local averaging)
+- [`np_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_dnn.md)
+  : Nonparametric regression via DNN rank weights
+- [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md)
+  : PLQR local moment evaluation and direct coefficient inference via
+  DNN rank weights
+- [`weights_matrix()`](https://JakobJuergens.github.io/RdistNN/reference/weights_matrix.md)
+  : Compute weight matrix W via an arbitrary ranking + weight mapping
+- [`weights_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/weights_dnn.md)
+  : DNN weights (choose method), distance-based ranking
+- [`weights_dnn_exact()`](https://JakobJuergens.github.io/RdistNN/reference/weights_dnn_exact.md)
+  : DNN weights (exact full-U), distance-based ranking
+- [`weights_dnn_asymp()`](https://JakobJuergens.github.io/RdistNN/reference/weights_dnn_asymp.md)
+  : DNN weights (asymptotic full-U), distance-based ranking
+
+## Developer API — scores (U-stat kernels)
+
+Extension points for custom scores: S3 spec, helpers, generics,
+registries, and built-in score topics.
+
+- [`new_score()`](https://JakobJuergens.github.io/RdistNN/reference/new_score.md)
+  : Score specification (S3) for U-stat kernels
+
+- [`score_setup()`](https://JakobJuergens.github.io/RdistNN/reference/score_setup.md)
+  : Set up score context (precomputation)
+
+- [`score_order()`](https://JakobJuergens.github.io/RdistNN/reference/score_order.md)
+  :
+
+  Resolve kernel order `s`
+
+- [`score_eval()`](https://JakobJuergens.github.io/RdistNN/reference/score_eval.md)
+  : Evaluate kernel on one subset
+
+- [`score_eval_batch()`](https://JakobJuergens.github.io/RdistNN/reference/score_eval_batch.md)
+  : Evaluate kernel on many subsets (R fast-path)
+
+- [`as_score()`](https://JakobJuergens.github.io/RdistNN/reference/as_score.md)
+  : Coerce a plain function to a score (simple cases)
+
+- [`is_score()`](https://JakobJuergens.github.io/RdistNN/reference/is_score.md)
+  :
+
+  Is object a `ustat_score`?
+
+- [`is_compiled()`](https://JakobJuergens.github.io/RdistNN/reference/is_compiled.md)
+  : Does a score have a compiled implementation?
+
+- [`register_score()`](https://JakobJuergens.github.io/RdistNN/reference/register_score.md)
+  : Register a score
+
+- [`get_score()`](https://JakobJuergens.github.io/RdistNN/reference/get_score.md)
+  : Retrieve a registered score
+
+- [`list_scores()`](https://JakobJuergens.github.io/RdistNN/reference/list_scores.md)
+  : List registered scores
+
+- [`score_cate_rho()`](https://JakobJuergens.github.io/RdistNN/reference/score_cate_rho.md)
+  : CATE score from a precomputed pseudo-outcome \\\rho\\ (pure score;
+  no weights)
+
+- [`score_diff_path()`](https://JakobJuergens.github.io/RdistNN/reference/score_diff_path.md)
+  : Build a modular differentiable path for a score
+
+- [`score_np_y()`](https://JakobJuergens.github.io/RdistNN/reference/score_np_y.md)
+  :
+
+  Nonparametric regression **singleton** score from observed outcome
+  \\Y\\ (order-1 pure score; no weights)
+
+- [`score_plqr_component()`](https://JakobJuergens.github.io/RdistNN/reference/score_plqr_component.md)
+  : PLQR diagnostic score (component \\j\\); pure score (no weights, no
+  fitting)
+
+## Experimental — local IV-GMM (companion paper)
+
+Experimental companion functionality for the GMM paper; API and theorem
+alignment may change before that paper is released.
+
+- [`gmm_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/gmm_dnn.md)
+  : Local GMM estimation via DNN rank weights
+- [`iv_demo_data()`](https://JakobJuergens.github.io/RdistNN/reference/iv_demo_data.md)
+  : Minimal IV-GMM demo data
+- [`sim_iv_data()`](https://JakobJuergens.github.io/RdistNN/reference/sim_iv_data.md)
+  : Draw one sample from a named IV-GMM simulation DGP
+- [`sim_iv_one_rep()`](https://JakobJuergens.github.io/RdistNN/reference/sim_iv_one_rep.md)
+  : Run one replicate of IV-GMM estimators
+- [`sim_iv_run()`](https://JakobJuergens.github.io/RdistNN/reference/sim_iv_run.md)
+  : Run the IV-GMM simulation grid
+- [`sim_iv_methods()`](https://JakobJuergens.github.io/RdistNN/reference/sim_iv_methods.md)
+  : List available IV simulation methods
+- [`summarise_iv_results()`](https://JakobJuergens.github.io/RdistNN/reference/summarise_iv_results.md)
+  : Summarise raw IV-GMM simulation results
+- [`new_gmm_model()`](https://JakobJuergens.github.io/RdistNN/reference/new_gmm_model.md)
+  : Create a local GMM model object
+- [`is_gmm_model()`](https://JakobJuergens.github.io/RdistNN/reference/is_gmm_model.md)
+  : Test whether an object is a GMM model
+- [`gmm_model_dr_iv()`](https://JakobJuergens.github.io/RdistNN/reference/gmm_model_dr_iv.md)
+  : Doubly robust IV GMM model
+
+## Developer API — distances (rankers)
+
+Extension points for custom distances: S3 spec, helpers, generics,
+registries, and built-in distance constructors.
+
+- [`new_distance()`](https://JakobJuergens.github.io/RdistNN/reference/new_distance.md)
+  : Construct a distance spec
+- [`distance_eval()`](https://JakobJuergens.github.io/RdistNN/reference/distance_eval.md)
+  : Evaluate a distance spec at a single target
+- [`distance_eval_batch()`](https://JakobJuergens.github.io/RdistNN/reference/distance_eval_batch.md)
+  : Evaluate a distance spec for many targets (batch)
+- [`as_distance()`](https://JakobJuergens.github.io/RdistNN/reference/as_distance.md)
+  : Wrap a function as a distance spec
+- [`is_distance()`](https://JakobJuergens.github.io/RdistNN/reference/is_distance.md)
+  : Is this a distance spec?
+- [`register_distance()`](https://JakobJuergens.github.io/RdistNN/reference/register_distance.md)
+  : Register a distance spec under a name
+- [`get_distance()`](https://JakobJuergens.github.io/RdistNN/reference/get_distance.md)
+  : Retrieve a registered distance spec
+- [`distance_names()`](https://JakobJuergens.github.io/RdistNN/reference/distance_names.md)
+  : List registered distances
+- [`distance_l2()`](https://JakobJuergens.github.io/RdistNN/reference/distance_l2.md)
+  : L2 distance spec (single and batched evaluation)
+- [`distance_l1()`](https://JakobJuergens.github.io/RdistNN/reference/distance_l1.md)
+  : L1 distance spec (single and batched evaluation)
+- [`distance_l2_scaled()`](https://JakobJuergens.github.io/RdistNN/reference/distance_l2_scaled.md)
+  : Scaled L2 distance spec (one-time setup + eval/batch)
+- [`distance_l1_scaled()`](https://JakobJuergens.github.io/RdistNN/reference/distance_l1_scaled.md)
+  : Scaled L1 distance spec (one-time setup + eval/batch)
+- [`distance_mahalanobis()`](https://JakobJuergens.github.io/RdistNN/reference/distance_mahalanobis.md)
+  : Mahalanobis distance spec (with one-time covariance setup)
+
+## Developer API — rank → weight mappings
+
+Extension points for custom rank weights: S3 spec, evaluators, registry,
+and the single-scale DNN rank-weight constructors.
+
+- [`new_rank_weight()`](https://JakobJuergens.github.io/RdistNN/reference/new_rank_weight.md)
+  : Construct a rank-weight spec
+- [`rank_weight_eval()`](https://JakobJuergens.github.io/RdistNN/reference/rank_weight_eval.md)
+  : Evaluate rank-weight for a single target
+- [`rank_weight_eval_batch()`](https://JakobJuergens.github.io/RdistNN/reference/rank_weight_eval_batch.md)
+  : Evaluate rank-weight for many targets (batch)
+- [`as_rank_weight()`](https://JakobJuergens.github.io/RdistNN/reference/as_rank_weight.md)
+  : Wrap a function as a rank_weight spec
+- [`is_rank_weight()`](https://JakobJuergens.github.io/RdistNN/reference/is_rank_weight.md)
+  : Is this a rank_weight spec?
+- [`register_rank_weight()`](https://JakobJuergens.github.io/RdistNN/reference/register_rank_weight.md)
+  : Register a rank_weight under a name
+- [`get_rank_weight()`](https://JakobJuergens.github.io/RdistNN/reference/get_rank_weight.md)
+  : Retrieve a registered rank_weight
+- [`rank_weight_names()`](https://JakobJuergens.github.io/RdistNN/reference/rank_weight_names.md)
+  : List registered rank_weight names
+- [`rank_weight_dnn_exact()`](https://JakobJuergens.github.io/RdistNN/reference/rank_weight_dnn_exact.md)
+  : Rank-weight: DNN exact (full U, WOR)
+- [`rank_weight_dnn_asymp()`](https://JakobJuergens.github.io/RdistNN/reference/rank_weight_dnn_asymp.md)
+  : Rank-weight: DNN asymptotic (full U, WOR)
+
+## Advanced — TDNN and jackknife-paper infrastructure
+
+Two-scale DNN estimation and the leave-one-out jackknife primitives
+supporting the generalized U-statistics companion paper.
+
+- [`np_tdnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_tdnn.md)
+  : Nonparametric regression via TDNN rank weights
+- [`weights_tdnn()`](https://JakobJuergens.github.io/RdistNN/reference/weights_tdnn.md)
+  : TDNN weights (choose method, k = 1), distance-based ranking
+- [`weights_tdnn_exact()`](https://JakobJuergens.github.io/RdistNN/reference/weights_tdnn_exact.md)
+  : TDNN weights (exact, k = 1), distance-based ranking
+- [`weights_tdnn_asymp()`](https://JakobJuergens.github.io/RdistNN/reference/weights_tdnn_asymp.md)
+  : TDNN weights (asymptotic, k = 1), distance-based ranking
+- [`rank_weight_tdnn_exact()`](https://JakobJuergens.github.io/RdistNN/reference/rank_weight_tdnn_exact.md)
+  : Rank-weight spec: TDNN exact (Demirkaya two-scale DNN, k = 1)
+- [`rank_weight_tdnn_asymp()`](https://JakobJuergens.github.io/RdistNN/reference/rank_weight_tdnn_asymp.md)
+  : Rank-weight spec: TDNN asymptotic (Demirkaya two-scale DNN, k = 1)
+- [`plot_tdnn_scales()`](https://JakobJuergens.github.io/RdistNN/reference/plot_tdnn_scales.md)
+  : Plot the TDNN two-scale decomposition
+- [`jackknife_fast_rank()`](https://JakobJuergens.github.io/RdistNN/reference/jackknife_fast_rank.md)
+  : Fast delete-one jackknife for rank-weighted functionals (auto C++
+  when available, R fallback otherwise)
+- [`jackknife_rank_full()`](https://JakobJuergens.github.io/RdistNN/reference/jackknife_rank_full.md)
+  : Generic rank-order delete-one jackknife (prefix/suffix engine)
+- [`jackknife_slow_rank()`](https://JakobJuergens.github.io/RdistNN/reference/jackknife_slow_rank.md)
+  : Slow delete-one jackknife for rank-weighted L-stat rules (fixed
+  ranks)
+
+## Plotting
+
+ggplot2-based panels for fitted objects (ggplot2 is a suggested
+dependency), and the tidy data extractors underneath them; see the
+plotting-layer plan in the repository notes.
+
+- [`plot_estimates()`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
+  [`autoplot.np_result()`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
+  [`autoplot.cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
+  [`autoplot.plqr_result()`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
+  [`autoplot.gmm_result()`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
+  [`plot(`*`<np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
+  [`plot(`*`<cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
+  [`plot(`*`<plqr_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
+  [`plot(`*`<gmm_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
+  : Plot estimates with confidence bounds across target points
+- [`plot_weights()`](https://JakobJuergens.github.io/RdistNN/reference/plot_weights.md)
+  : Plot DNN weight profiles, concentration, and effective kernels
+- [`plot_overlap()`](https://JakobJuergens.github.io/RdistNN/reference/plot_overlap.md)
+  : Plot local overlap for CATE fits
+- [`plot_dashboard()`](https://JakobJuergens.github.io/RdistNN/reference/plot_dashboard.md)
+  : Compose a diagnostics dashboard for a fitted object
+- [`plot_conditioning()`](https://JakobJuergens.github.io/RdistNN/reference/plot_conditioning.md)
+  : Plot local design conditioning for PLQR fits
+- [`plot_calibration()`](https://JakobJuergens.github.io/RdistNN/reference/plot_calibration.md)
+  : Plot local quantile calibration for PLQR fits
+- [`plot_influence()`](https://JakobJuergens.github.io/RdistNN/reference/plot_influence.md)
+  : Plot per-observation contributions to a CATE estimate
+- [`plot_tuning()`](https://JakobJuergens.github.io/RdistNN/reference/plot_tuning.md)
+  : Plot estimate sensitivity to the kernel order
+- [`autoplot.dnn_diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/autoplot.dnn_diagnostics.md)
+  [`plot(`*`<dnn_diagnostics>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/autoplot.dnn_diagnostics.md)
+  : Plot per-target weight diagnostics
+- [`plot_data_estimates()`](https://JakobJuergens.github.io/RdistNN/reference/plot_data_estimates.md)
+  : Extract a tidy estimates frame from a fitted RdistNN object
+- [`plot_data_weights()`](https://JakobJuergens.github.io/RdistNN/reference/plot_data_weights.md)
+  : Extract a tidy weight-profile frame from a fitted RdistNN object
+- [`plot_data_diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/plot_data_diagnostics.md)
+  : Extract the per-target diagnostics frame from a fitted RdistNN
+  object
+
+## S3 methods
+
+diagnostics, print, summary, confint, and predict methods for package
+objects.
+
+- [`candidate_fit()`](https://JakobJuergens.github.io/RdistNN/reference/candidate_fit.md)
+  [`candidate_fits()`](https://JakobJuergens.github.io/RdistNN/reference/candidate_fit.md)
+  : Extract one candidate view from a grid fit
+
+- [`diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/diagnostics.md)
+  [`print(`*`<dnn_diagnostics>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/diagnostics.md)
+  : Compute diagnostics for fitted localized estimators
+
+- [`print(`*`<cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.cate_result.md)
+  :
+
+  Print a `cate_result` object
+
+- [`print(`*`<gmm_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.gmm_result.md)
+  :
+
+  Print a `gmm_result` object
+
+- [`print(`*`<np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.np_result.md)
+  :
+
+  Print an `np_result` object
+
+- [`print(`*`<plqr_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.plqr_result.md)
+  :
+
+  Print a `plqr_result` object
+
+- [`print(`*`<score_diff_path>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.score_diff_path.md)
+  :
+
+  Print a `score_diff_path` object
+
+- [`print(`*`<summary.cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.summary.cate_result.md)
+  :
+
+  Print a `summary.cate_result` object
+
+- [`print(`*`<summary.gmm_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.summary.gmm_result.md)
+  :
+
+  Print a `summary.gmm_result`
+
+- [`print(`*`<summary.plqr_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.summary.plqr_result.md)
+  :
+
+  Print a `summary.plqr_result`
+
+- [`print(`*`<tdnn_np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.tdnn_np_result.md)
+  :
+
+  Print a `tdnn_np_result` object
+
+- [`print(`*`<ustat_score>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.ustat_score.md)
+  :
+
+  Print a `ustat_score` object
+
+- [`print(`*`<weights_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.weights_result.md)
+  :
+
+  Print a `weights_result` object
+
+- [`summary(`*`<cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/summary.cate_result.md)
+  :
+
+  Summarize a `cate_result` object
+
+- [`summary(`*`<gmm_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/summary.gmm_result.md)
+  :
+
+  Summarize a `gmm_result`
+
+- [`summary(`*`<plqr_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/summary.plqr_result.md)
+  :
+
+  Summarize a `plqr_result`
+
+- [`confint(`*`<cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/confint.cate_result.md)
+  :
+
+  Confidence intervals for `cate_result`
+
+- [`confint(`*`<gmm_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/confint.gmm_result.md)
+  :
+
+  Confidence intervals for `gmm_result`
+
+- [`confint(`*`<plqr_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/confint.plqr_result.md)
+  :
+
+  Confidence intervals for `plqr_result`
+
+- [`coef(`*`<cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/coef.cate_result.md)
+  :
+
+  Extract coefficients from a `cate_result`
+
+- [`coef(`*`<gmm_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/coef.gmm_result.md)
+  :
+
+  Extract coefficients from a `gmm_result`
+
+- [`coef(`*`<plqr_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/coef.plqr_result.md)
+  :
+
+  Extract coefficients from a `plqr_result`
+
+- [`vcov(`*`<gmm_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/vcov.gmm_result.md)
+  :
+
+  Variance-covariance matrices for `gmm_result`
+
+- [`vcov(`*`<plqr_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/vcov.plqr_result.md)
+  :
+
+  Variance-covariance matrices for `plqr_result`
+
+- [`predict(`*`<cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/predict.cate_result.md)
+  :
+
+  Predict from a `cate_result` object at new targets
+
+- [`predict(`*`<plqr_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/predict.plqr_result.md)
+  :
+
+  Predict from a `plqr_result` object at new targets
+
+## Kernel-order tuning
+
+Tuning specifications, registry helpers, and paper-default rules.
+
+- [`new_tuning()`](https://JakobJuergens.github.io/RdistNN/reference/new_tuning.md)
+  : Construct a tuning spec
+- [`as_tuning()`](https://JakobJuergens.github.io/RdistNN/reference/as_tuning.md)
+  : Wrap a function as a tuning spec
+- [`is_tuning()`](https://JakobJuergens.github.io/RdistNN/reference/is_tuning.md)
+  : Is this a tuning spec?
+- [`register_tuning()`](https://JakobJuergens.github.io/RdistNN/reference/register_tuning.md)
+  : Register a tuning spec under a name
+- [`get_tuning()`](https://JakobJuergens.github.io/RdistNN/reference/get_tuning.md)
+  : Retrieve a registered tuning spec
+- [`tuning_names()`](https://JakobJuergens.github.io/RdistNN/reference/tuning_names.md)
+  : List registered tuning names
+- [`tuning_eval()`](https://JakobJuergens.github.io/RdistNN/reference/tuning_eval.md)
+  : Evaluate a tuning spec
+- [`tuning_dnn_paper()`](https://JakobJuergens.github.io/RdistNN/reference/tuning_dnn_paper.md)
+  : Paper-default undersmoothing rule for kernel order
+
+## Paper replication — CATE simulation study
+
+Data-generating processes and Monte Carlo harnesses mirroring the
+conditional Z-estimation paper’s CATE study.
+
+- [`sim_cate_data()`](https://JakobJuergens.github.io/RdistNN/reference/sim_cate_data.md)
+  : Draw one sample from a named CATE simulation DGP
+- [`sim_cate_one_rep()`](https://JakobJuergens.github.io/RdistNN/reference/sim_cate_one_rep.md)
+  : Run one replicate of CATE estimators
+- [`sim_cate_run()`](https://JakobJuergens.github.io/RdistNN/reference/sim_cate_run.md)
+  : Run the CATE simulation grid
+- [`sim_cate_methods()`](https://JakobJuergens.github.io/RdistNN/reference/sim_cate_methods.md)
+  : List available CATE simulation methods
+- [`summarise_sim_results()`](https://JakobJuergens.github.io/RdistNN/reference/summarise_sim_results.md)
+  : Summarise raw per-replicate CATE simulation results
+
+## Demo data & utilities
+
+- [`cate_demo_data()`](https://JakobJuergens.github.io/RdistNN/reference/cate_demo_data.md)
+  : Minimal CATE demo data (oracle nuisances + pseudo-outcome)
+- [`cate_demo_subsets()`](https://JakobJuergens.github.io/RdistNN/reference/cate_demo_subsets.md)
+  : Quick helper: sample a batch of subsets (for U-stat experiments)
+- [`np_demo_data()`](https://JakobJuergens.github.io/RdistNN/reference/np_demo_data.md)
+  : Minimal nonparametric regression demo data (oracle m and Y only)
+- [`np_demo_subsets()`](https://JakobJuergens.github.io/RdistNN/reference/np_demo_subsets.md)
+  : Quick helper: sample a batch of subsets (singleton by default)
+- [`plqr_demo_data()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_demo_data.md)
+  : Minimal PLQR demo data (oracle nuisances; no internal fitting)
+- [`plqr_demo_subsets()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_demo_subsets.md)
+  : Quick helper: sample a batch of subsets (for U-stat / localization
+  experiments)
+- [`plqr_score_matrix()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_score_matrix.md)
+  : Observation-level orthogonal PLQR scores at a supplied coefficient
