@@ -187,3 +187,15 @@ packages (`grf`, etc.) listed under `Suggests` in `DESCRIPTION`.
 ```{r benchmarks-path, eval = FALSE}
 system.file("paper-replication/cate/benchmarks.R", package = "RdistNN")
 ```
+
+## Related Articles
+
+- [Notation and package conventions](notation-and-conventions.html):
+  `vignette("notation-and-conventions", package = "RdistNN")` defines the CATE
+  signal, nuisance, localization, and effective-size conventions used here.
+- [Conditional Z-estimation](conditional-z-estimation.html):
+  `vignette("conditional-z-estimation", package = "RdistNN")` gives the general
+  user-facing `cate_dnn()` workflow outside this replication design.
+- [Diagnostics and reporting](diagnostics-reporting.html):
+  `vignette("diagnostics-reporting", package = "RdistNN")` documents the
+  overlap and localization diagnostics returned by CATE fits.

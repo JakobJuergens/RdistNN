@@ -97,3 +97,15 @@ fit$meta$s
 fit$tuning$grid$candidates
 diagnostics(fit)[, c("target_id", "tuning_name", "tuning_default_s", "tuning_grid_n_candidates")]
 ```
+
+## Related Articles
+
+- [Notation and package conventions](notation-and-conventions.html):
+  `vignette("notation-and-conventions", package = "RdistNN")` relates `s`,
+  `k`, `lambda`, support, and effective sample size to the paper notation.
+- [DNN weights](dnn-weights.html):
+  `vignette("dnn-weights", package = "RdistNN")` explains how the selected
+  order enters exact and asymptotic weights.
+- [Diagnostics and reporting](diagnostics-reporting.html):
+  `vignette("diagnostics-reporting", package = "RdistNN")` shows how resolved
+  tuning metadata appears in fitted-object diagnostics.

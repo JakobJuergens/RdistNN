@@ -252,8 +252,16 @@ scores, and debugging with `return = c("dx", "ord", "ranks")`, is in
 
 ## Next Steps
 
-- `vignette("dnn-weights", package = "RdistNN")`
-- `vignette("diagnostics-reporting", package = "RdistNN")`
-- `vignette("conditional-z-estimation", package = "RdistNN")`
-- `vignette("extending", package = "RdistNN")`
-- `vignette("jackknife-gen-ustats", package = "RdistNN")`
+- [Notation and package conventions](notation-and-conventions.html):
+  `vignette("notation-and-conventions", package = "RdistNN")` for the
+  package-to-paper symbol map and cross-vignette guide
+- [DNN weights](dnn-weights.html):
+  `vignette("dnn-weights", package = "RdistNN")`
+- [Diagnostics and reporting](diagnostics-reporting.html):
+  `vignette("diagnostics-reporting", package = "RdistNN")`
+- [Conditional Z-estimation](conditional-z-estimation.html):
+  `vignette("conditional-z-estimation", package = "RdistNN")`
+- [Extending RdistNN](extending.html):
+  `vignette("extending", package = "RdistNN")`
+- [Jackknife generalized U-statistics](jackknife-gen-ustats.html):
+  `vignette("jackknife-gen-ustats", package = "RdistNN")`

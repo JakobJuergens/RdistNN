@@ -197,3 +197,15 @@ reports the direct coefficient sandwich instead of a jackknife SE (the
 jackknife path is not used in that case); the moment-level jackknife SE
 described above is only used as a fallback diagnostic when no density input
 is supplied. See "PLQR nuisances and inference" above.
+
+## Related Articles
+
+- [Notation and package conventions](notation-and-conventions.html):
+  `vignette("notation-and-conventions", package = "RdistNN")` maps arguments,
+  paper symbols, fitted-object fields, and uncertainty scales.
+- [Diagnostics and reporting](diagnostics-reporting.html):
+  `vignette("diagnostics-reporting", package = "RdistNN")` documents the
+  diagnostics available for each estimator.
+- [Kernel-order tuning](kernel-order-tuning.html):
+  `vignette("kernel-order-tuning", package = "RdistNN")` explains how `s` is
+  selected when it is not supplied directly.

@@ -135,3 +135,15 @@ plot_estimates(fit, level = 0.9) +
 For fully custom figures, the tidy frames behind the panels are exported:
 `plot_data_estimates()`, `plot_data_weights()`, and
 `plot_data_diagnostics()`.
+
+## Related Articles
+
+- [Notation and package conventions](notation-and-conventions.html):
+  `vignette("notation-and-conventions", package = "RdistNN")` explains the
+  statistical scale and provenance of the fields being plotted.
+- [Diagnostics and reporting](diagnostics-reporting.html):
+  `vignette("diagnostics-reporting", package = "RdistNN")` documents the
+  underlying diagnostic fields and availability rules.
+- [Getting started](getting-started.html):
+  `vignette("getting-started", package = "RdistNN")` provides compact fitted
+  objects for a first plotting workflow.

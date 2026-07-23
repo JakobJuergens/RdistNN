@@ -17,6 +17,7 @@ articles:
   - title: Getting started
     contents:
       - getting-started
+      - notation-and-conventions
       - diagnostics-reporting
       - visualising-fits
       - extending

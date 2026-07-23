@@ -93,3 +93,15 @@ se_jk
 - For user-level wrappers (`np_dnn()`, `cate_dnn()`, `plqr_dnn()`), these steps
   are handled internally when `se = TRUE`.
 
+## Related Articles
+
+- [Notation and package conventions](notation-and-conventions.html):
+  `vignette("notation-and-conventions", package = "RdistNN")` distinguishes
+  DNN kernel order, localized moments, and the uncertainty fields returned by
+  user-level estimators.
+- [DNN weights](dnn-weights.html):
+  `vignette("dnn-weights", package = "RdistNN")` describes the exact rank
+  weights used by the jackknife path.
+- [Conditional Z-estimation](conditional-z-estimation.html):
+  `vignette("conditional-z-estimation", package = "RdistNN")` shows the
+  high-level wrappers that invoke these routines internally.

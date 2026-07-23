@@ -381,3 +381,15 @@ own score or estimating equation.
   embedding it in a solver.
 - Register names only after the underlying object works directly. The registry
   is a convenience layer, not a debugging tool.
+
+## Related Articles
+
+- [Notation and package conventions](notation-and-conventions.html):
+  `vignette("notation-and-conventions", package = "RdistNN")` locates custom
+  distances, rank weights, and scores within the full estimator pipeline.
+- [DNN weights](dnn-weights.html):
+  `vignette("dnn-weights", package = "RdistNN")` documents the built-in weight
+  machinery that extensions should match.
+- [Jackknife generalized U-statistics](jackknife-gen-ustats.html):
+  `vignette("jackknife-gen-ustats", package = "RdistNN")` covers the low-level
+  delete-one aggregation tools used by user-level inference.

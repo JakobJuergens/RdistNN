@@ -11,6 +11,10 @@
 
 ### Pre-release documentation and metadata
 
+- Added a notation and package-conventions vignette that maps public arguments
+  and fitted-object fields to the companion papers, distinguishes effective
+  local scale from physical support, and separates PLQR moment diagnostics
+  from coefficient-level sandwich inference.
 - Corrected the `np_dnn()`, `cate_dnn()`, `plqr_dnn()`, and `gmm_dnn()` help
   pages so their automatic-order formula includes the finite-sample
   `lambda = 0.4` multiplier used by the implementation.

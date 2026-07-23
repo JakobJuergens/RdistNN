@@ -388,6 +388,8 @@ figures.
 ## Documentation Map
 
 - Start with `vignette("getting-started", package = "RdistNN")`
+- `vignette("notation-and-conventions", package = "RdistNN")` for the
+  package-to-paper symbol map and inference-scale conventions
 - `vignette("diagnostics-reporting", package = "RdistNN")` for
   fitted-object diagnostics
 - `vignette("dnn-weights", package = "RdistNN")` for exact/asymptotic
@@ -410,9 +412,9 @@ figures.
 - Deterministic tie handling is built in for reproducibility.
 - Tests use `testthat` (edition 3). Run `devtools::test()` for the suite
   and `devtools::check()` for the release gate.
-- The remaining pre-public documentation item is a dedicated notation
-  and package-conventions article; the general conditional-Z front end
-  and package-level SIPP workflow are longer-term work.
+- The general conditional-Z front end and package-level SIPP workflow
+  remain longer-term work; the current user-level estimators and
+  notation conventions are documented in dedicated articles.
 - Rebuild this README from source with `devtools::build_readme()`.
 
 ## Getting Help
