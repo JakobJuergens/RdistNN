@@ -317,6 +317,21 @@ test_that("print.summary.cate_result runs", {
   expect_true(any(grepl("<summary.cate_result>", txt_summary, fixed = TRUE)))
 })
 
+test_that("print.cate_result reports standard-error availability invisibly", {
+  with_se <- .make_cate_fit(se = TRUE)$fit
+  with_se_text <- capture.output(with_se_returned <- print(with_se))
+
+  expect_identical(with_se_returned, with_se)
+  expect_true(any(grepl("<cate_result>", with_se_text, fixed = TRUE)))
+  expect_true(any(grepl("SEs available", with_se_text, fixed = TRUE)))
+
+  without_se <- .make_cate_fit(se = FALSE)$fit
+  without_se_text <- capture.output(without_se_returned <- print(without_se))
+
+  expect_identical(without_se_returned, without_se)
+  expect_true(any(grepl("SEs not requested", without_se_text, fixed = TRUE)))
+})
+
 test_that("coef.cate_result returns the tau vector", {
   obj <- .make_cate_fit(se = FALSE)
   expect_equal(coef(obj$fit), obj$fit$tau)
