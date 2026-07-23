@@ -91,3 +91,52 @@ test_that("np_dnn estimates and inference agree across engine modes", {
   expect_equal(fallback$se, compiled$se, tolerance = 1e-12)
   expect_equal(fallback$meta$s, compiled$meta$s)
 })
+
+test_that("PLQR score contributions agree across compiled and R engines", {
+  skip_if(
+    is.null(.rdistnn_compiled_fun("rustat_plqr_ctx_create")) ||
+      is.null(.rdistnn_compiled_fun("rustat_subset_row_sums_g")),
+    "Compiled PLQR score symbols are unavailable."
+  )
+  old <- getOption("RdistNN.use_compiled")
+  on.exit(options(RdistNN.use_compiled = old), add = TRUE)
+
+  demo <- plqr_demo_data(
+    n = 36L, p = 2L, p_d = 2L, tau = 0.4, seed = 75L
+  )
+  score <- score_plqr_component(
+    x0 = demo$x0,
+    x_cols = c("X1", "X2"),
+    D_cols = c("D1", "D2"),
+    g_col = "g_oracle",
+    mD_cols = c("mD1", "mD2"),
+    y_col = "Y",
+    theta = demo$truth$theta_true,
+    j = 2L,
+    tau = 0.4,
+    s = 3L
+  )
+  subsets <- rbind(
+    c(1L, 2L, 3L),
+    c(4L, 8L, 12L),
+    c(20L, 21L, 36L)
+  )
+
+  options(RdistNN.use_compiled = TRUE)
+  compiled_ctx <- score_setup(score, demo$data)
+  compiled <- list(
+    contribution = compiled_ctx$score,
+    single = score_eval(score, subsets[1L, ], demo$data, compiled_ctx),
+    batch = score_eval_batch(score, subsets, demo$data, compiled_ctx)
+  )
+
+  options(RdistNN.use_compiled = FALSE)
+  fallback_ctx <- score_setup(score, demo$data)
+  fallback <- list(
+    contribution = fallback_ctx$score,
+    single = score_eval(score, subsets[1L, ], demo$data, fallback_ctx),
+    batch = score_eval_batch(score, subsets, demo$data, fallback_ctx)
+  )
+
+  expect_equal(fallback, compiled, tolerance = 1e-12)
+})
