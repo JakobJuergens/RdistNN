@@ -14,9 +14,9 @@ test_that("custom distance works in cate_dnn; custom rank_weight works via weigh
     all(vapply(
       c(
         "register_distance", "get_distance",
-        "weights_dnn", "weights_matrix",
+        "weights_dnn",
         "as_rank_weight", "rank_weight_eval_batch",
-        "distance_eval_batch", "ord_to_ranks"
+        "distance_eval_batch"
       ),
       exists, logical(1),
       mode = "function"
@@ -63,7 +63,11 @@ test_that("custom distance works in cate_dnn; custom rank_weight works via weigh
 
   DX <- distance_eval_batch(spec, X, X0)
   ORD <- apply(DX, 2L, function(col) order(col, seq_along(col)))
-  RKS <- apply(ORD, 2L, ord_to_ranks)
+  RKS <- apply(ORD, 2L, function(ord) {
+    ranks <- integer(length(ord))
+    ranks[ord] <- seq_along(ord)
+    ranks
+  })
 
   rw_power <- function(alpha) {
     as_rank_weight(function(r, ctx = NULL) {

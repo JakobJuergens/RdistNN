@@ -1,12 +1,3 @@
-skip_if_not(
-  all(vapply(
-    c("cate_dnn", "summary.cate_result", "confint.cate_result", "predict.cate_result"),
-    exists, logical(1),
-    mode = "function"
-  )),
-  "cate_result methods or required helpers not found; skipping file"
-)
-
 set.seed(456)
 
 .make_cate_fit <- function(n = 40L, p = 2L, m = 3L, se = TRUE) {
