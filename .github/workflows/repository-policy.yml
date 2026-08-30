@@ -1,0 +1,84 @@
+name: Repository Policy
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main, master]
+    paths:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+      - ".github/dependabot.yml"
+  pull_request:
+    branches: [main, master]
+    paths:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+      - ".github/dependabot.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Reject mutable external action references
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t violations < <(
+            grep -RhoE '^[[:space:]]*(-[[:space:]]+)?use'"s:"'[[:space:]]*[^[:space:]#]+' .github/workflows \
+              | sed -E 's/^[[:space:]]*(-[[:space:]]+)?use'"s:"'[[:space:]]*//' \
+              | grep -vE '^(\./|docker://)' \
+              | grep -vE '@[0-9a-fA-F]{40}$' || true
+          )
+          if [[ ${#violations[@]} -gt 0 ]]; then
+            printf 'Mutable external action reference: %s\n' "${violations[@]}"
+            exit 1
+          fi
+
+      - name: Check finite workflow artifact retention
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          errors = []
+          for workflow in sorted(Path(".github/workflows").glob("*.y*ml")):
+              lines = workflow.read_text(encoding="utf-8").splitlines()
+              for index, line in enumerate(lines):
+                  if not re.search(r"use" r"s:\s*actions/upload-artifact@", line):
+                      continue
+                  uses_indent = len(line) - len(line.lstrip())
+                  block = []
+                  for following in lines[index + 1:]:
+                      indent = len(following) - len(following.lstrip())
+                      if following.lstrip().startswith("-") and indent <= uses_indent:
+                          break
+                      block.append(following)
+                  if not any(
+                      re.search(r"^\s*retention-days:\s*[0-9]+\s*$", item)
+                      for item in block
+                  ):
+                      errors.append(
+                          f"{workflow}:{index + 1}: upload-artifact has no finite retention-days"
+                      )
+          if errors:
+              raise SystemExit("\n".join(errors))
+          print("Workflow artifact-retention policy passed.")
+          PY
+
+      - name: Lint GitHub Actions workflows
+        uses: reviewdog/action-actionlint@dbe5299849118fd6f099ba563d263d770955a64a # v1.73.2
