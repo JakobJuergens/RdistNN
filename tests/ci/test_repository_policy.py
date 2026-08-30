@@ -5,6 +5,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 POLICY = ROOT / ".github" / "workflows" / "repository-policy.yml"
+ALIGNMENT = ROOT / ".github" / "workflows" / "alignment-guardrails.yaml"
+DESCRIPTION = ROOT / "DESCRIPTION"
 
 
 class RepositoryPolicyTests(unittest.TestCase):
@@ -44,3 +46,13 @@ class RepositoryPolicyTests(unittest.TestCase):
                     any(re.match(r"^\s*retention-days:\s*[0-9]+\s*$", item) for item in block),
                     "{}:{} upload-artifact has no finite retention".format(workflow, index + 1),
                 )
+
+    def test_alignment_uses_declared_roxygen_version(self):
+        description = DESCRIPTION.read_text(encoding="utf-8")
+        match = re.search(
+            r"^Config/roxygen2/version:\s*(\S+)\s*$", description, re.MULTILINE
+        )
+        self.assertIsNotNone(match, "DESCRIPTION must declare a roxygen2 version")
+
+        alignment = ALIGNMENT.read_text(encoding="utf-8")
+        self.assertIn("roxygen2@{}".format(match.group(1)), alignment)
