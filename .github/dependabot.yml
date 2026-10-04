@@ -8,6 +8,13 @@ updates:
       time: "09:00"
       timezone: America/Chicago
     open-pull-requests-limit: 5
+    groups:
+      github-actions-minor-patch:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
     commit-message:
       prefix: "chore(ci)"
-
