@@ -101,3 +101,19 @@ cbind(mu_exact, mu_asymp)
 For moderate samples and small `s`, exact weights are often preferred
 when you want finite-sample fidelity. Asymptotic weights can be cheaper
 and are often a practical default for larger-scale usage.
+
+## Related Articles
+
+- [Notation and package
+  conventions](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md):
+  [`vignette("notation-and-conventions", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md)
+  distinguishes kernel order, neighbor count, support, effective size,
+  and radius notation.
+- [Kernel-order
+  tuning](https://JakobJuergens.github.io/RdistNN/articles/kernel-order-tuning.md):
+  [`vignette("kernel-order-tuning", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/kernel-order-tuning.md)
+  covers selection of the kernel order `s`.
+- [Extending
+  RdistNN](https://JakobJuergens.github.io/RdistNN/articles/extending.md):
+  [`vignette("extending", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/extending.md)
+  shows how to define custom distances and rank-weight maps.

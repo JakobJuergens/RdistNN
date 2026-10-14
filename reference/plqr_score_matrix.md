@@ -1,4 +1,4 @@
-# Observation-level orthogonal PLQR scores at a supplied coefficient
+# Observation-level orthogonal PLQR scores at a supplied coefficient (experimental)
 
 Computes, for each observation \\i\\, the orthogonal PLQR score \$\$
 \psi\_{i} \\=\\ (\tau - \mathbf{1}\\\\Y\_{i} \le D\_{i}^{\top}\theta +
@@ -50,6 +50,12 @@ plqr_score_matrix(data, y_col, D_cols, g_col, mD_cols, theta, tau)
 ## Value
 
 A numeric matrix of size \\n \times p_d\\ of observation-level scores.
+
+## Lifecycle
+
+**Experimental.** PLQR functionality is outside the CATE and regression
+workflow focus of the initial public release. Its API and inference
+interfaces may change in later releases.
 
 ## See also
 

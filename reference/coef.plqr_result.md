@@ -1,4 +1,4 @@
-# Extract coefficients from a `plqr_result`
+# Extract coefficients from a `plqr_result` (experimental)
 
 Returns the coefficient value represented by the object. For current
 [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md)
@@ -26,3 +26,13 @@ coef(object, ...)
 ## Value
 
 Matrix of PLQR coefficient values with a `theta_source` attribute.
+
+## Lifecycle
+
+**Experimental.** PLQR functionality is outside the CATE and regression
+workflow focus of the initial public release. Its API and inference
+interfaces may change in later releases.
+
+## See also
+
+[`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md).

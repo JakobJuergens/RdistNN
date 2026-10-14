@@ -117,10 +117,17 @@ sim_cate_run(
 
 A `data.frame` with raw rows and columns `method`, `design`, `n`, `kx`,
 `k`, `tuning_source`, `candidate_id`, `lambda`, `s`, `seed`, `tau_hat`,
-`tau0`, `bias`, `sq_err`, `se`, `cover`, `ci_len`, `neff`, localization
-and studentization diagnostics described in
-[`sim_cate_one_rep()`](https://JakobJuergens.github.io/RdistNN/reference/sim_cate_one_rep.md),
-and `status`. Failed entries have `NA` for all metric columns.
+`tau0`, `bias`, `sq_err`, `se`, `cover`, `ci_len`, `neff`,
+`method_variant`, `forest_nuisance`, `y_hat_supplied`, and
+`w_hat_supplied`, plus the localization and studentization diagnostics
+described in
+[`sim_cate_one_rep()`](https://JakobJuergens.github.io/RdistNN/reference/sim_cate_one_rep.md)
+and `status`. The GRF fields identify whether the forest used oracle
+nuisances (`"oracle"`), common externally estimated nuisances
+(`"common_external"`), or internally estimated nuisances (`"internal"`),
+and whether `Y.hat` and `W.hat` were supplied. Non-GRF methods carry
+typed missing values for these fields. Failed entries have `NA` for all
+metric columns.
 
 ## Parallelism
 
@@ -145,6 +152,7 @@ Each replicate is wrapped in `tryCatch`. A total rep failure (e.g. DGP
 draw error) records `NA` for all metrics and all methods and emits a
 warning; per-method failures are handled inside
 [`sim_cate_one_rep()`](https://JakobJuergens.github.io/RdistNN/reference/sim_cate_one_rep.md).
+Registered GRF route metadata is retained in both replacement paths.
 [`summarise_sim_results()`](https://JakobJuergens.github.io/RdistNN/reference/summarise_sim_results.md)
 reports `n_failed` per candidate-aware group.
 

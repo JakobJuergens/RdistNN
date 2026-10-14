@@ -82,8 +82,10 @@ r
 #> 1 0.1805794     1 0.7078582 20.09801        1.196847  -0.05127403
 #>   estimator_remainder studentized_error score_sd0 standardized_branch_drift
 #> 1          0.09222453         0.2267728  1.031413                -0.2228647
-#>   physical_radius_90 treated_ess control_ess top5_score_share status
-#> 1          0.5221937    12.00479     8.38294         0.457057     ok
+#>   physical_radius_90 treated_ess control_ess top5_score_share method_variant
+#> 1          0.5221937    12.00479     8.38294         0.457057           <NA>
+#>   forest_nuisance y_hat_supplied w_hat_supplied status
+#> 1            <NA>             NA             NA     ok
 ```
 
 ## Small Monte Carlo run
@@ -136,13 +138,20 @@ head(raw)
 #> 13       -0.98014170  1.000000               -0.01321869          0.4067113
 #> 14       -1.28780521  1.000000                0.10595575          0.3700703
 #> 15       -0.05778994  1.031413               -0.39653678          0.5580878
-#>    treated_ess control_ess top5_score_share status
-#> 1     8.425537   11.691286        0.4454872     ok
-#> 11   10.823350    9.396065        0.4710436     ok
-#> 12    7.820847   12.277236        0.3730882     ok
-#> 13   13.357003    7.178954        0.5301387     ok
-#> 14   12.869978    9.113387        0.4887371     ok
-#> 15   13.286536    7.069731        0.4273958     ok
+#>    treated_ess control_ess top5_score_share method_variant forest_nuisance
+#> 1     8.425537   11.691286        0.4454872           <NA>            <NA>
+#> 11   10.823350    9.396065        0.4710436           <NA>            <NA>
+#> 12    7.820847   12.277236        0.3730882           <NA>            <NA>
+#> 13   13.357003    7.178954        0.5301387           <NA>            <NA>
+#> 14   12.869978    9.113387        0.4887371           <NA>            <NA>
+#> 15   13.286536    7.069731        0.4273958           <NA>            <NA>
+#>    y_hat_supplied w_hat_supplied status
+#> 1              NA             NA     ok
+#> 11             NA             NA     ok
+#> 12             NA             NA     ok
+#> 13             NA             NA     ok
+#> 14             NA             NA     ok
+#> 15             NA             NA     ok
 ```
 
 [`summarise_sim_results()`](https://JakobJuergens.github.io/RdistNN/reference/summarise_sim_results.md)
@@ -152,24 +161,27 @@ aggregates raw per-replicate rows to one summary row per cell:
 
 tab <- summarise_sim_results(raw)
 print(tab, digits = 3)
-#>       method         design   n kx candidate_id lambda  s n_reps n_failed
-#> 1 dnn_oracle    dgp1_linear 300  2         <NA>    0.4 28      5        0
-#> 2 dnn_oracle dgp2_nonlinear 300  2         <NA>    0.4 28      5        0
-#>       bias  rmse se_mean cover ci_len emp_sd se_to_sd bias_to_se
-#> 1  0.00231 0.226   0.184     1  0.721  0.253    0.727     0.0126
-#> 2 -0.03949 0.206   0.209     1  0.821  0.226    0.926    -0.1885
-#>   localized_truth_mean branch_drift estimator_remainder score_sd0
-#> 1               0.0063       0.0063            -0.00399      1.00
-#> 2               1.1899      -0.0582             0.01871      1.03
-#>   standardized_branch_drift physical_radius_90_mean physical_radius_90_p25
-#> 1                    0.0282                   0.392                  0.363
-#> 2                   -0.2530                   0.496                  0.437
-#>   physical_radius_90_p50 physical_radius_90_p75 treated_ess control_ess
-#> 1                  0.404                  0.415        10.7        9.93
-#> 2                  0.465                  0.567        11.6        9.00
-#>   top5_score_share studentized_mean studentized_sd studentized_skewness
-#> 1            0.462            0.111          1.341                0.184
-#> 2            0.522           -0.200          0.928               -0.759
+#>       method         design   n kx candidate_id lambda  s method_variant
+#> 1 dnn_oracle    dgp1_linear 300  2         <NA>    0.4 28           <NA>
+#> 2 dnn_oracle dgp2_nonlinear 300  2         <NA>    0.4 28           <NA>
+#>   forest_nuisance y_hat_supplied w_hat_supplied n_reps n_failed     bias  rmse
+#> 1            <NA>             NA             NA      5        0  0.00231 0.226
+#> 2            <NA>             NA             NA      5        0 -0.03949 0.206
+#>   se_mean cover ci_len emp_sd se_to_sd bias_to_se localized_truth_mean
+#> 1   0.184     1  0.721  0.253    0.727     0.0126               0.0063
+#> 2   0.209     1  0.821  0.226    0.926    -0.1885               1.1899
+#>   branch_drift estimator_remainder score_sd0 standardized_branch_drift
+#> 1       0.0063            -0.00399      1.00                    0.0282
+#> 2      -0.0582             0.01871      1.03                   -0.2530
+#>   physical_radius_90_mean physical_radius_90_p25 physical_radius_90_p50
+#> 1                   0.392                  0.363                  0.404
+#> 2                   0.496                  0.437                  0.465
+#>   physical_radius_90_p75 treated_ess control_ess top5_score_share
+#> 1                  0.415        10.7        9.93            0.462
+#> 2                  0.567        11.6        9.00            0.522
+#>   studentized_mean studentized_sd studentized_skewness
+#> 1            0.111          1.341                0.184
+#> 2           -0.200          0.928               -0.759
 #>   studentized_excess_kurtosis studentized_q025 studentized_q05 studentized_q50
 #> 1                      -1.701            -1.29           -1.29         -0.1914
 #> 2                      -0.358            -1.70           -1.70         -0.0578
@@ -253,9 +265,14 @@ launchers in `Cond_Z_Estimation/Codes/Simulations/`.
 
 ## Competitor benchmarks
 
-Stub implementations of causal forest, local linear forest, naive OLS,
-and interaction OLS are in `inst/paper-replication/cate/benchmarks.R`.
-These are not part of the package core; they use
+Optional causal-forest, local-linear-forest, naive-OLS, and
+interaction-OLS benchmarks are in
+`inst/paper-replication/cate/benchmarks.R`. In this standalone helper,
+the GRF routes estimate their nuisance functions internally and record
+`forest_nuisance = "internal"`. By contrast, the package simulation
+registry’s `causal_forest` and `llf` routes supply oracle outcome and
+propensity nuisances and record `forest_nuisance = "oracle"`. These
+benchmarks are not part of the package core; they use
 [`requireNamespace()`](https://rdrr.io/r/base/ns-load.html) and require
 optional packages (`grf`, etc.) listed under `Suggests` in
 `DESCRIPTION`.
@@ -264,3 +281,22 @@ optional packages (`grf`, etc.) listed under `Suggests` in
 
 system.file("paper-replication/cate/benchmarks.R", package = "RdistNN")
 ```
+
+## Related Articles
+
+- [Notation and package
+  conventions](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md):
+  [`vignette("notation-and-conventions", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md)
+  defines the CATE signal, nuisance, localization, and effective-size
+  conventions used here.
+- [Conditional
+  Z-estimation](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md):
+  [`vignette("conditional-z-estimation", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md)
+  gives the general user-facing
+  [`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md)
+  workflow outside this replication design.
+- [Diagnostics and
+  reporting](https://JakobJuergens.github.io/RdistNN/articles/diagnostics-reporting.md):
+  [`vignette("diagnostics-reporting", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/diagnostics-reporting.md)
+  documents the overlap and localization diagnostics returned by CATE
+  fits.

@@ -90,19 +90,23 @@ sim_cate_one_rep(
 
 A `data.frame` with one or more rows per method and columns `method`,
 `candidate_id`, `lambda`, `s`, `tau_hat`, `tau0`, `bias`, `sq_err`,
-`se`, `cover` (0/1), `ci_len`, `neff`, and `status`. Methods with
-explicit localization weights also report the realized DNN-weighted
-truth, realized localization drift, estimator remainder, studentized
-error, physical 90-percent-mass radius, treatment-arm effective sample
-sizes, and the top-five score-contribution share. The `localized_truth`
-field is the finite-sample object \\\sum_i W\_{i,s}(x_0)\tau_0(X_i)\\,
-not the deterministic population branch. With \\x_0\\ and \\(n,s)\\
-fixed, expectation over the i.i.d. covariate sample and complete-DNN
+`se`, `cover` (0/1), `ci_len`, `neff`, and `status`. Methods based on
+GRF also record `method_variant`, `forest_nuisance`, and whether `Y.hat`
+and `W.hat` were supplied. The maintained `causal_forest` route uses
+externally supplied oracle nuisance inputs. with explicit localization
+weights also report the realized DNN-weighted truth, realized
+localization drift, estimator remainder, studentized error, physical
+90-percent-mass radius, treatment-arm effective sample sizes, and the
+top-five score-contribution share. The `localized_truth` field is the
+finite-sample object \\\sum_i W\_{i,s}(x_0)\tau_0(X_i)\\, not the
+deterministic population branch. With \\x_0\\ and \\(n,s)\\ fixed,
+expectation over the i.i.d. covariate sample and complete-DNN
 exchangeability give \$\$E(\mathrm{localized\\truth})=\alpha_s(x_0).\$\$
 The historical `branch_drift` field name is retained for compatibility;
 it stores realized localization drift. The estimator remainder combines
 centered score variation with fitted-state effects. Failed methods have
-`NA` for all metric columns and `status = "failed"`.
+`NA` for all metric columns and `status = "failed"`; registered route
+metadata is retained when it is known from the selected method.
 
 ## Examples
 
@@ -123,7 +127,10 @@ rep1
 #>   estimator_remainder studentized_error score_sd0 standardized_branch_drift
 #> 1         -0.07518702         -1.150518  1.031413                -0.7190849
 #> 2                  NA                NA        NA                        NA
-#>   physical_radius_90 treated_ess control_ess top5_score_share status
-#> 1          0.7648358    20.04691    11.14627        0.3774768     ok
-#> 2                 NA          NA          NA               NA     ok
+#>   physical_radius_90 treated_ess control_ess top5_score_share method_variant
+#> 1          0.7648358    20.04691    11.14627        0.3774768           <NA>
+#> 2                 NA          NA          NA               NA           <NA>
+#>   forest_nuisance y_hat_supplied w_hat_supplied status
+#> 1            <NA>             NA             NA     ok
+#> 2            <NA>             NA             NA     ok
 ```

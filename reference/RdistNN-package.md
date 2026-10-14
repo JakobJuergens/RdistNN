@@ -1,7 +1,13 @@
-# RdistNN: Distance-Based Building Blocks for Localized U-Statistics
+# RdistNN: DNN Estimation for CATE and Nonparametric Regression
 
-`RdistNN` provides a modular toolkit for distance-localized estimation
-based on generalized U-statistics. It combines:
+The initial public release focuses on conditional average treatment
+effects with
+[`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md)
+and nonparametric regression with
+[`np_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_dnn.md),
+using distributional nearest-neighbor (DNN) weights and delete-1
+jackknife standard errors. Nuisance predictions for CATE are supplied
+externally. The underlying toolkit combines:
 
 - distance specifications (`dnn_distance`) for ranking observations
   around a target;
@@ -37,16 +43,29 @@ based on generalized U-statistics. It combines:
 - Estimate local nonparametric means with
   [`np_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_dnn.md).
 
-- Estimate local PLQR coefficient surfaces and orthogonal moments with
-  [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md).
-
-- Summarize/predict PLQR fits with
-  [`summary()`](https://rdrr.io/r/base/summary.html),
-  [`confint()`](https://rdrr.io/r/stats/confint.html), and
-  [`predict()`](https://rdrr.io/r/stats/predict.html) methods.
+- Use two-scale signed-weight regression with
+  [`np_tdnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_tdnn.md);
+  see its help for order constraints and additional smoothness
+  requirements.
 
 - Inspect fitted local estimators with
   [`diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/diagnostics.md).
+
+- Plot CATE and regression estimates with
+  [`plot_estimates()`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
+  and inspect local weights with
+  [`plot_weights()`](https://JakobJuergens.github.io/RdistNN/reference/plot_weights.md)
+  (requires ggplot2).
+
+## Experimental and Advanced Workflows
+
+All PLQR functionality is **experimental**, including
+[`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md),
+its scores, demo helpers, methods, and plots. The current wrapper
+evaluates moments at a supplied coefficient; it does not solve for local
+coefficients. Local IV-GMM functionality is also experimental. These
+workflows are outside the CATE and regression focus of the initial
+public release.
 
 - Build custom generalized U-statistics with
   [`new_score()`](https://JakobJuergens.github.io/RdistNN/reference/new_score.md),
@@ -78,7 +97,8 @@ based on generalized U-statistics. It combines:
   [`vignette("dnn-weights", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.md).
 
 - For estimator workflows see
-  [`vignette("conditional-z-estimation", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md).
+  [`vignette("conditional-z-estimation", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md),
+  including experimental PLQR details.
 
 - For jackknife details see
   [`vignette("jackknife-gen-ustats", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/jackknife-gen-ustats.md).

@@ -30,8 +30,11 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="active nav-item"><a class="nav-link" href="../articles/index.html">Articles</a></li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
+<li class="nav-item"><a class="external-link nav-link" href="https://jakobjuergens.com/">Author</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
       </ul>
 </div>
@@ -190,8 +193,10 @@ Z-estimator using the AIPW score, and returns per-replicate metrics:</p>
 <span><span class="co">#&gt; 1 0.1805794     1 0.7078582 20.09801        1.196847  -0.05127403</span></span>
 <span><span class="co">#&gt;   estimator_remainder studentized_error score_sd0 standardized_branch_drift</span></span>
 <span><span class="co">#&gt; 1          0.09222453         0.2267728  1.031413                -0.2228647</span></span>
-<span><span class="co">#&gt;   physical_radius_90 treated_ess control_ess top5_score_share status</span></span>
-<span><span class="co">#&gt; 1          0.5221937    12.00479     8.38294         0.457057     ok</span></span></code></pre></div>
+<span><span class="co">#&gt;   physical_radius_90 treated_ess control_ess top5_score_share method_variant</span></span>
+<span><span class="co">#&gt; 1          0.5221937    12.00479     8.38294         0.457057           &lt;NA&gt;</span></span>
+<span><span class="co">#&gt;   forest_nuisance y_hat_supplied w_hat_supplied status</span></span>
+<span><span class="co">#&gt; 1            &lt;NA&gt;             NA             NA     ok</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="small-monte-carlo-run">Small Monte Carlo run<a class="anchor" aria-label="anchor" href="#small-monte-carlo-run"></a>
@@ -244,36 +249,46 @@ rather than this package vignette.</p>
 <span><span class="co">#&gt; 13       -0.98014170  1.000000               -0.01321869          0.4067113</span></span>
 <span><span class="co">#&gt; 14       -1.28780521  1.000000                0.10595575          0.3700703</span></span>
 <span><span class="co">#&gt; 15       -0.05778994  1.031413               -0.39653678          0.5580878</span></span>
-<span><span class="co">#&gt;    treated_ess control_ess top5_score_share status</span></span>
-<span><span class="co">#&gt; 1     8.425537   11.691286        0.4454872     ok</span></span>
-<span><span class="co">#&gt; 11   10.823350    9.396065        0.4710436     ok</span></span>
-<span><span class="co">#&gt; 12    7.820847   12.277236        0.3730882     ok</span></span>
-<span><span class="co">#&gt; 13   13.357003    7.178954        0.5301387     ok</span></span>
-<span><span class="co">#&gt; 14   12.869978    9.113387        0.4887371     ok</span></span>
-<span><span class="co">#&gt; 15   13.286536    7.069731        0.4273958     ok</span></span></code></pre></div>
+<span><span class="co">#&gt;    treated_ess control_ess top5_score_share method_variant forest_nuisance</span></span>
+<span><span class="co">#&gt; 1     8.425537   11.691286        0.4454872           &lt;NA&gt;            &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 11   10.823350    9.396065        0.4710436           &lt;NA&gt;            &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 12    7.820847   12.277236        0.3730882           &lt;NA&gt;            &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 13   13.357003    7.178954        0.5301387           &lt;NA&gt;            &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 14   12.869978    9.113387        0.4887371           &lt;NA&gt;            &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 15   13.286536    7.069731        0.4273958           &lt;NA&gt;            &lt;NA&gt;</span></span>
+<span><span class="co">#&gt;    y_hat_supplied w_hat_supplied status</span></span>
+<span><span class="co">#&gt; 1              NA             NA     ok</span></span>
+<span><span class="co">#&gt; 11             NA             NA     ok</span></span>
+<span><span class="co">#&gt; 12             NA             NA     ok</span></span>
+<span><span class="co">#&gt; 13             NA             NA     ok</span></span>
+<span><span class="co">#&gt; 14             NA             NA     ok</span></span>
+<span><span class="co">#&gt; 15             NA             NA     ok</span></span></code></pre></div>
 <p><code><a href="../reference/summarise_sim_results.html">summarise_sim_results()</a></code> aggregates raw per-replicate
 rows to one summary row per cell:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tab</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/summarise_sim_results.html">summarise_sim_results</a></span><span class="op">(</span><span class="va">raw</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">tab</span>, digits <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
-<span><span class="co">#&gt;       method         design   n kx candidate_id lambda  s n_reps n_failed</span></span>
-<span><span class="co">#&gt; 1 dnn_oracle    dgp1_linear 300  2         &lt;NA&gt;    0.4 28      5        0</span></span>
-<span><span class="co">#&gt; 2 dnn_oracle dgp2_nonlinear 300  2         &lt;NA&gt;    0.4 28      5        0</span></span>
-<span><span class="co">#&gt;       bias  rmse se_mean cover ci_len emp_sd se_to_sd bias_to_se</span></span>
-<span><span class="co">#&gt; 1  0.00231 0.226   0.184     1  0.721  0.253    0.727     0.0126</span></span>
-<span><span class="co">#&gt; 2 -0.03949 0.206   0.209     1  0.821  0.226    0.926    -0.1885</span></span>
-<span><span class="co">#&gt;   localized_truth_mean branch_drift estimator_remainder score_sd0</span></span>
-<span><span class="co">#&gt; 1               0.0063       0.0063            -0.00399      1.00</span></span>
-<span><span class="co">#&gt; 2               1.1899      -0.0582             0.01871      1.03</span></span>
-<span><span class="co">#&gt;   standardized_branch_drift physical_radius_90_mean physical_radius_90_p25</span></span>
-<span><span class="co">#&gt; 1                    0.0282                   0.392                  0.363</span></span>
-<span><span class="co">#&gt; 2                   -0.2530                   0.496                  0.437</span></span>
-<span><span class="co">#&gt;   physical_radius_90_p50 physical_radius_90_p75 treated_ess control_ess</span></span>
-<span><span class="co">#&gt; 1                  0.404                  0.415        10.7        9.93</span></span>
-<span><span class="co">#&gt; 2                  0.465                  0.567        11.6        9.00</span></span>
-<span><span class="co">#&gt;   top5_score_share studentized_mean studentized_sd studentized_skewness</span></span>
-<span><span class="co">#&gt; 1            0.462            0.111          1.341                0.184</span></span>
-<span><span class="co">#&gt; 2            0.522           -0.200          0.928               -0.759</span></span>
+<span><span class="co">#&gt;       method         design   n kx candidate_id lambda  s method_variant</span></span>
+<span><span class="co">#&gt; 1 dnn_oracle    dgp1_linear 300  2         &lt;NA&gt;    0.4 28           &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 2 dnn_oracle dgp2_nonlinear 300  2         &lt;NA&gt;    0.4 28           &lt;NA&gt;</span></span>
+<span><span class="co">#&gt;   forest_nuisance y_hat_supplied w_hat_supplied n_reps n_failed     bias  rmse</span></span>
+<span><span class="co">#&gt; 1            &lt;NA&gt;             NA             NA      5        0  0.00231 0.226</span></span>
+<span><span class="co">#&gt; 2            &lt;NA&gt;             NA             NA      5        0 -0.03949 0.206</span></span>
+<span><span class="co">#&gt;   se_mean cover ci_len emp_sd se_to_sd bias_to_se localized_truth_mean</span></span>
+<span><span class="co">#&gt; 1   0.184     1  0.721  0.253    0.727     0.0126               0.0063</span></span>
+<span><span class="co">#&gt; 2   0.209     1  0.821  0.226    0.926    -0.1885               1.1899</span></span>
+<span><span class="co">#&gt;   branch_drift estimator_remainder score_sd0 standardized_branch_drift</span></span>
+<span><span class="co">#&gt; 1       0.0063            -0.00399      1.00                    0.0282</span></span>
+<span><span class="co">#&gt; 2      -0.0582             0.01871      1.03                   -0.2530</span></span>
+<span><span class="co">#&gt;   physical_radius_90_mean physical_radius_90_p25 physical_radius_90_p50</span></span>
+<span><span class="co">#&gt; 1                   0.392                  0.363                  0.404</span></span>
+<span><span class="co">#&gt; 2                   0.496                  0.437                  0.465</span></span>
+<span><span class="co">#&gt;   physical_radius_90_p75 treated_ess control_ess top5_score_share</span></span>
+<span><span class="co">#&gt; 1                  0.415        10.7        9.93            0.462</span></span>
+<span><span class="co">#&gt; 2                  0.567        11.6        9.00            0.522</span></span>
+<span><span class="co">#&gt;   studentized_mean studentized_sd studentized_skewness</span></span>
+<span><span class="co">#&gt; 1            0.111          1.341                0.184</span></span>
+<span><span class="co">#&gt; 2           -0.200          0.928               -0.759</span></span>
 <span><span class="co">#&gt;   studentized_excess_kurtosis studentized_q025 studentized_q05 studentized_q50</span></span>
 <span><span class="co">#&gt; 1                      -1.701            -1.29           -1.29         -0.1914</span></span>
 <span><span class="co">#&gt; 2                      -0.358            -1.70           -1.70         -0.0578</span></span>
@@ -346,14 +361,43 @@ manuscript output with manifests, the nuisance-efficiency run, or the
 <div class="section level2">
 <h2 id="competitor-benchmarks">Competitor benchmarks<a class="anchor" aria-label="anchor" href="#competitor-benchmarks"></a>
 </h2>
-<p>Stub implementations of causal forest, local linear forest, naive
-OLS, and interaction OLS are in
-<code>inst/paper-replication/cate/benchmarks.R</code>. These are not
-part of the package core; they use <code><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace()</a></code> and
-require optional packages (<code>grf</code>, etc.) listed under
-<code>Suggests</code> in <code>DESCRIPTION</code>.</p>
+<p>Optional causal-forest, local-linear-forest, naive-OLS, and
+interaction-OLS benchmarks are in
+<code>inst/paper-replication/cate/benchmarks.R</code>. In this
+standalone helper, the GRF routes estimate their nuisance functions
+internally and record <code>forest_nuisance = "internal"</code>. By
+contrast, the package simulation registry’s <code>causal_forest</code>
+and <code>llf</code> routes supply oracle outcome and propensity
+nuisances and record <code>forest_nuisance = "oracle"</code>. These
+benchmarks are not part of the package core; they use
+<code><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace()</a></code> and require optional packages
+(<code>grf</code>, etc.) listed under <code>Suggests</code> in
+<code>DESCRIPTION</code>.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"paper-replication/cate/benchmarks.R"</span>, package <span class="op">=</span> <span class="st">"RdistNN"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="related-articles">Related Articles<a class="anchor" aria-label="anchor" href="#related-articles"></a>
+</h2>
+<ul>
+<li>
+<a href="notation-and-conventions.html">Notation and package
+conventions</a>:
+<code><a href="../articles/notation-and-conventions.html">vignette("notation-and-conventions", package = "RdistNN")</a></code>
+defines the CATE signal, nuisance, localization, and effective-size
+conventions used here.</li>
+<li>
+<a href="conditional-z-estimation.html">Conditional
+Z-estimation</a>:
+<code><a href="../articles/conditional-z-estimation.html">vignette("conditional-z-estimation", package = "RdistNN")</a></code>
+gives the general user-facing <code><a href="../reference/cate_dnn.html">cate_dnn()</a></code> workflow outside
+this replication design.</li>
+<li>
+<a href="diagnostics-reporting.html">Diagnostics and reporting</a>:
+<code><a href="../articles/diagnostics-reporting.html">vignette("diagnostics-reporting", package = "RdistNN")</a></code>
+documents the overlap and localization diagnostics returned by CATE
+fits.</li>
+</ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

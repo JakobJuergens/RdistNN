@@ -3,10 +3,11 @@
 Aggregates a data.frame of raw replicate-level results (as returned by
 [`sim_cate_run()`](https://JakobJuergens.github.io/RdistNN/reference/sim_cate_run.md))
 to one summary row per
-`(method, design, n, kx, candidate_id, lambda, s)` cell. Reports bias,
-RMSE, mean SE, empirical coverage, mean CI length, empirical sampling
-dispersion of `tau_hat`, the ratio of mean SE to empirical dispersion,
-and (optionally) mean effective sample size. When the raw rows carry
+`(method, design, n, kx, candidate_id, lambda, s)` cell and, when
+present, per GRF nuisance configuration. Reports bias, RMSE, mean SE,
+empirical coverage, mean CI length, empirical sampling dispersion of
+`tau_hat`, the ratio of mean SE to empirical dispersion, and
+(optionally) mean effective sample size. When the raw rows carry
 localization diagnostics, the summary also reports mean realized
 localization drift, the mean estimator remainder, physical neighborhood
 radius, arm-specific effective sample sizes, and shape diagnostics for
@@ -36,7 +37,11 @@ summarise_sim_results(raw)
   [`sim_cate_run()`](https://JakobJuergens.github.io/RdistNN/reference/sim_cate_run.md))
   are handled gracefully: `neff` is averaged into the summary; `tau_hat`
   is summarized through its empirical standard deviation; `tau0` remains
-  a per-rep quantity and is not aggregated.
+  a per-rep quantity and is not aggregated. When present,
+  `method_variant`, `forest_nuisance`, `y_hat_supplied`, and
+  `w_hat_supplied` extend the grouping key. Older raw objects without
+  these fields receive typed missing metadata; no nuisance route is
+  inferred.
 
 ## Value
 
@@ -44,7 +49,9 @@ A `data.frame` with one row per unique group and columns `method`,
 `design`, `n`, `kx`, `candidate_id`, `lambda`, `s`, `n_reps`,
 `n_failed`, `bias`, `rmse`, `se_mean`, `cover`, `ci_len`, `emp_sd`,
 `se_to_sd`, `bias_to_se`, localization, support, and studentized-shape
-diagnostics (and `neff` when present in `raw`).
+diagnostics (and `neff` when present in `raw`). The output always
+includes the four GRF route fields, with typed missing values when they
+were absent from `raw` or do not apply.
 
 ## See also
 

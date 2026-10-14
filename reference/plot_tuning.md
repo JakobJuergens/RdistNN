@@ -112,6 +112,12 @@ A ggplot object.
 Scalar grid evaluation uses the training data stored on the fit; fits
 from package versions predating that storage must be re-estimated first.
 
+## Experimental methods
+
+Methods for `plqr_result` objects are experimental, as is all PLQR
+functionality in this release; see
+[`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md).
+
 ## Examples
 
 ``` r

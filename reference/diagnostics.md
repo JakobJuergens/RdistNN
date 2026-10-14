@@ -75,6 +75,12 @@ Gram but an ill-conditioned density-weighted Jacobian, so
 coefficient-inference reliability should be judged from the Jacobian
 block.
 
+## Experimental methods
+
+Methods for `plqr_result` objects are experimental, as is all PLQR
+functionality in this release; see
+[`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md).
+
 ## Examples
 
 ``` r

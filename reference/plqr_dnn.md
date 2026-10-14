@@ -1,4 +1,4 @@
-# PLQR local moment evaluation and direct coefficient inference via DNN rank weights
+# PLQR local moment evaluation and direct coefficient inference via DNN rank weights (experimental)
 
 Compute localized orthogonal PLQR moments \$\$ \mathbb{E}\\\left\[
 \left(\tau - \mathbf{1}\\Y \le D^\top \theta + g_0(U)\\\right) \left(D -
@@ -301,6 +301,12 @@ remain anchored to the default candidate. Candidate diagnostics include
 `top_n` is fixed at 5 and is independent of the estimator's `k`. Direct
 PLQR sandwich inference from `density` or `density_col` currently uses
 `tuning_mode = "default"` only.
+
+## Lifecycle
+
+**Experimental.** PLQR functionality is outside the CATE and regression
+workflow focus of the initial public release. Its API and inference
+interfaces may change in later releases.
 
 ## See also
 

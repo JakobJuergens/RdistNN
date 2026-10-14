@@ -27,7 +27,7 @@ Character vector of registered method names.
 | `local_constant` | Nadaraya-Watson smoother on the oracle AIPW score |
 | `ols_interact` | OLS with D\*X interactions, delta-method SE at x0 |
 | `causal_forest` | GRF causal forest, oracle nuisances (requires **grf**) |
-| `llf` | GRF causal forest with local-linear corrections (requires **grf**) |
+| `llf` | GRF causal forest with local-linear corrections and oracle nuisances (requires **grf**) |
 
 ## See also
 

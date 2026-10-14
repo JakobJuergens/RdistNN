@@ -1,6 +1,6 @@
-# Confidence intervals for `plqr_result`
+# Confidence intervals for `plqr_result` (experimental)
 
-Confidence intervals for `plqr_result`
+Confidence intervals for `plqr_result` (experimental)
 
 ## Usage
 
@@ -49,3 +49,13 @@ Intervals are centered at the coefficient value the object represents:
 for current fits the supplied `theta_eval`
 (`meta$theta_source = "supplied"`), not an estimated local root. The
 source is attached as `attr(., "theta_source")`.
+
+## Lifecycle
+
+**Experimental.** PLQR functionality is outside the CATE and regression
+workflow focus of the initial public release. Its API and inference
+interfaces may change in later releases.
+
+## See also
+
+[`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md).

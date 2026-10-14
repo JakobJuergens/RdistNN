@@ -1,7 +1,7 @@
-# Quick helper: sample a batch of subsets (for U-stat / localization experiments)
+# Quick helper: sample a batch of subsets (for U-stat / localization experiments) (experimental)
 
 Quick helper: sample a batch of subsets (for U-stat / localization
-experiments)
+experiments) (experimental)
 
 ## Usage
 
@@ -26,6 +26,12 @@ plqr_demo_subsets(n, K = 1000L, s = 8L, seed = NULL)
 - seed:
 
   Optional integer seed for reproducibility.
+
+## Lifecycle
+
+**Experimental.** PLQR functionality is outside the CATE and regression
+workflow focus of the initial public release. Its API and inference
+interfaces may change in later releases.
 
 ## Examples
 

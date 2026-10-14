@@ -1,4 +1,4 @@
-# Minimal PLQR demo data (oracle nuisances; no internal fitting)
+# Minimal PLQR demo data (oracle nuisances; no internal fitting) (experimental)
 
 Generates data for a partially linear quantile regression (PLQR) model
 \$\$ Q\_{\tau}(Y \mid D, U) \\=\\ D^{\top}\\\theta\_{0} \\+\\ g\_{0}(U)
@@ -103,6 +103,12 @@ The function also returns the oracle \\m\_{D}(U) \equiv \mathbb{E}\[D
 \mid U\]\\ to build the orthogonal PLQR score \$\$ \psi(W;\theta) \\=\\
 (\tau - \mathbf{1}\\\\Y \le D^{\top}\theta + g\_{0}(U)\\\\)\\ (D -
 m\_{D}(U))\\ . \$\$
+
+## Lifecycle
+
+**Experimental.** PLQR functionality is outside the CATE and regression
+workflow focus of the initial public release. Its API and inference
+interfaces may change in later releases.
 
 ## Examples
 

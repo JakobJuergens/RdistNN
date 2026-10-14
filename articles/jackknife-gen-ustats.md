@@ -92,3 +92,19 @@ se_jk
   [`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md),
   [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md)),
   these steps are handled internally when `se = TRUE`.
+
+## Related Articles
+
+- [Notation and package
+  conventions](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md):
+  [`vignette("notation-and-conventions", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md)
+  distinguishes DNN kernel order, localized moments, and the uncertainty
+  fields returned by user-level estimators.
+- [DNN
+  weights](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.md):
+  [`vignette("dnn-weights", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.md)
+  describes the exact rank weights used by the jackknife path.
+- [Conditional
+  Z-estimation](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md):
+  [`vignette("conditional-z-estimation", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md)
+  shows the high-level wrappers that invoke these routines internally.

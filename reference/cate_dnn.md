@@ -19,6 +19,7 @@ cate_dnn(
   X = NULL,
   X0 = NULL,
   x0 = NULL,
+  clip = 1e-08,
   distance = "l2",
   method = c("exact", "asymp"),
   k = 1L,
@@ -85,6 +86,14 @@ cate_dnn(
 - x0:
 
   Numeric vector of length `p` for a single target point.
+
+- clip:
+
+  Finite propensity clipping constant in `(0, 0.5)`, default `1e-8`. Raw
+  nuisance propensities must be finite and lie in `[0, 1]`;
+  nuisance-based AIPW and Robinson scores use
+  `pmin(pmax(e, clip), 1 - clip)`. This argument does not alter a
+  supplied `pseudo_outcome`.
 
 - distance:
 

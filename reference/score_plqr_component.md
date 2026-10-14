@@ -1,4 +1,4 @@
-# PLQR diagnostic score (component \\j\\); pure score (no weights, no fitting)
+# PLQR diagnostic score (component \\j\\); pure score (no weights, no fitting) (experimental)
 
 Constructs a **pure-score** kernel for PLQR diagnostics that stores the
 per-observation score contributions \$\$ \psi\_{i} \\=\\ \Bigl(\tau -
@@ -81,6 +81,12 @@ score_plqr_component(
 An `ustat_score` object whose `$setup` stores the vector `score` of
 contributions in the context, and whose `$eval`/`$eval_batch` return
 subset sums of `score` (no weights applied).
+
+## Lifecycle
+
+**Experimental.** PLQR functionality is outside the CATE and regression
+workflow focus of the initial public release. Its API and inference
+interfaces may change in later releases.
 
 ## Examples
 

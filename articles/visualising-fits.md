@@ -154,3 +154,19 @@ exported:
 [`plot_data_weights()`](https://JakobJuergens.github.io/RdistNN/reference/plot_data_weights.md),
 and
 [`plot_data_diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/plot_data_diagnostics.md).
+
+## Related Articles
+
+- [Notation and package
+  conventions](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md):
+  [`vignette("notation-and-conventions", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md)
+  explains the statistical scale and provenance of the fields being
+  plotted.
+- [Diagnostics and
+  reporting](https://JakobJuergens.github.io/RdistNN/articles/diagnostics-reporting.md):
+  [`vignette("diagnostics-reporting", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/diagnostics-reporting.md)
+  documents the underlying diagnostic fields and availability rules.
+- [Getting
+  started](https://JakobJuergens.github.io/RdistNN/articles/getting-started.md):
+  [`vignette("getting-started", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/getting-started.md)
+  provides compact fitted objects for a first plotting workflow.

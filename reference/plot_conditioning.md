@@ -1,4 +1,4 @@
-# Plot local design conditioning for PLQR fits
+# Plot local design conditioning for PLQR fits (experimental)
 
 Two facets across targets: the smallest eigenvalue of the weighted
 residualized-design Gram matrix (linear scale, guide at zero) and its
@@ -32,6 +32,12 @@ plot_conditioning(object, cond_limits = c(1000, 1e+06), ...)
 ## Value
 
 A ggplot object.
+
+## Lifecycle
+
+**Experimental.** PLQR functionality is outside the CATE and regression
+workflow focus of the initial public release. Its API and inference
+interfaces may change in later releases.
 
 ## Examples
 

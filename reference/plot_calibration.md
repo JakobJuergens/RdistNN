@@ -1,4 +1,4 @@
-# Plot local quantile calibration for PLQR fits
+# Plot local quantile calibration for PLQR fits (experimental)
 
 For each target, the weighted share of observations below the quantile
 threshold, `sum_i w_ij 1{Y_i <= D_i' theta + g_i}`, is plotted against
@@ -41,6 +41,12 @@ A ggplot object.
 The below-threshold indicator is stored on the fit; alternatively,
 supply `residuals` (`Y - D' theta - g`, length `n`), whose non-positive
 entries define the indicator.
+
+## Lifecycle
+
+**Experimental.** PLQR functionality is outside the CATE and regression
+workflow focus of the initial public release. Its API and inference
+interfaces may change in later releases.
 
 ## Examples
 

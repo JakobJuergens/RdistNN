@@ -20,7 +20,10 @@ metrics aligned with the paper's evaluation criteria."></head><body>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
+<li class="nav-item"><a class="nav-link" href="../articles/index.html">Articles</a></li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
+      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://jakobjuergens.com/">Author</a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
       </ul></div>
 
 
@@ -124,6 +127,9 @@ DNN candidate while non-DNN benchmarks remain one row per replicate.</p></dd>
     <p>A <code>data.frame</code> with one or more rows per method and columns
 <code>method</code>, <code>candidate_id</code>, <code>lambda</code>, <code>s</code>, <code>tau_hat</code>, <code>tau0</code>, <code>bias</code>,
 <code>sq_err</code>, <code>se</code>, <code>cover</code> (0/1), <code>ci_len</code>, <code>neff</code>, and <code>status</code>. Methods
+based on GRF also record <code>method_variant</code>, <code>forest_nuisance</code>, and whether
+<code>Y.hat</code> and <code>W.hat</code> were supplied. The maintained <code>causal_forest</code> route
+uses externally supplied oracle nuisance inputs.
 with explicit localization weights also report the realized DNN-weighted
 truth, realized localization drift, estimator remainder, studentized error, physical
 90-percent-mass radius, treatment-arm effective sample sizes, and the
@@ -136,7 +142,9 @@ $$E(\mathrm{localized\_truth})=\alpha_s(x_0).$$
 The historical <code>branch_drift</code> field name is retained for compatibility;
 it stores realized localization drift. The estimator remainder combines
 centered score variation with fitted-state effects.
-Failed methods have <code>NA</code> for all metric columns and <code>status = "failed"</code>.</p>
+Failed methods have <code>NA</code> for all metric columns and <code>status = "failed"</code>;
+registered route metadata is retained when it is known from the selected
+method.</p>
     </div>
 
     <div class="section level2">
@@ -157,9 +165,12 @@ Failed methods have <code>NA</code> for all metric columns and <code>status = "f
 <span class="r-out co"><span class="r-pr">#&gt;</span>   estimator_remainder studentized_error score_sd0 standardized_branch_drift</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1         -0.07518702         -1.150518  1.031413                -0.7190849</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2                  NA                NA        NA                        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   physical_radius_90 treated_ess control_ess top5_score_share status</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1          0.7648358    20.04691    11.14627        0.3774768     ok</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2                 NA          NA          NA               NA     ok</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   physical_radius_90 treated_ess control_ess top5_score_share method_variant</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1          0.7648358    20.04691    11.14627        0.3774768           &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2                 NA          NA          NA               NA           &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   forest_nuisance y_hat_supplied w_hat_supplied status</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1            &lt;NA&gt;             NA             NA     ok</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2            &lt;NA&gt;             NA             NA     ok</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

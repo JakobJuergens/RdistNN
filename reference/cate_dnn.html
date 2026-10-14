@@ -18,7 +18,10 @@ with DNN-based local weights."></head><body>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
+<li class="nav-item"><a class="nav-link" href="../articles/index.html">Articles</a></li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
+      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://jakobjuergens.com/">Author</a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
       </ul></div>
 
 
@@ -52,6 +55,7 @@ with DNN-based local weights.</p>
 <span>  X <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  X0 <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  x0 <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  clip <span class="op">=</span> <span class="fl">1e-08</span>,</span>
 <span>  distance <span class="op">=</span> <span class="st">"l2"</span>,</span>
 <span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"exact"</span>, <span class="st">"asymp"</span><span class="op">)</span>,</span>
 <span>  k <span class="op">=</span> <span class="fl">1L</span>,</span>
@@ -119,6 +123,14 @@ columns are not required.</p></dd>
 
 <dt id="arg-x-">x0<a class="anchor" aria-label="anchor" href="#arg-x-"></a></dt>
 <dd><p>Numeric vector of length <code>p</code> for a single target point.</p></dd>
+
+
+<dt id="arg-clip">clip<a class="anchor" aria-label="anchor" href="#arg-clip"></a></dt>
+<dd><p>Finite propensity clipping constant in <code>(0, 0.5)</code>, default
+<code>1e-8</code>. Raw nuisance propensities must be finite and lie in <code>[0, 1]</code>;
+nuisance-based AIPW and Robinson scores use
+<code>pmin(pmax(e, clip), 1 - clip)</code>. This argument does not alter a supplied
+<code>pseudo_outcome</code>.</p></dd>
 
 
 <dt id="arg-distance">distance<a class="anchor" aria-label="anchor" href="#arg-distance"></a></dt>

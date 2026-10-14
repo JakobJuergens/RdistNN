@@ -180,6 +180,32 @@ fit <- np_dnn(
 )
 
 fit$meta$s
+#> [1] 21
 fit$tuning$grid$candidates
+#>   candidate_id computed_key is_default feasible reason status lambda  s
+#> 1   lambda_0p3         s_15      FALSE     TRUE     ok     ok   0.30 15
+#> 2   lambda_0p4         s_21       TRUE     TRUE     ok     ok   0.40 21
+#> 3   lambda_0p5         s_26      FALSE     TRUE     ok     ok   0.50 26
+#> 4  lambda_0p75         s_39      FALSE     TRUE     ok     ok   0.75 39
 diagnostics(fit)[, c("target_id", "tuning_name", "tuning_default_s", "tuning_grid_n_candidates")]
+#> <dnn_diagnostics>
+#>   targets: 1
+#>   dist   : available for 0/1 target(s)
 ```
+
+## Related Articles
+
+- [Notation and package
+  conventions](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md):
+  [`vignette("notation-and-conventions", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md)
+  relates `s`, `k`, `lambda`, support, and effective sample size to the
+  paper notation.
+- [DNN
+  weights](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.md):
+  [`vignette("dnn-weights", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.md)
+  explains how the selected order enters exact and asymptotic weights.
+- [Diagnostics and
+  reporting](https://JakobJuergens.github.io/RdistNN/articles/diagnostics-reporting.md):
+  [`vignette("diagnostics-reporting", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/diagnostics-reporting.md)
+  shows how resolved tuning metadata appears in fitted-object
+  diagnostics.

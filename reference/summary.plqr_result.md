@@ -1,6 +1,6 @@
-# Summarize a `plqr_result`
+# Summarize a `plqr_result` (experimental)
 
-Summarize a `plqr_result`
+Summarize a `plqr_result` (experimental)
 
 ## Usage
 
@@ -36,3 +36,13 @@ jackknife SE available on fits without a density input has no proven
 translation into a coefficient-level interval in this package's source
 theory — see
 `markdown_notes/design/15_plqr_variance_estimation_rationale.md`.
+
+## Lifecycle
+
+**Experimental.** PLQR functionality is outside the CATE and regression
+workflow focus of the initial public release. Its API and inference
+interfaces may change in later releases.
+
+## See also
+
+[`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md).

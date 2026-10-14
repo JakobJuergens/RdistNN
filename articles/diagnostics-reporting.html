@@ -30,8 +30,11 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="active nav-item"><a class="nav-link" href="../articles/index.html">Articles</a></li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
+<li class="nav-item"><a class="external-link nav-link" href="https://jakobjuergens.com/">Author</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
       </ul>
 </div>
@@ -117,7 +120,11 @@ weights, refit with <code>return</code> including <code>"W"</code>.</p>
 <span>  <span class="st">"weighted_mean_y"</span>,</span>
 <span>  <span class="st">"weighted_sd_y"</span>,</span>
 <span>  <span class="st">"weighted_y_q50"</span></span>
-<span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
+<span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt; &lt;dnn_diagnostics&gt;</span></span>
+<span><span class="co">#&gt;   targets: 1</span></span>
+<span><span class="co">#&gt;   n_eff  : min=51.8421, median=51.8421, max=51.8421</span></span>
+<span><span class="co">#&gt;   dist   : available for 0/1 target(s)</span></span></code></pre></div>
 <p>For NP fits, <code>weighted_mean_y</code> equals the local mean
 estimate when the weights are normalized.</p>
 </div>
@@ -150,15 +157,22 @@ estimate when the weights are normalized.</p>
 <span>  <span class="st">"control_mass"</span>,</span>
 <span>  <span class="st">"treated_share"</span>,</span>
 <span>  <span class="st">"weighted_mean_propensity"</span></span>
-<span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
+<span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt; &lt;dnn_diagnostics&gt;</span></span>
+<span><span class="co">#&gt;   targets: 1</span></span>
+<span><span class="co">#&gt;   n_eff  : min=64.9674, median=64.9674, max=64.9674</span></span>
+<span><span class="co">#&gt;   dist   : available for 0/1 target(s)</span></span></code></pre></div>
 <p>Overlap diagnostics are available when the fit was constructed from
 treatment and propensity inputs. If <code><a href="../reference/cate_dnn.html">cate_dnn()</a></code> was called
 with only a direct <code>pseudo_outcome</code>, overlap fields remain
 present but are marked unavailable.</p>
 </div>
 <div class="section level2">
-<h2 id="plqr-conditioning">PLQR Conditioning<a class="anchor" aria-label="anchor" href="#plqr-conditioning"></a>
+<h2 id="experimental-plqr-conditioning">Experimental PLQR conditioning<a class="anchor" aria-label="anchor" href="#experimental-plqr-conditioning"></a>
 </h2>
+<p>All PLQR functionality, including these diagnostics and its
+specialized plots, is experimental and outside the CATE and regression
+focus of this release.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">demo_plqr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plqr_demo_data.html">plqr_demo_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">160</span>, p <span class="op">=</span> <span class="fl">2</span>, p_d <span class="op">=</span> <span class="fl">2</span>, tau <span class="op">=</span> <span class="fl">0.5</span>, seed <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
 <span></span>
@@ -221,8 +235,17 @@ grid into every row.</p>
 <span>  <span class="st">"tuning_grid_n_candidates"</span>,</span>
 <span>  <span class="st">"tuning_lambda_default"</span></span>
 <span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt; &lt;dnn_diagnostics&gt;</span></span>
+<span><span class="co">#&gt;   targets: 1</span></span>
+<span><span class="co">#&gt;   dist   : available for 0/1 target(s)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">d_tuned</span>, <span class="st">"tuning_grid"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">d_tuned</span>, <span class="st">"tuning_grid"</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   candidate_id computed_key is_default feasible reason status lambda  s</span></span>
+<span><span class="co">#&gt; 1         s_45         s_45       TRUE     TRUE     ok     ok     NA 45</span></span>
+<span><span class="co">#&gt; 2   lambda_0p3         s_10      FALSE     TRUE     ok     ok   0.30 10</span></span>
+<span><span class="co">#&gt; 3   lambda_0p4         s_14      FALSE     TRUE     ok     ok   0.40 14</span></span>
+<span><span class="co">#&gt; 4   lambda_0p5         s_18      FALSE     TRUE     ok     ok   0.50 18</span></span>
+<span><span class="co">#&gt; 5  lambda_0p75         s_27      FALSE     TRUE     ok     ok   0.75 27</span></span></code></pre></div>
 <p>Use <code>attr(d_tuned, "tuning_grid")</code> when you need the full
 candidate table.</p>
 </div>
@@ -244,6 +267,27 @@ present but marked unavailable.</li>
 <p>This behavior keeps diagnostics predictable and prevents the
 diagnostics layer from silently rerunning expensive estimator
 construction.</p>
+</div>
+<div class="section level2">
+<h2 id="related-articles">Related Articles<a class="anchor" aria-label="anchor" href="#related-articles"></a>
+</h2>
+<ul>
+<li>
+<a href="notation-and-conventions.html">Notation and package
+conventions</a>:
+<code><a href="../articles/notation-and-conventions.html">vignette("notation-and-conventions", package = "RdistNN")</a></code>
+distinguishes similarly named fields and moment- from coefficient-scale
+uncertainty.</li>
+<li>
+<a href="visualising-fits.html">Visualising fits</a>:
+<code><a href="../articles/visualising-fits.html">vignette("visualising-fits", package = "RdistNN")</a></code> turns
+diagnostic fields into reusable plot panels.</li>
+<li>
+<a href="conditional-z-estimation.html">Conditional
+Z-estimation</a>:
+<code><a href="../articles/conditional-z-estimation.html">vignette("conditional-z-estimation", package = "RdistNN")</a></code>
+supplies the estimator workflows that create these objects.</li>
+</ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

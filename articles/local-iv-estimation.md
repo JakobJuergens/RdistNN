@@ -202,3 +202,20 @@ Set `SIM_OUTDIR` before running these scripts to write results outside
 the current working directory. The full grid uses 36 array cells and
 10,000 replications per cell; package tests exercise the same scripts
 through a small smoke grid instead of running the production simulation.
+
+## Related Articles
+
+- [Notation and package
+  conventions](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md):
+  [`vignette("notation-and-conventions", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md)
+  distinguishes solved GMM coefficients, local moments, Jacobians,
+  covariance fields, and the overidentification statistic.
+- [Conditional
+  Z-estimation](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md):
+  [`vignette("conditional-z-estimation", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md)
+  covers the stable NP, CATE, and supplied-theta PLQR interfaces.
+- [Diagnostics and
+  reporting](https://JakobJuergens.github.io/RdistNN/articles/diagnostics-reporting.md):
+  [`vignette("diagnostics-reporting", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/diagnostics-reporting.md)
+  explains the common DNN localization diagnostics shared with the
+  experimental fit.

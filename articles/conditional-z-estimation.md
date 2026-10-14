@@ -2,15 +2,18 @@
 
 ## Overview
 
-This vignette shows how DNN localization can be used in three user-level
-estimators:
+The initial public release focuses on CATE and nonparametric regression.
+Start with [Getting
+started](https://JakobJuergens.github.io/RdistNN/articles/getting-started.md)
+for executable examples of those workflows. This article gives
+additional moment details, including **experimental PLQR**:
 
 - [`np_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_dnn.md)
   for localized conditional means
 - [`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md)
   for conditional average treatment effects
 - [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md)
-  for localized PLQR coefficient surfaces and orthogonal moments
+  for experimental moment evaluation at supplied coefficients
 
 Each wrapper supports:
 
@@ -21,10 +24,9 @@ Each wrapper supports:
 - fitted-object diagnostics via
   [`diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/diagnostics.md)
 
-The wrappers implement fixed top-`k` DNN kernels for `1 <= k <= s`.
-Extending the written 1-NN theory to fixed `k` is essentially direct,
-but the current accompanying manuscript derivations are stated for
-`k = 1`.
+The wrappers implement fixed top-`k` DNN kernels for `1 <= k <= s`. The
+accompanying manuscript derivations are stated for `k = 1`; larger fixed
+`k` is an implementation-supported generalization.
 
 ## Local Mean (`np_dnn`)
 
@@ -46,8 +48,16 @@ fit_np <- np_dnn(
 )
 
 fit_np$mu
+#> [1] -0.02251305
 fit_np$se
+#> [1] 0.1782743
 diagnostics(fit_np)
+#> <dnn_diagnostics>
+#>   targets: 1
+#>   n_eff  : min=18.6582, median=18.6582, max=18.6582
+#>   weights: max(top5 share)=0.4122, max(weight)=0.1
+#>   dist   : available for 0/1 target(s)
+#>   outcome: available for 1/1 target(s)
 ```
 
 ## CATE (`cate_dnn`)
@@ -82,12 +92,31 @@ fit_cate <- cate_dnn(
 )
 
 summary(fit_cate)
+#> <summary.cate_result>
+#>   targets: 1
+#>          estimate std.error statistic p.value conf.low conf.high
+#> target_1   0.5512    0.3181     1.733 0.08313 -0.07227     1.175
 confint(fit_cate)
+#>             conf.low conf.high
+#> target_1 -0.07226519  1.174624
 diagnostics(fit_cate)
+#> <dnn_diagnostics>
+#>   targets: 1
+#>   n_eff  : min=20.098, median=20.098, max=20.098
+#>   weights: max(top5 share)=0.3894, max(weight)=0.0933
+#>   dist   : available for 0/1 target(s)
+#>   overlap: available for 1/1 target(s)
 predict(fit_cate, x0 = c(0.2, -0.1), interval = "confidence")
+#>            fit       lwr      upr
+#> [1,] 0.8336633 0.3016249 1.365702
 ```
 
-## PLQR Orthogonal Moments and Coefficient Inference (`plqr_dnn`)
+## Experimental PLQR moments and coefficient uncertainty (`plqr_dnn`)
+
+All PLQR functions, including score and demo helpers, methods, and
+specialized plots, are experimental. Their APIs and inference interfaces
+may change. The current wrapper does not estimate a local coefficient
+root.
 
 ``` r
 
@@ -146,14 +175,12 @@ Coefficient-level standard errors and confidence intervals require
 supplying `density`/`density_col` (an estimate of the local conditional
 density of `Y` at the fitted quantile). This is not an optional
 convenience: every valid coefficient route needs the density-backed
-sandwich bread (see
-`markdown_notes/design/15_plqr_variance_estimation_rationale.md`). Two
-coefficient-meat routes are available through `theta_meat`: the analytic
-score covariance (default) and a full delete-1 jackknife covariance of
-the localized vector moment (`theta_meat = "jackknife"`, stored in
-`moment_vcov`). A fit without a density input can still report
-`moment_se` (a componentwise jackknife SE on the *moment*, useful as a
-diagnostic) but
+sandwich bread. Two coefficient-meat routes are available through
+`theta_meat`: the analytic score covariance (default) and a full
+delete-1 jackknife covariance of the localized vector moment
+(`theta_meat = "jackknife"`, stored in `moment_vcov`). A fit without a
+density input can still report `moment_se` (a componentwise jackknife SE
+on the *moment*, useful as a diagnostic) but
 [`confint()`](https://rdrr.io/r/stats/confint.html)/`predict(se.fit = TRUE)`
 will error, by design, until refit with a density input — a
 componentwise `moment_se` alone is never coefficient inference.
@@ -197,9 +224,27 @@ always use delete-1 jackknife SEs when `se = TRUE`.
 
 `s < n` is required when jackknife SEs are requested.
 
+Experimental
 [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md)
-differs: when `density`/`density_col` is supplied, `se = TRUE` reports
-the direct coefficient sandwich instead of a jackknife SE (the jackknife
-path is not used in that case); the moment-level jackknife SE described
-above is only used as a fallback diagnostic when no density input is
-supplied. See “PLQR nuisances and inference” above.
+differs: with `density`/`density_col`, `se = TRUE` reports a
+density-backed coefficient sandwich. Its meat uses either the analytic
+score covariance (default) or the vector-moment jackknife covariance
+with `theta_meat = "jackknife"`. Without density, `moment_se` is a
+moment jackknife diagnostic and does not support coefficient intervals.
+See “PLQR nuisances and inference” above.
+
+## Related Articles
+
+- [Notation and package
+  conventions](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md):
+  [`vignette("notation-and-conventions", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md)
+  maps arguments, paper symbols, fitted-object fields, and uncertainty
+  scales.
+- [Diagnostics and
+  reporting](https://JakobJuergens.github.io/RdistNN/articles/diagnostics-reporting.md):
+  [`vignette("diagnostics-reporting", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/diagnostics-reporting.md)
+  documents the diagnostics available for each estimator.
+- [Kernel-order
+  tuning](https://JakobJuergens.github.io/RdistNN/articles/kernel-order-tuning.md):
+  [`vignette("kernel-order-tuning", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/kernel-order-tuning.md)
+  explains how `s` is selected when it is not supplied directly.

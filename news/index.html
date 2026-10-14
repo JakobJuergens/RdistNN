@@ -16,7 +16,10 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
+<li class="nav-item"><a class="nav-link" href="../articles/index.html">Articles</a></li>
+<li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
+      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://jakobjuergens.com/">Author</a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
       </ul></div>
 
 
@@ -29,7 +32,155 @@
       <small>Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
-  </main></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.1.0" id="rdistnn-010">RdistNN 0.1.0<a class="anchor" aria-label="anchor" href="#rdistnn-010"></a></h2>
+<div class="section level3">
+<h3 id="initial-public-release-scope-0-1-0">Initial public release scope<a class="anchor" aria-label="anchor" href="#initial-public-release-scope-0-1-0"></a></h3>
+<ul><li>Refocused onboarding, package metadata, and the documentation site on CATE and nonparametric regression, with executable examples of both input formats, tuning, diagnostics, and the methods each result class supports.</li>
+<li>Marked all PLQR functionality as experimental in help pages and articles, and grouped its estimator, scores, demos, inference methods, and specialized plots in the experimental reference section. PLQR continues to evaluate moments at supplied coefficients without solving for local coefficients.</li>
+<li>Added contributor guidance, a source-package release checklist, and website announcement copy. This polish does not change estimator behavior or APIs.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="paper-tuning-defaults-0-1-0">Paper tuning defaults<a class="anchor" aria-label="anchor" href="#paper-tuning-defaults-0-1-0"></a></h3>
+<ul><li>
+<code><a href="../reference/tuning_dnn_paper.html">tuning_dnn_paper()</a></code> now uses the paper’s finite-sample default <code>lambda = 0.4</code> and sensitivity grid <code>c(0.3, 0.4, 0.5, 0.75)</code>, while preserving <code>s(lambda) = floor(lambda * n^((kx + 1)/(kx + 2)))</code> and all explicit tuning overrides.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="pre-release-documentation-and-metadata-0-1-0">Pre-release documentation and metadata<a class="anchor" aria-label="anchor" href="#pre-release-documentation-and-metadata-0-1-0"></a></h3>
+<ul><li>Added a notation and package-conventions vignette that maps public arguments and fitted-object fields to the companion papers, distinguishes effective local scale from physical support, and separates PLQR moment diagnostics from coefficient-level sandwich inference.</li>
+<li>Corrected the <code><a href="../reference/np_dnn.html">np_dnn()</a></code>, <code><a href="../reference/cate_dnn.html">cate_dnn()</a></code>, <code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code>, and <code><a href="../reference/gmm_dnn.html">gmm_dnn()</a></code> help pages so their automatic-order formula includes the finite-sample <code>lambda = 0.4</code> multiplier used by the implementation.</li>
+<li>Added the CATE inference contract to the README and command help: orthogonality controls first-order population nuisance drift, while same-sample reuse separately requires the paper’s nuisance-rate and full-state stability conditions.</li>
+<li>Added the current paper link, repository and issue-tracker metadata, and explicit build exclusions for local check, archive, and rendered-README outputs.</li>
+<li>Expanded release CI to run on default-branch pushes and to cover both Apple Silicon and Intel macOS alongside Windows and Linux. Clarified that OpenMP is optional at runtime but source installation still requires C++17.</li>
+<li>Added <code>options(RdistNN.use_compiled = FALSE)</code> as a single switch for forcing supported R distance, score, and jackknife fallbacks, with compiled/fallback parity tests in the cross-platform matrix.</li>
+<li>Removed local agent settings and paper PDF snapshots from version control, eliminated the dormant CI log-commit path, tightened default workflow permissions, and added a repository-hygiene guard for generated artifacts and finite artifact retention.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="theory-facing-cate-simulation-diagnostics-0-1-0">Theory-facing CATE simulation diagnostics<a class="anchor" aria-label="anchor" href="#theory-facing-cate-simulation-diagnostics-0-1-0"></a></h3>
+<ul><li>User-facing <code>diagnostics(cate_result)</code> now reuses the paper-simulation definitions for the ordinary-Euclidean 90-percent weight-mass radius, normalized treated/control arm ESS, and top-five absolute weighted score-contribution share, with explicit availability fields.</li>
+<li>The CATE simulation now decomposes DNN error into realized localized-branch drift and estimator remainder, and records the corresponding root-effective- sample-size standardized drift.</li>
+<li>Weight-based simulation rows now report a physical 90-percent-mass radius, treated and control effective sample sizes, score-contribution concentration, and the studentized error. <code><a href="../reference/summarise_sim_results.html">summarise_sim_results()</a></code> adds finite-sample studentized quantiles, skewness, excess kurtosis, and support summaries.</li>
+<li>Integrated tuning-grid rows compute these diagnostics separately for every candidate while retaining shared-draw and shared-fitted-state parity.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="plqr-jackknife-meat-inference-supplied-theta-semantics-and-plot-defaults-0-1-0">PLQR jackknife-meat inference, supplied-theta semantics, and plot defaults<a class="anchor" aria-label="anchor" href="#plqr-jackknife-meat-inference-supplied-theta-semantics-and-plot-defaults-0-1-0"></a></h3>
+<ul><li>
+<code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code> gains <code>theta_meat = c("analytic", "jackknife")</code>: with <code>"jackknife"</code>, the full delete-1 jackknife covariance of the localized vector moment (<code>moment_vcov</code>) is used as the coefficient-sandwich meat with the density-backed bread. <code>meta$theta_meat_method</code> records the route; design note 15 now carries the full route table.</li>
+<li>Supplied-theta semantics are explicit across the PLQR S3 methods: <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> prints <code>theta_source</code> and suppresses <code>statistic</code>/<code>p.value</code> for supplied evaluation values; <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code>, <code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code>, and <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> attach a <code>theta_source</code> attribute and document that current fits repeat the supplied <code>theta_eval</code>.</li>
+<li>PLQR estimate plots default to moment coordinates: <code><a href="../reference/plot_data_estimates.html">plot_data_estimates()</a></code>/<code><a href="../reference/plot_estimates.html">plot_estimates()</a></code> accept <code>quantity = c("moment", "theta")</code>, zero reference lines are drawn for moment plots only, and candidate-grid plots stay in moment coordinates.</li>
+<li>
+<code>.plqr_direct_sandwich()</code> and the jackknife-meat route internally require normalized weight columns, failing clearly on rescaled or corrupted weight matrices.</li>
+<li>PLQR Jacobian diagnostics rename <code>density_min_weighted</code> / <code>density_max_weighted</code> to <code>density_min_support</code> / <code>density_max_support</code> (they are support extrema) and add the weighted mean <code>density_mean_weighted</code>.</li>
+<li>
+<code><a href="../reference/plqr_demo_data.html">plqr_demo_data()</a></code> now ships a true oracle threshold density: <code>data$density_oracle</code> and <code>truth$density_fn</code>, with the ALD error generator made density-continuous at the quantile (<code>f(0) = 4 tau (1 - tau) / sigma</code>; <code>tau = 0.5</code> draws are unchanged). README and vignette examples use it instead of a hand-set constant.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="pre-public-breaking-cleanup-paper-notation-alignment-0-1-0">Pre-public breaking cleanup (paper-notation alignment)<a class="anchor" aria-label="anchor" href="#pre-public-breaking-cleanup-paper-notation-alignment-0-1-0"></a></h3>
+<p>This pass deliberately breaks pre-release APIs so the first public version matches the conditional Z-estimation paper’s notation. No aliases for the old names are kept.</p>
+<ul><li>
+<code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code>: renamed the shape-nuisance inputs <code>q</code>/<code>q_col</code> to <code>g</code>/<code>g_col</code> (the paper’s (g_0(U))) and the coefficient input <code>beta</code> to <code>theta_eval</code>. The result stores <code>theta_eval</code> (the supplied vector) instead of <code>beta</code>, and <code>meta$theta_source = "supplied"</code> records that no root solving was performed.</li>
+<li>PLQR standard errors are no longer overloaded: coefficient-level direct-sandwich results live in <code>theta_se</code>/<code>theta_vcov</code>/<code>theta_omega</code> (previously <code>se</code>/<code>vcov</code>/<code>omega</code>), while the jackknife moment diagnostic lives in <code>moment_se</code>. <code>meta$se_route</code> was replaced by <code>meta$theta_se_method</code> and <code>meta$moment_se_method</code>.</li>
+<li>Renamed the PLQR return extra <code>"g"</code> to <code>"score"</code> (stored as <code>out$score</code>), reserving <code>g</code> for the shape nuisance.</li>
+<li>
+<code><a href="../reference/plqr_demo_data.html">plqr_demo_data()</a></code> now returns <code>g_oracle</code>, <code>theta_true</code>, <code>g_fn</code>, and <code>g_x0</code> (previously <code>q_oracle</code>, <code>beta_true</code>, <code>q_fn</code>, <code>q_x0</code>).</li>
+<li>Replaced the demo-bound <code>plqr_moment()</code> with the general <code>plqr_score_matrix(data, y_col, D_cols, g_col, mD_cols, theta, tau)</code>.</li>
+<li>
+<code><a href="../reference/score_plqr_component.html">score_plqr_component()</a></code> gained an explicit <code>y_col</code> argument (the outcome column was hardcoded as <code>"Y"</code>), dropped the ignored compatibility-only <code>k</code> argument, and now uses <code>g_col</code>/<code>theta</code> notation throughout.</li>
+<li>Renamed the rank-weight registry functions: <code>register_rank()</code> is now <code><a href="../reference/register_rank_weight.html">register_rank_weight()</a></code>, <code>get_rank()</code> is <code><a href="../reference/get_rank_weight.html">get_rank_weight()</a></code>, and <code>rank_names()</code> is <code><a href="../reference/rank_weight_names.html">rank_weight_names()</a></code>.</li>
+<li>Direct PLQR coefficient inference now requires <code>normalize = TRUE</code>; fits combining <code>density</code>/<code>density_col</code>, <code>se = TRUE</code>, and <code>normalize = FALSE</code> error instead of returning scale-dependent standard errors.</li>
+<li>Package <code>Title</code>/<code>Description</code> now lead with distributional nearest-neighbor inference for local conditional moment models rather than generalized U-statistics; the README labels the local IV-GMM layer as experimental companion functionality.</li>
+<li>Renamed the paper-rule tuning constant from <code>kappa</code> to <code>lambda</code> to avoid a collision with the paper’s own use of kappa: <code>tuning_dnn_paper(lambda =, lambda_grid =)</code>, candidate-table column <code>lambda</code>, candidate ids <code>lambda_*</code>, diagnostics column <code>tuning_lambda_default</code>, and the <code>lambda</code> column in <code>sim_cate_*</code> result and summary tables. No <code>kappa</code> alias is kept.</li>
+<li>Removed the ignored compatibility-only <code>k</code> argument from <code><a href="../reference/score_cate_rho.html">score_cate_rho()</a></code> and <code><a href="../reference/score_np_y.html">score_np_y()</a></code>, matching the same cleanup in <code><a href="../reference/score_plqr_component.html">score_plqr_component()</a></code>.</li>
+<li>Tuning-grid diagnostics payloads no longer carry the legacy duplicate <code>top_share</code> column; <code>top5_weight_share</code> is the single concentration field, and <code><a href="../reference/diagnostics.html">diagnostics()</a></code> no longer accepts legacy payloads without it.</li>
+<li>The experimental IV layer no longer aliases its target as tau: <code><a href="../reference/sim_iv_data.html">sim_iv_data()</a></code>/<code><a href="../reference/iv_demo_data.html">iv_demo_data()</a></code> drop <code>tau_x0</code>, <code>truth$tau_fn</code>, and the duplicate <code>tau_oracle</code> data column, keeping <code>theta_x0</code>/<code>theta_fn</code>/ <code>theta_oracle</code> only. <code>tau</code> remains reserved for the CATE target and the PLQR quantile level.</li>
+<li>Exported-function documentation no longer names internal compiled <code>rustat_*</code> symbols; compiled fast paths are described generically.</li>
+<li>Pruned the public namespace: the raw distance calculators and order helpers (<code>dist_l1()</code>, <code>dist_l2()</code>, <code>dist_l1_scaled()</code>, <code>dist_l2_scaled()</code>, <code>order_by_l1()</code>, <code>order_by_l2()</code>, <code>order_by_l1_scaled()</code>, <code>order_by_l2_scaled()</code>), the rank-to-weight plumbing (<code>dnn_weights_*_full_from_ranks()</code>, <code>tdnn_rank_table_exact()</code>, <code>tdnn_rank_table_asymp()</code>), and <code>ord_to_ranks()</code> are now internal. Use the <code>distance_*()</code> spec constructors and the <code>rank_weight_*()</code> / <code>weights_*()</code> layers instead; the internal implementations remain test-covered.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="plqr-inference-prediction-and-tuning-grid-mode-0-1-0">PLQR inference, prediction, and tuning-grid mode<a class="anchor" aria-label="anchor" href="#plqr-inference-prediction-and-tuning-grid-mode-0-1-0"></a></h3>
+<ul><li>Added the direct PLQR coefficient sandwich (<code>density</code>/<code>density_col</code>): <code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code> now reports coefficient-level <code>theta_se</code>, <code>theta_vcov</code>, <code>theta_omega</code>, <code>jacobian</code>, <code>score_covariance</code>, and <code>neff</code> when a local conditional density is supplied, matching the direct <code>J, S</code> sandwich this estimator’s source theory specifies (see <code>markdown_notes/design/15_plqr_variance_estimation_rationale.md</code>). <code><a href="../reference/confint.plqr_result.html">confint.plqr_result()</a></code> and <code><a href="../reference/summary.plqr_result.html">summary.plqr_result()</a></code> report coefficient inference only through this route.</li>
+<li>Added <code><a href="../reference/predict.plqr_result.html">predict.plqr_result()</a></code>, including coefficient-level <code>se.fit</code>/ <code>interval = "confidence"</code> support gated on the same direct-sandwich requirement.</li>
+<li>Added <code>tuning_mode = c("default", "grid")</code> to <code><a href="../reference/cate_dnn.html">cate_dnn()</a></code>, <code><a href="../reference/np_dnn.html">np_dnn()</a></code>, and <code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code>: grid mode evaluates a tuning object’s feasible kernel- order candidates and attaches a tidy <code>tuning_grid</code> payload (<code>candidates</code>, <code>estimates</code>, <code>diagnostics</code>, <code>meta</code>), reusing cached ranks and rank-weight tables rather than refitting per candidate. See <code>markdown_notes/design/14_integrated_tuning_grid_reuse.md</code>.</li>
+<li>Recorded, but deliberately did not build, a PLQR analogue of the <code>sim-cate-*.R</code> paper-simulation harness: the Cond_Z_Estimation paper has no PLQR numerical study to mirror, so a simulation harness would require inventing a DGP and comparator methods from scratch. Left as an explicit, flagged future-work item rather than undertaken speculatively.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="plotting-layer-phase-0-1-0">Plotting layer (Phase 3)<a class="anchor" aria-label="anchor" href="#plotting-layer-phase-0-1-0"></a></h3>
+<ul><li>
+<code>autoplot()</code>/<code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> methods for <code>plqr_result</code> (zero-referenced moment facets with a theta_eval/tau subtitle) and <code>gmm_result</code> (coefficient facets with the model name); zero reference lines are now drawn for PLQR moments as well as CATE effects.</li>
+<li>
+<code><a href="../reference/plot_conditioning.html">plot_conditioning()</a></code> for PLQR fits: smallest Gram eigenvalue and log10 condition number across targets with caution/ill-conditioned guides at <code>cond_limits</code>.</li>
+<li>
+<code><a href="../reference/plot_calibration.html">plot_calibration()</a></code> for PLQR fits: the weighted below-threshold share against the nominal <code>tau</code> with a normal reference band scaled by the local effective sample size; the indicator is stored on new fits and can be supplied as <code>residuals</code> otherwise.</li>
+<li>
+<code><a href="../reference/plot_influence.html">plot_influence()</a></code> for CATE fits: per-observation weighted score contributions against rank or distance, with the largest contributions labelled by observation index.</li>
+<li>
+<code><a href="../reference/plot_tdnn_scales.html">plot_tdnn_scales()</a></code> overlays a TDNN fit with internal single-scale refits at <code>s1</code> and <code>s2</code>.</li>
+<li>
+<code><a href="../reference/plot_tuning.html">plot_tuning()</a></code> for <code>np_result</code> and <code>cate_result</code>: refits across the tuning grid’s candidate kernel orders (always including the fitted <code>s</code>) and plots estimate stability with the fitted order marked.</li>
+<li>Fitted objects store the additional components these panels need: training data on <code><a href="../reference/np_dnn.html">np_dnn()</a></code>/<code><a href="../reference/np_tdnn.html">np_tdnn()</a></code> fits, and the below-threshold indicator on <code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code> fits.</li>
+<li>Optional visual regression layer: vdiffr snapshots for the main panels, opt-in via the <code>RDISTNN_VDIFFR=true</code> environment variable so platform font differences cannot break CI.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="plotting-layer-phase-0-1-0-1">Plotting layer (Phase 2)<a class="anchor" aria-label="anchor" href="#plotting-layer-phase-0-1-0-1"></a></h3>
+<ul><li>
+<code><a href="../reference/plot_overlap.html">plot_overlap()</a></code> for CATE fits: <code>type = "mass"</code> draws the weighted treated/control mass per target with dotted share guides and shaded warning bands outside <code>share_limits</code> (violations reported in the caption); <code>type = "propensity"</code> draws weighted propensity densities at selected targets when observation-level propensities are available and a weighted q10-q90 summary otherwise. Inputs resolve through the documented precedence chain (stored fit components, then <code>treatment</code>/<code>propensity</code> arguments, then an actionable error).</li>
+<li>
+<code>autoplot()</code>/<code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> on <code><a href="../reference/diagnostics.html">diagnostics()</a></code> frames: effective sample size (with the degenerate-weights guide at <code>0.9 n</code>), maximum weight, and top-5 weight share faceted across targets.</li>
+<li>
+<code><a href="../reference/plot_dashboard.html">plot_dashboard()</a></code> for <code>cate_result</code> and <code>np_result</code>: patchwork composition with a metadata annotation (<code>n</code>, <code>m</code>, <code>k</code>, <code>s</code> with provenance, distance, jackknife type); unavailable panels are substituted (diagnostics facets replace a missing overlap panel) or dropped, and without patchwork the panels are returned as a named list with a message. patchwork joins Suggests.</li>
+<li>Fitted <code><a href="../reference/np_dnn.html">np_dnn()</a></code>, <code><a href="../reference/cate_dnn.html">cate_dnn()</a></code>, <code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code>, and <code><a href="../reference/np_tdnn.html">np_tdnn()</a></code> objects record the jackknife type in <code>meta$jackknife</code> (<code>"none"</code> when <code>se = FALSE</code>).</li>
+<li>New vignette <code>visualising-fits</code> walks from a CATE fit through the estimate, weight, overlap, and diagnostics panels to the dashboard and panel customisation.</li>
+<li>The agent instruction files are excluded from the build, removing the long-standing top-level-files NOTE in R CMD check.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="plotting-layer-phase-0-1-0-2">Plotting layer (Phase 1)<a class="anchor" aria-label="anchor" href="#plotting-layer-phase-0-1-0-2"></a></h3>
+<ul><li>Added ggplot2-based plotting (ggplot2 is a suggested dependency; all entry points fail with an actionable message when it is missing): <code><a href="../reference/plot_estimates.html">plot_estimates()</a></code> draws point estimates with normal confidence bounds as a profile band (targets varying along one stored coordinate), a forest layout (small non-profile target sets, labelled from the stored coordinates), or pointranges, with an honesty caption carrying the median effective sample size and the kernel-order provenance on every panel; CATE panels add a dashed zero reference line and an opt-in <code>shade_significant</code> rug that marks intervals, never point estimates.</li>
+<li>
+<code><a href="../reference/plot_weights.html">plot_weights()</a></code> draws weight decay by rank (support-edge guide at <code>n - s + 1</code>, optional log scale), cumulative weight shares (0.5/0.9 guides and top-share markers), and the weight-vs-distance “effective kernel” view (rank-<code>s</code> radius guide); two-scale TDNN panels add a zero line for signed weights, and large target sets are subset to first/median-<code>n_eff</code>/last by default.</li>
+<li>
+<code>autoplot()</code> (registered on ggplot2) and <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> methods for <code>np_result</code> and <code>cate_result</code> delegate to <code><a href="../reference/plot_estimates.html">plot_estimates()</a></code>.</li>
+<li>README gains a visualisation section with the CATE profile figure.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="plotting-data-layer-phase-0-1-0">Plotting data layer (Phase 0)<a class="anchor" aria-label="anchor" href="#plotting-data-layer-phase-0-1-0"></a></h3>
+<ul><li>Added the tidy data extractors behind the upcoming ggplot2-based plotting interface, with no plotting dependency: <code><a href="../reference/plot_data_estimates.html">plot_data_estimates()</a></code> (S3 generic with methods for <code>np_result</code>, <code>cate_result</code>, <code>plqr_result</code>, and <code>gmm_result</code>; TDNN fits dispatch through <code>np_result</code>) returns one row per target and coefficient with estimates, stored jackknife standard errors, and normal confidence bounds at a chosen <code>level</code>; <code><a href="../reference/plot_data_weights.html">plot_data_weights()</a></code> returns per-(target, rank) weight profiles with cumulative shares and distances when stored; <code><a href="../reference/plot_data_diagnostics.html">plot_data_diagnostics()</a></code> returns the per-target diagnostics frame with an integer <code>target_id</code> aligned with the other extractors.</li>
+<li>Design and phase plan: <code>markdown_notes/archive/completed_plans_2026-07-09/plotting_layer_implementation_plan.md</code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="fitted-objects-store-evaluation-points-0-1-0">Fitted objects store evaluation points<a class="anchor" aria-label="anchor" href="#fitted-objects-store-evaluation-points-0-1-0"></a></h3>
+<ul><li>
+<code><a href="../reference/np_dnn.html">np_dnn()</a></code>, <code><a href="../reference/cate_dnn.html">cate_dnn()</a></code>, <code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code>, <code><a href="../reference/gmm_dnn.html">gmm_dnn()</a></code>, and <code><a href="../reference/np_tdnn.html">np_tdnn()</a></code> result objects now include <code>x0</code>, the <code>m x p</code> matrix of evaluation points, with covariate column names propagated from the training data when the targets carry none. This is Phase 0 of the plotting layer (<code>markdown_notes/archive/completed_plans_2026-07-09/plotting_layer_implementation_plan.md</code>): profile plots need the target coordinates, which were previously not stored.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="breaking-change-default-kernel-order-s-0-1-0">Breaking change: default kernel order <code>s</code>
+<a class="anchor" aria-label="anchor" href="#breaking-change-default-kernel-order-s-0-1-0"></a></h3>
+<ul><li>
+<code><a href="../reference/np_dnn.html">np_dnn()</a></code>, <code><a href="../reference/cate_dnn.html">cate_dnn()</a></code>, <code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code>, and <code><a href="../reference/gmm_dnn.html">gmm_dnn()</a></code> no longer default to <code>s = 1L</code>, which produced exactly uniform DNN weights and therefore no localization (every target point silently received the global weighted mean). When both <code>s</code> and <code>tuning</code> are omitted, <code>s</code> is now resolved from the paper undersmoothing rule <code><a href="../reference/tuning_dnn_paper.html">tuning_dnn_paper()</a></code>, <code>s = floor(0.4 * n^((kx + 1)/(kx + 2)))</code>, matching the current default used by the Stata companion (<code>cate_dnn.ado</code>). The resolved rule is recorded in <code>meta$tuning</code> with <code>source = "paper_default"</code>. Calls that passed <code>s</code> explicitly are unaffected.</li>
+<li>All DNN and TDNN user wrappers now emit a warning when the computed weights are (near-)uniform (max effective sample size at least <code>0.9 * n</code>, for example <code>s = 1</code> or <code>k = s</code>), instead of silently returning an unlocalized fit.</li>
+<li>Added <code>tests/testthat/test-s-default-paper-rule.R</code>, the <code>s</code>-analogue of the <code>k = 1</code> documentation guardrail: it pins the default-<code>s</code> resolution for all four wrappers, the manual-<code>s</code> path, the degenerate-weight warning, and R/Stata default-formula agreement.</li>
+<li>
+<code><a href="../reference/np_tdnn.html">np_tdnn()</a></code> still uses explicit <code>s1</code>/<code>s2</code> defaults; a two-scale default rule is a separate follow-up.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="diagnostics-and-reporting-0-1-0">Diagnostics and reporting<a class="anchor" aria-label="anchor" href="#diagnostics-and-reporting-0-1-0"></a></h3>
+<ul><li>Added <code><a href="../reference/diagnostics.html">diagnostics()</a></code> methods for <code><a href="../reference/np_dnn.html">np_dnn()</a></code>, <code><a href="../reference/cate_dnn.html">cate_dnn()</a></code>, and <code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code> fitted objects, including generic DNN weight/tuning summaries plus estimator-specific NP outcome, CATE overlap, and PLQR Gram conditioning diagnostics.</li>
+<li>Added a diagnostics/reporting vignette and updated README, getting-started, conditional Z-estimation, kernel-order tuning, and pkgdown references to show the diagnostics workflow.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="ci-and-package-engineering-0-1-0">CI and package engineering<a class="anchor" aria-label="anchor" href="#ci-and-package-engineering-0-1-0"></a></h3>
+<ul><li>Added <code>tools/ci/check_tests_declared_deps.R</code> and a CI guard step to fail when <code>tests/</code> uses <code>pkg::</code> or <code>pkg:::</code> for undeclared packages.</li>
+<li>Added <code>tools/ci/check_pkgdown_reference_coverage.R</code> and a CI guard step to fail when public <code>man/*.Rd</code> topics are missing from <code>_pkgdown.yml</code> reference contents.</li>
+<li>Added <code>tools/ci/check_generated_file_drift.R</code> and a CI guard step to fail when generated files (<code>NAMESPACE</code>, <code>R/RcppExports.R</code>, <code>src/RcppExports.cpp</code>) are stale.</li>
+<li>Added workflow <code>.github/workflows/alignment-guardrails.yaml</code> to run these guardrail checks on push and pull requests.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="dependency-and-docs-alignment-0-1-0">Dependency and docs alignment<a class="anchor" aria-label="anchor" href="#dependency-and-docs-alignment-0-1-0"></a></h3>
+<ul><li>Added <code>tibble</code> to <code>Suggests</code> for test-time namespace declarations.</li>
+<li>Filled missing <code>_pkgdown.yml</code> reference entries for TDNN and Mahalanobis topics that were failing site checks.</li>
+</ul></div>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">

@@ -55,6 +55,10 @@ d_np[, c(
   "weighted_sd_y",
   "weighted_y_q50"
 )]
+#> <dnn_diagnostics>
+#>   targets: 1
+#>   n_eff  : min=51.8421, median=51.8421, max=51.8421
+#>   dist   : available for 0/1 target(s)
 ```
 
 For NP fits, `weighted_mean_y` equals the local mean estimate when the
@@ -90,6 +94,10 @@ d_cate[, c(
   "treated_share",
   "weighted_mean_propensity"
 )]
+#> <dnn_diagnostics>
+#>   targets: 1
+#>   n_eff  : min=64.9674, median=64.9674, max=64.9674
+#>   dist   : available for 0/1 target(s)
 ```
 
 Overlap diagnostics are available when the fit was constructed from
@@ -98,7 +106,11 @@ treatment and propensity inputs. If
 was called with only a direct `pseudo_outcome`, overlap fields remain
 present but are marked unavailable.
 
-## PLQR Conditioning
+## Experimental PLQR conditioning
+
+All PLQR functionality, including these diagnostics and its specialized
+plots, is experimental and outside the CATE and regression focus of this
+release.
 
 ``` r
 
@@ -166,8 +178,17 @@ d_tuned[, c(
   "tuning_grid_n_candidates",
   "tuning_lambda_default"
 )]
+#> <dnn_diagnostics>
+#>   targets: 1
+#>   dist   : available for 0/1 target(s)
 
 attr(d_tuned, "tuning_grid")
+#>   candidate_id computed_key is_default feasible reason status lambda  s
+#> 1         s_45         s_45       TRUE     TRUE     ok     ok     NA 45
+#> 2   lambda_0p3         s_10      FALSE     TRUE     ok     ok   0.30 10
+#> 3   lambda_0p4         s_14      FALSE     TRUE     ok     ok   0.40 14
+#> 4   lambda_0p5         s_18      FALSE     TRUE     ok     ok   0.50 18
+#> 5  lambda_0p75         s_27      FALSE     TRUE     ok     ok   0.75 27
 ```
 
 Use `attr(d_tuned, "tuning_grid")` when you need the full candidate
@@ -189,3 +210,19 @@ Diagnostics avoid hidden recomputation.
 
 This behavior keeps diagnostics predictable and prevents the diagnostics
 layer from silently rerunning expensive estimator construction.
+
+## Related Articles
+
+- [Notation and package
+  conventions](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md):
+  [`vignette("notation-and-conventions", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md)
+  distinguishes similarly named fields and moment- from
+  coefficient-scale uncertainty.
+- [Visualising
+  fits](https://JakobJuergens.github.io/RdistNN/articles/visualising-fits.md):
+  [`vignette("visualising-fits", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/visualising-fits.md)
+  turns diagnostic fields into reusable plot panels.
+- [Conditional
+  Z-estimation](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md):
+  [`vignette("conditional-z-estimation", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md)
+  supplies the estimator workflows that create these objects.

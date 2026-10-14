@@ -422,3 +422,20 @@ with your own score or estimating equation.
   in isolation before embedding it in a solver.
 - Register names only after the underlying object works directly. The
   registry is a convenience layer, not a debugging tool.
+
+## Related Articles
+
+- [Notation and package
+  conventions](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md):
+  [`vignette("notation-and-conventions", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md)
+  locates custom distances, rank weights, and scores within the full
+  estimator pipeline.
+- [DNN
+  weights](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.md):
+  [`vignette("dnn-weights", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.md)
+  documents the built-in weight machinery that extensions should match.
+- [Jackknife generalized
+  U-statistics](https://JakobJuergens.github.io/RdistNN/articles/jackknife-gen-ustats.md):
+  [`vignette("jackknife-gen-ustats", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/jackknife-gen-ustats.md)
+  covers the low-level delete-one aggregation tools used by user-level
+  inference.

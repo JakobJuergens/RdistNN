@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Getting started with RdistNN • RdistNN</title>
+<title>Getting started: CATE and regression • RdistNN</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Getting started with RdistNN">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Getting started: CATE and regression">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -30,8 +30,11 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="active nav-item"><a class="nav-link" href="../articles/index.html">Articles</a></li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
+<li class="nav-item"><a class="external-link nav-link" href="https://jakobjuergens.com/">Author</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
       </ul>
 </div>
@@ -46,7 +49,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Getting started with RdistNN</h1>
+      <h1>Getting started: CATE and regression</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/master/vignettes/getting-started.Rmd" class="external-link"><code>vignettes/getting-started.Rmd</code></a></small>
@@ -55,285 +58,258 @@
 
     
     
+<p>The initial RdistNN release focuses on conditional average treatment
+effects and nonparametric regression with distributional
+nearest-neighbor (DNN) weights. Both estimators accept numeric matrices
+or data frames, including tibbles through the data-frame interface.
+Inputs must be finite and complete; choose covariate columns explicitly
+and supply one of <code>x0</code> (one target) or <code>X0</code> (one
+target per row).</p>
+<p>PLQR and local IV-GMM are experimental. Their reference material is
+available for research use, but they are outside the supported workflow
+focus of this release. PLQR evaluates moments at supplied coefficients;
+it does not solve for target-specific coefficients.</p>
+<div class="section level2">
+<h2 id="conditional-average-treatment-effects">Conditional average treatment effects<a class="anchor" aria-label="anchor" href="#conditional-average-treatment-effects"></a>
+</h2>
+<p>For binary treatment <code>D</code>, the AIPW inputs are outcome
+<code>Y</code>, control and treated conditional means <code>m0</code>
+and <code>m1</code>, and propensity <code>e</code>. Nuisance fitting is
+external to the package. This simulation supplies <strong>oracle
+nuisances</strong> so that the example demonstrates localization without
+choosing a nuisance learner.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://JakobJuergens.github.io/RdistNN/">RdistNN</a></span><span class="op">)</span></span></code></pre></div>
-<div class="section level2">
-<h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
-</h2>
-<p><code>RdistNN</code> provides:</p>
-<ul>
-<li>Distance specifications and registries (<code><a href="../reference/new_distance.html">new_distance()</a></code>,
-<code><a href="../reference/register_distance.html">register_distance()</a></code>)</li>
-<li>Rank-weight specifications and registries
-(<code><a href="../reference/new_rank_weight.html">new_rank_weight()</a></code>,
-<code><a href="../reference/register_rank_weight.html">register_rank_weight()</a></code>)</li>
-<li>Score specifications and differentiation helpers
-(<code><a href="../reference/new_score.html">new_score()</a></code>, <code><a href="../reference/score_eval_batch.html">score_eval_batch()</a></code>,
-<code><a href="../reference/score_diff_path.html">score_diff_path()</a></code>)</li>
-<li>DNN weight constructors (<code><a href="../reference/weights_dnn.html">weights_dnn()</a></code>,
-<code><a href="../reference/weights_dnn_exact.html">weights_dnn_exact()</a></code>, <code><a href="../reference/weights_dnn_asymp.html">weights_dnn_asymp()</a></code>)</li>
-<li>User-level localized estimators:
-<ul>
-<li>
-<code><a href="../reference/np_dnn.html">np_dnn()</a></code> for nonparametric local means</li>
-<li>
-<code><a href="../reference/cate_dnn.html">cate_dnn()</a></code> for conditional average treatment
-effects</li>
-<li>
-<code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code> for localized PLQR coefficient surfaces and
-orthogonal moments</li>
-</ul>
-</li>
-<li>Fitted-object diagnostics via <code><a href="../reference/diagnostics.html">diagnostics()</a></code>
-</li>
-</ul>
-<p>Most user workflows are one of:</p>
-<ol style="list-style-type: decimal">
-<li>Build weights directly and combine with your own signal.</li>
-<li>Use one of the user-level wrappers above.</li>
-<li>Customize distance and rank-weight rules through registries.</li>
-<li>Build your own score kernels and localized estimators on top of the
-same modular API.</li>
-</ol>
-</div>
-<div class="section level2">
-<h2 id="compute-dnn-weights">1) Compute DNN Weights<a class="anchor" aria-label="anchor" href="#compute-dnn-weights"></a>
-</h2>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
-<span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">120</span></span>
-<span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fl">2</span></span>
-<span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span> <span class="op">*</span> <span class="va">p</span><span class="op">)</span>, <span class="va">n</span>, <span class="va">p</span><span class="op">)</span></span>
-<span><span class="va">X0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">6</span><span class="op">)</span>, <span class="fl">3</span>, <span class="va">p</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Exact finite-sample DNN weights</span></span>
-<span><span class="va">wt_exact</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/weights_dnn.html">weights_dnn</a></span><span class="op">(</span></span>
-<span>  X <span class="op">=</span> <span class="va">X</span>, X0 <span class="op">=</span> <span class="va">X0</span>,</span>
-<span>  distance <span class="op">=</span> <span class="st">"l2"</span>,</span>
-<span>  method <span class="op">=</span> <span class="st">"exact"</span>,</span>
-<span>  k <span class="op">=</span> <span class="fl">1L</span>, s <span class="op">=</span> <span class="fl">3L</span>,</span>
-<span>  return <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"W"</span>, <span class="st">"ranks"</span>, <span class="st">"ord"</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Asymptotic DNN weights</span></span>
-<span><span class="va">wt_asymp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/weights_dnn.html">weights_dnn</a></span><span class="op">(</span></span>
-<span>  X <span class="op">=</span> <span class="va">X</span>, X0 <span class="op">=</span> <span class="va">X0</span>,</span>
-<span>  distance <span class="op">=</span> <span class="st">"l2"</span>,</span>
-<span>  method <span class="op">=</span> <span class="st">"asymp"</span>,</span>
-<span>  k <span class="op">=</span> <span class="fl">1L</span>, s <span class="op">=</span> <span class="fl">3L</span>,</span>
-<span>  normalize <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  return <span class="op">=</span> <span class="st">"W"</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">wt_exact</span><span class="op">$</span><span class="va">W</span><span class="op">)</span></span></code></pre></div>
-<p>For exact DNN weights, the package uses the full rank permutation at
-each target. This is not an <code>s</code>-nearest-neighbor truncation.
-In rank order, the exact finite-population support is
-<code>j &lt;= n - s + k</code>, and in particular
-<code>j &lt;= n - s + 1</code> when <code>k = 1</code>. When requested,
-the <code>neighbors</code> extra reports the first <code>k</code>
-nearest observations, not the full DNN weight support.</p>
-</div>
-<div class="section level2">
-<h2 id="local-nonparametric-regression-with-np_dnn">2) Local Nonparametric Regression with <code>np_dnn()</code><a class="anchor" aria-label="anchor" href="#local-nonparametric-regression-with-np_dnn"></a>
-</h2>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">demo_np</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/np_demo_data.html">np_demo_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">250</span>, p <span class="op">=</span> <span class="fl">2</span>, design <span class="op">=</span> <span class="st">"sinusoidal"</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">fit_np</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/np_dnn.html">np_dnn</a></span><span class="op">(</span></span>
-<span>  data <span class="op">=</span> <span class="va">demo_np</span><span class="op">$</span><span class="va">data</span>,</span>
-<span>  x_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X1"</span>, <span class="st">"X2"</span><span class="op">)</span>,</span>
-<span>  y_col <span class="op">=</span> <span class="st">"Y"</span>,</span>
-<span>  x0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>,</span>
-<span>  method <span class="op">=</span> <span class="st">"exact"</span>,</span>
-<span>  k <span class="op">=</span> <span class="fl">1L</span>, s <span class="op">=</span> <span class="fl">3L</span>,</span>
-<span>  se <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  jackknife <span class="op">=</span> <span class="st">"fast"</span>,</span>
-<span>  return <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"W"</span>, <span class="st">"ess"</span>, <span class="st">"neighbors"</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">fit_np</span><span class="op">$</span><span class="va">mu</span></span>
-<span><span class="va">fit_np</span><span class="op">$</span><span class="va">se</span></span>
-<span><span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">fit_np</span><span class="op">)</span></span></code></pre></div>
-<p><code>jackknife</code> can be:</p>
-<ul>
-<li>
-<code>"fast"</code>: delete-1 updates from full-sample ranks
-(default)</li>
-<li>
-<code>"loo"</code>: direct leave-one-out recomputation</li>
-<li>
-<code>"none"</code>: skip standard errors</li>
-</ul>
-</div>
-<div class="section level2">
-<h2 id="cate-with-cate_dnn-and-post-estimation-methods">3) CATE with <code>cate_dnn()</code> and Post-estimation
-Methods<a class="anchor" aria-label="anchor" href="#cate-with-cate_dnn-and-post-estimation-methods"></a>
-</h2>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">demo_cate</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cate_demo_data.html">cate_demo_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">300</span>, p <span class="op">=</span> <span class="fl">2</span>, design <span class="op">=</span> <span class="st">"hetero"</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">demo_cate</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cate_demo_data.html">cate_demo_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">180</span>, p <span class="op">=</span> <span class="fl">2</span>, design <span class="op">=</span> <span class="st">"hetero"</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">df</span> <span class="op">&lt;-</span> <span class="va">demo_cate</span><span class="op">$</span><span class="va">data</span></span>
 <span><span class="va">df</span><span class="op">$</span><span class="va">m1_oracle</span> <span class="op">&lt;-</span> <span class="va">df</span><span class="op">$</span><span class="va">m0_oracle</span> <span class="op">+</span> <span class="va">df</span><span class="op">$</span><span class="va">tau_oracle</span></span>
 <span></span>
 <span><span class="va">fit_cate</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cate_dnn.html">cate_dnn</a></span><span class="op">(</span></span>
-<span>  data <span class="op">=</span> <span class="va">df</span>,</span>
-<span>  x_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X1"</span>, <span class="st">"X2"</span><span class="op">)</span>,</span>
-<span>  y_col <span class="op">=</span> <span class="st">"Y"</span>,</span>
-<span>  t_col <span class="op">=</span> <span class="st">"D"</span>,</span>
-<span>  m0_col <span class="op">=</span> <span class="st">"m0_oracle"</span>,</span>
-<span>  m1_col <span class="op">=</span> <span class="st">"m1_oracle"</span>,</span>
-<span>  e_col <span class="op">=</span> <span class="st">"e_oracle"</span>,</span>
-<span>  x0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>,</span>
-<span>  method <span class="op">=</span> <span class="st">"exact"</span>,</span>
-<span>  k <span class="op">=</span> <span class="fl">1L</span>, s <span class="op">=</span> <span class="fl">3L</span>,</span>
-<span>  se <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  return <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"W"</span>, <span class="st">"psi"</span>, <span class="st">"nuisance"</span><span class="op">)</span></span>
+<span>  data <span class="op">=</span> <span class="va">df</span>, x_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X1"</span>, <span class="st">"X2"</span><span class="op">)</span>, y_col <span class="op">=</span> <span class="st">"Y"</span>, t_col <span class="op">=</span> <span class="st">"D"</span>,</span>
+<span>  m0_col <span class="op">=</span> <span class="st">"m0_oracle"</span>, m1_col <span class="op">=</span> <span class="st">"m1_oracle"</span>, e_col <span class="op">=</span> <span class="st">"e_oracle"</span>,</span>
+<span>  x0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, k <span class="op">=</span> <span class="fl">1L</span>, se <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  return <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"W"</span>, <span class="st">"psi"</span>, <span class="st">"nuisance"</span>, <span class="st">"dx"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit_cate</span><span class="op">)</span></span>
+<span><span class="co">#&gt; &lt;summary.cate_result&gt;</span></span>
+<span><span class="co">#&gt;   targets: 1</span></span>
+<span><span class="co">#&gt;          estimate std.error statistic p.value conf.low conf.high</span></span>
+<span><span class="co">#&gt; target_1   0.4527    0.2607     1.737 0.08242 -0.05817    0.9636</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">fit_cate</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">fit_cate</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit_cate</span>, x0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.2</span>, <span class="op">-</span><span class="fl">0.1</span><span class="op">)</span>, interval <span class="op">=</span> <span class="st">"confidence"</span><span class="op">)</span></span></code></pre></div>
-<p><code><a href="../reference/cate_dnn.html">cate_dnn()</a></code> supports:</p>
-<ul>
-<li>Matrix interface: pass <code>X</code>,
-<code>X0</code>/<code>x0</code>, and <code>pseudo_outcome</code>
-</li>
-<li>Data-frame interface:
-<ul>
-<li>Full AIPW: <code>y_col</code>, <code>t_col</code>,
-<code>e_col</code>, <code>m0_col</code>, <code>m1_col</code>
-</li>
-<li>Robinson-style: <code>y_col</code>, <code>t_col</code>,
-<code>e_col</code>, <code>m_col</code>
-</li>
-</ul>
-</li>
-</ul>
+<span><span class="co">#&gt;             conf.low conf.high</span></span>
+<span><span class="co">#&gt; target_1 -0.05817257 0.9636003</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit_cate</span>, x0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.2</span>, <span class="op">-</span><span class="fl">0.1</span><span class="op">)</span>, interval <span class="op">=</span> <span class="st">"confidence"</span><span class="op">)</span></span>
+<span><span class="co">#&gt;            fit       lwr      upr</span></span>
+<span><span class="co">#&gt; [1,] 0.7890503 0.4451826 1.132918</span></span></code></pre></div>
+<p><code>fit_cate$tau</code> contains the estimates and
+<code>fit_cate$se</code> contains their jackknife standard errors.
+<code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code> returns pointwise normal intervals; it does not
+provide a simultaneous confidence band for a profile.</p>
+<p>If you already have an observation-level pseudo-outcome, pass it
+directly. Here we reuse the oracle AIPW scores retained by the preceding
+fit:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">df</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X1"</span>, <span class="st">"X2"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="va">fit_cate_matrix</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cate_dnn.html">cate_dnn</a></span><span class="op">(</span></span>
+<span>  X <span class="op">=</span> <span class="va">X</span>, x0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, pseudo_outcome <span class="op">=</span> <span class="va">fit_cate</span><span class="op">$</span><span class="va">psi</span>, k <span class="op">=</span> <span class="fl">1L</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>data_frame <span class="op">=</span> <span class="va">fit_cate</span><span class="op">$</span><span class="va">tau</span>, matrix <span class="op">=</span> <span class="va">fit_cate_matrix</span><span class="op">$</span><span class="va">tau</span><span class="op">)</span></span>
+<span><span class="co">#&gt; data_frame     matrix </span></span>
+<span><span class="co">#&gt;  0.4527139  0.4527139</span></span></code></pre></div>
+<p>The data-frame pathway also accepts <code>pseudo_outcome</code>, or a
+Robinson-form score via <code>y_col</code>, <code>t_col</code>,
+<code>m_col</code>, and <code>e_col</code>. See <code><a href="../reference/cate_dnn.html">?cate_dnn</a></code>
+for the complete input contract. Preserve the same observation order for
+every nuisance or pseudo-outcome vector.</p>
+<div class="section level3">
+<h3 id="interpreting-cate-inference">Interpreting CATE inference<a class="anchor" aria-label="anchor" href="#interpreting-cate-inference"></a>
+</h3>
+<p>Orthogonality controls first-order population nuisance drift. Valid
+nuisance reuse on the full estimation sample additionally requires the
+nuisance-rate and full-state stability conditions in the accompanying
+paper. The package cannot establish those conditions for an arbitrary
+learner. Out-of-fold predictions are also accepted, but using them does
+not by itself establish all conditions needed for local inference.
+Overlap and localization bias control remain necessary.</p>
+<p>Raw supplied propensities must lie in <code>[0, 1]</code> and are
+clipped to <code>[clip, 1 - clip]</code> with <code>clip = 1e-8</code>
+by default. Diagnostics use the clipped values. Clipping does not create
+local treatment support, and a supplied pseudo-outcome is used
+unchanged.</p>
+<p>Inspect local weight concentration and treated/control mass:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">d_cate</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">fit_cate</span><span class="op">)</span></span>
+<span><span class="va">d_cate</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"target_id"</span>, <span class="st">"n_eff"</span>, <span class="st">"treated_mass"</span>, <span class="st">"control_mass"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt; &lt;dnn_diagnostics&gt;</span></span>
+<span><span class="co">#&gt;   targets: 1</span></span>
+<span><span class="co">#&gt;   n_eff  : min=17.5249, median=17.5249, max=17.5249</span></span>
+<span><span class="co">#&gt;   dist   : available for 0/1 target(s)</span></span></code></pre></div>
+<p>Diagnostics describe the realized sample near a target; they are not
+a test of the paper’s assumptions. Keep <code>"W"</code> in
+<code>return</code> for weight diagnostics, <code>"dx"</code> for
+distance-radius summaries, and <code>"nuisance"</code> for explicit
+nuisance inspection. For CATE overlap, the hidden fitted state retains
+treatment and propensity inputs when these were supplied.</p>
+</div>
 </div>
 <div class="section level2">
-<h2 id="local-plqr-moments-and-coefficient-inference-with-plqr_dnn">4) Local PLQR Moments and Coefficient Inference with
-<code>plqr_dnn()</code><a class="anchor" aria-label="anchor" href="#local-plqr-moments-and-coefficient-inference-with-plqr_dnn"></a>
+<h2 id="nonparametric-regression">Nonparametric regression<a class="anchor" aria-label="anchor" href="#nonparametric-regression"></a>
 </h2>
+<p><code><a href="../reference/np_dnn.html">np_dnn()</a></code> estimates a conditional mean by averaging
+outcomes with DNN weights. Its result exposes <code>mu</code> and
+<code>se</code> directly. The explicit CATE <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>,
+<code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code>, and <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> methods do not apply
+to <code>np_result</code>.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">demo_np</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/np_demo_data.html">np_demo_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">160</span>, p <span class="op">=</span> <span class="fl">2</span>, design <span class="op">=</span> <span class="st">"sinusoidal"</span>, seed <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="va">fit_np</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/np_dnn.html">np_dnn</a></span><span class="op">(</span></span>
+<span>  data <span class="op">=</span> <span class="va">demo_np</span><span class="op">$</span><span class="va">data</span>, x_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X1"</span>, <span class="st">"X2"</span><span class="op">)</span>, y_col <span class="op">=</span> <span class="st">"Y"</span>,</span>
+<span>  X0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span>, k <span class="op">=</span> <span class="fl">1L</span>, se <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  return <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"W"</span>, <span class="st">"dx"</span>, <span class="st">"ess"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Normal pointwise intervals from the stored jackknife standard errors.</span></span>
+<span><span class="fu"><a href="../reference/plot_data_estimates.html">plot_data_estimates</a></span><span class="op">(</span><span class="va">fit_np</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"target_id"</span>, <span class="st">"estimate"</span>, <span class="st">"se"</span>, <span class="st">"ci_lower"</span>, <span class="st">"ci_upper"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;   target_id    estimate        se    ci_lower  ci_upper</span></span>
+<span><span class="co">#&gt; 1         1 -0.08841632 0.1517981 -0.38593504 0.2091024</span></span>
+<span><span class="co">#&gt; 2         2  0.24768566 0.1328475 -0.01269067 0.5080620</span></span>
+<span><span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">fit_np</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"target_id"</span>, <span class="st">"n_eff"</span>, <span class="st">"weighted_mean_y"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt; &lt;dnn_diagnostics&gt;</span></span>
+<span><span class="co">#&gt;   targets: 2</span></span>
+<span><span class="co">#&gt;   n_eff  : min=17.3549, median=17.3549, max=17.3549</span></span>
+<span><span class="co">#&gt;   dist   : available for 0/2 target(s)</span></span></code></pre></div>
+<p>Use uppercase <code>Y</code> for the matrix interface:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">demo_plqr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plqr_demo_data.html">plqr_demo_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">250</span>, p <span class="op">=</span> <span class="fl">2</span>, p_d <span class="op">=</span> <span class="fl">2</span>, tau <span class="op">=</span> <span class="fl">0.5</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="co"># density_oracle ships with the demo data: the true threshold density.</span></span>
-<span></span>
-<span><span class="va">fit_plqr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plqr_dnn.html">plqr_dnn</a></span><span class="op">(</span></span>
-<span>  data <span class="op">=</span> <span class="va">demo_plqr</span><span class="op">$</span><span class="va">data</span>,</span>
-<span>  x_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X1"</span>, <span class="st">"X2"</span><span class="op">)</span>,</span>
-<span>  D_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"D1"</span>, <span class="st">"D2"</span><span class="op">)</span>,</span>
-<span>  g_col <span class="op">=</span> <span class="st">"g_oracle"</span>,</span>
-<span>  mD_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mD1"</span>, <span class="st">"mD2"</span><span class="op">)</span>,</span>
-<span>  y_col <span class="op">=</span> <span class="st">"Y"</span>,</span>
-<span>  density_col <span class="op">=</span> <span class="st">"density_oracle"</span>,</span>
-<span>  theta_eval <span class="op">=</span> <span class="va">demo_plqr</span><span class="op">$</span><span class="va">truth</span><span class="op">$</span><span class="va">theta_true</span>,</span>
-<span>  tau <span class="op">=</span> <span class="fl">0.5</span>,</span>
-<span>  x0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>,</span>
-<span>  method <span class="op">=</span> <span class="st">"exact"</span>,</span>
-<span>  k <span class="op">=</span> <span class="fl">1L</span>, s <span class="op">=</span> <span class="fl">3L</span>,</span>
-<span>  se <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  return <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"W"</span>, <span class="st">"score"</span>, <span class="st">"ess"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">fit_np_matrix</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/np_dnn.html">np_dnn</a></span><span class="op">(</span></span>
+<span>  X <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">demo_np</span><span class="op">$</span><span class="va">data</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X1"</span>, <span class="st">"X2"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span>,</span>
+<span>  Y <span class="op">=</span> <span class="va">demo_np</span><span class="op">$</span><span class="va">data</span><span class="op">$</span><span class="va">Y</span>, x0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, k <span class="op">=</span> <span class="fl">1L</span></span>
 <span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit_plqr</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">fit_plqr</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit_plqr</span>, x0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="op">-</span><span class="fl">0.25</span><span class="op">)</span>, interval <span class="op">=</span> <span class="st">"confidence"</span><span class="op">)</span></span>
-<span><span class="va">fit_plqr</span><span class="op">$</span><span class="va">moment</span></span>
-<span><span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">fit_plqr</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="fitted-object-diagnostics">5) Fitted-Object Diagnostics<a class="anchor" aria-label="anchor" href="#fitted-object-diagnostics"></a>
-</h2>
-<p><code><a href="../reference/diagnostics.html">diagnostics()</a></code> adds a compact reporting layer on top of
-fitted local estimators. It uses retained objects rather than
-refitting:</p>
-<ul>
-<li>all supported fits report weight concentration diagnostics such as
-<code>n_eff</code> and top-weight shares;</li>
-<li>NP fits add localized outcome summaries;</li>
-<li>CATE fits add treated/control overlap and propensity summaries when
-treatment and propensity state are available;</li>
-<li>PLQR fits add residual-regressor Gram conditioning diagnostics.</li>
-</ul>
+<span><span class="va">fit_np_matrix</span><span class="op">$</span><span class="va">mu</span></span>
+<span><span class="co">#&gt; [1] -0.08841632</span></span></code></pre></div>
+<p>To estimate at new regression targets, call <code><a href="../reference/np_dnn.html">np_dnn()</a></code>
+with those targets. The intervals above need the regression assumptions
+and localization bias control; the jackknife alone does not remove
+smoothing bias.</p>
+<div class="section level3">
+<h3 id="two-scale-nonparametric-regression">Two-scale nonparametric regression<a class="anchor" aria-label="anchor" href="#two-scale-nonparametric-regression"></a>
+</h3>
+<p><code><a href="../reference/np_tdnn.html">np_tdnn()</a></code> provides the existing two-scale DNN regression
+alternative. Supply orders <code>s1 &lt; s2</code>; delete-1 standard
+errors additionally require <code>s2 &lt; n</code>. Its weights sum to
+one but can be negative, so positive-weight CATE overlap interpretations
+do not carry over. Its bias-correction interpretation needs the
+additional smoothness conditions described in <code><a href="../reference/np_tdnn.html">?np_tdnn</a></code>.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">d_np</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">fit_np</span><span class="op">)</span></span>
-<span><span class="va">d_cate</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">fit_cate</span><span class="op">)</span></span>
-<span><span class="va">d_plqr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">fit_plqr</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">d_np</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"target_id"</span>, <span class="st">"n_eff"</span>, <span class="st">"weighted_mean_y"</span>, <span class="st">"weighted_sd_y"</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="va">d_cate</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"target_id"</span>, <span class="st">"treated_mass"</span>, <span class="st">"control_mass"</span>, <span class="st">"treated_share"</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="va">d_plqr</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"target_id"</span>, <span class="st">"gram_min_eig"</span>, <span class="st">"gram_condition_number"</span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
-<p>Diagnostics require retained weights. The default
-<code>return = "W"</code> keeps weights; if you omit them, refit with
-<code>return</code> including <code>"W"</code>.</p>
+<code class="sourceCode R"><span><span class="va">fit_tdnn</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/np_tdnn.html">np_tdnn</a></span><span class="op">(</span></span>
+<span>  data <span class="op">=</span> <span class="va">demo_np</span><span class="op">$</span><span class="va">data</span>, x_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X1"</span>, <span class="st">"X2"</span><span class="op">)</span>, y_col <span class="op">=</span> <span class="st">"Y"</span>,</span>
+<span>  x0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, s1 <span class="op">=</span> <span class="fl">8L</span>, s2 <span class="op">=</span> <span class="fl">16L</span>, se <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>estimate <span class="op">=</span> <span class="va">fit_tdnn</span><span class="op">$</span><span class="va">mu</span>, standard_error <span class="op">=</span> <span class="va">fit_tdnn</span><span class="op">$</span><span class="va">se</span><span class="op">)</span></span>
+<span><span class="co">#&gt;       estimate standard_error </span></span>
+<span><span class="co">#&gt;     -0.2026243      0.1984072</span></span></code></pre></div>
+<p>The matrix interface uses <code>X</code>, <code>Y</code>, and
+<code>x0</code>/<code>X0</code>, as for <code><a href="../reference/np_dnn.html">np_dnn()</a></code>. Use
+<code><a href="../reference/plot_tdnn_scales.html">plot_tdnn_scales()</a></code> to compare the two scales when ggplot2
+is available. The single-scale paper tuning rule discussed below applies
+to <code><a href="../reference/np_dnn.html">np_dnn()</a></code> and <code><a href="../reference/cate_dnn.html">cate_dnn()</a></code>; choose the two
+TDNN orders explicitly.</p>
+</div>
 </div>
 <div class="section level2">
-<h2 id="customize-distance-and-rank-rules">6) Customize Distance and Rank Rules<a class="anchor" aria-label="anchor" href="#customize-distance-and-rank-rules"></a>
+<h2 id="choosing-localization-and-uncertainty-settings">Choosing localization and uncertainty settings<a class="anchor" aria-label="anchor" href="#choosing-localization-and-uncertainty-settings"></a>
 </h2>
+<p>The defaults use exact DNN weights and <code>k = 1</code>. Unless
+<code>s</code> or <code>tuning</code> is supplied, the subsample order
+is <code>s = floor(0.4 * n^((p + 1)/(p + 2)))</code>, where
+<code>p</code> is the covariate dimension. Larger <code>s</code>
+concentrates more weight near the target. The written manuscript
+derivations use <code>k = 1</code>; larger fixed <code>k</code> is
+supported in the implementation.</p>
+<p>The order <code>s</code> is not a count of observations retained in a
+nearest-neighbor truncation. Exact weights use the full rank permutation
+and have support through rank <code>n - s + k</code>
+(<code>n - s + 1</code> for <code>k = 1</code>). The optional
+<code>neighbors</code> extra reports the first <code>k</code> neighbors,
+rather than the full weight support.</p>
+<p>For sensitivity analysis, compare the paper’s candidate orders
+without changing the primary result:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/register_distance.html">register_distance</a></span><span class="op">(</span><span class="st">"linf_demo"</span>, <span class="kw">function</span><span class="op">(</span><span class="va">X</span>, <span class="va">x0</span>, <span class="va">ctx</span> <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">X</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="va">x0</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span>, <span class="fl">1L</span>, <span class="va">max</span><span class="op">)</span></span>
-<span><span class="op">}</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="../reference/register_rank_weight.html">register_rank_weight</a></span><span class="op">(</span><span class="st">"inv_rank_demo"</span>, <span class="kw">function</span><span class="op">(</span><span class="va">ranks</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">w</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">ranks</span><span class="op">)</span></span>
-<span>  <span class="va">w</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">w</span><span class="op">)</span></span>
-<span><span class="op">}</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="../reference/np_demo_data.html">np_demo_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">80</span>, p <span class="op">=</span> <span class="fl">2</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">$</span><span class="va">data</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X1"</span>, <span class="st">"X2"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/weights_matrix.html">weights_matrix</a></span><span class="op">(</span></span>
-<span>  X <span class="op">=</span> <span class="va">X</span>,</span>
-<span>  x0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>,</span>
-<span>  ranking <span class="op">=</span> <span class="st">"linf_demo"</span>,</span>
-<span>  weight <span class="op">=</span> <span class="fu"><a href="../reference/get_rank_weight.html">get_rank_weight</a></span><span class="op">(</span><span class="st">"inv_rank_demo"</span><span class="op">)</span>,</span>
-<span>  return <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"W"</span>, <span class="st">"ranks"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">fit_grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/np_dnn.html">np_dnn</a></span><span class="op">(</span></span>
+<span>  data <span class="op">=</span> <span class="va">demo_np</span><span class="op">$</span><span class="va">data</span>, x_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X1"</span>, <span class="st">"X2"</span><span class="op">)</span>, y_col <span class="op">=</span> <span class="st">"Y"</span>,</span>
+<span>  x0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, tuning_mode <span class="op">=</span> <span class="st">"grid"</span>, se <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">out</span><span class="op">$</span><span class="va">W</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">fit_grid</span><span class="op">$</span><span class="va">tuning_grid</span><span class="op">$</span><span class="va">candidates</span></span>
+<span><span class="co">#&gt;   candidate_id computed_key is_default feasible reason status lambda  s</span></span>
+<span><span class="co">#&gt; 1   lambda_0p3         s_13      FALSE     TRUE     ok     ok   0.30 13</span></span>
+<span><span class="co">#&gt; 2   lambda_0p4         s_17       TRUE     TRUE     ok     ok   0.40 17</span></span>
+<span><span class="co">#&gt; 3   lambda_0p5         s_22      FALSE     TRUE     ok     ok   0.50 22</span></span>
+<span><span class="co">#&gt; 4  lambda_0p75         s_33      FALSE     TRUE     ok     ok   0.75 33</span></span>
+<span><span class="fu"><a href="../reference/candidate_fit.html">candidate_fit</a></span><span class="op">(</span><span class="va">fit_grid</span>, <span class="fl">1L</span><span class="op">)</span><span class="op">$</span><span class="va">mu</span></span>
+<span><span class="co">#&gt; [1] -0.0286826</span></span></code></pre></div>
+<p><code><a href="../reference/tuning_dnn_paper.html">tuning_dnn_paper()</a></code> uses <code>lambda = 0.4</code> and
+the grid <code>c(0.3, 0.4, 0.5, 0.75)</code>; <code>s</code> is
+recomputed for each candidate. Grid mode is a sensitivity comparison,
+not an automatic optimization rule. It cannot be combined with explicit
+<code>s</code>.</p>
+<p>For uncertainty, <code>jackknife = "fast"</code> reuses full-sample
+ranks; <code>jackknife = "loo"</code> directly recomputes leave-one-out
+weights. Delete-1 inference requires <code>s &lt; n</code>. Set
+<code>se = FALSE</code> to omit standard errors.</p>
 </div>
 <div class="section level2">
-<h2 id="minimal-custom-score">7) Minimal Custom Score<a class="anchor" aria-label="anchor" href="#minimal-custom-score"></a>
+<h2 id="plots-and-reusable-weights">Plots and reusable weights<a class="anchor" aria-label="anchor" href="#plots-and-reusable-weights"></a>
 </h2>
+<p>Plotting is optional and requires ggplot2. Dashboards additionally
+require patchwork. Both fitted workflows support the estimate and weight
+views:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sc_affine</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/new_score.html">new_score</a></span><span class="op">(</span></span>
-<span>  name <span class="op">=</span> <span class="st">"affine_order1"</span>,</span>
-<span>  order <span class="op">=</span> <span class="fl">1L</span>,</span>
-<span>  eval_param <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">idxs</span>, <span class="va">data</span>, <span class="va">theta</span>, <span class="va">ctx</span>, <span class="va">rng</span> <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="va">theta</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">*</span> <span class="va">data</span><span class="op">$</span><span class="va">Y</span><span class="op">[</span><span class="va">idxs</span><span class="op">]</span> <span class="op">+</span> <span class="va">theta</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span></span>
-<span>  <span class="op">}</span>,</span>
-<span>  grad <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">idxs</span>, <span class="va">data</span>, <span class="va">theta</span>, <span class="va">ctx</span>, <span class="va">rng</span> <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">data</span><span class="op">$</span><span class="va">Y</span><span class="op">[</span><span class="va">idxs</span><span class="op">]</span>, <span class="fl">1</span><span class="op">)</span></span>
-<span>  <span class="op">}</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit_np</span><span class="op">)</span></span></code></pre></div>
+<p><img src="getting-started_files/figure-html/plots-1.png" class="r-plt" alt="" width="576"></p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_weights.html">plot_weights</a></span><span class="op">(</span><span class="va">fit_cate</span>, type <span class="op">=</span> <span class="st">"profile"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="getting-started_files/figure-html/plots-2.png" class="r-plt" alt="" width="576"></p>
+<p>For your own scalar signal, build weights directly. Rows of
+<code>W</code> index observations and columns index target points:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">wt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/weights_dnn.html">weights_dnn</a></span><span class="op">(</span></span>
+<span>  X <span class="op">=</span> <span class="va">X</span>, X0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span>, k <span class="op">=</span> <span class="fl">1L</span>, s <span class="op">=</span> <span class="fl">12L</span>,</span>
+<span>  return <span class="op">=</span> <span class="st">"W"</span></span>
 <span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>Y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/score_diff_path.html">score_diff_path</a></span><span class="op">(</span><span class="va">sc_affine</span>, data <span class="op">=</span> <span class="va">df</span>, method <span class="op">=</span> <span class="st">"auto"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">path</span><span class="op">$</span><span class="fu">value</span><span class="op">(</span><span class="fl">2L</span>, theta <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">path</span><span class="op">$</span><span class="fu">grad</span><span class="op">(</span><span class="fl">2L</span>, theta <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>When you move beyond the built-in wrappers:</p>
-<ul>
-<li>implement a custom distance if the notion of closeness changes;</li>
-<li>implement a custom rank weight if the ranking stays the same but the
-localization profile changes;</li>
-<li>implement a custom score if the target moment or estimating equation
-changes.</li>
-</ul>
-<p>The full extension workflow, including <code>setup()</code>,
-<code>eval_batch()</code>, parameter-aware scores, and debugging with
-<code>return = c("dx", "ord", "ranks")</code>, is in
-<code><a href="../articles/extending.html">vignette("extending", package = "RdistNN")</a></code>.</p>
+<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">wt</span><span class="op">$</span><span class="va">W</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 180   2</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/vector.html" class="external-link">as.vector</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/crossprod.html" class="external-link">crossprod</a></span><span class="op">(</span><span class="va">wt</span><span class="op">$</span><span class="va">W</span>, <span class="va">fit_cate</span><span class="op">$</span><span class="va">psi</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 0.562277 1.169279</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="next-steps">Next Steps<a class="anchor" aria-label="anchor" href="#next-steps"></a>
+<h2 id="further-reading">Further reading<a class="anchor" aria-label="anchor" href="#further-reading"></a>
 </h2>
 <ul>
-<li><code><a href="../articles/dnn-weights.html">vignette("dnn-weights", package = "RdistNN")</a></code></li>
-<li><code><a href="../articles/diagnostics-reporting.html">vignette("diagnostics-reporting", package = "RdistNN")</a></code></li>
-<li><code><a href="../articles/conditional-z-estimation.html">vignette("conditional-z-estimation", package = "RdistNN")</a></code></li>
-<li><code><a href="../articles/extending.html">vignette("extending", package = "RdistNN")</a></code></li>
-<li><code><a href="../articles/jackknife-gen-ustats.html">vignette("jackknife-gen-ustats", package = "RdistNN")</a></code></li>
+<li>
+<a href="notation-and-conventions.html">Notation and
+conventions</a>: arguments, paper symbols, and uncertainty scales. Open
+locally with
+<code><a href="../articles/notation-and-conventions.html">vignette("notation-and-conventions", package = "RdistNN")</a></code>.</li>
+<li>
+<a href="diagnostics-reporting.html">Diagnostics and reporting</a>:
+available fields and retained-state requirements.</li>
+<li>
+<a href="kernel-order-tuning.html">Kernel-order tuning</a> and <a href="dnn-weights.html">DNN weights</a>: localization rules and
+sensitivity choices.</li>
+<li>
+<a href="visualising-fits.html">Visualizing fitted estimators</a>:
+CATE profiles, overlap, influence, and dashboards.</li>
+<li>
+<a href="paper-cate-simulation.html">CATE simulation tools</a>:
+paper-specific replication workflows; illustrative runs do not
+constitute manuscript evidence.</li>
+<li>
+<a href="conditional-z-estimation.html">Conditional
+Z-estimation</a>: additional moment details, including experimental
+PLQR.</li>
+<li>
+<a href="extending.html">Extending RdistNN</a>: custom distances,
+rank weights, and scores.</li>
 </ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

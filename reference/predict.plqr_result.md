@@ -1,6 +1,6 @@
-# Predict from a `plqr_result` object at new targets
+# Predict from a `plqr_result` object at new targets (experimental)
 
-Predict from a `plqr_result` object at new targets
+Predict from a `plqr_result` object at new targets (experimental)
 
 ## Usage
 
@@ -80,6 +80,16 @@ Prediction standard errors always use the analytic sandwich meat,
 regardless of the fit's `theta_meat` choice, because the fitted object
 does not retain the outcome data needed to re-run the jackknife at new
 targets.
+
+## Lifecycle
+
+**Experimental.** PLQR functionality is outside the CATE and regression
+workflow focus of the initial public release. Its API and inference
+interfaces may change in later releases.
+
+## See also
+
+[`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md).
 
 ## Examples
 

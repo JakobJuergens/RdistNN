@@ -28,7 +28,10 @@ summarise_sim_results() to aggregate to one row per
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
+<li class="nav-item"><a class="nav-link" href="../articles/index.html">Articles</a></li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
+      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://jakobjuergens.com/">Author</a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
       </ul></div>
 
 
@@ -157,9 +160,15 @@ Default: <code>"dnn_oracle"</code>.</p></dd>
     <p>A <code>data.frame</code> with raw rows and columns <code>method</code>, <code>design</code>, <code>n</code>,
 <code>kx</code>, <code>k</code>, <code>tuning_source</code>, <code>candidate_id</code>, <code>lambda</code>, <code>s</code>, <code>seed</code>,
 <code>tau_hat</code>, <code>tau0</code>, <code>bias</code>, <code>sq_err</code>, <code>se</code>, <code>cover</code>, <code>ci_len</code>, <code>neff</code>,
+<code>method_variant</code>, <code>forest_nuisance</code>, <code>y_hat_supplied</code>, and
+<code>w_hat_supplied</code>, plus the
 localization and studentization diagnostics described in
-<code><a href="sim_cate_one_rep.html">sim_cate_one_rep()</a></code>, and <code>status</code>. Failed entries have <code>NA</code> for all
-metric columns.</p>
+<code><a href="sim_cate_one_rep.html">sim_cate_one_rep()</a></code> and <code>status</code>. The GRF fields identify whether the
+forest used oracle nuisances (<code>"oracle"</code>), common externally estimated
+nuisances (<code>"common_external"</code>), or internally estimated nuisances
+(<code>"internal"</code>), and whether <code>Y.hat</code> and <code>W.hat</code> were supplied. Non-GRF
+methods carry typed missing values for these fields. Failed entries have
+<code>NA</code> for all metric columns.</p>
     </div>
     <div class="section level2">
     <h2 id="parallelism">Parallelism<a class="anchor" aria-label="anchor" href="#parallelism"></a></h2>
@@ -181,7 +190,8 @@ by calling <code><a href="https://future.futureverse.org/reference/plan.html" cl
 
 <p>Each replicate is wrapped in <code>tryCatch</code>.  A total rep failure (e.g. DGP
 draw error) records <code>NA</code> for all metrics and all methods and emits a warning;
-per-method failures are handled inside <code><a href="sim_cate_one_rep.html">sim_cate_one_rep()</a></code>.
+per-method failures are handled inside <code><a href="sim_cate_one_rep.html">sim_cate_one_rep()</a></code>. Registered GRF
+route metadata is retained in both replacement paths.
 <code><a href="summarise_sim_results.html">summarise_sim_results()</a></code> reports <code>n_failed</code> per candidate-aware group.</p>
     </div>
     <div class="section level2">

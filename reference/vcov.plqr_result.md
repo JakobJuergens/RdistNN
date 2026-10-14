@@ -1,6 +1,6 @@
-# Variance-covariance matrices for `plqr_result`
+# Variance-covariance matrices for `plqr_result` (experimental)
 
-Variance-covariance matrices for `plqr_result`
+Variance-covariance matrices for `plqr_result` (experimental)
 
 ## Usage
 
@@ -27,3 +27,13 @@ vcov(object, target = NULL, ...)
 ## Value
 
 A covariance matrix or list of covariance matrices.
+
+## Lifecycle
+
+**Experimental.** PLQR functionality is outside the CATE and regression
+workflow focus of the initial public release. Its API and inference
+interfaces may change in later releases.
+
+## See also
+
+[`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md).
