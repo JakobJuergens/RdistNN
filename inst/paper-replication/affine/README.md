@@ -30,6 +30,10 @@ Rscript /path/to/affine/verify.R
 Rscript /path/to/affine/render_evidence.R --output-dir=affine-paper-displays
 ```
 
+Rendering requires R's Cairo PDF device. On macOS with the CRAN build of R,
+install [XQuartz](https://www.xquartz.org/) for its X11 libraries; see the
+[R for macOS installation notes](https://mac.r-project.org/bin/macosx/).
+
 The renderer verifies and decompresses the accepted evidence, generates eight
 simulation table fragments and thirteen SIPP table fragments, and produces six
 PDF figures (three per study). It runs both upstream verification routines and

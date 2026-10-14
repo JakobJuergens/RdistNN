@@ -70,7 +70,7 @@
     "Paper/affine_scores_supplement.tex": "cb630fb41f85a7e99733785f2fe5a6c1808d099d32fed808e1b299c3abeec6c3"
   },
   "files": {
-    "README.md": "6235a7e21f9603589b130b3bea4a8de79b0ba6c7d3577c9ba7c3fb35424335cb",
+    "README.md": "58f9262612a0cce77f714f18116cba3d61efc9cb2532a2fd1c4212451b8b0f57",
     "configs/M3/config.rds": "08085f9ad2fd2f9f577443090ca203f4a84d6642b48788b1c83e21f2ec77f432",
     "configs/dnn/config.rds": "cd31d5a95b700a14152313455ee51b5d9c13e76ece6635963b092132a3b79cf0",
     "configs/kernel_comparison/config.rds": "d6b6ac69fcc48ff549515f781d5eb5aaa781fcceb73cad2851906abe312f8a99",

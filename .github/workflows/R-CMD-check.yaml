@@ -68,6 +68,20 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
+      - name: Install XQuartz for Cairo rendering
+        if: runner.os == 'macOS'
+        run: brew install --cask xquartz
+
+      - name: Verify macOS Cairo PDF device
+        if: runner.os == 'macOS'
+        shell: Rscript {0}
+        run: |
+          output <- tempfile(fileext = ".pdf")
+          grDevices::cairo_pdf(output)
+          graphics::plot.new()
+          grDevices::dev.off()
+          stopifnot(file.exists(output))
+
       - name: Verify runner architecture
         shell: Rscript {0}
         env:
