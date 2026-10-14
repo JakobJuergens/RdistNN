@@ -7,7 +7,10 @@ opts <- replication_args(commandArgs(TRUE), c("output-dir", "help"))
 if (opts$help) {
   cat(
     "Usage: render_evidence.R --output-dir=NEW_DIR\n",
-    "Verify the saved evidence and regenerate 21 current manuscript tables and six PDF figures. No data generation or estimation.\n"
+    paste0(
+      "Verify the saved evidence and regenerate 21 current manuscript tables and six PDF figures. ",
+      "No data generation or estimation.\n"
+    )
   )
 } else {
   replication_render(bundle, opts$output_dir)

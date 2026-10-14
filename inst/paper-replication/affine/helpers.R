@@ -47,7 +47,9 @@ replication_new_output <- function(path) {
     stop("Supply --output-dir with a new writable directory.", call. = FALSE)
   }
   path <- normalizePath(path, winslash = "/", mustWork = FALSE)
-  if (file.exists(path) || dir.exists(path)) stop("Output directory already exists; choose a new directory.", call. = FALSE)
+  if (file.exists(path) || dir.exists(path)) {
+    stop("Output directory already exists; choose a new directory.", call. = FALSE)
+  }
   if (!dir.create(path, recursive = TRUE)) stop("Cannot create output directory: ", path, call. = FALSE)
   normalizePath(path, winslash = "/")
 }
@@ -76,7 +78,10 @@ replication_configs <- function(bundle, mode = c("smoke", "production")) {
   code <- replication_source(bundle)
   lapply(configs, function(cfg) {
     cfg$stage <- NULL
-    cfg$cells <- data.frame(n = 128L, order_mult = 1, design_id = if (cfg$study == "settings_comparison") "C0H" else "C0")
+    cfg$cells <- data.frame(
+      n = 128L, order_mult = 1,
+      design_id = if (cfg$study == "settings_comparison") "C0H" else "C0"
+    )
     cfg$replications <- 2L
     cfg$control_reps <- 0L
     cfg$intensive_reps <- 0L
@@ -180,7 +185,9 @@ replication_stage <- function(destination, stage, run, audit_file = NULL) {
   }
   staging <- tempfile(paste0(basename(destination), ".staging-"), tmpdir = dirname(destination))
   run(staging)
-  if (!replication_stage_valid(staging, stage, audit_file)) stop("Stage completion receipt or output hashes are invalid: ", staging, call. = FALSE)
+  if (!replication_stage_valid(staging, stage, audit_file)) {
+    stop("Stage completion receipt or output hashes are invalid: ", staging, call. = FALSE)
+  }
   if (!file.rename(staging, destination)) stop("Cannot publish verified stage: ", destination, call. = FALSE)
   invisible(TRUE)
 }
@@ -196,12 +203,16 @@ replication_simulations <- function(bundle, output, mode = c("smoke", "productio
   }
   if (resume && mode != "production") stop("Resume is available for production campaigns only.", call. = FALSE)
   if (mode == "production" && (Sys.info()[["sysname"]] != "Linux" || !nzchar(Sys.which("python3")))) {
-    stop("Measured production launch requires Linux and python3; smoke runs and evidence rendering are portable.", call. = FALSE)
+    stop(
+      "Measured production launch requires Linux and python3; smoke runs and evidence rendering are portable.",
+      call. = FALSE
+    )
   }
   if (resume) {
     output <- normalizePath(output, winslash = "/", mustWork = TRUE)
     previous <- jsonlite::read_json(file.path(output, "replication.json"), simplifyVector = TRUE)
-    if (previous$mode != mode || previous$bundle_manifest_sha256 != digest::digest(file = file.path(bundle, "manifest.json"), algo = "sha256")) {
+    if (previous$mode != mode || previous$bundle_manifest_sha256 !=
+      digest::digest(file = file.path(bundle, "manifest.json"), algo = "sha256")) {
       stop("Resume bundle or mode mismatch.", call. = FALSE)
     }
   } else {
@@ -211,13 +222,21 @@ replication_simulations <- function(bundle, output, mode = c("smoke", "productio
     for (profile in names(configs)) {
       dir.create(file.path(output, "configs", profile))
       if (mode == "production") {
-        file.copy(file.path(bundle, "configs", profile, "config.rds"), file.path(output, "configs", profile, "config.rds"))
+        file.copy(
+          file.path(bundle, "configs", profile, "config.rds"),
+          file.path(output, "configs", profile, "config.rds")
+        )
       } else {
         saveRDS(configs[[profile]], file.path(output, "configs", profile, "config.rds"))
       }
     }
     jsonlite::write_json(list(
-      status = "running", mode = mode, scope = if (mode == "smoke") "validation_only; 128 observations; two preflight draw families" else "fresh replication of the accepted 28-cell scientific configuration",
+      status = "running", mode = mode,
+      scope = if (mode == "smoke") {
+        "validation_only; 128 observations; two preflight draw families"
+      } else {
+        "fresh replication of the accepted 28-cell scientific configuration"
+      },
       bundle_manifest_sha256 = digest::digest(file = file.path(bundle, "manifest.json"), algo = "sha256"),
       paper_commit = replication_manifest(bundle)$paper_commit
     ), file.path(output, "replication.json"), auto_unbox = TRUE, pretty = TRUE)
@@ -234,14 +253,18 @@ replication_simulations <- function(bundle, output, mode = c("smoke", "productio
     } else {
       # The paper's sampled RSS/wall measurement tool requires Linux /proc.
       if (Sys.info()[["sysname"]] != "Linux" || !nzchar(Sys.which("python3"))) {
-        stop("Measured production launch requires Linux and python3; smoke runs and evidence rendering are portable.", call. = FALSE)
+        stop(
+          "Measured production launch requires Linux and python3; smoke runs and evidence rendering are portable.",
+          call. = FALSE
+        )
       }
       measure <- file.path(output, "runs", "measurements", paste0(profile, "_", format(Sys.time(), "%Y%m%dT%H%M%S")))
       spec <- jsonlite::read_json(file.path(bundle, "configs", "proposal.json"), simplifyVector = TRUE)
       settings <- spec$profiles[[profile]]
       values <- c(
         SIM_RDISTNN_SOURCE_DIR = "", SIM_AFFINE_CONFIG_RDS = file.path(output, "configs", profile, "config.rds"),
-        SIM_AFFINE_OUTPUT_DIR = path, SIM_AFFINE_RESUME = if (resume && file.exists(file.path(path, "freeze.rds"))) "true" else "false",
+        SIM_AFFINE_OUTPUT_DIR = path,
+        SIM_AFFINE_RESUME = if (resume && file.exists(file.path(path, "freeze.rds"))) "true" else "false",
         SIM_AFFINE_REPLICATIONS = "", SIM_AFFINE_RUN_NAME = "", SIM_AFFINE_WORKERS = "", SIM_AFFINE_CHUNK_SIZE = "",
         SIM_AFFINE_CPU_BUDGET = "", SIM_AFFINE_MAX_CHUNKS = "", OMP_NUM_THREADS = "1", OPENBLAS_NUM_THREADS = "1",
         MKL_NUM_THREADS = "1", VECLIB_MAXIMUM_THREADS = "1", NUMEXPR_NUM_THREADS = "1", TZ = "UTC"
@@ -252,7 +275,13 @@ replication_simulations <- function(bundle, output, mode = c("smoke", "productio
         "--", file.path(R.home("bin"), "Rscript"), file.path(source_dir, "run_affine_scores.R")
       )
       status <- replication_with_env(values, system2(Sys.which("python3"), shQuote(args)))
-      if (status != 0L) stop("Production profile stopped: ", profile, "; inspect its measured process and sealed chunks before resuming.", call. = FALSE)
+      if (status != 0L) {
+        stop(
+          "Production profile stopped: ", profile,
+          "; inspect its measured process and sealed chunks before resuming.",
+          call. = FALSE
+        )
+      }
     }
   }
   all_profiles_present <- all(vapply(names(configs), function(profile) {
@@ -273,7 +302,13 @@ replication_simulations <- function(bundle, output, mode = c("smoke", "productio
       replication_run_r(file.path(source_dir, "campaign_tools", "analyze_production.R"), c(output, audit, staging))
     }, audit_file = file.path(audit, "audit.json"))
   }
-  status <- if (mode == "smoke") "validation_only" else if (all_profiles_present) "completed_and_audited_production" else "partial_production"
+  status <- if (mode == "smoke") {
+    "validation_only"
+  } else if (all_profiles_present) {
+    "completed_and_audited_production"
+  } else {
+    "partial_production"
+  }
   receipt <- jsonlite::read_json(file.path(output, "replication.json"), simplifyVector = TRUE)
   receipt$status <- status
   receipt$profiles_requested <- profiles
@@ -346,20 +381,29 @@ replication_render <- function(bundle, output) {
     "Codes/Applications/SIPP_401k/07_render_affine_manuscript.R"
   )
   for (script in scripts) {
-    replication_with_env(c(TZ = "UTC"), replication_run_renderer(file.path(output, script), character(), manifest$paper_commit))
-    replication_with_env(c(TZ = "UTC"), replication_run_renderer(file.path(output, script), "--check", manifest$paper_commit))
+    replication_with_env(
+      c(TZ = "UTC"), replication_run_renderer(file.path(output, script), character(), manifest$paper_commit)
+    )
+    replication_with_env(
+      c(TZ = "UTC"), replication_run_renderer(file.path(output, script), "--check", manifest$paper_commit)
+    )
   }
   for (name in names(manifest$reference_tables)) {
     actual <- readLines(file.path(output, name), warn = FALSE)
     expected <- readLines(file.path(output, "reference", name), warn = FALSE)
-    if (!identical(actual, expected)) stop("Manuscript table differs from the accepted reference: ", name, call. = FALSE)
+    if (!identical(actual, expected)) {
+      stop("Manuscript table differs from the accepted reference: ", name, call. = FALSE)
+    }
   }
   jsonlite::write_json(
     list(
       status = "verified", paper_commit = manifest$paper_commit,
       bundle_manifest_sha256 = digest::digest(file = file.path(bundle, "manifest.json"), algo = "sha256"),
       tables_matched = length(manifest$reference_tables), simulation_performed = FALSE, estimation_performed = FALSE,
-      provenance_adapter = "unchanged renderers; portable script/relative paths supplied by launcher; Git source identity taken from the pinned paper manifest"
+      provenance_adapter = paste0(
+        "unchanged renderers; portable script/relative paths supplied by launcher; ",
+        "Git source identity taken from the pinned paper manifest"
+      )
     ),
     file.path(output, "replication.json"),
     auto_unbox = TRUE, pretty = TRUE
@@ -384,7 +428,10 @@ replication_sipp <- function(bundle, output, mode = c("smoke", "production")) {
   fit_cache <- file.path(run, "02_fit_cate_profiles.rds")
   fit <- readRDS(fit_cache)
   if (mode == "production" && nrow(fit$analysis_data) != 9915L) {
-    stop("SIPP analysis sample differs from the accepted 9,915-household sample; inspect the data and package versions.", call. = FALSE)
+    stop(
+      "SIPP analysis sample differs from the accepted 9,915-household sample; inspect the data and package versions.",
+      call. = FALSE
+    )
   }
   replication_run_r(
     file.path(app, "03_profile_diagnostics.R"),
@@ -403,11 +450,17 @@ replication_sipp <- function(bundle, output, mode = c("smoke", "production")) {
     paste0("--orders=", paste(orders, collapse = ","))
   )
   if (mode == "smoke") localization_args <- c(localization_args, "--allow-validation")
-  replication_run_r(file.path(app, "06_localization_sensitivity.R"), localization_args, file.path(output, "localization.log"))
+  replication_run_r(
+    file.path(app, "06_localization_sensitivity.R"), localization_args, file.path(output, "localization.log")
+  )
   jsonlite::write_json(
     list(
       status = "completed", mode = mode, sample_n = nrow(fit$analysis_data),
-      purpose = if (mode == "smoke") "validation_only" else "fresh current affine SIPP replication; not automatic manuscript promotion",
+      purpose = if (mode == "smoke") {
+        "validation_only"
+      } else {
+        "fresh current affine SIPP replication; not automatic manuscript promotion"
+      },
       paper_commit = replication_manifest(bundle)$paper_commit,
       fit_manifest_sha256 = digest::digest(file = file.path(run, "manifest.json"), algo = "sha256")
     ),

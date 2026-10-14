@@ -10,6 +10,9 @@ adapters resolve installed paths, require explicit external output directories,
 validate dependencies and hashes, and separate smoke validation from production.
 The unused legacy CATE shared bootstrap is replaced by an explicit-path shim;
 the manifest records this adapter and its upstream identity.
+The pinned `source/` snapshot is excluded from package style linting to preserve
+its byte identity. Package launchers remain linted; integrity and behavior checks
+cover the bundled sources.
 No package estimator defaults or exported APIs change for this study.
 
 The bundle supplies three complete workflows: regenerate current manuscript

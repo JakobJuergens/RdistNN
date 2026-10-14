@@ -6,7 +6,10 @@ source(file.path(bundle, "helpers.R"))
 opts <- replication_args(commandArgs(TRUE))
 if (opts$help) {
   cat(
-    "Usage: run_simulations.R --mode=smoke|production --output-dir=NEW_DIR [--profiles=dnn,kernel_comparison,M3,settings_comparison] [--resume]\n",
+    paste0(
+      "Usage: run_simulations.R --mode=smoke|production --output-dir=NEW_DIR ",
+      "[--profiles=dnn,kernel_comparison,M3,settings_comparison] [--resume]\n"
+    ),
     "Smoke uses two preflight draw families at n=128; it is validation only.\n",
     "Production uses all four accepted profiles and 10,000 draws per cell, with Linux process measurement.\n"
   )

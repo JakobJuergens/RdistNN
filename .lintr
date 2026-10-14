@@ -9,5 +9,6 @@ linters: lintr::linters_with_defaults(
 encoding: "UTF-8"
 exclusions: list(
     "R/RcppExports.R",
-    "tests/testthat"
+    "tests/testthat",
+    "inst/paper-replication/affine/source"
   )
