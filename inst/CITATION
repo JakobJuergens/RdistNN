@@ -19,12 +19,12 @@ bibentry(
 )
 
 bibentry(
-  bibtype = "Misc",
-  title   = "Robust Inference for Conditional Z-Estimation via Distributional Nearest Neighbors",
+  bibtype = "Unpublished",
+  title   = "Orthogonal Inference for Conditional Z-Estimation without Cross-Fitting: A Distributional Nearest-Neighbor Approach",
   author  = person("Jakob R.", "Juergens"),
   year    = "2026",
-  howpublished = "Working paper",
-  url     = "https://jakobjuergens.com/research/#conditional-z-estimation-dnn"
+  note    = "Manuscript available upon request",
+  url     = "https://jakobjuergens.com/research/#orthogonal-inference-conditional-z"
 )
 
 bibentry(

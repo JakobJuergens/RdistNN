@@ -37,7 +37,7 @@ remotes::install_version("roxygen2", version = "8.0.0", upgrade = "never")
   `AGENTS.md` and the linked design policies for the detailed contracts.
 
 For package behavior changes, run `devtools::test()` and relevant focused
-checks. [The test-suite map](tests/README.md) lists the behavior-based files,
+checks. [The test-suite map](https://github.com/JakobJuergens/RdistNN/blob/master/tests/README.md) lists the behavior-based files,
 shared helpers, focused filters, and optional visual tests. Before a release,
 run the full package and site builds described in
 [RELEASING.md](RELEASING.md). Documentation changes should at least execute

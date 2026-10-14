@@ -28,13 +28,15 @@ test_that("CITATION metadata is valid and release-ready", {
 
   titles <- vapply(fields, `[[`, character(1), "title")
   conditional_z <- fields[[match(
-    "Robust Inference for Conditional Z-Estimation via Distributional Nearest Neighbors",
+    "Orthogonal Inference for Conditional Z-Estimation without Cross-Fitting: A Distributional Nearest-Neighbor Approach",
     titles
   )]]
   expect_identical(conditional_z$year, "2026")
+  expect_identical(attr(conditional_z, "bibtype", exact = TRUE), "Unpublished")
+  expect_identical(conditional_z$note, "Manuscript available upon request")
   expect_identical(
     conditional_z$url,
-    "https://jakobjuergens.com/research/#conditional-z-estimation-dnn"
+    "https://jakobjuergens.com/research/#orthogonal-inference-conditional-z"
   )
 
   jackknife <- fields[[match(
@@ -49,6 +51,8 @@ test_that("CITATION metadata is valid and release-ready", {
   stale_patterns <- c(
     "replace with actual",
     "placeholder",
+    "Robust Inference for Conditional Z-Estimation via Distributional Nearest Neighbors",
+    "#conditional-z-estimation-dnn",
     "github.com/JakobJuergens/Cond_Z_Estimation",
     "RdistNN: Modular distances and DNN weight engines for U-statistics"
   )
