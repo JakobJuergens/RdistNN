@@ -1,12 +1,3 @@
-skip_if_not(
-  all(vapply(
-    c("plqr_dnn", "plqr_demo_data"),
-    exists, logical(1),
-    mode = "function"
-  )),
-  "plqr_dnn() or required helpers not found; skipping file"
-)
-
 test_that("plqr_dnn computes direct PLQR sandwich from supplied density", {
   d <- .make_plqr_inference_data()
   fit <- plqr_dnn(

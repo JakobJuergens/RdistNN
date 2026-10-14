@@ -1,12 +1,6 @@
 # Helpers for jackknife tests
 set.seed(123)
 
-# Generate a random n×p training matrix (used across multiple test files)
-.make_X_helper <- function(n, p, seed = 1L) {
-  set.seed(seed)
-  matrix(rnorm(n * p), n, p)
-}
-
 # Generate a random m×p query matrix (used across multiple test files)
 .make_X0 <- function(m, p, seed = 99L) {
   set.seed(seed)

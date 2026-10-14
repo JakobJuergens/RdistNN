@@ -446,6 +446,10 @@
 #' rebuilt `neighbors` extra is the first `k` nearest observations, not the
 #' full DNN weight support.
 #'
+#' @section Experimental methods:
+#' Methods for `plqr_result` objects are experimental, as is all PLQR
+#' functionality in this release; see [plqr_dnn()].
+#'
 #' @param object A grid fit returned by [np_dnn()], [cate_dnn()], or
 #'   [plqr_dnn()] with
 #'   `tuning_mode = "grid"`.

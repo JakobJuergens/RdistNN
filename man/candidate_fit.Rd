@@ -60,6 +60,12 @@ the parent carried them, and candidate-independent state carried over. The
 rebuilt \code{neighbors} extra is the first \code{k} nearest observations, not the
 full DNN weight support.
 }
+\section{Experimental methods}{
+
+Methods for \code{plqr_result} objects are experimental, as is all PLQR
+functionality in this release; see \code{\link[=plqr_dnn]{plqr_dnn()}}.
+}
+
 \examples{
 set.seed(1)
 x_mat <- matrix(rnorm(40 * 2), 40, 2)

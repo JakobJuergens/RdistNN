@@ -41,7 +41,7 @@ created without weights, refit with `return` including `"W"`.
 
 ## Nonparametric Regression
 
-```{r np, eval=FALSE}
+```{r np}
 demo_np <- np_demo_data(n = 120, p = 2, design = "sinusoidal", seed = 1)
 
 fit_np <- np_dnn(
@@ -71,7 +71,7 @@ are normalized.
 
 ## CATE Overlap
 
-```{r cate, eval=FALSE}
+```{r cate}
 demo_cate <- cate_demo_data(n = 150, p = 2, design = "hetero", seed = 2)
 
 fit_cate <- cate_dnn(
@@ -104,7 +104,10 @@ Overlap diagnostics are available when the fit was constructed from treatment
 and propensity inputs. If `cate_dnn()` was called with only a direct
 `pseudo_outcome`, overlap fields remain present but are marked unavailable.
 
-## PLQR Conditioning
+## Experimental PLQR conditioning
+
+All PLQR functionality, including these diagnostics and its specialized plots,
+is experimental and outside the CATE and regression focus of this release.
 
 ```{r plqr, eval=FALSE}
 demo_plqr <- plqr_demo_data(n = 160, p = 2, p_d = 2, tau = 0.5, seed = 3)
@@ -148,7 +151,7 @@ bread estimate.
 When a fit uses `tuning = ...`, the diagnostics table exposes compact tuning
 metadata without duplicating the full candidate grid into every row.
 
-```{r tuning, eval=FALSE}
+```{r tuning}
 fit_tuned <- np_dnn(
   data = demo_np$data,
   x_cols = c("X1", "X2"),

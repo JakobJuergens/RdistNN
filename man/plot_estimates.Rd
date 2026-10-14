@@ -83,6 +83,12 @@ size across targets (when weight diagnostics are available) and the
 kernel order \code{s} with its provenance (\code{paper_default} or \code{manual}).
 CATE panels draw a dashed zero reference line.
 }
+\section{Experimental methods}{
+
+Methods for \code{plqr_result} objects are experimental, as is all PLQR
+functionality in this release; see \code{\link[=plqr_dnn]{plqr_dnn()}}.
+}
+
 \examples{
 if (requireNamespace("ggplot2", quietly = TRUE)) {
   set.seed(1)

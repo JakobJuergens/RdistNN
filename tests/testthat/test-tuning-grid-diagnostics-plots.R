@@ -1,27 +1,12 @@
-skip_if_not(
-  all(vapply(
-    c("np_dnn", "cate_dnn", "plqr_dnn", "new_tuning", "diagnostics",
-      "plot_estimates", "plot_weights", "plot_tuning", "plot_dashboard",
-      "rank_weight_dnn_exact"),
-    exists, logical(1),
-    mode = "function"
-  )),
-  "Layer 10 diagnostics/plot dependencies not found; skipping file"
-)
-
-.layer10_geoms <- function(p) {
-  vapply(p$layers, function(l) class(l$geom)[1L], character(1L))
-}
-
-.layer10_count_traced_calls <- function(fun, expr) {
+.grid_plot_count_traced_calls <- function(fun, expr) {
   trace_env <- new.env(parent = emptyenv())
   trace_env$calls <- 0L
-  assign(".layer10_trace_env", trace_env, envir = .GlobalEnv)
-  on.exit(rm(".layer10_trace_env", envir = .GlobalEnv), add = TRUE)
+  assign(".grid_plot_trace_env", trace_env, envir = .GlobalEnv)
+  on.exit(rm(".grid_plot_trace_env", envir = .GlobalEnv), add = TRUE)
   suppressMessages(invisible(trace(
     fun,
     tracer = quote({
-      .GlobalEnv$.layer10_trace_env$calls <- .GlobalEnv$.layer10_trace_env$calls + 1L
+      .GlobalEnv$.grid_plot_trace_env$calls <- .GlobalEnv$.grid_plot_trace_env$calls + 1L
     }),
     where = asNamespace("RdistNN"),
     print = FALSE
@@ -31,7 +16,7 @@ skip_if_not(
   trace_env$calls
 }
 
-.layer10_tuning <- function(default_s = 5L, s_grid = c(1L, 3L, 5L, 7L)) {
+.grid_plot_tuning <- function(default_s = 5L, s_grid = c(1L, 3L, 5L, 7L)) {
   new_tuning(
     name = "layer10_grid",
     eval = function(...) list(s = default_s, meta = list(lambda = 1)),
@@ -45,7 +30,7 @@ skip_if_not(
   )
 }
 
-.layer10_np_data <- function(n = 46L, m = 5L, seed = 1010L) {
+.grid_plot_np_data <- function(n = 46L, m = 5L, seed = 1010L) {
   set.seed(seed)
   X <- matrix(rnorm(n * 2L), n, 2L,
               dimnames = list(NULL, c("X1", "X2")))
@@ -54,29 +39,29 @@ skip_if_not(
   list(X = X, X0 = X0, y = y)
 }
 
-.layer10_np_grid <- function(return = c("W", "ranks", "dx"),
+.grid_plot_np_grid <- function(return = c("W", "ranks", "dx"),
                              se = TRUE, seed = 1010L) {
-  d <- .layer10_np_data(seed = seed)
+  d <- .grid_plot_np_data(seed = seed)
   suppressWarnings(np_dnn(
     X = d$X, X0 = d$X0, Y = d$y,
-    method = "exact", k = 2L, tuning = .layer10_tuning(),
+    method = "exact", k = 2L, tuning = .grid_plot_tuning(),
     tuning_mode = "grid", se = se, jackknife = "fast",
     return = return
   ))
 }
 
-.layer10_cate_grid <- function(seed = 1011L) {
-  d <- .layer10_np_data(seed = seed)
+.grid_plot_cate_grid <- function(seed = 1011L) {
+  d <- .grid_plot_np_data(seed = seed)
   psi <- d$y - mean(d$y)
   suppressWarnings(cate_dnn(
     X = d$X, X0 = d$X0, pseudo_outcome = psi,
-    method = "exact", k = 2L, tuning = .layer10_tuning(),
+    method = "exact", k = 2L, tuning = .grid_plot_tuning(),
     tuning_mode = "grid", se = TRUE, jackknife = "fast",
     return = c("W", "ranks", "dx", "psi")
   ))
 }
 
-.layer10_plqr_grid <- function(seed = 1012L) {
+.grid_plot_plqr_grid <- function(seed = 1012L) {
   demo <- plqr_demo_data(n = 50L, p = 2L, p_d = 2L, tau = 0.5, seed = seed)
   df <- demo$data
   suppressWarnings(plqr_dnn(
@@ -87,7 +72,7 @@ skip_if_not(
     Y = as.numeric(df$Y),
     theta_eval = demo$truth$theta_true, tau = 0.5,
     X0 = cbind(seq(-0.5, 0.5, length.out = 4L), 0),
-    method = "exact", k = 2L, tuning = .layer10_tuning(),
+    method = "exact", k = 2L, tuning = .grid_plot_tuning(),
     tuning_mode = "grid", se = TRUE, jackknife = "fast",
     return = c("W", "ranks", "dx")
   ))
@@ -95,7 +80,7 @@ skip_if_not(
 
 test_that("diagnostics exposes candidate-level grid diagnostics on request", {
   skip_if_not_installed("ggplot2")
-  fit <- .layer10_np_grid()
+  fit <- .grid_plot_np_grid()
 
   d_default <- diagnostics(fit)
   expect_false("candidate_id" %in% names(d_default))
@@ -134,7 +119,7 @@ test_that("diagnostics exposes candidate-level grid diagnostics on request", {
 
 test_that("candidate estimate plots use tuning_grid rows, labels, and compact drops", {
   skip_if_not_installed("ggplot2")
-  fit <- .layer10_np_grid()
+  fit <- .grid_plot_np_grid()
 
   p <- plot_estimates(fit, candidates = "all")
   expect_s3_class(p, "ggplot")
@@ -142,7 +127,7 @@ test_that("candidate estimate plots use tuning_grid rows, labels, and compact dr
   expect_identical(p$labels$colour, "candidate")
   expect_identical(p$labels$fill, "candidate")
   expect_match(p$labels$caption, "Dropped 1 unavailable candidate")
-  expect_true("GeomLine" %in% .layer10_geoms(p))
+  expect_true("GeomLine" %in% .plot_layer_geoms(p))
   expect_equal(
     levels(p$data$candidate_label),
     c("lambda = 0.7 (s = 3)", "lambda = 1 (s = 5)", "lambda = 1.4 (s = 7)")
@@ -150,9 +135,9 @@ test_that("candidate estimate plots use tuning_grid rows, labels, and compact dr
   expect_identical(tail(unique(p$data$candidate_id), 1L), "lambda_1")
 
   scalar <- np_dnn(
-    X = .layer10_np_data()$X,
-    X0 = .layer10_np_data()$X0,
-    Y = .layer10_np_data()$y,
+    X = .grid_plot_np_data()$X,
+    X0 = .grid_plot_np_data()$X0,
+    Y = .grid_plot_np_data()$y,
     method = "exact", k = 2L, s = 5L, se = FALSE
   )
   expect_error(
@@ -167,7 +152,7 @@ test_that("candidate estimate plots use tuning_grid rows, labels, and compact dr
 
 test_that("candidate weight plots compare rank profiles without stored W", {
   skip_if_not_installed("ggplot2")
-  fit <- .layer10_np_grid(return = "ranks", se = FALSE)
+  fit <- .grid_plot_np_grid(return = "ranks", se = FALSE)
 
   p <- plot_weights(fit, type = "profile", candidates = "all")
   expect_s3_class(p, "ggplot")
@@ -184,15 +169,15 @@ test_that("candidate weight plots compare rank profiles without stored W", {
 
 test_that("plot_tuning uses stored grids or internal engines without public refits", {
   skip_if_not_installed("ggplot2")
-  d <- .layer10_np_data(seed = 1020L)
-  grid <- .layer10_np_grid(seed = 1020L)
+  d <- .grid_plot_np_data(seed = 1020L)
+  grid <- .grid_plot_np_grid(seed = 1020L)
   scalar <- np_dnn(
     X = d$X, X0 = d$X0, Y = d$y,
-    method = "exact", k = 2L, tuning = .layer10_tuning(),
+    method = "exact", k = 2L, tuning = .grid_plot_tuning(),
     se = FALSE, return = character(0)
   )
 
-  grid_calls <- .layer10_count_traced_calls("np_dnn", {
+  grid_calls <- .grid_plot_count_traced_calls("np_dnn", {
     p_grid <- plot_tuning(grid, se = FALSE)
   })
   expect_identical(grid_calls, 0L)
@@ -200,26 +185,26 @@ test_that("plot_tuning uses stored grids or internal engines without public refi
   expect_true(all(c("candidate_id", "candidate_label", "selected") %in% names(p_grid$data)))
   expect_match(p_grid$labels$caption, "Dropped 1 unavailable candidate")
 
-  scalar_calls <- .layer10_count_traced_calls("np_dnn", {
+  scalar_calls <- .grid_plot_count_traced_calls("np_dnn", {
     p_scalar <- plot_tuning(scalar, se = FALSE)
   })
   expect_identical(scalar_calls, 0L)
   expect_equal(p_scalar$data$estimate, p_grid$data$estimate)
 
-  cate_calls <- .layer10_count_traced_calls("cate_dnn", {
-    p_cate <- plot_tuning(.layer10_cate_grid(), se = FALSE)
+  cate_calls <- .grid_plot_count_traced_calls("cate_dnn", {
+    p_cate <- plot_tuning(.grid_plot_cate_grid(), se = FALSE)
   })
   expect_identical(cate_calls, 0L)
-  expect_true("GeomPointrange" %in% .layer10_geoms(p_cate))
+  expect_true("GeomPointrange" %in% .plot_layer_geoms(p_cate))
 
-  p_plqr <- plot_tuning(.layer10_plqr_grid(), se = FALSE)
+  p_plqr <- plot_tuning(.grid_plot_plqr_grid(), se = FALSE)
   expect_s3_class(p_plqr, "ggplot")
   expect_identical(class(p_plqr$facet)[1L], "FacetWrap")
 })
 
 test_that("grid dashboards include a tuning panel while preserving default panels", {
   skip_if_not_installed("ggplot2")
-  fit <- .layer10_np_grid()
+  fit <- .grid_plot_np_grid()
 
   testthat::local_mocked_bindings(
     .plot_pkg_installed = function(pkg) pkg != "patchwork",

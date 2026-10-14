@@ -30,7 +30,7 @@
   invisible(TRUE)
 }
 
-#' PLQR diagnostic score (component \eqn{j}); pure score (no weights, no fitting)
+#' PLQR diagnostic score (component \eqn{j}); pure score (no weights, no fitting) (experimental)
 #'
 #' Constructs a **pure-score** kernel for PLQR diagnostics that stores the
 #' per-observation score contributions
@@ -44,6 +44,10 @@
 #' This score performs **no** nearest-neighbor ordering or L-stat weighting;
 #' any aggregation/weights are handled outside the score layer.
 #'
+#' @section Lifecycle:
+#' **Experimental.** PLQR functionality is outside the CATE and regression
+#' workflow focus of the initial public release. Its API and inference
+#' interfaces may change in later releases.
 #' @param x0 Numeric length-\eqn{p} target point. Used only for basic dimension
 #'   checks against \code{x_cols}; not used in the kernel.
 #' @param x_cols Integer or character indices of the \eqn{X} columns in

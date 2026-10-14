@@ -2,7 +2,7 @@
 % Please edit documentation in R/user-dnn-plqr-methods.R
 \name{summary.plqr_result}
 \alias{summary.plqr_result}
-\title{Summarize a \code{plqr_result}}
+\title{Summarize a \code{plqr_result} (experimental)}
 \usage{
 \method{summary}{plqr_result}(object, level = 0.95, ...)
 }
@@ -17,7 +17,7 @@
 An object of class \code{summary.plqr_result}.
 }
 \description{
-Summarize a \code{plqr_result}
+Summarize a \code{plqr_result} (experimental)
 }
 \details{
 Coefficient-level standard errors and intervals require the direct PLQR
@@ -25,4 +25,14 @@ sandwich (fit with \code{density} or \code{density_col}); the moment-level jackk
 SE available on fits without a density input has no proven translation
 into a coefficient-level interval in this package's source theory — see
 \verb{markdown_notes/design/15_plqr_variance_estimation_rationale.md}.
+}
+\section{Lifecycle}{
+
+\strong{Experimental.} PLQR functionality is outside the CATE and regression
+workflow focus of the initial public release. Its API and inference
+interfaces may change in later releases.
+}
+
+\seealso{
+\code{\link[=plqr_dnn]{plqr_dnn()}}.
 }

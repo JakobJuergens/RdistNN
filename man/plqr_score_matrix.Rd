@@ -2,7 +2,7 @@
 % Please edit documentation in R/user-dnn-plqr.R
 \name{plqr_score_matrix}
 \alias{plqr_score_matrix}
-\title{Observation-level orthogonal PLQR scores at a supplied coefficient}
+\title{Observation-level orthogonal PLQR scores at a supplied coefficient (experimental)}
 \usage{
 plqr_score_matrix(data, y_col, D_cols, g_col, mD_cols, theta, tau)
 }
@@ -40,6 +40,13 @@ Computes, for each observation \eqn{i}, the orthogonal PLQR score
 from supplied nuisance columns. No weights are applied and no localization
 is performed; \code{\link[=plqr_dnn]{plqr_dnn()}} aggregates these scores with DNN rank weights.
 }
+\section{Lifecycle}{
+
+\strong{Experimental.} PLQR functionality is outside the CATE and regression
+workflow focus of the initial public release. Its API and inference
+interfaces may change in later releases.
+}
+
 \examples{
 demo <- plqr_demo_data(n = 100, p = 2, p_d = 2, tau = 0.5, seed = 1)
 scores <- plqr_score_matrix(

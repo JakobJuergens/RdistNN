@@ -1,14 +1,5 @@
 # tests/testthat/test-user-cate-dnn-ties.R
 
-skip_if_not(
-  all(vapply(
-    c("cate_dnn", "get_distance", "distance_eval_batch"),
-    exists, logical(1),
-    mode = "function"
-  )),
-  "required APIs not available"
-)
-
 test_that("deterministic ties in distances lead to deterministic ordering and stable tau", {
   set.seed(42)
   n <- 10L

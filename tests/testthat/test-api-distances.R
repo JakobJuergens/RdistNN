@@ -1,18 +1,6 @@
 # tests/testthat/test-distance-api.R
 # ------------------------------------------------------------------------------
 
-skip_if_not(
-  all(vapply(
-    c(
-      "is_distance", "as_distance", "register_distance", "get_distance",
-      "distance_names", "distance_eval", "distance_eval_batch"
-    ),
-    exists, logical(1),
-    mode = "function"
-  )),
-  "distance API not loaded"
-)
-
 test_that("as_distance() wraps a function and is_distance() recognizes it", {
   f <- function(X, x0, ctx) {
     rowSums((X - matrix(x0, nrow(X), ncol(X), byrow = TRUE))^2)

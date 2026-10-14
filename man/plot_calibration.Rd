@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot-calibration.R
 \name{plot_calibration}
 \alias{plot_calibration}
-\title{Plot local quantile calibration for PLQR fits}
+\title{Plot local quantile calibration for PLQR fits (experimental)}
 \usage{
 plot_calibration(object, residuals = NULL, level = 0.95, ...)
 }
@@ -33,6 +33,13 @@ The below-threshold indicator is stored on the fit; alternatively,
 supply \code{residuals} (\verb{Y - D' theta - g}, length \code{n}), whose non-positive
 entries define the indicator.
 }
+\section{Lifecycle}{
+
+\strong{Experimental.} PLQR functionality is outside the CATE and regression
+workflow focus of the initial public release. Its API and inference
+interfaces may change in later releases.
+}
+
 \examples{
 if (requireNamespace("ggplot2", quietly = TRUE)) {
   demo <- plqr_demo_data(n = 90, p = 2, p_d = 2, tau = 0.5, seed = 1)

@@ -299,6 +299,10 @@
 #' Scalar grid evaluation uses the training data stored on the fit; fits
 #' from package versions predating that storage must be re-estimated first.
 #'
+#' @section Experimental methods:
+#' Methods for `plqr_result` objects are experimental, as is all PLQR
+#' functionality in this release; see [plqr_dnn()].
+#'
 #' @param object A fitted `np_result`, `cate_result`, or `plqr_result`.
 #' @param tuning A tuning specification for the candidate grid (default
 #'   [tuning_dnn_paper()]).

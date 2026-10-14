@@ -2,7 +2,7 @@
 % Please edit documentation in R/user-dnn-plqr.R
 \name{plqr_dnn}
 \alias{plqr_dnn}
-\title{PLQR local moment evaluation and direct coefficient inference via DNN rank weights}
+\title{PLQR local moment evaluation and direct coefficient inference via DNN rank weights (experimental)}
 \usage{
 plqr_dnn(
   data = NULL,
@@ -235,6 +235,13 @@ to the default candidate. Candidate diagnostics include \code{ess}, \code{max_we
 is independent of the estimator's \code{k}. Direct PLQR sandwich inference from
 \code{density} or \code{density_col} currently uses \code{tuning_mode = "default"} only.
 }
+\section{Lifecycle}{
+
+\strong{Experimental.} PLQR functionality is outside the CATE and regression
+workflow focus of the initial public release. Its API and inference
+interfaces may change in later releases.
+}
+
 \examples{
 set.seed(1)
 demo <- plqr_demo_data(n = 120, p = 2, p_d = 2, tau = 0.5, seed = 1)

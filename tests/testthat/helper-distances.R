@@ -47,19 +47,6 @@ run_distance_battery <- function(metric_name, mk_spec, orderer, args = list(),
     }
   })
 
-  test_that(paste0(metric_name, ": eval equals column 1 of batched"), {
-    X <- gen_X()
-    X0 <- gen_X0(p = ncol(X))
-    x0 <- X0[1L, ]
-
-    sp <- do.call(mk_spec, args)
-    ctx <- if (!is.null(sp$setup)) sp$setup(X) else NULL
-
-    d1 <- sp$eval(X, x0, ctx)
-    D2 <- sp$eval_batch(X, X0, ctx)
-    expect_equal(as.numeric(d1), as.numeric(D2[, 1L]))
-  })
-
   test_that(paste0(metric_name, ": batched equals loop over eval()"), {
     X <- gen_X()
     X0 <- gen_X0(p = ncol(X))

@@ -1,12 +1,3 @@
-skip_if_not(
-  all(vapply(
-    c("np_dnn", "weights_dnn"),
-    exists, logical(1),
-    mode = "function"
-  )),
-  "np_dnn() or required helpers not found; skipping file"
-)
-
 set.seed(123)
 
 .make_np_data <- function(n = 40L, p = 2L, m = 4L) {
@@ -340,28 +331,18 @@ test_that("NA and non-finite Y values produce informative errors (matrix API)", 
   y_na  <- d$y; y_na[5L]  <- NA_real_
   y_inf <- d$y; y_inf[5L] <- Inf
 
-  expect_error(
-    np_dnn(X = d$X, X0 = d$X0, Y = y_na,  k = 1L, s = 2L, se = FALSE),
+  err_na <- expect_error(
+    np_dnn(X = d$X, X0 = d$X0, Y = y_na, k = 1L, s = 2L, se = FALSE),
     regexp = "NA", ignore.case = TRUE
   )
-  expect_error(
+  err_inf <- expect_error(
     np_dnn(X = d$X, X0 = d$X0, Y = y_inf, k = 1L, s = 2L, se = FALSE),
     regexp = "non-finite", ignore.case = TRUE
   )
-
-  msg_na  <- tryCatch(
-    np_dnn(X = d$X, X0 = d$X0, Y = y_na,  k = 1L, s = 2L, se = FALSE),
-    error = conditionMessage
-  )
-  msg_inf <- tryCatch(
-    np_dnn(X = d$X, X0 = d$X0, Y = y_inf, k = 1L, s = 2L, se = FALSE),
-    error = conditionMessage
-  )
-  expect_false(identical(msg_na, msg_inf))
+  expect_false(identical(conditionMessage(err_na), conditionMessage(err_inf)))
 })
 
 test_that("np_dnn surfaces malformed custom distance outputs", {
-  skip_if_not(exists("new_distance"), "new_distance() not found")
   d <- .make_np_data(n = 18L, p = 2L, m = 2L)
 
   bad_shape <- new_distance(

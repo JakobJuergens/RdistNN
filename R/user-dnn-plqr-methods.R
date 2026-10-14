@@ -245,11 +245,16 @@
   do.call(rbind, rows)
 }
 
-#' Print a `plqr_result` object
+#' Print a `plqr_result` object (experimental)
 #'
+#' @section Lifecycle:
+#' **Experimental.** PLQR functionality is outside the CATE and regression
+#' workflow focus of the initial public release. Its API and inference
+#' interfaces may change in later releases.
 #' @param x An object returned by [plqr_dnn()].
 #' @param ... Not used.
 #' @return `x`, invisibly.
+#' @seealso [plqr_dnn()].
 #' @export
 print.plqr_result <- function(x, ...) {
   cat("<plqr_result>\n", sep = "")
@@ -292,17 +297,22 @@ print.plqr_result <- function(x, ...) {
   invisible(x)
 }
 
-#' Extract coefficients from a `plqr_result`
+#' Extract coefficients from a `plqr_result` (experimental)
 #'
 #' Returns the coefficient value represented by the object. For current
 #' [plqr_dnn()] fits this is the supplied `theta_eval` repeated across
 #' targets (`meta$theta_source = "supplied"`); no local PLQR root is
 #' solved. The source is attached as `attr(., "theta_source")`.
 #'
+#' @section Lifecycle:
+#' **Experimental.** PLQR functionality is outside the CATE and regression
+#' workflow focus of the initial public release. Its API and inference
+#' interfaces may change in later releases.
 #' @param object A `plqr_result` object.
 #' @param ... Not used.
 #' @return Matrix of PLQR coefficient values with a `theta_source`
 #'   attribute.
+#' @seealso [plqr_dnn()].
 #' @export
 coef.plqr_result <- function(object, ...) {
   out <- object$theta
@@ -310,13 +320,18 @@ coef.plqr_result <- function(object, ...) {
   out
 }
 
-#' Variance-covariance matrices for `plqr_result`
+#' Variance-covariance matrices for `plqr_result` (experimental)
 #'
+#' @section Lifecycle:
+#' **Experimental.** PLQR functionality is outside the CATE and regression
+#' workflow focus of the initial public release. Its API and inference
+#' interfaces may change in later releases.
 #' @param object A `plqr_result` object.
 #' @param target Optional target index. When omitted, returns one matrix for a
 #'   single-target fit and a named list for a multi-target fit.
 #' @param ... Not used.
 #' @return A covariance matrix or list of covariance matrices.
+#' @seealso [plqr_dnn()].
 #' @export
 vcov.plqr_result <- function(object, target = NULL, ...) {
   if (is.null(object$theta_vcov)) {
@@ -345,7 +360,7 @@ vcov.plqr_result <- function(object, target = NULL, ...) {
   object$theta_vcov[[target]]
 }
 
-#' Confidence intervals for `plqr_result`
+#' Confidence intervals for `plqr_result` (experimental)
 #'
 #' @details
 #' Coefficient-level standard errors and intervals require the direct PLQR
@@ -359,6 +374,10 @@ vcov.plqr_result <- function(object, target = NULL, ...) {
 #' (`meta$theta_source = "supplied"`), not an estimated local root. The
 #' source is attached as `attr(., "theta_source")`.
 #'
+#' @section Lifecycle:
+#' **Experimental.** PLQR functionality is outside the CATE and regression
+#' workflow focus of the initial public release. Its API and inference
+#' interfaces may change in later releases.
 #' @param object A `plqr_result` object from [plqr_dnn()].
 #' @param parm Optional coefficient names or indices.
 #' @param level Confidence level.
@@ -366,6 +385,7 @@ vcov.plqr_result <- function(object, target = NULL, ...) {
 #' @param ... Not used.
 #' @return A data frame with confidence intervals and a `theta_source`
 #'   attribute.
+#' @seealso [plqr_dnn()].
 #' @export
 confint.plqr_result <- function(object, parm = NULL, level = 0.95,
                                 target = NULL, ...) {
@@ -414,7 +434,7 @@ confint.plqr_result <- function(object, parm = NULL, level = 0.95,
   out
 }
 
-#' Summarize a `plqr_result`
+#' Summarize a `plqr_result` (experimental)
 #'
 #' @details
 #' Coefficient-level standard errors and intervals require the direct PLQR
@@ -423,10 +443,15 @@ confint.plqr_result <- function(object, parm = NULL, level = 0.95,
 #' into a coefficient-level interval in this package's source theory — see
 #' `markdown_notes/design/15_plqr_variance_estimation_rationale.md`.
 #'
+#' @section Lifecycle:
+#' **Experimental.** PLQR functionality is outside the CATE and regression
+#' workflow focus of the initial public release. Its API and inference
+#' interfaces may change in later releases.
 #' @param object A `plqr_result` object from [plqr_dnn()].
 #' @param level Confidence level.
 #' @param ... Not used.
 #' @return An object of class `summary.plqr_result`.
+#' @seealso [plqr_dnn()].
 #' @export
 summary.plqr_result <- function(object, level = 0.95, ...) {
   out <- list(
@@ -442,12 +467,17 @@ summary.plqr_result <- function(object, level = 0.95, ...) {
   out
 }
 
-#' Print a `summary.plqr_result`
+#' Print a `summary.plqr_result` (experimental)
 #'
+#' @section Lifecycle:
+#' **Experimental.** PLQR functionality is outside the CATE and regression
+#' workflow focus of the initial public release. Its API and inference
+#' interfaces may change in later releases.
 #' @param x A `summary.plqr_result` object.
 #' @param digits Number of significant digits for printing.
 #' @param ... Not used.
 #' @return `x`, invisibly.
+#' @seealso [plqr_dnn()].
 #' @export
 print.summary.plqr_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
   cat("<summary.plqr_result>\n", sep = "")
@@ -470,7 +500,7 @@ print.summary.plqr_result <- function(x, digits = max(3L, getOption("digits") - 
   invisible(x)
 }
 
-#' Predict from a `plqr_result` object at new targets
+#' Predict from a `plqr_result` object at new targets (experimental)
 #'
 #' @details
 #' The returned fit matrix repeats the supplied `theta_eval`
@@ -488,6 +518,10 @@ print.summary.plqr_result <- function(x, digits = max(3L, getOption("digits") - 
 #' does not retain the outcome data needed to re-run the jackknife at new
 #' targets.
 #'
+#' @section Lifecycle:
+#' **Experimental.** PLQR functionality is outside the CATE and regression
+#' workflow focus of the initial public release. Its API and inference
+#' interfaces may change in later releases.
 #' @param object A `plqr_result` object from [plqr_dnn()].
 #' @param newdata Optional matrix/data frame of target covariates.
 #' @param X0 Optional numeric matrix of targets (rows).
@@ -523,6 +557,7 @@ print.summary.plqr_result <- function(x, digits = max(3L, getOption("digits") - 
 #'   se = FALSE
 #' )
 #' predict(fit, x0 = c(0.2, -0.1))
+#' @seealso [plqr_dnn()].
 #' @export
 predict.plqr_result <- function(
     object,

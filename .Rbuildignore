@@ -3,6 +3,8 @@
 ^\.git$
 ^\.gitignore$
 ^\.claude$
+^\.agents$
+^\.codex$
 ^\.Rhistory$
 ^\.RData$
 ^\.Ruserdata$
@@ -14,6 +16,9 @@
 ^vign_test$
 ^LICENSE\.md$
 ^README\.Rmd$
+^CONTRIBUTING\.md$
+^RELEASING\.md$
+^WEBSITE\.md$
 ^\.github$
 ^_pkgdown\.yml$
 ^docs$
@@ -23,6 +28,8 @@
 ^\.clang-format$
 ^archives$
 ^tools$
+^tests/ci$
+^tests/README\.md$
 ^bench$
 ^tools/bench$
 ^Jackknife-GenUStat_JJuergens\.pdf$

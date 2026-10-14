@@ -1,7 +1,10 @@
-#' RdistNN: Distance-Based Building Blocks for Localized U-Statistics
+#' RdistNN: DNN Estimation for CATE and Nonparametric Regression
 #'
-#' `RdistNN` provides a modular toolkit for distance-localized estimation based
-#' on generalized U-statistics. It combines:
+#' The initial public release focuses on conditional average treatment effects
+#' with [cate_dnn()] and nonparametric regression with [np_dnn()], using
+#' distributional nearest-neighbor (DNN) weights and delete-1 jackknife standard
+#' errors. Nuisance predictions for CATE are supplied externally.
+#' The underlying toolkit combines:
 #' - distance specifications (`dnn_distance`) for ranking observations around a
 #'   target;
 #' - rank-weight specifications (`rank_weight`) for converting ranks to weights;
@@ -16,11 +19,18 @@
 #' - Summarize/predict CATE fits with [summary.cate_result()],
 #'   [confint.cate_result()], and [predict.cate_result()].
 #' - Estimate local nonparametric means with [np_dnn()].
-#' - Estimate local PLQR coefficient surfaces and orthogonal moments with
-#'   [plqr_dnn()].
-#' - Summarize/predict PLQR fits with `summary()`, `confint()`, and
-#'   `predict()` methods.
+#' - Use two-scale signed-weight regression with [np_tdnn()]; see its help for
+#'   order constraints and additional smoothness requirements.
 #' - Inspect fitted local estimators with [diagnostics()].
+#' - Plot CATE and regression estimates with [plot_estimates()] and inspect
+#'   local weights with [plot_weights()] (requires ggplot2).
+#'
+#' @section Experimental and Advanced Workflows:
+#' All PLQR functionality is **experimental**, including [plqr_dnn()], its
+#' scores, demo helpers, methods, and plots. The current wrapper evaluates
+#' moments at a supplied coefficient; it does not solve for local coefficients.
+#' Local IV-GMM functionality is also experimental. These workflows are outside
+#' the CATE and regression focus of the initial public release.
 #' - Build custom generalized U-statistics with [new_score()],
 #'   [score_eval_batch()], and [score_diff_path()].
 #' - Estimate uncertainty with [jackknife_fast_rank()] and
@@ -37,7 +47,8 @@
 #' - For distance/rank weighting details see
 #'   `vignette("dnn-weights", package = "RdistNN")`.
 #' - For estimator workflows see
-#'   `vignette("conditional-z-estimation", package = "RdistNN")`.
+#'   `vignette("conditional-z-estimation", package = "RdistNN")`, including
+#'   experimental PLQR details.
 #' - For jackknife details see
 #'   `vignette("jackknife-gen-ustats", package = "RdistNN")`.
 #'

@@ -10,8 +10,6 @@
 }
 
 test_that("is_rank_weight() and as_rank_weight() basics", {
-  skip_if_not(exists("is_rank_weight"), "is_rank_weight() not found")
-  skip_if_not(exists("as_rank_weight"), "as_rank_weight() not found")
 
   # Simple harmonic rank weight w_i ∝ 1/r_i
   rw <- as_rank_weight(function(r, ctx = NULL) {
@@ -82,9 +80,6 @@ test_that("new_rank_weight() builds validated specs", {
 })
 
 test_that("rank_weight_eval() and rank_weight_eval_batch() work (eval only path)", {
-  skip_if_not(exists("as_rank_weight"), "as_rank_weight() not found")
-  skip_if_not(exists("rank_weight_eval"), "rank_weight_eval() not found")
-  skip_if_not(exists("rank_weight_eval_batch"), "rank_weight_eval_batch() not found")
 
   # eval-only spec (no eval_batch): batch should fall back to apply(eval, 2, ...)
   rw_eval_only <- as_rank_weight(function(r, ctx = NULL) {
@@ -107,8 +102,6 @@ test_that("rank_weight_eval() and rank_weight_eval_batch() work (eval only path)
 })
 
 test_that("rank_weight_eval() falls back to eval_batch when eval is missing", {
-  skip_if_not(exists("rank_weight_eval"), "rank_weight_eval() not found")
-  skip_if_not(exists("rank_weight_eval_batch"), "rank_weight_eval_batch() not found")
 
   # batch-only spec (no eval): single-target should route through eval_batch
   rw_batch_only <- list(
@@ -137,7 +130,6 @@ test_that("rank_weight_eval() falls back to eval_batch when eval is missing", {
 })
 
 test_that("ctx is forwarded to eval / eval_batch", {
-  skip_if_not(exists("as_rank_weight"), "as_rank_weight() not found")
 
   # ctx: power alpha; w_i ∝ 1 / r_i^alpha
   rw_ctx <- as_rank_weight(function(r, ctx = NULL) {
@@ -163,9 +155,6 @@ test_that("ctx is forwarded to eval / eval_batch", {
 })
 
 test_that("register_rank_weight(), get_rank_weight(), and rank_weight_names() work", {
-  skip_if_not(exists("register_rank_weight"), "register_rank_weight() not found")
-  skip_if_not(exists("get_rank_weight"), "get_rank_weight() not found")
-  skip_if_not(exists("rank_weight_names"), "rank_weight_names() not found")
 
   # Register via (name, spec function)
   nm_new <- paste0("rw_new_", as.integer(runif(1, 1e6, 2e6)))
@@ -193,9 +182,6 @@ test_that("register_rank_weight(), get_rank_weight(), and rank_weight_names() wo
 })
 
 test_that("input validation: bad ranks and bad specs produce clear errors", {
-  skip_if_not(exists("rank_weight_eval"), "rank_weight_eval() not found")
-  skip_if_not(exists("rank_weight_eval_batch"), "rank_weight_eval_batch() not found")
-  skip_if_not(exists("as_rank_weight"), "as_rank_weight() not found")
 
   rw <- as_rank_weight(function(r, ctx = NULL) {
     w <- 1 / as.numeric(r)
@@ -245,8 +231,6 @@ test_that("input validation: bad ranks and bad specs produce clear errors", {
 })
 
 test_that("as_rank_weight handles functions without ctx (and ignores provided ctx)", {
-  skip_if_not(exists("as_rank_weight"), "as_rank_weight() not found")
-  skip_if_not(exists("rank_weight_eval"), "rank_weight_eval() not found")
 
   # fun has signature fun(r) with no ctx
   rw_nocontext <- as_rank_weight(function(r) {
@@ -264,8 +248,6 @@ test_that("as_rank_weight handles functions without ctx (and ignores provided ct
 })
 
 test_that("batch fallback produces an n x 1 matrix when m == 1 (eval-only spec)", {
-  skip_if_not(exists("as_rank_weight"), "as_rank_weight() not found")
-  skip_if_not(exists("rank_weight_eval_batch"), "rank_weight_eval_batch() not found")
 
   rw_eval_only <- as_rank_weight(function(r) {
     w <- 1 / as.numeric(r)
@@ -283,8 +265,6 @@ test_that("batch fallback produces an n x 1 matrix when m == 1 (eval-only spec)"
 })
 
 test_that("when both eval and eval_batch exist, eval_batch is preferred (single and batch)", {
-  skip_if_not(exists("rank_weight_eval"), "rank_weight_eval() not found")
-  skip_if_not(exists("rank_weight_eval_batch"), "rank_weight_eval_batch() not found")
 
   calls <- new.env(parent = emptyenv())
   calls$eval <- 0L
@@ -328,7 +308,6 @@ test_that("when both eval and eval_batch exist, eval_batch is preferred (single 
 })
 
 test_that("register_rank overwrite is idempotent and replaces behavior", {
-  skip_if_not(exists("register_rank_weight") && exists("get_rank_weight") && exists("rank_weight_eval"))
 
   nm <- paste0("rw_over_", as.integer(runif(1, 1e6, 2e6)))
   spec1 <- function(r) {
@@ -353,7 +332,6 @@ test_that("register_rank overwrite is idempotent and replaces behavior", {
 })
 
 test_that("rank_weight_eval_batch validates columns are permutations", {
-  skip_if_not(exists("rank_weight_eval_batch") && exists("as_rank_weight"))
 
   rw <- as_rank_weight(function(r) (1 / as.numeric(r)) / sum(1 / as.numeric(r)), "perm_check")
   n <- 6L
@@ -364,7 +342,6 @@ test_that("rank_weight_eval_batch validates columns are permutations", {
 })
 
 test_that("rank_weight_eval rejects NA or NaN returns from user functions", {
-  skip_if_not(exists("as_rank_weight") && exists("rank_weight_eval"))
 
   rw_na <- as_rank_weight(function(r) rep(NA_real_, length(r)), "bad_na")
   expect_error(rank_weight_eval(rw_na, 1:4), "finite", ignore.case = TRUE)
@@ -374,7 +351,6 @@ test_that("rank_weight_eval rejects NA or NaN returns from user functions", {
 })
 
 test_that("integerish numeric ranks are accepted; non-integer permutations rejected", {
-  skip_if_not(exists("rank_weight_eval") && exists("as_rank_weight"))
 
   rw <- as_rank_weight(function(r) (1 / as.numeric(r)) / sum(1 / as.numeric(r)), "intish")
 
@@ -394,7 +370,6 @@ test_that("integerish numeric ranks are accepted; non-integer permutations rejec
 })
 
 test_that("n = 1 trivial case works (both eval and eval_batch paths)", {
-  skip_if_not(exists("rank_weight_eval") && exists("rank_weight_eval_batch") && exists("as_rank_weight"))
 
   rw_eval <- as_rank_weight(function(r) 1, "trivial_eval")
   w <- rank_weight_eval(rw_eval, 1L)
@@ -412,7 +387,6 @@ test_that("n = 1 trivial case works (both eval and eval_batch paths)", {
 })
 
 test_that("is_rank_weight recognizes list specs flagged with __kind", {
-  skip_if_not(exists("is_rank_weight"))
 
   rw_list <- list(
     name = "kind_list",
@@ -422,7 +396,6 @@ test_that("is_rank_weight recognizes list specs flagged with __kind", {
     }
   )
   rw_list$.__kind <- "rank_weight"
-  class(rw_list) <- c("rank_weight", class(rw_list))
   expect_true(is_rank_weight(rw_list))
 })
 

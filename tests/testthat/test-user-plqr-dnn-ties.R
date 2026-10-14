@@ -1,12 +1,3 @@
-skip_if_not(
-  all(vapply(
-    c("plqr_dnn", "get_distance", "distance_eval_batch"),
-    exists, logical(1),
-    mode = "function"
-  )),
-  "required APIs not available"
-)
-
 test_that("deterministic ties in distances lead to deterministic ordering and stable moment", {
   set.seed(43)
   n <- 10L

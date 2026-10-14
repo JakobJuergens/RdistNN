@@ -2,7 +2,7 @@
 % Please edit documentation in R/demo-data-plqr.R
 \name{plqr_demo_data}
 \alias{plqr_demo_data}
-\title{Minimal PLQR demo data (oracle nuisances; no internal fitting)}
+\title{Minimal PLQR demo data (oracle nuisances; no internal fitting) (experimental)}
 \usage{
 plqr_demo_data(
   n = 300,
@@ -84,6 +84,13 @@ The function also returns the oracle
   (D - m_{D}(U))\, .
 }
 }
+\section{Lifecycle}{
+
+\strong{Experimental.} PLQR functionality is outside the CATE and regression
+workflow focus of the initial public release. Its API and inference
+interfaces may change in later releases.
+}
+
 \examples{
 demo <- plqr_demo_data(
   n = 300, p = 2, p_d = 1, tau = 0.5,

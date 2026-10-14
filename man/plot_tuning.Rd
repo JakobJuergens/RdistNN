@@ -95,6 +95,12 @@ the stored model state; public estimators are not refit.
 Scalar grid evaluation uses the training data stored on the fit; fits
 from package versions predating that storage must be re-estimated first.
 }
+\section{Experimental methods}{
+
+Methods for \code{plqr_result} objects are experimental, as is all PLQR
+functionality in this release; see \code{\link[=plqr_dnn]{plqr_dnn()}}.
+}
+
 \examples{
 \donttest{
 if (requireNamespace("ggplot2", quietly = TRUE)) {

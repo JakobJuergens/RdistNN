@@ -1,16 +1,4 @@
-skip_if_not(
-  all(vapply(
-    c(
-      "weights_dnn", "rank_weight_dnn_exact", "rank_weight_dnn_asymp",
-      "rank_weight_eval_batch", "as_rank_weight"
-    ),
-    exists, logical(1),
-    mode = "function"
-  )),
-  "DNN rank-weight helpers not found; skipping file"
-)
-
-.make_layer2_prefix_data <- function(n = 26L, m = 4L) {
+.make_dnn_prefix_data <- function(n = 26L, m = 4L) {
   if (n < 12L || m < 1L) {
     stop("Layer-2 prefix data requires n >= 12 and m >= 1.", call. = FALSE)
   }
@@ -48,7 +36,7 @@ skip_if_not(
   list(X = X, X0 = X0, y = y)
 }
 
-.layer2_signal <- function(y, q = 1L) {
+.dnn_prefix_signal <- function(y, q = 1L) {
   if (q == 1L) {
     return(matrix(y, ncol = 1L))
   }
@@ -59,7 +47,7 @@ skip_if_not(
   )[, seq_len(q), drop = FALSE]
 }
 
-.layer2_loop_loo <- function(sig, ranks_full, rw) {
+.dnn_prefix_loop_loo <- function(sig, ranks_full, rw) {
   sig <- as.matrix(sig)
   ranks_full <- as.matrix(ranks_full)
   storage.mode(ranks_full) <- "integer"
@@ -93,7 +81,7 @@ skip_if_not(
   loo
 }
 
-.layer2_rank_weight <- function(method, k, s, normalize = TRUE) {
+.dnn_prefix_rank_weight <- function(method, k, s, normalize = TRUE) {
   if (identical(method, "exact")) {
     rank_weight_dnn_exact(k = k, s = s)
   } else {
@@ -101,9 +89,9 @@ skip_if_not(
   }
 }
 
-.expect_layer2_prefix_matches_loop <- function(method, k, s, n, m, q, normalize = TRUE) {
-  d <- .make_layer2_prefix_data(n = n, m = m)
-  sig <- .layer2_signal(d$y, q = q)
+.expect_dnn_prefix_matches_loop <- function(method, k, s, n, m, q, normalize = TRUE) {
+  d <- .make_dnn_prefix_data(n = n, m = m)
+  sig <- .dnn_prefix_signal(d$y, q = q)
   ranks <- weights_dnn(
     X = d$X,
     X0 = d$X0,
@@ -113,13 +101,13 @@ skip_if_not(
     normalize = normalize,
     return = "ranks"
   )$ranks
-  rw <- .layer2_rank_weight(method = method, k = k, s = s, normalize = normalize)
+  rw <- .dnn_prefix_rank_weight(method = method, k = k, s = s, normalize = normalize)
   tab_full <- RdistNN:::.rank_weight_table(rw, n)
   tab_jk <- RdistNN:::.rank_weight_table(rw, n - 1L)
 
   loo_prefix <- RdistNN:::.dnn_loo_prefix(sig, ranks, tab_jk)
   loo_dispatch <- RdistNN:::.dnn_loo_prefix(sig, ranks, tab_jk, tab_full = tab_full)
-  loo_loop <- .layer2_loop_loo(sig, ranks, rw)
+  loo_loop <- .dnn_prefix_loop_loo(sig, ranks, rw)
 
   expect_equal(loo_prefix, loo_loop, tolerance = 1e-12)
   expect_equal(loo_dispatch, loo_loop, tolerance = 1e-12)
@@ -131,25 +119,25 @@ skip_if_not(
 }
 
 test_that("prefix LOO helper matches deletion loop for scalar signals", {
-  .expect_layer2_prefix_matches_loop(
+  .expect_dnn_prefix_matches_loop(
     method = "exact", k = 1L, s = 2L, n = 24L, m = 4L, q = 1L
   )
-  .expect_layer2_prefix_matches_loop(
+  .expect_dnn_prefix_matches_loop(
     method = "asymp", k = 2L, s = 12L, n = 30L, m = 4L, q = 1L
   )
 })
 
 test_that("prefix LOO helper matches deletion loop for vector signals", {
-  .expect_layer2_prefix_matches_loop(
+  .expect_dnn_prefix_matches_loop(
     method = "exact", k = 2L, s = 5L, n = 25L, m = 1L, q = 3L
   )
-  .expect_layer2_prefix_matches_loop(
+  .expect_dnn_prefix_matches_loop(
     method = "asymp", k = 1L, s = 10L, n = 28L, m = 3L, q = 2L
   )
 })
 
 test_that("fast scalar wrappers keep the layer-0 SE contract", {
-  d <- .make_layer2_prefix_data(n = 28L, m = 3L)
+  d <- .make_dnn_prefix_data(n = 28L, m = 3L)
 
   np <- np_dnn(
     X = d$X,
@@ -162,7 +150,7 @@ test_that("fast scalar wrappers keep the layer-0 SE contract", {
     jackknife = "fast",
     return = "ranks"
   )
-  np_ref <- .dnn_layer0_fast_jackknife_reference(
+  np_ref <- .dnn_reference_fast_jackknife_reference(
     x_mat = d$X,
     x0_mat = d$X0,
     signal = d$y,
@@ -188,7 +176,7 @@ test_that("fast scalar wrappers keep the layer-0 SE contract", {
     jackknife = "fast",
     return = "ranks"
   )
-  cate_ref <- .dnn_layer0_fast_jackknife_reference(
+  cate_ref <- .dnn_reference_fast_jackknife_reference(
     x_mat = d$X,
     x0_mat = d$X0,
     signal = psi,
@@ -224,7 +212,7 @@ test_that("fast scalar wrappers keep the layer-0 SE contract", {
     return = "ranks"
   )
   score_mat <- RdistNN:::.plqr_dnn_score_matrix(D, mD, g, Y, theta_eval = theta, tau = 0.5)
-  plqr_ref <- .dnn_layer0_fast_jackknife_reference(
+  plqr_ref <- .dnn_reference_fast_jackknife_reference(
     x_mat = d$X,
     x0_mat = d$X0,
     signal = score_mat,
@@ -240,8 +228,8 @@ test_that("fast scalar wrappers keep the layer-0 SE contract", {
 })
 
 test_that("loop fallback remains available for rank weights without tables", {
-  d <- .make_layer2_prefix_data(n = 18L, m = 2L)
-  sig <- .layer2_signal(d$y, q = 2L)
+  d <- .make_dnn_prefix_data(n = 18L, m = 2L)
+  sig <- .dnn_prefix_signal(d$y, q = 2L)
   ranks <- weights_dnn(
     X = d$X,
     X0 = d$X0,
@@ -258,7 +246,7 @@ test_that("loop fallback remains available for rank weights without tables", {
   expect_null(RdistNN:::.rank_weight_table(rw, nrow(ranks) - 1L))
   expect_equal(
     RdistNN:::.dnn_loo_loop(sig, ranks, rw),
-    .layer2_loop_loo(sig, ranks, rw),
+    .dnn_prefix_loop_loo(sig, ranks, rw),
     tolerance = 1e-12
   )
 })

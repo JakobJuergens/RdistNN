@@ -2,7 +2,7 @@
 % Please edit documentation in R/demo-data-plqr.R
 \name{plqr_demo_subsets}
 \alias{plqr_demo_subsets}
-\title{Quick helper: sample a batch of subsets (for U-stat / localization experiments)}
+\title{Quick helper: sample a batch of subsets (for U-stat / localization experiments) (experimental)}
 \usage{
 plqr_demo_subsets(n, K = 1000L, s = 8L, seed = NULL)
 }
@@ -16,8 +16,15 @@ plqr_demo_subsets(n, K = 1000L, s = 8L, seed = NULL)
 \item{seed}{Optional integer seed for reproducibility.}
 }
 \description{
-Quick helper: sample a batch of subsets (for U-stat / localization experiments)
+Quick helper: sample a batch of subsets (for U-stat / localization experiments) (experimental)
 }
+\section{Lifecycle}{
+
+\strong{Experimental.} PLQR functionality is outside the CATE and regression
+workflow focus of the initial public release. Its API and inference
+interfaces may change in later releases.
+}
+
 \examples{
 plqr_demo_subsets(n = 10, K = 4, s = 3, seed = 1)
 }

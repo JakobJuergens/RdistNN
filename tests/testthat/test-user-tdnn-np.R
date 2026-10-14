@@ -6,15 +6,6 @@
 # Interface-equivalence (matrix vs data-frame) lives in the companion file
 # test-user-tdnn-np-data-interface.R.
 
-skip_if_not(
-  all(vapply(
-    c("np_tdnn", "weights_tdnn"),
-    exists, logical(1L),
-    mode = "function"
-  )),
-  "np_tdnn() or required helpers not found; skipping file"
-)
-
 set.seed(123)
 
 .make_tdnn_data <- function(n = 50L, p = 2L, m = 4L) {

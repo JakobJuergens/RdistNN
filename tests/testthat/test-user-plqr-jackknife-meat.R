@@ -1,12 +1,3 @@
-skip_if_not(
-  all(vapply(
-    c("plqr_dnn", "plqr_demo_data"),
-    exists, logical(1),
-    mode = "function"
-  )),
-  "plqr_dnn() or required helpers not found; skipping file"
-)
-
 .fit_plqr_meat <- function(d, theta_meat, jackknife = "fast", ...) {
   plqr_dnn(
     X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,

@@ -1,13 +1,9 @@
-# Structural and contract tests for the Phase 3 plotting panels: plqr/gmm
+# Structural and contract tests for the specialized plotting panels: plqr/gmm
 # autoplot (P-1, G-1), Gram conditioning (P-2), quantile calibration
 # (P-3), CATE influence (C-5), TDNN scale decomposition (NP-5), and
 # kernel-order sensitivity (NP-6).
 
-.p3_geoms <- function(p) {
-  vapply(p$layers, function(l) class(l$geom)[1L], character(1L))
-}
-
-.p3_plqr_fit <- function(n = 90L, m = 5L, seed = 101L, se = FALSE) {
+.plot_special_plqr_fit <- function(n = 90L, m = 5L, seed = 101L, se = FALSE) {
   demo <- plqr_demo_data(n = n, p = 2L, p_d = 2L, tau = 0.5, seed = seed)
   df <- demo$data
   plqr_dnn(
@@ -22,7 +18,7 @@
   )
 }
 
-.p3_cate_fit <- function(n = 100L, m = 5L, seed = 102L) {
+.plot_special_cate_fit <- function(n = 100L, m = 5L, seed = 102L) {
   set.seed(seed)
   X <- matrix(rnorm(n * 2L), n, 2L,
               dimnames = list(NULL, c("X1", "X2")))
@@ -36,11 +32,11 @@
 
 test_that("plqr and gmm autoplot methods carry class-specific dressing", {
   skip_if_not_installed("ggplot2")
-  fit_plqr <- .p3_plqr_fit(se = TRUE)
+  fit_plqr <- .plot_special_plqr_fit(se = TRUE)
   p <- ggplot2::autoplot(fit_plqr)
 
   # PLQR moments get the zero reference line and the beta/tau subtitle.
-  expect_true("GeomHline" %in% .p3_geoms(p))
+  expect_true("GeomHline" %in% .plot_layer_geoms(p))
   expect_match(p$labels$subtitle, "PLQR moments at theta_eval")
   expect_match(p$labels$subtitle, "tau = 0.50", fixed = TRUE)
   expect_identical(class(p$facet)[1L], "FacetWrap")
@@ -60,8 +56,8 @@ test_that("plqr and gmm autoplot methods carry class-specific dressing", {
   p_gmm <- ggplot2::autoplot(fit_gmm)
   expect_match(p_gmm$labels$subtitle, "GMM model")
   # Coefficient estimates carry no zero line.
-  expect_false("GeomHline" %in% .p3_geoms(p_gmm))
-  expect_false("GeomVline" %in% .p3_geoms(p_gmm))
+  expect_false("GeomHline" %in% .plot_layer_geoms(p_gmm))
+  expect_false("GeomVline" %in% .plot_layer_geoms(p_gmm))
 
   # plot() methods print invisibly.
   pdf(NULL)
@@ -73,7 +69,7 @@ test_that("plqr and gmm autoplot methods carry class-specific dressing", {
 
 test_that("plot_conditioning facets eigenvalue and log condition number", {
   skip_if_not_installed("ggplot2")
-  fit <- .p3_plqr_fit()
+  fit <- .plot_special_plqr_fit()
   dd <- plot_data_diagnostics(fit)
   p <- plot_conditioning(fit)
 
@@ -91,18 +87,18 @@ test_that("plot_conditioning facets eigenvalue and log condition number", {
     log10(dd$gram_condition_number[avail])
   )
   # Guides: zero for the eigenvalue facet, log10 cond_limits otherwise.
-  hline <- p$layers[[which(.p3_geoms(p) == "GeomHline")[1L]]]
+  hline <- p$layers[[which(.plot_layer_geoms(p) == "GeomHline")[1L]]]
   expect_equal(sort(hline$data$yintercept), sort(c(0, 3, 6)))
   expect_match(p$labels$caption, "ill-conditioned")
 
   expect_error(plot_conditioning(fit, cond_limits = c(1e6, 1e3)),
                "increasing")
-  expect_error(plot_conditioning(.p3_cate_fit()), "plqr_result")
+  expect_error(plot_conditioning(.plot_special_cate_fit()), "plqr_result")
 })
 
 test_that("plot_calibration reproduces the weighted indicator share", {
   skip_if_not_installed("ggplot2")
-  fit <- .p3_plqr_fit(m = 5L)
+  fit <- .plot_special_plqr_fit(m = 5L)
   p <- plot_calibration(fit)
 
   # Manual recomputation from stored components.
@@ -114,7 +110,7 @@ test_that("plot_calibration reproduces the weighted indicator share", {
   neff <- 1 / colSums(fit$W^2)
   half <- qnorm(0.975) * sqrt(0.5 * 0.5 / neff)
   expect_equal(p$data$band_upper - p$data$band_lower, 2 * half)
-  geoms <- .p3_geoms(p)
+  geoms <- .plot_layer_geoms(p)
   expect_true(all(c("GeomRibbon", "GeomHline", "GeomLine") %in% geoms))
   expect_match(p$labels$caption, "reference band")
 
@@ -130,12 +126,12 @@ test_that("plot_calibration reproduces the weighted indicator share", {
   p_arg <- plot_calibration(fit_old, residuals = r)
   expect_equal(p_arg$data$share, share_ref)
 
-  expect_error(plot_calibration(.p3_cate_fit()), "plqr_result")
+  expect_error(plot_calibration(.plot_special_cate_fit()), "plqr_result")
 })
 
 test_that("plot_influence computes contributions and labels extremes", {
   skip_if_not_installed("ggplot2")
-  fit <- .p3_cate_fit(m = 5L)
+  fit <- .plot_special_cate_fit(m = 5L)
   p <- plot_influence(fit, targets = 3L)
 
   # Contributions equal w * (psi - tau_hat) for the shown target.
@@ -145,7 +141,7 @@ test_that("plot_influence computes contributions and labels extremes", {
   # Contributions sum to (approximately) zero at the fitted root.
   expect_equal(sum(p$data$contribution), 0, tolerance = 1e-10)
 
-  geoms <- .p3_geoms(p)
+  geoms <- .plot_layer_geoms(p)
   expect_true("GeomText" %in% geoms)
   txt <- p$layers[[which(geoms == "GeomText")[1L]]]$data
   expect_identical(nrow(txt), 3L)
@@ -158,7 +154,7 @@ test_that("plot_influence computes contributions and labels extremes", {
   expect_identical(p$labels$x, "Distance")
   expect_match(p$labels$caption, "top-1 weight share")
 
-  expect_error(plot_influence(.p3_plqr_fit()), "cate_result")
+  expect_error(plot_influence(.plot_special_plqr_fit()), "cate_result")
   fit_nopsi <- fit
   fit_nopsi$.model$psi <- NULL
   expect_error(plot_influence(fit_nopsi), "pseudo_outcome")
@@ -195,7 +191,7 @@ test_that("plot_tdnn_scales overlays refits that match manual estimates", {
   )
 
   # Wrong class and missing stored data error with remedies.
-  expect_error(plot_tdnn_scales(.p3_cate_fit()), "tdnn_np_result")
+  expect_error(plot_tdnn_scales(.plot_special_cate_fit()), "tdnn_np_result")
   fit_old <- fit
   fit_old$.model <- NULL
   expect_error(plot_tdnn_scales(fit_old), "supply both")
@@ -228,18 +224,18 @@ test_that("plot_tuning evaluates candidate grids and marks the fit", {
   expect_equal(p$data$estimate[p$data$selected], as.numeric(fit$mu))
 
   # The vline marks the fitted s; caption names provenance.
-  geoms <- .p3_geoms(p)
+  geoms <- .plot_layer_geoms(p)
   vl <- p$layers[[which(geoms == "GeomVline")[1L]]]
   expect_identical(vl$data$xintercept, s_fit)
   expect_match(p$labels$caption, "paper_default")
 
   # cate method, with se: pointranges drawn.
-  fit_cate <- .p3_cate_fit(m = 2L)
+  fit_cate <- .plot_special_cate_fit(m = 2L)
   p_cate <- plot_tuning(fit_cate, se = TRUE)
-  expect_true("GeomPointrange" %in% .p3_geoms(p_cate))
+  expect_true("GeomPointrange" %in% .plot_layer_geoms(p_cate))
   expect_identical(class(p_cate$facet)[1L], "FacetWrap")
 
-  p_plqr <- plot_tuning(.p3_plqr_fit(), se = FALSE)
+  p_plqr <- plot_tuning(.plot_special_plqr_fit(), se = FALSE)
   expect_s3_class(p_plqr, "ggplot")
   expect_identical(class(p_plqr$facet)[1L], "FacetWrap")
   fit_old <- fit
@@ -249,7 +245,7 @@ test_that("plot_tuning evaluates candidate grids and marks the fit", {
 
 test_that("PLQR plot quantity controls zero lines and plotted values", {
   skip_if_not_installed("ggplot2")
-  fit <- .p3_plqr_fit()
+  fit <- .plot_special_plqr_fit()
   geoms_of <- function(p) vapply(p$layers, function(l) class(l$geom)[1L], character(1L))
 
   # Default: localized moments with a zero reference line.
@@ -287,19 +283,14 @@ test_that("candidate-grid PLQR plot data stays in moment coordinates", {
     return = c("W", "ranks")
   )
 
-  payload <- RdistNN:::.plot_candidate_estimates_frame(
-    object = fit,
-    candidates = "all",
-    level = 0.95,
-    fn = "plot_estimates"
-  )
+  p <- plot_estimates(fit, candidates = "all")
   grid_est <- fit$tuning_grid$estimates
-  expect_true(all(payload$data$estimate %in% grid_est$estimate))
+  expect_true(all(p$data$estimate %in% grid_est$estimate))
   # The default candidate rows are the fit's localized moments, not theta.
   default_id <- fit$tuning_grid$candidates$candidate_id[
     fit$tuning_grid$candidates$is_default
   ][1L]
-  default_rows <- payload$data[payload$data$candidate_id == default_id, ]
+  default_rows <- p$data[p$data$candidate_id == default_id, ]
   expect_equal(
     sort(default_rows$estimate),
     sort(as.numeric(as.matrix(fit$moment))),

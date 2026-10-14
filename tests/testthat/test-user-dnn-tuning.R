@@ -1,3 +1,9 @@
+test_that("main DNN wrappers expose tuning_mode", {
+  for (wrapper in list(np_dnn, cate_dnn, plqr_dnn)) {
+    expect_true("tuning_mode" %in% names(formals(wrapper)))
+  }
+})
+
 test_that("np_dnn tuning path matches manual s and exposes tuning payload", {
   demo <- np_demo_data(n = 80L, p = 2L, seed = 1L)
   df <- demo$data

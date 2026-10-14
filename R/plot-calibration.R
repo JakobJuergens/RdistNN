@@ -2,7 +2,7 @@
 # share of below-threshold observations per target against the quantile
 # level tau, with a normal-approximation reference band.
 
-#' Plot local quantile calibration for PLQR fits
+#' Plot local quantile calibration for PLQR fits (experimental)
 #'
 #' For each target, the weighted share of observations below the quantile
 #' threshold, `sum_i w_ij 1{Y_i <= D_i' theta + g_i}`, is plotted against
@@ -15,6 +15,10 @@
 #' supply `residuals` (`Y - D' theta - g`, length `n`), whose non-positive
 #' entries define the indicator.
 #'
+#' @section Lifecycle:
+#' **Experimental.** PLQR functionality is outside the CATE and regression
+#' workflow focus of the initial public release. Its API and inference
+#' interfaces may change in later releases.
 #' @param object A `plqr_result` with the weight matrix `W` stored (the
 #'   default).
 #' @param residuals Optional numeric vector of length `n` of quantile

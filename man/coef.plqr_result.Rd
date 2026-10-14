@@ -2,7 +2,7 @@
 % Please edit documentation in R/user-dnn-plqr-methods.R
 \name{coef.plqr_result}
 \alias{coef.plqr_result}
-\title{Extract coefficients from a \code{plqr_result}}
+\title{Extract coefficients from a \code{plqr_result} (experimental)}
 \usage{
 \method{coef}{plqr_result}(object, ...)
 }
@@ -20,4 +20,14 @@ Returns the coefficient value represented by the object. For current
 \code{\link[=plqr_dnn]{plqr_dnn()}} fits this is the supplied \code{theta_eval} repeated across
 targets (\code{meta$theta_source = "supplied"}); no local PLQR root is
 solved. The source is attached as \code{attr(., "theta_source")}.
+}
+\section{Lifecycle}{
+
+\strong{Experimental.} PLQR functionality is outside the CATE and regression
+workflow focus of the initial public release. Its API and inference
+interfaces may change in later releases.
+}
+
+\seealso{
+\code{\link[=plqr_dnn]{plqr_dnn()}}.
 }

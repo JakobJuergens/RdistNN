@@ -16,11 +16,6 @@
   matrix(rnorm(n * p), n, p)
 }
 
-.make_X0 <- function(m, p, seed = 99L) {
-  set.seed(seed)
-  matrix(rnorm(m * p), m, p)
-}
-
 # ── [exact] ───────────────────────────────────────────────────────────────────
 
 test_that("[exact] weights_tdnn_exact returns W with correct shape", {

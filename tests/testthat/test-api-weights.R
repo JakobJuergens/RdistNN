@@ -2,7 +2,6 @@
 # ------------------------------------------------------------------------------
 
 test_that("helpers: deterministic ordering + ranks conversion round-trip", {
-  skip_if_not(exists("ord_to_ranks"), "ord_to_ranks() not found in package")
 
   set.seed(1)
   n <- 6
@@ -32,7 +31,6 @@ test_that("helpers: deterministic ordering + ranks conversion round-trip", {
 })
 
 test_that(".resolve_ranking works for dx, ord, ranks, and function outputs", {
-  skip_if_not(exists(".resolve_ranking"), ".resolve_ranking() not found")
 
   n <- 5
   p <- 2
@@ -73,7 +71,6 @@ test_that(".resolve_ranking works for dx, ord, ranks, and function outputs", {
 })
 
 test_that(".resolve_ranking rejects malformed shapes", {
-  skip_if_not(exists(".resolve_ranking"), ".resolve_ranking() not found")
   n <- 4
   p <- 2
   m <- 2
@@ -123,8 +120,6 @@ test_that(".resolve_ranking rejects malformed shapes", {
 })
 
 test_that(".resolve_weight identifies rank_weight and zero-arg factories", {
-  skip_if_not(exists(".resolve_weight"), ".resolve_weight() not found")
-  skip_if_not(exists("as_rank_weight"), "as_rank_weight() not found")
 
   # A simple rank_weight: w_i ∝ 1 / rank_i
   rw <- as_rank_weight(function(r, ctx = NULL) {
@@ -142,7 +137,6 @@ test_that(".resolve_weight identifies rank_weight and zero-arg factories", {
 })
 
 test_that("weights_matrix works with distance-based ranking + rank_weight", {
-  skip_if_not(exists("as_rank_weight"), "as_rank_weight() not found")
 
   n <- 5
   p <- 2
@@ -242,7 +236,6 @@ test_that("weights_matrix passes ctx through to rank_weight evaluators", {
 })
 
 test_that("weights_matrix handles x0 vs X0 and basic shape errors", {
-  skip_if_not(exists("as_rank_weight"), "as_rank_weight() not found")
 
   n <- 4
   p <- 2
@@ -294,14 +287,7 @@ test_that("print.weights_result is informative", {
   expect_output(print(out), "weight: rank \\(mock\\)")
 })
 
-test_that("rank-weight path works if available (DNN wrappers)", {
-  # Optional integration test; skip if your DNN factory isn't present yet.
-  skip_if_not(
-    exists("weights_dnn_exact") &&
-      exists("rank_weight_dnn_exact") &&
-      exists("ord_to_ranks"),
-    "DNN rank-weight API not found; skipping."
-  )
+test_that("DNN weights expose the expected rank-weight integration outputs", {
 
   set.seed(9)
   n <- 6
@@ -322,7 +308,6 @@ test_that("rank-weight path works if available (DNN wrappers)", {
 # ------------------------------------------------------------------------------
 
 test_that("end-to-end parity: dx vs ord vs ranks produce identical W", {
-  skip_if_not(exists("as_rank_weight"), "as_rank_weight() not found")
 
   n <- 7
   p <- 3
@@ -353,7 +338,6 @@ test_that("end-to-end parity: dx vs ord vs ranks produce identical W", {
 })
 
 test_that("return= filters extras: only requested components are present", {
-  skip_if_not(exists("as_rank_weight"), "as_rank_weight() not found")
 
   n <- 6
   p <- 2
@@ -385,12 +369,6 @@ test_that("return= filters extras: only requested components are present", {
 })
 
 test_that("ranking name path works via distance registry", {
-  skip_if_not(
-    exists("new_distance") && exists("register_distance") &&
-      exists("get_distance") && exists("distance_eval_batch") &&
-      exists("as_rank_weight"),
-    "distance API pieces not found; skipping."
-  )
 
   n <- 5
   p <- 2
@@ -430,7 +408,6 @@ test_that("ranking name path works via distance registry", {
 })
 
 test_that("x0 convenience path equals 1-column X0 path", {
-  skip_if_not(exists("as_rank_weight"), "as_rank_weight() not found")
 
   n <- 8
   p <- 3
@@ -452,7 +429,6 @@ test_that("x0 convenience path equals 1-column X0 path", {
 })
 
 test_that("metadata types and contents are stable", {
-  skip_if_not(exists("as_rank_weight"), "as_rank_weight() not found")
 
   n <- 5
   p <- 4
@@ -484,7 +460,6 @@ test_that("metadata types and contents are stable", {
 })
 
 test_that("weights_matrix warns on unknown return values", {
-  skip_if_not(exists("as_rank_weight"), "as_rank_weight() not found")
 
   n <- 5L; p <- 2L; m <- 2L
   set.seed(42)
@@ -550,7 +525,6 @@ test_that("error paths: missing weight and unsupported ranking type", {
 })
 
 test_that("deterministic ties with massive plateaus still stable", {
-  skip_if_not(exists("as_rank_weight"), "as_rank_weight() not found")
 
   n <- 10
   p <- 2

@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot-conditioning.R
 \name{plot_conditioning}
 \alias{plot_conditioning}
-\title{Plot local design conditioning for PLQR fits}
+\title{Plot local design conditioning for PLQR fits (experimental)}
 \usage{
 plot_conditioning(object, cond_limits = c(1000, 1e+06), ...)
 }
@@ -25,6 +25,13 @@ caution and ill-conditioned). This is the software face of the local
 design-conditioning diagnostics: a well-conditioned local Gram is what
 makes the moment evaluation (and later inversion) trustworthy.
 }
+\section{Lifecycle}{
+
+\strong{Experimental.} PLQR functionality is outside the CATE and regression
+workflow focus of the initial public release. Its API and inference
+interfaces may change in later releases.
+}
+
 \examples{
 if (requireNamespace("ggplot2", quietly = TRUE)) {
   demo <- plqr_demo_data(n = 90, p = 2, p_d = 2, tau = 0.5, seed = 1)

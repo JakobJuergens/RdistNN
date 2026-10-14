@@ -28,7 +28,7 @@
   )
 }
 
-#' Observation-level orthogonal PLQR scores at a supplied coefficient
+#' Observation-level orthogonal PLQR scores at a supplied coefficient (experimental)
 #'
 #' Computes, for each observation \eqn{i}, the orthogonal PLQR score
 #' \deqn{
@@ -40,6 +40,10 @@
 #' from supplied nuisance columns. No weights are applied and no localization
 #' is performed; [plqr_dnn()] aggregates these scores with DNN rank weights.
 #'
+#' @section Lifecycle:
+#' **Experimental.** PLQR functionality is outside the CATE and regression
+#' workflow focus of the initial public release. Its API and inference
+#' interfaces may change in later releases.
 #' @param data A \code{data.frame} containing the outcome, regressor, and
 #'   nuisance columns.
 #' @param y_col Name or index of the outcome column in `data`.
@@ -324,7 +328,7 @@ plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
   )
 }
 
-#' PLQR local moment evaluation and direct coefficient inference via DNN rank weights
+#' PLQR local moment evaluation and direct coefficient inference via DNN rank weights (experimental)
 #'
 #' Compute localized orthogonal PLQR moments
 #' \deqn{
@@ -390,6 +394,10 @@ plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
 #' is independent of the estimator's `k`. Direct PLQR sandwich inference from
 #' `density` or `density_col` currently uses `tuning_mode = "default"` only.
 #'
+#' @section Lifecycle:
+#' **Experimental.** PLQR functionality is outside the CATE and regression
+#' workflow focus of the initial public release. Its API and inference
+#' interfaces may change in later releases.
 #' @param data Optional data frame containing covariates, regressors, outcome,
 #'   and nuisance columns. Column names must be non-missing, non-empty, and
 #'   unique.

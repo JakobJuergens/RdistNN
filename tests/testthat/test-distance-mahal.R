@@ -11,11 +11,6 @@
 #   - "mahalanobis" string alias is registered at package load
 #   - integration with cate_dnn() / weights_dnn()
 
-skip_if_not(
-  exists("distance_mahalanobis", mode = "function"),
-  "distance_mahalanobis() not found; skipping file"
-)
-
 # ── correctness ───────────────────────────────────────────────────────────────
 
 test_that("distance_mahalanobis: identity covariance matches L2", {
@@ -221,7 +216,6 @@ test_that("'mahalanobis' string alias is registered and evaluates correctly", {
 # ── integration ───────────────────────────────────────────────────────────────
 
 test_that("cate_dnn() accepts distance = 'mahalanobis'", {
-  skip_if_not(exists("cate_dnn", mode = "function"), "cate_dnn() not found")
   set.seed(100)
   n   <- 120L
   rho <- 0.8
@@ -244,7 +238,6 @@ test_that("cate_dnn() accepts distance = 'mahalanobis'", {
 })
 
 test_that("cate_dnn() Mahalanobis vs L2: finite and structurally consistent", {
-  skip_if_not(exists("cate_dnn", mode = "function"), "cate_dnn() not found")
   set.seed(101)
   n   <- 150L
   rho <- 0.85
@@ -268,7 +261,6 @@ test_that("cate_dnn() Mahalanobis vs L2: finite and structurally consistent", {
 })
 
 test_that("dnn_oracle_mahal benchmark method runs through sim_cate_one_rep", {
-  skip_if_not(exists("sim_cate_one_rep", mode = "function"), "sim_cate_one_rep() not found")
   r <- sim_cate_one_rep(
     n = 120L, kx = 2L, k = 3L,
     s = floor(120L^(3/4)),

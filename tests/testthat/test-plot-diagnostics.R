@@ -1,9 +1,9 @@
-# Structural and contract tests for the Phase 2 plotting panels: overlap
+# Structural and contract tests for the CATE diagnostic plotting panels: overlap
 # (C-3/C-4), diagnostics facets (NP-4), dashboards (C-6 and the np
 # analogue), and the meta$jackknife plumbing behind the dashboard
 # annotation.
 
-.p2_cate_df <- function(n = 120L, seed = 71L) {
+.plot_diag_cate_df <- function(n = 120L, seed = 71L) {
   set.seed(seed)
   df <- data.frame(X1 = rnorm(n), X2 = rnorm(n))
   df$e <- plogis(0.5 * df$X1)
@@ -14,8 +14,8 @@
   df
 }
 
-.p2_cate_fit <- function(n = 120L, m = 5L, seed = 71L, se = FALSE) {
-  df <- .p2_cate_df(n = n, seed = seed)
+.plot_diag_cate_fit <- function(n = 120L, m = 5L, seed = 71L, se = FALSE) {
+  df <- .plot_diag_cate_df(n = n, seed = seed)
   cate_dnn(
     data = df, x_cols = c("X1", "X2"), y_col = "Y", t_col = "T",
     e_col = "e", m0_col = "m0", m1_col = "m1",
@@ -24,7 +24,7 @@
   )
 }
 
-.p2_matrix_cate_fit <- function(n = 100L, m = 5L, seed = 72L) {
+.plot_diag_matrix_cate_fit <- function(n = 100L, m = 5L, seed = 72L) {
   set.seed(seed)
   X <- matrix(rnorm(n * 2L), n, 2L)
   cate_dnn(
@@ -34,14 +34,10 @@
   )
 }
 
-.p2_geoms <- function(p) {
-  vapply(p$layers, function(l) class(l$geom)[1L], character(1L))
-}
-
 test_that("meta stores the jackknife type across wrappers", {
-  fit_se <- .p2_cate_fit(se = TRUE)
+  fit_se <- .plot_diag_cate_fit(se = TRUE)
   expect_identical(fit_se$meta$jackknife, "fast")
-  fit_nose <- .p2_cate_fit(se = FALSE)
+  fit_nose <- .plot_diag_cate_fit(se = FALSE)
   expect_identical(fit_nose$meta$jackknife, "none")
 
   set.seed(73)
@@ -58,9 +54,9 @@ test_that("meta stores the jackknife type across wrappers", {
 
 test_that("overlap mass panel draws arms, guides, bands, and violations", {
   skip_if_not_installed("ggplot2")
-  fit <- .p2_cate_fit(m = 5L)
+  fit <- .plot_diag_cate_fit(m = 5L)
   p <- plot_overlap(fit, type = "mass")
-  geoms <- .p2_geoms(p)
+  geoms <- .plot_layer_geoms(p)
 
   # Two warning-band rects, dotted share guides, and profile lines.
   expect_identical(sum(geoms == "GeomRect"), 2L)
@@ -84,14 +80,14 @@ test_that("overlap mass panel draws arms, guides, bands, and violations", {
   expect_match(p_tight$labels$caption, "treated share outside")
 
   # Few targets without a profile axis: dodged columns.
-  fit2 <- .p2_cate_fit(m = 2L, seed = 74L)
+  fit2 <- .plot_diag_cate_fit(m = 2L, seed = 74L)
   p2 <- plot_overlap(fit2, type = "mass")
-  expect_true("GeomCol" %in% .p2_geoms(p2))
+  expect_true("GeomCol" %in% .plot_layer_geoms(p2))
 })
 
 test_that("overlap inputs follow the precedence chain", {
   skip_if_not_installed("ggplot2")
-  fit_mat <- .p2_matrix_cate_fit()
+  fit_mat <- .plot_diag_matrix_cate_fit()
 
   # No stored treatment: actionable error naming both remedies.
   expect_error(plot_overlap(fit_mat, type = "mass"), "t_col")
@@ -110,15 +106,15 @@ test_that("overlap inputs follow the precedence chain", {
 
   # Propensity view: stored e gives densities; matrix fit errors with the
   # e_col remedy; a supplied propensity vector unlocks densities.
-  fit <- .p2_cate_fit(m = 5L)
+  fit <- .plot_diag_cate_fit(m = 5L)
   p_dens <- plot_overlap(fit, type = "propensity", targets = c(1L, 5L))
-  expect_true("GeomDensity" %in% .p2_geoms(p_dens))
+  expect_true("GeomDensity" %in% .plot_layer_geoms(p_dens))
   expect_identical(class(p_dens$facet)[1L], "FacetWrap")
 
   expect_error(plot_overlap(fit_mat, type = "propensity"), "e_col")
   p_dens2 <- plot_overlap(fit_mat, type = "propensity",
                           propensity = plogis(rnorm(100L)))
-  expect_true("GeomDensity" %in% .p2_geoms(p_dens2))
+  expect_true("GeomDensity" %in% .plot_layer_geoms(p_dens2))
   expect_error(
     plot_overlap(fit_mat, type = "propensity", propensity = rep(2, 100L)),
     "in \\(0, 1\\)"
@@ -133,7 +129,7 @@ test_that("overlap inputs follow the precedence chain", {
 
 test_that("diagnostics autoplot facets three metrics with the 0.9n guide", {
   skip_if_not_installed("ggplot2")
-  fit <- .p2_cate_fit(m = 5L)
+  fit <- .plot_diag_cate_fit(m = 5L)
   d <- diagnostics(fit)
   p <- ggplot2::autoplot(d)
 
@@ -143,7 +139,7 @@ test_that("diagnostics autoplot facets three metrics with the 0.9n guide", {
                    c("n_eff", "max weight", "top-5 weight share"))
   expect_identical(nrow(p$data), 3L * 5L)
 
-  geoms <- .p2_geoms(p)
+  geoms <- .plot_layer_geoms(p)
   hline <- p$layers[[which(geoms == "GeomHline")[1L]]]
   expect_equal(hline$data$yintercept, 0.9 * fit$meta$n)
   expect_identical(as.character(hline$data$metric), "n_eff")
@@ -160,7 +156,7 @@ test_that("diagnostics autoplot facets three metrics with the 0.9n guide", {
 test_that("cate dashboard composes with the metadata annotation contract", {
   skip_if_not_installed("ggplot2")
   skip_if_not_installed("patchwork")
-  fit <- .p2_cate_fit(m = 5L, se = TRUE)
+  fit <- .plot_diag_cate_fit(m = 5L, se = TRUE)
   dash <- plot_dashboard(fit)
   expect_s3_class(dash, "patchwork")
 
@@ -181,7 +177,7 @@ test_that("dashboards substitute and degrade per availability", {
 
   # Matrix-interface cate fit: overlap unavailable, diagnostics facets
   # substituted; the dashboard still composes.
-  fit_mat <- .p2_matrix_cate_fit()
+  fit_mat <- .plot_diag_matrix_cate_fit()
   dash <- plot_dashboard(fit_mat)
   expect_s3_class(dash, "patchwork")
 
@@ -204,7 +200,7 @@ test_that("dashboards substitute and degrade per availability", {
 
 test_that("dashboard returns a named panel list when patchwork is absent", {
   skip_if_not_installed("ggplot2")
-  fit <- .p2_cate_fit(m = 5L)
+  fit <- .plot_diag_cate_fit(m = 5L)
   testthat::local_mocked_bindings(
     .plot_pkg_installed = function(pkg) pkg != "patchwork",
     .package = "RdistNN"

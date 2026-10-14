@@ -1,14 +1,5 @@
 # tests/testthat/test-user-cate-dnn-core.R
 
-skip_if_not(
-  all(vapply(
-    c("cate_dnn", "weights_dnn", "as_rank_weight"),
-    exists, logical(1),
-    mode = "function"
-  )),
-  "cate_dnn() or required helpers not found; skipping file"
-)
-
 set.seed(123)
 
 test_that("basic run: returns tau (and se if requested) with expected shapes", {

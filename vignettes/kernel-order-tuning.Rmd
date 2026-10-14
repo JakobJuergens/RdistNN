@@ -80,7 +80,7 @@ tuning_eval(meta_rule, n = 500, kx = 2, k = 1)
 
 High-level wrappers accept `tuning = ...` and resolve `s` internally:
 
-```{r wrapper-integration, eval=FALSE}
+```{r wrapper-integration}
 demo <- np_demo_data(n = 200, p = 2, seed = 1)
 fit <- np_dnn(
   data = demo$data,

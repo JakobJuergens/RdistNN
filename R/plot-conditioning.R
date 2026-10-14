@@ -2,7 +2,7 @@
 # condition number of the weighted residualized-design Gram matrix across
 # targets, from the stored PLQR diagnostics.
 
-#' Plot local design conditioning for PLQR fits
+#' Plot local design conditioning for PLQR fits (experimental)
 #'
 #' Two facets across targets: the smallest eigenvalue of the weighted
 #' residualized-design Gram matrix (linear scale, guide at zero) and its
@@ -11,6 +11,10 @@
 #' design-conditioning diagnostics: a well-conditioned local Gram is what
 #' makes the moment evaluation (and later inversion) trustworthy.
 #'
+#' @section Lifecycle:
+#' **Experimental.** PLQR functionality is outside the CATE and regression
+#' workflow focus of the initial public release. Its API and inference
+#' interfaces may change in later releases.
 #' @param object A `plqr_result` from [plqr_dnn()].
 #' @param cond_limits Numeric length-2 vector (default `c(1e3, 1e6)`);
 #'   dashed guides drawn at these condition numbers.

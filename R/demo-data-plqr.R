@@ -46,7 +46,7 @@
   }
 }
 
-#' Minimal PLQR demo data (oracle nuisances; no internal fitting)
+#' Minimal PLQR demo data (oracle nuisances; no internal fitting) (experimental)
 #'
 #' Generates data for a partially linear quantile regression (PLQR) model
 #' \deqn{
@@ -66,6 +66,10 @@
 #'   (D - m_{D}(U))\, .
 #' }
 #'
+#' @section Lifecycle:
+#' **Experimental.** PLQR functionality is outside the CATE and regression
+#' workflow focus of the initial public release. Its API and inference
+#' interfaces may change in later releases.
 #' @param n Integer; sample size.
 #' @param p Integer; number of features in \eqn{X} (recommend \eqn{p \ge 2}).
 #' @param p_d Integer; dimension of \eqn{D} (number of partially linear regressors).
@@ -236,7 +240,12 @@ plqr_demo_data <- function(n = 300,
   )
 }
 
-#' Quick helper: sample a batch of subsets (for U-stat / localization experiments)
+#' Quick helper: sample a batch of subsets (for U-stat / localization experiments) (experimental)
+#' @section Lifecycle:
+#' **Experimental.** PLQR functionality is outside the CATE and regression
+#' workflow focus of the initial public release. Its API and inference
+#' interfaces may change in later releases.
+#'
 #' @inheritParams cate_demo_subsets
 #' @examples
 #' plqr_demo_subsets(n = 10, K = 4, s = 3, seed = 1)

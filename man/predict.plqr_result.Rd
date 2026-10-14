@@ -2,7 +2,7 @@
 % Please edit documentation in R/user-dnn-plqr-methods.R
 \name{predict.plqr_result}
 \alias{predict.plqr_result}
-\title{Predict from a \code{plqr_result} object at new targets}
+\title{Predict from a \code{plqr_result} object at new targets (experimental)}
 \usage{
 \method{predict}{plqr_result}(
   object,
@@ -43,7 +43,7 @@ and also \code{se.fit} when requested. The coefficient source is attached to
 the fit as \code{attr(., "theta_source")}.
 }
 \description{
-Predict from a \code{plqr_result} object at new targets
+Predict from a \code{plqr_result} object at new targets (experimental)
 }
 \details{
 The returned fit matrix repeats the supplied \code{theta_eval}
@@ -61,6 +61,13 @@ regardless of the fit's \code{theta_meat} choice, because the fitted object
 does not retain the outcome data needed to re-run the jackknife at new
 targets.
 }
+\section{Lifecycle}{
+
+\strong{Experimental.} PLQR functionality is outside the CATE and regression
+workflow focus of the initial public release. Its API and inference
+interfaces may change in later releases.
+}
+
 \examples{
 set.seed(3)
 demo <- plqr_demo_data(n = 80, p = 2, p_d = 2, tau = 0.5, seed = 3)
@@ -79,4 +86,7 @@ fit <- plqr_dnn(
   se = FALSE
 )
 predict(fit, x0 = c(0.2, -0.1))
+}
+\seealso{
+\code{\link[=plqr_dnn]{plqr_dnn()}}.
 }

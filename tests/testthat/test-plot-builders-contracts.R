@@ -156,7 +156,6 @@ test_that("multi-coefficient fits facet by coefficient with free scales", {
   )
   p <- plot_estimates(fit_plqr)
   expect_identical(class(p$facet)[1L], "FacetWrap")
-  expect_no_error(ggplot2::ggplot_build(p))
   built <- ggplot2::ggplot_build(p)
   expect_identical(length(built$layout$layout$PANEL), 2L)
 

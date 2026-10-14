@@ -1,13 +1,4 @@
-skip_if_not(
-  all(vapply(
-    c("cate_dnn", "new_tuning", "tuning_dnn_paper", "rank_weight_dnn_exact"),
-    exists, logical(1),
-    mode = "function"
-  )),
-  "cate_dnn() grid-mode dependencies not found; skipping file"
-)
-
-.layer6_cate_tuning <- function(default_s = 4L, s_grid = c(2L, 4L, 4L, 6L)) {
+.cate_grid_cate_tuning <- function(default_s = 4L, s_grid = c(2L, 4L, 4L, 6L)) {
   new_tuning(
     name = "layer6_cate_grid",
     eval = function(...) list(s = default_s, meta = list(lambda = 1)),
@@ -21,7 +12,7 @@ skip_if_not(
   )
 }
 
-.layer6_cate_case <- function(kind = c("direct", "aipw", "robinson"),
+.cate_grid_cate_case <- function(kind = c("direct", "aipw", "robinson"),
                               n = 42L, p = 2L, m = 3L, seed = 6606L) {
   kind <- match.arg(kind)
   d <- .make_df_data(n = n, p = p, m = m, seed = seed)
@@ -50,17 +41,17 @@ skip_if_not(
   list(grid_args = args, scalar_args = args)
 }
 
-.layer6_do_cate <- function(args, ...) {
+.cate_grid_do_cate <- function(args, ...) {
   do.call(cate_dnn, c(args, list(...)))
 }
 
-.layer6_top_share <- function(n, k, s, top_n) {
+.cate_grid_top_share <- function(n, k, s, top_n) {
   tab <- rank_weight_dnn_exact(k = k, s = s)$table(n)
   abs_tab <- abs(tab)
   sum(abs_tab[seq_len(min(top_n, length(abs_tab)))]) / sum(abs_tab)
 }
 
-.layer6_expect_fixed_top5_diagnostics <- function(grid) {
+.cate_grid_expect_fixed_top5_diagnostics <- function(grid) {
   diag <- grid$tuning_grid$diagnostics
   expect_true(all(c("top_n", "top5_weight_share") %in% names(diag)))
   expect_false("top_share" %in% names(diag))
@@ -77,13 +68,13 @@ skip_if_not(
       ,
       drop = FALSE
     ]
-    expected_top5 <- .layer6_top_share(
+    expected_top5 <- .cate_grid_top_share(
       n = grid$tuning_grid$meta$n,
       k = grid$tuning_grid$meta$k,
       s = cand$s[[1L]],
       top_n = 5L
     )
-    estimator_k_share <- .layer6_top_share(
+    estimator_k_share <- .cate_grid_top_share(
       n = grid$tuning_grid$meta$n,
       k = grid$tuning_grid$meta$k,
       s = cand$s[[1L]],
@@ -95,10 +86,10 @@ skip_if_not(
   expect_true(any(differs_from_estimator_k))
 }
 
-.layer6_expect_grid_matches_scalar <- function(kind, seed) {
-  case <- .layer6_cate_case(kind = kind, seed = seed)
-  tun <- .layer6_cate_tuning()
-  grid <- .layer6_do_cate(
+.cate_grid_expect_grid_matches_scalar <- function(kind, seed) {
+  case <- .cate_grid_cate_case(kind = kind, seed = seed)
+  tun <- .cate_grid_cate_tuning()
+  grid <- .cate_grid_do_cate(
     case$grid_args,
     method = "exact", k = 1L, tuning = tun, tuning_mode = "grid",
     se = TRUE, jackknife = "fast",
@@ -108,7 +99,7 @@ skip_if_not(
   ok_candidates <- grid$tuning_grid$candidates[grid$tuning_grid$candidates$status == "ok", ]
   for (i in seq_len(nrow(ok_candidates))) {
     row <- ok_candidates[i, ]
-    ref <- .layer6_do_cate(
+    ref <- .cate_grid_do_cate(
       case$scalar_args,
       method = "exact", k = 1L, s = row$s,
       se = TRUE, jackknife = "fast",
@@ -128,15 +119,15 @@ skip_if_not(
   invisible(grid)
 }
 
-.layer6_count_traced_calls <- function(fun, expr) {
+.cate_grid_count_traced_calls <- function(fun, expr) {
   trace_env <- new.env(parent = emptyenv())
   trace_env$calls <- 0L
-  assign(".layer6_trace_env", trace_env, envir = .GlobalEnv)
-  on.exit(rm(".layer6_trace_env", envir = .GlobalEnv), add = TRUE)
+  assign(".cate_grid_trace_env", trace_env, envir = .GlobalEnv)
+  on.exit(rm(".cate_grid_trace_env", envir = .GlobalEnv), add = TRUE)
   suppressMessages(invisible(trace(
     fun,
     tracer = quote({
-      .GlobalEnv$.layer6_trace_env$calls <- .GlobalEnv$.layer6_trace_env$calls + 1L
+      .GlobalEnv$.cate_grid_trace_env$calls <- .GlobalEnv$.cate_grid_trace_env$calls + 1L
     }),
     where = asNamespace("RdistNN"),
     print = FALSE
@@ -147,16 +138,16 @@ skip_if_not(
 }
 
 test_that("cate_dnn grid mode preserves default-candidate fields and extras", {
-  case <- .layer6_cate_case("direct", seed = 6610L)
-  tun <- .layer6_cate_tuning()
+  case <- .cate_grid_cate_case("direct", seed = 6610L)
+  tun <- .cate_grid_cate_tuning()
 
-  scalar <- .layer6_do_cate(
+  scalar <- .cate_grid_do_cate(
     case$scalar_args,
     method = "exact", k = 1L, tuning = tun,
     se = TRUE, jackknife = "fast",
     return = c("W", "ranks", "ess", "psi", "tuning")
   )
-  grid <- .layer6_do_cate(
+  grid <- .cate_grid_do_cate(
     case$grid_args,
     method = "exact", k = 1L, tuning = tun, tuning_mode = "grid",
     se = TRUE, jackknife = "fast",
@@ -181,38 +172,38 @@ test_that("cate_dnn grid mode preserves default-candidate fields and extras", {
 })
 
 test_that("cate_dnn grid mode candidate rows match scalar fits on every pseudo-outcome path", {
-  .layer6_expect_grid_matches_scalar("direct", seed = 6611L)
-  .layer6_expect_grid_matches_scalar("aipw", seed = 6612L)
-  .layer6_expect_grid_matches_scalar("robinson", seed = 6613L)
+  .cate_grid_expect_grid_matches_scalar("direct", seed = 6611L)
+  .cate_grid_expect_grid_matches_scalar("aipw", seed = 6612L)
+  .cate_grid_expect_grid_matches_scalar("robinson", seed = 6613L)
 })
 
 test_that("cate_dnn grid diagnostics use fixed top-5 shares on every pseudo-outcome path", {
-  tun <- .layer6_cate_tuning(default_s = 5L, s_grid = c(2L, 5L, 5L, 7L))
+  tun <- .cate_grid_cate_tuning(default_s = 5L, s_grid = c(2L, 5L, 5L, 7L))
   seeds <- c(direct = 6619L, aipw = 6620L, robinson = 6621L)
   for (kind in names(seeds)) {
-    case <- .layer6_cate_case(kind = kind, n = 40L, m = 3L, seed = seeds[[kind]])
-    grid <- .layer6_do_cate(
+    case <- .cate_grid_cate_case(kind = kind, n = 40L, m = 3L, seed = seeds[[kind]])
+    grid <- .cate_grid_do_cate(
       case$grid_args,
       method = "exact", k = 2L, tuning = tun, tuning_mode = "grid",
       se = FALSE,
       return = character(0)
     )
 
-    .layer6_expect_fixed_top5_diagnostics(grid)
+    .cate_grid_expect_fixed_top5_diagnostics(grid)
   }
 })
 
 test_that("cate_dnn grid mode keeps nuisance extras anchored to the default candidate", {
-  tun <- .layer6_cate_tuning()
+  tun <- .cate_grid_cate_tuning()
   for (kind in c("aipw", "robinson")) {
-    case <- .layer6_cate_case(kind, seed = if (identical(kind, "aipw")) 6617L else 6618L)
-    scalar <- .layer6_do_cate(
+    case <- .cate_grid_cate_case(kind, seed = if (identical(kind, "aipw")) 6617L else 6618L)
+    scalar <- .cate_grid_do_cate(
       case$scalar_args,
       method = "exact", k = 1L, tuning = tun,
       se = FALSE,
       return = c("psi", "nuisance", "tuning")
     )
-    grid <- .layer6_do_cate(
+    grid <- .cate_grid_do_cate(
       case$grid_args,
       method = "exact", k = 1L, tuning = tun, tuning_mode = "grid",
       se = FALSE,
@@ -226,10 +217,10 @@ test_that("cate_dnn grid mode keeps nuisance extras anchored to the default cand
 })
 
 test_that("cate_dnn grid mode rejects explicit s and can use the paper default grid", {
-  case <- .layer6_cate_case("direct", n = 40L, m = 2L, seed = 6614L)
+  case <- .cate_grid_cate_case("direct", n = 40L, m = 2L, seed = 6614L)
 
   expect_error(
-    .layer6_do_cate(
+    .cate_grid_do_cate(
       case$grid_args,
       method = "exact", k = 1L, s = 4L,
       tuning_mode = "grid", se = FALSE
@@ -237,7 +228,7 @@ test_that("cate_dnn grid mode rejects explicit s and can use the paper default g
     "tuning_mode.*grid.*s"
   )
 
-  grid <- .layer6_do_cate(
+  grid <- .cate_grid_do_cate(
     case$grid_args,
     method = "exact", k = 1L,
     tuning_mode = "grid", se = FALSE,
@@ -251,12 +242,12 @@ test_that("cate_dnn grid mode rejects explicit s and can use the paper default g
 })
 
 test_that("cate_dnn grid mode constructs nuisance pseudo-outcomes once per fit", {
-  aipw_case <- .layer6_cate_case("aipw", n = 40L, m = 2L, seed = 6615L)
-  robinson_case <- .layer6_cate_case("robinson", n = 40L, m = 2L, seed = 6616L)
-  tun <- .layer6_cate_tuning()
+  aipw_case <- .cate_grid_cate_case("aipw", n = 40L, m = 2L, seed = 6615L)
+  robinson_case <- .cate_grid_cate_case("robinson", n = 40L, m = 2L, seed = 6616L)
+  tun <- .cate_grid_cate_tuning()
 
-  aipw_calls <- .layer6_count_traced_calls("cate_rho_aipw", {
-    grid <- .layer6_do_cate(
+  aipw_calls <- .cate_grid_count_traced_calls("cate_rho_aipw", {
+    grid <- .cate_grid_do_cate(
       aipw_case$grid_args,
       method = "exact", k = 1L, tuning = tun, tuning_mode = "grid",
       se = FALSE,
@@ -267,8 +258,8 @@ test_that("cate_dnn grid mode constructs nuisance pseudo-outcomes once per fit",
   })
   expect_equal(aipw_calls, 1L)
 
-  robinson_calls <- .layer6_count_traced_calls("cate_rho_rlearner", {
-    grid <- .layer6_do_cate(
+  robinson_calls <- .cate_grid_count_traced_calls("cate_rho_rlearner", {
+    grid <- .cate_grid_do_cate(
       robinson_case$grid_args,
       method = "exact", k = 1L, tuning = tun, tuning_mode = "grid",
       se = FALSE,
@@ -278,10 +269,4 @@ test_that("cate_dnn grid mode constructs nuisance pseudo-outcomes once per fit",
     expect_true(is.numeric(grid$psi))
   })
   expect_equal(robinson_calls, 1L)
-})
-
-test_that("later layers add tuning_mode to all main DNN wrappers", {
-  expect_true("tuning_mode" %in% names(formals(np_dnn)))
-  expect_true("tuning_mode" %in% names(formals(cate_dnn)))
-  expect_true("tuning_mode" %in% names(formals(plqr_dnn)))
 })

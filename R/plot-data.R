@@ -63,6 +63,10 @@
 #' This is the data layer of the plotting interface: plot builders consume
 #' these frames, and users can consume them directly for custom figures.
 #'
+#' @section Experimental methods:
+#' Methods for `plqr_result` objects are experimental, as is all PLQR
+#' functionality in this release; see [plqr_dnn()].
+#'
 #' @param object A fitted result object (`np_result`, `cate_result`,
 #'   `plqr_result`, or `gmm_result`; `tdnn_np_result` dispatches through
 #'   `np_result`).

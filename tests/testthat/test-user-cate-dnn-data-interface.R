@@ -1,14 +1,5 @@
 # tests/testthat/test-user-cate-dnn-data-interface.R
 
-skip_if_not(
-  all(vapply(
-    c("cate_dnn", "cate_demo_data"),
-    exists, logical(1),
-    mode = "function"
-  )),
-  "cate_dnn() or demo-data helpers not found; skipping file"
-)
-
 test_that("data-frame AIPW path: psi matches manual formula", {
   d <- .make_df_data()
   nms <- names(d$df)
@@ -544,13 +535,13 @@ test_that("cate_dnn stores and diagnoses the propensity used by the score", {
   d$df$e_edge <- c(0, 1, 1e-12, 1 - 1e-12, 0.2, 0.5, 0.8)
   clip <- 1e-6
   e_used <- pmin(pmax(d$df$e_edge, clip), 1 - clip)
-  fit <- cate_dnn(
+  expect_warning(fit <- cate_dnn(
     data = d$df, x_cols = d$x_cols,
     y_col = "Y", t_col = "D", m0_col = "m0_oracle",
     m1_col = "m1_oracle", e_col = "e_edge",
     X0 = d$X0, clip = clip, k = 1L, s = 1L, se = FALSE,
     return = c("W", "psi", "nuisance")
-  )
+  ), "near-.?uniform")
 
   expect_equal(fit$nuisance$e, e_used, tolerance = 0)
   expect_identical(fit$meta$propensity_version, "clipped")
@@ -569,11 +560,11 @@ test_that("cate_dnn stores and diagnoses the propensity used by the score", {
   expect_equal(diag$weighted_propensity_q10, min(e_used), tolerance = 1e-12)
   expect_equal(diag$weighted_propensity_q90, sort(e_used)[7L], tolerance = 1e-12)
 
-  fit_pseudo <- cate_dnn(
+  expect_warning(fit_pseudo <- cate_dnn(
     X = as.matrix(d$df[, d$x_cols]), X0 = d$X0,
     pseudo_outcome = seq_len(nrow(d$df)), clip = clip,
     k = 1L, s = 1L, se = FALSE, return = "psi"
-  )
+  ), "near-.?uniform")
   expect_equal(fit_pseudo$psi, seq_len(nrow(d$df)), tolerance = 0)
   expect_null(fit_pseudo$meta$propensity_clip)
 })

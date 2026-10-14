@@ -322,6 +322,10 @@
 #' Jacobian, so coefficient-inference reliability should be judged from the
 #' Jacobian block.
 #'
+#' @section Experimental methods:
+#' Methods for `plqr_result` objects are experimental, as is all PLQR
+#' functionality in this release; see [plqr_dnn()].
+#'
 #' @param object A fitted estimator object, currently an object returned by
 #'   [np_dnn()], [cate_dnn()], or [plqr_dnn()].
 #' @param candidates Candidate rows to report for grid fits. The default

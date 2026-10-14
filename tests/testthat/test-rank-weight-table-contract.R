@@ -1,32 +1,16 @@
-skip_if_not(
-  all(vapply(
-    c(
-      "rank_weight_eval",
-      "rank_weight_eval_batch",
-      "rank_weight_dnn_exact",
-      "rank_weight_dnn_asymp",
-      "rank_weight_tdnn_exact",
-      "rank_weight_tdnn_asymp"
-    ),
-    exists, logical(1),
-    mode = "function"
-  )),
-  "rank-weight helpers not found; skipping file"
-)
-
-.layer1_rank_matrix <- function(n, m, seed = 101L) {
+.rank_table_rank_matrix <- function(n, m, seed = 101L) {
   set.seed(seed)
   R <- replicate(m, sample.int(n))
   storage.mode(R) <- "integer"
   R
 }
 
-.layer1_reference_batch <- function(R, ref_one) {
+.rank_table_reference_batch <- function(R, ref_one) {
   n <- nrow(R)
   vapply(seq_len(ncol(R)), function(j) ref_one(R[, j]), numeric(n))
 }
 
-.layer1_expect_table_contract <- function(spec, n, R, ref_table, ref_one) {
+.rank_table_expect_table_contract <- function(spec, n, R, ref_table, ref_one) {
   tab <- RdistNN:::.rank_weight_table(spec, n)
 
   expect_type(tab, "double")
@@ -36,15 +20,15 @@ skip_if_not(
 
   W_table <- matrix(tab[R], nrow = n, ncol = ncol(R))
   expect_equal(rank_weight_eval_batch(spec, R), W_table, tolerance = 1e-12)
-  expect_equal(rank_weight_eval_batch(spec, R), .layer1_reference_batch(R, ref_one), tolerance = 1e-12)
+  expect_equal(rank_weight_eval_batch(spec, R), .rank_table_reference_batch(R, ref_one), tolerance = 1e-12)
   expect_equal(rank_weight_eval(spec, R[, 1L]), ref_one(R[, 1L]), tolerance = 1e-12)
 }
 
 test_that("DNN rank-weight specs expose validated tables matching existing evaluators", {
   n <- 12L
-  R <- .layer1_rank_matrix(n, m = 4L, seed = 202L)
+  R <- .rank_table_rank_matrix(n, m = 4L, seed = 202L)
 
-  .layer1_expect_table_contract(
+  .rank_table_expect_table_contract(
     spec = rank_weight_dnn_exact(k = 3L, s = 3L),
     n = n,
     R = R,
@@ -52,7 +36,7 @@ test_that("DNN rank-weight specs expose validated tables matching existing evalu
     ref_one = function(r) dnn_weights_exact_full_from_ranks(r, k = 3L, s = 3L)$w
   )
 
-  .layer1_expect_table_contract(
+  .rank_table_expect_table_contract(
     spec = rank_weight_dnn_exact(k = 2L, s = n),
     n = n,
     R = R,
@@ -60,7 +44,7 @@ test_that("DNN rank-weight specs expose validated tables matching existing evalu
     ref_one = function(r) dnn_weights_exact_full_from_ranks(r, k = 2L, s = n)$w
   )
 
-  .layer1_expect_table_contract(
+  .rank_table_expect_table_contract(
     spec = rank_weight_dnn_asymp(k = 2L, s = 5L, normalize = TRUE),
     n = n,
     R = R,
@@ -68,7 +52,7 @@ test_that("DNN rank-weight specs expose validated tables matching existing evalu
     ref_one = function(r) rank_weight_dnn_asymp(k = 2L, s = 5L, normalize = TRUE)$eval(r)
   )
 
-  .layer1_expect_table_contract(
+  .rank_table_expect_table_contract(
     spec = rank_weight_dnn_asymp(k = 2L, s = 5L, normalize = FALSE),
     n = n,
     R = R,
@@ -76,7 +60,7 @@ test_that("DNN rank-weight specs expose validated tables matching existing evalu
     ref_one = function(r) rank_weight_dnn_asymp(k = 2L, s = 5L, normalize = FALSE)$eval(r)
   )
 
-  .layer1_expect_table_contract(
+  .rank_table_expect_table_contract(
     spec = rank_weight_dnn_asymp(k = 4L, s = 4L, normalize = TRUE),
     n = n,
     R = R,
@@ -84,7 +68,7 @@ test_that("DNN rank-weight specs expose validated tables matching existing evalu
     ref_one = function(r) rank_weight_dnn_asymp(k = 4L, s = 4L, normalize = TRUE)$eval(r)
   )
 
-  .layer1_expect_table_contract(
+  .rank_table_expect_table_contract(
     spec = rank_weight_dnn_asymp(k = 2L, s = n, normalize = TRUE),
     n = n,
     R = R,
@@ -95,9 +79,9 @@ test_that("DNN rank-weight specs expose validated tables matching existing evalu
 
 test_that("TDNN rank-weight specs expose validated tables matching existing evaluators", {
   n <- 16L
-  R <- .layer1_rank_matrix(n, m = 3L, seed = 303L)
+  R <- .rank_table_rank_matrix(n, m = 3L, seed = 303L)
 
-  .layer1_expect_table_contract(
+  .rank_table_expect_table_contract(
     spec = rank_weight_tdnn_exact(s1 = 3L, s2 = 7L, dim = 2L),
     n = n,
     R = R,
@@ -105,7 +89,7 @@ test_that("TDNN rank-weight specs expose validated tables matching existing eval
     ref_one = function(r) dnn_weights_tdnn_exact_full_from_ranks(r, s1 = 3L, s2 = 7L, dim = 2L)$w
   )
 
-  .layer1_expect_table_contract(
+  .rank_table_expect_table_contract(
     spec = rank_weight_tdnn_asymp(s1 = 3L, s2 = 7L, dim = 2L, normalize = TRUE),
     n = n,
     R = R,
@@ -115,7 +99,7 @@ test_that("TDNN rank-weight specs expose validated tables matching existing eval
     }
   )
 
-  .layer1_expect_table_contract(
+  .rank_table_expect_table_contract(
     spec = rank_weight_tdnn_asymp(s1 = 3L, s2 = 7L, dim = 2L, normalize = FALSE),
     n = n,
     R = R,
@@ -151,7 +135,7 @@ test_that("rank_weight_eval_batch prefers table path when present", {
   )
   class(spec) <- c("rank_weight", class(spec))
 
-  R <- .layer1_rank_matrix(n = 7L, m = 2L, seed = 404L)
+  R <- .rank_table_rank_matrix(n = 7L, m = 2L, seed = 404L)
   tab <- spec$table(nrow(R))
   calls$table <- 0L
 
@@ -180,7 +164,7 @@ test_that("rank-weight validation accepts table-only specs through the registry"
   got <- get_rank_weight(nm)
   expect_true(is_rank_weight(got))
 
-  R <- .layer1_rank_matrix(n = 6L, m = 2L, seed = 454L)
+  R <- .rank_table_rank_matrix(n = 6L, m = 2L, seed = 454L)
   tab <- got$table(nrow(R))
   expect_equal(rank_weight_eval_batch(got, R), matrix(tab[R], nrow = nrow(R)), tolerance = 1e-12)
   expect_equal(rank_weight_eval(got, R[, 1L]), tab[R[, 1L]], tolerance = 1e-12)
@@ -196,12 +180,12 @@ test_that("custom rank weights without tables keep the old per-column fallback",
     w / sum(w)
   }, name = "no_table_fallback")
 
-  R <- .layer1_rank_matrix(n = 8L, m = 3L, seed = 505L)
+  R <- .rank_table_rank_matrix(n = 8L, m = 3L, seed = 505L)
   expect_null(RdistNN:::.rank_weight_table(spec, nrow(R)))
 
   W <- rank_weight_eval_batch(spec, R)
   expect_equal(calls$eval, ncol(R))
-  expect_equal(W, .layer1_reference_batch(R, function(r) spec$eval(r)), tolerance = 1e-12)
+  expect_equal(W, .rank_table_reference_batch(R, function(r) spec$eval(r)), tolerance = 1e-12)
 })
 
 test_that("rank-weight table accessor rejects malformed tables", {

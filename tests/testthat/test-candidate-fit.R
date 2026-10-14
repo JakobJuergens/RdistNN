@@ -1,16 +1,4 @@
-skip_if_not(
-  all(vapply(
-    c(
-      "np_dnn", "cate_dnn", "new_tuning", "tuning_dnn_paper",
-      "diagnostics", "candidate_fit", "candidate_fits"
-    ),
-    exists, logical(1),
-    mode = "function"
-  )),
-  "Layer 7 candidate-fit dependencies not found; skipping file"
-)
-
-.layer7_tuning <- function(default_s = 4L, s_grid = c(2L, 4L, 6L)) {
+.candidate_view_tuning <- function(default_s = 4L, s_grid = c(2L, 4L, 6L)) {
   new_tuning(
     name = "layer7_grid",
     eval = function(...) list(s = default_s, meta = list(lambda = 1)),
@@ -24,7 +12,7 @@ skip_if_not(
   )
 }
 
-.layer7_np_case <- function(n = 42L, p = 2L, m = 3L, seed = 7707L) {
+.candidate_view_np_case <- function(n = 42L, p = 2L, m = 3L, seed = 7707L) {
   set.seed(seed)
   X <- matrix(rnorm(n * p), nrow = n, ncol = p)
   X0 <- matrix(rnorm(m * p), nrow = m, ncol = p)
@@ -32,11 +20,11 @@ skip_if_not(
   list(X = X, X0 = X0, y = y)
 }
 
-.layer7_rank_matrix <- function(n, m) {
+.candidate_view_rank_matrix <- function(n, m) {
   matrix(rep(seq_len(n), m), nrow = n, ncol = m)
 }
 
-.layer7_compare_np <- function(view, ref) {
+.candidate_view_compare_np <- function(view, ref) {
   expect_s3_class(view, "np_result")
   expect_equal(view$mu, ref$mu, tolerance = 1e-12)
   expect_equal(view$se, ref$se, tolerance = 1e-12)
@@ -49,7 +37,7 @@ skip_if_not(
   expect_equal(view$meta$s, ref$meta$s)
 }
 
-.layer7_compare_cate <- function(view, ref) {
+.candidate_view_compare_cate <- function(view, ref) {
   expect_s3_class(view, "cate_result")
   expect_equal(view$tau, ref$tau, tolerance = 1e-12)
   expect_equal(view$se, ref$se, tolerance = 1e-12)
@@ -64,8 +52,8 @@ skip_if_not(
 }
 
 test_that("candidate_fit reconstructs NP candidate views equivalent to scalar fits", {
-  d <- .layer7_np_case(seed = 7710L)
-  tun <- .layer7_tuning()
+  d <- .candidate_view_np_case(seed = 7710L)
+  tun <- .candidate_view_tuning()
   fit <- np_dnn(
     X = d$X, X0 = d$X0, Y = d$y,
     method = "exact", k = 1L, tuning = tun, tuning_mode = "grid",
@@ -82,7 +70,7 @@ test_that("candidate_fit reconstructs NP candidate views equivalent to scalar fi
     return = c("W", "ranks", "ord", "dx", "ess", "neighbors", "y")
   )
 
-  .layer7_compare_np(view, ref)
+  .candidate_view_compare_np(view, ref)
   expect_equal(view$meta$candidate_id, cand$candidate_id)
   expect_equal(view$neighbors, ref$neighbors)
   expect_null(view$tuning_grid)
@@ -95,9 +83,9 @@ test_that("candidate_fit reconstructs NP candidate views equivalent to scalar fi
 })
 
 test_that("candidate_fit preserves matrix extras for single-target x0 views", {
-  d <- .layer7_np_case(n = 35L, m = 1L, seed = 7715L)
+  d <- .candidate_view_np_case(n = 35L, m = 1L, seed = 7715L)
   x0 <- as.numeric(d$X0[1L, ])
-  tun <- .layer7_tuning(default_s = 4L, s_grid = c(2L, 4L, 7L))
+  tun <- .candidate_view_tuning(default_s = 4L, s_grid = c(2L, 4L, 7L))
   fit <- np_dnn(
     X = d$X, x0 = x0, Y = d$y,
     method = "exact", k = 1L, tuning = tun, tuning_mode = "grid",
@@ -114,7 +102,7 @@ test_that("candidate_fit preserves matrix extras for single-target x0 views", {
     return = c("W", "ranks", "ord", "dx", "ess", "neighbors", "y")
   )
 
-  .layer7_compare_np(view, ref)
+  .candidate_view_compare_np(view, ref)
   expect_equal(dim(view$x0), c(1L, ncol(d$X)))
   expect_equal(dim(view$W), c(nrow(d$X), 1L))
   expect_equal(dim(view$ranks), c(nrow(d$X), 1L))
@@ -128,9 +116,9 @@ test_that("candidate_fit preserves matrix extras for single-target x0 views", {
 })
 
 test_that("candidate_fit keeps nearest-k neighbors distinct from DNN support", {
-  d <- .layer7_np_case(n = 42L, m = 4L, seed = 7714L)
+  d <- .candidate_view_np_case(n = 42L, m = 4L, seed = 7714L)
   k <- 2L
-  tun <- .layer7_tuning(default_s = 5L, s_grid = c(3L, 5L, 8L))
+  tun <- .candidate_view_tuning(default_s = 5L, s_grid = c(3L, 5L, 8L))
   fit <- np_dnn(
     X = d$X, X0 = d$X0, Y = d$y,
     method = "exact", k = k, tuning = tun, tuning_mode = "grid",
@@ -160,7 +148,7 @@ test_that("candidate_fit keeps nearest-k neighbors distinct from DNN support", {
 
 test_that("candidate_fit reconstructs CATE candidate views and methods work", {
   d <- .make_df_data(n = 44L, p = 2L, m = 3L, seed = 7711L)
-  tun <- .layer7_tuning()
+  tun <- .candidate_view_tuning()
   fit <- cate_dnn(
     data = d$df, x_cols = d$x_cols,
     y_col = "Y", t_col = "D",
@@ -183,7 +171,7 @@ test_that("candidate_fit reconstructs CATE candidate views and methods work", {
     return = c("W", "ranks", "ord", "dx", "ess", "psi", "nuisance")
   )
 
-  .layer7_compare_cate(view, ref)
+  .candidate_view_compare_cate(view, ref)
   expect_equal(view$meta$candidate_id, cand$candidate_id)
   expect_null(view$tuning_grid)
 
@@ -198,7 +186,7 @@ test_that("candidate_fit reconstructs CATE candidate views and methods work", {
 
 test_that("CATE candidate prediction works without retained W but diagnostics require it", {
   d <- .make_df_data(n = 44L, p = 2L, m = 3L, seed = 7717L)
-  tun <- .layer7_tuning()
+  tun <- .candidate_view_tuning()
   fit <- cate_dnn(
     data = d$df, x_cols = d$x_cols,
     y_col = "Y", t_col = "D",
@@ -232,10 +220,10 @@ test_that("CATE candidate prediction works without retained W but diagnostics re
 })
 
 test_that("candidate_fits is a named list matching repeated candidate_fit calls", {
-  d <- .layer7_np_case(seed = 7712L)
+  d <- .candidate_view_np_case(seed = 7712L)
   fit <- np_dnn(
     X = d$X, X0 = d$X0, Y = d$y,
-    method = "exact", k = 1L, tuning = .layer7_tuning(), tuning_mode = "grid",
+    method = "exact", k = 1L, tuning = .candidate_view_tuning(), tuning_mode = "grid",
     se = TRUE, jackknife = "fast",
     return = c("W", "ess")
   )
@@ -252,10 +240,10 @@ test_that("candidate_fits is a named list matching repeated candidate_fit calls"
 })
 
 test_that("candidate_fits rejects empty, malformed, and unknown selections", {
-  d <- .layer7_np_case(seed = 7718L)
+  d <- .candidate_view_np_case(seed = 7718L)
   fit <- np_dnn(
     X = d$X, X0 = d$X0, Y = d$y,
-    method = "exact", k = 1L, tuning = .layer7_tuning(), tuning_mode = "grid",
+    method = "exact", k = 1L, tuning = .candidate_view_tuning(), tuning_mode = "grid",
     se = FALSE,
     return = character(0)
   )
@@ -284,11 +272,11 @@ test_that("candidate_fits rejects empty, malformed, and unknown selections", {
 })
 
 test_that("candidate_fit does not attach optional extras absent from the parent fit", {
-  d <- .layer7_np_case(seed = 7716L)
+  d <- .candidate_view_np_case(seed = 7716L)
   fit <- np_dnn(
     X = d$X, X0 = d$X0, Y = d$y,
     method = "exact", k = 1L,
-    tuning = .layer7_tuning(), tuning_mode = "grid",
+    tuning = .candidate_view_tuning(), tuning_mode = "grid",
     se = FALSE,
     return = character(0)
   )
@@ -311,24 +299,24 @@ test_that("candidate_fit does not attach optional extras absent from the parent 
 })
 
 test_that("candidate_fit rejects stale cached ranks inconsistent with result dimensions", {
-  d <- .layer7_np_case(n = 36L, m = 3L, seed = 7719L)
+  d <- .candidate_view_np_case(n = 36L, m = 3L, seed = 7719L)
   fit <- np_dnn(
     X = d$X, X0 = d$X0, Y = d$y,
     method = "exact", k = 1L,
-    tuning = .layer7_tuning(), tuning_mode = "grid",
+    tuning = .candidate_view_tuning(), tuning_mode = "grid",
     se = FALSE,
     return = c("W", "ranks", "ess")
   )
 
   short_ranks <- fit
-  short_ranks$.model$ranks <- .layer7_rank_matrix(nrow(d$X) - 1L, nrow(d$X0))
+  short_ranks$.model$ranks <- .candidate_view_rank_matrix(nrow(d$X) - 1L, nrow(d$X0))
   expect_error(
     candidate_fit(short_ranks, "lambda_1p5"),
     "row count.*object\\$meta\\$n"
   )
 
   few_target_ranks <- fit
-  few_target_ranks$.model$ranks <- .layer7_rank_matrix(nrow(d$X), nrow(d$X0) - 1L)
+  few_target_ranks$.model$ranks <- .candidate_view_rank_matrix(nrow(d$X), nrow(d$X0) - 1L)
   expect_error(
     candidate_fit(few_target_ranks, "lambda_1p5"),
     "column count.*target points"
@@ -343,7 +331,7 @@ test_that("candidate_fit rejects stale cached ranks inconsistent with result dim
 
   fallback_ranks <- fit
   fallback_ranks$.model$ranks <- NULL
-  fallback_ranks$ranks <- .layer7_rank_matrix(nrow(d$X) - 1L, nrow(d$X0))
+  fallback_ranks$ranks <- .candidate_view_rank_matrix(nrow(d$X) - 1L, nrow(d$X0))
   expect_error(
     candidate_fit(fallback_ranks, "lambda_1p5"),
     "row count.*object\\$meta\\$n"
@@ -351,11 +339,11 @@ test_that("candidate_fit rejects stale cached ranks inconsistent with result dim
 })
 
 test_that("candidate_fit rejects stale candidate estimate rows", {
-  d <- .layer7_np_case(n = 36L, m = 3L, seed = 7720L)
+  d <- .candidate_view_np_case(n = 36L, m = 3L, seed = 7720L)
   fit <- np_dnn(
     X = d$X, X0 = d$X0, Y = d$y,
     method = "exact", k = 1L,
-    tuning = .layer7_tuning(), tuning_mode = "grid",
+    tuning = .candidate_view_tuning(), tuning_mode = "grid",
     se = FALSE,
     return = character(0)
   )
@@ -394,7 +382,7 @@ test_that("candidate_fit rejects stale candidate estimate rows", {
 })
 
 test_that("candidate_fit errors are actionable", {
-  d <- .layer7_np_case(n = 30L, m = 2L, seed = 7713L)
+  d <- .candidate_view_np_case(n = 30L, m = 2L, seed = 7713L)
   scalar <- np_dnn(
     X = d$X, X0 = d$X0, Y = d$y,
     method = "exact", k = 1L, s = 4L,
@@ -407,7 +395,7 @@ test_that("candidate_fit errors are actionable", {
 
   fit <- np_dnn(
     X = d$X, X0 = d$X0, Y = d$y,
-    method = "exact", k = 1L, tuning = .layer7_tuning(), tuning_mode = "grid",
+    method = "exact", k = 1L, tuning = .candidate_view_tuning(), tuning_mode = "grid",
     se = FALSE
   )
   expect_error(candidate_fit(fit, "not_a_candidate"), "unknown candidate")
@@ -427,7 +415,7 @@ test_that("candidate_fit errors are actionable", {
   malformed$tuning_grid$diagnostics <- NULL
   expect_error(candidate_fit(malformed, "lambda_1"), "tuning_grid.*malformed")
 
-  bad_tun <- .layer7_tuning(default_s = 4L, s_grid = c(1L, 4L, 6L))
+  bad_tun <- .candidate_view_tuning(default_s = 4L, s_grid = c(1L, 4L, 6L))
   infeasible <- suppressWarnings(np_dnn(
     X = d$X, X0 = d$X0, Y = d$y,
     method = "exact", k = 2L, tuning = bad_tun, tuning_mode = "grid",

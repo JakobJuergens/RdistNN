@@ -27,7 +27,7 @@ help pages:
 
 The notation is shared across several estimators, but the estimators do not all
 perform the same operation. In particular, `np_dnn()` and `cate_dnn()` localize
-scalar signals, `plqr_dnn()` evaluates a vector moment at a supplied coefficient,
+scalar signals, the experimental `plqr_dnn()` evaluates a vector moment at a supplied coefficient,
 and the experimental `gmm_dnn()` front end solves a local moment problem.
 
 This is the collection's crosswalk and navigation article. It explains notation
@@ -40,7 +40,7 @@ and paper-specific replication.
 The vignette collection has four complementary layers:
 
 1. Start with the package tour and the common DNN localization machinery.
-2. Move to an estimator article for the complete NP, CATE, PLQR, or IV workflow.
+2. Move to an estimator article for the NP and CATE workflows or experimental PLQR and IV details.
 3. Consult the diagnostics and visualization articles when interpreting a fit.
 4. Use the extension and replication articles only when you need those more
    specialized interfaces.
@@ -54,7 +54,7 @@ an input, an intermediate quantity, a diagnostic, or an inferential output.
 | If you want to ... | Continue with ... |
 |---|---|
 | Take a first tour of weights and the main estimators | [Getting started](getting-started.html): `vignette("getting-started", package = "RdistNN")` |
-| See complete NP, CATE, and PLQR calls | [Conditional Z-estimation](conditional-z-estimation.html): `vignette("conditional-z-estimation", package = "RdistNN")` |
+| See NP, CATE, and experimental PLQR calls | [Conditional Z-estimation](conditional-z-estimation.html): `vignette("conditional-z-estimation", package = "RdistNN")` |
 | Understand exact and asymptotic DNN weights, support, and ranks | [DNN weights](dnn-weights.html): `vignette("dnn-weights", package = "RdistNN")` |
 | Choose `s` with the paper rule, registry, or tuning grid | [Kernel-order tuning](kernel-order-tuning.html): `vignette("kernel-order-tuning", package = "RdistNN")` |
 | Interpret diagnostic names and their availability | [Diagnostics and reporting](diagnostics-reporting.html): `vignette("diagnostics-reporting", package = "RdistNN")` |
@@ -295,7 +295,11 @@ Continue with [Conditional Z-estimation](conditional-z-estimation.html) for a
 worked CATE fit. For the paper-specific data-generating process and Monte Carlo
 harness, use [Paper CATE simulation](paper-cate-simulation.html).
 
-## PLQR target and nuisance conventions
+## Experimental PLQR target and nuisance conventions
+
+All PLQR functionality is experimental, including its scores, helpers,
+post-estimation methods, and plots. The initial release focuses on CATE and
+nonparametric regression; the PLQR API and inference interfaces may change.
 
 For partially linear quantile regression, let $D_i$ be the partially linear
 regressor and let $U_i$ denote the full adjustment state. At a supplied

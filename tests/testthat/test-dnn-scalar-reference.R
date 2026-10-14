@@ -1,13 +1,4 @@
-skip_if_not(
-  all(vapply(
-    c("np_dnn", "cate_dnn", "plqr_dnn", "weights_dnn"),
-    exists, logical(1),
-    mode = "function"
-  )),
-  "DNN wrappers or required helpers not found; skipping file"
-)
-
-.make_layer0_boundary_data <- function(n = 18L, p = 2L, m = 3L) {
+.make_dnn_scalar_boundary_data <- function(n = 18L, p = 2L, m = 3L) {
   stopifnot(n >= 8L, p == 2L, m >= 2L)
   base <- matrix(
     c(
@@ -39,7 +30,7 @@ skip_if_not(
   list(X = X, X0 = X0, y = y)
 }
 
-.expect_layer0_ties_and_rank_boundaries <- function(ranks, dx) {
+.expect_dnn_scalar_ties_and_rank_boundaries <- function(ranks, dx) {
   expect_equal(sort(unique(as.integer(ranks[, 1L]))), seq_len(nrow(ranks)))
   expect_true(any(ranks == 1L))
   expect_true(any(ranks == nrow(ranks)))
@@ -48,7 +39,7 @@ skip_if_not(
 }
 
 test_that("layer 0 reference locks np_dnn scalar estimates, SEs, and extras", {
-  d <- .make_layer0_boundary_data(n = 20L, m = 3L)
+  d <- .make_dnn_scalar_boundary_data(n = 20L, m = 3L)
 
   out <- NULL
   expect_warning(
@@ -67,7 +58,7 @@ test_that("layer 0 reference locks np_dnn scalar estimates, SEs, and extras", {
     ignore.case = TRUE
   )
 
-  ref_se <- .dnn_layer0_fast_jackknife_reference(
+  ref_se <- .dnn_reference_fast_jackknife_reference(
     x_mat = d$X,
     x0_mat = d$X0,
     signal = d$y,
@@ -90,11 +81,11 @@ test_that("layer 0 reference locks np_dnn scalar estimates, SEs, and extras", {
   expect_equal(out$y, d$y, tolerance = 1e-12)
   expect_equal(out$ess, 1 / colSums(out$W^2), tolerance = 1e-12)
   expect_equal(dim(out$neighbors), c(1L, nrow(d$X0)))
-  .expect_layer0_ties_and_rank_boundaries(out$ranks, out$dx)
+  .expect_dnn_scalar_ties_and_rank_boundaries(out$ranks, out$dx)
 })
 
 test_that("layer 0 reference locks cate_dnn scalar estimates, SEs, and extras", {
-  d <- .make_layer0_boundary_data(n = 22L, m = 3L)
+  d <- .make_dnn_scalar_boundary_data(n = 22L, m = 3L)
   psi <- d$y - mean(d$y)
 
   out <- cate_dnn(
@@ -109,7 +100,7 @@ test_that("layer 0 reference locks cate_dnn scalar estimates, SEs, and extras", 
     return = c("W", "ranks", "ord", "dx", "psi", "ess", "neighbors")
   )
 
-  ref_se <- .dnn_layer0_fast_jackknife_reference(
+  ref_se <- .dnn_reference_fast_jackknife_reference(
     x_mat = d$X,
     x0_mat = d$X0,
     signal = psi,
@@ -132,7 +123,7 @@ test_that("layer 0 reference locks cate_dnn scalar estimates, SEs, and extras", 
   expect_equal(out$psi, psi, tolerance = 1e-12)
   expect_equal(out$ess, 1 / colSums(out$W^2), tolerance = 1e-12)
   expect_equal(dim(out$neighbors), c(2L, nrow(d$X0)))
-  .expect_layer0_ties_and_rank_boundaries(out$ranks, out$dx)
+  .expect_dnn_scalar_ties_and_rank_boundaries(out$ranks, out$dx)
 })
 
 test_that("layer 0 reference locks plqr_dnn scalar moment, SE matrix, and extras", {
@@ -141,7 +132,7 @@ test_that("layer 0 reference locks plqr_dnn scalar moment, SE matrix, and extras
   p <- 2L
   p_d <- 2L
   m <- 3L
-  d <- .make_layer0_boundary_data(n = n, p = p, m = m)
+  d <- .make_dnn_scalar_boundary_data(n = n, p = p, m = m)
   D <- cbind(1 + d$X[, 1], -0.5 + d$X[, 2])
   mD <- cbind(rep(0.75, n), rep(-0.25, n))
   theta <- c(0.4, -0.2)
@@ -166,7 +157,7 @@ test_that("layer 0 reference locks plqr_dnn scalar moment, SE matrix, and extras
   )
 
   score_mat <- RdistNN:::.plqr_dnn_score_matrix(D, mD, g, Y, theta_eval = theta, tau = 0.5)
-  ref_se <- .dnn_layer0_fast_jackknife_reference(
+  ref_se <- .dnn_reference_fast_jackknife_reference(
     x_mat = d$X,
     x0_mat = d$X0,
     signal = score_mat,
@@ -191,11 +182,11 @@ test_that("layer 0 reference locks plqr_dnn scalar moment, SE matrix, and extras
   expect_equal(out$score, score_mat, tolerance = 1e-12)
   expect_equal(out$ess, 1 / colSums(out$W^2), tolerance = 1e-12)
   expect_equal(dim(out$neighbors), c(2L, nrow(d$X0)))
-  .expect_layer0_ties_and_rank_boundaries(out$ranks, out$dx)
+  .expect_dnn_scalar_ties_and_rank_boundaries(out$ranks, out$dx)
 })
 
 test_that("layer 0 important scalar error paths remain stable across wrappers", {
-  d <- .make_layer0_boundary_data(n = 12L, m = 2L)
+  d <- .make_dnn_scalar_boundary_data(n = 12L, m = 2L)
   D <- cbind(1 + d$X[, 1], -0.5 + d$X[, 2])
   mD <- matrix(0, nrow = nrow(d$X), ncol = 2L)
   theta <- c(0.4, -0.2)

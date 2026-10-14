@@ -16,11 +16,6 @@
 #
 # Design note ref: note 13 §10.2 ("Add interface-equivalence tests").
 
-skip_if_not(
-  all(vapply(c("np_dnn"), exists, logical(1L), mode = "function")),
-  "np_dnn() not found; skipping file"
-)
-
 # ---- shared helper -----------------------------------------------------------
 
 # Produces a deterministic dataset with a named data.frame suitable for both
@@ -38,10 +33,10 @@ skip_if_not(
 }
 
 # ============================================================================
-# 1. Core mu equivalence: exact method, no SE
+# 1. Mean and metadata equivalence: exact method, no SE
 # ============================================================================
 
-test_that("mu is identical across all input variants (exact, no SE)", {
+test_that("means and metadata agree across input variants (exact, no SE)", {
   d   <- .make_np_iface_data()
   nms <- names(d$df)
 
@@ -70,6 +65,13 @@ test_that("mu is identical across all input variants (exact, no SE)", {
   expect_equal(out_df_name$mu,  out_mat$mu, tolerance = 1e-12)
   expect_equal(out_df_idx$mu,   out_mat$mu, tolerance = 1e-12)
   expect_equal(out_df_yvec$mu,  out_mat$mu, tolerance = 1e-12)
+
+  expect_identical(out_df_name$meta$n,      out_mat$meta$n)
+  expect_identical(out_df_name$meta$m,      out_mat$meta$m)
+  expect_identical(out_df_name$meta$p,      out_mat$meta$p)
+  expect_identical(out_df_name$meta$k,      out_mat$meta$k)
+  expect_identical(out_df_name$meta$s,      out_mat$meta$s)
+  expect_identical(out_df_name$meta$method, out_mat$meta$method)
 })
 
 # ============================================================================
@@ -243,82 +245,19 @@ test_that("tibble input produces identical mu to data.frame input", {
 })
 
 # ============================================================================
-# 9. Meta fields are consistent across interfaces
+# 9. x_cols index diagnostics: NA and non-finite are distinguished
 # ============================================================================
-
-test_that("meta fields are identical across interfaces", {
-  d <- .make_np_iface_data()
-
-  out_mat <- np_dnn(
-    X = d$X, X0 = d$X0, Y = d$y,
-    k = 2L, s = 3L, method = "exact", se = FALSE
-  )
-  out_df <- np_dnn(
-    data = d$df, x_cols = d$x_cols, y_col = "Y",
-    X0 = d$X0, k = 2L, s = 3L, method = "exact", se = FALSE
-  )
-
-  expect_identical(out_df$meta$n,      out_mat$meta$n)
-  expect_identical(out_df$meta$m,      out_mat$meta$m)
-  expect_identical(out_df$meta$p,      out_mat$meta$p)
-  expect_identical(out_df$meta$k,      out_mat$meta$k)
-  expect_identical(out_df$meta$s,      out_mat$meta$s)
-  expect_identical(out_df$meta$method, out_mat$meta$method)
-})
-
-# ============================================================================
-# 10. x_cols index diagnostics: NA and non-finite are distinguished
-# ============================================================================
-
-test_that("NA integer index in x_cols produces NA-specific error", {
-  d <- .make_np_iface_data()
-
-  expect_error(
-    np_dnn(
-      data   = d$df,
-      x_cols = c(1L, NA_integer_),
-      y_col  = "Y",
-      X0 = d$X0, k = 2L, s = 3L, se = FALSE
-    ),
-    regexp = "NA",
-    ignore.case = TRUE
-  )
-})
-
-test_that("non-finite index in x_cols produces non-finite-specific error", {
-  d <- .make_np_iface_data()
-
-  expect_error(
-    np_dnn(
-      data   = d$df,
-      x_cols = c(1L, Inf),
-      y_col  = "Y",
-      X0 = d$X0, k = 2L, s = 3L, se = FALSE
-    ),
-    regexp = "non-finite",
-    ignore.case = TRUE
-  )
-})
 
 test_that("NA-index error is distinct from non-finite-index error", {
-  d    <- .make_np_iface_data()
-  base <- function(x_cols) {
-    tryCatch(
-      np_dnn(data = d$df, x_cols = x_cols, y_col = "Y",
-             X0 = d$X0, k = 2L, s = 3L, se = FALSE),
-      error = function(e) conditionMessage(e)
-    )
+  d <- .make_np_iface_data()
+  run <- function(x_cols) {
+    np_dnn(data = d$df, x_cols = x_cols, y_col = "Y",
+            X0 = d$X0, k = 2L, s = 3L, se = FALSE)
   }
 
-  msg_na  <- base(c(1L, NA_integer_))
-  msg_inf <- base(c(1L, Inf))
-
-  expect_false(
-    identical(msg_na, msg_inf),
-    info = "NA-index and non-finite-index errors should have distinct messages"
-  )
-  expect_match(msg_na,  "NA",         ignore.case = TRUE)
-  expect_match(msg_inf, "non-finite", ignore.case = TRUE)
+  err_na <- expect_error(run(c(1L, NA_integer_)), "NA", ignore.case = TRUE)
+  err_inf <- expect_error(run(c(1L, Inf)), "non-finite", ignore.case = TRUE)
+  expect_false(identical(conditionMessage(err_na), conditionMessage(err_inf)))
 })
 
 test_that("data-frame covariate values distinguish NA and non-finite errors", {
@@ -347,7 +286,7 @@ test_that("data-frame covariate values distinguish NA and non-finite errors", {
 })
 
 # ============================================================================
-# 11. Missing column names produce informative errors
+# 10. Missing column names produce informative errors
 # ============================================================================
 
 test_that("unknown column in x_cols names the missing column in the error", {
@@ -381,7 +320,7 @@ test_that("unknown y_col column name produces informative error", {
 })
 
 # ============================================================================
-# 12. Out-of-range column indices produce informative errors
+# 11. Out-of-range column indices produce informative errors
 # ============================================================================
 
 test_that("out-of-range integer index in x_cols produces informative error", {
@@ -401,7 +340,7 @@ test_that("out-of-range integer index in x_cols produces informative error", {
 })
 
 # ============================================================================
-# 13. Ambiguous data-frame schemas fail before column extraction
+# 12. Ambiguous data-frame schemas fail before column extraction
 # ============================================================================
 
 test_that("ambiguous data-frame column-name schemas are rejected", {
@@ -437,7 +376,7 @@ test_that("ambiguous data-frame column-name schemas are rejected", {
 })
 
 # ============================================================================
-# 14. Extended extras parity across interfaces
+# 13. Extended extras parity across interfaces
 # ============================================================================
 
 test_that("extended return extras are identical across interfaces", {
@@ -465,7 +404,7 @@ test_that("extended return extras are identical across interfaces", {
 })
 
 # ============================================================================
-# 15. normalize=FALSE parity
+# 14. normalize=FALSE parity
 # ============================================================================
 
 test_that("normalize=FALSE preserves matrix/data-frame equivalence", {
@@ -487,7 +426,7 @@ test_that("normalize=FALSE preserves matrix/data-frame equivalence", {
 })
 
 # ============================================================================
-# 16. Distance spec object parity
+# 15. Distance spec object parity
 # ============================================================================
 
 test_that("distance spec object preserves matrix/data-frame equivalence", {
@@ -507,7 +446,7 @@ test_that("distance spec object preserves matrix/data-frame equivalence", {
 })
 
 # ============================================================================
-# 17. Degenerate shape parity (p=1, m=1)
+# 16. Degenerate shape parity (p=1, m=1)
 # ============================================================================
 
 test_that("p=1,m=1 edge case remains equivalent across interfaces", {

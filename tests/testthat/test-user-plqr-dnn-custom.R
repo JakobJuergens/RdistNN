@@ -1,26 +1,4 @@
-skip_if_not(
-  all(vapply(
-    c("plqr_dnn", "weights_dnn", "as_rank_weight"),
-    exists, logical(1),
-    mode = "function"
-  )),
-  "plqr_dnn() or required helpers not found; skipping file"
-)
-
-test_that("custom distance works in plqr_dnn; custom rank_weight works via weights_matrix", {
-  skip_if_not(
-    all(vapply(
-      c(
-        "register_distance", "get_distance",
-        "weights_dnn",
-        "as_rank_weight", "rank_weight_eval_batch",
-        "distance_eval_batch"
-      ),
-      exists, logical(1),
-      mode = "function"
-    )),
-    "required APIs not available"
-  )
+test_that("custom distance works in plqr_dnn; custom rank weights evaluate in batches", {
 
   set.seed(124)
   d <- .make_plqr_data(n = 40L, p = 3L, p_d = 2L, m = 4L, tau = 0.5)

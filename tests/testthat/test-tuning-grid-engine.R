@@ -1,19 +1,6 @@
-# Helper-level tests: public wrappers do not call the grid engine in layer 4.
-skip_if_not(
-  all(vapply(
-    c(
-      "new_tuning",
-      "rank_weight_dnn_exact",
-      "rank_weight_eval_batch",
-      "as_rank_weight"
-    ),
-    exists, logical(1),
-    mode = "function"
-  )),
-  "DNN grid-engine dependencies not found; skipping file"
-)
+# Shared grid-engine contracts for estimates, inference, diagnostics, and candidate reuse.
 
-.layer4_ranks <- function() {
+.grid_engine_ranks <- function() {
   R <- matrix(
     as.integer(c(
       1L, 2L, 3L, 4L, 5L,
@@ -26,7 +13,7 @@ skip_if_not(
   R
 }
 
-.layer4_candidates <- function(
+.grid_engine_candidates <- function(
   s_grid = c(1L, 2L, 2L, 4L),
   lambda_grid = c(0.5, 1, 1.25, 2),
   default_s = 2L,
@@ -58,7 +45,7 @@ skip_if_not(
   )$tuning$grid$candidates
 }
 
-.layer4_estimator <- function(signal) {
+.grid_engine_estimator <- function(signal) {
   force(signal)
   function(W, candidate_row) {
     data.frame(
@@ -70,7 +57,7 @@ skip_if_not(
   }
 }
 
-.layer4_se <- function(ranks) {
+.grid_engine_se <- function(ranks) {
   force(ranks)
   function(candidate_row, tab_jk) {
     data.frame(
@@ -82,7 +69,7 @@ skip_if_not(
   }
 }
 
-.layer4_counted_dnn_spec <- function(calls, fail_s = integer(0L)) {
+.grid_engine_counted_dnn_spec <- function(calls, fail_s = integer(0L)) {
   force(calls)
   force(fail_s)
   function(candidate_row) {
@@ -95,7 +82,7 @@ skip_if_not(
   }
 }
 
-.layer4_fixed_table_spec <- function(tab) {
+.grid_engine_fixed_table_spec <- function(tab) {
   force(tab)
   spec <- list(
     name = "fixed_table",
@@ -112,18 +99,18 @@ skip_if_not(
 }
 
 test_that("grid engine computes duplicate feasible keys once and reports all rows", {
-  ranks <- .layer4_ranks()
+  ranks <- .grid_engine_ranks()
   signal <- c(2, -1, 3, 0, 4)
-  candidates <- .layer4_candidates()
+  candidates <- .grid_engine_candidates()
   calls <- new.env(parent = emptyenv())
   calls$keys <- character()
 
   out <- RdistNN:::.dnn_grid_eval(
     candidates = candidates,
     ranks = ranks,
-    weight_spec_fn = .layer4_counted_dnn_spec(calls),
-    estimate_fn = .layer4_estimator(signal),
-    se_fn = .layer4_se(ranks),
+    weight_spec_fn = .grid_engine_counted_dnn_spec(calls),
+    estimate_fn = .grid_engine_estimator(signal),
+    se_fn = .grid_engine_se(ranks),
     ctx = list(k = 2L)
   )
 
@@ -147,14 +134,14 @@ test_that("grid engine computes duplicate feasible keys once and reports all row
 })
 
 test_that("grid engine emits NA rows for skipped infeasible candidates", {
-  ranks <- .layer4_ranks()
-  candidates <- .layer4_candidates()
+  ranks <- .grid_engine_ranks()
+  candidates <- .grid_engine_candidates()
   out <- RdistNN:::.dnn_grid_eval(
     candidates = candidates,
     ranks = ranks,
-    weight_spec_fn = .layer4_counted_dnn_spec(new.env(parent = emptyenv())),
-    estimate_fn = .layer4_estimator(c(1, 2, 3, 4, 5)),
-    se_fn = .layer4_se(ranks),
+    weight_spec_fn = .grid_engine_counted_dnn_spec(new.env(parent = emptyenv())),
+    estimate_fn = .grid_engine_estimator(c(1, 2, 3, 4, 5)),
+    se_fn = .grid_engine_se(ranks),
     ctx = list(k = 2L)
   )
 
@@ -173,17 +160,17 @@ test_that("grid engine emits NA rows for skipped infeasible candidates", {
 })
 
 test_that("grid engine records failed non-default candidate rows", {
-  ranks <- .layer4_ranks()
-  candidates <- .layer4_candidates()
+  ranks <- .grid_engine_ranks()
+  candidates <- .grid_engine_candidates()
   calls <- new.env(parent = emptyenv())
   calls$keys <- character()
 
   out <- RdistNN:::.dnn_grid_eval(
     candidates = candidates,
     ranks = ranks,
-    weight_spec_fn = .layer4_counted_dnn_spec(calls, fail_s = 4L),
-    estimate_fn = .layer4_estimator(c(1, 2, 3, 4, 5)),
-    se_fn = .layer4_se(ranks),
+    weight_spec_fn = .grid_engine_counted_dnn_spec(calls, fail_s = 4L),
+    estimate_fn = .grid_engine_estimator(c(1, 2, 3, 4, 5)),
+    se_fn = .grid_engine_se(ranks),
     ctx = list(k = 2L)
   )
 
@@ -198,15 +185,15 @@ test_that("grid engine records failed non-default candidate rows", {
 })
 
 test_that("grid engine rethrows failed default candidates", {
-  ranks <- .layer4_ranks()
-  candidates <- .layer4_candidates()
+  ranks <- .grid_engine_ranks()
+  candidates <- .grid_engine_candidates()
   expect_error(
     RdistNN:::.dnn_grid_eval(
       candidates = candidates,
       ranks = ranks,
-      weight_spec_fn = .layer4_counted_dnn_spec(new.env(parent = emptyenv()), fail_s = 2L),
-      estimate_fn = .layer4_estimator(c(1, 2, 3, 4, 5)),
-      se_fn = .layer4_se(ranks),
+      weight_spec_fn = .grid_engine_counted_dnn_spec(new.env(parent = emptyenv()), fail_s = 2L),
+      estimate_fn = .grid_engine_estimator(c(1, 2, 3, 4, 5)),
+      se_fn = .grid_engine_se(ranks),
       ctx = list(k = 2L)
     ),
     "boom s=2"
@@ -214,8 +201,8 @@ test_that("grid engine rethrows failed default candidates", {
 })
 
 test_that("grid engine computes table diagnostics from the rank-weight table", {
-  ranks <- .layer4_ranks()
-  candidates <- .layer4_candidates(
+  ranks <- .grid_engine_ranks()
+  candidates <- .grid_engine_candidates(
     s_grid = 3L,
     lambda_grid = 1,
     default_s = 3L,
@@ -229,8 +216,8 @@ test_that("grid engine computes table diagnostics from the rank-weight table", {
   out <- RdistNN:::.dnn_grid_eval(
     candidates = candidates,
     ranks = ranks,
-    weight_spec_fn = function(candidate_row) .layer4_fixed_table_spec(tab),
-    estimate_fn = .layer4_estimator(c(1, 2, 3, 4, 5)),
+    weight_spec_fn = function(candidate_row) .grid_engine_fixed_table_spec(tab),
+    estimate_fn = .grid_engine_estimator(c(1, 2, 3, 4, 5)),
     se_fn = NULL,
     ctx = list(k = 2L)
   )
@@ -244,7 +231,7 @@ test_that("grid engine computes table diagnostics from the rank-weight table", {
 
 test_that("grid engine diagnostic top share is independent of estimator k", {
   ranks <- matrix(as.integer(seq_len(6L)), ncol = 1L)
-  candidates <- .layer4_candidates(
+  candidates <- .grid_engine_candidates(
     s_grid = 3L,
     lambda_grid = 1,
     default_s = 3L,
@@ -258,8 +245,8 @@ test_that("grid engine diagnostic top share is independent of estimator k", {
   out <- RdistNN:::.dnn_grid_eval(
     candidates = candidates,
     ranks = ranks,
-    weight_spec_fn = function(candidate_row) .layer4_fixed_table_spec(tab),
-    estimate_fn = .layer4_estimator(seq_len(6L)),
+    weight_spec_fn = function(candidate_row) .grid_engine_fixed_table_spec(tab),
+    estimate_fn = .grid_engine_estimator(seq_len(6L)),
     se_fn = NULL,
     ctx = list(k = 1L)
   )
@@ -270,8 +257,8 @@ test_that("grid engine diagnostic top share is independent of estimator k", {
 })
 
 test_that("grid engine falls back to rank_weight_eval_batch when no table is available", {
-  ranks <- .layer4_ranks()
-  candidates <- .layer4_candidates(
+  ranks <- .grid_engine_ranks()
+  candidates <- .grid_engine_candidates(
     s_grid = 2L,
     lambda_grid = 1,
     default_s = 2L,
@@ -291,7 +278,7 @@ test_that("grid engine falls back to rank_weight_eval_batch when no table is ava
     candidates = candidates,
     ranks = ranks,
     weight_spec_fn = function(candidate_row) spec,
-    estimate_fn = .layer4_estimator(signal),
+    estimate_fn = .grid_engine_estimator(signal),
     se_fn = NULL,
     ctx = list(k = 2L)
   )
@@ -299,28 +286,4 @@ test_that("grid engine falls back to rank_weight_eval_batch when no table is ava
   expect_equal(out$estimates$estimate, as.numeric(crossprod(signal, expected_W)), tolerance = 1e-12)
   expect_true(all(is.na(out$diagnostics$ess)))
   expect_true(all(is.na(out$diagnostics$top5_weight_share)))
-})
-
-test_that("later layers wire plqr wrappers while plotting stays outside the grid engine", {
-  expect_true("tuning_mode" %in% names(formals(plqr_dnn)))
-
-  source_dir <- normalizePath(file.path(testthat::test_path(), "..", "..", "R"), mustWork = FALSE)
-  # Under covr the tests run against the installed layout, where R/ exists
-  # but holds the lazy-load database rather than the .R sources — require a
-  # known source file, not just the directory.
-  skip_if_not(
-    file.exists(file.path(source_dir, "user-dnn-core.R")),
-    "source R directory not available in installed-package checks"
-  )
-  source_refs <- unlist(lapply(
-    list.files(source_dir, pattern = "[.]R$", full.names = TRUE),
-    function(path) {
-      txt <- readLines(path, warn = FALSE)
-      paste(path, grep("[.]dnn_grid_eval", txt, value = TRUE), sep = ":")
-    }
-  ), use.names = FALSE)
-  source_refs <- source_refs[grepl("[.]dnn_grid_eval", source_refs)]
-  expect_true(any(grepl("user-dnn-core[.]R", source_refs)))
-  expect_true(any(grepl("user-dnn-plqr[.]R", source_refs)))
-  expect_false(any(grepl("plot-|sim-", source_refs)))
 })

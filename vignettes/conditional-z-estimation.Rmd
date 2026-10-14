@@ -16,12 +16,14 @@ tuning_default <- tuning_dnn_paper()
 
 ## Overview
 
-This vignette shows how DNN localization can be used in three user-level
-estimators:
+The initial public release focuses on CATE and nonparametric regression.
+Start with [Getting started](getting-started.html) for executable examples of
+those workflows. This article gives additional moment details, including
+**experimental PLQR**:
 
 - `np_dnn()` for localized conditional means
 - `cate_dnn()` for conditional average treatment effects
-- `plqr_dnn()` for localized PLQR coefficient surfaces and orthogonal moments
+- `plqr_dnn()` for experimental moment evaluation at supplied coefficients
 
 Each wrapper supports:
 
@@ -31,13 +33,12 @@ Each wrapper supports:
 - modular kernel-order tuning via `tuning = tuning_dnn_paper(...)`
 - fitted-object diagnostics via `diagnostics()`
 
-The wrappers implement fixed top-`k` DNN kernels for `1 <= k <= s`. Extending
-the written 1-NN theory to fixed `k` is essentially direct, but the current
-accompanying manuscript derivations are stated for `k = 1`.
+The wrappers implement fixed top-`k` DNN kernels for `1 <= k <= s`. The accompanying manuscript derivations are stated for `k = 1`;
+larger fixed `k` is an implementation-supported generalization.
 
 ## Local Mean (`np_dnn`)
 
-```{r np, eval=FALSE}
+```{r np}
 demo_np <- np_demo_data(n = 250, p = 2, design = "sinusoidal", seed = 1)
 
 fit_np <- np_dnn(
@@ -66,7 +67,7 @@ diagnostics(fit_np)
 - Robinson-form nuisance inputs (`m`, `e`)
 - Direct `pseudo_outcome`
 
-```{r cate, eval=FALSE}
+```{r cate}
 demo_cate <- cate_demo_data(n = 300, p = 2, design = "hetero", seed = 1)
 df <- demo_cate$data
 df$m1_oracle <- df$m0_oracle + df$tau_oracle
@@ -93,7 +94,11 @@ diagnostics(fit_cate)
 predict(fit_cate, x0 = c(0.2, -0.1), interval = "confidence")
 ```
 
-## PLQR Orthogonal Moments and Coefficient Inference (`plqr_dnn`)
+## Experimental PLQR moments and coefficient uncertainty (`plqr_dnn`)
+
+All PLQR functions, including score and demo helpers, methods, and specialized
+plots, are experimental. Their APIs and inference interfaces may change.
+The current wrapper does not estimate a local coefficient root.
 
 ```{r plqr, eval=FALSE}
 demo_plqr <- plqr_demo_data(n = 250, p = 2, p_d = 2, tau = 0.5, seed = 1)
@@ -149,8 +154,7 @@ Coefficient-level standard errors and confidence intervals require
 supplying `density`/`density_col` (an estimate of the local conditional
 density of `Y` at the fitted quantile). This is not an optional
 convenience: every valid coefficient route needs the density-backed
-sandwich bread (see
-`markdown_notes/design/15_plqr_variance_estimation_rationale.md`). Two
+sandwich bread. Two
 coefficient-meat routes are available through `theta_meat`: the analytic
 score covariance (default) and a full delete-1 jackknife covariance of
 the localized vector moment (`theta_meat = "jackknife"`, stored in
@@ -192,11 +196,12 @@ conditioning.
 
 `s < n` is required when jackknife SEs are requested.
 
-`plqr_dnn()` differs: when `density`/`density_col` is supplied, `se = TRUE`
-reports the direct coefficient sandwich instead of a jackknife SE (the
-jackknife path is not used in that case); the moment-level jackknife SE
-described above is only used as a fallback diagnostic when no density input
-is supplied. See "PLQR nuisances and inference" above.
+Experimental `plqr_dnn()` differs: with `density`/`density_col`, `se = TRUE`
+reports a density-backed coefficient sandwich. Its meat uses either the
+analytic score covariance (default) or the vector-moment jackknife covariance
+with `theta_meat = "jackknife"`. Without density, `moment_se` is a moment
+jackknife diagnostic and does not support coefficient intervals. See
+"PLQR nuisances and inference" above.
 
 ## Related Articles
 

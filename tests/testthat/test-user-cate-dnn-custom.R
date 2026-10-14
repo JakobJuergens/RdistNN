@@ -1,28 +1,6 @@
 # tests/testthat/test-user-cate-dnn-custom.R
 
-skip_if_not(
-  all(vapply(
-    c("cate_dnn", "weights_dnn", "as_rank_weight"),
-    exists, logical(1),
-    mode = "function"
-  )),
-  "cate_dnn() or required helpers not found; skipping file"
-)
-
-test_that("custom distance works in cate_dnn; custom rank_weight works via weights_matrix", {
-  skip_if_not(
-    all(vapply(
-      c(
-        "register_distance", "get_distance",
-        "weights_dnn",
-        "as_rank_weight", "rank_weight_eval_batch",
-        "distance_eval_batch"
-      ),
-      exists, logical(1),
-      mode = "function"
-    )),
-    "required APIs not available"
-  )
+test_that("custom distance works in cate_dnn; custom rank weights evaluate in batches", {
 
   set.seed(123)
 

@@ -1,13 +1,4 @@
-skip_if_not(
-  all(vapply(
-    c("sim_cate_one_rep", "sim_cate_run", "summarise_sim_results", "new_tuning"),
-    exists, logical(1),
-    mode = "function"
-  )),
-  "Layer 8 simulation-grid dependencies not found; skipping file"
-)
-
-.layer8_tuning <- function(default_s = 6L, s_grid = c(4L, 6L, 8L)) {
+.sim_cate_grid_tuning <- function(default_s = 6L, s_grid = c(4L, 6L, 8L)) {
   new_tuning(
     name = "layer8_grid",
     eval = function(...) list(s = default_s, meta = list(lambda = 1)),
@@ -21,7 +12,7 @@ skip_if_not(
   )
 }
 
-.layer8_raw_schema <- c(
+.sim_cate_grid_raw_schema <- c(
   "method", "design", "n", "kx", "k", "tuning_source",
   "candidate_id", "lambda", "s", "seed",
   "tau_hat", "tau0", "bias", "sq_err", "se", "cover", "ci_len", "neff",
@@ -33,7 +24,7 @@ skip_if_not(
 )
 
 test_that("sim_cate_one_rep grid mode emits DNN candidate rows matching scalar runs", {
-  tun <- .layer8_tuning()
+  tun <- .sim_cate_grid_tuning()
   n <- 64L
   kx <- 2L
   k <- 1L
@@ -77,7 +68,7 @@ test_that("sim_cate_one_rep grid mode emits DNN candidate rows matching scalar r
 })
 
 test_that("sim_cate_one_rep grid mode reuses one cross-fit score across candidates", {
-  tun <- .layer8_tuning()
+  tun <- .sim_cate_grid_tuning()
   n <- 72L
   kx <- 2L
   k <- 1L
@@ -122,14 +113,14 @@ test_that("sim_cate_run grid mode uses raw schema and does not duplicate benchma
     n_reps = 2L,
     master_seed = 8803L,
     k = 1L,
-    tuning = .layer8_tuning(),
+    tuning = .sim_cate_grid_tuning(),
     tuning_mode = "grid",
     methods = c("dnn_oracle", "ols_interact"),
     verbose = FALSE
   )
 
   expect_s3_class(raw, "data.frame")
-  expect_equal(names(raw), .layer8_raw_schema)
+  expect_equal(names(raw), .sim_cate_grid_raw_schema)
   expect_equal(nrow(raw), 8L)
   expect_equal(unique(raw$tuning_source), "tuning")
 
@@ -154,7 +145,7 @@ test_that("sim_cate_run grid mode records infeasible candidates without duplicat
       n_reps = 1L,
       master_seed = 8804L,
       k = 2L,
-      tuning = .layer8_tuning(default_s = 4L, s_grid = c(1L, 4L, 6L)),
+      tuning = .sim_cate_grid_tuning(default_s = 4L, s_grid = c(1L, 4L, 6L)),
       tuning_mode = "grid",
       methods = c("dnn_oracle", "ols_interact"),
       verbose = FALSE
@@ -182,7 +173,7 @@ test_that("sim_cate_run grid mode shapes total-failure rows by method and candid
       n_reps = 1L,
       master_seed = 8805L,
       k = 1L,
-      tuning = .layer8_tuning(),
+      tuning = .sim_cate_grid_tuning(),
       tuning_mode = "grid",
       methods = c("dnn_oracle", "ols_interact"),
       verbose = FALSE
@@ -190,7 +181,7 @@ test_that("sim_cate_run grid mode shapes total-failure rows by method and candid
     "rep seed"
   )
 
-  expect_equal(names(raw), .layer8_raw_schema)
+  expect_equal(names(raw), .sim_cate_grid_raw_schema)
   expect_equal(nrow(raw), 4L)
   expect_equal(sum(raw$method == "dnn_oracle"), 3L)
   expect_equal(sum(raw$method == "ols_interact"), 1L)

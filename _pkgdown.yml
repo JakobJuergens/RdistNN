@@ -3,11 +3,17 @@ url: https://JakobJuergens.github.io/RdistNN
 template:
   bootstrap: 5
 
+redirects:
+  - [README.html, index.html]
+
 navbar:
   structure:
-    left:  [home, reference]
-    right: [github]
+    left:  [home, reference, articles, news]
+    right: [website, github]
   components:
+    website:
+      text: Author
+      href: https://jakobjuergens.com/
     github:
       icon: fa-github
       href: https://github.com/JakobJuergens/RdistNN
@@ -20,14 +26,16 @@ articles:
       - notation-and-conventions
       - diagnostics-reporting
       - visualising-fits
-      - extending
+      - kernel-order-tuning
   - title: Theory & details
     contents:
       - conditional-z-estimation
-      - local-iv-estimation
       - dnn-weights
-      - kernel-order-tuning
+      - extending
       - jackknife-gen-ustats
+  - title: Experimental companion workflows
+    contents:
+      - local-iv-estimation
   - title: Paper replication
     contents:
       - paper-cate-simulation
@@ -37,18 +45,126 @@ reference:
     contents:
       - RdistNN-package
 
-  - title: Stable user API — estimators and weights
+  - title: CATE and regression — estimators and weights
     desc: >
-      The primary entry points expected to survive the public release:
-      user-level estimators plus the DNN weight builders.
+      The focus of the initial public release: conditional average treatment
+      effects, nonparametric regression, and their DNN weight builders.
     contents:
       - cate_dnn
       - np_dnn
-      - plqr_dnn
+      - np_tdnn
       - weights_matrix
       - weights_dnn
       - weights_dnn_exact
       - weights_dnn_asymp
+
+  - title: S3 methods
+    desc: CATE inference methods, regression printing, and shared diagnostics and candidate views.
+    contents:
+      - candidate_fit
+      - diagnostics
+      - print.cate_result
+      - print.np_result
+      - print.score_diff_path
+      - print.summary.cate_result
+      - print.tdnn_np_result
+      - print.ustat_score
+      - print.weights_result
+      - summary.cate_result
+      - confint.cate_result
+      - coef.cate_result
+      - predict.cate_result
+
+  - title: Plotting
+    desc: >
+      ggplot2-based panels for fitted objects (ggplot2 is a suggested
+      dependency), and the tidy data extractors underneath them; see the
+      visualization and diagnostics articles.
+    contents:
+      - plot_estimates
+      - plot_weights
+      - plot_overlap
+      - plot_dashboard
+      - plot_influence
+      - plot_tuning
+      - autoplot.dnn_diagnostics
+      - plot_data_estimates
+      - plot_data_weights
+      - plot_data_diagnostics
+
+  - title: Kernel-order tuning
+    desc: Tuning specifications, registry helpers, and paper-default rules.
+    contents:
+      - new_tuning
+      - as_tuning
+      - is_tuning
+      - register_tuning
+      - get_tuning
+      - tuning_names
+      - tuning_eval
+      - tuning_dnn_paper
+
+  - title: Demo data & utilities
+    contents:
+      - cate_demo_data
+      - cate_demo_subsets
+      - np_demo_data
+      - np_demo_subsets
+
+  - title: Paper replication — CATE simulation study
+    desc: >
+      Data-generating processes and Monte Carlo harnesses mirroring the
+      conditional Z-estimation paper's CATE study.
+    contents:
+      - sim_cate_data
+      - sim_cate_one_rep
+      - sim_cate_run
+      - sim_cate_methods
+      - summarise_sim_results
+
+  - title: Experimental — PLQR
+    desc: >
+      All PLQR interfaces are experimental and outside the CATE and
+      regression focus of this release. The wrapper evaluates moments
+      at supplied coefficients; it does not solve for local coefficients.
+      APIs and inference interfaces may change.
+    contents:
+      - plqr_dnn
+      - plqr_score_matrix
+      - score_plqr_component
+      - plqr_demo_data
+      - plqr_demo_subsets
+      - print.plqr_result
+      - print.summary.plqr_result
+      - summary.plqr_result
+      - confint.plqr_result
+      - coef.plqr_result
+      - vcov.plqr_result
+      - predict.plqr_result
+      - plot_conditioning
+      - plot_calibration
+
+  - title: Experimental — local IV-GMM (companion paper)
+    desc: >
+      Experimental companion functionality for the GMM paper; API and
+      theorem alignment may change before that paper is released.
+    contents:
+      - gmm_dnn
+      - iv_demo_data
+      - sim_iv_data
+      - sim_iv_one_rep
+      - sim_iv_run
+      - sim_iv_methods
+      - summarise_iv_results
+      - new_gmm_model
+      - is_gmm_model
+      - gmm_model_dr_iv
+      - print.gmm_result
+      - print.summary.gmm_result
+      - summary.gmm_result
+      - confint.gmm_result
+      - coef.gmm_result
+      - vcov.gmm_result
 
   - title: Developer API — scores (U-stat kernels)
     desc: >
@@ -66,23 +182,9 @@ reference:
       - register_score
       - get_score
       - list_scores
-      - starts_with("score_")      # e.g. score_cate_rho / score_cate_from_rho, score_plqr_component
-
-  - title: Experimental — local IV-GMM (companion paper)
-    desc: >
-      Experimental companion functionality for the GMM paper; API and
-      theorem alignment may change before that paper is released.
-    contents:
-      - gmm_dnn
-      - iv_demo_data
-      - sim_iv_data
-      - sim_iv_one_rep
-      - sim_iv_run
-      - sim_iv_methods
-      - summarise_iv_results
-      - new_gmm_model
-      - is_gmm_model
-      - gmm_model_dr_iv
+      - score_np_y
+      - score_cate_rho
+      - score_diff_path
 
   - title: Developer API — distances (rankers)
     desc: >
@@ -124,7 +226,6 @@ reference:
       Two-scale DNN estimation and the leave-one-out jackknife primitives
       supporting the generalized U-statistics companion paper.
     contents:
-      - np_tdnn
       - weights_tdnn
       - weights_tdnn_exact
       - weights_tdnn_asymp
@@ -134,85 +235,3 @@ reference:
       - jackknife_fast_rank
       - jackknife_rank_full
       - jackknife_slow_rank
-
-  - title: Plotting
-    desc: >
-      ggplot2-based panels for fitted objects (ggplot2 is a suggested
-      dependency), and the tidy data extractors underneath them; see the
-      plotting-layer plan in the repository notes.
-    contents:
-      - plot_estimates
-      - plot_weights
-      - plot_overlap
-      - plot_dashboard
-      - plot_conditioning
-      - plot_calibration
-      - plot_influence
-      - plot_tuning
-      - autoplot.dnn_diagnostics
-      - plot_data_estimates
-      - plot_data_weights
-      - plot_data_diagnostics
-
-  - title: S3 methods
-    desc: diagnostics, print, summary, confint, and predict methods for package objects.
-    contents:
-      - candidate_fit
-      - diagnostics
-      - print.cate_result
-      - print.gmm_result
-      - print.np_result
-      - print.plqr_result
-      - print.score_diff_path
-      - print.summary.cate_result
-      - print.summary.gmm_result
-      - print.summary.plqr_result
-      - print.tdnn_np_result
-      - print.ustat_score
-      - print.weights_result
-      - summary.cate_result
-      - summary.gmm_result
-      - summary.plqr_result
-      - confint.cate_result
-      - confint.gmm_result
-      - confint.plqr_result
-      - coef.cate_result
-      - coef.gmm_result
-      - coef.plqr_result
-      - vcov.gmm_result
-      - vcov.plqr_result
-      - predict.cate_result
-      - predict.plqr_result
-
-  - title: Kernel-order tuning
-    desc: Tuning specifications, registry helpers, and paper-default rules.
-    contents:
-      - new_tuning
-      - as_tuning
-      - is_tuning
-      - register_tuning
-      - get_tuning
-      - tuning_names
-      - tuning_eval
-      - tuning_dnn_paper
-
-  - title: Paper replication — CATE simulation study
-    desc: >
-      Data-generating processes and Monte Carlo harnesses mirroring the
-      conditional Z-estimation paper's CATE study.
-    contents:
-      - sim_cate_data
-      - sim_cate_one_rep
-      - sim_cate_run
-      - sim_cate_methods
-      - summarise_sim_results
-
-  - title: Demo data & utilities
-    contents:
-      - cate_demo_data
-      - cate_demo_subsets
-      - np_demo_data
-      - np_demo_subsets
-      - plqr_demo_data
-      - plqr_demo_subsets
-      - plqr_score_matrix

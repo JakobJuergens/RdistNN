@@ -1,15 +1,25 @@
-# RdistNN news
+# RdistNN 0.1.0
 
-## RdistNN 0.1.0
+## Initial public release scope
 
-### Paper tuning defaults
+- Refocused onboarding, package metadata, and the documentation site on CATE
+  and nonparametric regression, with executable examples of both input formats,
+  tuning, diagnostics, and the methods each result class supports.
+- Marked all PLQR functionality as experimental in help pages and articles,
+  and grouped its estimator, scores, demos, inference methods, and specialized
+  plots in the experimental reference section. PLQR continues to evaluate
+  moments at supplied coefficients without solving for local coefficients.
+- Added contributor guidance, a source-package release checklist, and website
+  announcement copy. This polish does not change estimator behavior or APIs.
+
+## Paper tuning defaults
 
 - `tuning_dnn_paper()` now uses the paper's finite-sample default
   `lambda = 0.4` and sensitivity grid `c(0.3, 0.4, 0.5, 0.75)`, while
   preserving `s(lambda) = floor(lambda * n^((kx + 1)/(kx + 2)))` and all
   explicit tuning overrides.
 
-### Pre-release documentation and metadata
+## Pre-release documentation and metadata
 
 - Added a notation and package-conventions vignette that maps public arguments
   and fitted-object fields to the companion papers, distinguishes effective
@@ -36,7 +46,7 @@
   permissions, and added a repository-hygiene guard for generated artifacts
   and finite artifact retention.
 
-### Theory-facing CATE simulation diagnostics
+## Theory-facing CATE simulation diagnostics
 
 - User-facing `diagnostics(cate_result)` now reuses the paper-simulation
   definitions for the ordinary-Euclidean 90-percent weight-mass radius,
@@ -52,7 +62,7 @@
 - Integrated tuning-grid rows compute these diagnostics separately for every
   candidate while retaining shared-draw and shared-fitted-state parity.
 
-### PLQR jackknife-meat inference, supplied-theta semantics, and plot defaults
+## PLQR jackknife-meat inference, supplied-theta semantics, and plot defaults
 
 - `plqr_dnn()` gains `theta_meat = c("analytic", "jackknife")`: with
   `"jackknife"`, the full delete-1 jackknife covariance of the localized
@@ -81,7 +91,7 @@
   (`f(0) = 4 tau (1 - tau) / sigma`; `tau = 0.5` draws are unchanged).
   README and vignette examples use it instead of a hand-set constant.
 
-### Pre-public breaking cleanup (paper-notation alignment)
+## Pre-public breaking cleanup (paper-notation alignment)
 
 This pass deliberately breaks pre-release APIs so the first public version
 matches the conditional Z-estimation paper's notation. No aliases for the
@@ -145,7 +155,7 @@ old names are kept.
   `weights_*()` layers instead; the internal implementations remain
   test-covered.
 
-### PLQR inference, prediction, and tuning-grid mode
+## PLQR inference, prediction, and tuning-grid mode
 
 - Added the direct PLQR coefficient sandwich (`density`/`density_col`):
   `plqr_dnn()` now reports coefficient-level `theta_se`, `theta_vcov`,
@@ -170,7 +180,7 @@ old names are kept.
   inventing a DGP and comparator methods from scratch. Left as an explicit,
   flagged future-work item rather than undertaken speculatively.
 
-### Plotting layer (Phase 3)
+## Plotting layer (Phase 3)
 
 - `autoplot()`/`plot()` methods for `plqr_result` (zero-referenced moment
   facets with a theta_eval/tau subtitle) and `gmm_result` (coefficient facets
@@ -198,7 +208,7 @@ old names are kept.
   opt-in via the `RDISTNN_VDIFFR=true` environment variable so platform
   font differences cannot break CI.
 
-### Plotting layer (Phase 2)
+## Plotting layer (Phase 2)
 
 - `plot_overlap()` for CATE fits: `type = "mass"` draws the weighted
   treated/control mass per target with dotted share guides and shaded
@@ -226,7 +236,7 @@ old names are kept.
 - The agent instruction files are excluded from the build, removing the
   long-standing top-level-files NOTE in R CMD check.
 
-### Plotting layer (Phase 1)
+## Plotting layer (Phase 1)
 
 - Added ggplot2-based plotting (ggplot2 is a suggested dependency; all
   entry points fail with an actionable message when it is missing):
@@ -247,7 +257,7 @@ old names are kept.
   `np_result` and `cate_result` delegate to `plot_estimates()`.
 - README gains a visualisation section with the CATE profile figure.
 
-### Plotting data layer (Phase 0)
+## Plotting data layer (Phase 0)
 
 - Added the tidy data extractors behind the upcoming ggplot2-based plotting
   interface, with no plotting dependency: `plot_data_estimates()` (S3
@@ -261,7 +271,7 @@ old names are kept.
   aligned with the other extractors.
 - Design and phase plan: `markdown_notes/archive/completed_plans_2026-07-09/plotting_layer_implementation_plan.md`.
 
-### Fitted objects store evaluation points
+## Fitted objects store evaluation points
 
 - `np_dnn()`, `cate_dnn()`, `plqr_dnn()`, `gmm_dnn()`, and `np_tdnn()`
   result objects now include `x0`, the `m x p` matrix of evaluation
@@ -270,7 +280,7 @@ old names are kept.
   (`markdown_notes/archive/completed_plans_2026-07-09/plotting_layer_implementation_plan.md`): profile
   plots need the target coordinates, which were previously not stored.
 
-### Breaking change: default kernel order `s`
+## Breaking change: default kernel order `s`
 
 - `np_dnn()`, `cate_dnn()`, `plqr_dnn()`, and `gmm_dnn()` no longer default
   to `s = 1L`, which produced exactly uniform DNN weights and therefore no
@@ -292,7 +302,7 @@ old names are kept.
 - `np_tdnn()` still uses explicit `s1`/`s2` defaults; a two-scale default
   rule is a separate follow-up.
 
-### Diagnostics and reporting
+## Diagnostics and reporting
 
 - Added `diagnostics()` methods for `np_dnn()`, `cate_dnn()`, and `plqr_dnn()`
   fitted objects, including generic DNN weight/tuning summaries plus
@@ -302,7 +312,7 @@ old names are kept.
   conditional Z-estimation, kernel-order tuning, and pkgdown references to show
   the diagnostics workflow.
 
-### CI and package engineering
+## CI and package engineering
 
 - Added `tools/ci/check_tests_declared_deps.R` and a CI guard step to fail when
   `tests/` uses `pkg::` or `pkg:::` for undeclared packages.
@@ -315,7 +325,7 @@ old names are kept.
 - Added workflow `.github/workflows/alignment-guardrails.yaml` to run these
   guardrail checks on push and pull requests.
 
-### Dependency and docs alignment
+## Dependency and docs alignment
 
 - Added `tibble` to `Suggests` for test-time namespace declarations.
 - Filled missing `_pkgdown.yml` reference entries for TDNN and Mahalanobis

@@ -2,10 +2,6 @@
 # C-2, NP-2, NP-3) and the autoplot()/plot() methods. No rendering: tests
 # assert on ggplot object structure, layer geoms, mapped data, and labels.
 
-.pb_layer_geoms <- function(p) {
-  vapply(p$layers, function(l) class(l$geom)[1L], character(1L))
-}
-
 .pb_np_profile_fit <- function(n = 80L, m = 6L, se = TRUE,
                                return = c("W"), seed = 51L,
                                k = 1L, s = 12L) {
@@ -43,7 +39,7 @@ test_that("profile mode draws ribbon + line with the profile axis", {
   p <- plot_estimates(fit)
 
   expect_s3_class(p, "ggplot")
-  geoms <- .pb_layer_geoms(p)
+  geoms <- .plot_layer_geoms(p)
   expect_true("GeomRibbon" %in% geoms)
   expect_true("GeomLine" %in% geoms)
   expect_false("GeomHline" %in% geoms) # no zero line for NP means
@@ -57,7 +53,7 @@ test_that("se = FALSE drops the band and says so; x_var overrides the axis", {
   skip_if_not_installed("ggplot2")
   fit <- .pb_np_profile_fit(se = FALSE)
   p <- plot_estimates(fit)
-  geoms <- .pb_layer_geoms(p)
+  geoms <- .plot_layer_geoms(p)
   expect_false("GeomRibbon" %in% geoms)
   expect_match(p$labels$caption, "no standard errors stored")
 
@@ -72,7 +68,7 @@ test_that("cate panels draw the zero line; small target sets go forest", {
   skip_if_not_installed("ggplot2")
   fit <- .pb_cate_fit()
   p <- plot_estimates(fit)
-  geoms <- .pb_layer_geoms(p)
+  geoms <- .plot_layer_geoms(p)
 
   # Non-profile with 3 targets: forest layout, zero vline, pointranges.
   expect_true("GeomVline" %in% geoms)
@@ -81,7 +77,7 @@ test_that("cate panels draw the zero line; small target sets go forest", {
 
   # Explicit pointrange style over target ids uses hline instead.
   p2 <- plot_estimates(fit, style = "pointrange")
-  geoms2 <- .pb_layer_geoms(p2)
+  geoms2 <- .plot_layer_geoms(p2)
   expect_true("GeomHline" %in% geoms2)
   expect_false("GeomVline" %in% geoms2)
 
@@ -100,9 +96,9 @@ test_that("shade_significant adds a rug only where CIs exclude zero", {
                   se = TRUE)
 
   p0 <- plot_estimates(fit)
-  expect_false("GeomRug" %in% .pb_layer_geoms(p0))
+  expect_false("GeomRug" %in% .plot_layer_geoms(p0))
   p1 <- plot_estimates(fit, shade_significant = TRUE)
-  geoms <- .pb_layer_geoms(p1)
+  geoms <- .plot_layer_geoms(p1)
   if ("GeomRug" %in% geoms) {
     rug_layer <- p1$layers[[which(geoms == "GeomRug")[1L]]]
     sig <- rug_layer$data
@@ -135,7 +131,7 @@ test_that("weight profile and cumulative views carry guides and captions", {
   fit <- .pb_np_profile_fit(n = n, m = 2L, se = FALSE,
                             return = c("W", "dx"))
   p <- plot_weights(fit, type = "profile")
-  geoms <- .pb_layer_geoms(p)
+  geoms <- .plot_layer_geoms(p)
   expect_true("GeomStep" %in% geoms)
   vl <- p$layers[[which(geoms == "GeomVline")[1L]]]
   expect_identical(vl$data$xintercept, n - 12L + 1L)
@@ -147,7 +143,7 @@ test_that("weight profile and cumulative views carry guides and captions", {
   expect_true(all(log_layer_data$weight > 0))
 
   p_cum <- plot_weights(fit, type = "cumulative")
-  geoms_cum <- .pb_layer_geoms(p_cum)
+  geoms_cum <- .plot_layer_geoms(p_cum)
   expect_true("GeomLine" %in% geoms_cum)
   expect_true("GeomHline" %in% geoms_cum)
   expect_true("GeomPoint" %in% geoms_cum)
@@ -163,7 +159,7 @@ test_that("weight profile guide uses exact DNN support edge for k > 1", {
     n = n, m = 2L, se = FALSE, return = c("W", "dx"), k = k, s = s
   )
   p <- plot_weights(fit, type = "profile")
-  geoms <- .pb_layer_geoms(p)
+  geoms <- .plot_layer_geoms(p)
   vl <- p$layers[[which(geoms == "GeomVline")[1L]]]
 
   expect_identical(vl$data$xintercept, n - s + k)
@@ -177,7 +173,7 @@ test_that("kernel view requires distances and marks the rank-s radius", {
 
   fit <- .pb_np_profile_fit(m = 1L, se = FALSE, return = c("W", "dx"))
   p <- plot_weights(fit, type = "kernel")
-  geoms <- .pb_layer_geoms(p)
+  geoms <- .plot_layer_geoms(p)
   expect_true("GeomStep" %in% geoms)
   expect_identical(p$labels$x, "Distance")
   vl <- p$layers[[which(geoms == "GeomVline")[1L]]]
@@ -194,7 +190,7 @@ test_that("TDNN weight panels add the zero line; many targets are subset", {
                       s1 = 4L, s2 = 8L, se = FALSE,
                       return = c("W", "dx"))
   p <- plot_weights(fit_tdnn, type = "kernel")
-  geoms <- .pb_layer_geoms(p)
+  geoms <- .plot_layer_geoms(p)
   expect_true("GeomHline" %in% geoms)
   expect_match(p$labels$caption, "signed")
 

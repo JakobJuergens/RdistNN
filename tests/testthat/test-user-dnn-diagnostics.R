@@ -1,12 +1,3 @@
-skip_if_not(
-  all(vapply(
-    c("np_dnn", "cate_dnn", "plqr_dnn", "new_tuning", "diagnostics"),
-    exists, logical(1),
-    mode = "function"
-  )),
-  "DNN diagnostics dependencies not found; skipping file"
-)
-
 set.seed(777)
 
 .diag_top_share <- function(w, k) {

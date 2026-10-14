@@ -3,7 +3,7 @@
 # optimized paths can be checked against the scalar contract without relying
 # on stored numeric constants.
 
-.dnn_layer0_as_signal_matrix <- function(signal, n) {
+.dnn_reference_as_signal_matrix <- function(signal, n) {
   if (is.null(dim(signal))) {
     return(matrix(as.numeric(signal), ncol = 1L))
   }
@@ -15,7 +15,7 @@
   sig
 }
 
-.dnn_layer0_jackknife_se_from_loo <- function(loo, q, n, m) {
+.dnn_reference_jackknife_se_from_loo <- function(loo, q, n, m) {
   if (q == 1L) {
     loo_bar <- colMeans(loo)
     centered <- sweep(loo, 2L, loo_bar, FUN = "-")
@@ -34,7 +34,7 @@
   se
 }
 
-.dnn_layer0_eval_rank_weight_columns <- function(spec, rank_matrix) {
+.dnn_reference_eval_rank_weight_columns <- function(spec, rank_matrix) {
   n <- nrow(rank_matrix)
   m <- ncol(rank_matrix)
   W <- matrix(NA_real_, nrow = n, ncol = m)
@@ -54,13 +54,13 @@
   W
 }
 
-.dnn_layer0_fast_jackknife_reference <- function(
+.dnn_reference_fast_jackknife_reference <- function(
   x_mat, x0_mat, signal, distance, method, k, s, normalize, ctx,
   precomputed_ranks = NULL
 ) {
   n <- nrow(x_mat)
   m <- nrow(x0_mat)
-  sig <- .dnn_layer0_as_signal_matrix(signal, n = n)
+  sig <- .dnn_reference_as_signal_matrix(signal, n = n)
   q <- ncol(sig)
 
   ranks_full <- precomputed_ranks
@@ -105,7 +105,7 @@
     rank_matrix_i <- rank_matrix_i - (rank_matrix_i > r_i)
     storage.mode(rank_matrix_i) <- "integer"
 
-    W_i <- .dnn_layer0_eval_rank_weight_columns(rw, rank_matrix_i)
+    W_i <- .dnn_reference_eval_rank_weight_columns(rw, rank_matrix_i)
     est_i <- crossprod(sig[keep, , drop = FALSE], W_i)
     if (q == 1L) {
       loo[i, ] <- as.numeric(est_i[1L, ])
@@ -114,5 +114,5 @@
     }
   }
 
-  .dnn_layer0_jackknife_se_from_loo(loo = loo, q = q, n = n, m = m)
+  .dnn_reference_jackknife_se_from_loo(loo = loo, q = q, n = n, m = m)
 }

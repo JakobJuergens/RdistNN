@@ -2,7 +2,7 @@
 % Please edit documentation in R/score-plqr.R
 \name{score_plqr_component}
 \alias{score_plqr_component}
-\title{PLQR diagnostic score (component \eqn{j}); pure score (no weights, no fitting)}
+\title{PLQR diagnostic score (component \eqn{j}); pure score (no weights, no fitting) (experimental)}
 \usage{
 score_plqr_component(
   x0,
@@ -65,6 +65,13 @@ and returns subset sums \eqn{\sum_{i \in S} \psi_i} in \code{eval}/\code{eval_ba
 This score performs \strong{no} nearest-neighbor ordering or L-stat weighting;
 any aggregation/weights are handled outside the score layer.
 }
+\section{Lifecycle}{
+
+\strong{Experimental.} PLQR functionality is outside the CATE and regression
+workflow focus of the initial public release. Its API and inference
+interfaces may change in later releases.
+}
+
 \examples{
 demo <- plqr_demo_data(n = 200, p = 3, p_d = 2, tau = 0.5, seed = 1)
 sc <- score_plqr_component(

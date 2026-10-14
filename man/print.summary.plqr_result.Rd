@@ -2,7 +2,7 @@
 % Please edit documentation in R/user-dnn-plqr-methods.R
 \name{print.summary.plqr_result}
 \alias{print.summary.plqr_result}
-\title{Print a \code{summary.plqr_result}}
+\title{Print a \code{summary.plqr_result} (experimental)}
 \usage{
 \method{print}{summary.plqr_result}(x, digits = max(3L, getOption("digits") - 3L), ...)
 }
@@ -17,5 +17,15 @@
 \code{x}, invisibly.
 }
 \description{
-Print a \code{summary.plqr_result}
+Print a \code{summary.plqr_result} (experimental)
+}
+\section{Lifecycle}{
+
+\strong{Experimental.} PLQR functionality is outside the CATE and regression
+workflow focus of the initial public release. Its API and inference
+interfaces may change in later releases.
+}
+
+\seealso{
+\code{\link[=plqr_dnn]{plqr_dnn()}}.
 }

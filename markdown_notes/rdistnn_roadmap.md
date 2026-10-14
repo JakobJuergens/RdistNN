@@ -1,12 +1,20 @@
 # RdistNN Live Roadmap
 
-**Updated:** 2026-07-22
+**Updated:** 2026-10-14
 **Purpose:** the single live list of open package work. Completed plans are
 archived under `markdown_notes/archive/`; the design policy corpus is
 `markdown_notes/design/`. Verify any item against current code before
 treating it as still open.
 
 ## Current State
+
+The initial public release focuses on CATE, nonparametric regression, and
+supporting DNN weights, tuning, diagnostics, and plotting. All PLQR functions
+and methods are labeled experimental, as is local IV-GMM. The October release
+polish is recorded in `release/2026-10-14-public-release-polish.md`;
+`RELEASING.md` describes packaging and publication, and `WEBSITE.md` contains
+copy for the author's website. These scope changes do not alter the API or
+computational behavior.
 
 The pre-public overhaul is implemented (archived roadmap in
 `archive/completed_plans_2026-07-11/`): paper-aligned PLQR names

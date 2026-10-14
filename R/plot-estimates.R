@@ -16,6 +16,10 @@
 #' kernel order `s` with its provenance (`paper_default` or `manual`).
 #' CATE panels draw a dashed zero reference line.
 #'
+#' @section Experimental methods:
+#' Methods for `plqr_result` objects are experimental, as is all PLQR
+#' functionality in this release; see [plqr_dnn()].
+#'
 #' @param object A fitted result object accepted by
 #'   [plot_data_estimates()].
 #' @param level Confidence level for the bounds (default `0.95`).

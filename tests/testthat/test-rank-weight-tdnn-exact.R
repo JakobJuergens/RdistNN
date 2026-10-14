@@ -173,17 +173,6 @@ test_that("[spec] eval_batch produces correct shape and column sums", {
   expect_equal(colSums(W), rep(1, m), tolerance = 1e-10)
 })
 
-test_that("[spec] table cache: second call with same n reuses cached table", {
-  s1 <- 3L; s2 <- 6L; d <- 2L
-  rw <- rank_weight_tdnn_exact(s1, s2, d)
-  n <- 10L; m <- 2L
-  R <- apply(replicate(m, sample.int(n)), 2L, identity)
-  storage.mode(R) <- "integer"
-  W1 <- rank_weight_eval_batch(rw, R)
-  W2 <- rank_weight_eval_batch(rw, R)  # second call, should hit cache
-  expect_equal(W1, W2, tolerance = 0)
-})
-
 test_that("[spec] eval_batch agrees with dnn_weights_tdnn_exact_full_from_ranks", {
   set.seed(6)
   n <- 14L; m <- 3L; s1 <- 2L; s2 <- 5L; d <- 2L

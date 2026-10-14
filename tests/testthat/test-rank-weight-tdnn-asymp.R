@@ -241,16 +241,6 @@ test_that("[spec] eval_batch has signed weights", {
   expect_true(any(W < 0))
 })
 
-test_that("[spec] table cache: second call with same n reuses cached table", {
-  s1 <- 3L; s2 <- 6L; d <- 2L
-  rw <- rank_weight_tdnn_asymp(s1, s2, d)
-  n <- 10L; m <- 2L
-  R <- .make_rank_matrix(n, m, seed = 8L)
-  W1 <- rank_weight_eval_batch(rw, R)
-  W2 <- rank_weight_eval_batch(rw, R)
-  expect_equal(W1, W2, tolerance = 0)
-})
-
 test_that("[spec] normalize=FALSE spec: colSums may deviate slightly from 1", {
   # With normalize=FALSE the rank table is not renormalized; floating-point
   # drift can cause sum != 1 exactly, but it should still be close.

@@ -1,13 +1,4 @@
-skip_if_not(
-  all(vapply(
-    c("np_dnn", "new_tuning", "tuning_dnn_paper", "rank_weight_dnn_exact"),
-    exists, logical(1),
-    mode = "function"
-  )),
-  "np_dnn() grid-mode dependencies not found; skipping file"
-)
-
-.layer5_np_data <- function(n = 42L, p = 2L, m = 3L, seed = 5505L) {
+.np_grid_np_data <- function(n = 42L, p = 2L, m = 3L, seed = 5505L) {
   set.seed(seed)
   X <- matrix(rnorm(n * p), nrow = n, ncol = p)
   X0 <- matrix(rnorm(m * p), nrow = m, ncol = p)
@@ -15,7 +6,7 @@ skip_if_not(
   list(X = X, X0 = X0, y = y)
 }
 
-.layer5_np_tuning <- function(default_s = 4L, s_grid = c(2L, 4L, 4L, 6L)) {
+.np_grid_np_tuning <- function(default_s = 4L, s_grid = c(2L, 4L, 4L, 6L)) {
   new_tuning(
     name = "layer5_np_grid",
     eval = function(...) list(s = default_s, meta = list(lambda = 1)),
@@ -29,13 +20,13 @@ skip_if_not(
   )
 }
 
-.layer5_top_share <- function(n, k, s, top_n) {
+.np_grid_top_share <- function(n, k, s, top_n) {
   tab <- rank_weight_dnn_exact(k = k, s = s)$table(n)
   abs_tab <- abs(tab)
   sum(abs_tab[seq_len(min(top_n, length(abs_tab)))]) / sum(abs_tab)
 }
 
-.layer5_expect_fixed_top5_diagnostics <- function(grid) {
+.np_grid_expect_fixed_top5_diagnostics <- function(grid) {
   diag <- grid$tuning_grid$diagnostics
   expect_true(all(c("top_n", "top5_weight_share") %in% names(diag)))
   expect_false("top_share" %in% names(diag))
@@ -52,13 +43,13 @@ skip_if_not(
       ,
       drop = FALSE
     ]
-    expected_top5 <- .layer5_top_share(
+    expected_top5 <- .np_grid_top_share(
       n = grid$tuning_grid$meta$n,
       k = grid$tuning_grid$meta$k,
       s = cand$s[[1L]],
       top_n = 5L
     )
-    estimator_k_share <- .layer5_top_share(
+    estimator_k_share <- .np_grid_top_share(
       n = grid$tuning_grid$meta$n,
       k = grid$tuning_grid$meta$k,
       s = cand$s[[1L]],
@@ -71,8 +62,8 @@ skip_if_not(
 }
 
 test_that("np_dnn grid mode preserves default-candidate fields and extras", {
-  d <- .layer5_np_data()
-  tun <- .layer5_np_tuning()
+  d <- .np_grid_np_data()
+  tun <- .np_grid_np_tuning()
 
   scalar <- np_dnn(
     X = d$X, X0 = d$X0, Y = d$y,
@@ -104,8 +95,8 @@ test_that("np_dnn grid mode preserves default-candidate fields and extras", {
 })
 
 test_that("np_dnn grid mode candidate rows match separate scalar fits", {
-  d <- .layer5_np_data(n = 38L, m = 4L, seed = 5506L)
-  tun <- .layer5_np_tuning()
+  d <- .np_grid_np_data(n = 38L, m = 4L, seed = 5506L)
+  tun <- .np_grid_np_tuning()
 
   grid <- np_dnn(
     X = d$X, X0 = d$X0, Y = d$y,
@@ -137,27 +128,27 @@ test_that("np_dnn grid mode candidate rows match separate scalar fits", {
 })
 
 test_that("np_dnn grid diagnostics expose fixed top-5 shares independent of estimator k", {
-  d <- .layer5_np_data(n = 40L, m = 3L, seed = 5509L)
+  d <- .np_grid_np_data(n = 40L, m = 3L, seed = 5509L)
   grid <- np_dnn(
     X = d$X, X0 = d$X0, Y = d$y,
     method = "exact", k = 2L,
-    tuning = .layer5_np_tuning(default_s = 5L, s_grid = c(2L, 5L, 5L, 7L)),
+    tuning = .np_grid_np_tuning(default_s = 5L, s_grid = c(2L, 5L, 5L, 7L)),
     tuning_mode = "grid",
     se = FALSE,
     return = character(0)
   )
 
-  .layer5_expect_fixed_top5_diagnostics(grid)
+  .np_grid_expect_fixed_top5_diagnostics(grid)
 })
 
 test_that("np_dnn grid mode computes s = n candidates when no jackknife is requested", {
   n <- 34L
   k <- 2L
-  d <- .layer5_np_data(n = n, m = 3L, seed = 5510L)
+  d <- .np_grid_np_data(n = n, m = 3L, seed = 5510L)
   grid <- np_dnn(
     X = d$X, X0 = d$X0, Y = d$y,
     method = "exact", k = k,
-    tuning = .layer5_np_tuning(default_s = 5L, s_grid = c(2L, 5L, n, n)),
+    tuning = .np_grid_np_tuning(default_s = 5L, s_grid = c(2L, 5L, n, n)),
     tuning_mode = "grid",
     se = FALSE,
     return = character(0)
@@ -179,7 +170,7 @@ test_that("np_dnn grid mode computes s = n candidates when no jackknife is reque
 })
 
 test_that("np_dnn grid mode rejects explicit s and can use the paper default grid", {
-  d <- .layer5_np_data(n = 40L, m = 2L, seed = 5507L)
+  d <- .np_grid_np_data(n = 40L, m = 2L, seed = 5507L)
 
   expect_error(
     np_dnn(
@@ -204,8 +195,8 @@ test_that("np_dnn grid mode rejects explicit s and can use the paper default gri
 })
 
 test_that("np_dnn grid mode records infeasible candidates with one warning", {
-  d <- .layer5_np_data(n = 36L, m = 2L, seed = 5508L)
-  tun <- .layer5_np_tuning(default_s = 4L, s_grid = c(1L, 4L, 4L, 36L))
+  d <- .np_grid_np_data(n = 36L, m = 2L, seed = 5508L)
+  tun <- .np_grid_np_tuning(default_s = 4L, s_grid = c(1L, 4L, 4L, 36L))
 
   expect_warning(
     grid <- np_dnn(
@@ -226,10 +217,4 @@ test_that("np_dnn grid mode records infeasible candidates with one warning", {
     grid$tuning_grid$diagnostics$status,
     c("infeasible", "ok", "ok", "infeasible")
   )
-})
-
-test_that("later layers add tuning_mode to all main DNN wrappers", {
-  expect_true("tuning_mode" %in% names(formals(np_dnn)))
-  expect_true("tuning_mode" %in% names(formals(cate_dnn)))
-  expect_true("tuning_mode" %in% names(formals(plqr_dnn)))
 })

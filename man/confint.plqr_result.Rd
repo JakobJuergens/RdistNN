@@ -2,7 +2,7 @@
 % Please edit documentation in R/user-dnn-plqr-methods.R
 \name{confint.plqr_result}
 \alias{confint.plqr_result}
-\title{Confidence intervals for \code{plqr_result}}
+\title{Confidence intervals for \code{plqr_result} (experimental)}
 \usage{
 \method{confint}{plqr_result}(object, parm = NULL, level = 0.95, target = NULL, ...)
 }
@@ -22,7 +22,7 @@ A data frame with confidence intervals and a \code{theta_source}
 attribute.
 }
 \description{
-Confidence intervals for \code{plqr_result}
+Confidence intervals for \code{plqr_result} (experimental)
 }
 \details{
 Coefficient-level standard errors and intervals require the direct PLQR
@@ -35,4 +35,14 @@ Intervals are centered at the coefficient value the object represents:
 for current fits the supplied \code{theta_eval}
 (\code{meta$theta_source = "supplied"}), not an estimated local root. The
 source is attached as \code{attr(., "theta_source")}.
+}
+\section{Lifecycle}{
+
+\strong{Experimental.} PLQR functionality is outside the CATE and regression
+workflow focus of the initial public release. Its API and inference
+interfaces may change in later releases.
+}
+
+\seealso{
+\code{\link[=plqr_dnn]{plqr_dnn()}}.
 }

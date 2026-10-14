@@ -2,7 +2,7 @@
 % Please edit documentation in R/user-dnn-plqr-methods.R
 \name{vcov.plqr_result}
 \alias{vcov.plqr_result}
-\title{Variance-covariance matrices for \code{plqr_result}}
+\title{Variance-covariance matrices for \code{plqr_result} (experimental)}
 \usage{
 \method{vcov}{plqr_result}(object, target = NULL, ...)
 }
@@ -18,5 +18,15 @@ single-target fit and a named list for a multi-target fit.}
 A covariance matrix or list of covariance matrices.
 }
 \description{
-Variance-covariance matrices for \code{plqr_result}
+Variance-covariance matrices for \code{plqr_result} (experimental)
+}
+\section{Lifecycle}{
+
+\strong{Experimental.} PLQR functionality is outside the CATE and regression
+workflow focus of the initial public release. Its API and inference
+interfaces may change in later releases.
+}
+
+\seealso{
+\code{\link[=plqr_dnn]{plqr_dnn()}}.
 }

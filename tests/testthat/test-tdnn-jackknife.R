@@ -19,8 +19,6 @@
   matrix(rnorm(n * p), n, p)
 }
 
-.make_x0_jk <- function(p = 2L) rep(0, p)
-
 # thin wrapper: call the internal function with scalar x0 wrapped as x0_mat
 .se_matrix <- function(X, x0_mat, signal, s1, s2, d,
                         method = "exact", jackknife = "fast",

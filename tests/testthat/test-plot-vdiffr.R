@@ -1,5 +1,5 @@
-# Visual regression baselines for the plotting layer (plan 6, Phase 3
-# gate). These snapshots are opt-in: SVG rendering differs across
+# Visual regression baselines for the plotting panels.
+# These snapshots are opt-in: SVG rendering differs across
 # platforms and font stacks, so they run only when RDISTNN_VDIFFR=true is
 # set explicitly (a deliberate local run), never on CI or CRAN.
 #

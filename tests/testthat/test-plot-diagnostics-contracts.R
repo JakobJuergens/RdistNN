@@ -1,5 +1,5 @@
-# Deeper contract tests for the Phase 2 plotting panels. Complements the
-# structural checks in test-plot-phase2.R with:
+# Deeper contract tests for the CATE diagnostic plotting panels. Complements the
+# structural checks in test-plot-diagnostics.R with:
 #   - built-layer identities for the overlap mass panel (masses recomputed
 #     independently from W and t, band/guide geometry, pinned palette),
 #   - the user-supplied-treatment path verified numerically,
@@ -10,7 +10,7 @@
 #   - dashboard panel counts, argument passthrough, single-panel
 #     degradation, and a full print smoke test.
 
-.p2c_cate_df <- function(n = 120L, seed = 81L) {
+.plot_diag_contract_cate_df <- function(n = 120L, seed = 81L) {
   set.seed(seed)
   df <- data.frame(X1 = rnorm(n), X2 = rnorm(n))
   df$e <- plogis(0.5 * df$X1)
@@ -21,9 +21,9 @@
   df
 }
 
-.p2c_cate_fit <- function(n = 120L, m = 5L, seed = 81L, se = FALSE,
+.plot_diag_contract_cate_fit <- function(n = 120L, m = 5L, seed = 81L, se = FALSE,
                           s = 15L) {
-  df <- .p2c_cate_df(n = n, seed = seed)
+  df <- .plot_diag_contract_cate_df(n = n, seed = seed)
   cate_dnn(
     data = df, x_cols = c("X1", "X2"), y_col = "Y", t_col = "T",
     e_col = "e", m0_col = "m0", m1_col = "m1",
@@ -32,17 +32,13 @@
   )
 }
 
-.p2c_geoms <- function(p) {
-  vapply(p$layers, function(l) class(l$geom)[1L], character(1L))
-}
-
 test_that("overlap mass built layers reproduce independent computations", {
   skip_if_not_installed("ggplot2")
-  fit <- .p2c_cate_fit(m = 5L)
+  fit <- .plot_diag_contract_cate_fit(m = 5L)
   limits <- c(0.2, 0.8)
   p <- plot_overlap(fit, type = "mass", share_limits = limits)
   built <- ggplot2::ggplot_build(p)
-  geoms <- .p2c_geoms(p)
+  geoms <- .plot_layer_geoms(p)
 
   # Independent mass computation from stored components.
   t_num <- fit$.model$t_vec
@@ -67,7 +63,7 @@ test_that("overlap mass built layers reproduce independent computations", {
 
 test_that("user-supplied treatment reproduces the stored-treatment panel", {
   skip_if_not_installed("ggplot2")
-  df <- .p2c_cate_df(seed = 82L)
+  df <- .plot_diag_contract_cate_df(seed = 82L)
   fit_data <- cate_dnn(
     data = df, x_cols = c("X1", "X2"), y_col = "Y", t_col = "T",
     e_col = "e", m0_col = "m0", m1_col = "m1",
@@ -91,10 +87,10 @@ test_that("user-supplied treatment reproduces the stored-treatment panel", {
 test_that("overlap display mode and inputs are validated at the boundaries", {
   skip_if_not_installed("ggplot2")
   # Profile lines at m = 4, dodged columns at m = 3.
-  fit4 <- .p2c_cate_fit(m = 4L, seed = 83L)
-  expect_true("GeomLine" %in% .p2c_geoms(plot_overlap(fit4, type = "mass")))
-  fit3 <- .p2c_cate_fit(m = 3L, seed = 84L)
-  expect_true("GeomCol" %in% .p2c_geoms(plot_overlap(fit3, type = "mass")))
+  fit4 <- .plot_diag_contract_cate_fit(m = 4L, seed = 83L)
+  expect_true("GeomLine" %in% .plot_layer_geoms(plot_overlap(fit4, type = "mass")))
+  fit3 <- .plot_diag_contract_cate_fit(m = 3L, seed = 84L)
+  expect_true("GeomCol" %in% .plot_layer_geoms(plot_overlap(fit3, type = "mass")))
 
   # share_limits validation.
   expect_error(plot_overlap(fit4, share_limits = c(0.9, 0.1)), "increasing")
@@ -102,7 +98,7 @@ test_that("overlap display mode and inputs are validated at the boundaries", {
   expect_error(plot_overlap(fit4, share_limits = c(0.1, Inf)), "finite")
 
   # Overlap panels need the stored weight matrix.
-  df <- .p2c_cate_df(seed = 85L)
+  df <- .plot_diag_contract_cate_df(seed = 85L)
   fit_now <- cate_dnn(
     data = df, x_cols = c("X1", "X2"), y_col = "Y", t_col = "T",
     e_col = "e", m0_col = "m0", m1_col = "m1",
@@ -123,7 +119,7 @@ test_that("overlap display mode and inputs are validated at the boundaries", {
 
 test_that("propensity densities map weights and respect target subsetting", {
   skip_if_not_installed("ggplot2")
-  fit <- .p2c_cate_fit(m = 10L, seed = 86L)
+  fit <- .plot_diag_contract_cate_fit(m = 10L, seed = 86L)
 
   # Default subsetting above eight targets: at most three facets.
   p <- plot_overlap(fit, type = "propensity")
@@ -136,7 +132,7 @@ test_that("propensity densities map weights and respect target subsetting", {
   expect_identical(nrow(p2$data), 2L * fit$meta$n)
 
   # The density layer maps the per-target normalized weights.
-  dens_layer <- p2$layers[[which(.p2c_geoms(p2) == "GeomDensity")[1L]]]
+  dens_layer <- p2$layers[[which(.plot_layer_geoms(p2) == "GeomDensity")[1L]]]
   expect_true("weight" %in% names(dens_layer$mapping))
   w2 <- p2$data$w[p2$data$target_id == 2L]
   expect_equal(sum(w2), 1)
@@ -154,11 +150,11 @@ test_that("propensity densities map weights and respect target subsetting", {
 
 test_that("diagnostics facets reproduce the extractor and isolate the guide", {
   skip_if_not_installed("ggplot2")
-  fit <- .p2c_cate_fit(m = 5L, seed = 87L)
+  fit <- .plot_diag_contract_cate_fit(m = 5L, seed = 87L)
   dd <- plot_data_diagnostics(fit)
   p <- ggplot2::autoplot(diagnostics(fit))
   built <- ggplot2::ggplot_build(p)
-  geoms <- .p2c_geoms(p)
+  geoms <- .plot_layer_geoms(p)
 
   # Facet values equal the extractor columns, target by target.
   long <- p$data
@@ -191,13 +187,13 @@ test_that("dashboards carry the expected panel counts and pass arguments", {
 
   # Full-input cate dashboard: four panels (estimates, overlap,
   # propensity, weights).
-  fit <- .p2c_cate_fit(m = 5L, seed = 89L, se = TRUE)
+  fit <- .plot_diag_contract_cate_fit(m = 5L, seed = 89L, se = TRUE)
   dash <- plot_dashboard(fit)
   expect_identical(length(dash$patches$plots) + 1L, 4L)
 
   # Matrix-interface fit: overlap and propensity unavailable, diagnostics
   # substituted -> three panels.
-  df <- .p2c_cate_df(seed = 90L)
+  df <- .plot_diag_contract_cate_df(seed = 90L)
   fit_mat <- cate_dnn(
     X = as.matrix(df[, c("X1", "X2")]),
     X0 = cbind(seq(-1, 1, length.out = 5L), 0),
@@ -237,15 +233,14 @@ test_that("dashboards degrade to a single panel and survive printing", {
   expect_identical(length(dash$patches$plots) + 1L, 1L)
 
   # Full render smoke test: the composed dashboard prints without error.
-  fit <- .p2c_cate_fit(m = 5L, seed = 92L, se = TRUE)
+  fit <- .plot_diag_contract_cate_fit(m = 5L, seed = 92L, se = TRUE)
   dash_full <- plot_dashboard(fit)
   pdf(NULL)
   on.exit(dev.off(), add = TRUE)
   expect_no_error(print(dash_full))
 
   # paper_default provenance reaches the annotation.
-  set.seed(93)
-  df <- .p2c_cate_df(seed = 93L)
+  df <- .plot_diag_contract_cate_df(seed = 93L)
   fit_def <- cate_dnn(
     data = df, x_cols = c("X1", "X2"), y_col = "Y", t_col = "T",
     e_col = "e", m0_col = "m0", m1_col = "m1",

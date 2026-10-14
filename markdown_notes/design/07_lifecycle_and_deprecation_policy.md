@@ -12,7 +12,17 @@ documented, and staged where possible.
 
 ## 2. Lifecycle posture
 
-`RdistNN` is currently experimental.
+`RdistNN` is an early research package. The initial public release focuses on
+CATE (`cate_dnn()`), nonparametric regression (`np_dnn()`), and supporting DNN
+weights, tuning, diagnostics, and plots.
+
+All PLQR functionality is explicitly experimental: estimator and score
+constructors, demo helpers, dedicated post-estimation methods, specialized
+plots, and PLQR dispatch through shared generics. Local IV-GMM is also
+experimental. These workflows remain available but fall outside the initial
+release's supported workflow focus. Mark their status in help, articles, and
+the pkgdown reference; do not change computation or emit new runtime warnings
+solely to communicate lifecycle status.
 
 This means:
 

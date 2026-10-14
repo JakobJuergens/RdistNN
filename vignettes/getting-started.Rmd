@@ -1,267 +1,225 @@
 ---
-title: "Getting started with RdistNN"
+title: "Getting started: CATE and regression"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Getting started with RdistNN}
+  %\VignetteIndexEntry{Getting started: CATE and regression}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
-```
-
-```{r setup}
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 library(RdistNN)
 ```
 
-## Overview
+The initial RdistNN release focuses on conditional average treatment effects
+and nonparametric regression with distributional nearest-neighbor (DNN)
+weights. Both estimators accept numeric matrices or data frames, including
+tibbles through the data-frame interface. Inputs must be finite and complete;
+choose covariate columns explicitly and supply one of `x0` (one target) or
+`X0` (one target per row).
 
-`RdistNN` provides:
+PLQR and local IV-GMM are experimental. Their reference material is available
+for research use, but they are outside the supported workflow focus of this
+release. PLQR evaluates moments at supplied coefficients; it does not solve
+for target-specific coefficients.
 
-- Distance specifications and registries (`new_distance()`, `register_distance()`)
-- Rank-weight specifications and registries (`new_rank_weight()`, `register_rank_weight()`)
-- Score specifications and differentiation helpers (`new_score()`, `score_eval_batch()`, `score_diff_path()`)
-- DNN weight constructors (`weights_dnn()`, `weights_dnn_exact()`, `weights_dnn_asymp()`)
-- User-level localized estimators:
-  - `np_dnn()` for nonparametric local means
-  - `cate_dnn()` for conditional average treatment effects
-  - `plqr_dnn()` for localized PLQR coefficient surfaces and orthogonal moments
-- Fitted-object diagnostics via `diagnostics()`
+## Conditional average treatment effects
 
-Most user workflows are one of:
+For binary treatment `D`, the AIPW inputs are outcome `Y`, control and treated
+conditional means `m0` and `m1`, and propensity `e`. Nuisance fitting is external
+to the package. This simulation supplies **oracle nuisances** so that the
+example demonstrates localization without choosing a nuisance learner.
 
-1. Build weights directly and combine with your own signal.
-2. Use one of the user-level wrappers above.
-3. Customize distance and rank-weight rules through registries.
-4. Build your own score kernels and localized estimators on top of the same modular API.
-
-## 1) Compute DNN Weights
-
-```{r weights, eval=FALSE}
-set.seed(1)
-n <- 120
-p <- 2
-X <- matrix(rnorm(n * p), n, p)
-X0 <- matrix(rnorm(6), 3, p)
-
-# Exact finite-sample DNN weights
-wt_exact <- weights_dnn(
-  X = X, X0 = X0,
-  distance = "l2",
-  method = "exact",
-  k = 1L, s = 3L,
-  return = c("W", "ranks", "ord")
-)
-
-# Asymptotic DNN weights
-wt_asymp <- weights_dnn(
-  X = X, X0 = X0,
-  distance = "l2",
-  method = "asymp",
-  k = 1L, s = 3L,
-  normalize = TRUE,
-  return = "W"
-)
-
-dim(wt_exact$W)
-```
-
-For exact DNN weights, the package uses the full rank permutation at each
-target. This is not an `s`-nearest-neighbor truncation. In rank order, the
-exact finite-population support is `j <= n - s + k`, and in particular
-`j <= n - s + 1` when `k = 1`.
-When requested, the `neighbors` extra reports the first `k` nearest
-observations, not the full DNN weight support.
-
-## 2) Local Nonparametric Regression with `np_dnn()`
-
-```{r np, eval=FALSE}
-demo_np <- np_demo_data(n = 250, p = 2, design = "sinusoidal", seed = 1)
-
-fit_np <- np_dnn(
-  data = demo_np$data,
-  x_cols = c("X1", "X2"),
-  y_col = "Y",
-  x0 = c(0, 0),
-  method = "exact",
-  k = 1L, s = 3L,
-  se = TRUE,
-  jackknife = "fast",
-  return = c("W", "ess", "neighbors")
-)
-
-fit_np$mu
-fit_np$se
-diagnostics(fit_np)
-```
-
-`jackknife` can be:
-
-- `"fast"`: delete-1 updates from full-sample ranks (default)
-- `"loo"`: direct leave-one-out recomputation
-- `"none"`: skip standard errors
-
-## 3) CATE with `cate_dnn()` and Post-estimation Methods
-
-```{r cate, eval=FALSE}
-demo_cate <- cate_demo_data(n = 300, p = 2, design = "hetero", seed = 1)
+```{r cate}
+demo_cate <- cate_demo_data(n = 180, p = 2, design = "hetero", seed = 1)
 df <- demo_cate$data
 df$m1_oracle <- df$m0_oracle + df$tau_oracle
 
 fit_cate <- cate_dnn(
-  data = df,
-  x_cols = c("X1", "X2"),
-  y_col = "Y",
-  t_col = "D",
-  m0_col = "m0_oracle",
-  m1_col = "m1_oracle",
-  e_col = "e_oracle",
-  x0 = c(0, 0),
-  method = "exact",
-  k = 1L, s = 3L,
-  se = TRUE,
-  return = c("W", "psi", "nuisance")
+  data = df, x_cols = c("X1", "X2"), y_col = "Y", t_col = "D",
+  m0_col = "m0_oracle", m1_col = "m1_oracle", e_col = "e_oracle",
+  x0 = c(0, 0), k = 1L, se = TRUE,
+  return = c("W", "psi", "nuisance", "dx")
 )
 
 summary(fit_cate)
 confint(fit_cate)
-diagnostics(fit_cate)
 predict(fit_cate, x0 = c(0.2, -0.1), interval = "confidence")
 ```
 
-`cate_dnn()` supports:
+`fit_cate$tau` contains the estimates and `fit_cate$se` contains their
+jackknife standard errors. `confint()` returns pointwise normal intervals;
+it does not provide a simultaneous confidence band for a profile.
 
-- Matrix interface: pass `X`, `X0`/`x0`, and `pseudo_outcome`
-- Data-frame interface:
-  - Full AIPW: `y_col`, `t_col`, `e_col`, `m0_col`, `m1_col`
-  - Robinson-style: `y_col`, `t_col`, `e_col`, `m_col`
+If you already have an observation-level pseudo-outcome, pass it directly.
+Here we reuse the oracle AIPW scores retained by the preceding fit:
 
-## 4) Local PLQR Moments and Coefficient Inference with `plqr_dnn()`
-
-```{r plqr, eval=FALSE}
-demo_plqr <- plqr_demo_data(n = 250, p = 2, p_d = 2, tau = 0.5, seed = 1)
-# density_oracle ships with the demo data: the true threshold density.
-
-fit_plqr <- plqr_dnn(
-  data = demo_plqr$data,
-  x_cols = c("X1", "X2"),
-  D_cols = c("D1", "D2"),
-  g_col = "g_oracle",
-  mD_cols = c("mD1", "mD2"),
-  y_col = "Y",
-  density_col = "density_oracle",
-  theta_eval = demo_plqr$truth$theta_true,
-  tau = 0.5,
-  x0 = c(0, 0),
-  method = "exact",
-  k = 1L, s = 3L,
-  se = TRUE,
-  return = c("W", "score", "ess")
+```{r cate-matrix}
+X <- as.matrix(df[c("X1", "X2")])
+fit_cate_matrix <- cate_dnn(
+  X = X, x0 = c(0, 0), pseudo_outcome = fit_cate$psi, k = 1L
 )
 
-summary(fit_plqr)
-confint(fit_plqr)
-predict(fit_plqr, x0 = c(0.25, -0.25), interval = "confidence")
-fit_plqr$moment
-diagnostics(fit_plqr)
+c(data_frame = fit_cate$tau, matrix = fit_cate_matrix$tau)
 ```
 
-## 5) Fitted-Object Diagnostics
+The data-frame pathway also accepts `pseudo_outcome`, or a Robinson-form
+score via `y_col`, `t_col`, `m_col`, and `e_col`. See `?cate_dnn` for the
+complete input contract. Preserve the same observation order for every
+nuisance or pseudo-outcome vector.
 
-`diagnostics()` adds a compact reporting layer on top of fitted local
-estimators. It uses retained objects rather than refitting:
+### Interpreting CATE inference
 
-- all supported fits report weight concentration diagnostics such as `n_eff`
-  and top-weight shares;
-- NP fits add localized outcome summaries;
-- CATE fits add treated/control overlap and propensity summaries when treatment
-  and propensity state are available;
-- PLQR fits add residual-regressor Gram conditioning diagnostics.
+Orthogonality controls first-order population nuisance drift. Valid nuisance
+reuse on the full estimation sample additionally requires the nuisance-rate
+and full-state stability conditions in the accompanying paper. The package
+cannot establish those conditions for an arbitrary learner. Out-of-fold
+predictions are also accepted, but using them does not by itself establish
+all conditions needed for local inference. Overlap and localization bias
+control remain necessary.
 
-```{r diagnostics, eval=FALSE}
-d_np <- diagnostics(fit_np)
+Raw supplied propensities must lie in `[0, 1]` and are clipped to
+`[clip, 1 - clip]` with `clip = 1e-8` by default. Diagnostics use the clipped
+values. Clipping does not create local treatment support, and a supplied
+pseudo-outcome is used unchanged.
+
+Inspect local weight concentration and treated/control mass:
+
+```{r cate-diagnostics}
 d_cate <- diagnostics(fit_cate)
-d_plqr <- diagnostics(fit_plqr)
-
-d_np[, c("target_id", "n_eff", "weighted_mean_y", "weighted_sd_y")]
-d_cate[, c("target_id", "treated_mass", "control_mass", "treated_share")]
-d_plqr[, c("target_id", "gram_min_eig", "gram_condition_number")]
+d_cate[, c("target_id", "n_eff", "treated_mass", "control_mass")]
 ```
 
-Diagnostics require retained weights. The default `return = "W"` keeps weights;
-if you omit them, refit with `return` including `"W"`.
+Diagnostics describe the realized sample near a target; they are not a test
+of the paper's assumptions. Keep `"W"` in `return` for weight diagnostics,
+`"dx"` for distance-radius summaries, and `"nuisance"` for explicit nuisance
+inspection. For CATE overlap, the hidden fitted state retains treatment and
+propensity inputs when these were supplied.
 
-## 6) Customize Distance and Rank Rules
+## Nonparametric regression
 
-```{r custom, eval=FALSE}
-register_distance("linf_demo", function(X, x0, ctx = NULL) {
-  apply(abs(X - matrix(x0, nrow(X), ncol(X), byrow = TRUE)), 1L, max)
-})
+`np_dnn()` estimates a conditional mean by averaging outcomes with DNN
+weights. Its result exposes `mu` and `se` directly. The explicit CATE
+`summary()`, `confint()`, and `predict()` methods do not apply to `np_result`.
 
-register_rank_weight("inv_rank_demo", function(ranks) {
-  w <- 1 / as.numeric(ranks)
-  w / sum(w)
-})
-
-X <- as.matrix(np_demo_data(n = 80, p = 2, seed = 1)$data[, c("X1", "X2")])
-
-out <- weights_matrix(
-  X = X,
-  x0 = c(0, 0),
-  ranking = "linf_demo",
-  weight = get_rank_weight("inv_rank_demo"),
-  return = c("W", "ranks")
-)
-dim(out$W)
-```
-
-## 7) Minimal Custom Score
-
-```{r custom-score, eval=FALSE}
-sc_affine <- new_score(
-  name = "affine_order1",
-  order = 1L,
-  eval_param = function(idxs, data, theta, ctx, rng = NULL) {
-    theta[1] * data$Y[idxs] + theta[2]
-  },
-  grad = function(idxs, data, theta, ctx, rng = NULL) {
-    c(data$Y[idxs], 1)
-  }
+```{r regression}
+demo_np <- np_demo_data(n = 160, p = 2, design = "sinusoidal", seed = 2)
+fit_np <- np_dnn(
+  data = demo_np$data, x_cols = c("X1", "X2"), y_col = "Y",
+  X0 = rbind(c(0, 0), c(0.5, 0)), k = 1L, se = TRUE,
+  return = c("W", "dx", "ess")
 )
 
-df <- data.frame(Y = c(1, 2, 4))
-path <- score_diff_path(sc_affine, data = df, method = "auto")
-
-path$value(2L, theta = c(0.5, 1))
-path$grad(2L, theta = c(0.5, 1))
+# Normal pointwise intervals from the stored jackknife standard errors.
+plot_data_estimates(fit_np)[, c("target_id", "estimate", "se", "ci_lower", "ci_upper")]
+diagnostics(fit_np)[, c("target_id", "n_eff", "weighted_mean_y")]
 ```
 
-When you move beyond the built-in wrappers:
+Use uppercase `Y` for the matrix interface:
 
-- implement a custom distance if the notion of closeness changes;
-- implement a custom rank weight if the ranking stays the same but the localization profile changes;
-- implement a custom score if the target moment or estimating equation changes.
+```{r regression-matrix}
+fit_np_matrix <- np_dnn(
+  X = as.matrix(demo_np$data[c("X1", "X2")]),
+  Y = demo_np$data$Y, x0 = c(0, 0), k = 1L
+)
+fit_np_matrix$mu
+```
 
-The full extension workflow, including `setup()`, `eval_batch()`, parameter-aware
-scores, and debugging with `return = c("dx", "ord", "ranks")`, is in
-`vignette("extending", package = "RdistNN")`.
+To estimate at new regression targets, call `np_dnn()` with those targets.
+The intervals above need the regression assumptions and localization bias
+control; the jackknife alone does not remove smoothing bias.
 
-## Next Steps
+### Two-scale nonparametric regression
 
-- [Notation and package conventions](notation-and-conventions.html):
-  `vignette("notation-and-conventions", package = "RdistNN")` for the
-  package-to-paper symbol map and cross-vignette guide
-- [DNN weights](dnn-weights.html):
-  `vignette("dnn-weights", package = "RdistNN")`
-- [Diagnostics and reporting](diagnostics-reporting.html):
-  `vignette("diagnostics-reporting", package = "RdistNN")`
-- [Conditional Z-estimation](conditional-z-estimation.html):
-  `vignette("conditional-z-estimation", package = "RdistNN")`
-- [Extending RdistNN](extending.html):
-  `vignette("extending", package = "RdistNN")`
-- [Jackknife generalized U-statistics](jackknife-gen-ustats.html):
-  `vignette("jackknife-gen-ustats", package = "RdistNN")`
+`np_tdnn()` provides the existing two-scale DNN regression alternative. Supply
+orders `s1 < s2`; delete-1 standard errors additionally require `s2 < n`.
+Its weights sum to one but can be negative, so positive-weight CATE overlap
+interpretations do not carry over. Its bias-correction interpretation needs
+the additional smoothness conditions described in `?np_tdnn`.
+
+```{r regression-tdnn}
+fit_tdnn <- np_tdnn(
+  data = demo_np$data, x_cols = c("X1", "X2"), y_col = "Y",
+  x0 = c(0, 0), s1 = 8L, s2 = 16L, se = TRUE
+)
+c(estimate = fit_tdnn$mu, standard_error = fit_tdnn$se)
+```
+
+The matrix interface uses `X`, `Y`, and `x0`/`X0`, as for `np_dnn()`.
+Use `plot_tdnn_scales()` to compare the two scales when ggplot2 is available.
+The single-scale paper tuning rule discussed below applies to `np_dnn()`
+and `cate_dnn()`; choose the two TDNN orders explicitly.
+
+## Choosing localization and uncertainty settings
+
+The defaults use exact DNN weights and `k = 1`. Unless `s` or `tuning` is
+supplied, the subsample order is
+`s = floor(0.4 * n^((p + 1)/(p + 2)))`, where `p` is the covariate dimension.
+Larger `s` concentrates more weight near the target. The written manuscript
+derivations use `k = 1`; larger fixed `k` is supported in the implementation.
+
+The order `s` is not a count of observations retained in a nearest-neighbor
+truncation. Exact weights use the full rank permutation and have support
+through rank `n - s + k` (`n - s + 1` for `k = 1`). The optional `neighbors`
+extra reports the first `k` neighbors, rather than the full weight support.
+
+For sensitivity analysis, compare the paper's candidate orders without
+changing the primary result:
+
+```{r tuning}
+fit_grid <- np_dnn(
+  data = demo_np$data, x_cols = c("X1", "X2"), y_col = "Y",
+  x0 = c(0, 0), tuning_mode = "grid", se = FALSE
+)
+fit_grid$tuning_grid$candidates
+candidate_fit(fit_grid, 1L)$mu
+```
+
+`tuning_dnn_paper()` uses `lambda = 0.4` and the grid
+`c(0.3, 0.4, 0.5, 0.75)`; `s` is recomputed for each candidate.
+Grid mode is a sensitivity comparison, not an automatic optimization rule.
+It cannot be combined with explicit `s`.
+
+For uncertainty, `jackknife = "fast"` reuses full-sample ranks;
+`jackknife = "loo"` directly recomputes leave-one-out weights. Delete-1
+inference requires `s < n`. Set `se = FALSE` to omit standard errors.
+
+## Plots and reusable weights
+
+Plotting is optional and requires ggplot2. Dashboards additionally require
+patchwork. Both fitted workflows support the estimate and weight views:
+
+```{r plots, eval = requireNamespace("ggplot2", quietly = TRUE), fig.width = 6, fig.height = 3.5}
+plot(fit_np)
+plot_weights(fit_cate, type = "profile")
+```
+
+For your own scalar signal, build weights directly. Rows of `W` index
+observations and columns index target points:
+
+```{r weights}
+wt <- weights_dnn(
+  X = X, X0 = rbind(c(0, 0), c(0.5, 0)), k = 1L, s = 12L,
+  return = "W"
+)
+dim(wt$W)
+as.vector(crossprod(wt$W, fit_cate$psi))
+```
+
+## Further reading
+
+- [Notation and conventions](notation-and-conventions.html): arguments,
+  paper symbols, and uncertainty scales. Open locally with
+  `vignette("notation-and-conventions", package = "RdistNN")`.
+- [Diagnostics and reporting](diagnostics-reporting.html): available fields
+  and retained-state requirements.
+- [Kernel-order tuning](kernel-order-tuning.html) and
+  [DNN weights](dnn-weights.html): localization rules and sensitivity choices.
+- [Visualizing fitted estimators](visualising-fits.html): CATE profiles,
+  overlap, influence, and dashboards.
+- [CATE simulation tools](paper-cate-simulation.html): paper-specific
+  replication workflows; illustrative runs do not constitute manuscript evidence.
+- [Conditional Z-estimation](conditional-z-estimation.html): additional
+  moment details, including experimental PLQR.
+- [Extending RdistNN](extending.html): custom distances, rank weights, and scores.

@@ -53,6 +53,12 @@ stored jackknife standard error, and symmetric normal confidence bounds.
 This is the data layer of the plotting interface: plot builders consume
 these frames, and users can consume them directly for custom figures.
 }
+\section{Experimental methods}{
+
+Methods for \code{plqr_result} objects are experimental, as is all PLQR
+functionality in this release; see \code{\link[=plqr_dnn]{plqr_dnn()}}.
+}
+
 \examples{
 set.seed(1)
 n <- 60
