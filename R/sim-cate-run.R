@@ -24,9 +24,8 @@
 #     future::plan(future::multisession, workers = ncores)
 #     raw <- sim_cate_run(...)
 #
-#   For multi-node SLURM array parallelism, see
-#   inst/paper-replication/cate/hpc/task.R and submit.sh, which dispatch
-#   one sim_cate_run() call per cell via SLURM_ARRAY_TASK_ID.
+#   This general CATE benchmark harness is separate from the current affine
+#   paper's installed replication bundle.
 
 # ── Shared row helpers ────────────────────────────────────────────────────────
 
@@ -352,8 +351,8 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
 #' ```
 #'
 #' Without `future.apply` the function falls back silently to sequential
-#' `lapply`.  For multi-node HPC, see
-#' `system.file("paper-replication/cate/hpc", package = "RdistNN")`.
+#' `lapply`. The current affine paper uses a separate study-specific workflow
+#' under `system.file("paper-replication/affine", package = "RdistNN")`.
 #'
 #' @section Fault tolerance:
 #' Each replicate is wrapped in `tryCatch`.  A total rep failure (e.g. DGP

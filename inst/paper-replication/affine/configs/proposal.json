@@ -1,0 +1,95 @@
+{
+  "status": "authorized_10000_repetitions_not_started",
+  "date": "2026-10-11",
+  "source_fingerprint": "d53182f6b1142396d7a2e39c7cc3a71f72566d960fb7ac53e0378b5d061be2f2",
+  "RdistNN_source_commit": "40060f155cc4d84d59ee5af119f6a2534c569bab",
+  "master_seed": 20261011,
+  "seed_capacity": 20000,
+  "workers": 4,
+  "chunk_size": 8,
+  "inner_threads": 1,
+  "rss_limit_mib": 40960,
+  "profiles": {
+    "dnn": {
+      "replications": 10000,
+      "control_reps": 1000,
+      "intensive_reps": 200,
+      "cpu_budget_seconds": 36000,
+      "wall_limit_seconds": 43200,
+      "expected_cells": 14,
+      "expected_main_rows": 840000,
+      "expected_control_rows": 56000,
+      "campaign_id": "affine_dnn_production_10000_20261011_v1"
+    },
+    "kernel_comparison": {
+      "replications": 10000,
+      "control_reps": 0,
+      "intensive_reps": 200,
+      "cpu_budget_seconds": 24000,
+      "wall_limit_seconds": 43200,
+      "expected_cells": 9,
+      "expected_main_rows": 1080000,
+      "expected_control_rows": 0,
+      "campaign_id": "affine_kernel_comparison_production_10000_20261011_v1"
+    },
+    "M3": {
+      "replications": 10000,
+      "control_reps": 100,
+      "intensive_reps": 0,
+      "cpu_budget_seconds": 100000,
+      "wall_limit_seconds": 43200,
+      "expected_cells": 1,
+      "expected_main_rows": 60000,
+      "expected_control_rows": 400,
+      "campaign_id": "affine_M3_production_10000_20261011_v1"
+    },
+    "settings_comparison": {
+      "replications": 10000,
+      "control_reps": 0,
+      "intensive_reps": 200,
+      "cpu_budget_seconds": 10000,
+      "wall_limit_seconds": 14400,
+      "expected_cells": 4,
+      "expected_main_rows": 480000,
+      "expected_control_rows": 0,
+      "campaign_id": "affine_settings_comparison_production_10000_20261011_v1"
+    }
+  },
+  "expected_total_rows": 2516400,
+  "unique_common_draw_families": 10000,
+  "duplicate_DNN_main_rows_across_profiles": 480000,
+  "reserve_designs": "C0H/C2S measured and included; other reserves inactive",
+  "manuscript_evidence_replacement": "separate_later_goal",
+  "settings_resource_basis": "200-ID pilot strata at 10000 IDs forecast 4613.610 family CPU seconds, 5212.650 coordinator-proxy seconds and 6366.052 total wall seconds. Forecasts, not validated production bounds.",
+  "replication_authority": "Author explicitly requests 10000 Monte Carlo repetitions for every full profile, including M3.",
+  "monitor_interval_seconds": 900,
+  "resource_scaling_note": "Original profiles retain measured pilot strata. At 10000 IDs the conservative kernel working-RAM forecast is about 39 GiB. Sampled cap 40 GiB with 4 workers; atomic chunks remain resumable. M3 family-CPU forecast about 52774 seconds.",
+  "source_hashes": {
+    "affine_config.R": "f12575e82fec8eab761ad04624b2fabfe0c1a8230e8a3fb0f2a1c227926fce00",
+    "affine_diagnostics.R": "5d8a6683c257ee176494459789dcdf9d3abef8f518ead2e79f7652e1ef31735c",
+    "affine_kernel.R": "40a6a7fcf5db46974d5b2bd90f848694c1c125556457258f375f5d70d62d91ab",
+    "affine_local.R": "ab63d17a417eb92ca0bdc062444ccc2a606481c875df26a103e9ccfff59db239",
+    "affine_models.R": "72b348828ea5362a6b01cfadaa6b0f35387f3ae8ebf623495a59fe12c8103b56",
+    "affine_runner.R": "b184f1ea7874243faeba4fab0c517d2f3a31d1d7aa291033cfe382d9dd8ce692",
+    "affine_series.R": "40f808d02c7b932741cc6e5640ba087d10d792caa65fc4f9a5e8a0e638315078",
+    "affine_summary.R": "3e3ed9f31a8ea065575bb58342a66b89a30a2444d4f8195aed92f58f9a89e7e5",
+    "run_affine_scores.R": "708233aec9b8b770eb998801051e2ce7340a1ee96844c605f69d6db5fd4569b3"
+  },
+  "production_seed_hash": "190d9b5e7cb74ccf464832e06606ec4c3936bec4eb1a0b7dfcbb3fdee8bffc90",
+  "helper_hashes": {
+    "audit_pilots.R": "8022bd5b47113f351df7c5d1bcb794e951ff30c3792e8a1048b1bbf68112bed9",
+    "measure_process.py": "1c18bbe7b2413c0dba5f07dd8e9583b03b9140a5d379898fe482d8bda8b2b518",
+    "prepare_production.R": "8b3f54e9745a2f3152a3576c04cf1f0e65f3b70bfddeee9a2fda79db86f44dea",
+    "prepare_settings_pilot.R": "21dd32324eb7dd02d392959a30728e256d9e047bafde57ec2b94372dd7e41f89",
+    "production_spec.json": "32c5c27d51abc34bf1d166923be13598aef91020688b5c431cbd7c71b0f40659",
+    "review_settings_pilot.R": "33c3ba8cd55d9aabd473ad9b1db90043952336e7f69460a684cbcf793e8c415b",
+    "summarise_resources.R": "f279f1c285caf78bc20fe5e6372d473986d24e75894341cab1c947c8bd55a6f6"
+  },
+  "runtime_freeze": "The runner records dependency DLL/R/session hashes at launch and enforces them on resume.",
+  "config_hashes": {
+    "dnn": "cd31d5a95b700a14152313455ee51b5d9c13e76ece6635963b092132a3b79cf0",
+    "kernel_comparison": "d6b6ac69fcc48ff549515f781d5eb5aaa781fcceb73cad2851906abe312f8a99",
+    "M3": "08085f9ad2fd2f9f577443090ca203f4a84d6642b48788b1c83e21f2ec77f432",
+    "settings_comparison": "f584b4259ede7a7235b2f78c7980d3866ee0e5ff56df6d3e7b39defd40034c5a"
+  }
+}

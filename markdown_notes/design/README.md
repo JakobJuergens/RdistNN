@@ -24,6 +24,7 @@ rely on a single explicit read order.
 13. `13_existing_codebase_standardization_plan.md`
 14. `14_integrated_tuning_grid_reuse.md`
 15. `15_plqr_variance_estimation_rationale.md`
+16. `16_affine_replication_contract.md`
 
 ## Structure
 
@@ -47,6 +48,7 @@ rely on a single explicit read order.
 - `13_existing_codebase_standardization_plan.md`
 - `14_integrated_tuning_grid_reuse.md`
 - `15_plqr_variance_estimation_rationale.md`
+- `16_affine_replication_contract.md`
 
 ## Core package-wide decision
 

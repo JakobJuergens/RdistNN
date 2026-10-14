@@ -1,0 +1,67 @@
+{
+  "status": "authorized_10000_repetitions_not_started",
+  "date": "2026-10-11",
+  "source_fingerprint": "d53182f6b1142396d7a2e39c7cc3a71f72566d960fb7ac53e0378b5d061be2f2",
+  "RdistNN_source_commit": "40060f155cc4d84d59ee5af119f6a2534c569bab",
+  "master_seed": 20261011,
+  "seed_capacity": 20000,
+  "workers": 4,
+  "chunk_size": 8,
+  "inner_threads": 1,
+  "rss_limit_mib": 40960,
+  "profiles": {
+    "dnn": {
+      "replications": 10000,
+      "control_reps": 1000,
+      "intensive_reps": 200,
+      "cpu_budget_seconds": 36000,
+      "wall_limit_seconds": 43200,
+      "expected_cells": 14,
+      "expected_main_rows": 840000,
+      "expected_control_rows": 56000,
+      "campaign_id": "affine_dnn_production_10000_20261011_v1"
+    },
+    "kernel_comparison": {
+      "replications": 10000,
+      "control_reps": 0,
+      "intensive_reps": 200,
+      "cpu_budget_seconds": 24000,
+      "wall_limit_seconds": 43200,
+      "expected_cells": 9,
+      "expected_main_rows": 1080000,
+      "expected_control_rows": 0,
+      "campaign_id": "affine_kernel_comparison_production_10000_20261011_v1"
+    },
+    "M3": {
+      "replications": 10000,
+      "control_reps": 100,
+      "intensive_reps": 0,
+      "cpu_budget_seconds": 100000,
+      "wall_limit_seconds": 43200,
+      "expected_cells": 1,
+      "expected_main_rows": 60000,
+      "expected_control_rows": 400,
+      "campaign_id": "affine_M3_production_10000_20261011_v1"
+    },
+    "settings_comparison": {
+      "replications": 10000,
+      "control_reps": 0,
+      "intensive_reps": 200,
+      "cpu_budget_seconds": 10000,
+      "wall_limit_seconds": 14400,
+      "expected_cells": 4,
+      "expected_main_rows": 480000,
+      "expected_control_rows": 0,
+      "campaign_id": "affine_settings_comparison_production_10000_20261011_v1"
+    }
+  },
+  "expected_total_rows": 2516400,
+  "unique_common_draw_families": 10000,
+  "duplicate_DNN_main_rows_across_profiles": 480000,
+  "reserve_designs": "C0H/C2S measured and included; other reserves inactive",
+  "manuscript_evidence_replacement": "separate_later_goal",
+  "settings_resource_basis": "200-ID pilot strata at 10000 IDs forecast 4613.610 family CPU seconds, 5212.650 coordinator-proxy seconds and 6366.052 total wall seconds. Forecasts, not validated production bounds.",
+  "replication_authority": "Author explicitly requests 10000 Monte Carlo repetitions for every full profile, including M3.",
+  "monitor_interval_seconds": 900,
+  "resource_scaling_note": "Original profiles retain measured pilot strata. At 10000 IDs the conservative kernel working-RAM forecast is about 39 GiB. Sampled cap 40 GiB with 4 workers; atomic chunks remain resumable. M3 family-CPU forecast about 52774 seconds."
+}

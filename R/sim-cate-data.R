@@ -351,7 +351,7 @@
 #'
 #' Generates a synthetic dataset for the CATE simulation study, including
 #' oracle nuisance quantities \eqn{e}, \eqn{m_0}, \eqn{m_1}, the AIPW score used
-#' by the paper-facing DNN CATE simulations, and the Robinson pseudo-outcome
+#' by the general DNN CATE benchmarks, and the Robinson pseudo-outcome
 #' \eqn{\rho} used by the Robinson-style estimator route.
 #'
 #' Six designs are available:

@@ -1,0 +1,3 @@
+# Frozen replication inputs and their hash manifest must keep exact bytes on
+# every checkout, including Windows installations with core.autocrlf=true.
+inst/paper-replication/affine/** -text

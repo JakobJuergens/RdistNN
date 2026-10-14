@@ -103,8 +103,8 @@ raw <- sim_cate_run(...)
 }\if{html}{\out{</div>}}
 
 Without \code{future.apply} the function falls back silently to sequential
-\code{lapply}.  For multi-node HPC, see
-\code{system.file("paper-replication/cate/hpc", package = "RdistNN")}.
+\code{lapply}. The current affine paper uses a separate study-specific workflow
+under \code{system.file("paper-replication/affine", package = "RdistNN")}.
 }
 
 \section{Fault tolerance}{

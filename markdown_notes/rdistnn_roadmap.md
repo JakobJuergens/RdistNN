@@ -47,9 +47,11 @@ remains open in this roadmap.
 2. **Nuisance-fitting convenience.** Wrappers still expect externally fitted
    nuisances (`g`, `mD`, propensities). Keeping this external is a deliberate
    current design choice; revisit only after the front-end question.
-3. **Empirical-application packaging.** The SIPP 401(k) workflow lives in the
-   paper repository as manuscript replication code. Package-level packaging
-   is needed only if the application becomes part of the package story.
+
+The current affine simulation and SIPP replication workflows are now bundled
+under `inst/paper-replication/affine/`, with unchanged paper source, production
+configurations, and compressed accepted evidence. The paper repository remains
+the scientific source of truth. See design note 16 for the refresh contract.
 
 ## Rule
 

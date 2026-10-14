@@ -62,7 +62,7 @@ an input, an intermediate quantity, a diagnostic, or an inferential output.
 | Define a custom distance, rank-weight map, or score | [Extending RdistNN](extending.html): `vignette("extending", package = "RdistNN")` |
 | Work directly with generalized U-statistic jackknife tools | [Jackknife generalized U-statistics](jackknife-gen-ustats.html): `vignette("jackknife-gen-ustats", package = "RdistNN")` |
 | Use the experimental local IV-GMM workflow | [Local IV estimation](local-iv-estimation.html): `vignette("local-iv-estimation", package = "RdistNN")` |
-| Reproduce the package's paper-facing CATE simulation | [Paper CATE simulation](paper-cate-simulation.html): `vignette("paper-cate-simulation", package = "RdistNN")` |
+| Reproduce the current affine simulations and SIPP application | [Affine paper replication](paper-affine-replication.html): `vignette("paper-affine-replication", package = "RdistNN")` |
 
 ## Quick package-to-paper map
 
@@ -293,7 +293,7 @@ an arbitrary same-sample nuisance learner.
 
 Continue with [Conditional Z-estimation](conditional-z-estimation.html) for a
 worked CATE fit. For the paper-specific data-generating process and Monte Carlo
-harness, use [Paper CATE simulation](paper-cate-simulation.html).
+harness, use [Affine paper replication](paper-affine-replication.html).
 
 ## Experimental PLQR target and nuisance conventions
 

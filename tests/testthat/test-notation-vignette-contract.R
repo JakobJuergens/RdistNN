@@ -101,7 +101,7 @@ test_that("vignettes expose hub-and-spoke navigation", {
     "extending",
     "jackknife-gen-ustats",
     "local-iv-estimation",
-    "paper-cate-simulation"
+    "paper-affine-replication"
   )
   for (spoke in spokes) {
     spoke_call <- sprintf('vignette("%s", package = "RdistNN")', spoke)

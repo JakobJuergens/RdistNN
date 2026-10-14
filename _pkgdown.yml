@@ -38,7 +38,7 @@ articles:
       - local-iv-estimation
   - title: Paper replication
     contents:
-      - paper-cate-simulation
+      - paper-affine-replication
 
 reference:
   - title: Package overview
@@ -111,10 +111,10 @@ reference:
       - np_demo_data
       - np_demo_subsets
 
-  - title: Paper replication — CATE simulation study
+  - title: General CATE simulation tools
     desc: >
-      Data-generating processes and Monte Carlo harnesses mirroring the
-      conditional Z-estimation paper's CATE study.
+      Synthetic benchmarks and Monte Carlo summaries. The current affine
+      paper uses the separate study-specific replication bundle.
     contents:
       - sim_cate_data
       - sim_cate_one_rep

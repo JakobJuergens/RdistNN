@@ -218,8 +218,8 @@ as.vector(crossprod(wt$W, fit_cate$psi))
   [DNN weights](dnn-weights.html): localization rules and sensitivity choices.
 - [Visualizing fitted estimators](visualising-fits.html): CATE profiles,
   overlap, influence, and dashboards.
-- [CATE simulation tools](paper-cate-simulation.html): paper-specific
-  replication workflows; illustrative runs do not constitute manuscript evidence.
+- [Affine paper replication](paper-affine-replication.html): the current
+  simulation and SIPP workflows, plus regeneration of accepted manuscript evidence.
 - [Conditional Z-estimation](conditional-z-estimation.html): additional
   moment details, including experimental PLQR.
 - [Extending RdistNN](extending.html): custom distances, rank weights, and scores.

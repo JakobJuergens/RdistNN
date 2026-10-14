@@ -1,3 +1,15 @@
+# RdistNN (development version)
+
+- Replaced the superseded CATE and IV paper launchers with the current affine
+  simulation and SIPP workflows. The bundle pins unchanged paper scientific
+  source, all four accepted production configurations, and compressed evidence.
+- Added portable evidence rendering and validation runs, Linux measured
+  production launches with resume checks, and SIPP full-fit/OOB/held-out
+  replication with frozen-score and localization diagnostics.
+- Updated the replication article and package guidance to distinguish the
+  current study from general simulation APIs. Accepted evidence regenerates
+  all 21 manuscript tables and six PDF figures without refitting.
+
 # RdistNN 0.1.0
 
 ## Initial public release scope

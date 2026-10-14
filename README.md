@@ -222,15 +222,16 @@ shows the available panels and their underlying data extractors.
 
 ## Documentation and release scope
 
-| Workflow                 | Entry points                                   | Status in 0.1.0                                                                |
-|--------------------------|------------------------------------------------|--------------------------------------------------------------------------------|
-| CATE                     | `cate_dnn()`, CATE methods and diagnostics     | Release focus                                                                  |
-| Nonparametric regression | `np_dnn()`, `np_tdnn()`, diagnostics and plots | Release focus; TDNN uses signed weights                                        |
-| Localization             | DNN weights, distances, tuning                 | Supports the main workflows                                                    |
-| CATE replication         | `sim_cate_*`, `summarise_sim_results()`        | Paper-specific tools                                                           |
-| PLQR                     | `plqr_dnn()`, PLQR scores, helpers and methods | Experimental; evaluates moments at supplied coefficients, without root solving |
-| Local IV-GMM             | `gmm_dnn()`, `sim_iv_*`                        | Experimental companion work                                                    |
-| Extensions               | Registries, generalized U-statistic utilities  | Advanced reference material                                                    |
+| Workflow                  | Entry points                                   | Status                                                                         |
+|---------------------------|------------------------------------------------|--------------------------------------------------------------------------------|
+| CATE                      | `cate_dnn()`, CATE methods and diagnostics     | Release focus                                                                  |
+| Nonparametric regression  | `np_dnn()`, `np_tdnn()`, diagnostics and plots | Release focus; TDNN uses signed weights                                        |
+| Localization              | DNN weights, distances, tuning                 | Supports the main workflows                                                    |
+| Affine paper replication  | Installed `paper-replication/affine` scripts   | Current affine simulations, SIPP, and accepted evidence                        |
+| Synthetic CATE benchmarks | `sim_cate_*`, `summarise_sim_results()`        | General simulation tools                                                       |
+| PLQR                      | `plqr_dnn()`, PLQR scores, helpers and methods | Experimental; evaluates moments at supplied coefficients, without root solving |
+| Local IV-GMM              | `gmm_dnn()`, `sim_iv_*`                        | Experimental companion work                                                    |
+| Extensions                | Registries, generalized U-statistic utilities  | Advanced reference material                                                    |
 
 Start with [Getting
 started](https://JakobJuergens.github.io/RdistNN/articles/getting-started.html),
@@ -239,10 +240,12 @@ conventions](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conve
 [diagnostics](https://JakobJuergens.github.io/RdistNN/articles/diagnostics-reporting.html),
 and
 [tuning](https://JakobJuergens.github.io/RdistNN/articles/kernel-order-tuning.html).
-The [CATE simulation
-guide](https://JakobJuergens.github.io/RdistNN/articles/paper-cate-simulation.html)
-covers replication tools; its small illustrative runs are not manuscript
-evidence.
+The [affine paper replication
+guide](https://JakobJuergens.github.io/RdistNN/articles/paper-affine-replication.html)
+covers the current bounded simulations, SIPP application, and
+regeneration of accepted manuscript tables and figures. Validation runs
+are labeled separately from production. Locate the installed bundle with
+`system.file("paper-replication/affine", package = "RdistNN")`.
 
 With local vignettes installed, open the symbol guide with
 `vignette("notation-and-conventions", package = "RdistNN")`.
