@@ -59,6 +59,11 @@ system2(file.path(R.home("bin"), "Rscript"), c(
 ))
 ```
 
+Rendering uses R’s Cairo PDF device. With the CRAN build of R on macOS,
+install [XQuartz](https://www.xquartz.org/) to provide its X11
+libraries. This requirement is described in the [R for macOS
+installation notes](https://mac.r-project.org/bin/macosx/).
+
 The script verifies the compressed evidence, regenerates **eight
 simulation tables, thirteen SIPP tables and six PDF figures**, runs the
 upstream check routines, and compares all tables with accepted

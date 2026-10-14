@@ -111,6 +111,10 @@ installed script:</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/shQuote.html" class="external-link">shQuote</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">bundle</span>, <span class="st">"render_evidence.R"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  <span class="st">"--output-dir=affine-paper-displays"</span></span>
 <span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>Rendering uses R’s Cairo PDF device. With the CRAN build of R on
+macOS, install <a href="https://www.xquartz.org/" class="external-link">XQuartz</a> to provide
+its X11 libraries. This requirement is described in the <a href="https://mac.r-project.org/bin/macosx/" class="external-link">R for macOS installation
+notes</a>.</p>
 <p>The script verifies the compressed evidence, regenerates
 <strong>eight simulation tables, thirteen SIPP tables and six PDF
 figures</strong>, runs the upstream check routines, and compares all
