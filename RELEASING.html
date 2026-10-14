@@ -29,7 +29,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Releasing RdistNN 0.1.0</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/master/RELEASING.md" class="external-link"><code>RELEASING.md</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.0/RELEASING.md" class="external-link"><code>RELEASING.md</code></a></small>
     </div>
 
 <div id="releasing-rdistnn-010" class="section level1">
@@ -69,6 +69,7 @@
 <p>Attach <strong><code>RdistNN_0.1.0.tar.gz</code></strong>, built above, as the installable R source asset. GitHub’s automatically generated repository ZIP/tarball and the CI source-snapshot ZIP are repository snapshots; the R source package includes built vignettes and applies <code>.Rbuildignore</code> exclusions. Include a checksum:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="bu">cd</span> archives</span>
 <span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">sha256sum</span> RdistNN_0.1.0.tar.gz <span class="op">&gt;</span> SHA256SUMS</span></code></pre></div>
+<p>After publication, download both assets without credentials and run <code>sha256sum --check SHA256SUMS</code> from their download directory. Install the downloaded tarball in a fresh library and execute the getting-started examples. For version-pinned GitHub installation, use <code>pak::pak("JakobJuergens/RdistNN@v0.1.0")</code>; the default branch remains available for development installations.</p>
 <p>Users can install a downloaded source asset with:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"Rcpp"</span><span class="op">)</span>  <span class="co"># required dependency, if not already installed</span></span>

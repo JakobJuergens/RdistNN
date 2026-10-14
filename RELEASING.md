@@ -78,6 +78,13 @@ cd archives
 sha256sum RdistNN_0.1.0.tar.gz > SHA256SUMS
 ```
 
+After publication, download both assets without credentials and run
+`sha256sum --check SHA256SUMS` from their download directory. Install
+the downloaded tarball in a fresh library and execute the
+getting-started examples. For version-pinned GitHub installation, use
+`pak::pak("JakobJuergens/RdistNN@v0.1.0")`; the default branch remains
+available for development installations.
+
 Users can install a downloaded source asset with:
 
 ``` r

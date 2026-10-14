@@ -25,13 +25,31 @@ context.
 
 ## Installation
 
-Install from GitHub (R 4.1.0 or newer):
+Install release **0.1.0** from GitHub (R 4.1.0 or newer):
 
 ``` r
 
 install.packages("pak")  # once
-pak::pak("JakobJuergens/RdistNN")
+pak::pak("JakobJuergens/RdistNN@v0.1.0")
 ```
+
+The [v0.1.0
+release](https://github.com/JakobJuergens/RdistNN/releases/tag/v0.1.0)
+also provides `RdistNN_0.1.0.tar.gz` with built HTML vignettes and a
+`SHA256SUMS` file. After installing Rcpp, install that source asset
+directly:
+
+``` r
+
+install.packages("Rcpp")  # once
+install.packages(
+  "https://github.com/JakobJuergens/RdistNN/releases/download/v0.1.0/RdistNN_0.1.0.tar.gz",
+  repos = NULL, type = "source"
+)
+```
+
+For the current development version, use
+`pak::pak("JakobJuergens/RdistNN")`.
 
 This installs from source and requires a C++17 toolchain and Rcpp. Use
 Rtools matching your R version on Windows, Xcode command line tools on
@@ -45,7 +63,7 @@ include local HTML vignettes, use:
 ``` r
 
 install.packages("remotes")  # once
-remotes::install_github("JakobJuergens/RdistNN", build_vignettes = TRUE)
+remotes::install_github("JakobJuergens/RdistNN", ref = "v0.1.0", build_vignettes = TRUE)
 vignette("getting-started", package = "RdistNN")
 ```
 

@@ -56,22 +56,30 @@
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>Install from GitHub (R 4.1.0 or newer):</p>
+<p>Install release <strong>0.1.0</strong> from GitHub (R 4.1.0 or newer):</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"pak"</span><span class="op">)</span>  <span class="co"># once</span></span>
-<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"JakobJuergens/RdistNN"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"JakobJuergens/RdistNN@v0.1.0"</span><span class="op">)</span></span></code></pre></div>
+<p>The <a href="https://github.com/JakobJuergens/RdistNN/releases/tag/v0.1.0" class="external-link">v0.1.0 release</a> also provides <code>RdistNN_0.1.0.tar.gz</code> with built HTML vignettes and a <code>SHA256SUMS</code> file. After installing Rcpp, install that source asset directly:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"Rcpp"</span><span class="op">)</span>  <span class="co"># once</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span></span>
+<span>  <span class="st">"https://github.com/JakobJuergens/RdistNN/releases/download/v0.1.0/RdistNN_0.1.0.tar.gz"</span>,</span>
+<span>  repos <span class="op">=</span> <span class="cn">NULL</span>, type <span class="op">=</span> <span class="st">"source"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>For the current development version, use <code>pak::pak("JakobJuergens/RdistNN")</code>.</p>
 <p>This installs from source and requires a C++17 toolchain and Rcpp. Use Rtools matching your R version on Windows, Xcode command line tools on macOS, or an R-compatible C++ compiler on Linux. OpenMP is optional; supported kernels run serially when R’s toolchain does not supply OpenMP flags.</p>
 <p>The online guides are available independently of installation. To include local HTML vignettes, use:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span>  <span class="co"># once</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"JakobJuergens/RdistNN"</span>, build_vignettes <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"JakobJuergens/RdistNN"</span>, ref <span class="op">=</span> <span class="st">"v0.1.0"</span>, build_vignettes <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/vignette.html" class="external-link">vignette</a></span><span class="op">(</span><span class="st">"getting-started"</span>, package <span class="op">=</span> <span class="st">"RdistNN"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="conditional-average-treatment-effects">Conditional average treatment effects<a class="anchor" aria-label="anchor" href="#conditional-average-treatment-effects"></a>
 </h2>
 <p>This example uses simulated data and <strong>oracle nuisance values</strong> to show the interface. For an application, replace these columns with your estimated conditional outcome means and treatment propensities.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://JakobJuergens.github.io/RdistNN/">RdistNN</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">demo</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cate_demo_data.html">cate_demo_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">180</span>, p <span class="op">=</span> <span class="fl">2</span>, design <span class="op">=</span> <span class="st">"hetero"</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
@@ -108,7 +116,7 @@
 <div class="section level2">
 <h2 id="nonparametric-regression">Nonparametric regression<a class="anchor" aria-label="anchor" href="#nonparametric-regression"></a>
 </h2>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">demo_np</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/np_demo_data.html">np_demo_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">180</span>, p <span class="op">=</span> <span class="fl">2</span>, design <span class="op">=</span> <span class="st">"sinusoidal"</span>, seed <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="va">fit_np</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/np_dnn.html">np_dnn</a></span><span class="op">(</span></span>
 <span>  data <span class="op">=</span> <span class="va">demo_np</span><span class="op">$</span><span class="va">data</span>, x_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X1"</span>, <span class="st">"X2"</span><span class="op">)</span>, y_col <span class="op">=</span> <span class="st">"Y"</span>,</span>
@@ -138,7 +146,7 @@
 <h2 id="visualizing-cate">Visualizing CATE<a class="anchor" aria-label="anchor" href="#visualizing-cate"></a>
 </h2>
 <p>If ggplot2 is installed, <code>plot(fit)</code> displays estimates with pointwise jackknife confidence bounds. This profile holds the second covariate at zero and again uses oracle nuisance inputs.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://JakobJuergens.github.io/RdistNN/">RdistNN</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
