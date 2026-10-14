@@ -28,6 +28,17 @@ Superseded CATE and IV study launchers are removed. General `sim_cate_*` and
 experimental `sim_iv_*` APIs remain synthetic benchmark tools; they do not
 implement this affine campaign.
 
+## Install the replication bundle
+
+The bundle was introduced in development version `0.1.0.9000`. Install the
+current `master` branch before following this guide; the initial `v0.1.0`
+release does not contain the affine bundle.
+
+```{r install-bundle, eval=FALSE}
+install.packages("pak")
+pak::pak("JakobJuergens/RdistNN@master")
+```
+
 ```{r locate}
 bundle <- system.file("paper-replication/affine", package = "RdistNN")
 list.files(bundle)
