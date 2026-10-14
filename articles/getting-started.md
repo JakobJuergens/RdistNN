@@ -284,10 +284,10 @@ as.vector(crossprod(wt$W, fit_cate$psi))
 - [Visualizing fitted
   estimators](https://JakobJuergens.github.io/RdistNN/articles/visualising-fits.md):
   CATE profiles, overlap, influence, and dashboards.
-- [CATE simulation
-  tools](https://JakobJuergens.github.io/RdistNN/articles/paper-cate-simulation.md):
-  paper-specific replication workflows; illustrative runs do not
-  constitute manuscript evidence.
+- [Affine paper
+  replication](https://JakobJuergens.github.io/RdistNN/articles/paper-affine-replication.md):
+  the current simulation and SIPP workflows, plus regeneration of
+  accepted manuscript evidence.
 - [Conditional
   Z-estimation](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md):
   additional moment details, including experimental PLQR.

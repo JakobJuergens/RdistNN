@@ -11,8 +11,8 @@
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Distributional Nearest-Neighbor Inference for Local Conditional Moment Models">
-<meta name="description" content="Implements distributional nearest-neighbor weights and diagnostics for local conditional moment and Z-estimation problems. The initial public release focuses on nonparametric regression and conditional average treatment effects, with delete-one jackknife standard errors, tuning-grid diagnostics, visualization, and CATE replication tools. Partially linear quantile-regression moment evaluation and local IV-GMM functionality are experimental. Lower-level generalized U-statistic and jackknife utilities are included as supporting infrastructure. Uses compiled C++ fast paths with robust batched R fallbacks for supported algorithms; source installation still requires a C++17 toolchain. The package also includes estimator-specific inference routes, including delete-one jackknife diagnostics and direct sandwich covariance estimates.">
-<meta property="og:description" content="Implements distributional nearest-neighbor weights and diagnostics for local conditional moment and Z-estimation problems. The initial public release focuses on nonparametric regression and conditional average treatment effects, with delete-one jackknife standard errors, tuning-grid diagnostics, visualization, and CATE replication tools. Partially linear quantile-regression moment evaluation and local IV-GMM functionality are experimental. Lower-level generalized U-statistic and jackknife utilities are included as supporting infrastructure. Uses compiled C++ fast paths with robust batched R fallbacks for supported algorithms; source installation still requires a C++17 toolchain. The package also includes estimator-specific inference routes, including delete-one jackknife diagnostics and direct sandwich covariance estimates.">
+<meta name="description" content="Implements distributional nearest-neighbor weights and diagnostics for local conditional moment and Z-estimation problems. The initial public release focuses on nonparametric regression and conditional average treatment effects, with delete-one jackknife standard errors, tuning-grid diagnostics, visualization, and study-specific replication workflows for the affine conditional Z-estimation paper. Partially linear quantile-regression moment evaluation and local IV-GMM functionality are experimental. Lower-level generalized U-statistic and jackknife utilities are included as supporting infrastructure. Uses compiled C++ fast paths with robust batched R fallbacks for supported algorithms; source installation still requires a C++17 toolchain. The package also includes estimator-specific inference routes, including delete-one jackknife diagnostics and direct sandwich covariance estimates.">
+<meta property="og:description" content="Implements distributional nearest-neighbor weights and diagnostics for local conditional moment and Z-estimation problems. The initial public release focuses on nonparametric regression and conditional average treatment effects, with delete-one jackknife standard errors, tuning-grid diagnostics, visualization, and study-specific replication workflows for the affine conditional Z-estimation paper. Partially linear quantile-regression moment evaluation and local IV-GMM functionality are experimental. Lower-level generalized U-statistic and jackknife utilities are included as supporting infrastructure. Uses compiled C++ fast paths with robust batched R fallbacks for supported algorithms; source installation still requires a C++17 toolchain. The package also includes estimator-specific inference routes, including delete-one jackknife diagnostics and direct sandwich covariance estimates.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -176,14 +176,14 @@
 </h2>
 <table class="table">
 <colgroup>
-<col width="16%">
-<col width="31%">
+<col width="17%">
+<col width="30%">
 <col width="51%">
 </colgroup>
 <thead><tr>
 <th>Workflow</th>
 <th>Entry points</th>
-<th>Status in 0.1.0</th>
+<th>Status</th>
 </tr></thead>
 <tbody>
 <tr>
@@ -204,11 +204,16 @@
 <td>Supports the main workflows</td>
 </tr>
 <tr>
-<td>CATE replication</td>
+<td>Affine paper replication</td>
+<td>Installed <code>paper-replication/affine</code> scripts</td>
+<td>Current affine simulations, SIPP, and accepted evidence</td>
+</tr>
+<tr>
+<td>Synthetic CATE benchmarks</td>
 <td>
 <code>sim_cate_*</code>, <code><a href="reference/summarise_sim_results.html">summarise_sim_results()</a></code>
 </td>
-<td>Paper-specific tools</td>
+<td>General simulation tools</td>
 </tr>
 <tr>
 <td>PLQR</td>
@@ -230,7 +235,7 @@
 </tr>
 </tbody>
 </table>
-<p>Start with <a href="https://JakobJuergens.github.io/RdistNN/articles/getting-started.html">Getting started</a>, then read <a href="https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.html">notation and conventions</a>, <a href="https://JakobJuergens.github.io/RdistNN/articles/diagnostics-reporting.html">diagnostics</a>, and <a href="https://JakobJuergens.github.io/RdistNN/articles/kernel-order-tuning.html">tuning</a>. The <a href="https://JakobJuergens.github.io/RdistNN/articles/paper-cate-simulation.html">CATE simulation guide</a> covers replication tools; its small illustrative runs are not manuscript evidence.</p>
+<p>Start with <a href="https://JakobJuergens.github.io/RdistNN/articles/getting-started.html">Getting started</a>, then read <a href="https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.html">notation and conventions</a>, <a href="https://JakobJuergens.github.io/RdistNN/articles/diagnostics-reporting.html">diagnostics</a>, and <a href="https://JakobJuergens.github.io/RdistNN/articles/kernel-order-tuning.html">tuning</a>. The <a href="https://JakobJuergens.github.io/RdistNN/articles/paper-affine-replication.html">affine paper replication guide</a> covers the current bounded simulations, SIPP application, and regeneration of accepted manuscript tables and figures. Validation runs are labeled separately from production. Locate the installed bundle with <code>system.file("paper-replication/affine", package = "RdistNN")</code>.</p>
 <p>With local vignettes installed, open the symbol guide with <code><a href="articles/notation-and-conventions.html">vignette("notation-and-conventions", package = "RdistNN")</a></code>.</p>
 </div>
 <div class="section level2">

@@ -31,5 +31,5 @@
 
 ### Paper replication
 
-- [CATE Simulation
-  Study](https://JakobJuergens.github.io/RdistNN/articles/paper-cate-simulation.md):
+- [Affine Paper
+  Replication](https://JakobJuergens.github.io/RdistNN/articles/paper-affine-replication.md):

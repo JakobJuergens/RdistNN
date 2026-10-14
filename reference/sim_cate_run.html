@@ -19,7 +19,7 @@ summarise_sim_results() to aggregate to one row per
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,7 +41,7 @@ summarise_sim_results() to aggregate to one row per
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Run the CATE simulation grid</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.0/R/sim-cate-run.R" class="external-link"><code>R/sim-cate-run.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/master/R/sim-cate-run.R" class="external-link"><code>R/sim-cate-run.R</code></a></small>
       <div class="d-none name"><code>sim_cate_run.Rd</code></div>
     </div>
 
@@ -181,8 +181,8 @@ by calling <code><a href="https://future.futureverse.org/reference/plan.html" cl
 <span><span class="fu">future</span><span class="fu">::</span><span class="fu"><a href="https://future.futureverse.org/reference/plan.html" class="external-link">plan</a></span><span class="op">(</span><span class="fu">future</span><span class="fu">::</span><span class="va"><a href="https://future.futureverse.org/reference/multisession.html" class="external-link">multisession</a></span><span class="op">)</span></span>
 <span><span class="va">raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sim_cate_run.html">sim_cate_run</a></span><span class="op">(</span><span class="va">...</span><span class="op">)</span></span></code></pre><p></p></div>
 <p>Without <code>future.apply</code> the function falls back silently to sequential
-<code>lapply</code>.  For multi-node HPC, see
-<code>system.file("paper-replication/cate/hpc", package = "RdistNN")</code>.</p>
+<code>lapply</code>. The current affine paper uses a separate study-specific workflow
+under <code>system.file("paper-replication/affine", package = "RdistNN")</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="fault-tolerance">Fault tolerance<a class="anchor" aria-label="anchor" href="#fault-tolerance"></a></h2>

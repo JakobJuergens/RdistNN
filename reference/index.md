@@ -163,10 +163,10 @@ Tuning specifications, registry helpers, and paper-default rules.
 - [`np_demo_subsets()`](https://JakobJuergens.github.io/RdistNN/reference/np_demo_subsets.md)
   : Quick helper: sample a batch of subsets (singleton by default)
 
-## Paper replication — CATE simulation study
+## General CATE simulation tools
 
-Data-generating processes and Monte Carlo harnesses mirroring the
-conditional Z-estimation paper’s CATE study.
+Synthetic benchmarks and Monte Carlo summaries. The current affine paper
+uses the separate study-specific replication bundle.
 
 - [`sim_cate_data()`](https://JakobJuergens.github.io/RdistNN/reference/sim_cate_data.md)
   : Draw one sample from a named CATE simulation DGP

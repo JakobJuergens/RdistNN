@@ -29,7 +29,9 @@ work, also read as relevant:
 For tuning-grid work read
 `markdown_notes/design/14_integrated_tuning_grid_reuse.md`; for PLQR
 inference work read
-`markdown_notes/design/15_plqr_variance_estimation_rationale.md`.
+`markdown_notes/design/15_plqr_variance_estimation_rationale.md`. For
+paper-replication work read
+`markdown_notes/design/16_affine_replication_contract.md`.
 
 ## Markdown note layout
 

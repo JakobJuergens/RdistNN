@@ -61,7 +61,7 @@ or an inferential output.
 | Define a custom distance, rank-weight map, or score | [Extending RdistNN](https://JakobJuergens.github.io/RdistNN/articles/extending.md): [`vignette("extending", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/extending.md) |
 | Work directly with generalized U-statistic jackknife tools | [Jackknife generalized U-statistics](https://JakobJuergens.github.io/RdistNN/articles/jackknife-gen-ustats.md): [`vignette("jackknife-gen-ustats", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/jackknife-gen-ustats.md) |
 | Use the experimental local IV-GMM workflow | [Local IV estimation](https://JakobJuergens.github.io/RdistNN/articles/local-iv-estimation.md): [`vignette("local-iv-estimation", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/local-iv-estimation.md) |
-| Reproduce the package’s paper-facing CATE simulation | [Paper CATE simulation](https://JakobJuergens.github.io/RdistNN/articles/paper-cate-simulation.md): [`vignette("paper-cate-simulation", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/paper-cate-simulation.md) |
+| Reproduce the current affine simulations and SIPP application | [Affine paper replication](https://JakobJuergens.github.io/RdistNN/articles/paper-affine-replication.md): [`vignette("paper-affine-replication", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/paper-affine-replication.md) |
 
 ## Quick package-to-paper map
 
@@ -318,8 +318,8 @@ learner.
 Continue with [Conditional
 Z-estimation](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md)
 for a worked CATE fit. For the paper-specific data-generating process
-and Monte Carlo harness, use [Paper CATE
-simulation](https://JakobJuergens.github.io/RdistNN/articles/paper-cate-simulation.md).
+and Monte Carlo harness, use [Affine paper
+replication](https://JakobJuergens.github.io/RdistNN/articles/paper-affine-replication.md).
 
 ## Experimental PLQR target and nuisance conventions
 

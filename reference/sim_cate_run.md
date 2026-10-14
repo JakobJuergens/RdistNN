@@ -143,8 +143,9 @@ before `sim_cate_run()`:
     raw <- sim_cate_run(...)
 
 Without `future.apply` the function falls back silently to sequential
-`lapply`. For multi-node HPC, see
-`system.file("paper-replication/cate/hpc", package = "RdistNN")`.
+`lapply`. The current affine paper uses a separate study-specific
+workflow under
+`system.file("paper-replication/affine", package = "RdistNN")`.
 
 ## Fault tolerance
 

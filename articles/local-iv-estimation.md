@@ -18,15 +18,9 @@ The example uses the doubly robust IV moment model created by
 and the IV simulation DGPs exposed through
 [`sim_iv_data()`](https://JakobJuergens.github.io/RdistNN/reference/sim_iv_data.md).
 
-The full paper replication grid is intentionally kept out of the
-vignette. It is installed with the package under
-`inst/paper-replication/iv/` and can be located after installation with:
-
-``` r
-
-system.file("paper-replication/iv/run.R", package = "RdistNN")
-system.file("paper-replication/iv/hpc", package = "RdistNN")
-```
+These synthetic IV examples are experimental benchmarks. The current
+affine paper replication is described in [Affine paper
+replication](https://JakobJuergens.github.io/RdistNN/articles/paper-affine-replication.md).
 
 ## One Local IV Dataset
 
@@ -178,30 +172,6 @@ print(tab_iv, digits = 3)
 #> 1     1   3.85 21.9       NA            NA       NA
 #> 2     1   2.45 21.9     3.12         0.333      0.5
 ```
-
-## Paper Replication Scripts
-
-The installed replication layer provides single-machine and SLURM
-entrypoints:
-
-``` r
-
-# Full main-grid run. Writes ./results/sim_iv_raw.rds and sim_iv_table.csv.
-source(system.file("paper-replication/iv/run.R", package = "RdistNN"))
-```
-
-``` bash
-# On a SLURM cluster, after installing RdistNN:
-sbatch /path/to/paper-replication/iv/hpc/submit.sh
-
-# After the array tasks complete:
-Rscript /path/to/paper-replication/iv/hpc/merge.R
-```
-
-Set `SIM_OUTDIR` before running these scripts to write results outside
-the current working directory. The full grid uses 36 array cells and
-10,000 replications per cell; package tests exercise the same scripts
-through a small smoke grid instead of running the production simulation.
 
 ## Related Articles
 
