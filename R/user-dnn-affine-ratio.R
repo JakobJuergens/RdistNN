@@ -86,8 +86,8 @@ affine_ratio_dnn <- function(
       .abort_bad_arg("data/X", "cannot combine data with X or direct signal vectors", quoted = FALSE)
     }
     if (!is.data.frame(data)) .abort_bad_arg("data", "must be a data.frame")
+    n <- .affine_sample_size(data, "data")
     x_mat <- .dnn_col_mat(x_cols, data, "x_cols", out_arg = "X")
-    n <- nrow(x_mat)
     num <- .affine_column(numerator_col, data, n, "numerator_col")
     den <- .affine_column(denominator_col, data, n, "denominator_col")
   } else {
@@ -96,7 +96,7 @@ affine_ratio_dnn <- function(
     }
     if (is.null(X)) .abort_bad_arg("X", "must be supplied for the matrix interface")
     x_mat <- .validate_matrix_nonempty(X, "X")
-    n <- nrow(x_mat)
+    n <- .affine_sample_size(x_mat, "X")
     num <- .affine_vector(numerator, n, "numerator")
     den <- .affine_vector(denominator, n, "denominator")
   }

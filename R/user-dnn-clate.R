@@ -84,9 +84,9 @@ clate_dnn <- function(
       .abort_bad_arg("data/X", "cannot combine data with X or direct sample vectors", quoted = FALSE)
     }
     if (!is.data.frame(data)) .abort_bad_arg("data", "must be a data.frame")
+    n <- .affine_sample_size(data, "data")
     resolved_x_cols <- .dnn_resolve_data_cols(x_cols, data, "x_cols")
     x_mat <- .dnn_col_mat(resolved_x_cols, data, "x_cols", out_arg = "X")
-    n <- nrow(x_mat)
     for (nm in names(vectors)) {
       col_arg <- switch(nm, Y = "y_col", D = "d_col", A = "a_col", e = "e_col",
                          m_y0 = "m_y0_col", m_y1 = "m_y1_col",
@@ -100,7 +100,7 @@ clate_dnn <- function(
     }
     if (is.null(X)) .abort_bad_arg("X", "must be supplied for the matrix interface")
     x_mat <- .validate_matrix_nonempty(X, "X")
-    n <- nrow(x_mat)
+    n <- .affine_sample_size(x_mat, "X")
     vectors$Y <- .affine_vector(Y, n, "Y")
   }
   signals <- do.call(iv_augmented_signals, c(

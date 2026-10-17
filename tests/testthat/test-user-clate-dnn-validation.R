@@ -58,3 +58,16 @@ test_that("CLATE default tuning is resolved once and recorded", {
   a$tuning <- tuning_dnn_paper()
   expect_error(do.call(clate_dnn, a), "s/tuning")
 })
+
+test_that("CLATE rejects empty matrix and tabular training samples early", {
+  a <- .clate_fit_arguments()
+  for (nm in names(.clate_test_predictions())) a[[nm]] <- numeric()
+  a$X <- matrix(numeric(), 0L, 1L)
+  a$X0 <- NULL
+  a$x0 <- 0
+  expect_error(do.call(clate_dnn, a), "X.*at least one")
+  original <- .clate_fit_arguments()
+  frame <- .clate_frame_arguments(original, .clate_test_frame(original))
+  frame$data <- frame$data[FALSE, ]
+  expect_error(do.call(clate_dnn, frame), "data.*at least one")
+})

@@ -68,7 +68,7 @@ vcov.affine_ratio_result <- function(object, target = NULL, ...) {
   ))
   if (!is.null(object$se)) {
     ok <- object$status$wald_available
-    delta <- stats::qnorm((1 + level) / 2) * object$se[ok]
+    delta <- stats::qnorm((1 - level) / 2, lower.tail = FALSE) * object$se[ok]
     ci[ok, 1L] <- object$theta[ok] - delta
     ci[ok, 2L] <- object$theta[ok] + delta
   }

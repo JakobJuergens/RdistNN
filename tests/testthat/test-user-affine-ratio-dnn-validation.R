@@ -53,3 +53,14 @@ test_that("numerical cancellation tolerance never changes a representable ratio"
   expect_identical(a$theta, b$theta)
   expect_identical(a$theta_vcov, b$theta_vcov)
 })
+
+test_that("empty training samples fail before weight and tuning resolution", {
+  expect_error(affine_ratio_dnn(
+    X = matrix(numeric(), 0L, 1L), numerator = numeric(), denominator = numeric(),
+    x0 = 0, s = 1L, se = FALSE
+  ), "X.*at least one")
+  expect_error(affine_ratio_dnn(
+    data = data.frame(x = numeric(), y = numeric(), d = numeric()),
+    x_cols = "x", numerator_col = "y", denominator_col = "d", x0 = 0, s = 1L
+  ), "data.*at least one")
+})

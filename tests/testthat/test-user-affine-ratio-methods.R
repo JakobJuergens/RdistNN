@@ -20,6 +20,15 @@ test_that("ratio coefficient covariance and intervals have stable target semanti
   }
 })
 
+test_that("confidence quantiles remain finite at the largest representable level below one", {
+  f <- .ratio_fixture()
+  level <- 1 - .Machine$double.eps / 2
+  ci <- confint(f, level = level)
+  critical <- stats::qnorm((1 - level) / 2, lower.tail = FALSE)
+  expect_true(all(is.finite(ci)))
+  expect_equal(as.numeric(ci), 4 + c(-1, 1) * critical * sqrt(34))
+})
+
 test_that("ratio summaries retain undefined and degenerate targets without fabricated intervals", {
   f <- .ratio_fixture(X0 = matrix(c(0, 3, 5), ncol = 1L), x0 = NULL,
                        denominator = c(0, 0, -1, 2), s = 3L)

@@ -48,3 +48,9 @@
   nm <- .dnn_resolve_data_cols(col, data, arg, allow_multiple = FALSE)
   .affine_vector(data[[nm]], n, arg)
 }
+
+.affine_sample_size <- function(x_mat, arg) {
+  n <- nrow(x_mat)
+  if (n < 1L) .abort_bad_arg(arg, "must contain at least one observation")
+  n
+}
