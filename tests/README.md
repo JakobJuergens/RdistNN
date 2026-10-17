@@ -16,6 +16,7 @@ names.
 | Component contracts | `test-api-*`, `test-distance-*`, `test-order-*`, `test-score-*`, `test-utils-validate.R` |
 | Numerical references and optimized paths | `test-rank-weight-*`, `test-jackknife-rank-*`, `test-dnn-scalar-reference.R`, `test-dnn-jackknife-prefix.R`, `test-tdnn-*`, `test-compiled-fallback-parity.R`, `test-errors-fastpaths.R` |
 | CATE and nonparametric regression | `test-user-cate-*`, `test-user-np-dnn*`, `test-user-tdnn-np*`, `test-demo-data-npr.R` |
+| Experimental conditional LATE | `test-clate-*`, `test-user-clate-*`, `test-user-affine-ratio-*`, `test-weights-single-row.R` |
 | Tuning and stored candidate views | `test-api-tuning.R`, `test-user-dnn-tuning.R`, `test-tuning-*`, `test-candidate-fit.R`, `test-user-*-tuning-grid.R` |
 | Diagnostics and plots | `test-user-dnn-diagnostics.R`, `test-plot-*`, `test-tuning-grid-diagnostics-plots.R` |
 | CATE simulations | `test-sim-cate-data.R`, `test-sim-cate-one-rep.R`, `test-sim-cate-run.R`, `test-sim-cate-summary.R`, `test-sim-cate-tuning*.R` |
@@ -45,6 +46,7 @@ devtools::test(filter = "^user-(np-dnn|tdnn-np)")
 devtools::test(filter = "^(api-tuning|tuning-|candidate-fit|user-dnn-tuning|user-.*-tuning-grid|sim-cate-tuning)")
 devtools::test(filter = "^(plot-|user-dnn-diagnostics|tuning-grid-diagnostics-plots)")
 devtools::test(filter = "^sim-cate")
+devtools::test(filter = "^(clate-|user-clate|user-affine-ratio|weights-single-row)")
 devtools::test(filter = "^(user-plqr|user-dnn-gmm|user-gmm|gmm-models|score-plqr|demo-data-(plqr|iv)|sim-iv)")
 ```
 
@@ -60,6 +62,14 @@ Shared fixtures and reference calculations live in domain-specific
 `helper-sim-cate.R` holds independent AIPW calculations;
 `helper-user-dnn-gmm.R` supplies custom GMM model fixtures. Helper files define
 support functions rather than fitting models eagerly.
+
+`helper-clate-reference.R` enumerates complete subsamples independently of the
+package's weight/deletion engines. CLATE suites cover paired covariance,
+signed and zero denominators, deterministic ties, R/compiled/explicit-loop
+parity, methods and serialization. The bounded ridge suite checks independent
+dense normal equations and all required one-/two-deleted fits. Confidence-set
+tests cover every quadratic geometry, membership, singular covariance and
+extreme scales. Small generated examples test execution, not coverage.
 
 Test files should run independently. Testthat's helper loading and file
 conventions are documented in its

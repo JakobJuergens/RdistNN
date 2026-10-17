@@ -55,7 +55,7 @@ iv_augmented_signals <- function(
   one_sided <- .validate_scalar_logical(one_sided, "one_sided")
   training_values <- c("supplied", "oracle", "full_sample", "oob", "cross_fit")
   if (!is.character(training) || length(training) != 1L ||
-      is.na(training) || !training %in% training_values) {
+    is.na(training) || !training %in% training_values) {
     .abort_bad_arg("training", paste("must be one of", paste(training_values, collapse = ", ")))
   }
   y_vec <- .affine_vector(Y, arg = "Y")

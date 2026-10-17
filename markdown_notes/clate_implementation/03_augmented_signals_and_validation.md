@@ -3,7 +3,7 @@
 [Index](README.md) · [Previous](02_public_interfaces_and_results.md) ·
 [Next: computation](04_localization_and_deletion_engine.md)
 
-**Status:** proposed constructor and validation contract. The implementation
+**Status:** implemented constructor and validation contract. The implementation
 owner is `R/score-clate.R`; wrapper interface resolution belongs in
 `R/user-dnn-clate.R`. No learner is fitted in either file.
 

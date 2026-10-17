@@ -27,8 +27,8 @@
   D <- .validate_binary01(.affine_column("D", data, n, "D"), "D")
   if (any(abs(Y) > 1)) .abort_bad_arg("Y", "must be bounded by one in the reference model")
   if (!is.numeric(delete) || !is.null(dim(delete)) || length(delete) > 2L ||
-      anyNA(delete) || any(!is.finite(delete)) || any(delete != floor(delete)) ||
-      any(delete < 1 | delete > n) || anyDuplicated(delete)) {
+    anyNA(delete) || any(!is.finite(delete)) || any(delete != floor(delete)) ||
+    any(delete < 1 | delete > n) || anyDuplicated(delete)) {
     .abort_bad_arg("delete", "must contain at most two distinct retained-sample indices in 1..n")
   }
   delete <- sort(as.integer(delete))

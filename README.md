@@ -21,8 +21,9 @@ The initial public release focuses on `cate_dnn()`, `np_dnn()`, and the
 DNN weights and tuning tools supporting these workflows. Nuisance
 predictions for CATE are supplied by the user. **All PLQR functionality
 is experimental**, including its scores, demo data, inference methods,
-and plotting helpers. Local IV-GMM is also experimental; advanced
-extensions remain available in the reference documentation.
+and plotting helpers. Conditional LATE and local IV-GMM are also
+experimental; advanced extensions remain available in the reference
+documentation.
 
 The package accompanies [Orthogonal Inference for Conditional
 Z-Estimation without
@@ -160,6 +161,25 @@ and additional smoothness requirements are explained in the
 getting-started guide and `?np_tdnn`; `plot_tdnn_scales()` compares the
 component scales.
 
+## Experimental conditional LATE
+
+The development version adds `clate_dnn()` for a binary instrument and
+binary treatment, using externally supplied nuisance predictions. It
+reports the adjusted reduced form, first stage, their ratio and paired
+frozen-score uncertainty. `affine_ratio_dnn()` accepts the two signals
+directly; `iv_augmented_signals()` constructs them from predictions. No
+learner is fitted by these interfaces.
+
+The [CLATE
+guide](https://JakobJuergens.github.io/RdistNN/articles/conditional-late.html)
+shows matrix/data-frame calls, diagnostics and new reporting profiles.
+The [inference
+article](https://JakobJuergens.github.io/RdistNN/articles/conditional-late-inference.html)
+explains covariance scales, signed/zero denominators, and the optional
+`ratio_confidence_set()` output, including unbounded sets. These
+features require the development version; they are not in the original
+0.1.0 release.
+
 ## Localization and tuning
 
 With `k = 1` and no explicit `s`, the default is
@@ -222,16 +242,17 @@ shows the available panels and their underlying data extractors.
 
 ## Documentation and release scope
 
-| Workflow                  | Entry points                                   | Status                                                                         |
-|---------------------------|------------------------------------------------|--------------------------------------------------------------------------------|
-| CATE                      | `cate_dnn()`, CATE methods and diagnostics     | Release focus                                                                  |
-| Nonparametric regression  | `np_dnn()`, `np_tdnn()`, diagnostics and plots | Release focus; TDNN uses signed weights                                        |
-| Localization              | DNN weights, distances, tuning                 | Supports the main workflows                                                    |
-| Affine paper replication  | Installed `paper-replication/affine` scripts   | Current affine simulations, SIPP, and accepted evidence                        |
-| Synthetic CATE benchmarks | `sim_cate_*`, `summarise_sim_results()`        | General simulation tools                                                       |
-| PLQR                      | `plqr_dnn()`, PLQR scores, helpers and methods | Experimental; evaluates moments at supplied coefficients, without root solving |
-| Local IV-GMM              | `gmm_dnn()`, `sim_iv_*`                        | Experimental companion work                                                    |
-| Extensions                | Registries, generalized U-statistic utilities  | Advanced reference material                                                    |
+| Workflow                  | Entry points                                                          | Status                                                                         |
+|---------------------------|-----------------------------------------------------------------------|--------------------------------------------------------------------------------|
+| CATE                      | `cate_dnn()`, CATE methods and diagnostics                            | Release focus                                                                  |
+| Nonparametric regression  | `np_dnn()`, `np_tdnn()`, diagnostics and plots                        | Release focus; TDNN uses signed weights                                        |
+| Localization              | DNN weights, distances, tuning                                        | Supports the main workflows                                                    |
+| Affine paper replication  | Installed `paper-replication/affine` scripts                          | Current affine simulations, SIPP, and accepted evidence                        |
+| Synthetic CATE benchmarks | `sim_cate_*`, `summarise_sim_results()`                               | General simulation tools                                                       |
+| Conditional LATE          | `clate_dnn()`, `affine_ratio_dnn()`, paired inference and diagnostics | Experimental; supplied nuisance predictions                                    |
+| PLQR                      | `plqr_dnn()`, PLQR scores, helpers and methods                        | Experimental; evaluates moments at supplied coefficients, without root solving |
+| Local IV-GMM              | `gmm_dnn()`, `sim_iv_*`                                               | Experimental companion work                                                    |
+| Extensions                | Registries, generalized U-statistic utilities                         | Advanced reference material                                                    |
 
 Start with [Getting
 started](https://JakobJuergens.github.io/RdistNN/articles/getting-started.html),

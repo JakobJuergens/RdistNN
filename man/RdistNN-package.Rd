@@ -45,6 +45,13 @@ moments at a supplied coefficient; it does not solve for local coefficients.
 Local IV-GMM functionality is also experimental. These workflows are outside
 the CATE and regression focus of the initial public release.
 \itemize{
+\item Estimate conditional LATE from supplied nuisance predictions with
+\code{\link[=clate_dnn]{clate_dnn()}}, or localize two supplied signals with \code{\link[=affine_ratio_dnn]{affine_ratio_dnn()}}.
+\code{\link[=iv_augmented_signals]{iv_augmented_signals()}} constructs the augmented binary-IV signals.
+Reporting methods and \code{\link[=diagnostics]{diagnostics()}} retain components and statuses;
+\code{\link[=ratio_confidence_set]{ratio_confidence_set()}} provides separate set-valued moment inversion.
+\code{\link[=clate_demo_data]{clate_demo_data()}} supplies a bounded synthetic benchmark with oracle
+predictions. All conditional-LATE functionality is experimental.
 \item Build custom generalized U-statistics with \code{\link[=new_score]{new_score()}},
 \code{\link[=score_eval_batch]{score_eval_batch()}}, and \code{\link[=score_diff_path]{score_diff_path()}}.
 \item Estimate uncertainty with \code{\link[=jackknife_fast_rank]{jackknife_fast_rank()}} and
@@ -67,6 +74,9 @@ and scores, see \code{vignette("extending", package = "RdistNN")}.
 \item For estimator workflows see
 \code{vignette("conditional-z-estimation", package = "RdistNN")}, including
 experimental PLQR details.
+\item For supplied-prediction conditional LATE and paired inference, see
+\code{vignette("conditional-late", package = "RdistNN")} and
+\code{vignette("conditional-late-inference", package = "RdistNN")}.
 \item For jackknife details see
 \code{vignette("jackknife-gen-ustats", package = "RdistNN")}.
 }

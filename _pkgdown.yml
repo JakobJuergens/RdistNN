@@ -35,6 +35,8 @@ articles:
       - jackknife-gen-ustats
   - title: Experimental companion workflows
     contents:
+      - conditional-late
+      - conditional-late-inference
       - local-iv-estimation
   - title: Paper replication
     contents:
@@ -121,6 +123,20 @@ reference:
       - sim_cate_run
       - sim_cate_methods
       - summarise_sim_results
+
+  - title: Experimental — conditional LATE
+    desc: >
+      Supplied-prediction binary-IV signals, paired exact-DNN ratios,
+      frozen-score covariance, reporting and diagnostics. Includes a bounded
+      benchmark and separate pointwise ratio confidence-set inversion.
+    contents:
+      - clate_dnn
+      - iv_augmented_signals
+      - affine_ratio_dnn
+      - affine_ratio_result
+      - clate_diagnostics
+      - clate_demo_data
+      - ratio_confidence_set
 
   - title: Experimental — PLQR
     desc: >

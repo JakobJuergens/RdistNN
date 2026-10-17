@@ -1,5 +1,18 @@
 # RdistNN (development version)
 
+- Added experimental conditional LATE from supplied nuisance predictions with
+  `clate_dnn()`, `iv_augmented_signals()` and the generic `affine_ratio_dnn()`.
+  Both input formats retain paired components, covariance scales and explicit
+  zero/negative-denominator statuses. Reporting, prediction and diagnostics
+  reuse frozen signals; nuisance learning remains external.
+- Added `ratio_confidence_set()` with bounded, singleton, ray, half-line,
+  all-real, empty and unresolved numerical results, plus a bounded
+  `clate_demo_data()` benchmark and internal ridge-series reference adapter.
+  New guides explain the estimand, covariance and pointwise inference scope.
+- Added independent subset/deletion references, signal identities, interface
+  and validation tests, R/compiled parity, ridge refits and confidence-set
+  geometry/rescaling tests. Hardened single-observation rank shapes, empty
+  CLATE/ratio inputs and near-one confidence quantiles.
 - Replaced the superseded CATE and IV paper launchers with the current affine
   simulation and SIPP workflows. The bundle pins unchanged paper scientific
   source, all four accepted production configurations, and compressed evidence.

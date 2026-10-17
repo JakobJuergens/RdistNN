@@ -3,8 +3,8 @@
 [Index](README.md) · [Previous](06_learners_bounded_model_and_studies.md) ·
 [Next: documentation](08_documentation_examples_and_vignettes.md)
 
-**Status:** test specification for future code. The named files below are
-proposed additions, not tests run or delivered by this planning collection.
+**Status:** implemented acceptance specification. The named suites below
+exist and their focused runs pass; the index records full acceptance status.
 Use testthat edition 3 and the existing [testing policy](../design/09_testing_and_regression_policy.md).
 No test should need the paper checkout, the Literature vault or downloaded
 SIPP data.

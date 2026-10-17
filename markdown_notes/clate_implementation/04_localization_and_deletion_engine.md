@@ -3,7 +3,7 @@
 [Index](README.md) · [Previous](03_augmented_signals_and_validation.md) ·
 [Next: inference](05_inference_confidence_sets_and_diagnostics.md)
 
-**Status:** implementation design. The new owner is
+**Status:** implemented numeric contract. The owner is
 `R/user-dnn-affine-ratio.R`, calling existing shared primitives.
 No new compiled routine is needed to deliver the first complete feature.
 

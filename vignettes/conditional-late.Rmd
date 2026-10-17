@@ -1,0 +1,249 @@
+---
+title: "Conditional LATE from supplied nuisance predictions"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Conditional LATE from supplied nuisance predictions}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(RdistNN)
+```
+
+`clate_dnn()` estimates a conditional local average treatment effect from
+externally supplied nuisance predictions. This experimental workflow uses
+a binary instrument `A` and binary treatment `D`. For example, an
+encouragement may change participation without determining it perfectly.
+Under the IV assumptions, the target is the effect among people whose
+treatment changes with encouragement, conditional on a reporting profile.
+
+The full adjustment vector \(V=(X,Z)\) contains the pre-instrument
+covariates needed for instrument exogeneity. Reporting uses only \(X\).
+The effect therefore averages over the distribution of the additional
+controls \(Z\) at each reporting profile, with compliance weights.
+It generally differs from population CATE.
+
+Causal interpretation requires consistency, exclusion, conditional
+instrument independence given \(V\), monotonicity, instrument overlap
+and positive local compliance. Without those causal assumptions, the
+calculation estimates a standardized observed-data Wald functional wherever
+its denominator is nonzero. Predictions alone do not verify identification.
+
+## An example with known nuisance functions
+
+`clate_demo_data()` generates a bounded model with endogenous treatment,
+a conditionally valid instrument and known nuisance functions. The latent
+compliance rank also affects untreated outcomes. Its default data frame
+contains observed variables and explicitly labelled oracle prediction
+columns; latent variables are available only with `keep_latent = TRUE`.
+
+```{r data}
+demo <- clate_demo_data(n = 120, seed = 20261017, heterogeneous = TRUE)
+d <- demo$data
+X <- as.matrix(d[c("X1", "X2")])
+targets <- rbind(c(.25, .25), c(.5, .5), c(.75, .75))
+data.frame(targets,
+           CLATE = demo$truth$theta(targets), CATE = demo$truth$cate(targets))
+```
+
+With `heterogeneous = TRUE`, CLATE exceeds CATE by \(3/1024\).
+The default model instead has the same treatment effect for everyone at a
+given \(X\), so the targets coincide. Neither model turns a single
+draw's confidence interval into evidence of repeated-sampling coverage.
+
+The five prediction vectors have the following roles:
+
+| Argument | Function evaluated at each observed \(V_i\) |
+| --- | --- |
+| `e` | \(P(A=1\mid V)\), instrument propensity |
+| `m_y0`, `m_y1` | \(E[Y\mid A=0,V]\), \(E[Y\mid A=1,V]\) |
+| `m_d0`, `m_d1` | \(E[D\mid A=0,V]\), \(E[D\mid A=1,V]\) |
+
+Arm indices refer to the instrument. The outcome regressions do not
+condition on participation as an extra control. In an application, supply
+aligned predictions from the chosen learning procedure. One full-sample
+nuisance state can contain five fitted regressions. The `training` label
+records their provenance; it does not train or validate them.
+
+## Matrix inputs and the two augmented signals
+
+```{r matrix-fit}
+fit <- clate_dnn(
+  X = X, X0 = targets, Y = d$Y, D = d$D, A = d$A,
+  e = d$e_oracle, m_y0 = d$m_y0_oracle, m_y1 = d$m_y1_oracle,
+  m_d0 = d$m_d0_oracle, m_d1 = d$m_d1_oracle,
+  s = 16L, training = "oracle", row_ids = d$row_id,
+  return = c("W", "nuisance")
+)
+```
+
+The wrapper constructs the augmented contrast for each response \(R=Y,D\):
+
+\[
+\phi_R=m_{R,1}-m_{R,0}
+ +\frac A e(R-m_{R,1})
+ -\frac{1-A}{1-e}(R-m_{R,0}).
+\]
+
+It then solves the affine equation
+\(\sum_iw_i(x)(\theta\phi_{D,i}-\phi_{Y,i})=0\). The
+result is a ratio of weighted averages, with common weights for both
+signals. Do not average observation-level signal ratios.
+
+The constructor and generic ratio engine are also available separately:
+
+```{r explicit-composition}
+signals <- iv_augmented_signals(
+  Y = d$Y, D = d$D, A = d$A, e = d$e_oracle,
+  m_y0 = d$m_y0_oracle, m_y1 = d$m_y1_oracle,
+  m_d0 = d$m_d0_oracle, m_d1 = d$m_d1_oracle,
+  row_ids = d$row_id, training = "oracle"
+)
+ratio <- affine_ratio_dnn(
+  X = X, X0 = targets, numerator = signals$phi_y, denominator = signals$phi_d,
+  s = 16L, row_ids = signals$row_ids
+)
+stopifnot(isTRUE(all.equal(ratio$theta, fit$theta)),
+          isTRUE(all.equal(ratio$theta_vcov, fit$theta_vcov)))
+```
+
+Both high-level estimators support exact without-replacement DNN with
+`method = "exact"`, `k = 1L`. Supply a deterministic integer `s`, or an
+existing tuning specification for a single order. Without either, the
+package's paper-default rule resolves the order. Covariance requires
+`s < n`. The same order is used after every deletion.
+
+## Data frames and tibbles
+
+Select all columns explicitly. Tibbles follow the same data-frame path;
+there is no formula interface or implicit column guessing.
+
+```{r table-fit}
+estimate_from_table <- function(data) {
+  clate_dnn(
+    data = data, x_cols = c("X1", "X2"), X0 = targets,
+    y_col = "Y", d_col = "D", a_col = "A", e_col = "e_oracle",
+    m_y0_col = "m_y0_oracle", m_y1_col = "m_y1_oracle",
+    m_d0_col = "m_d0_oracle", m_d1_col = "m_d1_oracle",
+    s = 16L, training = "oracle", row_ids = data$row_id
+  )
+}
+table_fit <- estimate_from_table(d)
+stopifnot(isTRUE(all.equal(table_fit$theta, fit$theta)),
+          isTRUE(all.equal(table_fit$component_vcov, fit$component_vcov)))
+if (requireNamespace("tibble", quietly = TRUE)) {
+  tibble_fit <- estimate_from_table(tibble::as_tibble(d))
+  stopifnot(isTRUE(all.equal(tibble_fit$theta, fit$theta)))
+}
+```
+
+Every observation and prediction vector must be finite and aligned in the
+same row order. Row IDs must be unique, finite/nonmissing numeric or
+nonempty character values. IDs document alignment; the wrapper cannot
+detect a separately permuted prediction vector supplied without its own
+row map. Align external predictions before passing them.
+
+Instrument propensities must lie in `[0,1]` and are clipped to
+`[clip,1-clip]`; the default is `clip = 1e-8`. Raw and used propensities
+are retained by the constructor. Treatment predictions must lie in
+`[0,1]`; outcome predictions are finite but not automatically capped.
+Clipping a propensity does not establish overlap, and clipping predictions
+does not bound an unbounded observed outcome.
+
+## Report components with the ratio
+
+```{r component-table}
+report <- as.data.frame(summary(fit))
+knitr::kable(report[c("target_id", "numerator", "denominator", "theta", "se", "neff")],
+             digits = 4, caption = "Reduced form, first stage and conditional ratio")
+knitr::kable(report[c("target_id", "conf.low", "conf.high", "ratio_status", "wald_available")],
+             digits = 4, caption = "Pointwise intervals and computation status")
+```
+
+For CLATE, the numerator is the adjusted outcome reduced form and the
+denominator is the adjusted treatment first stage. `component_vcov` retains
+their full paired covariance. `vcov(fit)` returns ratio variance matrices
+on the estimator scale; `theta_omega` multiplies those matrices by `neff`.
+Do not divide the returned ratio variance by `neff` again.
+
+```{r diagnostics}
+info <- as.data.frame(diagnostics(fit))
+fields <- c("target_id", "denominator_se", "denominator_stat",
+            "instrument_1_mass", "radius_90", "jk_top1_sq_share")
+knitr::kable(info[fields], digits = 4, row.names = FALSE,
+             col.names = c("Target", "First-stage SE", "First-stage stat.",
+                           "Instrument mass", "Radius (90%)", "Largest share"))
+```
+
+These diagnostics describe first-stage variation, instrument support,
+physical localization and concentration of fitted uncertainty. `neff`
+measures reporting-weight concentration, not the number of compliers.
+There is no automatic weak-instrument cutoff or target filtering.
+
+## A selected one-sided model
+
+When the design implies \(D(0)=0\), select `one_sided = TRUE` and omit
+`m_d0`, or provide an identically zero vector. The wrapper checks `D <= A`.
+That observed check alone does not establish the counterfactual restriction.
+
+For a simple example, specify perfect compliance, \(D(a)=a\), and a
+constant effect. Here the first-stage signal is identically one and the
+estimate and covariance reduce to CATE.
+
+```{r one-sided}
+set.seed(320)
+n <- 32L
+one_X <- matrix(seq(-1, 1, length.out = n), ncol = 1)
+A <- rbinom(n, 1, .5)
+baseline <- .2 * one_X[, 1]
+Y <- baseline + .5 * A + rnorm(n, sd = .1)
+one <- clate_dnn(
+  X = one_X, x0 = 0, Y = Y, D = A, A = A, e = rep(.5, n),
+  m_y0 = baseline, m_y1 = baseline + .5, m_d1 = rep(1, n),
+  one_sided = TRUE, s = 6L, training = "oracle", return = "signals"
+)
+one$components
+stopifnot(all(one$signals[, 2] == 1))
+```
+
+In general one-sided models, an eligible nonparticipant's augmented
+first-stage signal can be negative. The implementation preserves it.
+
+## New reporting profiles
+
+`predict()` changes only the reporting profiles. It reuses the original
+observations, frozen signals, metric and resolved order; it fits no nuisance
+functions and does not predict outcomes for new households.
+
+```{r new-targets}
+predict(fit, X0 = rbind(c(.4, .4), c(.6, .6)), se.fit = TRUE)
+predict(table_fit, newdata = data.frame(X1 = .5, X2 = .5), interval = "confidence")
+```
+
+## Undefined ratios remain visible
+
+An exactly zero aggregate denominator gives an undefined ratio, while
+preserving the components and their covariance. This is different from a
+finite negative denominator, which remains a computed signed ratio.
+
+```{r zero-denominator}
+zero <- affine_ratio_dnn(
+  X = matrix(1:4), x0 = 0, numerator = c(2, 1, 4, 3),
+  denominator = rep(0, 4), s = 2
+)
+zero$components
+zero$status
+confint(zero)
+ratio_confidence_set(zero$components, zero$component_vcov)
+```
+
+For the covariance derivation, exact worked arrays, confidence-set geometry
+and pointwise inference conditions, continue with [Paired frozen-score
+inference](conditional-late-inference.html). Full-sample inference needs
+learner accuracy and deletion stability as well as orthogonality and
+undersmoothing. The software's numerical statuses do not certify those
+conditions or causal validity. The existing [local IV-GMM
+workflow](local-iv-estimation.html) uses a different moment and covariance
+route; it is not an alias for this augmented CLATE estimator.

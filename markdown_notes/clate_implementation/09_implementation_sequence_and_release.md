@@ -2,7 +2,9 @@
 
 > **For agentic workers:** use superpowers:executing-plans for future native
 > task-by-task implementation. Delegation is not required by this plan.
-> Steps use unchecked boxes because no implementation has started.
+> Implementation is now authorized. Completed tasks are checked below;
+> independent review, hosted-platform acceptance and publication remain
+> tracked in the collection index.
 
 **Goal:** deliver a documented, tested conditional-LATE workflow using paired
 exact-DNN component averages and frozen-score covariance.
@@ -39,8 +41,8 @@ No new runtime dependency is needed for the initial feature.
 - Preserve existing CATE/NP, PLQR/IV-GMM and frozen replication behavior.
 - Optional dependency paths are guarded; no network or sibling checkout
   is required by tests/examples.
-- These are planning documents, not authorization to implement the feature
-  during the present notes-only task.
+- The original notes-only task has been superseded by the explicit request
+  to implement, verify, document, commit and push the feature.
 
 ## Review focus
 
@@ -84,15 +86,15 @@ from roxygen.
 **Produces:** iv_augmented_signals() and the exact iv_signals payload in
 Notes 02–03.
 
-- [ ] Write "augmented responses match explicit formulas" with explicit
+- [x] Write "augmented responses match explicit formulas" with explicit
   arrays, plus the one-sided negative-signal and perfect-compliance cases.
-- [ ] Run the focused new test; confirm failure because the proposed
+- [x] Run the focused new test; confirm failure because the proposed
   constructor is absent, rather than from a broken fixture.
-- [ ] Implement the exact Note 02 signature and Note 03 validation sequence,
+- [x] Implement the exact Note 02 signature and Note 03 validation sequence,
   shared clipped propensity, row IDs and descriptive training metadata.
-- [ ] Add the finite-distribution product-remainder test and all
+- [x] Add the finite-distribution product-remainder test and all
   constructor misuse cases from Note 07.
-- [ ] Regenerate help; run the focused signals/validation suite and commit
+- [x] Regenerate help; run the focused signals/validation suite and commit
   the complete constructor/tests/docs slice.
 
 **Accept when:** both signals match an independent formula, one-sided
@@ -107,14 +109,14 @@ Add focused shared-helper regression cases only where reuse needs them.
 **Produces:** affine_ratio_dnn() point estimates, components, neff,
 target matrix, metadata, optional returns and per-target statuses.
 
-- [ ] Write the four-row fixture's components/theta/shape assertions and
+- [x] Write the four-row fixture's components/theta/shape assertions and
   batch zero/negative-denominator assertions with covariance disabled.
-- [ ] Run the focused tests and confirm absence/contract failures.
-- [ ] Implement both input routes, exact/k=1 restriction, default tuning
+- [x] Run the focused tests and confirm absence/contract failures.
+- [x] Implement both input routes, exact/k=1 restriction, default tuning
   resolution, target/ID validation and ratio status rules.
-- [ ] Test n=1,s=1 point estimation, unsupported controls, optional-return
+- [x] Test n=1,s=1 point estimation, unsupported controls, optional-return
   warnings and no dropped batch targets.
-- [ ] Generate help, verify focused tests and commit this point-estimation
+- [x] Generate help, verify focused tests and commit this point-estimation
   slice without advertising covariance or S3 methods not yet present.
 
 **Accept when:** matrix/data-frame paths produce identical core fields and
@@ -130,16 +132,16 @@ a demonstrated shared bug or missing contract requires it.
 **Produces:** component_vcov, theta_vcov, theta_omega, se, optional deletion/
 pseudo-value arrays and covariance statuses.
 
-- [ ] Extend the four-row test to require V_theta=34,
+- [x] Extend the four-row test to require V_theta=34,
   N=18/7 and Omega=612/7, including its zero deleted denominator.
-- [ ] Confirm the covariance assertions fail before implementation.
-- [ ] Route fast computation through existing matrix-signal deletions;
+- [x] Confirm the covariance assertions fail before implementation.
+- [x] Route fast computation through existing matrix-signal deletions;
   implement "loo" as a frozen-rank reference, with no geometry refit.
-- [ ] Form paired covariance and the stable centered-score ratio variance;
+- [x] Form paired covariance and the stable centered-score ratio variance;
   retain exact-zero and numerical-failure statuses.
-- [ ] Run exhaustive small-subset checks, tied-rank cases, R/available-C++
+- [x] Run exhaustive small-subset checks, tied-rank cases, R/available-C++
   parity and existing prefix/scalar-reference suites.
-- [ ] Generate help and commit the paired inference slice.
+- [x] Generate help and commit the paired inference slice.
 
 **Accept when:** all arrays and scales agree with independent references,
 including m=1 and m>1. No deleted nuisance models or ratios are used.
@@ -154,15 +156,15 @@ test-user-clate-dnn-validation.R.
 **Produces:** clate_dnn(), class c("clate_result","affine_ratio_result"),
 component-role and observation/prediction metadata.
 
-- [ ] Write wrapper-versus-explicit-composition tests, matrix/data-frame/
+- [x] Write wrapper-versus-explicit-composition tests, matrix/data-frame/
   optional-tibble equivalence and unrestricted/one-sided cases.
-- [ ] Confirm failure at the missing wrapper and then implement the exact
+- [x] Confirm failure at the missing wrapper and then implement the exact
   Note 02 signature without duplicating formulas or covariance.
-- [ ] Test perfect-compliance equality to CATE, full instrument relabeling,
+- [x] Test perfect-compliance equality to CATE, full instrument relabeling,
   wrong-arm nuisance mistakes and column/row-ID errors.
-- [ ] Validate training declarations and optional nuisance returns; retain
+- [x] Validate training declarations and optional nuisance returns; retain
   A and used/raw propensity needed by IV diagnostics.
-- [ ] Generate help, run all CLATE/core suites and commit.
+- [x] Generate help, run all CLATE/core suites and commit.
 
 **Accept when:** every route computes the same supplied-prediction
 functional and both sample interfaces are documented and tested.
@@ -175,16 +177,16 @@ register only implemented S3 methods through roxygen.
 **Consumes:** the stable Note 02 result and retained frozen model state.
 **Produces:** coef/vcov/confint/summary/print/predict plus diagnostics.
 
-- [ ] Write method shape and missing-covariance tests, including a batch
+- [x] Write method shape and missing-covariance tests, including a batch
   with undefined ratios and zero score variance.
-- [ ] Implement marginal covariance access and pointwise Wald reporting;
+- [x] Implement marginal covariance access and pointwise Wald reporting;
   confidence bounds remain NA when wald_available is false.
-- [ ] Implement prediction by relocalizing the same paired signals and s.
+- [x] Implement prediction by relocalizing the same paired signals and s.
   Compare original/new targets with explicit engine calls and serialized
   state; confirm no nuisance fitting occurs.
-- [ ] Implement diagnostic reconstruction of paired variation, N,
+- [x] Implement diagnostic reconstruction of paired variation, N,
   concentration and available instrument information.
-- [ ] Run the relevant methods/target-matrix/diagnostic regressions,
+- [x] Run the relevant methods/target-matrix/diagnostic regressions,
   generate help and commit the reporting slice.
 
 **Accept when:** users can inspect components and every target's status
@@ -200,17 +202,17 @@ R/RdistNN-package.R, _pkgdown.yml, NEWS.md and tests/README.md.
 **Produces:** a complete supplied-prediction user feature with experimental
 lifecycle, runnable examples and discoverable help.
 
-- [ ] Execute the standalone matrix/data-frame examples and add their
+- [x] Execute the standalone matrix/data-frame examples and add their
   equivalence assertions to the behavior tests where needed.
-- [ ] Write and build both articles, keeping optional learner dependencies
+- [x] Write and build both articles, keeping optional learner dependencies
   guarded and network/sibling access unnecessary.
-- [ ] Generate help and README from their sources with the declared tools;
+- [x] Generate help and README from their sources with the declared tools;
   inspect rendered tables, equations, status output and article links.
-- [ ] Run focused tests, the full package suite, alignment checks and an
+- [x] Run focused tests, the full package suite, alignment checks and an
   installable-source check; build pkgdown locally.
 - [ ] Review all warnings/notes and supported-platform CI evidence before
   declaring the implemented feature release-ready.
-- [ ] Commit the documentation/release-note slice. Tagging, announcing or
+- [x] Commit the documentation/release-note slice. Tagging, announcing or
   deploying is a separate author-requested action.
 
 **Accept when:** Tasks 1–6 deliver all initial interfaces, validation,
@@ -228,13 +230,13 @@ supplied-prediction estimation.
 **Produces:** clate_demo_data() and internal
 .clate_ridge_predictions(data,M,lambda,normalizer_n,delete).
 
-- [ ] Write exact structural-moment and oracle-constant expectations.
-- [ ] Implement generator/return schema and verify both core and
+- [x] Write exact structural-moment and oracle-constant expectations.
+- [x] Implement generator/return schema and verify both core and
   heterogeneous target definitions.
-- [ ] Write explicit small retained-refit tests before adding the ridge
+- [x] Write explicit small retained-refit tests before adding the ridge
   adapter; verify the same ambient normalizer in every fit.
-- [ ] Implement the adapter, projection records and seed/row metadata.
-- [ ] Run deterministic checks and small execution studies, document scope
+- [x] Implement the adapter, projection records and seed/row metadata.
+- [x] Run deterministic checks and small execution studies, document scope
   and commit. Production simulation remains a separate study decision.
 
 **Accept when:** generated truths and fitted algorithms match the stated
@@ -248,15 +250,15 @@ extension.
 **Consumes:** existing components and component_vcov.
 **Produces:** ratio_confidence_set() and private .ratio_quadratic_set().
 
-- [ ] Write every algebraic geometry and coherent PSD-input case from
+- [x] Write every algebraic geometry and coherent PSD-input case from
   Note 07, including exact-zero-denominator degeneracies.
-- [ ] Implement the Note 05 numeric contract, stable roots and explicit
+- [x] Implement the Note 05 numeric contract, stable roots and explicit
   near-boundary/unresolved statuses.
-- [ ] Test membership by substitution, rescaling, serialization and
+- [x] Test membership by substitution, rescaling, serialization and
   infinite endpoints.
-- [ ] Generate help and article examples; state the fixed-candidate
+- [x] Generate help and article examples; state the fixed-candidate
   justification and uniform weak-IV limitation precisely.
-- [ ] Run focused and affected full checks and commit this separate feature.
+- [x] Run focused and affected full checks and commit this separate feature.
 
 **Accept when:** set geometry and numeric statuses are correct without
 turning all outputs into finite Wald endpoints.
@@ -335,3 +337,34 @@ only the relevant files. Reuse successful verification while content is
 unchanged; fetch/rebase only when upstream movement is plausible or a push
 rejects. A successful push confirms publication of that commit. Publishing
 these notes does not publish the proposed estimator.
+
+## 13. Implementation acceptance — October 17, 2026
+
+Concrete tasks 1–8 are implemented. Task 9 remains a future contract rather
+than an automatic-learner, Stata or production-study obligation. Independent
+final review and terminal hosted-platform results still gate publication
+acceptance; no release tag or website deployment is included.
+
+Local evidence on the final implementation/documentation snapshot:
+
+| Check | Result |
+| --- | --- |
+| `devtools::test()` | 882 blocks; 5,395 assertions pass; zero failures/errors/warnings; one opt-in visual snapshot skipped |
+| Built source with all vignettes; `rcmdcheck(..., args="--no-manual")` | Zero errors and warnings; one installed-size NOTE, 11.4 MB |
+| `devtools::document()` / `devtools::build_readme()` | Generated with declared roxygen2 8.0.0; README built from source |
+| Installed-package pkgdown build | All examples/articles build; 131 public reference topics indexed |
+| Changed-page links and browser inspection | 574 local file/anchor checks over 13 pages pass; tables, equations and infinite endpoints reviewed |
+| Declared dependencies, generated drift, repository hygiene and lint | Pass |
+| Pinned affine replication verification | Pass; source/configuration/evidence unchanged |
+
+The checked local source archive has SHA-256
+`8e4539822a5377b2ac7bb23f275300b8a58a43dbef875f81a275e626d6905f64`.
+The full-suite comparison covers existing CATE/regression/PLQR/GMM and
+replication behavior as well as the new feature. The installed check also
+runs both new vignettes. The generated-file helper's namespace-only pass
+can emit unresolved own-topic link messages when the globally installed
+package predates these exports; full Rd checks and rendered links pass.
+
+These checks certify the implemented computation and documentation. They
+do not establish uniform weak-IV coverage, practical-forest learner rates
+or new SIPP participation evidence.

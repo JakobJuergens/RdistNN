@@ -14,16 +14,18 @@
 }
 
 .affine_row_ids <- function(row_ids, n) {
-  if (is.null(row_ids)) return(seq_len(n))
+  if (is.null(row_ids)) {
+    return(seq_len(n))
+  }
   if ((!is.character(row_ids) && !is.numeric(row_ids)) ||
-      is.object(row_ids) || !is.null(dim(row_ids)) || is.complex(row_ids)) {
+    is.object(row_ids) || !is.null(dim(row_ids)) || is.complex(row_ids)) {
     .abort_bad_arg("row_ids", "must be a character or numeric vector")
   }
   if (length(row_ids) != n) {
     .abort_bad_arg("row_ids", sprintf("must have length %d; got %d", n, length(row_ids)))
   }
   if (anyNA(row_ids) || (is.numeric(row_ids) && any(!is.finite(row_ids))) ||
-      (is.character(row_ids) && any(!nzchar(row_ids))) || anyDuplicated(row_ids)) {
+    (is.character(row_ids) && any(!nzchar(row_ids))) || anyDuplicated(row_ids)) {
     .abort_bad_arg("row_ids", "must contain unique, nonmissing, nonempty finite identities")
   }
   row_ids
@@ -38,7 +40,7 @@
 
 .affine_integer <- function(x, arg) {
   if (!is.numeric(x) || length(x) != 1L || !is.finite(x) ||
-      x < 1 || x > .Machine$integer.max || x != floor(x)) {
+    x < 1 || x > .Machine$integer.max || x != floor(x)) {
     .abort_bad_arg(arg, "must be a positive integer scalar within the R integer range")
   }
   as.integer(x)

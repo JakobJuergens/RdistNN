@@ -69,15 +69,21 @@ clate_dnn <- function(
 ) {
   one_sided <- .validate_scalar_logical(one_sided, "one_sided")
   jackknife <- match.arg(jackknife)
-  valid <- c("W", "ranks", "ord", "dx", "ess", "signals",
-             "deletions", "pseudo_values", "tuning", "nuisance")
+  valid <- c(
+    "W", "ranks", "ord", "dx", "ess", "signals",
+    "deletions", "pseudo_values", "tuning", "nuisance"
+  )
   .warn_unknown_return(return, valid = valid)
   return <- intersect(return, valid)
-  column_arguments <- list(y_col = y_col, d_col = d_col, a_col = a_col, e_col = e_col,
-                           m_y0_col = m_y0_col, m_y1_col = m_y1_col,
-                           m_d0_col = m_d0_col, m_d1_col = m_d1_col)
-  vectors <- list(Y = Y, D = D, A = A, e = e, m_y0 = m_y0,
-                  m_y1 = m_y1, m_d0 = m_d0, m_d1 = m_d1)
+  column_arguments <- list(
+    y_col = y_col, d_col = d_col, a_col = a_col, e_col = e_col,
+    m_y0_col = m_y0_col, m_y1_col = m_y1_col,
+    m_d0_col = m_d0_col, m_d1_col = m_d1_col
+  )
+  vectors <- list(
+    Y = Y, D = D, A = A, e = e, m_y0 = m_y0,
+    m_y1 = m_y1, m_d0 = m_d0, m_d1 = m_d1
+  )
   resolved_x_cols <- NULL
   if (!is.null(data)) {
     if (!is.null(X) || any(!vapply(vectors, is.null, logical(1L)))) {
@@ -88,9 +94,16 @@ clate_dnn <- function(
     resolved_x_cols <- .dnn_resolve_data_cols(x_cols, data, "x_cols")
     x_mat <- .dnn_col_mat(resolved_x_cols, data, "x_cols", out_arg = "X")
     for (nm in names(vectors)) {
-      col_arg <- switch(nm, Y = "y_col", D = "d_col", A = "a_col", e = "e_col",
-                         m_y0 = "m_y0_col", m_y1 = "m_y1_col",
-                         m_d0 = "m_d0_col", m_d1 = "m_d1_col")
+      col_arg <- switch(nm,
+        Y = "y_col",
+        D = "d_col",
+        A = "a_col",
+        e = "e_col",
+        m_y0 = "m_y0_col",
+        m_y1 = "m_y1_col",
+        m_d0 = "m_d0_col",
+        m_d1 = "m_d1_col"
+      )
       if (nm == "m_d0" && one_sided && is.null(m_d0_col)) next
       vectors[[nm]] <- .affine_column(column_arguments[[col_arg]], data, n, col_arg)
     }

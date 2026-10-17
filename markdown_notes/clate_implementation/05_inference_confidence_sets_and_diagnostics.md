@@ -3,9 +3,9 @@
 [Index](README.md) · [Previous](04_localization_and_deletion_engine.md) ·
 [Next: learners and studies](06_learners_bounded_model_and_studies.md)
 
-**Status:** reporting and extension design. Wald reporting belongs to the
-initial feature. Ratio confidence-set inversion is a separately gated
-optional stage, not a claim of uniform weak-instrument validity.
+**Status:** implemented reporting, diagnostics and separate ratio confidence-set
+inversion. The original staged design below is retained; implementation does
+not establish uniform weak-instrument validity.
 
 ## 1. Three covariance objects with distinct scales
 
@@ -33,7 +33,9 @@ can remain nondegenerate.
 ## 2. Pointwise Wald output
 
 For finite theta_hat and strictly positive finite V_theta, report
-theta_hat +/- qnorm((1+level)/2)*sqrt(V_theta). Validate 0<level<1.
+theta_hat +/- qnorm((1-level)/2,lower.tail=FALSE)*sqrt(V_theta).
+The upper-tail form avoids rounding to probability one at extreme valid
+confidence levels. Validate 0<level<1.
 Keep every requested target in the result and confint matrix.
 
 At exact zero denominator, retain components/component_vcov but set the

@@ -50,7 +50,7 @@ clate_demo_data <- function(n = 200L, seed = NULL, heterogeneous = FALSE, keep_l
   keep_latent <- .validate_scalar_logical(keep_latent, "keep_latent")
   if (!is.null(seed)) {
     if (!is.numeric(seed) || length(seed) != 1L || !is.finite(seed) ||
-        seed < 0 || seed > .Machine$integer.max || seed != floor(seed)) {
+      seed < 0 || seed > .Machine$integer.max || seed != floor(seed)) {
       .abort_bad_arg("seed", "must be NULL or a nonnegative integer scalar")
     }
     seed <- as.integer(seed)

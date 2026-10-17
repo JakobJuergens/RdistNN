@@ -55,6 +55,7 @@ an input, an intermediate quantity, a diagnostic, or an inferential output.
 |---|---|
 | Take a first tour of weights and the main estimators | [Getting started](getting-started.html): `vignette("getting-started", package = "RdistNN")` |
 | See NP, CATE, and experimental PLQR calls | [Conditional Z-estimation](conditional-z-estimation.html): `vignette("conditional-z-estimation", package = "RdistNN")` |
+| Estimate a binary-instrument complier effect from supplied predictions | [Conditional LATE](conditional-late.html) and [paired inference](conditional-late-inference.html) |
 | Understand exact and asymptotic DNN weights, support, and ranks | [DNN weights](dnn-weights.html): `vignette("dnn-weights", package = "RdistNN")` |
 | Choose `s` with the paper rule, registry, or tuning grid | [Kernel-order tuning](kernel-order-tuning.html): `vignette("kernel-order-tuning", package = "RdistNN")` |
 | Interpret diagnostic names and their availability | [Diagnostics and reporting](diagnostics-reporting.html): `vignette("diagnostics-reporting", package = "RdistNN")` |
@@ -194,7 +195,7 @@ estimator calls.
 
 ## Estimator targets and signals
 
-All four high-level wrappers localize with DNN weights, but they consume and
+The high-level wrappers localize with DNN weights, but they consume and
 return different statistical objects.
 
 | Wrapper | Localized input | Main returned target | Interpretation |
@@ -203,6 +204,8 @@ return different statistical objects.
 | `cate_dnn()` | CATE pseudo-outcome $\psi_i$ | `tau` | Local conditional average treatment effect |
 | `plqr_dnn()` | Vector PLQR score $\psi_i(\theta_{\mathrm{eval}})$ | `moment`; supplied `theta` | Moment evaluation at a user-supplied coefficient |
 | `gmm_dnn()` | Model-defined vector moments $g_i(\theta)$ | solved `theta` | Experimental local GMM estimate |
+| `clate_dnn()` | Paired augmented reduced-form and first-stage signals | `theta`, `components` | Experimental conditional complier effect under the IV assumptions |
+| `affine_ratio_dnn()` | Two supplied scalar signals | `theta`, `components` | Experimental ratio of common-weight local averages |
 
 The word **score** means an observation-level contribution. The word
 **moment** means its DNN-weighted average at a target. For scalar NP and CATE
@@ -222,8 +225,10 @@ lower-level weight and score tools expose more of the intermediate machinery.
 | `cate_dnn()` | `X`, targets, and either nuisance evaluations or a pseudo-outcome | CATE signal when needed, then its DNN localization | `tau`, and `se` when requested |
 | `plqr_dnn()` | `X`, targets, `D`, `theta_eval`, `g`, `mD`, and optionally `density` | Scores and their local moment; Jacobian and sandwich pieces when inputs permit | `moment`; supplied `theta`; separate moment- and coefficient-scale uncertainty fields |
 | `gmm_dnn()` | `X`, targets, a `gmm_model`, observed data, and model-specific nuisances | Local moments, two-step root solving, weighting matrix, and sandwich pieces | solved `theta`, `se`, `vcov`, and overidentification diagnostics |
+| `clate_dnn()` | `X`, targets, `Y,D,A` and five nuisance predictions | Both augmented signals, paired local averages and frozen covariance | `components`, `theta`, `se`, per-target `status` |
+| `affine_ratio_dnn()` | `X`, targets, numerator and denominator signals | Common-weight averages, ratio and paired frozen covariance | `components`, `theta`, `se`, per-target `status` |
 
-The package does not currently fit CATE, PLQR, or built-in IV-GMM nuisances.
+The wrappers do not fit CATE, CLATE, PLQR, or built-in IV-GMM nuisances.
 Those functions receive already evaluated nuisance vectors or matrices. Also
 note the asymmetry in `theta`: `plqr_dnn()` repeats a supplied evaluation value,
 whereas `gmm_dnn()` estimates a local root.
@@ -239,7 +244,7 @@ synonyms. Interpret them together with the fitted-object class.
 
 | Name | Meaning in one context | Meaning elsewhere or important distinction |
 |---|---|---|
-| `theta` | Supplied PLQR evaluation coefficient, copied into a `plqr_result` | A coefficient solved separately at each target in a `gmm_result` |
+| `theta` | Supplied PLQR evaluation coefficient, copied into a `plqr_result` | A solved local GMM coefficient, or a paired local ratio in an affine-ratio/CLATE result |
 | `g` | The PLQR nonparametric shape nuisance $g_0(U)$ | `g_obs` is the observation-by-moment contribution matrix in GMM, not a nuisance named `g` |
 | `J` / `jacobian` | `jacobian` is the derivative or bread matrix used for coefficient inference | `J` in `gmm_result` is the scalar local overidentification statistic |
 | `se` | Target-scale standard error for NP, CATE, and GMM results | PLQR uses `moment_se` and `theta_se` so the inferential scale is explicit |
@@ -294,6 +299,48 @@ an arbitrary same-sample nuisance learner.
 Continue with [Conditional Z-estimation](conditional-z-estimation.html) for a
 worked CATE fit. For the paper-specific data-generating process and Monte Carlo
 harness, use [Affine paper replication](paper-affine-replication.html).
+
+## Experimental CLATE conventions
+
+CLATE uses `A` for the binary instrument and `D` for binary treatment.
+Reporting uses `X`; nuisance predictions adjust for all pre-instrument
+variables in $V=(X,Z)$. `Z` denotes additional adjustment covariates in this
+notation. The five predictions `e,m_y0,m_y1,m_d0,m_d1` are instrument
+propensity and outcome/treatment means indexed by **instrument arm**.
+`one_sided = TRUE` explicitly selects $D(0)=0$, permitting `m_d0 = NULL`.
+The observed check `D <= A` does not establish that structural restriction.
+
+`iv_augmented_signals()` returns `phi_y` and `phi_d`. In the affine score
+$B\theta+b$, CLATE has $B=\phi_D$ and $b=-\phi_Y$. The fitted solution is
+the ratio of their DNN-weighted averages. Individual augmented denominators
+may be negative; they are not compliance indicators and are not clipped.
+Ordinary residualized IV can introduce different stratum weights.
+
+| Field | Scale or convention |
+| --- | --- |
+| `components` | Target-by-two matrix with `numerator`, `denominator` columns |
+| `component_vcov[[j]]` | Paired 2-by-2 estimator covariance |
+| `theta_vcov[[j]]` | 1-by-1 ratio variance, already on the estimator scale |
+| `theta_omega[[j]]` | `neff[j] * theta_vcov[[j]]` |
+| `se[j]` | Square root of the ratio variance |
+| `status` | One row per reporting target, retained even for undefined ratios |
+
+Covariance is marginal across targets. `ratio_status` distinguishes `ok`,
+`zero_denominator`, `component_overflow` and `ratio_overflow`.
+`negative_denominator` and `near_zero_denominator` are flags, with no silent
+denominator replacement. `covariance_status` separately records missing,
+positive, zero-score or numerically failed covariance calculations.
+`wald_available` controls interval availability. An exact zero denominator
+gives `NA` ratio/interval while retaining component uncertainty; an exact
+zero score norm gives computational SE zero and unavailable Wald bounds.
+
+`predict()` relocalizes the same frozen signals at new reporting points.
+`ratio_confidence_set()` instead accepts components and paired covariance
+and returns interval unions, including rays, all-real and empty sets;
+unresolved numerical geometry has a separate status. It does not replace
+`confint()` or establish uniform weak-instrument coverage. The
+[CLATE inference article](conditional-late-inference.html) gives the exact
+four-row example, scale conventions and statistical conditions.
 
 ## Experimental PLQR target and nuisance conventions
 
@@ -429,6 +476,7 @@ The core result fields are intentionally estimator-specific.
 | `cate_result` | `tau` | `se` | `x0`, optional `psi`, optional `nuisance` |
 | `plqr_result` | `moment`, supplied `theta`, `theta_eval` | `moment_se` or sandwich fields described above | `meta$theta_source`, `meta$theta_meat_method`, `neff` |
 | `gmm_result` | solved `theta`, `theta_first` | `se`, `vcov`; optional `omega`, `jacobian` | `J`, `df`, `pval_J`, `neff`, `convergence` |
+| `affine_ratio_result` / `clate_result` | solved `theta`, two-column `components` | `component_vcov`, `theta_vcov`, `theta_omega`, `se` | `status`, `neff`, component roles and training declaration |
 
 Optional fields requested through `return` are additive. For example, asking
 for `W`, `dx`, `ess`, or `tuning` does not change the meaning of the main
@@ -459,7 +507,7 @@ objects in this order:
 1. Identify the localization covariates `X` and target `x0` or `X0`.
 2. Record `s`, `k`, the weight method, and whether weights are normalized.
 3. Identify the observation-level signal or vector score being localized.
-4. Mark every nuisance as supplied or package-computed. Current CATE, PLQR,
+4. Mark every nuisance as supplied or package-computed. Current CATE, CLATE, PLQR,
    and built-in GMM workflows expect nuisance values rather than fitting them.
 5. Determine whether the returned uncertainty is on the moment scale or the
    target-coefficient scale.

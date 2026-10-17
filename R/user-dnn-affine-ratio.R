@@ -55,8 +55,10 @@
 #' fit$theta
 #' fit$theta_vcov
 #' d <- data.frame(x = 1:4, y = c(2, 1, 4, 3), d = c(1, -1, 2, 1))
-#' affine_ratio_dnn(data = d, x_cols = "x", numerator_col = "y",
-#'                  denominator_col = "d", x0 = 0, s = 2, se = FALSE)$theta
+#' affine_ratio_dnn(
+#'   data = d, x_cols = "x", numerator_col = "y",
+#'   denominator_col = "d", x0 = 0, s = 2, se = FALSE
+#' )$theta
 #' @export
 affine_ratio_dnn <- function(
   data = NULL, x_cols = NULL,
@@ -77,8 +79,10 @@ affine_ratio_dnn <- function(
   se <- .validate_scalar_logical(se, "se")
   jackknife <- match.arg(jackknife)
   denominator_tol <- .affine_nonnegative_scalar(denominator_tol, "denominator_tol")
-  valid_returns <- c("W", "ranks", "ord", "dx", "ess", "signals",
-                     "deletions", "pseudo_values", "tuning")
+  valid_returns <- c(
+    "W", "ranks", "ord", "dx", "ess", "signals",
+    "deletions", "pseudo_values", "tuning"
+  )
   .warn_unknown_return(return, valid = valid_returns)
   return <- intersect(return, valid_returns)
   if (!is.null(data)) {
@@ -236,6 +240,8 @@ affine_ratio_dnn <- function(
     se[j] <- sd
     if (scale == 0) status[j] <- "zero_score_variance"
   }
-  list(se = se, component_vcov = paired, theta_vcov = theta_vcov,
-       theta_omega = theta_omega, status = status)
+  list(
+    se = se, component_vcov = paired, theta_vcov = theta_vcov,
+    theta_omega = theta_omega, status = status
+  )
 }

@@ -3,10 +3,9 @@
 [Index](README.md) · [Previous](07_unit_integration_and_regression_tests.md) ·
 [Next: implementation sequence](09_implementation_sequence_and_release.md)
 
-**Status:** documentation plan for a future feature. No Rmd article, help
-topic or exported example is added in the present planning pass. All code
-below uses proposed APIs and becomes executable only with their
-implementation.
+**Status:** both articles and help topics are implemented. Final installed
+package/site acceptance is tracked in the index. The original teaching plan
+below remains the documentation contract; its example APIs now exist.
 
 ## 1. Reader tasks and help-topic ownership
 

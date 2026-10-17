@@ -31,6 +31,13 @@
 #' moments at a supplied coefficient; it does not solve for local coefficients.
 #' Local IV-GMM functionality is also experimental. These workflows are outside
 #' the CATE and regression focus of the initial public release.
+#' - Estimate conditional LATE from supplied nuisance predictions with
+#'   [clate_dnn()], or localize two supplied signals with [affine_ratio_dnn()].
+#'   [iv_augmented_signals()] constructs the augmented binary-IV signals.
+#'   Reporting methods and [diagnostics()] retain components and statuses;
+#'   [ratio_confidence_set()] provides separate set-valued moment inversion.
+#'   [clate_demo_data()] supplies a bounded synthetic benchmark with oracle
+#'   predictions. All conditional-LATE functionality is experimental.
 #' - Build custom generalized U-statistics with [new_score()],
 #'   [score_eval_batch()], and [score_diff_path()].
 #' - Estimate uncertainty with [jackknife_fast_rank()] and
@@ -49,6 +56,9 @@
 #' - For estimator workflows see
 #'   `vignette("conditional-z-estimation", package = "RdistNN")`, including
 #'   experimental PLQR details.
+#' - For supplied-prediction conditional LATE and paired inference, see
+#'   `vignette("conditional-late", package = "RdistNN")` and
+#'   `vignette("conditional-late-inference", package = "RdistNN")`.
 #' - For jackknife details see
 #'   `vignette("jackknife-gen-ustats", package = "RdistNN")`.
 #'

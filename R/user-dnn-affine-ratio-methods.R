@@ -52,7 +52,9 @@ vcov.affine_ratio_result <- function(object, target = NULL, ...) {
     .abort_bad_arg("object", "has no covariance; refit with se = TRUE and an active jackknife")
   }
   if (is.null(target)) {
-    if (length(object$theta_vcov) == 1L) return(object$theta_vcov[[1L]])
+    if (length(object$theta_vcov) == 1L) {
+      return(object$theta_vcov[[1L]])
+    }
     return(object$theta_vcov)
   }
   target <- .affine_integer(target, "target")
@@ -82,14 +84,18 @@ confint.affine_ratio_result <- function(object, parm = NULL, level = .95, ...) {
   if (is.null(object$se)) {
     .abort_bad_arg("object", "has no covariance; refit with se = TRUE and an active jackknife")
   }
-  idx <- if (is.null(parm)) seq_along(object$theta) else {
+  idx <- if (is.null(parm)) {
+    seq_along(object$theta)
+  } else {
     .validate_index_vector(parm, length(object$theta), "parm", label = "target indices")
   }
   .affine_wald_bounds(object, level)[idx, , drop = FALSE]
 }
 
 .affine_component_se <- function(object, component) {
-  if (is.null(object$component_vcov)) return(rep(NA_real_, length(object$theta)))
+  if (is.null(object$component_vcov)) {
+    return(rep(NA_real_, length(object$theta)))
+  }
   vapply(object$component_vcov, function(v) {
     value <- v[component, component]
     if (!is.finite(value) || value < 0) NA_real_ else sqrt(value)
@@ -145,7 +151,7 @@ print.summary.affine_ratio_result <- function(x, digits = max(3L, getOption("dig
 .affine_prediction_state <- function(object) {
   model <- object$.model
   if (!is.list(model) || is.null(model$x_mat) || is.null(model$signal) ||
-      is.null(model$s) || is.null(model$row_ids)) {
+    is.null(model$s) || is.null(model$row_ids)) {
     .abort_bad_arg("object$.model", "is missing frozen model state; refit with affine_ratio_dnn or clate_dnn")
   }
   model$x_mat <- .validate_matrix(model$x_mat, "object$.model$x_mat", numeric = TRUE, finite = TRUE)
@@ -188,8 +194,12 @@ predict.affine_ratio_result <- function(
   )
   result <- if (interval == "confidence") {
     ci <- .affine_wald_bounds(fit, level)
-    matrix(c(fit$theta, ci[, 1L], ci[, 2L]), ncol = 3L,
-           dimnames = list(NULL, c("fit", "lwr", "upr")))
-  } else fit$theta
+    matrix(c(fit$theta, ci[, 1L], ci[, 2L]),
+      ncol = 3L,
+      dimnames = list(NULL, c("fit", "lwr", "upr"))
+    )
+  } else {
+    fit$theta
+  }
   if (se.fit) list(fit = result, se.fit = fit$se) else result
 }

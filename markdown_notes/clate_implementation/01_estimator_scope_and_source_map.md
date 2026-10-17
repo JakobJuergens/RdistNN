@@ -2,9 +2,9 @@
 
 [Index](README.md) · [Next: interfaces](02_public_interfaces_and_results.md)
 
-**Status:** future feature specification, grounded in the inspected snapshots
-listed in the index. Existing functions below are present at that baseline;
-new names are proposals. Re-read the exact sources before implementation.
+**Status:** implemented scientific contract, grounded in the inspected
+snapshots listed in the index. The source map below records the original
+baseline; current exports and acceptance evidence are routed through the index.
 
 ## 1. The question the feature answers
 

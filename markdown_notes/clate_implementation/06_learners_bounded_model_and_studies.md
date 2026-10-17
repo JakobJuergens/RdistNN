@@ -3,10 +3,10 @@
 [Index](README.md) · [Previous](05_inference_confidence_sets_and_diagnostics.md) ·
 [Next: tests](07_unit_integration_and_regression_tests.md)
 
-**Status:** future learner and numerical program. Supplied-prediction
-estimation is the initial user feature. This note makes later training,
-benchmark and empirical work concrete without treating them as completed
-package functionality or accepted manuscript evidence.
+**Status:** the bounded generator and internal ridge reference adapter are
+implemented and tested. The practical-learner, production simulation and
+empirical programs below remain future work. Small execution tests are
+not accepted manuscript evidence.
 
 ## 1. External nuisance fitting first
 

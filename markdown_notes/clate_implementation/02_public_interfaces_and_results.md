@@ -3,10 +3,9 @@
 [Index](README.md) · [Previous](01_estimator_scope_and_source_map.md) ·
 [Next: signals](03_augmented_signals_and_validation.md)
 
-**Status:** recommended signatures for future implementation. None is an
-existing export. Names follow the package's estimator suffix convention:
+**Status:** implemented public contracts. Names follow the package's estimator suffix convention:
 `affine_ratio_dnn()` refines the paper notes' provisional
-`dnn_affine_ratio()` spelling. Settle this contract before writing code.
+`dnn_affine_ratio()` spelling. Generated help records the installed interfaces.
 
 ## 1. Three layers with distinct responsibilities
 

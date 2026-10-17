@@ -104,6 +104,8 @@ fit <- affine_ratio_dnn(
 fit$theta
 fit$theta_vcov
 d <- data.frame(x = 1:4, y = c(2, 1, 4, 3), d = c(1, -1, 2, 1))
-affine_ratio_dnn(data = d, x_cols = "x", numerator_col = "y",
-                 denominator_col = "d", x0 = 0, s = 2, se = FALSE)$theta
+affine_ratio_dnn(
+  data = d, x_cols = "x", numerator_col = "y",
+  denominator_col = "d", x0 = 0, s = 2, se = FALSE
+)$theta
 }

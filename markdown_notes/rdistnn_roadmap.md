@@ -53,15 +53,19 @@ under `inst/paper-replication/affine/`, with unchanged paper source, production
 configurations, and compressed accepted evidence. The paper repository remains
 the scientific source of truth. See design note 16 for the refresh contract.
 
-## Open: Conditional LATE implementation planning
+## Conditional LATE implementation
 
-The [nine-note CLATE collection](clate_implementation/README.md) specifies a
-future augmented conditional-LATE estimator: paired exact-DNN component
-averages, frozen-score covariance, supplied-prediction interfaces, result
-methods, unit/integration tests, help and vignettes. It includes a staged
-implementation plan and separate bounded-learner, confidence-set and study
-extensions. This is planning only; no CLATE export, learner or experiment is
-implemented. Existing local IV-GMM is a distinct score and covariance route.
+The experimental supplied-prediction CLATE feature now has a signal constructor,
+paired exact-DNN ratio engine, dual interfaces, result methods and diagnostics.
+The bounded generator, internal ridge-series reference adapter and separate
+ratio confidence-set helper are implemented. The [CLATE collection](clate_implementation/README.md)
+owns the design contracts and requirements-to-evidence record. Package and
+hosted CI acceptance are recorded there as they complete.
+
+Automatic practical learners, adaptive/grid selection and plots remain future
+contracts. CLATE production simulations and SIPP participation analysis are
+separate study decisions. Existing local IV-GMM keeps its distinct score and
+covariance route; the frozen paper replication bundle remains independent.
 
 ## Rule
 
