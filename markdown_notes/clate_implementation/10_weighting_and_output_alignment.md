@@ -1,7 +1,7 @@
 # CLATE weighting and output alignment
 
-Status: implemented and locally verified, starting from `ec987e0` on `master`;
-direct publication and hosted CI receipt pending.
+Status: implemented, verified and published on `master` in `d655282`.
+All six hosted package-check platforms, lint and alignment passed.
 The author's follow-up authorizes alignment with the existing CATE and
 nonparametric-regression interfaces, followed by direct commit and push.
 This extends the original nine-note exact, single-neighbor baseline.
@@ -120,7 +120,7 @@ inversion and NP-only two-scale weights retain their distinct meanings.
   namespace/export drift and pinned affine-bundle checks pass. There are still
   131 public reference topics; new methods are grouped with existing generics.
 - The local source-package check has zero errors and warnings, with the existing
-  11.4 MB installed-size NOTE. The clean checked archive is under
+  11.5 MB installed-size NOTE. The clean checked archive is under
   `work/release/`; 364 source/help/test/vignette files matched its checked
   snapshot. The later article-only refinement prints all five example plots
   explicitly and was rebuilt separately; numerical package inputs are unchanged.
@@ -132,5 +132,19 @@ inversion and NP-only two-scale weights retain their distinct meanings.
 - The documentation-default guard caught an introductory k=2 example. The
   executable introduction retains k=1, while the supported general-k controls
   and their independent numerical tests remain documented.
-- Direct publication and terminal hosted-platform evidence will be recorded
-  after the implementation push.
+- Direct `master` publication: `d655282afc84b52ca1449b102b3bdd314421674f`.
+  The [R CMD check matrix](https://github.com/JakobJuergens/RdistNN/actions/runs/39070188587)
+  completed successfully on Linux devel/release/oldrel-1, Windows x64 release,
+  macOS ARM release and macOS Intel release. The
+  [lint](https://github.com/JakobJuergens/RdistNN/actions/runs/39070188560) and
+  [alignment](https://github.com/JakobJuergens/RdistNN/actions/runs/39070188589)
+  workflows also succeeded. These checks cover the final committed article,
+  including all explicitly printed plots.
+- The [source snapshot workflow](https://github.com/JakobJuergens/RdistNN/actions/runs/39070188584)
+  succeeded at its cooldown gate; `zip-and-upload` was skipped by the 12-hour
+  policy. No new hosted source archive is claimed. The local checked archive
+  and verification receipts remain under the ignored work directory.
+- This subsequent acceptance receipt changes only this note. Package source,
+  tests, generated help, README, vignettes and site inputs remain identical to
+  the verified implementation commit, so successful checks are reused. No tag,
+  release, deployment, empirical campaign or Stata edit is included.
