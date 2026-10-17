@@ -1,12 +1,3 @@
-.ratio_fixture <- function(...) {
-  args <- list(X = matrix(1:4, ncol = 1L), x0 = 0,
-               numerator = c(2, 1, 4, 3), denominator = c(1, -1, 2, 1),
-               s = 2L, return = character())
-  extra <- list(...)
-  args[names(extra)] <- extra
-  do.call(affine_ratio_dnn, args)
-}
-
 test_that("hand fixture returns paired ratio covariance and exact array identities", {
   fit <- .ratio_fixture(return = c("W", "signals", "deletions", "pseudo_values", "ess", "tuning"))
   expect_s3_class(fit, "affine_ratio_result")

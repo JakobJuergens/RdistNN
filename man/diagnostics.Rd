@@ -25,7 +25,7 @@ diagnostics(object, candidates = "default", ...)
 }
 \arguments{
 \item{object}{A fitted estimator object, currently an object returned by
-\code{\link[=np_dnn]{np_dnn()}}, \code{\link[=cate_dnn]{cate_dnn()}}, or \code{\link[=plqr_dnn]{plqr_dnn()}}.}
+\code{\link[=np_dnn]{np_dnn()}}, \code{\link[=cate_dnn]{cate_dnn()}}, \code{\link[=plqr_dnn]{plqr_dnn()}}, \code{\link[=affine_ratio_dnn]{affine_ratio_dnn()}} or \code{\link[=clate_dnn]{clate_dnn()}}.}
 
 \item{candidates}{Candidate rows to report for grid fits. The default
 \code{"default"} preserves the per-target diagnostics table for the selected

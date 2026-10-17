@@ -39,3 +39,22 @@
     X0 = rbind(c(.2, 0), c(.8, .2)), s = 3L, return = character()
   ))
 }
+
+.ratio_fixture <- function(...) {
+  args <- list(X = matrix(1:4, ncol = 1L), x0 = 0,
+               numerator = c(2, 1, 4, 3), denominator = c(1, -1, 2, 1),
+               s = 2L, return = character())
+  extra <- list(...)
+  args[names(extra)] <- extra
+  do.call(affine_ratio_dnn, args)
+}
+
+.clate_test_frame <- function(a) {
+  data.frame(x1 = a$X[, 1L], x2 = a$X[, 2L], a[names(.clate_test_predictions())])
+}
+
+.clate_frame_arguments <- function(a, data) {
+  list(data = data, x_cols = c("x1", "x2"), X0 = a$X0, s = a$s,
+       y_col = "Y", d_col = "D", a_col = "A", e_col = "e",
+       m_y0_col = "m_y0", m_y1_col = "m_y1", m_d0_col = "m_d0", m_d1_col = "m_d1")
+}

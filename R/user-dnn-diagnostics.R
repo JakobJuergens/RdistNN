@@ -327,7 +327,7 @@
 #' functionality in this release; see [plqr_dnn()].
 #'
 #' @param object A fitted estimator object, currently an object returned by
-#'   [np_dnn()], [cate_dnn()], or [plqr_dnn()].
+#'   [np_dnn()], [cate_dnn()], [plqr_dnn()], [affine_ratio_dnn()] or [clate_dnn()].
 #' @param candidates Candidate rows to report for grid fits. The default
 #'   `"default"` preserves the per-target diagnostics table for the selected
 #'   fit. Use `"all"` or a character vector of candidate ids to report

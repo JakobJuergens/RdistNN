@@ -1,13 +1,3 @@
-.clate_test_frame <- function(a) {
-  data.frame(x1 = a$X[, 1L], x2 = a$X[, 2L], a[names(.clate_test_predictions())])
-}
-
-.clate_frame_arguments <- function(a, data) {
-  list(data = data, x_cols = c("x1", "x2"), X0 = a$X0, s = a$s,
-       y_col = "Y", d_col = "D", a_col = "A", e_col = "e",
-       m_y0_col = "m_y0", m_y1_col = "m_y1", m_d0_col = "m_d0", m_d1_col = "m_d1")
-}
-
 test_that("CLATE matrix data-frame and tibble interfaces agree", {
   a <- .clate_fit_arguments()
   matrix_fit <- do.call(clate_dnn, a)
