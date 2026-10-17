@@ -3,8 +3,8 @@
 > **For agentic workers:** use superpowers:executing-plans for future native
 > task-by-task implementation. Delegation is not required by this plan.
 > Implementation is now authorized. Completed tasks are checked below;
-> independent review corrections are implemented; hosted-platform acceptance
-> and publication remain tracked in the collection index.
+> independent review corrections and hosted-platform acceptance are complete.
+> Publication evidence is tracked in the collection index and below.
 
 **Goal:** deliver a documented, tested conditional-LATE workflow using paired
 exact-DNN component averages and frozen-score covariance.
@@ -210,7 +210,7 @@ lifecycle, runnable examples and discoverable help.
   inspect rendered tables, equations, status output and article links.
 - [x] Run focused tests, the full package suite, alignment checks and an
   installable-source check; build pkgdown locally.
-- [ ] Review all warnings/notes and supported-platform CI evidence before
+- [x] Review all warnings/notes and supported-platform CI evidence before
   declaring the implemented feature release-ready.
 - [x] Commit the documentation/release-note slice. Tagging, announcing or
   deploying is a separate author-requested action.
@@ -340,10 +340,11 @@ these notes does not publish the proposed estimator.
 
 ## 13. Implementation acceptance — October 17, 2026
 
-Concrete tasks 1–8 and the final review corrections are implemented. Task 9
-remains a future contract rather than an automatic-learner, Stata or
-production-study obligation. Terminal hosted-platform results still gate
-publication acceptance; no release tag or website deployment is included.
+Concrete tasks 1–8 and the final review corrections are implemented and
+published directly to `master` through `eb6928f`. Task 9 remains a future
+contract rather than an automatic-learner, Stata or production-study
+obligation. Local and hosted acceptance are complete; no release tag or
+website deployment is included.
 
 Local evidence on the final implementation/documentation snapshot:
 
@@ -356,6 +357,8 @@ Local evidence on the final implementation/documentation snapshot:
 | Changed-page links and browser inspection | 486 local file/anchor checks over all 14 changed pages pass after the final rebuild; tables, equations and infinite endpoints reviewed |
 | Declared dependencies, generated drift, repository hygiene and lint | Pass |
 | Pinned affine replication verification | Pass; source/configuration/evidence unchanged |
+| [Hosted R-CMD-check matrix](https://github.com/JakobJuergens/RdistNN/actions/runs/39063416197) | All six jobs succeeded: Linux devel/release/oldrel-1, macOS ARM/Intel release and Windows release |
+| [Hosted lint](https://github.com/JakobJuergens/RdistNN/actions/runs/39063416111), [alignment](https://github.com/JakobJuergens/RdistNN/actions/runs/39063416225), [source snapshot](https://github.com/JakobJuergens/RdistNN/actions/runs/39063416175) | All completed successfully at `eb6928f`; snapshot archive produced |
 
 The checked local source archive has SHA-256
 `09aa5199aee480315e8844cdd9d7cce5ee6394f22eb70f5e6e26f59929a5b6ed`.
@@ -364,6 +367,15 @@ replication behavior as well as the new feature. The installed check also
 runs both new vignettes. The generated-file helper's namespace-only pass
 can emit unresolved own-topic link messages when the globally installed
 package predates these exports; full Rd checks and rendered links pass.
+
+Hosted conclusions, all six job records and check annotations were inspected.
+Annotations contain runner notices only (Ubuntu image migration and macOS ARM
+queue capacity). The bulk-log download API returned HTTP 403, so complete
+hosted logs were not independently re-read; local installed-source logs and
+terminal hosted metadata are retained beside the checked archive. This final
+acceptance update changes only excluded implementation notes. The package,
+site and workflow inputs are identical to the verified `eb6928f` snapshot;
+the notes-only receipt commit reuses those results and skips duplicate CI.
 
 These checks certify the implemented computation and documentation. They
 do not establish uniform weak-IV coverage, practical-forest learner rates
@@ -399,6 +411,7 @@ The review declined three judgments, resolved here:
 - New learner-rate, causal-identification and uniform weak-IV proofs remain
   outside this software contract. If stronger inference is required, a new
   proof is still needed; the computation alone cannot establish it.
-- Hosted-platform success requires terminal CI evidence after pushing. Local
-  success cannot exclude a platform-specific failure, so publication
-  acceptance remains pending until that evidence is available.
+- Hosted-platform success required terminal CI evidence after pushing. Local
+  success could not exclude a platform-specific failure. The six successful
+  matrix jobs and other terminal workflow results linked above now satisfy
+  that gate; no platform result is inferred from the local run.
