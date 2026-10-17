@@ -356,3 +356,21 @@ The cleanup is done when the following statement becomes true across the package
 > numeric matrices and vectors under a stable validation contract, with tests,
 > generated files, compiled paths, and docs all aligned to the same package-wide
 > design rules.
+
+
+## Shared result interfaces and extension maintenance
+
+The maintainer's current direction is to align implementation, usage, outputs
+and plotting where their statistical meaning agrees. Use existing S3 interfaces
+on the estimation object; retain distinct scientific result classes. Common
+builders should consume documented coefficient/plot-data/candidate schemas,
+with numerical callbacks or adapters owning score and covariance differences.
+Do not fabricate inheritance between scientifically distinct estimators.
+
+The [CLATE alignment contract](../clate_implementation/10_weighting_and_output_alignment.md)
+records the current implementation map, supported CATE/CLATE capabilities and
+extension checklist. New methods must test their own analytic references as
+well as common-schema and special-case equivalence. Shared presentation does
+not extend a theorem or make method-specific weighting choices interchangeable:
+exact and asymptotic single-scale DNN are the CATE/CLATE options; TDNN remains
+NP-regression functionality.

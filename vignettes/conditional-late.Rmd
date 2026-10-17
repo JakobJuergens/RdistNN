@@ -75,7 +75,7 @@ fit <- clate_dnn(
   e = d$e_oracle, m_y0 = d$m_y0_oracle, m_y1 = d$m_y1_oracle,
   m_d0 = d$m_d0_oracle, m_d1 = d$m_d1_oracle,
   s = 16L, training = "oracle", row_ids = d$row_id,
-  return = c("W", "nuisance")
+  return = c("W", "dx", "nuisance")
 )
 ```
 
@@ -109,11 +109,30 @@ stopifnot(isTRUE(all.equal(ratio$theta, fit$theta)),
           isTRUE(all.equal(ratio$theta_vcov, fit$theta_vcov)))
 ```
 
-Both high-level estimators support exact without-replacement DNN with
-`method = "exact"`, `k = 1L`. Supply a deterministic integer `s`, or an
-existing tuning specification for a single order. Without either, the
-package's paper-default rule resolves the order. Covariance requires
-`s < n`. The same order is used after every deletion.
+Both high-level estimators use the same weighting controls as `cate_dnn()`
+and `np_dnn()`: `method = "exact"` or `"asymp"`, `1 <= k <= s`, and
+`normalize` for asymptotic weights. Exact DNN and `k = 1L` are the defaults.
+Supply a deterministic integer `s`, or an existing tuning specification.
+Without either, the package's paper-default rule resolves the order.
+Covariance requires `s < n`. The same order and weight rule are used after
+every deletion and retained by `predict()` and `diagnostics()`.
+CATE and CLATE expose single-scale DNN only; the two-scale `np_tdnn()`
+regression method has no corresponding justification here.
+
+For example, the generic composition can use asymptotic DNN while retaining
+the default single neighbor per subsample:
+
+```{r asymptotic-fit}
+approximate <- affine_ratio_dnn(
+  X = X, X0 = targets, numerator = signals$phi_y, denominator = signals$phi_d,
+  s = 16L, method = "asymp", k = 1L, normalize = TRUE
+)
+summary(approximate)$coefficients
+```
+
+Availability of a weighting option is a computational contract. Statistical
+validity still requires the localization, bias and nuisance conditions for
+that choice; it does not extend an exact, single-neighbor theorem automatically.
 
 ## Data frames and tibbles
 
@@ -155,11 +174,10 @@ does not bound an unbounded observed outcome.
 ## Report components with the ratio
 
 ```{r component-table}
-report <- as.data.frame(summary(fit))
-knitr::kable(report[c("target_id", "numerator", "denominator", "theta", "se", "neff")],
-             digits = 4, caption = "Reduced form, first stage and conditional ratio")
-knitr::kable(report[c("target_id", "conf.low", "conf.high", "ratio_status", "wald_available")],
-             digits = 4, caption = "Pointwise intervals and computation status")
+report <- summary(fit)
+knitr::kable(report$coefficients, digits = 4, caption = "Conditional ratio and pointwise inference")
+knitr::kable(report$components, digits = 4, caption = "Reduced form and first stage")
+knitr::kable(report$status, caption = "Computation status by target")
 ```
 
 For CLATE, the numerator is the adjusted outcome reduced form and the
@@ -181,6 +199,77 @@ These diagnostics describe first-stage variation, instrument support,
 physical localization and concentration of fitted uncertainty. `neff`
 measures reporting-weight concentration, not the number of compliers.
 There is no automatic weak-instrument cutoff or target filtering.
+
+## The same plotting workflow as CATE
+
+The fitted object determines the implementation behind each shared call.
+`plot_estimates()`, `plot()` and `ggplot2::autoplot()` use the same
+profile, forest and pointrange styles as CATE. The coefficient extractor
+`plot_data_estimates()` returns the common tidy table, while
+`summary(fit)$coefficients` uses the same six columns as CATE.
+Undefined ratios and unavailable Wald bounds remain visible in the tables.
+
+```{r plots, fig.width=7, fig.height=4}
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  print(plot_estimates(fit, style = "forest"))
+  print(plot_overlap(fit, type = "mass"))
+  print(plot_influence(fit, targets = 2L))
+}
+```
+
+The remaining common calls are `plot_weights(fit, type = "profile")`,
+`type = "cumulative"` or `"kernel"`, `plot_overlap(fit, type = "propensity")`,
+and `plot_dashboard(fit)`. Weight and overlap panels require `W`; the
+physical-distance weight view also requires `dx`, so retain both as above.
+Plots require optional ggplot2. Dashboards use patchwork when installed and
+otherwise return a named list of plots. Unavailable panels are omitted or
+replaced by diagnostics using the same policy as CATE.
+
+CLATE overlap panels use **instrument** arms and the instrument propensity,
+not treatment uptake. Its influence panel shows the weighted paired score
+residual `w * (phi_y - theta * phi_d)`. These are neither individual causal
+effects nor jackknife pseudo-values. The latter are separately available
+through `return = "pseudo_values"`.
+
+## Tuning sensitivity and candidate views
+
+As for CATE and NP regression, `tuning_mode = "grid"` retains the default
+fit and adds common candidate, estimate and diagnostic tables. All candidates
+reuse the same signals and frozen ranks. This is a sensitivity analysis;
+it does not select an order or justify inference after data-dependent selection.
+
+```{r tuning-grid}
+grid_fit <- clate_dnn(
+  X = X, X0 = targets, Y = d$Y, D = d$D, A = d$A,
+  e = d$e_oracle, m_y0 = d$m_y0_oracle, m_y1 = d$m_y1_oracle,
+  m_d0 = d$m_d0_oracle, m_d1 = d$m_d1_oracle,
+  tuning_mode = "grid", method = "asymp", training = "oracle",
+  return = c("W", "dx")
+)
+head(grid_fit$tuning_grid$candidates)
+views <- candidate_fits(grid_fit)
+selected <- candidate_fit(grid_fit, 1L)
+summary(selected)$coefficients
+```
+
+Candidate views have the same class and reporting methods as a scalar fit,
+with paired components and covariance recomputed from cached state. They
+retain instrument information for overlap plots and use the candidate order
+for prediction. Selecting an infeasible candidate gives an actionable error.
+`candidate_fits(fit, ids)` can restrict the list to feasible candidate IDs.
+
+```{r tuning-plots, fig.width=7, fig.height=4}
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  print(plot_estimates(grid_fit, candidates = "all", style = "pointrange"))
+  print(plot_tuning(grid_fit))
+}
+```
+
+`plot_data_estimates(grid_fit, candidates = "all")`, candidate-aware
+`plot_weights()` and `diagnostics()` use the same selection grammar as CATE.
+`plot_tuning()` also works from a scalar fit's retained state. Stored grid
+fits reuse their stored standard errors; refit with `se = TRUE` if these
+were omitted and confidence bounds are needed.
 
 ## A selected one-sided model
 

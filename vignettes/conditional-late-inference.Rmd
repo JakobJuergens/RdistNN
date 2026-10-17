@@ -13,7 +13,9 @@ library(RdistNN)
 ```
 
 The experimental `affine_ratio_dnn()` and `clate_dnn()` workflows average
-two signals using common exact DNN weights, then take their ratio. This
+two signals using common DNN weights, then take their ratio. Exact weights
+and one neighbor per subsample are the defaults; asymptotic DNN and general
+`k` use the same paired calculation. The worked example below is exact. This
 article explains the paired covariance calculation and its numerical
 diagnostics. Start with [Conditional LATE from supplied nuisance
 predictions](conditional-late.html) for the economic target and input roles.

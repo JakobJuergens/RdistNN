@@ -19,7 +19,9 @@
 #'
 #' @return coef returns a named vector; vcov returns one marginal matrix or a
 #'   list of marginal matrices; confint returns a two-column matrix.
-#'   summary returns a summary.affine_ratio_result data frame.
+#'   summary returns a classed list with coefficients, level, has_se and meta,
+#'   plus component and per-target status tables. The coefficient table follows
+#'   the CATE estimate/std.error/statistic/p.value/conf.low/conf.high schema.
 #'   predict returns a vector, a fit/se.fit list or a fit/lwr/upr matrix.
 #'   Printing returns its input invisibly.
 #' @details Covariance matrices are on the estimator scale. Prediction changes
@@ -107,22 +109,27 @@ confint.affine_ratio_result <- function(object, parm = NULL, level = .95, ...) {
 summary.affine_ratio_result <- function(object, level = .95, ...) {
   ci <- .affine_wald_bounds(object, level)
   m <- length(object$theta)
-  out <- data.frame(
+  se <- if (is.null(object$se)) rep(NA_real_, m) else object$se
+  statistic <- p_value <- rep(NA_real_, m)
+  ok <- object$status$wald_available
+  statistic[ok] <- object$theta[ok] / se[ok]
+  p_value[ok] <- 2 * stats::pnorm(-abs(statistic[ok]))
+  coefficients <- data.frame(
+    estimate = object$theta, std.error = se, statistic = statistic,
+    p.value = p_value, conf.low = ci[, 1L], conf.high = ci[, 2L],
+    row.names = paste0("target_", seq_len(m))
+  )
+  components <- data.frame(
     target_id = seq_len(m), numerator = object$components[, 1L],
     denominator = object$components[, 2L],
     numerator_se = .affine_component_se(object, 1L),
     denominator_se = .affine_component_se(object, 2L),
-    theta = object$theta, se = if (is.null(object$se)) rep(NA_real_, m) else object$se,
-    conf.low = ci[, 1L], conf.high = ci[, 2L], neff = object$neff,
-    ratio_status = object$status$ratio_status,
-    negative_denominator = object$status$negative_denominator,
-    near_zero_denominator = object$status$near_zero_denominator,
-    covariance_status = object$status$covariance_status,
-    wald_available = object$status$wald_available, row.names = NULL
+    neff = object$neff, row.names = NULL
   )
-  attr(out, "component_roles") <- object$meta$component_roles
-  attr(out, "level") <- level
-  class(out) <- c("summary.affine_ratio_result", "data.frame")
+  out <- list(coefficients = coefficients, level = as.numeric(level),
+              has_se = any(is.finite(se)), meta = object$meta,
+              components = components, status = object$status)
+  class(out) <- "summary.affine_ratio_result"
   out
 }
 
@@ -130,7 +137,9 @@ summary.affine_ratio_result <- function(object, level = .95, ...) {
 #' @export
 print.affine_ratio_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
   kind <- if (inherits(x, "clate_result")) "clate_result" else "affine_ratio_result"
-  cat("<", kind, "> paired exact-DNN ratio; ", length(x$theta), " target(s)\n", sep = "")
+  cat("<", kind, "> paired DNN ratio; ", length(x$theta), " target(s)\n", sep = "")
+  cat("  DNN: method=", x$meta$method, ", k=", x$meta$k,
+      ", s=", x$meta$s, ", distance=", x$meta$distance, "\n", sep = "")
   print(summary(x), digits = digits)
   invisible(x)
 }
@@ -138,13 +147,13 @@ print.affine_ratio_result <- function(x, digits = max(3L, getOption("digits") - 
 #' @rdname affine_ratio_result
 #' @export
 print.summary.affine_ratio_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
-  roles <- attr(x, "component_roles")
+  roles <- x$meta$component_roles
   if (!is.null(roles)) {
     cat("Components: numerator = ", roles[[1L]], "; denominator = ", roles[[2L]], "\n", sep = "")
   }
-  counts <- table(x$ratio_status)
+  counts <- table(x$status$ratio_status)
   cat("Ratio statuses: ", paste(paste(names(counts), counts, sep = "="), collapse = ", "), "\n", sep = "")
-  print.data.frame(x, digits = digits, row.names = FALSE)
+  print(x$coefficients, digits = digits)
   invisible(x)
 }
 
@@ -188,7 +197,8 @@ predict.affine_ratio_result <- function(
   fit <- affine_ratio_dnn(
     X = model$x_mat, X0 = X0, x0 = x0,
     numerator = model$signal[, 1L], denominator = model$signal[, 2L],
-    distance = model$distance, ctx = model$ctx, s = model$s,
+    distance = model$distance, ctx = model$ctx, s = model$s, k = model$k,
+    method = model$method, normalize = if (is.null(model$normalize)) TRUE else model$normalize,
     se = need_se, jackknife = engine, denominator_tol = model$denominator_tol,
     row_ids = model$row_ids, return = character()
   )
@@ -202,4 +212,18 @@ predict.affine_ratio_result <- function(
     fit$theta
   }
   if (se.fit) list(fit = result, se.fit = fit$se) else result
+}
+
+#' @rdname plot_data_estimates
+#' @export
+plot_data_estimates.affine_ratio_result <- function(object, level = .95, candidates = "default", ...) {
+  if (!.plot_candidates_is_default(candidates)) {
+    return(.plot_candidate_estimates_frame(object, candidates, level, "plot_data_estimates")$data)
+  }
+  out <- .plot_data_estimates_frame(matrix(object$theta, nrow = 1L),
+                                  object$se, object$x0, "theta", level)
+  ci <- .affine_wald_bounds(object, level)
+  out$ci_lower <- ci[, 1L]
+  out$ci_upper <- ci[, 2L]
+  out
 }

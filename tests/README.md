@@ -71,6 +71,15 @@ dense normal equations and all required one-/two-deleted fits. Confidence-set
 tests cover every quadratic geometry, membership, singular covariance and
 extreme scales. Small generated examples test execution, not coverage.
 
+The CLATE alignment suites additionally check literal asymptotic weights and
+paired deletions, exhaustive exact general-k subset averages, perfect-compliance
+reduction to CATE, common summary/tidy schemas and every candidate-dependent
+covariance/extras field. Plot tests cover instrument versus treatment overlap,
+paired score contributions, unavailable bounds, serialization, optional packages,
+and real ggplot builds. The shared rank-weight and plot-builder changes also
+require the CATE/NP suites. The implementation/extension map is in
+[CLATE Note 10](../markdown_notes/clate_implementation/10_weighting_and_output_alignment.md).
+
 Test files should run independently. Testthat's helper loading and file
 conventions are documented in its
 [special-files guide](https://testthat.r-lib.org/articles/special-files.html).

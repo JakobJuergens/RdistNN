@@ -265,7 +265,11 @@ turning all outputs into finite Wald endpoints.
 
 ## Task 9 — Optional tuning, plots and learner adapters
 
-Only begin after a concrete user need and a contract update:
+The author subsequently authorized grids and CATE-style plotting; those
+parts are implemented and verified under the updated contract in [Note 10](10_weighting_and_output_alignment.md).
+The original tasks and dated receipts below describe the initial baseline.
+Practical automatic learners, adaptive selection and the other extensions
+remain open and separately scoped.
 
 - Reuse the integrated candidate engine and candidate_fit() conventions for
   grid sensitivity. Preserve one common selected order across deletions.

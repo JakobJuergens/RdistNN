@@ -1,17 +1,20 @@
 # Conditional LATE implementation contracts and acceptance
 
 Prepared October 17, 2026; implementation authorized subsequently in the same
-session. **Status: implemented, verified and published on `master`.** The nine design
+session. **Status: implemented, verified and published on `master`.** The original nine design
 notes below specify the augmented conditional local average treatment effect
 (CLATE) feature. Tasks 1–8 and the final review corrections are implemented,
 with 5,438 passing assertions, built installed-package guides and a checked
 source archive. All six hosted platform jobs, lint and alignment passed at
 `eb6928f`; the source snapshot archive was produced. No CLATE
-production campaign or SIPP participation analysis is included. This navigation
-index is not a tenth substantive design note.
+production campaign or SIPP participation analysis is included. Those counts and receipts describe the accepted initial snapshot. The
+subsequent [Note 10 — Weighting, output and plotting alignment](10_weighting_and_output_alignment.md)
+extends that baseline with exact/asymptotic DNN, general k, common summaries,
+grids, candidate views and CATE-style plots. Its status and final evidence
+supersede initial exact-only and deferred-plot descriptions in Notes 01–09.
 
 The implementation computes two augmented signals, localizes both
-with the same exact distributional nearest-neighbor weights, solves their
+with the same distributional nearest-neighbor weights, solves their
 ratio equation, and estimates uncertainty from paired frozen-score deletions.
 The plan includes a complete user workflow with externally supplied nuisance
 predictions. Learner-training adapters are a subsequent, separately testable
@@ -30,7 +33,8 @@ automatic fitting remains future work.
 | [06 — Learners, model and study program](06_learners_bounded_model_and_studies.md) | Explicit bounded benchmark, ridge verification contract, future adapters, simulations and SIPP separation |
 | [07 — Unit and integration tests](07_unit_integration_and_regression_tests.md) | Named suites, independent oracles, exact fixture, failures, fallback parity and acceptance rules |
 | [08 — Help, vignettes and site](08_documentation_examples_and_vignettes.md) | Roxygen topics, executable examples, two articles, pkgdown, accessibility and documentation checks |
-| [09 — Staged implementation and release](09_implementation_sequence_and_release.md) | File ownership, dependency order, test-first tasks, commands and completion gates |
+| [09 — Staged implementation and release](09_implementation_sequence_and_release.md) | Initial implementation stages and dated acceptance receipts |
+| [10 — Weighting, output and plotting alignment](10_weighting_and_output_alignment.md) | Current shared-interface contract, extension points and follow-up acceptance |
 
 Read 01–03 before settling an API. Notes 04–05 define the numeric contract;
 07 is its acceptance specification. Notes 06 and 08 distinguish a usable
@@ -63,8 +67,8 @@ the implementation adds the new exports without superseding that policy. The
 ## Fixed decisions and later extensions
 
 The implemented feature has a scalar target, binary instrument and
-treatment, externally supplied predictions, exact without-replacement DNN,
-`k = 1L`, one common order, paired frozen-score covariance and pointwise
+treatment, externally supplied predictions, exact/asymptotic single-scale DNN,
+`1 <= k <= s` (default k=1), one common order, paired frozen-score covariance and pointwise
 reporting. It supports both matrix and data-frame inputs. A ratio with a finite
 negative denominator remains a computed ratio; exact-zero and numerical
 failures remain visible with their components.

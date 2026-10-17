@@ -1,6 +1,6 @@
-#' Exact-DNN inference for a ratio of two supplied signal averages
+#' DNN inference for a ratio of two supplied signal averages
 #'
-#' Localizes two aligned, externally supplied signals with common exact DNN
+#' Localizes two aligned, externally supplied signals with common DNN
 #' weights. This experimental estimator uses paired frozen-score covariance;
 #' it never divides individual signals or deleted component averages.
 #'
@@ -14,11 +14,15 @@
 #' @param numerator,denominator Finite numeric signal vectors for the matrix route.
 #' @param distance Existing distance specification, registered name or function.
 #'   Geometry is frozen across deletions; input position resolves distance ties.
-#' @param method Only "exact" is supported.
-#' @param k Only 1 is supported: nearest-observation winners in size-s subsamples.
+#' @param method One of "exact" or "asymp", as in [cate_dnn()] and [np_dnn()].
+#' @param k Number of neighbors averaged within each size-s subsample, 1 <= k <= s.
 #' @param s Deterministic integer order. Covariance requires s < n.
 #' @param tuning Optional existing tuning specification, mutually exclusive with s.
 #'   If neither is provided, the package paper rule resolves the order.
+#' @param tuning_mode "default" retains a single fit; "grid" also evaluates
+#'   feasible tuning candidates using the same frozen signals and ranks.
+#' @param normalize Logical normalization control passed to the asymptotic
+#'   weight rule, as in [weights_dnn()]. Exact weights are normalized by construction.
 #' @param se Whether to compute covariance.
 #' @param jackknife "fast" uses the existing prefix/suffix engine; "loo" uses
 #'   explicit frozen-rank deletions; "none" disables covariance.
@@ -27,7 +31,7 @@
 #' @param row_ids Optional aligned unique character/numeric identities.
 #' @param ctx Optional context passed to the existing distance machinery.
 #' @param return Optional extras: W, ranks, ord, dx, ess, signals, deletions,
-#'   pseudo_values or tuning. Unknown values warn and are ignored.
+#'   pseudo_values, neighbors or tuning. Unknown values warn and are ignored.
 #'
 #' @details Both full and deleted averages use the same order s. The target
 #' and nuisance predictions remain frozen. If V is the paired estimator-scale
@@ -67,23 +71,26 @@ affine_ratio_dnn <- function(
   numerator_col = NULL, denominator_col = NULL,
   X = NULL, X0 = NULL, x0 = NULL,
   numerator = NULL, denominator = NULL,
-  distance = "l2", method = "exact", k = 1L,
-  s = NULL, tuning = NULL,
+  distance = "l2", method = c("exact", "asymp"), k = 1L,
+  s = NULL, tuning = NULL, tuning_mode = c("default", "grid"),
+  normalize = TRUE,
   se = TRUE, jackknife = c("fast", "loo", "none"),
   denominator_tol = sqrt(.Machine$double.eps),
   row_ids = NULL, ctx = NULL, return = c("W")
 ) {
-  if (!is.character(method) || length(method) != 1L || is.na(method) || method != "exact") {
-    .abort_bad_arg("method", "must be 'exact' for paired affine-ratio inference")
+  method <- .affine_weight_method(method)
+  tuning_mode <- match.arg(tuning_mode)
+  if (tuning_mode == "grid" && !is.null(s)) {
+    .abort_bad_arg("tuning_mode", "cannot be 'grid' with explicit s; omit s and use tuning")
   }
   k <- .affine_integer(k, "k")
-  if (k != 1L) .abort_bad_arg("k", "must be 1 for paired affine-ratio inference")
+  normalize <- .validate_scalar_logical(normalize, "normalize")
   se <- .validate_scalar_logical(se, "se")
   jackknife <- match.arg(jackknife)
   denominator_tol <- .affine_nonnegative_scalar(denominator_tol, "denominator_tol")
   valid_returns <- c(
     "W", "ranks", "ord", "dx", "ess", "signals",
-    "deletions", "pseudo_values", "tuning"
+    "deletions", "pseudo_values", "neighbors", "tuning"
   )
   .warn_unknown_return(return, valid = valid_returns)
   return <- intersect(return, valid_returns)
@@ -124,47 +131,27 @@ affine_ratio_dnn <- function(
   }
   # Resolve the geometry once, including for the explicit deletion reference.
   weights <- .dnn_weights_with_extras(
-    x_mat, x0_mat, distance, "exact", k, s, TRUE, ctx,
+    x_mat, x0_mat, distance, method, k, s, normalize, ctx,
     return = c("ranks", "ord", "dx")
   )
   W <- weights$W
   wt <- weights$wt
   m <- ncol(W)
   signal <- cbind(numerator = num, denominator = den)
-  components <- t(.dnn_estimate_from_signal(signal, W, n))
-  colnames(components) <- c("numerator", "denominator")
-  rownames(components) <- NULL
-  neff <- as.numeric(1 / colSums(W^2))
-  theta <- components[, 1L] / components[, 2L]
-  status <- .affine_ratio_status(components, theta, den, denominator_tol)
-  theta[status$ratio_status != "ok"] <- NA_real_
-  loo <- NULL
-  covariance <- list(se = NULL, component_vcov = NULL, theta_vcov = NULL, theta_omega = NULL)
-  if (active_covariance) {
-    loo <- if (jackknife == "fast") {
-      .dnn_jackknife_loo_array(
-        x_mat, x0_mat, signal, distance, "exact", k, s, TRUE, ctx,
-        jackknife = "fast", precomputed_ranks = wt$ranks
-      )
-    } else {
-      .dnn_loo_loop(signal, wt$ranks, rank_weight_dnn_exact(k = k, s = s))
-    }
-    covariance <- .affine_ratio_covariance(loo, components, theta, neff)
-    status$covariance_status <- covariance$status
-    status$wald_available <- is.finite(theta) & is.finite(covariance$se) & covariance$se > 0
-  }
-  out <- c(list(theta = as.numeric(theta)), covariance[c("se", "component_vcov", "theta_vcov", "theta_omega")])
-  out$components <- components
+  model_weights <- list(k = k, s = s, method = method, normalize = normalize)
+  out <- .affine_ratio_evaluate(signal, W, wt$ranks, .affine_rank_weight(model_weights),
+                                active_covariance, jackknife, denominator_tol)
+  loo <- out$deletions
+  out$deletions <- NULL
+  components <- out$components
   out$x0 <- .dnn_x0_with_names(x0_mat, x_mat)
-  out$neff <- neff
-  out$status <- status
   out$row_ids <- ids
   out$meta <- list(
-    n = n, m = m, p = ncol(x_mat), k = k, s = s, method = "exact",
+    n = n, m = m, p = ncol(x_mat), k = k, s = s, method = method, normalize = normalize,
     distance = .dnn_distance_name(distance), jackknife = if (active_covariance) jackknife else "none",
     covariance = if (active_covariance) "paired_frozen_score" else "none",
     component_roles = c(numerator = "numerator", denominator = "denominator"),
-    tie_rule = "distance_then_input_position", tuning = resolved$tuning
+    tie_rule = "distance_then_input_position", tuning = resolved$tuning, tuning_mode = tuning_mode
   )
   out <- .dnn_attach_common_extras(out, return, wt, W, k, resolved$tuning)
   if ("signals" %in% return) out$signals <- signal
@@ -179,12 +166,43 @@ affine_ratio_dnn <- function(
   }
   out$.model <- list(
     x_mat = x_mat, signal = signal, x_cols = resolved_x_cols,
-    distance = distance, ctx = ctx, k = k, s = s, method = "exact",
+    distance = distance, ctx = ctx, k = k, s = s, method = method, normalize = normalize,
     denominator_tol = denominator_tol, row_ids = ids,
     geometry = list(ranks = wt$ranks, ord = wt$ord, dx = wt$dx)
   )
+  if (tuning_mode == "grid") {
+    out$tuning_grid <- .affine_ratio_tuning_grid(out, signal, wt$ranks, model_weights,
+      active_covariance, jackknife, denominator_tol, resolved$tuning)
+  }
   class(out) <- "affine_ratio_result"
   out
+}
+
+# Common paired calculation for the default order and cached grid candidates.
+.affine_ratio_evaluate <- function(signal, W, ranks, rw, active, jackknife, tol) {
+  n <- nrow(signal)
+  components <- t(crossprod(signal, W))
+  colnames(components) <- c("numerator", "denominator")
+  rownames(components) <- NULL
+  neff <- as.numeric(1 / colSums(W^2))
+  theta <- components[, 1L] / components[, 2L]
+  status <- .affine_ratio_status(components, theta, signal[, 2L], tol)
+  theta[status$ratio_status != "ok"] <- NA_real_
+  loo <- NULL
+  covariance <- list(se = NULL, component_vcov = NULL, theta_vcov = NULL, theta_omega = NULL)
+  if (active) {
+    loo <- if (jackknife == "fast") {
+      .dnn_loo_prefix(signal, ranks, .rank_weight_table(rw, n - 1L),
+                      tab_full = .rank_weight_table(rw, n))
+    } else {
+      .dnn_loo_loop(signal, ranks, rw)
+    }
+    covariance <- .affine_ratio_covariance(loo, components, theta, neff)
+    status$covariance_status <- covariance$status
+    status$wald_available <- is.finite(theta) & is.finite(covariance$se) & covariance$se > 0
+  }
+  c(list(theta = as.numeric(theta)), covariance[c("se", "component_vcov", "theta_vcov", "theta_omega")],
+    list(components = components, neff = neff, status = status, deletions = loo))
 }
 
 .affine_ratio_status <- function(components, theta, denominator, tol) {

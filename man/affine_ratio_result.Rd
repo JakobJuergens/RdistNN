@@ -59,7 +59,9 @@ fit, only the retained reporting columns are extracted.}
 \value{
 coef returns a named vector; vcov returns one marginal matrix or a
 list of marginal matrices; confint returns a two-column matrix.
-summary returns a summary.affine_ratio_result data frame.
+summary returns a classed list with coefficients, level, has_se and meta,
+plus component and per-target status tables. The coefficient table follows
+the CATE estimate/std.error/statistic/p.value/conf.low/conf.high schema.
 predict returns a vector, a fit/se.fit list or a fit/lwr/upr matrix.
 Printing returns its input invisibly.
 }

@@ -11,13 +11,15 @@
 }
 
 # Independent finite-subset oracle: no package weights or deletion helpers.
-.clate_subset_average <- function(X, x0, signal, s) {
+.clate_subset_average <- function(X, x0, signal, s, k = 1L) {
   subsets <- utils::combn(seq_len(nrow(X)), s)
   distance <- rowSums(sweep(X, 2L, x0, "-")^2)
-  winners <- apply(subsets, 2L, function(idx) {
-    idx[order(distance[idx], idx)[1L]]
-  })
-  colMeans(signal[winners, , drop = FALSE])
+  averages <- vapply(seq_len(ncol(subsets)), function(j) {
+    idx <- subsets[, j]
+    winners <- idx[order(distance[idx], idx)[seq_len(k)]]
+    colMeans(signal[winners, , drop = FALSE])
+  }, numeric(ncol(signal)))
+  rowMeans(averages)
 }
 
 .clate_subset_reference <- function(X, x0, signal, s) {
@@ -57,4 +59,9 @@
   list(data = data, x_cols = c("x1", "x2"), X0 = a$X0, s = a$s,
        y_col = "Y", d_col = "D", a_col = "A", e_col = "e",
        m_y0_col = "m_y0", m_y1_col = "m_y1", m_d0_col = "m_d0", m_d1_col = "m_d1")
+}
+.clate_alignment_tuning <- function() {
+  new_tuning(name = "clate_alignment", eval = function(...) list(s = 3L),
+    eval_grid = function(...) data.frame(lambda = c(.5, 1, 1.1, 2, 4),
+                                        s = c(2L, 3L, 3L, 6L, 8L)))
 }

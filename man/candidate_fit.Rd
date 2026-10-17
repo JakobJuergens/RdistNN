@@ -5,11 +5,13 @@
 \alias{candidate_fit.default}
 \alias{candidate_fit.np_result}
 \alias{candidate_fit.cate_result}
+\alias{candidate_fit.affine_ratio_result}
 \alias{candidate_fit.plqr_result}
 \alias{candidate_fits}
 \alias{candidate_fits.default}
 \alias{candidate_fits.np_result}
 \alias{candidate_fits.cate_result}
+\alias{candidate_fits.affine_ratio_result}
 \alias{candidate_fits.plqr_result}
 \title{Extract one candidate view from a grid fit}
 \usage{
@@ -21,6 +23,8 @@ candidate_fit(object, candidate, ...)
 
 \method{candidate_fit}{cate_result}(object, candidate, ...)
 
+\method{candidate_fit}{affine_ratio_result}(object, candidate, ...)
+
 \method{candidate_fit}{plqr_result}(object, candidate, ...)
 
 candidate_fits(object, candidates = "all", ...)
@@ -31,11 +35,13 @@ candidate_fits(object, candidates = "all", ...)
 
 \method{candidate_fits}{cate_result}(object, candidates = "all", ...)
 
+\method{candidate_fits}{affine_ratio_result}(object, candidates = "all", ...)
+
 \method{candidate_fits}{plqr_result}(object, candidates = "all", ...)
 }
 \arguments{
 \item{object}{A grid fit returned by \code{\link[=np_dnn]{np_dnn()}}, \code{\link[=cate_dnn]{cate_dnn()}}, or
-\code{\link[=plqr_dnn]{plqr_dnn()}} with
+\code{\link[=clate_dnn]{clate_dnn()}}, \code{\link[=affine_ratio_dnn]{affine_ratio_dnn()}} or \code{\link[=plqr_dnn]{plqr_dnn()}} with
 \code{tuning_mode = "grid"}.}
 
 \item{candidate}{A single \code{candidate_id} string or integer row index into
@@ -47,7 +53,9 @@ candidate_fits(object, candidates = "all", ...)
 an integer vector of candidate row indices.}
 }
 \value{
-A scalar-style \code{np_result}, \code{cate_result}, or \code{plqr_result} view.
+A scalar-style view with the same class as the parent. Affine-ratio
+views rebuild paired components and covariance from retained signals and
+frozen ranks; nuisance models and geometry are never refitted.
 
 A named list of scalar-style candidate views.
 }

@@ -396,11 +396,7 @@ cate_dnn <- function(
 }
 
 .cate_dnn_rank_weight_spec <- function(method, k, s, normalize) {
-  if (identical(method, "exact")) {
-    rank_weight_dnn_exact(k = as.integer(k), s = as.integer(s))
-  } else {
-    rank_weight_dnn_asymp(k = as.integer(k), s = as.integer(s), normalize = normalize)
-  }
+  .dnn_rank_weight_spec(method, k, s, normalize)
 }
 
 .cate_dnn_grid_estimates <- function(tau, se) {

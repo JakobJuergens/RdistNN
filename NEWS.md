@@ -1,5 +1,15 @@
 # RdistNN (development version)
 
+- Aligned CLATE and generic affine ratios with exact/asymptotic single-scale
+  DNN, general `k`, normalization, tuning grids and candidate views. Prediction
+  and diagnostics retain the chosen weights and frozen paired signals.
+- Standardized ratio summaries on the CATE coefficient-table schema, retaining
+  component uncertainty and target statuses in separate fields. Added CATE-style
+  estimate, weight, instrument-overlap, paired-score influence, tuning and
+  dashboard plots, including `plot()` and `ggplot2::autoplot()` dispatch.
+  Shared builders and rank-weight construction support both methods; TDNN
+  remains separate NP-regression functionality.
+
 - Added experimental conditional LATE from supplied nuisance predictions with
   `clate_dnn()`, `iv_augmented_signals()` and the generic `affine_ratio_dnn()`.
   Both input formats retain paired components, covariance scales and explicit

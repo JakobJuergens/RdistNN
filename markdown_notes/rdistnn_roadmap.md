@@ -56,13 +56,16 @@ the scientific source of truth. See design note 16 for the refresh contract.
 ## Conditional LATE implementation
 
 The experimental supplied-prediction CLATE feature now has a signal constructor,
-paired exact-DNN ratio engine, dual interfaces, result methods and diagnostics.
+paired exact/asymptotic DNN ratio engine, dual interfaces, result methods and diagnostics.
 The bounded generator, internal ridge-series reference adapter and separate
 ratio confidence-set helper are implemented. The [CLATE collection](clate_implementation/README.md)
 owns the design contracts and requirements-to-evidence record. Package and
 hosted CI acceptance are recorded there as they complete.
 
-Automatic practical learners, adaptive/grid selection and plots remain future
+CATE-style summaries, tuning sensitivity, candidate views and plots share
+common interfaces and builders; [Note 10](clate_implementation/10_weighting_and_output_alignment.md)
+records the current alignment and extension contract. Two-scale TDNN remains
+NP-only. Automatic practical learners and adaptive selection remain future
 contracts. CLATE production simulations and SIPP participation analysis are
 separate study decisions. Existing local IV-GMM keeps its distinct score and
 covariance route; the frozen paper replication bundle remains independent.

@@ -36,8 +36,9 @@
 #'
 #' A patchwork composition of the estimate panel with the weight and
 #' overlap diagnostics, annotated with the fit's metadata (`n`, `m`, `k`,
-#' `s` with provenance, distance, and jackknife type). CATE dashboards use
+#' `s` with provenance, distance, and jackknife type). CATE and CLATE dashboards use
 #' estimates, overlap mass, local propensity, and cumulative weight share;
+#' CLATE overlap describes the instrument. Stored tuning grids add a sensitivity panel.
 #' nonparametric-regression dashboards use estimates, the diagnostics
 #' facets, and the weight decay and concentration views. Panels whose
 #' inputs are unavailable are substituted (the diagnostics facets take the
@@ -47,7 +48,7 @@
 #' When patchwork is not installed the panels are returned as a named list
 #' of ggplot objects with a message.
 #'
-#' @param object A fitted result object (`cate_result` or `np_result`).
+#' @param object A fitted result object (`cate_result`, `clate_result` or `np_result`).
 #' @param ... Passed on to [plot_estimates()] for the estimates panel.
 #'
 #' @return A patchwork object (or a named list of ggplots when patchwork
@@ -87,6 +88,10 @@ plot_dashboard.default <- function(object, ...) {
 #' @rdname plot_dashboard
 #' @export
 plot_dashboard.cate_result <- function(object, ...) {
+  .plot_dashboard_effect(object, ...)
+}
+
+.plot_dashboard_effect <- function(object, ...) {
   .plot_require_ggplot2("plot_dashboard")
   specs <- list(
     estimates = function() plot_estimates(object, ...),
@@ -110,6 +115,12 @@ plot_dashboard.cate_result <- function(object, ...) {
     }
   }
   .plot_dashboard_compose(panels, object)
+}
+
+#' @rdname plot_dashboard
+#' @export
+plot_dashboard.clate_result <- function(object, ...) {
+  .plot_dashboard_effect(object, ...)
 }
 
 #' @rdname plot_dashboard

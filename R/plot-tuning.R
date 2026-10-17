@@ -248,12 +248,12 @@
     p <- p + ggplot2::geom_pointrange(
       ggplot2::aes(ymin = .data$ci_lower, ymax = .data$ci_upper,
                    shape = .data$selected_shape,
-                   colour = .data$candidate_label)
+                   colour = .data$candidate_label), na.rm = TRUE
     )
   } else {
     p <- p + ggplot2::geom_point(
       ggplot2::aes(shape = .data$selected_shape,
-                   colour = .data$candidate_label)
+                   colour = .data$candidate_label), na.rm = TRUE
     )
   }
   p <- p +
@@ -279,7 +279,8 @@
           "filled point / dotted line: fitted s = %d (%s); n = %d",
           as.integer(object$meta$s), src, as.integer(object$meta$n)
         ),
-        payload$drop_caption
+        payload$drop_caption,
+        .plot_estimate_availability_caption(object, df)
       ),
       collapse = "\n"
     )
@@ -303,7 +304,8 @@
 #' Methods for `plqr_result` objects are experimental, as is all PLQR
 #' functionality in this release; see [plqr_dnn()].
 #'
-#' @param object A fitted `np_result`, `cate_result`, or `plqr_result`.
+#' @param object A fitted `np_result`, `cate_result`, `affine_ratio_result`
+#'   (including `clate_result`), or `plqr_result`.
 #' @param tuning A tuning specification for the candidate grid (default
 #'   [tuning_dnn_paper()]).
 #' @param targets Optional integer vector of target ids (defaults to at
@@ -374,6 +376,28 @@ plot_tuning.cate_result <- function(object, tuning = tuning_dnn_paper(),
   grid <- .plot_tuning_grid_cate(object, tuning = tuning, se = se)
   .plot_tuning_panel(object, grid = grid, targets = targets,
                      level = level, candidates = candidates)
+}
+
+#' @rdname plot_tuning
+#' @export
+plot_tuning.affine_ratio_result <- function(object, tuning = tuning_dnn_paper(),
+    targets = NULL, level = .95, se = TRUE, candidates = "all", ...) {
+  .plot_require_ggplot2("plot_tuning")
+  se <- .validate_scalar_logical(se, "se")
+  grid <- object$tuning_grid
+  if (is.null(grid)) {
+    model <- .affine_prediction_state(object)
+    payload <- .plot_tuning_payload(object, tuning, se)
+    engine <- .plot_tuning_jackknife(se)
+    rw <- .affine_rank_weight(model)
+    W <- rank_weight_eval_batch(rw, model$geometry$ranks)
+    default <- .affine_ratio_evaluate(model$signal, W, model$geometry$ranks,
+      rw, se, engine, model$denominator_tol)
+    default$meta <- object$meta
+    grid <- suppressWarnings(.affine_ratio_tuning_grid(default, model$signal,
+      model$geometry$ranks, model, se, engine, model$denominator_tol, payload))
+  }
+  .plot_tuning_panel(object, grid, targets, level, candidates)
 }
 
 #' @rdname plot_tuning

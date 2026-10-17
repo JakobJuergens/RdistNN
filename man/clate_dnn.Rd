@@ -29,10 +29,12 @@ clate_dnn(
   clip = 1e-08,
   one_sided = FALSE,
   distance = "l2",
-  method = "exact",
+  method = c("exact", "asymp"),
   k = 1L,
   s = NULL,
   tuning = NULL,
+  tuning_mode = c("default", "grid"),
+  normalize = TRUE,
   se = TRUE,
   jackknife = c("fast", "loo", "none"),
   denominator_tol = sqrt(.Machine$double.eps),
@@ -83,14 +85,20 @@ under instrument 0. Requires D <= A and zero m_d0 if supplied.}
 \item{distance}{Existing distance specification, registered name or function.
 Geometry is frozen across deletions; input position resolves distance ties.}
 
-\item{method}{Only "exact" is supported.}
+\item{method}{One of "exact" or "asymp", as in \code{\link[=cate_dnn]{cate_dnn()}} and \code{\link[=np_dnn]{np_dnn()}}.}
 
-\item{k}{Only 1 is supported: nearest-observation winners in size-s subsamples.}
+\item{k}{Number of neighbors averaged within each size-s subsample, 1 <= k <= s.}
 
 \item{s}{Deterministic integer order. Covariance requires s < n.}
 
 \item{tuning}{Optional existing tuning specification, mutually exclusive with s.
 If neither is provided, the package paper rule resolves the order.}
+
+\item{tuning_mode}{"default" retains a single fit; "grid" also evaluates
+feasible tuning candidates using the same frozen signals and ranks.}
+
+\item{normalize}{Logical normalization control passed to the asymptotic
+weight rule, as in \code{\link[=weights_dnn]{weights_dnn()}}. Exact weights are normalized by construction.}
 
 \item{se}{Whether to compute covariance.}
 
@@ -108,7 +116,7 @@ full_sample, oob or cross_fit. It is not verified from predictions.}
 \item{ctx}{Optional context passed to the existing distance machinery.}
 
 \item{return}{Optional extras: W, ranks, ord, dx, ess, signals, deletions,
-pseudo_values or tuning. Unknown values warn and are ignored.}
+pseudo_values, neighbors or tuning. Unknown values warn and are ignored.}
 }
 \value{
 A clate_result inheriting affine_ratio_result. Component roles are
@@ -137,6 +145,11 @@ additionally requires the affine theorem's design, oracle, learner accuracy,
 deletion-stability and undersmoothing conditions. A training label alone does
 not establish them. The covariance keeps paired variation of both signals;
 existing residualized IV-GMM uses a different moment and covariance route.
+Exact/asymptotic single-scale DNN and general k share the CATE/NP controls.
+These computational choices require their corresponding statistical
+conditions; they do not extend the exact-k=1 theorem automatically.
+Reporting and plotting use the common generics; overlap panels describe
+the instrument and influence panels retain both augmented signals.
 }
 \examples{
 d <- data.frame(

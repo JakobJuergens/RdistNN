@@ -8,13 +8,13 @@
 #' confidence bounds from the stored jackknife standard errors, drawn as a
 #' profile band when the targets vary along a single stored coordinate, as
 #' a forest layout for small non-profile target sets, and as pointranges
-#' otherwise. `autoplot()` and `plot()` on `np_result` and `cate_result`
+#' otherwise. `autoplot()` and `plot()` on `np_result`, `cate_result` and `affine_ratio_result`
 #' objects delegate here.
 #'
 #' Every panel carries an honesty caption with the median effective sample
 #' size across targets (when weight diagnostics are available) and the
 #' kernel order `s` with its provenance (`paper_default` or `manual`).
-#' CATE panels draw a dashed zero reference line.
+#' CATE and CLATE panels draw a dashed zero reference line.
 #'
 #' @section Experimental methods:
 #' Methods for `plqr_result` objects are experimental, as is all PLQR
@@ -31,7 +31,7 @@
 #'   (see `attr(plot_data_estimates(object), "x0_names")`), an `x0_*`
 #'   column name, or a coordinate index.
 #' @param shade_significant Logical (default `FALSE`); for profile-style
-#'   CATE panels, add a rug along the axis where the confidence interval
+#'   CATE/CLATE panels, add a rug along the axis where the confidence interval
 #'   excludes zero. Intervals are marked, never point estimates.
 #' @param candidates Candidate rows to compare for grid fits. The default
 #'   `"default"` preserves the scalar-fit display. Use `"all"` or a
@@ -86,10 +86,7 @@ plot_estimates <- function(object, level = 0.95,
   }
 
   has_se <- !all(is.na(df$se))
-  captions <- character(0)
-  if (!has_se) {
-    captions <- c(captions, "no standard errors stored (se = FALSE)")
-  }
+  captions <- .plot_estimate_availability_caption(object, df)
   honesty <- .plot_honesty_caption(object)
   if (nzchar(honesty)) captions <- c(captions, honesty)
 
@@ -97,7 +94,7 @@ plot_estimates <- function(object, level = 0.95,
   # 3.0): treatment effects and PLQR moment coordinates. Supplied-theta
   # PLQR plots get no automatic zero line; zero is not a meaningful
   # reference for an arbitrary evaluation value.
-  zero_line <- inherits(object, "cate_result") ||
+  zero_line <- inherits(object, "cate_result") || inherits(object, "clate_result") ||
     (inherits(object, "plqr_result") && !identical(attr(df, "quantity"), "theta"))
 
   if (mode == "forest") {
@@ -116,10 +113,10 @@ plot_estimates <- function(object, level = 0.95,
     if (has_se) {
       p <- p + ggplot2::geom_pointrange(
         ggplot2::aes(xmin = .data$ci_lower, xmax = .data$ci_upper),
-        colour = .plot_col_single
+        colour = .plot_col_single, na.rm = TRUE
       )
     } else {
-      p <- p + ggplot2::geom_point(colour = .plot_col_single)
+      p <- p + ggplot2::geom_point(colour = .plot_col_single, na.rm = TRUE)
     }
     p <- p + ggplot2::labs(x = "Estimate", y = NULL)
   } else {
@@ -132,10 +129,10 @@ plot_estimates <- function(object, level = 0.95,
       if (has_se) {
         p <- p + ggplot2::geom_ribbon(
           ggplot2::aes(ymin = .data$ci_lower, ymax = .data$ci_upper),
-          alpha = 0.25, fill = .plot_col_single
+          alpha = 0.25, fill = .plot_col_single, na.rm = TRUE
         )
       }
-      p <- p + ggplot2::geom_line(colour = .plot_col_single)
+      p <- p + ggplot2::geom_line(colour = .plot_col_single, na.rm = TRUE)
       if (isTRUE(shade_significant) && has_se) {
         sig <- df[!is.na(df$ci_lower) &
                     sign(df$ci_lower) == sign(df$ci_upper) &
@@ -151,10 +148,10 @@ plot_estimates <- function(object, level = 0.95,
       if (has_se) {
         p <- p + ggplot2::geom_pointrange(
           ggplot2::aes(ymin = .data$ci_lower, ymax = .data$ci_upper),
-          colour = .plot_col_single
+          colour = .plot_col_single, na.rm = TRUE
         )
       } else {
-        p <- p + ggplot2::geom_point(colour = .plot_col_single)
+        p <- p + ggplot2::geom_point(colour = .plot_col_single, na.rm = TRUE)
       }
     }
     p <- p + ggplot2::labs(x = axis$label, y = "Estimate")
@@ -192,14 +189,11 @@ plot_estimates <- function(object, level = 0.95,
   }
 
   has_se <- !all(is.na(df$se))
-  captions <- character(0)
-  if (!has_se) {
-    captions <- c(captions, "no standard errors stored (se = FALSE)")
-  }
+  captions <- .plot_estimate_availability_caption(object, df)
   if (!is.null(payload$drop_caption)) {
     captions <- c(captions, payload$drop_caption)
   }
-  zero_line <- inherits(object, "cate_result") || inherits(object, "plqr_result")
+  zero_line <- inherits(object, "cate_result") || inherits(object, "clate_result") || inherits(object, "plqr_result")
   dodge <- ggplot2::position_dodge(width = 0.5)
 
   if (mode == "forest") {
@@ -224,10 +218,10 @@ plot_estimates <- function(object, level = 0.95,
     if (has_se) {
       p <- p + ggplot2::geom_pointrange(
         ggplot2::aes(xmin = .data$ci_lower, xmax = .data$ci_upper),
-        position = dodge
+        position = dodge, na.rm = TRUE
       )
     } else {
-      p <- p + ggplot2::geom_point(position = dodge)
+      p <- p + ggplot2::geom_point(position = dodge, na.rm = TRUE)
     }
     p <- p + ggplot2::labs(x = "Estimate", y = NULL)
   } else {
@@ -256,10 +250,10 @@ plot_estimates <- function(object, level = 0.95,
           ),
           alpha = 0.18,
           colour = NA,
-          linewidth = 0
+          linewidth = 0, na.rm = TRUE
         )
       }
-      p <- p + ggplot2::geom_line()
+      p <- p + ggplot2::geom_line(na.rm = TRUE)
       if (isTRUE(shade_significant) && has_se) {
         sig <- df[!is.na(df$ci_lower) &
                     sign(df$ci_lower) == sign(df$ci_upper) &
@@ -278,10 +272,10 @@ plot_estimates <- function(object, level = 0.95,
       if (has_se) {
         p <- p + ggplot2::geom_pointrange(
           ggplot2::aes(ymin = .data$ci_lower, ymax = .data$ci_upper),
-          position = dodge
+          position = dodge, na.rm = TRUE
         )
       } else {
-        p <- p + ggplot2::geom_point(position = dodge)
+        p <- p + ggplot2::geom_point(position = dodge, na.rm = TRUE)
       }
     }
     p <- p + ggplot2::labs(x = axis$label, y = "Estimate")
@@ -297,9 +291,9 @@ plot_estimates <- function(object, level = 0.95,
     ) +
     ggplot2::labs(
       colour = "candidate",
-      fill = "candidate",
       linetype = "candidate"
     )
+  if (mode == "profile" && has_se) p <- p + ggplot2::labs(fill = "candidate")
   if (length(captions) > 0L) {
     p <- p + ggplot2::labs(caption = paste(captions, collapse = "\n"))
   }
@@ -315,6 +309,12 @@ autoplot.np_result <- function(object, ...) {
 #' @rdname plot_estimates
 #' @exportS3Method ggplot2::autoplot cate_result
 autoplot.cate_result <- function(object, ...) {
+  plot_estimates(object, ...)
+}
+
+#' @rdname plot_estimates
+#' @exportS3Method ggplot2::autoplot affine_ratio_result
+autoplot.affine_ratio_result <- function(object, ...) {
   plot_estimates(object, ...)
 }
 
@@ -354,6 +354,14 @@ plot.np_result <- function(x, ...) {
 #' @rdname plot_estimates
 #' @export
 plot.cate_result <- function(x, ...) {
+  p <- plot_estimates(x, ...)
+  print(p)
+  invisible(p)
+}
+
+#' @rdname plot_estimates
+#' @export
+plot.affine_ratio_result <- function(x, ...) {
   p <- plot_estimates(x, ...)
   print(p)
   invisible(p)

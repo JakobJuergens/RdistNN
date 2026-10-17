@@ -5,6 +5,7 @@
 \alias{plot_tuning.default}
 \alias{plot_tuning.np_result}
 \alias{plot_tuning.cate_result}
+\alias{plot_tuning.affine_ratio_result}
 \alias{plot_tuning.plqr_result}
 \title{Plot estimate sensitivity to the kernel order}
 \usage{
@@ -48,6 +49,16 @@ plot_tuning(
   ...
 )
 
+\method{plot_tuning}{affine_ratio_result}(
+  object,
+  tuning = tuning_dnn_paper(),
+  targets = NULL,
+  level = 0.95,
+  se = TRUE,
+  candidates = "all",
+  ...
+)
+
 \method{plot_tuning}{plqr_result}(
   object,
   tuning = tuning_dnn_paper(),
@@ -59,7 +70,8 @@ plot_tuning(
 )
 }
 \arguments{
-\item{object}{A fitted \code{np_result}, \code{cate_result}, or \code{plqr_result}.}
+\item{object}{A fitted \code{np_result}, \code{cate_result}, \code{affine_ratio_result}
+(including \code{clate_result}), or \code{plqr_result}.}
 
 \item{tuning}{A tuning specification for the candidate grid (default
 \code{\link[=tuning_dnn_paper]{tuning_dnn_paper()}}).}

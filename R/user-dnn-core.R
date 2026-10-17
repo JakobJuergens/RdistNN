@@ -1015,11 +1015,7 @@
     }
     if (!is.integer(ranks_full)) storage.mode(ranks_full) <- "integer"
 
-    rw <- if (identical(method, "exact")) {
-      rank_weight_dnn_exact(k = as.integer(k), s = as.integer(s))
-    } else {
-      rank_weight_dnn_asymp(k = as.integer(k), s = as.integer(s), normalize = normalize)
-    }
+    rw <- .dnn_rank_weight_spec(method, k, s, normalize)
 
     tab_jk <- .rank_weight_table(rw, n - 1L)
     loo <- if (is.null(tab_jk)) {
@@ -1094,4 +1090,13 @@
     precomputed_ranks = precomputed_ranks
   )
   .dnn_jackknife_se_from_loo(loo = loo, q = ncol(sig), n = n, m = nrow(x0_mat))
+}
+
+# Shared rank-weight construction for NP, CATE, paired ratios and grid views.
+.dnn_rank_weight_spec <- function(method, k, s, normalize = TRUE) {
+  if (identical(method, "exact")) {
+    rank_weight_dnn_exact(k = as.integer(k), s = as.integer(s))
+  } else {
+    rank_weight_dnn_asymp(k = as.integer(k), s = as.integer(s), normalize = normalize)
+  }
 }

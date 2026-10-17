@@ -2,7 +2,7 @@ test_that("unsupported controls fail before distance evaluation", {
   args <- list(X = matrix(1:4, ncol = 1L), x0 = 0,
                numerator = 1:4, denominator = rep(1, 4L), s = 2L)
   distance <- function(...) stop("distance should not run")
-  for (item in list(list(k = 2), list(method = "asymp"), list(s = 5),
+  for (item in list(list(k = 3), list(method = "invalid"), list(normalize = 1), list(s = 5),
                     list(s = 4), list(s = 0), list(s = 1.5),
                     list(s = 1e100), list(denominator_tol = -1))) {
     a <- args

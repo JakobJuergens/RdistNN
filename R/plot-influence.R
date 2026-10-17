@@ -2,7 +2,7 @@
 # contributions, flagging single-observation dominance. This is the
 # plot-level counterpart of the delete-one jackknife's sensitivity logic.
 
-#' Plot per-observation contributions to a CATE estimate
+#' Plot per-observation contributions to a CATE or CLATE estimating equation
 #'
 #' For a target `j`, each observation contributes
 #' `w_ij (psi_i - tau_hat_j)` to the localized estimating equation; large
@@ -13,8 +13,11 @@
 #'
 #' The pseudo-outcome is taken from the fit; supply `pseudo_outcome` for
 #' fits that do not store it.
+#' For CLATE the contribution is w_ij (phi_Yi - theta_j phi_Di), using both
+#' retained signals at the target's fitted ratio. These are weighted score
+#' residuals, not delete-one pseudo-values or estimated individual effects.
 #'
-#' @param object A `cate_result` with the weight matrix `W` stored (the
+#' @param object A `cate_result` or `clate_result` with the weight matrix `W` stored (the
 #'   default).
 #' @param targets Optional integer vector of target ids (defaults to the
 #'   first/median-`n_eff`/last subset above eight targets).
@@ -45,11 +48,12 @@ plot_influence <- function(object,
                            n_label = 3L,
                            ...) {
   .plot_require_ggplot2("plot_influence")
-  if (!inherits(object, "cate_result")) {
+  clate <- inherits(object, "clate_result")
+  if (!inherits(object, "cate_result") && !clate) {
     .abort_bad_arg(
       "object",
       sprintf(
-        "plot_influence() supports cate_result fits; got class '%s'",
+        "plot_influence() supports cate_result or clate_result fits; got class '%s'",
         class(object)[1L]
       ),
       quoted = FALSE
@@ -58,7 +62,12 @@ plot_influence <- function(object,
   n_label <- .validate_scalar_int(n_label, "n_label")
 
   model <- object$.model
-  psi <- if (is.list(model) && !is.null(model$psi)) {
+  if (clate && !is.null(pseudo_outcome)) {
+    .abort_bad_arg("pseudo_outcome", "is a CATE input; CLATE uses its paired stored signals")
+  }
+  psi <- if (clate) {
+    .affine_prediction_state(object)$signal
+  } else if (is.list(model) && !is.null(model$psi)) {
     model$psi
   } else {
     pseudo_outcome
@@ -73,8 +82,8 @@ plot_influence <- function(object,
 
   dw <- plot_data_weights(object)
   n <- max(dw$rank)
-  psi <- as.numeric(psi)
-  if (length(psi) != n || any(!is.finite(psi))) {
+  if (!clate) psi <- as.numeric(psi)
+  if ((!clate && length(psi) != n) || (clate && nrow(psi) != n) || any(!is.finite(psi))) {
     .abort_bad_arg(
       "pseudo_outcome",
       sprintf("must be a finite numeric vector of length n = %d", n),
@@ -91,9 +100,18 @@ plot_influence <- function(object,
   targets <- .plot_select_targets(all_targets, neff_by_target, targets)
   dw <- dw[dw$target_id %in% targets, , drop = FALSE]
 
-  tau_hat <- as.numeric(object$tau)
-  dw$contribution <- dw$weight *
-    (psi[dw$obs_id] - tau_hat[dw$target_id])
+  if (clate) {
+    if (any(!is.finite(object$theta[targets]))) {
+      .abort_bad_arg("targets", paste0(
+        "must select targets with a finite CLATE ratio; inspect ratio_status in diagnostics(object)"
+      ))
+    }
+    dw$contribution <- dw$weight * (psi[dw$obs_id, 1L] -
+      object$theta[dw$target_id] * psi[dw$obs_id, 2L])
+  } else {
+    tau_hat <- as.numeric(object$tau)
+    dw$contribution <- dw$weight * (psi[dw$obs_id] - tau_hat[dw$target_id])
+  }
   has_dx <- !all(is.na(dw$distance))
   dw$xval <- if (has_dx) dw$distance else dw$rank
   dw$target <- factor(dw$target_id)
@@ -139,7 +157,7 @@ plot_influence <- function(object,
     ) +
     ggplot2::labs(
       x = if (has_dx) "Distance" else "Rank",
-      y = "Weighted score contribution",
+      y = if (clate) "Weighted CLATE score contribution" else "Weighted score contribution",
       colour = "target",
       caption = cap
     )

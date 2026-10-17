@@ -197,11 +197,7 @@
   }
   k <- as.integer(object$meta$k)
   s <- as.integer(candidate_row$s[[1L]])
-  if (identical(method, "exact")) {
-    rank_weight_dnn_exact(k = k, s = s)
-  } else {
-    rank_weight_dnn_asymp(k = k, s = s, normalize = normalize)
-  }
+  .dnn_rank_weight_spec(method, k, s, normalize)
 }
 
 .candidate_validate_cached_ranks <- function(object, ranks) {
@@ -228,6 +224,8 @@
   ranks <- NULL
   if (is.list(object$.model) && !is.null(object$.model$ranks)) {
     ranks <- object$.model$ranks
+  } else if (is.list(object$.model) && !is.null(object$.model$geometry$ranks)) {
+    ranks <- object$.model$geometry$ranks
   } else if (!is.null(object$ranks)) {
     ranks <- object$ranks
   }
@@ -372,6 +370,28 @@
   .candidate_attach_common_view_fields(out, object, row)
 }
 
+.candidate_affine_view <- function(object, candidate) {
+  row <- .candidate_resolve_row(object, candidate)
+  model <- .affine_prediction_state(object)
+  ranks <- .candidate_cached_ranks(object)
+  W <- .candidate_weights_from_ranks(object, row)
+  fit <- .affine_ratio_evaluate(model$signal, W, ranks,
+    .candidate_rank_weight_spec(object, row), !is.null(object$se),
+    object$meta$jackknife, model$denominator_tol)
+  out <- object
+  for (field in setdiff(names(fit), "deletions")) out[field] <- fit[field]
+  if ("deletions" %in% names(object)) out$deletions <- fit$deletions
+  if ("pseudo_values" %in% names(object)) {
+    pv <- fit$deletions
+    for (j in seq_along(fit$theta)) {
+      full <- matrix(fit$components[j, ], nrow(W), 2L, byrow = TRUE)
+      pv[, , j] <- full + (nrow(W) - 1) * (full - pv[, , j])
+    }
+    out$pseudo_values <- pv
+  }
+  .candidate_attach_common_view_fields(out, object, row)
+}
+
 .candidate_plqr_view <- function(object, candidate) {
   row <- .candidate_resolve_row(object, candidate)
   rows <- .candidate_estimates(object, row)
@@ -451,13 +471,15 @@
 #' functionality in this release; see [plqr_dnn()].
 #'
 #' @param object A grid fit returned by [np_dnn()], [cate_dnn()], or
-#'   [plqr_dnn()] with
+#'   [clate_dnn()], [affine_ratio_dnn()] or [plqr_dnn()] with
 #'   `tuning_mode = "grid"`.
 #' @param candidate A single `candidate_id` string or integer row index into
 #'   `object$tuning_grid$candidates`.
 #' @param ... Reserved for future methods.
 #'
-#' @return A scalar-style `np_result`, `cate_result`, or `plqr_result` view.
+#' @return A scalar-style view with the same class as the parent. Affine-ratio
+#'   views rebuild paired components and covariance from retained signals and
+#'   frozen ranks; nuisance models and geometry are never refitted.
 #'
 #' @examples
 #' set.seed(1)
@@ -494,6 +516,12 @@ candidate_fit.np_result <- function(object, candidate, ...) {
 #' @export
 candidate_fit.cate_result <- function(object, candidate, ...) {
   .candidate_cate_view(object, candidate)
+}
+
+#' @rdname candidate_fit
+#' @export
+candidate_fit.affine_ratio_result <- function(object, candidate, ...) {
+  .candidate_affine_view(object, candidate)
 }
 
 #' @rdname candidate_fit
@@ -540,6 +568,12 @@ candidate_fits.np_result <- function(object, candidates = "all", ...) {
 #' @rdname candidate_fit
 #' @export
 candidate_fits.cate_result <- function(object, candidates = "all", ...) {
+  .candidate_fits_impl(object, candidates = candidates, ...)
+}
+
+#' @rdname candidate_fit
+#' @export
+candidate_fits.affine_ratio_result <- function(object, candidates = "all", ...) {
   .candidate_fits_impl(object, candidates = candidates, ...)
 }
 

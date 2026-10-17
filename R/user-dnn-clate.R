@@ -28,6 +28,11 @@
 #' deletion-stability and undersmoothing conditions. A training label alone does
 #' not establish them. The covariance keeps paired variation of both signals;
 #' existing residualized IV-GMM uses a different moment and covariance route.
+#' Exact/asymptotic single-scale DNN and general k share the CATE/NP controls.
+#' These computational choices require their corresponding statistical
+#' conditions; they do not extend the exact-k=1 theorem automatically.
+#' Reporting and plotting use the common generics; overlap panels describe
+#' the instrument and influence panels retain both augmented signals.
 #'
 #' @return A clate_result inheriting affine_ratio_result. Component roles are
 #'   reduced_form and first_stage. Optional nuisance output is the complete
@@ -60,18 +65,21 @@ clate_dnn <- function(
   Y = NULL, D = NULL, A = NULL, e = NULL,
   m_y0 = NULL, m_y1 = NULL, m_d0 = NULL, m_d1 = NULL,
   clip = 1e-8, one_sided = FALSE,
-  distance = "l2", method = "exact", k = 1L,
-  s = NULL, tuning = NULL,
+  distance = "l2", method = c("exact", "asymp"), k = 1L,
+  s = NULL, tuning = NULL, tuning_mode = c("default", "grid"),
+  normalize = TRUE,
   se = TRUE, jackknife = c("fast", "loo", "none"),
   denominator_tol = sqrt(.Machine$double.eps),
   row_ids = NULL, training = "supplied", ctx = NULL,
   return = c("W")
 ) {
   one_sided <- .validate_scalar_logical(one_sided, "one_sided")
+  method <- .affine_weight_method(method)
+  tuning_mode <- match.arg(tuning_mode)
   jackknife <- match.arg(jackknife)
   valid <- c(
     "W", "ranks", "ord", "dx", "ess", "signals",
-    "deletions", "pseudo_values", "tuning", "nuisance"
+    "deletions", "pseudo_values", "neighbors", "tuning", "nuisance"
   )
   .warn_unknown_return(return, valid = valid)
   return <- intersect(return, valid)
@@ -122,6 +130,7 @@ clate_dnn <- function(
   out <- affine_ratio_dnn(
     X = x_mat, X0 = X0, x0 = x0, numerator = signals$phi_y, denominator = signals$phi_d,
     distance = distance, method = method, k = k, s = s, tuning = tuning,
+    tuning_mode = tuning_mode, normalize = normalize,
     se = se, jackknife = jackknife, denominator_tol = denominator_tol,
     row_ids = signals$row_ids, ctx = ctx, return = setdiff(return, "nuisance")
   )

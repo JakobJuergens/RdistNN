@@ -173,7 +173,13 @@ learner is fitted by these interfaces.
 The [CLATE
 guide](https://JakobJuergens.github.io/RdistNN/articles/conditional-late.html)
 shows matrix/data-frame calls, diagnostics and new reporting profiles.
-The [inference
+CATE and CLATE share exact/asymptotic DNN weighting controls, the
+`summary(fit)$coefficients` schema, candidate views and plotting calls:
+`plot_estimates()`, `plot_weights()`, `plot_overlap()`,
+`plot_influence()`, `plot_tuning()` and `plot_dashboard()`. CLATE
+overlap describes the instrument; its influence panels retain both
+augmented signals. Two-scale TDNN remains an NP-regression method. The
+[inference
 article](https://JakobJuergens.github.io/RdistNN/articles/conditional-late-inference.html)
 explains covariance scales, signed/zero denominators, and the optional
 `ratio_confidence_set()` output, including unbounded sets. These

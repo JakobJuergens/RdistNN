@@ -1,8 +1,8 @@
 #' Paired component and first-stage diagnostics
 #'
 #' @param object An affine_ratio_result or clate_result.
-#' @param candidates Only "default" is supported; this estimator has no
-#'   candidate-selection inference rule.
+#' @param candidates "default", "all", or candidate ids from a grid-mode fit.
+#'   Candidate diagnostics do not provide candidate-selection inference.
 #' @param ... Not used.
 #' @details Reports component uncertainty, denominator diagnostics, geometry and
 #'   centered score pseudo-value concentration. Instrument and propensity fields
@@ -25,8 +25,8 @@ NULL
 #' @rdname clate_diagnostics
 #' @export
 diagnostics.affine_ratio_result <- function(object, candidates = "default", ...) {
-  if (!identical(candidates, "default")) {
-    .abort_bad_arg("candidates", "must be 'default' for affine-ratio diagnostics")
+  if (!.plot_candidates_is_default(candidates)) {
+    return(.dnn_candidate_diagnostics(object, candidates))
   }
   model <- .affine_prediction_state(object)
   geometry <- model$geometry
@@ -34,7 +34,8 @@ diagnostics.affine_ratio_result <- function(object, candidates = "default", ...)
     .abort_bad_arg("object$.model", "is missing the frozen geometry; refit the estimator")
   }
   ranks <- .validate_permutation_matrix(geometry$ranks, "object$.model$geometry$ranks")
-  W <- rank_weight_eval_batch(rank_weight_dnn_exact(k = 1L, s = model$s), ranks)
+  rw <- .affine_rank_weight(model)
+  W <- rank_weight_eval_batch(rw, ranks)
   m <- ncol(W)
   out <- .dnn_weight_diagnostics(W, object$meta, geometry$dx, object$meta$tuning)
   ns <- .affine_component_se(object, 1L)
@@ -55,8 +56,8 @@ diagnostics.affine_ratio_result <- function(object, candidates = "default", ...)
   if (!is.null(object$component_vcov) && model$s < nrow(model$x_mat)) {
     loo <- .dnn_loo_prefix(
       model$signal, ranks,
-      .rank_weight_table(rank_weight_dnn_exact(k = 1L, s = model$s), nrow(model$x_mat) - 1L),
-      tab_full = .rank_weight_table(rank_weight_dnn_exact(k = 1L, s = model$s), nrow(model$x_mat))
+      .rank_weight_table(rw, nrow(model$x_mat) - 1L),
+      tab_full = .rank_weight_table(rw, nrow(model$x_mat))
     )
     for (j in seq_len(m)) {
       if (!is.finite(object$theta[j])) next

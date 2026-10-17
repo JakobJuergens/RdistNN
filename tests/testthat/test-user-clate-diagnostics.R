@@ -18,7 +18,7 @@ test_that("ratio diagnostics reconstruct paired uncertainty and score concentrat
   expect_false(z$instrument_available)
   expect_true(is.na(z$instrument_1_mass))
   expect_true(is.na(z$propensity_clipped_mass))
-  expect_error(diagnostics(f, candidates = "all"), "candidates")
+  expect_error(diagnostics(f, candidates = "all"), "grid|tuning_mode")
 })
 
 test_that("CLATE diagnostics preserve IV roles clipping and instrument support", {

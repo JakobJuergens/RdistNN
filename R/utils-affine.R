@@ -56,3 +56,13 @@
   if (n < 1L) .abort_bad_arg(arg, "must contain at least one observation")
   n
 }
+.affine_rank_weight <- function(model) {
+  .dnn_rank_weight_spec(model$method, model$k, model$s,
+                        if (is.null(model$normalize)) TRUE else model$normalize)
+}
+
+.affine_weight_method <- function(method) {
+  tryCatch(match.arg(method, c("exact", "asymp")), error = function(e) {
+    .abort_bad_arg("method", "must be one of 'exact' or 'asymp'")
+  })
+}

@@ -280,11 +280,7 @@ np_dnn <- function(
 }
 
 .np_dnn_rank_weight_spec <- function(method, k, s, normalize) {
-  if (identical(method, "exact")) {
-    rank_weight_dnn_exact(k = as.integer(k), s = as.integer(s))
-  } else {
-    rank_weight_dnn_asymp(k = as.integer(k), s = as.integer(s), normalize = normalize)
-  }
+  .dnn_rank_weight_spec(method, k, s, normalize)
 }
 
 .np_dnn_grid_estimates <- function(mu, se) {

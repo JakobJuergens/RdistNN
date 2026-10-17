@@ -68,19 +68,22 @@
 #' functionality in this release; see [plqr_dnn()].
 #'
 #' @param object A fitted result object (`np_result`, `cate_result`,
-#'   `plqr_result`, or `gmm_result`; `tdnn_np_result` dispatches through
+#'   `affine_ratio_result`, `clate_result`, `plqr_result`, or `gmm_result`; `tdnn_np_result` dispatches through
 #'   `np_result`).
 #' @param level Confidence level for the normal bounds (default `0.95`).
+#' @param candidates For grid-aware methods, `"default"`, `"all"`, or a
+#'   character vector of stored candidate ids.
 #' @param ... Passed to methods; not used.
 #'
 #' @return A `data.frame` with columns `target_id` (integer, `1..m`),
-#'   `coef` (character; `"mu"`/`"tau"` for scalar fits, moment or
+#'   `coef` (character; `"mu"`/`"tau"`/`"theta"` for scalar fits, moment or
 #'   coefficient names for vector fits), `estimate`, `se`, `ci_lower`,
 #'   `ci_upper`, and — when the fit stores evaluation points — target
 #'   coordinates `x0_1..x0_p`, with the original covariate names recorded in
 #'   `attr(., "x0_names")`. Fits without stored standard errors return `NA`
 #'   in `se` and the bound columns. The confidence level is recorded in
-#'   `attr(., "level")`.
+#'   `attr(., "level")`. Ratio fits also retain unavailable Wald bounds as
+#'   `NA` when the ratio is undefined or its score variance is zero.
 #'
 #' @examples
 #' set.seed(1)

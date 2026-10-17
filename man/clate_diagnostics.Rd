@@ -13,8 +13,8 @@
 \arguments{
 \item{object}{An affine_ratio_result or clate_result.}
 
-\item{candidates}{Only "default" is supported; this estimator has no
-candidate-selection inference rule.}
+\item{candidates}{"default", "all", or candidate ids from a grid-mode fit.
+Candidate diagnostics do not provide candidate-selection inference.}
 
 \item{...}{Not used.}
 }

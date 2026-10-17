@@ -4,10 +4,12 @@
 \alias{plot_estimates}
 \alias{autoplot.np_result}
 \alias{autoplot.cate_result}
+\alias{autoplot.affine_ratio_result}
 \alias{autoplot.plqr_result}
 \alias{autoplot.gmm_result}
 \alias{plot.np_result}
 \alias{plot.cate_result}
+\alias{plot.affine_ratio_result}
 \alias{plot.plqr_result}
 \alias{plot.gmm_result}
 \title{Plot estimates with confidence bounds across target points}
@@ -26,6 +28,8 @@ autoplot.np_result(object, ...)
 
 autoplot.cate_result(object, ...)
 
+autoplot.affine_ratio_result(object, ...)
+
 autoplot.plqr_result(object, ...)
 
 autoplot.gmm_result(object, ...)
@@ -33,6 +37,8 @@ autoplot.gmm_result(object, ...)
 \method{plot}{np_result}(x, ...)
 
 \method{plot}{cate_result}(x, ...)
+
+\method{plot}{affine_ratio_result}(x, ...)
 
 \method{plot}{plqr_result}(x, ...)
 
@@ -54,7 +60,7 @@ non-profile targets, and pointranges otherwise.}
 column name, or a coordinate index.}
 
 \item{shade_significant}{Logical (default \code{FALSE}); for profile-style
-CATE panels, add a rug along the axis where the confidence interval
+CATE/CLATE panels, add a rug along the axis where the confidence interval
 excludes zero. Intervals are marked, never point estimates.}
 
 \item{candidates}{Candidate rows to compare for grid fits. The default
@@ -74,14 +80,14 @@ The estimate panel of the plotting layer: point estimates with normal
 confidence bounds from the stored jackknife standard errors, drawn as a
 profile band when the targets vary along a single stored coordinate, as
 a forest layout for small non-profile target sets, and as pointranges
-otherwise. \code{autoplot()} and \code{plot()} on \code{np_result} and \code{cate_result}
+otherwise. \code{autoplot()} and \code{plot()} on \code{np_result}, \code{cate_result} and \code{affine_ratio_result}
 objects delegate here.
 }
 \details{
 Every panel carries an honesty caption with the median effective sample
 size across targets (when weight diagnostics are available) and the
 kernel order \code{s} with its provenance (\code{paper_default} or \code{manual}).
-CATE panels draw a dashed zero reference line.
+CATE and CLATE panels draw a dashed zero reference line.
 }
 \section{Experimental methods}{
 

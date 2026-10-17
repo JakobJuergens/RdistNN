@@ -15,8 +15,9 @@ affine_ratio_dnn(
   numerator_col = NULL, denominator_col = NULL,
   X = NULL, X0 = NULL, x0 = NULL,
   numerator = NULL, denominator = NULL,
-  distance = "l2", method = "exact", k = 1L,
-  s = NULL, tuning = NULL,
+  distance = "l2", method = c("exact", "asymp"), k = 1L,
+  s = NULL, tuning = NULL, tuning_mode = c("default", "grid"),
+  normalize = TRUE,
   se = TRUE, jackknife = c("fast", "loo", "none"),
   denominator_tol = sqrt(.Machine$double.eps),
   row_ids = NULL, ctx = NULL, return = c("W")
@@ -37,8 +38,9 @@ clate_dnn(
   Y = NULL, D = NULL, A = NULL, e = NULL,
   m_y0 = NULL, m_y1 = NULL, m_d0 = NULL, m_d1 = NULL,
   clip = 1e-8, one_sided = FALSE,
-  distance = "l2", method = "exact", k = 1L,
-  s = NULL, tuning = NULL,
+  distance = "l2", method = c("exact", "asymp"), k = 1L,
+  s = NULL, tuning = NULL, tuning_mode = c("default", "grid"),
+  normalize = TRUE,
   se = TRUE, jackknife = c("fast", "loo", "none"),
   denominator_tol = sqrt(.Machine$double.eps),
   row_ids = NULL, training = "supplied", ctx = NULL,
@@ -59,12 +61,14 @@ observation-level ratio as a CATE pseudo-outcome. An `iv_signals` object can
 be passed through its documented `phi_y` and `phi_d` fields to the generic
 estimator; an additional polymorphic `signals=` argument is unnecessary.
 
-## 2. Restricted controls and default resolution
+## 2. Weight controls and default resolution
 
-Keep method and k in the grammar but accept only `method = "exact"` and
-`k = 1L` in this feature's first version. Reject unsupported values early.
-Exact weights are normalized; no public normalize switch is needed. Common
-core calls pass `normalize = TRUE`.
+The author-authorized alignment extension in [Note 10](10_weighting_and_output_alignment.md)
+supersedes the initial exact/k=1 restriction. Accept exact or asymptotic DNN,
+`1 <= k <= s`, and `normalize` as in CATE/NP regression. Exact and k=1
+remain defaults. Reject TDNN: its justification is specific to NP regression.
+The same selected weight specification is used in full/deleted calculations,
+prediction, diagnostics, tuning sensitivity and candidate reconstruction.
 
 Use `.dnn_resolve_s()` for either explicit s or a tuning specification.
 If neither is supplied, it currently uses
@@ -80,10 +84,13 @@ Use effective covariance availability
 are NULL and metadata records `jackknife = "none"`. Do not treat
 `se = TRUE, jackknife = "none"` as having standard errors.
 
-Grid-mode evaluation is a later stage. A tuning object can supply the default
-candidate now, but non-default candidates are not evaluated implicitly.
-When grid mode is added, follow [design note 14](../design/14_integrated_tuning_grid_reuse.md)
-and `candidate_fit()`; do not create a separate grid-estimator export.
+Grid-mode evaluation follows [design note 14](../design/14_integrated_tuning_grid_reuse.md).
+`tuning_mode = "grid"` adds the standard candidates/estimates/diagnostics/meta
+payload while retaining the default fit. Geometry and supplied signals remain
+fixed. Duplicate orders share computation; infeasible orders retain NA rows.
+`candidate_fit()` and `candidate_fits()` return scalar-style views with the
+parent class and complete paired uncertainty, using cached ranks and signals.
+No candidate is automatically selected.
 
 ## 3. Stable public result contract
 
@@ -170,20 +177,21 @@ Proposed S3 methods live in `R/user-dnn-affine-ratio-methods.R`:
   rows where wald_available is false. Missing covariance is an actionable
   error. Validate level and target indices as in existing CATE methods.
 - `summary.affine_ratio_result(object, level = .95, ...)` returns a classed
-  table containing both components, denominator SE, ratio, ratio SE, interval,
-  N and statuses. Print never drops failed targets.
+  list with coefficients, level, has_se, meta, components and status. Print never drops failed targets.
 - `predict.affine_ratio_result(object, newdata = NULL, X0 = NULL, x0 = NULL,
   se.fit = FALSE, interval = c("none","confidence"), level = .95, ...)`
   relocalizes the stored two-signal state with the original order; it fits no
   nuisance functions and never evaluates new households' outcomes.
 
-The summary table has classes
-`c("summary.affine_ratio_result","data.frame")` and columns target_id,
-numerator, denominator, numerator_se, denominator_se, theta, se,
-conf.low, conf.high, neff, ratio_status, negative_denominator,
-near_zero_denominator, covariance_status and wald_available. Without
-covariance, summary still returns point estimates with NA uncertainty
-columns; confint remains an error in that case.
+The summary has class `summary.affine_ratio_result`. Its coefficient table
+uses the same six columns as CATE: estimate, std.error, statistic, p.value,
+conf.low and conf.high, with row names target_1 through target_m. Its
+components table contains target_id, numerator, denominator, numerator_se,
+denominator_se and neff. Its status table retains the fitted target statuses.
+Without covariance, point estimates remain available with NA uncertainty;
+confint remains an error. With zero score variance, the computational SE is
+zero but Wald statistics and bounds remain NA. Mixed target statuses are
+handled row by row rather than dropping a batch's valid uncertainty.
 `print.affine_ratio_result(x,...)` and
 `print.summary.affine_ratio_result(x,...)` return x invisibly after
 displaying component roles and status counts. Document and register both.
@@ -197,7 +205,8 @@ do not hide metadata as incidental numeric-vector attributes.
 CLATE-specific print and summary labels may delegate to the base methods with
 component-role metadata. Neither print method claims causal identification.
 `diagnostics.clate_result()` and the generic diagnostic method are specified
-in Note 05. Plot methods and candidate views are separately gated extensions.
+in Note 05. Plot methods and candidate views are implemented through the common interfaces
+described in Note 10.
 
 ## 6. Contract review before coding
 

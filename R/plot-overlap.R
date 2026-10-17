@@ -3,7 +3,7 @@
 # plan's precedence chain: stored fit components, then user-supplied
 # vectors, then an actionable error.
 
-#' Plot local overlap for CATE fits
+#' Plot local overlap for CATE and CLATE fits
 #'
 #' Two views of treatment overlap inside the DNN neighbourhoods of a
 #' [cate_dnn()] fit. `type = "mass"` shows the weighted treated and control
@@ -19,15 +19,21 @@
 #' `propensity` arguments, then an actionable error. Nothing is
 #' recomputed from first stages.
 #'
-#' @param object A `cate_result` with the weight matrix `W` stored (the
+#' For [clate_dnn()] fits these same panels describe instrument overlap:
+#' the arms are A=1 and A=0 and the propensity is P(A=1|V). Both are retained
+#' by the CLATE fit. Treatment uptake D is not used as the instrument arm.
+#'
+#' @param object A `cate_result` or `clate_result` with the weight matrix `W` stored (the
 #'   default).
 #' @param type One of `"mass"` or `"propensity"`.
 #' @param share_limits Numeric length-2 vector (default `c(0.1, 0.9)`);
 #'   treated shares outside this range are flagged as overlap warnings.
 #' @param treatment Optional 0/1 vector of length `n`; used when the fit
-#'   does not store treatment (matrix interface).
+#'   does not store treatment (matrix interface). For CLATE use `instrument`.
 #' @param propensity Optional numeric vector of length `n` in (0, 1); used
 #'   when the fit does not store propensities.
+#' @param instrument Optional 0/1 instrument vector for a CLATE fit whose
+#'   instrument record is unavailable. Stored instrument data take precedence.
 #' @param targets Optional integer vector of target ids for the density
 #'   view (defaults to the first/median-`n_eff`/last subset above eight
 #'   targets).
@@ -60,18 +66,23 @@ plot_overlap <- function(object,
                          treatment = NULL,
                          propensity = NULL,
                          targets = NULL,
+                         instrument = NULL,
                          ...) {
   .plot_require_ggplot2("plot_overlap")
   type <- match.arg(type)
-  if (!inherits(object, "cate_result")) {
+  clate <- inherits(object, "clate_result")
+  if (!inherits(object, "cate_result") && !clate) {
     .abort_bad_arg(
       "object",
       sprintf(
-        "plot_overlap() supports cate_result fits; got class '%s'",
+        "plot_overlap() supports cate_result or clate_result fits; got class '%s'",
         class(object)[1L]
       ),
       quoted = FALSE
     )
+  }
+  if (clate && !is.null(treatment)) {
+    .abort_bad_arg("treatment", "is a CATE argument; use instrument for a CLATE overlap plot")
   }
   if (!is.numeric(share_limits) || length(share_limits) != 2L ||
       any(!is.finite(share_limits)) || share_limits[1L] >= share_limits[2L]) {
@@ -96,25 +107,29 @@ plot_overlap <- function(object,
   honesty <- .plot_honesty_caption(object)
 
   if (type == "mass") {
-    t_use <- if (is.list(model) && !is.null(model$t_vec)) {
+    arm_arg <- if (clate) "instrument" else "treatment"
+    t_use <- if (clate) {
+      if (!is.null(model$iv$A)) model$iv$A else instrument
+    } else if (is.list(model) && !is.null(model$t_vec)) {
       model$t_vec
     } else {
       treatment
     }
     if (is.null(t_use)) {
       .abort_bad_arg(
-        "treatment",
+        arm_arg,
         paste0(
           "is required for type = \"mass\": fit through the data ",
-          "interface with `t_col`, or supply `treatment` (0/1, length n)"
+          if (clate) "interface with `a_col`, or supply `instrument` (0/1, length n)" else
+            "interface with `t_col`, or supply `treatment` (0/1, length n)"
         ),
         quoted = FALSE
       )
     }
-    t_num <- .validate_binary01(t_use, arg = "treatment")
+    t_num <- .validate_binary01(t_use, arg = arm_arg)
     if (length(t_num) != n) {
       .abort_bad_arg(
-        "treatment",
+        arm_arg,
         sprintf("must have length n = %d", n),
         quoted = FALSE
       )
@@ -127,7 +142,7 @@ plot_overlap <- function(object,
                             treated_mass / total, NA_real_)
     df <- data.frame(
       target_id = rep(seq_len(m), times = 2L),
-      arm = rep(c("treated", "control"), each = m),
+      arm = rep(if (clate) c("instrument 1", "instrument 0") else c("treated", "control"), each = m),
       mass = c(treated_mass, control_mass),
       stringsAsFactors = FALSE
     )
@@ -163,7 +178,8 @@ plot_overlap <- function(object,
     }
     p <- p +
       ggplot2::scale_colour_manual(
-        values = c(treated = .plot_col_treated, control = .plot_col_control),
+        values = stats::setNames(c(.plot_col_treated, .plot_col_control),
+                                if (clate) c("instrument 1", "instrument 0") else c("treated", "control")),
         aesthetics = c("colour", "fill")
       ) +
       ggplot2::labs(
@@ -173,8 +189,8 @@ plot_overlap <- function(object,
     captions <- c(
       if (n_violations > 0L) {
         sprintf(
-          "%d target(s) with treated share outside [%.2f, %.2f]",
-          n_violations, share_limits[1L], share_limits[2L]
+          "%d target(s) with %s share outside [%.2f, %.2f]",
+          n_violations, if (clate) "instrument 1" else "treated", share_limits[1L], share_limits[2L]
         )
       },
       honesty
@@ -186,7 +202,13 @@ plot_overlap <- function(object,
   }
 
   # type == "propensity"
-  e_use <- if (is.list(model) && !is.null(model$e)) model$e else propensity
+  e_use <- if (clate) {
+    if (!is.null(model$iv$propensity$used)) model$iv$propensity$used else propensity
+  } else if (is.list(model) && !is.null(model$e)) {
+    model$e
+  } else {
+    propensity
+  }
   if (!is.null(e_use)) {
     e_num <- as.numeric(e_use)
     if (length(e_num) != n || any(!is.finite(e_num)) ||
@@ -218,7 +240,7 @@ plot_overlap <- function(object,
       ) +
       ggplot2::facet_wrap(ggplot2::vars(.data$target), scales = "free_y") +
       ggplot2::coord_cartesian(xlim = c(0, 1)) +
-      ggplot2::labs(x = "Propensity", y = "Weighted density")
+      ggplot2::labs(x = if (clate) "Instrument propensity P(A = 1 | V)" else "Propensity", y = "Weighted density")
   } else if ("propensity_available" %in% names(dd) &&
              any(dd$propensity_available)) {
     xcol <- if (!is.null(axis$var)) axis$var else "target_id"

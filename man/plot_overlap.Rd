@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot-overlap.R
 \name{plot_overlap}
 \alias{plot_overlap}
-\title{Plot local overlap for CATE fits}
+\title{Plot local overlap for CATE and CLATE fits}
 \usage{
 plot_overlap(
   object,
@@ -11,11 +11,12 @@ plot_overlap(
   treatment = NULL,
   propensity = NULL,
   targets = NULL,
+  instrument = NULL,
   ...
 )
 }
 \arguments{
-\item{object}{A \code{cate_result} with the weight matrix \code{W} stored (the
+\item{object}{A \code{cate_result} or \code{clate_result} with the weight matrix \code{W} stored (the
 default).}
 
 \item{type}{One of \code{"mass"} or \code{"propensity"}.}
@@ -24,7 +25,7 @@ default).}
 treated shares outside this range are flagged as overlap warnings.}
 
 \item{treatment}{Optional 0/1 vector of length \code{n}; used when the fit
-does not store treatment (matrix interface).}
+does not store treatment (matrix interface). For CLATE use \code{instrument}.}
 
 \item{propensity}{Optional numeric vector of length \code{n} in (0, 1); used
 when the fit does not store propensities.}
@@ -32,6 +33,9 @@ when the fit does not store propensities.}
 \item{targets}{Optional integer vector of target ids for the density
 view (defaults to the first/median-\code{n_eff}/last subset above eight
 targets).}
+
+\item{instrument}{Optional 0/1 instrument vector for a CLATE fit whose
+instrument record is unavailable. Stored instrument data take precedence.}
 
 \item{...}{Ignored; reserved for future options.}
 }
@@ -53,6 +57,10 @@ Inputs resolve in a fixed order: components stored on the fit
 (\code{t_vec}/\code{e} from the data-frame interface), then the \code{treatment}/
 \code{propensity} arguments, then an actionable error. Nothing is
 recomputed from first stages.
+
+For \code{\link[=clate_dnn]{clate_dnn()}} fits these same panels describe instrument overlap:
+the arms are A=1 and A=0 and the propensity is P(A=1|V). Both are retained
+by the CLATE fit. Treatment uptake D is not used as the instrument arm.
 }
 \examples{
 if (requireNamespace("ggplot2", quietly = TRUE)) {

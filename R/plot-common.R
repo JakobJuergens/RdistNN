@@ -337,6 +337,8 @@ utils::globalVariables(".data")
     "mu"
   } else if (inherits(object, "cate_result")) {
     "tau"
+  } else if (inherits(object, "affine_ratio_result")) {
+    "theta"
   } else {
     "estimate"
   }
@@ -418,6 +420,13 @@ utils::globalVariables(".data")
   )
   out$ci_lower <- out$estimate - z * out$se
   out$ci_upper <- out$estimate + z * out$se
+  if (inherits(object, "affine_ratio_result")) {
+    wald_ok <- rows$wald_available
+    critical <- stats::qnorm((1 - level) / 2, lower.tail = FALSE)
+    out$ci_lower <- out$ci_upper <- NA_real_
+    out$ci_lower[wald_ok] <- out$estimate[wald_ok] - critical * out$se[wald_ok]
+    out$ci_upper[wald_ok] <- out$estimate[wald_ok] + critical * out$se[wald_ok]
+  }
   out <- .plot_attach_x0(out, object)
   out$candidate_label <- factor(
     out$candidate_label,
@@ -484,5 +493,19 @@ utils::globalVariables(".data")
     drop_caption = .plot_candidate_drop_caption(selected),
     selected = selected,
     ok = ok
+  )
+}
+
+# Ratio uncertainty may be unavailable despite a requested covariance calculation.
+.plot_estimate_availability_caption <- function(object, data) {
+  if (!inherits(object, "affine_ratio_result")) {
+    return(if (all(is.na(data$se))) "no standard errors stored (se = FALSE)" else character())
+  }
+  missing_estimate <- sum(!is.finite(data$estimate))
+  missing_interval <- sum(!is.finite(data$ci_lower) | !is.finite(data$ci_upper))
+  c(
+    if (is.null(object$se)) "no standard errors stored (se = FALSE or jackknife = 'none')",
+    if (missing_estimate) sprintf("%d estimate(s) unavailable", missing_estimate),
+    if (missing_interval) sprintf("%d Wald interval(s) unavailable; see summary(object)$status", missing_interval)
   )
 }

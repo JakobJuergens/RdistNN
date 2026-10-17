@@ -2,7 +2,7 @@
 % Please edit documentation in R/user-dnn-affine-ratio.R
 \name{affine_ratio_dnn}
 \alias{affine_ratio_dnn}
-\title{Exact-DNN inference for a ratio of two supplied signal averages}
+\title{DNN inference for a ratio of two supplied signal averages}
 \usage{
 affine_ratio_dnn(
   data = NULL,
@@ -15,10 +15,12 @@ affine_ratio_dnn(
   numerator = NULL,
   denominator = NULL,
   distance = "l2",
-  method = "exact",
+  method = c("exact", "asymp"),
   k = 1L,
   s = NULL,
   tuning = NULL,
+  tuning_mode = c("default", "grid"),
+  normalize = TRUE,
   se = TRUE,
   jackknife = c("fast", "loo", "none"),
   denominator_tol = sqrt(.Machine$double.eps),
@@ -46,14 +48,20 @@ sample vectors.}
 \item{distance}{Existing distance specification, registered name or function.
 Geometry is frozen across deletions; input position resolves distance ties.}
 
-\item{method}{Only "exact" is supported.}
+\item{method}{One of "exact" or "asymp", as in \code{\link[=cate_dnn]{cate_dnn()}} and \code{\link[=np_dnn]{np_dnn()}}.}
 
-\item{k}{Only 1 is supported: nearest-observation winners in size-s subsamples.}
+\item{k}{Number of neighbors averaged within each size-s subsample, 1 <= k <= s.}
 
 \item{s}{Deterministic integer order. Covariance requires s < n.}
 
 \item{tuning}{Optional existing tuning specification, mutually exclusive with s.
 If neither is provided, the package paper rule resolves the order.}
+
+\item{tuning_mode}{"default" retains a single fit; "grid" also evaluates
+feasible tuning candidates using the same frozen signals and ranks.}
+
+\item{normalize}{Logical normalization control passed to the asymptotic
+weight rule, as in \code{\link[=weights_dnn]{weights_dnn()}}. Exact weights are normalized by construction.}
 
 \item{se}{Whether to compute covariance.}
 
@@ -68,7 +76,7 @@ a diagnostic flag only, never the ratio or covariance.}
 \item{ctx}{Optional context passed to the existing distance machinery.}
 
 \item{return}{Optional extras: W, ranks, ord, dx, ess, signals, deletions,
-pseudo_values or tuning. Unknown values warn and are ignored.}
+pseudo_values, neighbors or tuning. Unknown values warn and are ignored.}
 }
 \value{
 An affine_ratio_result with theta, se, m-by-2 components,
@@ -78,7 +86,7 @@ Optional deletions/pseudo_values have dimensions n-by-2-by-m. Covariance
 matrices are marginal across targets, not cross-target covariances.
 }
 \description{
-Localizes two aligned, externally supplied signals with common exact DNN
+Localizes two aligned, externally supplied signals with common DNN
 weights. This experimental estimator uses paired frozen-score covariance;
 it never divides individual signals or deleted component averages.
 }

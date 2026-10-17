@@ -342,6 +342,13 @@ unresolved numerical geometry has a separate status. It does not replace
 [CLATE inference article](conditional-late-inference.html) gives the exact
 four-row example, scale conventions and statistical conditions.
 
+CLATE supports exact/asymptotic single-scale DNN with the same `method`,
+`k`, `s`, `normalize` and `tuning_mode` controls as CATE and NP regression.
+Two-scale TDNN is available for NP regression only. Weighting choices do
+not by themselves verify the inference conditions for a particular estimator.
+`summary()` returns the common coefficient table plus CLATE-specific
+`components` and `status` tables. Its unavailable Wald bounds remain `NA`.
+
 ## Experimental PLQR target and nuisance conventions
 
 All PLQR functionality is experimental, including its scores, helpers,
@@ -483,6 +490,24 @@ for `W`, `dx`, `ess`, or `tuning` does not change the meaning of the main
 estimate. Use `summary()`, `confint()`, `predict()`, and `diagnostics()` where
 the fitted-object class documents those methods instead of inferring meaning
 from similarly named internal fields.
+
+Shared reporting functions dispatch on the estimation object. Use the same
+calls below for CATE and CLATE; their score and uncertainty calculations
+remain method-specific.
+
+| Interface | CATE | CLATE |
+| --- | --- | --- |
+| `summary(fit)$coefficients` | Estimate, SE, statistic, p-value and confidence bounds | Same columns; component/status tables additionally retained |
+| `plot_estimates()`, `plot()`, `ggplot2::autoplot()` | Profile, forest or pointrange; zero reference | Same styles and arguments; unavailable ratio bounds stay missing |
+| `plot_weights()` | Profile, cumulative or kernel | Same views and retained-weight requirements |
+| `plot_overlap()` | Treatment mass and propensity | Instrument mass and propensity |
+| `plot_influence()` | Weighted pseudo-outcome residual | Weighted paired score residual |
+| `plot_tuning()`, `candidate_fit()`, `candidate_fits()` | Frozen-state sensitivity and candidate views | Same workflow, retaining paired covariance |
+| `plot_dashboard()` | Common component panels | Same layout and optional-dependency policy |
+
+The tidy `plot_data_estimates()` and `diagnostics()` tables allow custom
+presentations without accessing plotting internals. Distinct result classes
+retain their scientific meaning; CLATE is not a `cate_result` subclass.
 
 ```{r reading-results, eval=FALSE}
 fit_cate$tau

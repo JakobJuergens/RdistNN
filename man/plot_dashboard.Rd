@@ -4,6 +4,7 @@
 \alias{plot_dashboard}
 \alias{plot_dashboard.default}
 \alias{plot_dashboard.cate_result}
+\alias{plot_dashboard.clate_result}
 \alias{plot_dashboard.np_result}
 \title{Compose a diagnostics dashboard for a fitted object}
 \usage{
@@ -13,10 +14,12 @@ plot_dashboard(object, ...)
 
 \method{plot_dashboard}{cate_result}(object, ...)
 
+\method{plot_dashboard}{clate_result}(object, ...)
+
 \method{plot_dashboard}{np_result}(object, ...)
 }
 \arguments{
-\item{object}{A fitted result object (\code{cate_result} or \code{np_result}).}
+\item{object}{A fitted result object (\code{cate_result}, \code{clate_result} or \code{np_result}).}
 
 \item{...}{Passed on to \code{\link[=plot_estimates]{plot_estimates()}} for the estimates panel.}
 }
@@ -27,8 +30,9 @@ is unavailable).
 \description{
 A patchwork composition of the estimate panel with the weight and
 overlap diagnostics, annotated with the fit's metadata (\code{n}, \code{m}, \code{k},
-\code{s} with provenance, distance, and jackknife type). CATE dashboards use
+\code{s} with provenance, distance, and jackknife type). CATE and CLATE dashboards use
 estimates, overlap mass, local propensity, and cumulative weight share;
+CLATE overlap describes the instrument. Stored tuning grids add a sensitivity panel.
 nonparametric-regression dashboards use estimates, the diagnostics
 facets, and the weight decay and concentration views. Panels whose
 inputs are unavailable are substituted (the diagnostics facets take the

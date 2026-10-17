@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot-influence.R
 \name{plot_influence}
 \alias{plot_influence}
-\title{Plot per-observation contributions to a CATE estimate}
+\title{Plot per-observation contributions to a CATE or CLATE estimating equation}
 \usage{
 plot_influence(
   object,
@@ -13,7 +13,7 @@ plot_influence(
 )
 }
 \arguments{
-\item{object}{A \code{cate_result} with the weight matrix \code{W} stored (the
+\item{object}{A \code{cate_result} or \code{clate_result} with the weight matrix \code{W} stored (the
 default).}
 
 \item{targets}{Optional integer vector of target ids (defaults to the
@@ -41,6 +41,9 @@ weight-concentration diagnostics in the caption.
 \details{
 The pseudo-outcome is taken from the fit; supply \code{pseudo_outcome} for
 fits that do not store it.
+For CLATE the contribution is w_ij (phi_Yi - theta_j phi_Di), using both
+retained signals at the target's fitted ratio. These are weighted score
+residuals, not delete-one pseudo-values or estimated individual effects.
 }
 \examples{
 if (requireNamespace("ggplot2", quietly = TRUE)) {
