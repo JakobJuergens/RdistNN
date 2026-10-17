@@ -1,6 +1,6 @@
 # RdistNN Live Roadmap
 
-**Updated:** 2026-10-14
+**Updated:** 2026-10-17
 **Purpose:** the single live list of open package work. Completed plans are
 archived under `markdown_notes/archive/`; the design policy corpus is
 `markdown_notes/design/`. Verify any item against current code before
@@ -52,6 +52,16 @@ The current affine simulation and SIPP replication workflows are now bundled
 under `inst/paper-replication/affine/`, with unchanged paper source, production
 configurations, and compressed accepted evidence. The paper repository remains
 the scientific source of truth. See design note 16 for the refresh contract.
+
+## Open: Conditional LATE implementation planning
+
+The [nine-note CLATE collection](clate_implementation/README.md) specifies a
+future augmented conditional-LATE estimator: paired exact-DNN component
+averages, frozen-score covariance, supplied-prediction interfaces, result
+methods, unit/integration tests, help and vignettes. It includes a staged
+implementation plan and separate bounded-learner, confidence-set and study
+extensions. This is planning only; no CLATE export, learner or experiment is
+implemented. Existing local IV-GMM is a distinct score and covariance route.
 
 ## Rule
 
