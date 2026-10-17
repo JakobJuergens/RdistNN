@@ -32,3 +32,10 @@
   list(components = full, loo = loo, pv = pv,
        vcov = crossprod(centered) / (n * (n - 1)))
 }
+
+.clate_fit_arguments <- function() {
+  c(.clate_test_predictions(), list(
+    X = cbind(x1 = seq_len(8L) / 8, x2 = sin(seq_len(8L))),
+    X0 = rbind(c(.2, 0), c(.8, .2)), s = 3L, return = character()
+  ))
+}

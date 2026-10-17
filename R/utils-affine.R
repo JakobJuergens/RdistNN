@@ -29,3 +29,22 @@
   row_ids
 }
 
+.affine_nonnegative_scalar <- function(x, arg) {
+  if (!is.numeric(x) || length(x) != 1L || !is.finite(x) || x < 0) {
+    .abort_bad_arg(arg, "must be a finite nonnegative numeric scalar")
+  }
+  as.numeric(x)
+}
+
+.affine_integer <- function(x, arg) {
+  if (!is.numeric(x) || length(x) != 1L || !is.finite(x) ||
+      x < 1 || x > .Machine$integer.max || x != floor(x)) {
+    .abort_bad_arg(arg, "must be a positive integer scalar within the R integer range")
+  }
+  as.integer(x)
+}
+
+.affine_column <- function(col, data, n, arg) {
+  nm <- .dnn_resolve_data_cols(col, data, arg, allow_multiple = FALSE)
+  .affine_vector(data[[nm]], n, arg)
+}

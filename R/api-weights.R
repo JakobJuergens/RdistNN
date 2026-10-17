@@ -94,12 +94,15 @@
   make_from_dx <- function(dist_matrix) {
     dist_matrix <- validate_nm_matrix(dist_matrix, arg = "dx", finite = TRUE)
     order_matrix <- apply(dist_matrix, 2L, .order_with_ties) # n x m
+    if (is.null(dim(order_matrix))) order_matrix <- matrix(order_matrix, nrow = n, ncol = m)
     rank_matrix <- apply(order_matrix, 2L, ord_to_ranks) # n x m
+    if (is.null(dim(rank_matrix))) rank_matrix <- matrix(rank_matrix, nrow = n, ncol = m)
     list(ranks = rank_matrix, ord = order_matrix, dx = dist_matrix)
   }
   make_from_ord <- function(order_matrix) {
     order_matrix <- validate_permutation_columns(order_matrix, arg = "ord")
     rank_matrix <- apply(order_matrix, 2L, ord_to_ranks)
+    if (is.null(dim(rank_matrix))) rank_matrix <- matrix(rank_matrix, nrow = n, ncol = m)
     list(ranks = rank_matrix, ord = order_matrix, dx = NULL)
   }
   make_from_ranks <- function(rank_matrix) {
