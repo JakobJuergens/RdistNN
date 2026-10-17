@@ -90,3 +90,16 @@ test_that("data-frame CLATE prediction uses reporting columns only and never ref
   nearest <- .ratio_fixture(s = 4L, se = FALSE)
   expect_error(predict(nearest, x0 = 0, se.fit = TRUE), "s.*n|s < n")
 })
+
+test_that("numeric reporting selectors retain column identity for newdata", {
+  d <- data.frame(junk = 10:13, x = 1:4, y = c(2, 1, 4, 3), d = c(1, -1, 2, 1))
+  fit <- affine_ratio_dnn(data = d, x_cols = 2L, numerator_col = 3L,
+                          denominator_col = 4L, x0 = 0, s = 2L)
+  expect_equal(predict(fit, newdata = data.frame(x = 0, junk = 5)), 4)
+  expect_equal(predict(fit, newdata = data.frame(x = 0)), 4)
+  path <- tempfile(fileext = ".rds")
+  on.exit(unlink(path), add = TRUE)
+  saveRDS(fit, path)
+  expect_equal(predict(readRDS(path), newdata = data.frame(x = 0), se.fit = TRUE),
+               list(fit = 4, se.fit = sqrt(34)))
+})

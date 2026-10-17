@@ -57,6 +57,10 @@ and is distinguished from a mathematically empty set by its type/status.
 Near-boundary calculations are reported rather than rounding coefficients
 or discriminants to zero. Materially indefinite covariance is rejected;
 a negative eigenvalue within tolerance gives an unresolved result.
+Deterministic-denominator intervals are computed directly from the
+components to preserve small positive uncertainty. Repeated roots of a
+rounded polynomial alone do not certify zero uncertainty; such cases are
+unresolved unless a component-level zero-variance identity establishes it.
 
 Power-of-two coordinate scaling avoids intermediate overflow. The numerical
 record retains original quadratic coefficients where representable, plus

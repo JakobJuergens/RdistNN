@@ -3,8 +3,8 @@
 > **For agentic workers:** use superpowers:executing-plans for future native
 > task-by-task implementation. Delegation is not required by this plan.
 > Implementation is now authorized. Completed tasks are checked below;
-> independent review, hosted-platform acceptance and publication remain
-> tracked in the collection index.
+> independent review corrections are implemented; hosted-platform acceptance
+> and publication remain tracked in the collection index.
 
 **Goal:** deliver a documented, tested conditional-LATE workflow using paired
 exact-DNN component averages and frozen-score covariance.
@@ -340,25 +340,25 @@ these notes does not publish the proposed estimator.
 
 ## 13. Implementation acceptance — October 17, 2026
 
-Concrete tasks 1–8 are implemented. Task 9 remains a future contract rather
-than an automatic-learner, Stata or production-study obligation. Independent
-final review and terminal hosted-platform results still gate publication
-acceptance; no release tag or website deployment is included.
+Concrete tasks 1–8 and the final review corrections are implemented. Task 9
+remains a future contract rather than an automatic-learner, Stata or
+production-study obligation. Terminal hosted-platform results still gate
+publication acceptance; no release tag or website deployment is included.
 
 Local evidence on the final implementation/documentation snapshot:
 
 | Check | Result |
 | --- | --- |
-| `devtools::test()` | 882 blocks; 5,395 assertions pass; zero failures/errors/warnings; one opt-in visual snapshot skipped |
+| `devtools::test()` | 887 blocks; 5,438 assertions pass; zero failures/errors/warnings; one opt-in visual snapshot skipped |
 | Built source with all vignettes; `rcmdcheck(..., args="--no-manual")` | Zero errors and warnings; one installed-size NOTE, 11.4 MB |
 | `devtools::document()` / `devtools::build_readme()` | Generated with declared roxygen2 8.0.0; README built from source |
 | Installed-package pkgdown build | All examples/articles build; 131 public reference topics indexed |
-| Changed-page links and browser inspection | 574 local file/anchor checks over 13 pages pass; tables, equations and infinite endpoints reviewed |
+| Changed-page links and browser inspection | 486 local file/anchor checks over all 14 changed pages pass after the final rebuild; tables, equations and infinite endpoints reviewed |
 | Declared dependencies, generated drift, repository hygiene and lint | Pass |
 | Pinned affine replication verification | Pass; source/configuration/evidence unchanged |
 
 The checked local source archive has SHA-256
-`8e4539822a5377b2ac7bb23f275300b8a58a43dbef875f81a275e626d6905f64`.
+`09aa5199aee480315e8844cdd9d7cce5ee6394f22eb70f5e6e26f59929a5b6ed`.
 The full-suite comparison covers existing CATE/regression/PLQR/GMM and
 replication behavior as well as the new feature. The installed check also
 runs both new vignettes. The generated-file helper's namespace-only pass
@@ -368,3 +368,37 @@ package predates these exports; full Rd checks and rendered links pass.
 These checks certify the implemented computation and documentation. They
 do not establish uniform weak-IV coverage, practical-forest learner rates
 or new SIPP participation evidence.
+
+## 14. Final review decisions
+
+One independent whole-branch review covered `28ce33c..ef7ec43`. The parent
+reproduced the three behavioral findings, accepted the explicit alignment
+test gap and included the small diagnostic omission in one correction pass.
+No second review or deferred minor finding is needed for this contract.
+
+| Finding | Decision and regression evidence |
+| --- | --- |
+| Numeric reporting selectors could change prediction coordinates | Resolve training selectors to names; reordered and reporting-only `newdata`, including serialized fits, retain the same coordinates |
+| Component covariance could underflow to a falsely valid zero | Nonzero centered component variation with zero representable variance gives unavailable covariance and `numerical_failure`; an end-to-end test prevents passing it off as a deterministic confidence set |
+| Rounded polynomial coefficients could falsely certify a singleton | Compute deterministic-denominator intervals from component uncertainty; other uncertifiable repeated roots report `coefficient_rounding`, and unrepresentable widths remain unresolved |
+| Independent prediction-row misalignment lacked its required test | Public constructor tests compare supplied order with a literal reference and demonstrate explicit identity joins; permuted ridge predictions are checked after joining nontrivial observation IDs |
+| Diagnostic table omitted two specified fields | Add estimator-scale `component_covariance`, `geometry_rule` and `tie_rule`, with unavailable covariance handled explicitly |
+
+The accepted fixes preserve the existing API. Their failure cost would be
+incorrect prediction coordinates, false precision or untested alignment;
+each now has a public or independent-reference regression. The shared
+`row_ids` argument still cannot detect a prediction vector independently
+misordered by its caller. Joining predictions remains the caller's duty.
+
+The review declined three judgments, resolved here:
+
+- Automatic practical learners, adaptive tuning/grid/plots, Stata parity and
+  production/SIPP studies remain the separately specified Task 9. If that
+  boundary is wrong, those workflows still need another implementation;
+  the supplied-prediction feature does not claim to supply them.
+- New learner-rate, causal-identification and uniform weak-IV proofs remain
+  outside this software contract. If stronger inference is required, a new
+  proof is still needed; the computation alone cannot establish it.
+- Hosted-platform success requires terminal CI evidence after pushing. Local
+  success cannot exclude a platform-specific failure, so publication
+  acceptance remains pending until that evidence is available.

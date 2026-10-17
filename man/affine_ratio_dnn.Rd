@@ -95,6 +95,8 @@ Signed signals and finite negative denominators are retained. At exact zero
 denominator the components remain available and the ratio is NA. Computational
 statuses do not verify causal assumptions, learner stability, point-target
 undersmoothing or weak-instrument-uniform validity.
+If nonzero component variation underflows its covariance, uncertainty is
+unavailable with numerical_failure status; it is not treated as deterministic.
 }
 \examples{
 fit <- affine_ratio_dnn(

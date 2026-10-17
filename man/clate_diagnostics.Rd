@@ -20,6 +20,8 @@ candidate-selection inference rule.}
 }
 \value{
 A dnn_diagnostics data frame. Component covariance is estimator-scale.
+component_covariance reports the paired numerator-denominator covariance;
+geometry_rule and tie_rule identify the frozen geometry and tie convention.
 Zero denominator variance gives NA standardized magnitude/correlation.
 Disabled covariance gives unavailable uncertainty/concentration fields.
 }

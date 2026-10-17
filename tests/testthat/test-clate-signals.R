@@ -134,3 +134,26 @@ test_that("row identities and training declarations are explicit", {
   }
   expect_error(do.call(iv_augmented_signals, c(a, list(training = "auto"))), "training")
 })
+
+test_that("independently reordered predictions must be joined before signal construction", {
+  a <- .clate_test_predictions()
+  ids <- paste0("person_", c(83, 14, 65, 21, 98, 37, 42, 56))
+  permutation <- c(3L, 8L, 1L, 5L, 2L, 7L, 4L, 6L)
+  prediction_ids <- ids[permutation]
+  supplied <- a
+  supplied$m_y1 <- a$m_y1[permutation]
+  misaligned <- do.call(iv_augmented_signals, c(supplied, list(row_ids = ids)))
+  # The one shared ID vector labels rows; it cannot inspect the independent
+  # provenance of an otherwise valid prediction vector.
+  reference <- supplied$m_y1 - supplied$m_y0 + supplied$A / supplied$e *
+    (supplied$Y - supplied$m_y1) - (1 - supplied$A) / (1 - supplied$e) *
+    (supplied$Y - supplied$m_y0)
+  expect_equal(misaligned$phi_y, reference)
+  expect_identical(misaligned$row_ids, ids)
+  original <- do.call(iv_augmented_signals, c(a, list(row_ids = ids)))
+  expect_gt(max(abs(misaligned$phi_y - original$phi_y)), .01)
+  supplied$m_y1 <- supplied$m_y1[match(ids, prediction_ids)]
+  realigned <- do.call(iv_augmented_signals, c(supplied, list(row_ids = ids)))
+  expect_equal(realigned$phi_y, original$phi_y)
+  expect_equal(realigned$phi_d, original$phi_d)
+})

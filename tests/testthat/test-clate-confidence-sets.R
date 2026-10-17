@@ -174,3 +174,39 @@ test_that("exact zero constant terms are factored before discriminant calculatio
   expect_equal(as.numeric(strong$intervals), c(0, 0))
   expect_identical(weak$type, "all_real")
 })
+
+test_that("tiny component variance cannot be certified as zero uncertainty", {
+  critical <- stats::qnorm(.025, lower.tail = FALSE)
+  for (denominator in c(-1, 1)) {
+    out <- ratio_confidence_set(matrix(c(2, denominator), 1L),
+                                list(diag(c(1e-20, 0))))[[1L]]
+    expect_identical(out$type, "bounded")
+    expect_identical(out$numerical_status, "ok")
+    # Compare widths after removing the center: ordinary all.equal tolerance
+    # would accept the incorrect singleton at this scale.
+    width <- as.numeric(out$intervals) - 2 / denominator
+    expect_equal(width / 1e-10, c(-1, 1) * critical, tolerance = 2e-6)
+  }
+  uncertain <- ratio_confidence_set(matrix(c(2, 1), 1L),
+                                    list(diag(c(1e-20, 1e-20))))[[1L]]
+  expect_identical(uncertain$type, "unresolved")
+  expect_identical(uncertain$numerical_status, "coefficient_rounding")
+  expect_equal(nrow(uncertain$intervals), 0L)
+  unrepresentable_width <- ratio_confidence_set(matrix(c(2, 1), 1L),
+                                               list(diag(c(1e-40, 0))))[[1L]]
+  expect_identical(unrepresentable_width$type, "unresolved")
+})
+
+test_that("unrepresentable component covariance cannot feed a deterministic set", {
+  ordinary <- .ratio_fixture()
+  expect_identical(ratio_confidence_set(ordinary$components,
+                                        ordinary$component_vcov)[[1L]]$type, "two_rays")
+  tiny <- .ratio_fixture(numerator = 1e-170 * c(2, 1, 4, 3),
+                         denominator = 1e-170 * c(1, -1, 2, 1))
+  expect_equal(tiny$theta, ordinary$theta)
+  expect_identical(tiny$status$covariance_status, "numerical_failure")
+  expect_false(tiny$status$wald_available)
+  expect_true(all(is.na(tiny$component_vcov[[1L]])))
+  expect_true(is.na(tiny$se))
+  expect_error(ratio_confidence_set(tiny$components, tiny$component_vcov), "component_vcov")
+})

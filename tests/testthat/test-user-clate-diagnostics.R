@@ -7,6 +7,9 @@ test_that("ratio diagnostics reconstruct paired uncertainty and score concentrat
   expect_equal(z$numerator_se, sqrt(.5))
   expect_equal(z$denominator_se, sqrt(.75))
   expect_equal(z$component_correlation, .5 / sqrt(.5 * .75))
+  expect_equal(z$component_covariance, .5)
+  expect_identical(z$geometry_rule, "frozen_full_sample")
+  expect_identical(z$tie_rule, "distance_then_input_position")
   expect_equal(z$neff, 18 / 7)
   expect_equal(z$max_weight, .5)
   expect_equal(z$radius_90, 3)
@@ -50,6 +53,7 @@ test_that("diagnostics handle deterministic denominators and disabled covariance
   expect_true(is.na(point$se))
   expect_true(is.na(point$jk_top1_sq_share))
   expect_false(point$score_concentration_available)
+  expect_true(is.na(point$component_covariance))
 })
 test_that("paired diagnostics work without utils attached to the search path", {
   fit <- .ratio_fixture()

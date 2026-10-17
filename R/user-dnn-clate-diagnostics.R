@@ -9,6 +9,8 @@
 #'   are available only from CLATE observations/predictions. Training declarations
 #'   are descriptive. Effective information is not a complier count.
 #' @return A dnn_diagnostics data frame. Component covariance is estimator-scale.
+#'   component_covariance reports the paired numerator-denominator covariance;
+#'   geometry_rule and tie_rule identify the frozen geometry and tie convention.
 #'   Zero denominator variance gives NA standardized magnitude/correlation.
 #'   Disabled covariance gives unavailable uncertainty/concentration fields.
 #' @examples
@@ -37,10 +39,11 @@ diagnostics.affine_ratio_result <- function(object, candidates = "default", ...)
   out <- .dnn_weight_diagnostics(W, object$meta, geometry$dx, object$meta$tuning)
   ns <- .affine_component_se(object, 1L)
   ds <- .affine_component_se(object, 2L)
-  denom_stat <- correlation <- rep(NA_real_, m)
+  denom_stat <- correlation <- cross_covariance <- rep(NA_real_, m)
   variance_status <- rep("not_computed", m)
   if (!is.null(object$component_vcov)) {
     for (j in seq_len(m)) {
+      cross_covariance[j] <- object$component_vcov[[j]][1L, 2L]
       variance_status[j] <- if (!is.finite(ds[j])) "numerical_failure" else if (ds[j] == 0) "zero" else "positive"
       if (is.finite(ds[j]) && ds[j] > 0) denom_stat[j] <- object$components[j, 2L] / ds[j]
       if (is.finite(ns[j]) && ns[j] > 0 && is.finite(ds[j]) && ds[j] > 0) {
@@ -78,6 +81,7 @@ diagnostics.affine_ratio_result <- function(object, candidates = "default", ...)
   extra <- list(
     numerator = object$components[, 1L], denominator = object$components[, 2L],
     numerator_se = ns, denominator_se = ds,
+    component_covariance = cross_covariance,
     component_correlation = correlation, denominator_stat = denom_stat,
     denominator_variance_status = variance_status,
     theta = object$theta, se = if (is.null(object$se)) rep(NA_real_, m) else object$se,
@@ -93,7 +97,8 @@ diagnostics.affine_ratio_result <- function(object, candidates = "default", ...)
     instrument_1_mass = mass1, instrument_0_mass = if (iv_available) 1 - mass1 else rep(NA_real_, m),
     propensity_clipped_mass = clipped_mass,
     training = rep(if (iv_available) iv$training else "supplied", m),
-    numerator_role = rep(roles[[1L]], m), denominator_role = rep(roles[[2L]], m)
+    numerator_role = rep(roles[[1L]], m), denominator_role = rep(roles[[2L]], m),
+    geometry_rule = rep("frozen_full_sample", m), tie_rule = rep(object$meta$tie_rule, m)
   )
   for (nm in setdiff(names(object$status), "target_id")) extra[[nm]] <- object$status[[nm]]
   .dnn_diag_append(out, extra)

@@ -3,9 +3,9 @@
 Prepared October 17, 2026; implementation authorized subsequently in the same
 session. **Status: implemented; local acceptance complete.** The nine design
 notes below specify the augmented conditional local average treatment effect
-(CLATE) feature. Tasks 1–8 are implemented, with 5,395 passing assertions,
-built installed-package guides and a checked source archive. Independent
-review, hosted platform acceptance and publication remain the final gates. No CLATE
+(CLATE) feature. Tasks 1–8 and the final review corrections are implemented,
+with 5,438 passing assertions, built installed-package guides and a checked
+source archive. Hosted platform acceptance and publication remain the final gates. No CLATE
 production campaign or SIPP participation analysis is included. This navigation
 index is not a tenth substantive design note.
 
@@ -87,9 +87,10 @@ CLATE feature has an experimental lifecycle designation.
 | Methods, retained prediction and diagnostics | `R/user-dnn-affine-ratio-methods.R`, `R/user-dnn-clate-diagnostics.R`; target shapes, serialization, unavailable uncertainty and independent concentration references |
 | Bounded benchmark and designated ridge objective | `R/demo-data-clate.R`, `R/sim-clate-learners.R`; latent integration, core constants, heterogeneous target, dense normal equations and all one-/two-deleted refits |
 | Set-valued moment inversion | `R/clate-confidence-sets.R`; every quadratic geometry, PSD/singular inputs, membership, rescaling, extreme confidence levels and subnormal covariance |
-| Executable documentation | Both installed-package articles, generated help/README and full pkgdown build pass; 131 public topics indexed; 574 local links across 13 changed pages checked; browser-reviewed tables/formulae/set output |
-| Existing workflows and frozen bundle | 882 test blocks, 5,395 passing assertions, no failures/errors/warnings, one opt-in visual skip; source archive has no errors/warnings and one 11.4 MB size NOTE; alignment, lint and pinned bundle verification pass |
-| Supported platforms and publication | Hosted R-CMD-check matrix and direct `master` push pending final review |
+| Executable documentation | Both installed-package articles, generated help/README and full pkgdown build pass; 131 public topics indexed; 486 local links across all 14 changed pages checked after the final rebuild; browser-reviewed tables/formulae/set output |
+| Existing workflows and frozen bundle | 887 test blocks, 5,438 passing assertions, no failures/errors/warnings, one opt-in visual skip; source archive has no errors/warnings and one 11.4 MB size NOTE; alignment, lint and pinned bundle verification pass |
+| Final independent review | All four Important findings and the one small diagnostic omission addressed; decisions and scope rulings are recorded in Note 09 |
+| Supported platforms and publication | Hosted R-CMD-check matrix and direct `master` push pending |
 
 Completed source slices: `a6a2504` (signals), `a84097b` (paired engine/wrapper),
 `01c2756` (methods/diagnostics), `c95f4a9` (bounded generator/ridge), `8a6a139`

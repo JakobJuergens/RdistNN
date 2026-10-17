@@ -105,3 +105,27 @@ test_that("bounded ridge predictions feed the public full-sample workflow reprod
     expect_identical(fit$row_ids, d$row_id)
   }
 })
+
+test_that("ridge predictions remain aligned by observation identity after row permutation", {
+  d <- clate_demo_data(n = 18L, seed = 331L)$data
+  d$row_id <- paste0("observation_", c(83, 14, 65, 21, 98, 37, 42, 56, 101:110))
+  permutation <- c(18:10, 1:9)
+  reordered <- d[permutation, ]
+  original_delete <- c(2L, 7L)
+  reordered_delete <- match(d$row_id[original_delete], reordered$row_id)
+  original <- .clate_ridge_predictions(d, 2L, .1, nrow(d), delete = original_delete)
+  shuffled <- .clate_ridge_predictions(reordered, 2L, .1, nrow(d), delete = reordered_delete)
+  expect_identical(shuffled$row_ids, reordered$row_id)
+  join <- match(original$row_ids, shuffled$row_ids)
+  for (nm in names(original$predictions)) {
+    expect_equal(shuffled$predictions[[nm]][join], original$predictions[[nm]], tolerance = 1e-12)
+    expect_equal(shuffled$raw_predictions[[nm]][join], original$raw_predictions[[nm]], tolerance = 1e-12)
+  }
+  aligned <- lapply(shuffled$predictions, function(x) x[join])
+  arguments <- list(Y = d$Y, D = d$D, A = d$A, row_ids = d$row_id, training = "full_sample")
+  signals <- do.call(iv_augmented_signals, c(arguments, aligned))
+  direct <- do.call(iv_augmented_signals, c(arguments, original$predictions))
+  expect_equal(signals$phi_y, direct$phi_y)
+  expect_equal(signals$phi_d, direct$phi_d)
+  expect_identical(signals$row_ids, d$row_id)
+})

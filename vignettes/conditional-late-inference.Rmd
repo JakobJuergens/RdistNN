@@ -242,6 +242,15 @@ covariance is rejected. Power-of-two scaling and stable roots limit
 overflow and cancellation; near-boundary or unrepresentable calculations
 remain explicit in the returned record.
 
+With a deterministic nonzero denominator, the helper computes the interval
+width directly from the numerator SE. This preserves small positive
+uncertainty that can disappear when quadratic coefficients are expanded.
+An apparent repeated root of rounded coefficients alone cannot certify a
+singleton; an uncertifiable result is `unresolved`. If the estimator's
+component covariance underflows despite nonzero component variation, it
+returns unavailable covariance with `numerical_failure` status. The helper
+rejects that unavailable input rather than interpreting it as zero variance.
+
 At a fixed true candidate, inclusion probability is the acceptance
 probability of that one candidate's score test. Simultaneous validity of
 all candidate tests is unnecessary for this pointwise statement. The test

@@ -41,6 +41,8 @@
 #' denominator the components remain available and the ratio is NA. Computational
 #' statuses do not verify causal assumptions, learner stability, point-target
 #' undersmoothing or weak-instrument-uniform validity.
+#' If nonzero component variation underflows its covariance, uncertainty is
+#' unavailable with numerical_failure status; it is not treated as deterministic.
 #'
 #' @return An affine_ratio_result with theta, se, m-by-2 components,
 #'   lists component_vcov, theta_vcov and theta_omega (NULL without covariance),
@@ -85,13 +87,15 @@ affine_ratio_dnn <- function(
   )
   .warn_unknown_return(return, valid = valid_returns)
   return <- intersect(return, valid_returns)
+  resolved_x_cols <- NULL
   if (!is.null(data)) {
     if (!is.null(X) || !is.null(numerator) || !is.null(denominator)) {
       .abort_bad_arg("data/X", "cannot combine data with X or direct signal vectors", quoted = FALSE)
     }
     if (!is.data.frame(data)) .abort_bad_arg("data", "must be a data.frame")
     n <- .affine_sample_size(data, "data")
-    x_mat <- .dnn_col_mat(x_cols, data, "x_cols", out_arg = "X")
+    resolved_x_cols <- .dnn_resolve_data_cols(x_cols, data, "x_cols")
+    x_mat <- .dnn_col_mat(resolved_x_cols, data, "x_cols", out_arg = "X")
     num <- .affine_column(numerator_col, data, n, "numerator_col")
     den <- .affine_column(denominator_col, data, n, "denominator_col")
   } else {
@@ -174,7 +178,7 @@ affine_ratio_dnn <- function(
     out$pseudo_values <- pv
   }
   out$.model <- list(
-    x_mat = x_mat, signal = signal, x_cols = if (!is.null(data)) x_cols else NULL,
+    x_mat = x_mat, signal = signal, x_cols = resolved_x_cols,
     distance = distance, ctx = ctx, k = k, s = s, method = "exact",
     denominator_tol = denominator_tol, row_ids = ids,
     geometry = list(ranks = wt$ranks, ord = wt$ord, dx = wt$dx)
@@ -214,12 +218,15 @@ affine_ratio_dnn <- function(
   for (j in seq_len(m)) {
     dimnames(paired[[j]]) <- list(colnames(components), colnames(components))
     theta_vcov[[j]] <- theta_omega[[j]] <- matrix(NA_real_, 1L, 1L, dimnames = list("theta", "theta"))
-    if (any(!is.finite(paired[[j]]))) {
+    centered <- sweep(loo[, , j], 2L, colMeans(loo[, , j]), "-")
+    varying <- colSums(centered != 0) > 0
+    if (any(!is.finite(paired[[j]])) || any(!is.finite(centered)) ||
+      any(varying & diag(paired[[j]]) == 0)) {
+      paired[[j]][, ] <- NA_real_
       status[j] <- "numerical_failure"
       next
     }
     if (!is.finite(theta[j])) next
-    centered <- sweep(loo[, , j], 2L, colMeans(loo[, , j]), "-")
     # Divide each centered component before combining to avoid denominator squaring.
     g <- theta[j] * (centered[, 2L] / components[j, 2L]) -
       centered[, 1L] / components[j, 2L]

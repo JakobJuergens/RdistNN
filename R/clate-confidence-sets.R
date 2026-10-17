@@ -28,6 +28,10 @@
 #'   Near-boundary calculations are reported rather than rounding coefficients
 #'   or discriminants to zero. Materially indefinite covariance is rejected;
 #'   a negative eigenvalue within tolerance gives an unresolved result.
+#'   Deterministic-denominator intervals are computed directly from the
+#'   components to preserve small positive uncertainty. Repeated roots of a
+#'   rounded polynomial alone do not certify zero uncertainty; such cases are
+#'   unresolved unless a component-level zero-variance identity establishes it.
 #'
 #'   Power-of-two coordinate scaling avoids intermediate overflow. The numerical
 #'   record retains original quadratic coefficients where representable, plus
@@ -86,6 +90,27 @@ ratio_confidence_set <- function(
     )
     names(abc) <- c("a", "b", "c")
     answer <- do.call(.ratio_quadratic_set, c(as.list(abc), list(tol = tol)))
+    reason <- NULL
+    if (any(V != 0) && answer$scaled_discriminant == 0 &&
+      !(delta[1L] == 0 && V[1L, 1L] == 0)) {
+      reason <- "coefficient_rounding"
+    }
+    if (delta[2L] != 0 && V[2L, 2L] == 0 && V[1L, 1L] > 0 && critical > 0) {
+      # Expansion can absorb z^2 V_YY into Delta_Y^2 even when the interval
+      # width is representable. Compute that width before forming the square.
+      center <- normalized[1L] / normalized[2L]
+      width <- critical * sqrt(v[1L, 1L]) / abs(normalized[2L])
+      bounds <- center + c(-1, 1) * width
+      answer$type <- "bounded"
+      answer$intervals <- .ratio_intervals(bounds)
+      answer$numerical_status <- "ok"
+      reason <- if (width == 0 || bounds[1L] == bounds[2L]) "endpoint_precision" else NULL
+      direct_discriminant <- 4 * critical^2 * normalized[2L]^2 * v[1L, 1L]
+      answer$scaled_discriminant <- .ratio_pow2(
+        direct_discriminant, -2 * answer$quadratic_scale_exponent
+      )
+      if (answer$scaled_discriminant == 0) answer$scaled_discriminant <- NA_real_
+    }
     answer$target_id <- j
     answer$level <- level
     answer$covariance_status <- checked$status
@@ -104,7 +129,6 @@ ratio_confidence_set <- function(
       (answer$discriminant == 0 && answer$scaled_discriminant != 0)) {
       answer$discriminant <- NA_real_
     }
-    reason <- NULL
     if (checked$status == "near_psd_boundary") reason <- "near_psd_boundary"
     if (any(V != 0 & v == 0)) reason <- "scaling_underflow"
     if (critical == 0 && any(V != 0)) reason <- "confidence_level_precision"
