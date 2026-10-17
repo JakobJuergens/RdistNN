@@ -28,3 +28,26 @@ test_that("CLATE input routes and missing columns fail explicitly", {
   a$Y <- a$Y[-1L]
   expect_error(do.call(clate_dnn, a), "Y")
 })
+
+test_that("tabular CLATE preserves reordered selectors and singleton shapes", {
+  a <- .clate_fit_arguments()
+  d <- .clate_test_frame(a)
+  args <- .clate_frame_arguments(a, d)
+  original <- do.call(clate_dnn, args)
+  args$x_cols <- c("x2", "x1")
+  args$X0 <- args$X0[, 2:1, drop = FALSE]
+  reordered <- do.call(clate_dnn, args)
+  expect_equal(reordered$theta, original$theta)
+  expect_equal(reordered$theta_vcov, original$theta_vcov)
+  expect_identical(colnames(reordered$x0), c("x2", "x1"))
+  args$x_cols <- "x1"
+  args$X0 <- a$X0[1L, 1L, drop = FALSE]
+  single <- do.call(clate_dnn, args)
+  a$X <- a$X[, 1L, drop = FALSE]
+  a$X0 <- args$X0
+  expect_equal(single$theta, do.call(clate_dnn, a)$theta)
+  expect_identical(dim(single$x0), c(1L, 1L))
+  expect_length(single$component_vcov, 1L)
+  args$data <- data.frame(d, Y = d$Y, check.names = FALSE)
+  expect_error(do.call(clate_dnn, args), "unique column names")
+})

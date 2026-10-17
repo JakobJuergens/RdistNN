@@ -64,7 +64,7 @@ diagnostics.affine_ratio_result <- function(object, candidates = "default", ...)
       squares <- (q / scale)^2
       shares <- sort(squares / sum(squares), decreasing = TRUE)
       top1[j] <- shares[1L]
-      top5[j] <- sum(head(shares, 5L))
+      top5[j] <- sum(utils::head(shares, 5L))
     }
   }
   iv <- model$iv
@@ -82,7 +82,9 @@ diagnostics.affine_ratio_result <- function(object, candidates = "default", ...)
     denominator_variance_status = variance_status,
     theta = object$theta, se = if (is.null(object$se)) rep(NA_real_, m) else object$se,
     neff = object$neff,
-    radius_90 = if (is.null(geometry$dx)) rep(NA_real_, m) else {
+    radius_90 = if (is.null(geometry$dx)) {
+      rep(NA_real_, m)
+    } else {
       vapply(seq_len(m), function(j) .dnn_weighted_quantile(geometry$dx[, j], W[, j], .9), numeric(1L))
     },
     jk_top1_sq_share = top1, jk_top5_sq_share = top5,

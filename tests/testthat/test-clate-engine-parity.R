@@ -1,14 +1,19 @@
 test_that("frozen-rank loop and R fast paths agree for paired signals", {
   old <- options(RdistNN.use_compiled = FALSE)
   on.exit(options(old), add = TRUE)
-  for (n in c(4L, 17L)) for (m in c(1L, 3L)) for (s in unique(c(2L, n - 1L))) {
+  for (n in c(2L, 4L, 17L)) for (m in c(1L, 3L)) for (s in unique(c(1L, min(2L, n - 1L), n - 1L))) {
     X <- cbind(seq_len(n) %% 3L, seq_len(n) %% 2L)
     X0 <- rbind(c(0, 0), c(.2, .5), c(2, 1))[seq_len(m), , drop = FALSE]
     a <- list(X = X, X0 = X0, numerator = sin(seq_len(n)),
               denominator = 1 + seq_len(n) / n, s = s,
               return = c("deletions", "pseudo_values"))
-    fast <- do.call(affine_ratio_dnn, c(a, list(jackknife = "fast")))
-    loop <- do.call(affine_ratio_dnn, c(a, list(jackknife = "loo")))
+    if (s == 1L) {
+      expect_warning(fast <- do.call(affine_ratio_dnn, c(a, list(jackknife = "fast"))), "uniform")
+      expect_warning(loop <- do.call(affine_ratio_dnn, c(a, list(jackknife = "loo"))), "uniform")
+    } else {
+      fast <- do.call(affine_ratio_dnn, c(a, list(jackknife = "fast")))
+      loop <- do.call(affine_ratio_dnn, c(a, list(jackknife = "loo")))
+    }
     for (nm in c("theta", "deletions", "pseudo_values", "component_vcov", "theta_vcov", "status")) {
       expect_equal(fast[[nm]], loop[[nm]], tolerance = 1e-12)
     }
@@ -19,17 +24,20 @@ test_that("available compiled paired engine agrees with the R implementation", {
   old <- options(RdistNN.use_compiled = TRUE)
   on.exit(options(old), add = TRUE)
   skip_if(is.null(.rdistnn_compiled_fun("rustat_jackknife_rank_full")))
-  a <- list(
-    X = cbind(seq_len(37L) %% 5L, seq_len(37L) / 37),
-    X0 = rbind(c(0, 0), c(2, .5), c(4, 1)),
-    numerator = cos(seq_len(37L)), denominator = 1 + sin(seq_len(37L)) / 4,
-    s = 11L, return = c("deletions", "pseudo_values")
-  )
-  cpp <- do.call(affine_ratio_dnn, a)
-  options(RdistNN.use_compiled = FALSE)
-  r <- do.call(affine_ratio_dnn, a)
-  for (nm in c("theta", "deletions", "pseudo_values", "component_vcov", "theta_vcov", "status")) {
-    expect_equal(cpp[[nm]], r[[nm]], tolerance = 1e-11)
+  for (n in c(2L, 4L, 17L, 37L)) for (m in c(1L, 3L)) for (s in unique(c(1L, min(11L, n - 1L), n - 1L))) {
+    a <- list(
+      X = cbind(seq_len(n) %% 5L, seq_len(n) / n),
+      X0 = rbind(c(0, 0), c(2, .5), c(4, 1))[seq_len(m), , drop = FALSE],
+      numerator = cos(seq_len(n)), denominator = 1 + sin(seq_len(n)) / 4,
+      s = s, return = c("deletions", "pseudo_values")
+    )
+    options(RdistNN.use_compiled = TRUE)
+    if (s == 1L) expect_warning(cpp <- do.call(affine_ratio_dnn, a), "uniform") else cpp <- do.call(affine_ratio_dnn, a)
+    options(RdistNN.use_compiled = FALSE)
+    if (s == 1L) expect_warning(r <- do.call(affine_ratio_dnn, a), "uniform") else r <- do.call(affine_ratio_dnn, a)
+    for (nm in c("theta", "deletions", "pseudo_values", "component_vcov", "theta_vcov", "status")) {
+      expect_equal(cpp[[nm]], r[[nm]], tolerance = 1e-11)
+    }
   }
 })
 

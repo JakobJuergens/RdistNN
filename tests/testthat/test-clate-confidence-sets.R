@@ -158,3 +158,19 @@ test_that("subnormal covariance is preserved and underflowed discriminants are l
   expect_true(is.na(tiny$discriminant))
   expect_true(is.finite(tiny$scaled_discriminant))
 })
+
+test_that("exact zero constant terms are factored before discriminant calculations", {
+  for (a in c(pi, -pi)) {
+    x <- .ratio_quadratic_set(a, 0, 0)
+    expect_identical(x$type, if (a > 0) "singleton" else "all_real")
+  }
+  small <- .ratio_quadratic_set(1, 1e-200, 0)
+  expect_identical(small$type, "bounded")
+  expect_equal(as.numeric(small$intervals) / 1e-200, c(-1, 0), tolerance = 1e-12)
+  comp <- matrix(c(0, 1), 1L)
+  strong <- ratio_confidence_set(comp, list(diag(c(0, .01))))[[1L]]
+  weak <- ratio_confidence_set(comp, list(diag(c(0, 1))))[[1L]]
+  expect_identical(strong$type, "singleton")
+  expect_equal(as.numeric(strong$intervals), c(0, 0))
+  expect_identical(weak$type, "all_real")
+})

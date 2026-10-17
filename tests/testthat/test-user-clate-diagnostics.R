@@ -51,3 +51,15 @@ test_that("diagnostics handle deterministic denominators and disabled covariance
   expect_true(is.na(point$jk_top1_sq_share))
   expect_false(point$score_concentration_available)
 })
+test_that("paired diagnostics work without utils attached to the search path", {
+  fit <- .ratio_fixture()
+  without_utils <- function(code) {
+    position <- match("package:utils", search())
+    if (!is.na(position)) {
+      detach("package:utils", character.only = TRUE)
+      on.exit(suppressPackageStartupMessages(library("utils", character.only = TRUE, pos = position)), add = TRUE)
+    }
+    force(code)
+  }
+  expect_s3_class(without_utils(diagnostics(fit)), "dnn_diagnostics")
+})

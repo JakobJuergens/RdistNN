@@ -224,6 +224,25 @@ ratio_confidence_set <- function(
     bounds <- if (b > 0) c(-Inf, root) else c(root, Inf)
     return(finish("half_line", .ratio_intervals(bounds)))
   }
+  # Exact factorization avoids squaring a tiny linear coefficient or treating
+  # theta^2 times an arbitrary nonzero constant as an uncertain repeated root.
+  if (c == 0) {
+    if (b == 0) {
+      if (a < 0) {
+        return(finish("all_real", .ratio_intervals(c(-Inf, Inf))))
+      }
+      return(finish("singleton", .ratio_intervals(c(0, 0))))
+    }
+    root <- -b / a
+    if (!is.finite(root) || root == 0) {
+      return(unresolved("endpoint_range"))
+    }
+    roots <- sort(c(0, root))
+    if (a > 0) {
+      return(finish("bounded", .ratio_intervals(roots)))
+    }
+    return(finish("two_rays", .ratio_intervals(c(-Inf, roots[1L]), c(roots[2L], Inf))))
+  }
   # Certify exact repeated roots on a dyadic grid whose integer products fit
   # exactly in a double. Other near-zero discriminants remain unresolved.
   integers <- scaled * 2^22
