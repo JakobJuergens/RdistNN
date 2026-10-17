@@ -73,7 +73,7 @@ dispatch. If a shared signature must change, preserve old call semantics
 and expand regression scope to affected estimators. Do not make a broad
 core refactor a prerequisite for the new wrapper.
 
-## 2. Task 1 — Signal constructor and independent algebra
+## Task 1 — Signal constructor and independent algebra
 
 **Files:** create R/score-clate.R,
 tests/testthat/helper-clate-reference.R, test-clate-signals.R and the
@@ -98,7 +98,7 @@ Notes 02–03.
 **Accept when:** both signals match an independent formula, one-sided
 equivalence holds and invalid arrays fail before localization.
 
-## 3. Task 2 — Generic ratio point estimation and shapes
+## Task 2 — Generic ratio point estimation and shapes
 
 **Files:** create R/user-dnn-affine-ratio.R and core/validation suites.
 Add focused shared-helper regression cases only where reuse needs them.
@@ -120,7 +120,7 @@ target matrix, metadata, optional returns and per-target statuses.
 **Accept when:** matrix/data-frame paths produce identical core fields and
 all valid-target status cases are explicit.
 
-## 4. Task 3 — Paired frozen covariance and engine parity
+## Task 3 — Paired frozen covariance and engine parity
 
 **Files:** extend the ratio engine and core suite; add
 test-clate-engine-parity.R. Existing full-rank engine files change only if
@@ -144,7 +144,7 @@ pseudo-value arrays and covariance statuses.
 **Accept when:** all arrays and scales agree with independent references,
 including m=1 and m>1. No deleted nuisance models or ratios are used.
 
-## 5. Task 4 — Public CLATE wrapper and dual interfaces
+## Task 4 — Public CLATE wrapper and dual interfaces
 
 **Files:** create R/user-dnn-clate.R,
 test-user-clate-dnn.R, test-user-clate-dnn-data-interface.R and
@@ -167,7 +167,7 @@ component-role and observation/prediction metadata.
 **Accept when:** every route computes the same supplied-prediction
 functional and both sample interfaces are documented and tested.
 
-## 6. Task 5 — Reporting, prediction and diagnostics
+## Task 5 — Reporting, prediction and diagnostics
 
 **Files:** create the methods/diagnostics files and their test suites;
 register only implemented S3 methods through roxygen.
@@ -190,7 +190,7 @@ register only implemented S3 methods through roxygen.
 **Accept when:** users can inspect components and every target's status
 through ordinary methods, with correctly scaled uncertainty.
 
-## 7. Task 6 — User documentation and initial feature acceptance
+## Task 6 — User documentation and initial feature acceptance
 
 **Files:** create the two Rmd articles and update README.Rmd,
 vignettes/getting-started.Rmd, notation-and-conventions.Rmd,
@@ -218,7 +218,7 @@ numeric contracts, tests and user documentation. Do not require a new SIPP
 analysis, confidence-set API or practical-forest theorem to accept this
 well-defined first feature.
 
-## 8. Task 7 — Bounded generator and designated learner
+## Task 7 — Bounded generator and designated learner
 
 This is a later study/example stage, not a hidden missing piece of
 supplied-prediction estimation.
@@ -241,7 +241,7 @@ supplied-prediction estimation.
 construction; no claim of practical forest validity or coverage follows
 solely from these tests.
 
-## 9. Task 8 — Optional ratio confidence sets
+## Task 8 — Optional ratio confidence sets
 
 **Files:** R/clate-confidence-sets.R, its suite, help and inference-article
 extension.
@@ -261,7 +261,7 @@ extension.
 **Accept when:** set geometry and numeric statuses are correct without
 turning all outputs into finite Wald endpoints.
 
-## 10. Task 9 — Optional tuning, plots and learner adapters
+## Task 9 — Optional tuning, plots and learner adapters
 
 Only begin after a concrete user need and a contract update:
 
