@@ -3,6 +3,15 @@
 Read this file before modifying code. It is the canonical instruction file for
 LLM agents and automated coding assistants working in this repository.
 
+## Development and production branches
+
+Develop on the local `development` branch. Keep it unpublished until the
+maintainer authorizes publication; branches in a public repository are public
+when pushed. Production is `master`. Submit production changes through a pull
+request and use a squash merge after review and required checks. Do not push
+development commits directly to `master` unless explicitly instructed to do so.
+See `CONTRIBUTING.md` for the workflow.
+
 ## Mandatory read order
 
 Before making changes, read these files in order:

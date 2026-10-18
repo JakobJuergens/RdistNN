@@ -5,6 +5,38 @@ supporting DNN weights, tuning, diagnostics, and plots. All PLQR functionality
 and local IV-GMM are experimental. Please open an issue before proposing a new
 estimator or a change to an exported interface.
 
+## Development and production workflow
+
+Use the local `development` branch for ongoing work. It has no upstream until
+publication is authorized. GitHub cannot make an individual branch private in
+a public repository; keeping development local preserves its unpublished state.
+Commit development changes there, with focused tests and documentation.
+
+When the maintainer authorizes a production update, publish a review branch
+and open a pull request targeting `master`. Include the problem, final behavior
+and verification in the description. Complete the required CI checks and
+review, then squash-merge the PR so production history records the reviewed
+change rather than each intermediate development commit. Do not push directly
+to `master` without an explicit override. Keep local development current with
+the reviewed production state before starting the next change.
+
+## R and Stata parity
+
+Use R as the numerical reference for shared estimator behavior. The companion
+Stata package retains its own command grammar, while reporting, candidate
+reuse and saved-fit prediction should agree on frozen observations/signals,
+fixed training geometry, weight normalization, covariance scale and undefined
+CLATE targets. PLQR parity currently concerns moments at supplied coefficients;
+Stata does not provide R's density-backed coefficient inference.
+
+Cross-language regression fixtures and their R generators live in the sibling
+`RdistNN_stata/tests/fixtures/` and `RdistNN_stata/tools/` directories. In
+particular, `generate_r_reporting_fixtures.R` and `generate_r_reuse_fixtures.R`
+record reporting and reusable-fit reference values. Run their matching Stata
+regressions after an intentional shared-contract change, and retain independent
+delete-one references rather than accepting agreement between two fast paths
+alone. Do not regenerate golden values merely to make a failure pass.
+
 ## Local setup
 
 Use R 4.1.0 or newer and a C++17 toolchain. OpenMP is optional. Install the

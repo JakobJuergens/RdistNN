@@ -1,5 +1,8 @@
 # RdistNN (development version)
 
+- Advanced the shared development version to 0.1.0.9001 and documented local
+  development branches, reviewed production PRs and R/Stata parity expectations.
+
 - Stabilized frozen-score jackknife calculations with target-specific,
   support-aware numerical centering across compiled, R, fast and explicit
   deletion paths. Zero-weight outliers no longer manufacture variance in
