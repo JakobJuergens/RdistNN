@@ -1,6 +1,6 @@
 # Tests for the plotting data layer (Phase 0):
 # plot_data_estimates(), plot_data_weights(), plot_data_diagnostics().
-# See markdown_notes/archive/completed_plans_2026-07-09/plotting_layer_implementation_plan.md.
+# See markdown_notes/design/13_estimator_and_result_architecture.md.
 
 .pd_np_fit <- function(n = 60L, se = TRUE, return = c("W"), X0 = NULL) {
   set.seed(31)

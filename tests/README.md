@@ -8,8 +8,6 @@ Python checks for repository and workflow policy.
 
 Filenames describe the behavior under test. Use the matching `R/` module as
 the first place to look, then the relevant integration or numerical suite.
-The former numbered rollout layers and plotting phases now have descriptive
-names.
 
 | Area | Files in `tests/testthat/` |
 | --- | --- |
@@ -78,7 +76,8 @@ covariance/extras field. Plot tests cover instrument versus treatment overlap,
 paired score contributions, unavailable bounds, serialization, optional packages,
 and real ggplot builds. The shared rank-weight and plot-builder changes also
 require the CATE/NP suites. The implementation/extension map is in
-[CLATE Note 10](../markdown_notes/clate_implementation/10_weighting_and_output_alignment.md).
+[result architecture](../markdown_notes/design/13_estimator_and_result_architecture.md)
+and [paired-ratio contract](../markdown_notes/design/17_clate_ratio_inference.md).
 
 Test files should run independently. Testthat's helper loading and file
 conventions are documented in its

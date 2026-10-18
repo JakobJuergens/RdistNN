@@ -1,61 +1,41 @@
-# RdistNN Design Notes
+# Maintainer design reference
 
-This directory contains the canonical ordered design-note corpus for the
-`RdistNN` package.
+These documents define the maintained interface, numerical and engineering
+contracts for RdistNN. Use [AGENTS.md](../../AGENTS.md) for editing rules,
+[CONTRIBUTING.md](../../CONTRIBUTING.md) for commands and checks, and
+[the package scope](../rdistnn_roadmap.md) for current capabilities and limits.
 
-The numbered files are the authoritative development policy set for this repo.
-Older unnumbered notes have been retired so that humans and coding agents can
-rely on a single explicit read order.
+## Interface and validation
 
-## Read order
+1. [Interface decisions](01_interface_standardization_decisions.md)
+2. [Code design](02_code_design_principles.md)
+3. [Input validation](03_input_validation_contract.md)
+4. [Shapes and input formats](04_api_shapes_and_input_formats.md)
+5. [Errors and warnings](05_error_messages_and_warnings.md)
 
-1. `01_interface_standardization_decisions.md`
-2. `02_code_design_principles.md`
-3. `03_input_validation_contract.md`
-4. `04_api_shapes_and_input_formats.md`
-5. `05_error_messages_and_warnings.md`
-6. `06_namespace_and_dependency_policy.md`
-7. `07_lifecycle_and_deprecation_policy.md`
-8. `08_comments_and_function_docs.md`
-9. `09_testing_and_regression_policy.md`
-10. `10_rcpp_and_compiled_code_policy.md`
-11. `11_examples_vignettes_and_pkgdown_policy.md`
-12. `12_release_and_ci_policy.md`
-13. `13_existing_codebase_standardization_plan.md`
-14. `14_integrated_tuning_grid_reuse.md`
-15. `15_plqr_variance_estimation_rationale.md`
-16. `16_affine_replication_contract.md`
+## Engineering policy
 
-## Structure
+6. [Namespace and dependencies](06_namespace_and_dependency_policy.md)
+7. [Lifecycle and deprecation](07_lifecycle_and_deprecation_policy.md)
+8. [Comments and function documentation](08_comments_and_function_docs.md)
+9. [Testing and regression](09_testing_and_regression_policy.md)
+10. [Rcpp and compiled code](10_rcpp_and_compiled_code_policy.md)
+11. [Examples, vignettes and pkgdown](11_examples_vignettes_and_pkgdown_policy.md)
+12. [Release and CI](12_release_and_ci_policy.md)
 
-### Foundation
-- `01_interface_standardization_decisions.md`
-- `02_code_design_principles.md`
-- `03_input_validation_contract.md`
-- `04_api_shapes_and_input_formats.md`
-- `05_error_messages_and_warnings.md`
+## Architecture and numerical contracts
 
-### Package engineering
-- `06_namespace_and_dependency_policy.md`
-- `07_lifecycle_and_deprecation_policy.md`
-- `08_comments_and_function_docs.md`
-- `09_testing_and_regression_policy.md`
-- `10_rcpp_and_compiled_code_policy.md`
-- `11_examples_vignettes_and_pkgdown_policy.md`
-- `12_release_and_ci_policy.md`
+13. [Estimator and result architecture](13_estimator_and_result_architecture.md)
+14. [Integrated tuning-grid reuse](14_integrated_tuning_grid_reuse.md)
+15. [PLQR variance and nuisance notation](15_plqr_variance_estimation_rationale.md)
+16. [Affine replication integrity](16_affine_replication_contract.md)
+17. [CLATE and paired-ratio inference](17_clate_ratio_inference.md)
 
-### Execution
-- `13_existing_codebase_standardization_plan.md`
-- `14_integrated_tuning_grid_reuse.md`
-- `15_plqr_variance_estimation_rationale.md`
-- `16_affine_replication_contract.md`
+User-facing estimators accept the documented matrix/vector or data-frame
+interface and then compute with canonical numeric inputs. Shared generics and
+builders preserve distinct estimands and uncertainty scales. New contributions
+must maintain these contracts and their independent numerical tests.
 
-## Core package-wide decision
-
-User-facing estimators may accept either:
-
-- explicit matrices and vectors; or
-- `data.frame`-style inputs, including tibbles.
-
-After validation and interface resolution, all internal computation should proceed
-on canonical numeric matrices and vectors.
+Keep this reference focused on current decisions and rationale. Session
+instructions, task checklists, local paths and execution receipts belong in
+private working records rather than public maintainer documentation.

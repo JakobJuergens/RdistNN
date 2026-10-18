@@ -37,25 +37,16 @@ paths, SIPP saved-fit diagnostics, and regeneration of all 21 current table
 fragments and six PDF figures. Do not rerun the 10,000-draw campaign merely to
 validate packaging of unchanged scientific code.
 
-## October 14, 2026 refresh verification
+## Maintenance checks
 
-The implemented snapshot is paper commit
-`683bf69b2f9d096b90011739b32ec3e6e16b0168`. All current numerical/SIPP source
-inputs and 21 reference table fragments match that checkout. All nine frozen
-affine scientific files retain the accepted production hashes; the numerical
-package engine remains unchanged from production pin `40060f1`.
+Use `inst/paper-replication/affine/manifest.json` for the exact pinned paper
+commit, source identities, accepted evidence and reference-display hashes.
+Run `Rscript inst/paper-replication/affine/verify.R` to verify that snapshot.
+Integrity corruption, interrupted-stage reuse, serialization differences,
+stale audit binding, dirty-source identity and portable output paths have
+regression coverage in `tests/testthat/test-paper-replication-affine.R`.
 
-Installed launchers passed four-profile validation, the measured native runner
-with two workers, SIPP fitting/diagnostics/export (21 estimates and 168
-localization rows), and regeneration/checking of all 21 tables and six PDFs.
-Output paths containing spaces, brackets and parentheses passed. All six PDFs
-passed qpdf structural checks. Integrity corruption, interrupted-stage reuse,
-RDS serialization differences, stale audit binding and dirty-source identity
-have regression coverage. Lint, generated-file, dependency/reference and
-workflow checks passed.
-
-The final offline R CMD check used installed dependency metadata and finished
-with zero errors, zero warnings and one installed-size NOTE (11.1 MB, including
-the compressed accepted evidence). All vignettes and package tests passed.
-The 10,000-draw production campaign and full-population SIPP fit were not rerun
-for this packaging change.
+Package smoke validation, accepted production evidence and a new scientific
+study are distinct activities. Preserve this distinction in documentation
+and output promotion; a successful packaging check does not constitute a
+new production run or empirical finding.

@@ -116,3 +116,20 @@ Before merging, ask:
 
 Code without tests may be exploratory.
 Code merged into the package should not remain exploratory.
+
+
+## Installed-package and independent-reference coverage
+
+Exercise registered S3 methods through public generics on fitted objects.
+A test must not skip an entire method family because an unexported method
+symbol is absent from the installed namespace. Similarly, public-interface
+tests should not depend on test-only aliases or unrelated internal helpers.
+Use explicit test-local reference calculations when independence is needed.
+
+Prioritize score formulas, deterministic demo-data contracts, result reporting,
+prediction, candidate views and compiled/fallback equivalence over a coverage
+percentage. Oracle examples should agree with independently calculated truth;
+a pair of optimized implementations agreeing is not an independent oracle.
+Remaining defensive branches warrant tests when an observed defect, supported
+input or changed contract makes them consequential. Unused helper coverage
+and benchmark timing are not substitutes for user-facing regression tests.

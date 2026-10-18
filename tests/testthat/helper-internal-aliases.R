@@ -1,7 +1,6 @@
 # Aliases for internal (unexported) low-level functions that the test suite
-# exercises directly. These layers were removed from the public namespace in
-# the pre-public API pruning (markdown_notes/archive/completed_plans_2026-07-09/rdistnn_public_release_cleanup_note.md,
-# section 18); the tests keep covering them through these aliases.
+# exercises directly. These aliases provide internal test access without
+# making the helpers part of the exported package API.
 
 dist_l1 <- RdistNN:::dist_l1
 dist_l2 <- RdistNN:::dist_l2

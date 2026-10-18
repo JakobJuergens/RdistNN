@@ -1,77 +1,46 @@
-# RdistNN Live Roadmap
+# Package scope and extension boundaries
 
-**Updated:** 2026-10-17
-**Purpose:** the single live list of open package work. Completed plans are
-archived under `markdown_notes/archive/`; the design policy corpus is
-`markdown_notes/design/`. Verify any item against current code before
-treating it as still open.
+RdistNN provides modular distance, rank-weight, score and jackknife primitives
+with high-level estimation workflows. The initial public release centers on
+CATE and nonparametric regression. The development version additionally
+supports conditional LATE and paired affine ratios. CLATE, PLQR and local
+IV-GMM are experimental; their documented inference requirements remain part
+of their use.
 
-## Current State
+The [design reference](design/README.md) specifies maintained contracts.
+[CONTRIBUTING.md](../CONTRIBUTING.md) owns development commands, and
+[RELEASING.md](../RELEASING.md) owns release checks. The public notation hub is
+`vignettes/notation-and-conventions.Rmd`.
 
-The initial public release focuses on CATE, nonparametric regression, and
-supporting DNN weights, tuning, diagnostics, and plotting. All PLQR functions
-and methods are labeled experimental, as is local IV-GMM. The October release
-polish is recorded in `release/2026-10-14-public-release-polish.md`;
-`RELEASING.md` describes packaging and publication, and `WEBSITE.md` contains
-copy for the author's website. These scope changes do not alter the API or
-computational behavior.
+## Current capabilities
 
-The pre-public overhaul is implemented (archived roadmap in
-`archive/completed_plans_2026-07-11/`): paper-aligned PLQR names
-(`g`, `theta_eval`, `theta_se`, `moment_se`, `theta_vcov`, `theta_omega`),
-tuning constant `lambda`/`lambda_grid`, jackknife-meat coefficient sandwich
-(`theta_meat = c("analytic", "jackknife")`), supplied-theta S3 semantics,
-moment-first PLQR plotting, hardened direct sandwich, density/Jacobian
-diagnostics, oracle demo density, API tier table, repositioned experimental
-IV-GMM, and untracked `GH_logs/`/`archives/`. `devtools::check()` was clean
-and the full CI matrix was dispatched on the release candidate.
+- Matrix/vector and data-frame interfaces resolve to common numeric inputs.
+- Exact/asymptotic DNN supports shared tuning sensitivity, diagnostics and
+  presentation. CATE/CLATE use single-scale DNN; TDNN remains NP-regression
+  functionality.
+- CLATE constructs paired augmented binary-IV signals from supplied nuisance
+  predictions, retaining components, estimator-scale covariance and numerical
+  statuses. Its summaries, plots and candidate views use the shared interfaces.
+- PLQR evaluates moments at supplied coefficients. Coefficient-level inference
+  needs the documented density-backed sandwich; componentwise moment SEs do
+  not supply coefficient inference.
+- Local IV-GMM solves a distinct moment system with its own covariance and
+  convergence diagnostics. It is not an alias for the augmented CLATE ratio.
+- The installed affine replication bundle pins scientific source, production
+  configurations and accepted evidence independently of the general package
+  estimators. Its manifest identifies the exact scientific snapshot.
 
-On 2026-07-10/11 the CATE simulation layer additionally gained theory-facing
-diagnostics for the paper's evidence contract (realized localized targets,
-physical-radius diagnostics, localization-drift/centered-remainder
-decomposition support consumed by
-`Cond_Z_Estimation/markdown_notes/simulation/main_power_sipp_theory_alignment_2026-07-11.md`).
+## Extension boundaries
 
-The public notation and package-conventions vignette now consolidates the
-package-to-paper symbol map, CATE and PLQR nuisance names, effective-size
-conventions, fitted-object fields, and the distinction between moment
-diagnostics and coefficient inference. No pre-public documentation item
-remains open in this roadmap.
+A unified score-localize-solve-report conditional Z-estimation front end is not
+implemented. Current wrappers take externally fitted nuisance predictions;
+keeping nuisance training outside estimation is a deliberate design boundary.
+The bounded CLATE generator and internal ridge reference adapter provide
+numerical verification, not a general automatic learner interface.
 
-## Open: Long-Term Framework (not release blockers)
-
-1. **General conditional Z-estimation front end.** One polished entry point
-   that takes a score/moment description, localizes, solves, and reports
-   inference with diagnostics. The score API provides the modular pieces;
-   the unified front end does not exist yet.
-2. **Nuisance-fitting convenience.** Wrappers still expect externally fitted
-   nuisances (`g`, `mD`, propensities). Keeping this external is a deliberate
-   current design choice; revisit only after the front-end question.
-
-The current affine simulation and SIPP replication workflows are now bundled
-under `inst/paper-replication/affine/`, with unchanged paper source, production
-configurations, and compressed accepted evidence. The paper repository remains
-the scientific source of truth. See design note 16 for the refresh contract.
-
-## Conditional LATE implementation
-
-The experimental supplied-prediction CLATE feature now has a signal constructor,
-paired exact/asymptotic DNN ratio engine, dual interfaces, result methods and diagnostics.
-The bounded generator, internal ridge-series reference adapter and separate
-ratio confidence-set helper are implemented. The [CLATE collection](clate_implementation/README.md)
-owns the design contracts and requirements-to-evidence record. Package and
-hosted CI acceptance are recorded there as they complete.
-
-CATE-style summaries, tuning sensitivity, candidate views and plots share
-common interfaces and builders; [Note 10](clate_implementation/10_weighting_and_output_alignment.md)
-records the current alignment and extension contract. Two-scale TDNN remains
-NP-only. Automatic practical learners and adaptive selection remain future
-contracts. CLATE production simulations and SIPP participation analysis are
-separate study decisions. Existing local IV-GMM keeps its distinct score and
-covariance route; the frozen paper replication bundle remains independent.
-
-## Rule
-
-Keep this note short. When an item lands, move its detail into a dated
-archive packet (or the design corpus if it becomes policy) and delete it
-here.
+Adaptive candidate selection, post-selection inference, simultaneous bands,
+weak-instrument-uniform guarantees and new empirical/production campaigns
+require separate scientific and interface justification. Successful tests,
+training labels and computational weighting choices do not establish them.
+Maintain a shared usage and presentation grammar where quantities agree in
+meaning; preserve method-specific scores, covariance and scientific limits.

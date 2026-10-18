@@ -26,9 +26,8 @@ using namespace Rcpp;
 //
 // Both passes are O(n) per (t, qq), giving O(n * m * q) total.
 //
-// This is the algorithm described in the archived implementation note
-// markdown_notes/archive/completed_plans_2026-07-09/tdnn_rdistnn_implementation_plan.md
-// ("Phase 2") and applies equally to
+// The rank-table deletion identity is documented in
+// markdown_notes/design/14_integrated_tuning_grid_reuse.md and applies to
 // exact DNN, asymptotic DNN, exact TDNN, and asymptotic TDNN — any rule
 // whose rank-weight table can be precomputed outside this function.
 //
