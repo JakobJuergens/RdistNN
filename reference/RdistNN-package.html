@@ -38,7 +38,8 @@ score objects (ustat_score) for flexible kernel-based moment evaluation.
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="../articles/index.html">Articles</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
-      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://jakobjuergens.com/">Author</a></li>
+      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN/blob/master/CONTRIBUTING.md">Contributing</a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://jakobjuergens.com/">Author</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
       </ul></div>
 
@@ -91,7 +92,14 @@ local weights with <code><a href="plot_weights.html">plot_weights()</a></code> (
 scores, demo helpers, methods, and plots. The current wrapper evaluates
 moments at a supplied coefficient; it does not solve for local coefficients.
 Local IV-GMM functionality is also experimental. These workflows are outside
-the CATE and regression focus of the initial public release.</p><ul><li><p>Build custom generalized U-statistics with <code><a href="new_score.html">new_score()</a></code>,
+the CATE and regression focus of the initial public release.</p><ul><li><p>Estimate conditional LATE from supplied nuisance predictions with
+<code><a href="clate_dnn.html">clate_dnn()</a></code>, or localize two supplied signals with <code><a href="affine_ratio_dnn.html">affine_ratio_dnn()</a></code>.
+<code><a href="iv_augmented_signals.html">iv_augmented_signals()</a></code> constructs the augmented binary-IV signals.
+Reporting methods and <code><a href="diagnostics.html">diagnostics()</a></code> retain components and statuses;
+<code><a href="ratio_confidence_set.html">ratio_confidence_set()</a></code> provides separate set-valued moment inversion.
+<code><a href="clate_demo_data.html">clate_demo_data()</a></code> supplies a bounded synthetic benchmark with oracle
+predictions. All conditional-LATE functionality is experimental.</p></li>
+<li><p>Build custom generalized U-statistics with <code><a href="new_score.html">new_score()</a></code>,
 <code><a href="score_eval_batch.html">score_eval_batch()</a></code>, and <code><a href="score_diff_path.html">score_diff_path()</a></code>.</p></li>
 <li><p>Estimate uncertainty with <code><a href="jackknife_fast_rank.html">jackknife_fast_rank()</a></code> and
 <code><a href="jackknife_slow_rank.html">jackknife_slow_rank()</a></code>.</p></li>
@@ -112,6 +120,9 @@ and scores, see <code><a href="../articles/extending.html">vignette("extending",
 <li><p>For estimator workflows see
 <code><a href="../articles/conditional-z-estimation.html">vignette("conditional-z-estimation", package = "RdistNN")</a></code>, including
 experimental PLQR details.</p></li>
+<li><p>For supplied-prediction conditional LATE and paired inference, see
+<code><a href="../articles/conditional-late.html">vignette("conditional-late", package = "RdistNN")</a></code> and
+<code><a href="../articles/conditional-late-inference.html">vignette("conditional-late-inference", package = "RdistNN")</a></code>.</p></li>
 <li><p>For jackknife details see
 <code><a href="../articles/jackknife-gen-ustats.html">vignette("jackknife-gen-ustats", package = "RdistNN")</a></code>.</p></li>
 </ul></div>

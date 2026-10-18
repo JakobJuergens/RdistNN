@@ -1,4 +1,4 @@
-# Plot local overlap for CATE fits
+# Plot local overlap for CATE and CLATE fits
 
 Two views of treatment overlap inside the DNN neighbourhoods of a
 [`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md)
@@ -20,6 +20,7 @@ plot_overlap(
   treatment = NULL,
   propensity = NULL,
   targets = NULL,
+  instrument = NULL,
   ...
 )
 ```
@@ -28,7 +29,8 @@ plot_overlap(
 
 - object:
 
-  A `cate_result` with the weight matrix `W` stored (the default).
+  A `cate_result` or `clate_result` with the weight matrix `W` stored
+  (the default).
 
 - type:
 
@@ -42,7 +44,7 @@ plot_overlap(
 - treatment:
 
   Optional 0/1 vector of length `n`; used when the fit does not store
-  treatment (matrix interface).
+  treatment (matrix interface). For CLATE use `instrument`.
 
 - propensity:
 
@@ -53,6 +55,11 @@ plot_overlap(
 
   Optional integer vector of target ids for the density view (defaults
   to the first/median-`n_eff`/last subset above eight targets).
+
+- instrument:
+
+  Optional 0/1 instrument vector for a CLATE fit whose instrument record
+  is unavailable. Stored instrument data take precedence.
 
 - ...:
 
@@ -68,6 +75,12 @@ Inputs resolve in a fixed order: components stored on the fit
 (`t_vec`/`e` from the data-frame interface), then the `treatment`/
 `propensity` arguments, then an actionable error. Nothing is recomputed
 from first stages.
+
+For
+[`clate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/clate_dnn.md)
+fits these same panels describe instrument overlap: the arms are A=1 and
+A=0 and the propensity is P(A=1\|V). Both are retained by the CLATE fit.
+Treatment uptake D is not used as the instrument arm.
 
 ## Examples
 

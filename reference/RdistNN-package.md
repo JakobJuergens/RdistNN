@@ -67,6 +67,20 @@ coefficients. Local IV-GMM functionality is also experimental. These
 workflows are outside the CATE and regression focus of the initial
 public release.
 
+- Estimate conditional LATE from supplied nuisance predictions with
+  [`clate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/clate_dnn.md),
+  or localize two supplied signals with
+  [`affine_ratio_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_dnn.md).
+  [`iv_augmented_signals()`](https://JakobJuergens.github.io/RdistNN/reference/iv_augmented_signals.md)
+  constructs the augmented binary-IV signals. Reporting methods and
+  [`diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/diagnostics.md)
+  retain components and statuses;
+  [`ratio_confidence_set()`](https://JakobJuergens.github.io/RdistNN/reference/ratio_confidence_set.md)
+  provides separate set-valued moment inversion.
+  [`clate_demo_data()`](https://JakobJuergens.github.io/RdistNN/reference/clate_demo_data.md)
+  supplies a bounded synthetic benchmark with oracle predictions. All
+  conditional-LATE functionality is experimental.
+
 - Build custom generalized U-statistics with
   [`new_score()`](https://JakobJuergens.github.io/RdistNN/reference/new_score.md),
   [`score_eval_batch()`](https://JakobJuergens.github.io/RdistNN/reference/score_eval_batch.md),
@@ -99,6 +113,11 @@ public release.
 - For estimator workflows see
   [`vignette("conditional-z-estimation", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md),
   including experimental PLQR details.
+
+- For supplied-prediction conditional LATE and paired inference, see
+  [`vignette("conditional-late", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/conditional-late.md)
+  and
+  [`vignette("conditional-late-inference", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/conditional-late-inference.md).
 
 - For jackknife details see
   [`vignette("jackknife-gen-ustats", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/jackknife-gen-ustats.md).

@@ -18,7 +18,8 @@
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="articles/index.html">Articles</a></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
-      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://jakobjuergens.com/">Author</a></li>
+      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN/blob/master/CONTRIBUTING.md">Contributing</a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://jakobjuergens.com/">Author</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
       </ul></div>
 
@@ -59,6 +60,11 @@
 <span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="ex">Rscript</span> tools/ci/check_repository_hygiene.R</span>
 <span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="ex">Rscript</span> tools/ci/check_pkgdown_reference_coverage.R</span>
 <span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="ex">Rscript</span> tools/ci/check_generated_file_drift.R</span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="maintainer-reference">Maintainer reference<a class="anchor" aria-label="anchor" href="#maintainer-reference"></a></h2>
+<p>The <a href="https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/README.md" class="external-link">design index</a> routes interface, validation, numerical and engineering contracts. The <a href="https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/13_estimator_and_result_architecture.md" class="external-link">result architecture</a> explains shared generic dispatch and method-specific adapters; the <a href="https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/17_clate_ratio_inference.md" class="external-link">paired-ratio contract</a> records CLATE signal, covariance and numerical-status requirements. <a href="https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/rdistnn_roadmap.md" class="external-link">Package scope</a> distinguishes implemented capabilities from extensions requiring further justification.</p>
+<p>Public maintainer documentation should explain current decisions, scientific limits and reproducible development procedures. Keep personal source-library configuration, session instructions, completed task lists and local execution receipts in private working records. Local <code>archives/</code> is ignored and excluded from R source packages; check that private records are untracked before committing.</p>
 </div>
 <div class="section level2">
 <h2 id="reporting-problems">Reporting problems<a class="anchor" aria-label="anchor" href="#reporting-problems"></a></h2>

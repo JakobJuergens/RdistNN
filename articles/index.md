@@ -26,6 +26,10 @@
 
 ### Experimental companion workflows
 
+- [Conditional LATE from supplied nuisance
+  predictions](https://JakobJuergens.github.io/RdistNN/articles/conditional-late.md):
+- [Paired frozen-score inference for conditional
+  ratios](https://JakobJuergens.github.io/RdistNN/articles/conditional-late-inference.md):
 - [Local IV-GMM
   Estimation](https://JakobJuergens.github.io/RdistNN/articles/local-iv-estimation.md):
 

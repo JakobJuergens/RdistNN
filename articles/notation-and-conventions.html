@@ -34,6 +34,7 @@
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN/blob/master/CONTRIBUTING.md">Contributing</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://jakobjuergens.com/">Author</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
       </ul>
@@ -131,13 +132,20 @@ Z-estimation</a>:
 </td>
 </tr>
 <tr class="odd">
+<td>Estimate a binary-instrument complier effect from supplied
+predictions</td>
+<td>
+<a href="conditional-late.html">Conditional LATE</a> and <a href="conditional-late-inference.html">paired inference</a>
+</td>
+</tr>
+<tr class="even">
 <td>Understand exact and asymptotic DNN weights, support, and ranks</td>
 <td>
 <a href="dnn-weights.html">DNN weights</a>:
 <code><a href="../articles/dnn-weights.html">vignette("dnn-weights", package = "RdistNN")</a></code>
 </td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Choose <code>s</code> with the paper rule, registry, or tuning
 grid</td>
 <td>
@@ -145,28 +153,28 @@ grid</td>
 <code><a href="../articles/kernel-order-tuning.html">vignette("kernel-order-tuning", package = "RdistNN")</a></code>
 </td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Interpret diagnostic names and their availability</td>
 <td>
 <a href="diagnostics-reporting.html">Diagnostics and reporting</a>:
 <code><a href="../articles/diagnostics-reporting.html">vignette("diagnostics-reporting", package = "RdistNN")</a></code>
 </td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Plot fitted targets, weight geometry, and overlap</td>
 <td>
 <a href="visualising-fits.html">Visualising fits</a>:
 <code><a href="../articles/visualising-fits.html">vignette("visualising-fits", package = "RdistNN")</a></code>
 </td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Define a custom distance, rank-weight map, or score</td>
 <td>
 <a href="extending.html">Extending RdistNN</a>:
 <code><a href="../articles/extending.html">vignette("extending", package = "RdistNN")</a></code>
 </td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Work directly with generalized U-statistic jackknife tools</td>
 <td>
 <a href="jackknife-gen-ustats.html">Jackknife generalized
@@ -174,14 +182,14 @@ U-statistics</a>:
 <code><a href="../articles/jackknife-gen-ustats.html">vignette("jackknife-gen-ustats", package = "RdistNN")</a></code>
 </td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Use the experimental local IV-GMM workflow</td>
 <td>
 <a href="local-iv-estimation.html">Local IV estimation</a>:
 <code><a href="../articles/local-iv-estimation.html">vignette("local-iv-estimation", package = "RdistNN")</a></code>
 </td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Reproduce the current affine simulations and SIPP application</td>
 <td>
 <a href="paper-affine-replication.html">Affine paper
@@ -495,8 +503,8 @@ side-by-side estimator calls.</p>
 <div class="section level2">
 <h2 id="estimator-targets-and-signals">Estimator targets and signals<a class="anchor" aria-label="anchor" href="#estimator-targets-and-signals"></a>
 </h2>
-<p>All four high-level wrappers localize with DNN weights, but they
-consume and return different statistical objects.</p>
+<p>The high-level wrappers localize with DNN weights, but they consume
+and return different statistical objects.</p>
 <table class="table">
 <colgroup>
 <col width="25%">
@@ -545,6 +553,23 @@ consume and return different statistical objects.</p>
 <td>solved <code>theta</code>
 </td>
 <td>Experimental local GMM estimate</td>
+</tr>
+<tr class="odd">
+<td><code><a href="../reference/clate_dnn.html">clate_dnn()</a></code></td>
+<td>Paired augmented reduced-form and first-stage signals</td>
+<td>
+<code>theta</code>, <code>components</code>
+</td>
+<td>Experimental conditional complier effect under the IV
+assumptions</td>
+</tr>
+<tr class="even">
+<td><code><a href="../reference/affine_ratio_dnn.html">affine_ratio_dnn()</a></code></td>
+<td>Two supplied scalar signals</td>
+<td>
+<code>theta</code>, <code>components</code>
+</td>
+<td>Experimental ratio of common-weight local averages</td>
 </tr>
 </tbody>
 </table>
@@ -617,9 +642,31 @@ pieces</td>
 <td>solved <code>theta</code>, <code>se</code>, <code>vcov</code>, and
 overidentification diagnostics</td>
 </tr>
+<tr class="odd">
+<td><code><a href="../reference/clate_dnn.html">clate_dnn()</a></code></td>
+<td>
+<code>X</code>, targets, <code>Y,D,A</code> and five nuisance
+predictions</td>
+<td>Both augmented signals, paired local averages and frozen
+covariance</td>
+<td>
+<code>components</code>, <code>theta</code>, <code>se</code>,
+per-target <code>status</code>
+</td>
+</tr>
+<tr class="even">
+<td><code><a href="../reference/affine_ratio_dnn.html">affine_ratio_dnn()</a></code></td>
+<td>
+<code>X</code>, targets, numerator and denominator signals</td>
+<td>Common-weight averages, ratio and paired frozen covariance</td>
+<td>
+<code>components</code>, <code>theta</code>, <code>se</code>,
+per-target <code>status</code>
+</td>
+</tr>
 </tbody>
 </table>
-<p>The package does not currently fit CATE, PLQR, or built-in IV-GMM
+<p>The wrappers do not fit CATE, CLATE, PLQR, or built-in IV-GMM
 nuisances. Those functions receive already evaluated nuisance vectors or
 matrices. Also note the asymmetry in <code>theta</code>:
 <code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code> repeats a supplied evaluation value, whereas
@@ -651,9 +698,8 @@ class.</p>
 <td>Supplied PLQR evaluation coefficient, copied into a
 <code>plqr_result</code>
 </td>
-<td>A coefficient solved separately at each target in a
-<code>gmm_result</code>
-</td>
+<td>A solved local GMM coefficient, or a paired local ratio in an
+affine-ratio/CLATE result</td>
 </tr>
 <tr class="even">
 <td><code>g</code></td>
@@ -756,6 +802,100 @@ an arbitrary same-sample nuisance learner.</p>
 Z-estimation</a> for a worked CATE fit. For the paper-specific
 data-generating process and Monte Carlo harness, use <a href="paper-affine-replication.html">Affine paper replication</a>.</p>
 </div>
+</div>
+<div class="section level2">
+<h2 id="experimental-clate-conventions">Experimental CLATE conventions<a class="anchor" aria-label="anchor" href="#experimental-clate-conventions"></a>
+</h2>
+<p>CLATE uses <code>A</code> for the binary instrument and
+<code>D</code> for binary treatment. Reporting uses <code>X</code>;
+nuisance predictions adjust for all pre-instrument variables in
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi><mo>=</mo><mo stretchy="false" form="prefix">(</mo><mi>X</mi><mo>,</mo><mi>Z</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">V=(X,Z)</annotation></semantics></math>.
+<code>Z</code> denotes additional adjustment covariates in this
+notation. The five predictions <code>e,m_y0,m_y1,m_d0,m_d1</code> are
+instrument propensity and outcome/treatment means indexed by
+<strong>instrument arm</strong>. <code>one_sided = TRUE</code>
+explicitly selects
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo stretchy="false" form="prefix">(</mo><mn>0</mn><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">D(0)=0</annotation></semantics></math>,
+permitting <code>m_d0 = NULL</code>. The observed check
+<code>D &lt;= A</code> does not establish that structural
+restriction.</p>
+<p><code><a href="../reference/iv_augmented_signals.html">iv_augmented_signals()</a></code> returns <code>phi_y</code> and
+<code>phi_d</code>. In the affine score
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi><mi>θ</mi><mo>+</mo><mi>b</mi></mrow><annotation encoding="application/x-tex">B\theta+b</annotation></semantics></math>,
+CLATE has
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi><mo>=</mo><msub><mi>ϕ</mi><mi>D</mi></msub></mrow><annotation encoding="application/x-tex">B=\phi_D</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>b</mi><mo>=</mo><mi>−</mi><msub><mi>ϕ</mi><mi>Y</mi></msub></mrow><annotation encoding="application/x-tex">b=-\phi_Y</annotation></semantics></math>.
+The fitted solution is the ratio of their DNN-weighted averages.
+Individual augmented denominators may be negative; they are not
+compliance indicators and are not clipped. Ordinary residualized IV can
+introduce different stratum weights.</p>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr class="header">
+<th>Field</th>
+<th>Scale or convention</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>components</code></td>
+<td>Target-by-two matrix with <code>numerator</code>,
+<code>denominator</code> columns</td>
+</tr>
+<tr class="even">
+<td><code>component_vcov[[j]]</code></td>
+<td>Paired 2-by-2 estimator covariance</td>
+</tr>
+<tr class="odd">
+<td><code>theta_vcov[[j]]</code></td>
+<td>1-by-1 ratio variance, already on the estimator scale</td>
+</tr>
+<tr class="even">
+<td><code>theta_omega[[j]]</code></td>
+<td><code>neff[j] * theta_vcov[[j]]</code></td>
+</tr>
+<tr class="odd">
+<td><code>se[j]</code></td>
+<td>Square root of the ratio variance</td>
+</tr>
+<tr class="even">
+<td><code>status</code></td>
+<td>One row per reporting target, retained even for undefined
+ratios</td>
+</tr>
+</tbody>
+</table>
+<p>Covariance is marginal across targets. <code>ratio_status</code>
+distinguishes <code>ok</code>, <code>zero_denominator</code>,
+<code>component_overflow</code> and <code>ratio_overflow</code>.
+<code>negative_denominator</code> and <code>near_zero_denominator</code>
+are flags, with no silent denominator replacement.
+<code>covariance_status</code> separately records missing, positive,
+zero-score or numerically failed covariance calculations.
+<code>wald_available</code> controls interval availability. An exact
+zero denominator gives <code>NA</code> ratio/interval while retaining
+component uncertainty; an exact zero score norm gives computational SE
+zero and unavailable Wald bounds.</p>
+<p><code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> relocalizes the same frozen signals at new
+reporting points. <code><a href="../reference/ratio_confidence_set.html">ratio_confidence_set()</a></code> instead accepts
+components and paired covariance and returns interval unions, including
+rays, all-real and empty sets; unresolved numerical geometry has a
+separate status. It does not replace <code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code> or establish
+uniform weak-instrument coverage. The <a href="conditional-late-inference.html">CLATE inference article</a> gives
+the exact four-row example, scale conventions and statistical
+conditions.</p>
+<p>CLATE supports exact/asymptotic single-scale DNN with the same
+<code>method</code>, <code>k</code>, <code>s</code>,
+<code>normalize</code> and <code>tuning_mode</code> controls as CATE and
+NP regression. Two-scale TDNN is available for NP regression only.
+Weighting choices do not by themselves verify the inference conditions
+for a particular estimator. <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> returns the common
+coefficient table plus CLATE-specific <code>components</code> and
+<code>status</code> tables. Its unavailable Wald bounds remain
+<code>NA</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="experimental-plqr-target-and-nuisance-conventions">Experimental PLQR target and nuisance conventions<a class="anchor" aria-label="anchor" href="#experimental-plqr-target-and-nuisance-conventions"></a>
@@ -1010,6 +1150,20 @@ reusable score machinery rather than fit the built-in IV model.</p>
 <code>neff</code>, <code>convergence</code>
 </td>
 </tr>
+<tr class="odd">
+<td>
+<code>affine_ratio_result</code> / <code>clate_result</code>
+</td>
+<td>solved <code>theta</code>, two-column <code>components</code>
+</td>
+<td>
+<code>component_vcov</code>, <code>theta_vcov</code>,
+<code>theta_omega</code>, <code>se</code>
+</td>
+<td>
+<code>status</code>, <code>neff</code>, component roles and training
+declaration</td>
+</tr>
 </tbody>
 </table>
 <p>Optional fields requested through <code>return</code> are additive.
@@ -1019,6 +1173,70 @@ the main estimate. Use <code><a href="https://rdrr.io/r/base/summary.html" class
 <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code>, and <code><a href="../reference/diagnostics.html">diagnostics()</a></code> where the
 fitted-object class documents those methods instead of inferring meaning
 from similarly named internal fields.</p>
+<p>Shared reporting functions dispatch on the estimation object. Use the
+same calls below for CATE and CLATE; their score and uncertainty
+calculations remain method-specific.</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th>Interface</th>
+<th>CATE</th>
+<th>CLATE</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>summary(fit)$coefficients</code></td>
+<td>Estimate, SE, statistic, p-value and confidence bounds</td>
+<td>Same columns; component/status tables additionally retained</td>
+</tr>
+<tr class="even">
+<td>
+<code><a href="../reference/plot_estimates.html">plot_estimates()</a></code>, <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>,
+<code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">ggplot2::autoplot()</a></code>
+</td>
+<td>Profile, forest or pointrange; zero reference</td>
+<td>Same styles and arguments; unavailable ratio bounds stay
+missing</td>
+</tr>
+<tr class="odd">
+<td><code><a href="../reference/plot_weights.html">plot_weights()</a></code></td>
+<td>Profile, cumulative or kernel</td>
+<td>Same views and retained-weight requirements</td>
+</tr>
+<tr class="even">
+<td><code><a href="../reference/plot_overlap.html">plot_overlap()</a></code></td>
+<td>Treatment mass and propensity</td>
+<td>Instrument mass and propensity</td>
+</tr>
+<tr class="odd">
+<td><code><a href="../reference/plot_influence.html">plot_influence()</a></code></td>
+<td>Weighted pseudo-outcome residual</td>
+<td>Weighted paired score residual</td>
+</tr>
+<tr class="even">
+<td>
+<code><a href="../reference/plot_tuning.html">plot_tuning()</a></code>, <code><a href="../reference/candidate_fit.html">candidate_fit()</a></code>,
+<code><a href="../reference/candidate_fit.html">candidate_fits()</a></code>
+</td>
+<td>Frozen-state sensitivity and candidate views</td>
+<td>Same workflow, retaining paired covariance</td>
+</tr>
+<tr class="odd">
+<td><code><a href="../reference/plot_dashboard.html">plot_dashboard()</a></code></td>
+<td>Common component panels</td>
+<td>Same layout and optional-dependency policy</td>
+</tr>
+</tbody>
+</table>
+<p>The tidy <code><a href="../reference/plot_data_estimates.html">plot_data_estimates()</a></code> and
+<code><a href="../reference/diagnostics.html">diagnostics()</a></code> tables allow custom presentations without
+accessing plotting internals. Distinct result classes retain their
+scientific meaning; CLATE is not a <code>cate_result</code>
+subclass.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_cate</span><span class="op">$</span><span class="va">tau</span></span>
 <span><span class="va">fit_cate</span><span class="op">$</span><span class="va">se</span></span>
@@ -1046,8 +1264,8 @@ whether weights are normalized.</li>
 <li>Identify the observation-level signal or vector score being
 localized.</li>
 <li>Mark every nuisance as supplied or package-computed. Current CATE,
-PLQR, and built-in GMM workflows expect nuisance values rather than
-fitting them.</li>
+CLATE, PLQR, and built-in GMM workflows expect nuisance values rather
+than fitting them.</li>
 <li>Determine whether the returned uncertainty is on the moment scale or
 the target-coefficient scale.</li>
 <li>Use <code>n_eff</code>/<code>neff</code>/<code>ess</code> as a scale

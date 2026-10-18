@@ -34,6 +34,7 @@
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN/blob/master/CONTRIBUTING.md">Contributing</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://jakobjuergens.com/">Author</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
       </ul>
@@ -102,6 +103,34 @@ implement a custom score.</li>
 pass them directly into <code><a href="../reference/weights_matrix.html">weights_matrix()</a></code> instead of
 rebuilding that layer inside <code>RdistNN</code>.</li>
 </ul>
+</div>
+<div class="section level2">
+<h2 id="fitted-object-interfaces">Fitted-object interfaces<a class="anchor" aria-label="anchor" href="#fitted-object-interfaces"></a>
+</h2>
+<p>Presentation is another shared layer. Result classes retain their
+scientific meaning, while S3 methods connect them to
+<code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>, <code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code>, <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code>,
+<code><a href="../reference/diagnostics.html">diagnostics()</a></code>, <code><a href="../reference/plot_data_estimates.html">plot_data_estimates()</a></code>,
+<code><a href="../reference/candidate_fit.html">candidate_fit()</a></code> and <code><a href="../reference/candidate_fit.html">candidate_fits()</a></code>. Plot
+builders consume these common tables. CATE and CLATE, for example, use
+the same estimate, weight, overlap, influence, tuning and dashboard
+calls; their overlap arms and score contributions differ. See <a href="notation-and-conventions.html#reading-fitted-objects">Reading
+fitted objects</a> for the capability table and <a href="conditional-late.html">the CLATE guide</a> for executed
+examples.</p>
+<p>When adding a result class, first document its estimate and
+covariance scales. Provide a tidy estimate extractor and the existing
+generic methods that are scientifically meaningful. Reuse shared frame
+and panel builders, retaining method-specific score, covariance and
+labels in adapters. An estimator that reports evaluated moments should
+not label them solved coefficients, and a CLATE object should not
+inherit from CATE merely to reuse a plot.</p>
+<p>Grid adapters must preserve frozen model state, distinguish
+infeasible candidates from undefined target estimates, and rebuild every
+dependent field when extracting a candidate view. Tests should compare
+candidates with direct scalar fits, check analytic special cases and
+missing uncertainty, exercise serialization and optional dependencies,
+and build actual plots. Matching interfaces never establishes a new
+theorem for an additional weighting rule.</p>
 </div>
 <div class="section level2">
 <h2 id="kernel-order-tuning-specs">0) Kernel-Order Tuning Specs<a class="anchor" aria-label="anchor" href="#kernel-order-tuning-specs"></a>

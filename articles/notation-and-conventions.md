@@ -54,6 +54,7 @@ or an inferential output.
 |----|----|
 | Take a first tour of weights and the main estimators | [Getting started](https://JakobJuergens.github.io/RdistNN/articles/getting-started.md): [`vignette("getting-started", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/getting-started.md) |
 | See NP, CATE, and experimental PLQR calls | [Conditional Z-estimation](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md): [`vignette("conditional-z-estimation", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md) |
+| Estimate a binary-instrument complier effect from supplied predictions | [Conditional LATE](https://JakobJuergens.github.io/RdistNN/articles/conditional-late.md) and [paired inference](https://JakobJuergens.github.io/RdistNN/articles/conditional-late-inference.md) |
 | Understand exact and asymptotic DNN weights, support, and ranks | [DNN weights](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.md): [`vignette("dnn-weights", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.md) |
 | Choose `s` with the paper rule, registry, or tuning grid | [Kernel-order tuning](https://JakobJuergens.github.io/RdistNN/articles/kernel-order-tuning.md): [`vignette("kernel-order-tuning", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/kernel-order-tuning.md) |
 | Interpret diagnostic names and their availability | [Diagnostics and reporting](https://JakobJuergens.github.io/RdistNN/articles/diagnostics-reporting.md): [`vignette("diagnostics-reporting", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/diagnostics-reporting.md) |
@@ -208,8 +209,8 @@ for side-by-side estimator calls.
 
 ## Estimator targets and signals
 
-All four high-level wrappers localize with DNN weights, but they consume
-and return different statistical objects.
+The high-level wrappers localize with DNN weights, but they consume and
+return different statistical objects.
 
 | Wrapper | Localized input | Main returned target | Interpretation |
 |----|----|----|----|
@@ -217,6 +218,8 @@ and return different statistical objects.
 | [`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md) | CATE pseudo-outcome $`\psi_i`$ | `tau` | Local conditional average treatment effect |
 | [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md) | Vector PLQR score $`\psi_i(\theta_{\mathrm{eval}})`$ | `moment`; supplied `theta` | Moment evaluation at a user-supplied coefficient |
 | [`gmm_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/gmm_dnn.md) | Model-defined vector moments $`g_i(\theta)`$ | solved `theta` | Experimental local GMM estimate |
+| [`clate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/clate_dnn.md) | Paired augmented reduced-form and first-stage signals | `theta`, `components` | Experimental conditional complier effect under the IV assumptions |
+| [`affine_ratio_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_dnn.md) | Two supplied scalar signals | `theta`, `components` | Experimental ratio of common-weight local averages |
 
 The word **score** means an observation-level contribution. The word
 **moment** means its DNN-weighted average at a target. For scalar NP and
@@ -237,10 +240,12 @@ the intermediate machinery.
 | [`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md) | `X`, targets, and either nuisance evaluations or a pseudo-outcome | CATE signal when needed, then its DNN localization | `tau`, and `se` when requested |
 | [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md) | `X`, targets, `D`, `theta_eval`, `g`, `mD`, and optionally `density` | Scores and their local moment; Jacobian and sandwich pieces when inputs permit | `moment`; supplied `theta`; separate moment- and coefficient-scale uncertainty fields |
 | [`gmm_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/gmm_dnn.md) | `X`, targets, a `gmm_model`, observed data, and model-specific nuisances | Local moments, two-step root solving, weighting matrix, and sandwich pieces | solved `theta`, `se`, `vcov`, and overidentification diagnostics |
+| [`clate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/clate_dnn.md) | `X`, targets, `Y,D,A` and five nuisance predictions | Both augmented signals, paired local averages and frozen covariance | `components`, `theta`, `se`, per-target `status` |
+| [`affine_ratio_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_dnn.md) | `X`, targets, numerator and denominator signals | Common-weight averages, ratio and paired frozen covariance | `components`, `theta`, `se`, per-target `status` |
 
-The package does not currently fit CATE, PLQR, or built-in IV-GMM
-nuisances. Those functions receive already evaluated nuisance vectors or
-matrices. Also note the asymmetry in `theta`:
+The wrappers do not fit CATE, CLATE, PLQR, or built-in IV-GMM nuisances.
+Those functions receive already evaluated nuisance vectors or matrices.
+Also note the asymmetry in `theta`:
 [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md)
 repeats a supplied evaluation value, whereas
 [`gmm_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/gmm_dnn.md)
@@ -260,7 +265,7 @@ class.
 
 | Name | Meaning in one context | Meaning elsewhere or important distinction |
 |----|----|----|
-| `theta` | Supplied PLQR evaluation coefficient, copied into a `plqr_result` | A coefficient solved separately at each target in a `gmm_result` |
+| `theta` | Supplied PLQR evaluation coefficient, copied into a `plqr_result` | A solved local GMM coefficient, or a paired local ratio in an affine-ratio/CLATE result |
 | `g` | The PLQR nonparametric shape nuisance $`g_0(U)`$ | `g_obs` is the observation-by-moment contribution matrix in GMM, not a nuisance named `g` |
 | `J` / `jacobian` | `jacobian` is the derivative or bread matrix used for coefficient inference | `J` in `gmm_result` is the scalar local overidentification statistic |
 | `se` | Target-scale standard error for NP, CATE, and GMM results | PLQR uses `moment_se` and `theta_se` so the inferential scale is explicit |
@@ -320,6 +325,64 @@ Z-estimation](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-est
 for a worked CATE fit. For the paper-specific data-generating process
 and Monte Carlo harness, use [Affine paper
 replication](https://JakobJuergens.github.io/RdistNN/articles/paper-affine-replication.md).
+
+## Experimental CLATE conventions
+
+CLATE uses `A` for the binary instrument and `D` for binary treatment.
+Reporting uses `X`; nuisance predictions adjust for all pre-instrument
+variables in $`V=(X,Z)`$. `Z` denotes additional adjustment covariates
+in this notation. The five predictions `e,m_y0,m_y1,m_d0,m_d1` are
+instrument propensity and outcome/treatment means indexed by
+**instrument arm**. `one_sided = TRUE` explicitly selects $`D(0)=0`$,
+permitting `m_d0 = NULL`. The observed check `D <= A` does not establish
+that structural restriction.
+
+[`iv_augmented_signals()`](https://JakobJuergens.github.io/RdistNN/reference/iv_augmented_signals.md)
+returns `phi_y` and `phi_d`. In the affine score $`B\theta+b`$, CLATE
+has $`B=\phi_D`$ and $`b=-\phi_Y`$. The fitted solution is the ratio of
+their DNN-weighted averages. Individual augmented denominators may be
+negative; they are not compliance indicators and are not clipped.
+Ordinary residualized IV can introduce different stratum weights.
+
+| Field | Scale or convention |
+|----|----|
+| `components` | Target-by-two matrix with `numerator`, `denominator` columns |
+| `component_vcov[[j]]` | Paired 2-by-2 estimator covariance |
+| `theta_vcov[[j]]` | 1-by-1 ratio variance, already on the estimator scale |
+| `theta_omega[[j]]` | `neff[j] * theta_vcov[[j]]` |
+| `se[j]` | Square root of the ratio variance |
+| `status` | One row per reporting target, retained even for undefined ratios |
+
+Covariance is marginal across targets. `ratio_status` distinguishes
+`ok`, `zero_denominator`, `component_overflow` and `ratio_overflow`.
+`negative_denominator` and `near_zero_denominator` are flags, with no
+silent denominator replacement. `covariance_status` separately records
+missing, positive, zero-score or numerically failed covariance
+calculations. `wald_available` controls interval availability. An exact
+zero denominator gives `NA` ratio/interval while retaining component
+uncertainty; an exact zero score norm gives computational SE zero and
+unavailable Wald bounds.
+
+[`predict()`](https://rdrr.io/r/stats/predict.html) relocalizes the same
+frozen signals at new reporting points.
+[`ratio_confidence_set()`](https://JakobJuergens.github.io/RdistNN/reference/ratio_confidence_set.md)
+instead accepts components and paired covariance and returns interval
+unions, including rays, all-real and empty sets; unresolved numerical
+geometry has a separate status. It does not replace
+[`confint()`](https://rdrr.io/r/stats/confint.html) or establish uniform
+weak-instrument coverage. The [CLATE inference
+article](https://JakobJuergens.github.io/RdistNN/articles/conditional-late-inference.md)
+gives the exact four-row example, scale conventions and statistical
+conditions.
+
+CLATE supports exact/asymptotic single-scale DNN with the same `method`,
+`k`, `s`, `normalize` and `tuning_mode` controls as CATE and NP
+regression. Two-scale TDNN is available for NP regression only.
+Weighting choices do not by themselves verify the inference conditions
+for a particular estimator.
+[`summary()`](https://rdrr.io/r/base/summary.html) returns the common
+coefficient table plus CLATE-specific `components` and `status` tables.
+Its unavailable Wald bounds remain `NA`.
 
 ## Experimental PLQR target and nuisance conventions
 
@@ -470,6 +533,7 @@ The core result fields are intentionally estimator-specific.
 | `cate_result` | `tau` | `se` | `x0`, optional `psi`, optional `nuisance` |
 | `plqr_result` | `moment`, supplied `theta`, `theta_eval` | `moment_se` or sandwich fields described above | `meta$theta_source`, `meta$theta_meat_method`, `neff` |
 | `gmm_result` | solved `theta`, `theta_first` | `se`, `vcov`; optional `omega`, `jacobian` | `J`, `df`, `pval_J`, `neff`, `convergence` |
+| `affine_ratio_result` / `clate_result` | solved `theta`, two-column `components` | `component_vcov`, `theta_vcov`, `theta_omega`, `se` | `status`, `neff`, component roles and training declaration |
 
 Optional fields requested through `return` are additive. For example,
 asking for `W`, `dx`, `ess`, or `tuning` does not change the meaning of
@@ -480,6 +544,28 @@ the main estimate. Use
 [`diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/diagnostics.md)
 where the fitted-object class documents those methods instead of
 inferring meaning from similarly named internal fields.
+
+Shared reporting functions dispatch on the estimation object. Use the
+same calls below for CATE and CLATE; their score and uncertainty
+calculations remain method-specific.
+
+| Interface | CATE | CLATE |
+|----|----|----|
+| `summary(fit)$coefficients` | Estimate, SE, statistic, p-value and confidence bounds | Same columns; component/status tables additionally retained |
+| [`plot_estimates()`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md), [`plot()`](https://rdrr.io/r/graphics/plot.default.html), [`ggplot2::autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html) | Profile, forest or pointrange; zero reference | Same styles and arguments; unavailable ratio bounds stay missing |
+| [`plot_weights()`](https://JakobJuergens.github.io/RdistNN/reference/plot_weights.md) | Profile, cumulative or kernel | Same views and retained-weight requirements |
+| [`plot_overlap()`](https://JakobJuergens.github.io/RdistNN/reference/plot_overlap.md) | Treatment mass and propensity | Instrument mass and propensity |
+| [`plot_influence()`](https://JakobJuergens.github.io/RdistNN/reference/plot_influence.md) | Weighted pseudo-outcome residual | Weighted paired score residual |
+| [`plot_tuning()`](https://JakobJuergens.github.io/RdistNN/reference/plot_tuning.md), [`candidate_fit()`](https://JakobJuergens.github.io/RdistNN/reference/candidate_fit.md), [`candidate_fits()`](https://JakobJuergens.github.io/RdistNN/reference/candidate_fit.md) | Frozen-state sensitivity and candidate views | Same workflow, retaining paired covariance |
+| [`plot_dashboard()`](https://JakobJuergens.github.io/RdistNN/reference/plot_dashboard.md) | Common component panels | Same layout and optional-dependency policy |
+
+The tidy
+[`plot_data_estimates()`](https://JakobJuergens.github.io/RdistNN/reference/plot_data_estimates.md)
+and
+[`diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/diagnostics.md)
+tables allow custom presentations without accessing plotting internals.
+Distinct result classes retain their scientific meaning; CLATE is not a
+`cate_result` subclass.
 
 ``` r
 
@@ -511,8 +597,8 @@ the objects in this order:
 3.  Identify the observation-level signal or vector score being
     localized.
 4.  Mark every nuisance as supplied or package-computed. Current CATE,
-    PLQR, and built-in GMM workflows expect nuisance values rather than
-    fitting them.
+    CLATE, PLQR, and built-in GMM workflows expect nuisance values
+    rather than fitting them.
 5.  Determine whether the returned uncertainty is on the moment scale or
     the target-coefficient scale.
 6.  Use `n_eff`/`neff`/`ess` as a scale and concentration diagnostic,

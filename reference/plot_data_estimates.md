@@ -25,14 +25,18 @@ plot_data_estimates(object, level = 0.95, quantity = c("moment", "theta"), ...)
 
 # S3 method for class 'gmm_result'
 plot_data_estimates(object, level = 0.95, ...)
+
+# S3 method for class 'affine_ratio_result'
+plot_data_estimates(object, level = 0.95, candidates = "default", ...)
 ```
 
 ## Arguments
 
 - object:
 
-  A fitted result object (`np_result`, `cate_result`, `plqr_result`, or
-  `gmm_result`; `tdnn_np_result` dispatches through `np_result`).
+  A fitted result object (`np_result`, `cate_result`,
+  `affine_ratio_result`, `clate_result`, `plqr_result`, or `gmm_result`;
+  `tdnn_np_result` dispatches through `np_result`).
 
 - level:
 
@@ -51,15 +55,22 @@ plot_data_estimates(object, level = 0.95, ...)
   exists, moments are the target-specific quantity, so they are the
   default. The choice is recorded in `attr(., "quantity")`.
 
+- candidates:
+
+  For grid-aware methods, `"default"`, `"all"`, or a character vector of
+  stored candidate ids.
+
 ## Value
 
 A `data.frame` with columns `target_id` (integer, `1..m`), `coef`
-(character; `"mu"`/`"tau"` for scalar fits, moment or coefficient names
-for vector fits), `estimate`, `se`, `ci_lower`, `ci_upper`, and — when
-the fit stores evaluation points — target coordinates `x0_1..x0_p`, with
-the original covariate names recorded in `attr(., "x0_names")`. Fits
-without stored standard errors return `NA` in `se` and the bound
-columns. The confidence level is recorded in `attr(., "level")`.
+(character; `"mu"`/`"tau"`/`"theta"` for scalar fits, moment or
+coefficient names for vector fits), `estimate`, `se`, `ci_lower`,
+`ci_upper`, and — when the fit stores evaluation points — target
+coordinates `x0_1..x0_p`, with the original covariate names recorded in
+`attr(., "x0_names")`. Fits without stored standard errors return `NA`
+in `se` and the bound columns. The confidence level is recorded in
+`attr(., "level")`. Ratio fits also retain unavailable Wald bounds as
+`NA` when the ratio is undefined or its score variance is zero.
 
 ## Experimental methods
 

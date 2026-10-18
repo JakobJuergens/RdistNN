@@ -18,7 +18,8 @@
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="../articles/index.html">Articles</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
-      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://jakobjuergens.com/">Author</a></li>
+      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN/blob/master/CONTRIBUTING.md">Contributing</a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://jakobjuergens.com/">Author</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
       </ul></div>
 
@@ -50,7 +51,7 @@
       </dl></div><div class="section level2">
       <h2 id="cate-and-regression-estimators-and-weights">CATE and regression — estimators and weights<a class="anchor" aria-label="anchor" href="#cate-and-regression-estimators-and-weights"></a></h2>
 
-      <div class="section-desc"><p>The focus of the initial public release: conditional average treatment effects, nonparametric regression, and their DNN weight builders.</p></div>
+      <div class="section-desc"><p>The main estimation workflows: conditional average treatment effects, nonparametric regression, and their DNN weight builders.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -217,7 +218,7 @@
 
       <dl><dt>
 
-          <code><a href="plot_estimates.html">plot_estimates()</a></code> <code><a href="plot_estimates.html">autoplot.np_result()</a></code> <code><a href="plot_estimates.html">autoplot.cate_result()</a></code> <code><a href="plot_estimates.html">autoplot.plqr_result()</a></code> <code><a href="plot_estimates.html">autoplot.gmm_result()</a></code> <code><a href="plot_estimates.html">plot(<i>&lt;np_result&gt;</i>)</a></code> <code><a href="plot_estimates.html">plot(<i>&lt;cate_result&gt;</i>)</a></code> <code><a href="plot_estimates.html">plot(<i>&lt;plqr_result&gt;</i>)</a></code> <code><a href="plot_estimates.html">plot(<i>&lt;gmm_result&gt;</i>)</a></code>
+          <code><a href="plot_estimates.html">plot_estimates()</a></code> <code><a href="plot_estimates.html">autoplot.np_result()</a></code> <code><a href="plot_estimates.html">autoplot.cate_result()</a></code> <code><a href="plot_estimates.html">autoplot.affine_ratio_result()</a></code> <code><a href="plot_estimates.html">autoplot.plqr_result()</a></code> <code><a href="plot_estimates.html">autoplot.gmm_result()</a></code> <code><a href="plot_estimates.html">plot(<i>&lt;np_result&gt;</i>)</a></code> <code><a href="plot_estimates.html">plot(<i>&lt;cate_result&gt;</i>)</a></code> <code><a href="plot_estimates.html">plot(<i>&lt;affine_ratio_result&gt;</i>)</a></code> <code><a href="plot_estimates.html">plot(<i>&lt;plqr_result&gt;</i>)</a></code> <code><a href="plot_estimates.html">plot(<i>&lt;gmm_result&gt;</i>)</a></code>
 
         </dt>
         <dd>Plot estimates with confidence bounds across target points</dd>
@@ -234,7 +235,7 @@
           <code><a href="plot_overlap.html">plot_overlap()</a></code>
 
         </dt>
-        <dd>Plot local overlap for CATE fits</dd>
+        <dd>Plot local overlap for CATE and CLATE fits</dd>
 
         <dt>
 
@@ -248,7 +249,7 @@
           <code><a href="plot_influence.html">plot_influence()</a></code>
 
         </dt>
-        <dd>Plot per-observation contributions to a CATE estimate</dd>
+        <dd>Plot per-observation contributions to a CATE or CLATE estimating equation</dd>
 
         <dt>
 
@@ -430,6 +431,64 @@
 
         </dt>
         <dd>Summarise raw per-replicate CATE simulation results</dd>
+      </dl></div><div class="section level2">
+      <h2 id="experimental-conditional-late">Experimental — conditional LATE<a class="anchor" aria-label="anchor" href="#experimental-conditional-late"></a></h2>
+
+      <div class="section-desc"><p>Supplied-prediction binary-IV signals and paired ratios with exact or asymptotic DNN weights. Shared reporting, candidate views and plots, with frozen-score covariance, diagnostics and pointwise ratio confidence-set inversion.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="clate_dnn.html">clate_dnn()</a></code>
+
+        </dt>
+        <dd>Conditional LATE from externally supplied nuisance predictions</dd>
+
+        <dt>
+
+          <code><a href="iv_augmented_signals.html">iv_augmented_signals()</a></code>
+
+        </dt>
+        <dd>Construct augmented reduced-form and first-stage signals</dd>
+
+        <dt>
+
+          <code><a href="affine_ratio_dnn.html">affine_ratio_dnn()</a></code>
+
+        </dt>
+        <dd>DNN inference for a ratio of two supplied signal averages</dd>
+
+        <dt>
+
+          <code><a href="affine_ratio_result.html">coef(<i>&lt;affine_ratio_result&gt;</i>)</a></code> <code><a href="affine_ratio_result.html">vcov(<i>&lt;affine_ratio_result&gt;</i>)</a></code> <code><a href="affine_ratio_result.html">confint(<i>&lt;affine_ratio_result&gt;</i>)</a></code> <code><a href="affine_ratio_result.html">summary(<i>&lt;affine_ratio_result&gt;</i>)</a></code> <code><a href="affine_ratio_result.html">print(<i>&lt;affine_ratio_result&gt;</i>)</a></code> <code><a href="affine_ratio_result.html">print(<i>&lt;summary.affine_ratio_result&gt;</i>)</a></code> <code><a href="affine_ratio_result.html">predict(<i>&lt;affine_ratio_result&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Reporting and prediction for paired affine-ratio results</dd>
+
+        <dt>
+
+          <code><a href="clate_diagnostics.html">diagnostics(<i>&lt;affine_ratio_result&gt;</i>)</a></code> <code><a href="clate_diagnostics.html">diagnostics(<i>&lt;clate_result&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Paired component and first-stage diagnostics</dd>
+
+        <dt>
+
+          <code><a href="clate_demo_data.html">clate_demo_data()</a></code>
+
+        </dt>
+        <dd>Bounded endogenous-treatment data for conditional LATE examples</dd>
+
+        <dt>
+
+          <code><a href="ratio_confidence_set.html">ratio_confidence_set()</a></code> <code><a href="ratio_confidence_set.html">print(<i>&lt;ratio_confidence_sets&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Confidence sets for a ratio of paired component estimates</dd>
       </dl></div><div class="section level2">
       <h2 id="experimental-plqr">Experimental — PLQR<a class="anchor" aria-label="anchor" href="#experimental-plqr"></a></h2>
 

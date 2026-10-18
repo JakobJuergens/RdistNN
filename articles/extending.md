@@ -50,6 +50,43 @@ As a rule of thumb:
   [`weights_matrix()`](https://JakobJuergens.github.io/RdistNN/reference/weights_matrix.md)
   instead of rebuilding that layer inside `RdistNN`.
 
+## Fitted-object interfaces
+
+Presentation is another shared layer. Result classes retain their
+scientific meaning, while S3 methods connect them to
+[`summary()`](https://rdrr.io/r/base/summary.html),
+[`confint()`](https://rdrr.io/r/stats/confint.html),
+[`predict()`](https://rdrr.io/r/stats/predict.html),
+[`diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/diagnostics.md),
+[`plot_data_estimates()`](https://JakobJuergens.github.io/RdistNN/reference/plot_data_estimates.md),
+[`candidate_fit()`](https://JakobJuergens.github.io/RdistNN/reference/candidate_fit.md)
+and
+[`candidate_fits()`](https://JakobJuergens.github.io/RdistNN/reference/candidate_fit.md).
+Plot builders consume these common tables. CATE and CLATE, for example,
+use the same estimate, weight, overlap, influence, tuning and dashboard
+calls; their overlap arms and score contributions differ. See [Reading
+fitted
+objects](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.html#reading-fitted-objects)
+for the capability table and [the CLATE
+guide](https://JakobJuergens.github.io/RdistNN/articles/conditional-late.md)
+for executed examples.
+
+When adding a result class, first document its estimate and covariance
+scales. Provide a tidy estimate extractor and the existing generic
+methods that are scientifically meaningful. Reuse shared frame and panel
+builders, retaining method-specific score, covariance and labels in
+adapters. An estimator that reports evaluated moments should not label
+them solved coefficients, and a CLATE object should not inherit from
+CATE merely to reuse a plot.
+
+Grid adapters must preserve frozen model state, distinguish infeasible
+candidates from undefined target estimates, and rebuild every dependent
+field when extracting a candidate view. Tests should compare candidates
+with direct scalar fits, check analytic special cases and missing
+uncertainty, exercise serialization and optional dependencies, and build
+actual plots. Matching interfaces never establishes a new theorem for an
+additional weighting rule.
+
 ## 0) Kernel-Order Tuning Specs
 
 Tuning specs mirror the same constructor/registry style as distances and

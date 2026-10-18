@@ -5,8 +5,8 @@ confidence bounds from the stored jackknife standard errors, drawn as a
 profile band when the targets vary along a single stored coordinate, as
 a forest layout for small non-profile target sets, and as pointranges
 otherwise. `autoplot()` and
-[`plot()`](https://rdrr.io/r/graphics/plot.default.html) on `np_result`
-and `cate_result` objects delegate here.
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) on `np_result`,
+`cate_result` and `affine_ratio_result` objects delegate here.
 
 ## Usage
 
@@ -25,6 +25,8 @@ autoplot.np_result(object, ...)
 
 autoplot.cate_result(object, ...)
 
+autoplot.affine_ratio_result(object, ...)
+
 autoplot.plqr_result(object, ...)
 
 autoplot.gmm_result(object, ...)
@@ -33,6 +35,9 @@ autoplot.gmm_result(object, ...)
 plot(x, ...)
 
 # S3 method for class 'cate_result'
+plot(x, ...)
+
+# S3 method for class 'affine_ratio_result'
 plot(x, ...)
 
 # S3 method for class 'plqr_result'
@@ -68,9 +73,9 @@ plot(x, ...)
 
 - shade_significant:
 
-  Logical (default `FALSE`); for profile-style CATE panels, add a rug
-  along the axis where the confidence interval excludes zero. Intervals
-  are marked, never point estimates.
+  Logical (default `FALSE`); for profile-style CATE/CLATE panels, add a
+  rug along the axis where the confidence interval excludes zero.
+  Intervals are marked, never point estimates.
 
 - candidates:
 
@@ -98,7 +103,7 @@ A ggplot object.
 Every panel carries an honesty caption with the median effective sample
 size across targets (when weight diagnostics are available) and the
 kernel order `s` with its provenance (`paper_default` or `manual`). CATE
-panels draw a dashed zero reference line.
+and CLATE panels draw a dashed zero reference line.
 
 ## Experimental methods
 

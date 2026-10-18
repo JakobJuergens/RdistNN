@@ -18,7 +18,8 @@
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="articles/index.html">Articles</a></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
-      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://jakobjuergens.com/">Author</a></li>
+      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN/blob/master/CONTRIBUTING.md">Contributing</a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://jakobjuergens.com/">Author</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
       </ul></div>
 
@@ -43,7 +44,7 @@
 <li><code>markdown_notes/design/03_input_validation_contract.md</code></li>
 <li><code>markdown_notes/design/04_api_shapes_and_input_formats.md</code></li>
 <li><code>markdown_notes/design/05_error_messages_and_warnings.md</code></li>
-<li><code>markdown_notes/design/13_existing_codebase_standardization_plan.md</code></li>
+<li><code>markdown_notes/design/13_estimator_and_result_architecture.md</code></li>
 </ol><p>For package-engineering, lifecycle, compiled-code, documentation, or CI work, also read as relevant:</p>
 <ul><li><code>markdown_notes/design/06_namespace_and_dependency_policy.md</code></li>
 <li><code>markdown_notes/design/07_lifecycle_and_deprecation_policy.md</code></li>
@@ -52,15 +53,15 @@
 <li><code>markdown_notes/design/10_rcpp_and_compiled_code_policy.md</code></li>
 <li><code>markdown_notes/design/11_examples_vignettes_and_pkgdown_policy.md</code></li>
 <li><code>markdown_notes/design/12_release_and_ci_policy.md</code></li>
-</ul><p>For tuning-grid work read <code>markdown_notes/design/14_integrated_tuning_grid_reuse.md</code>; for PLQR inference work read <code>markdown_notes/design/15_plqr_variance_estimation_rationale.md</code>. For paper-replication work read <code>markdown_notes/design/16_affine_replication_contract.md</code>.</p>
+</ul><p>For tuning-grid work read <code>markdown_notes/design/14_integrated_tuning_grid_reuse.md</code>; for PLQR inference work read <code>markdown_notes/design/15_plqr_variance_estimation_rationale.md</code>. For paper-replication work read <code>markdown_notes/design/16_affine_replication_contract.md</code>. For CLATE/ratio work read <code>markdown_notes/design/17_clate_ratio_inference.md</code>.</p>
 </div>
 <div class="section level2">
-<h2 id="markdown-note-layout">Markdown note layout<a class="anchor" aria-label="anchor" href="#markdown-note-layout"></a></h2>
+<h2 id="maintainer-documentation">Maintainer documentation<a class="anchor" aria-label="anchor" href="#maintainer-documentation"></a></h2>
 <ul><li>
-<code>markdown_notes/design/</code> is the canonical, ordered design-policy corpus.</li>
+<code>markdown_notes/design/README.md</code> indexes the maintained interface, numerical and engineering contracts. Keep public documentation focused on current decisions, scientific limits and extension requirements.</li>
 <li>
-<code>markdown_notes/rdistnn_roadmap.md</code> is the compact live roadmap; read it before starting new package work. The pre-public overhaul is implemented; the public notation page is implemented in <code>vignettes/notation-and-conventions.Rmd</code>. Consult the roadmap for remaining long-term framework and packaging work.</li>
-<li>Completed or superseded implementation plans are archived with status headers under <code>markdown_notes/archive/</code> (packets dated 2026-07-09 and 2026-07-11, including the implemented pre-public roadmap and the historical package audit note); treat them as provenance, not as live instructions — they largely predate the 2026-07-08 API renames.</li>
+<code>markdown_notes/rdistnn_roadmap.md</code> records current capabilities and extension boundaries. Check it before starting new package work.</li>
+<li>Keep session instructions, implementation task lists, private source-library procedures and execution receipts outside tracked public documentation. Local <code>archives/</code> is ignored by Git and excluded from source packages; verify that any private working record is untracked before committing.</li>
 </ul></div>
 <div class="section level2">
 <h2 id="repository-wide-non-negotiable-rules">Repository-wide non-negotiable rules<a class="anchor" aria-label="anchor" href="#repository-wide-non-negotiable-rules"></a></h2>
@@ -87,7 +88,7 @@
 <li>Source installation needs a C++17 toolchain and Rcpp; use the platform requirements in <code>README.md</code>. Regenerate <code>README.md</code> from <code>README.Rmd</code> with <code>devtools::build_readme()</code> when its source changes.</li>
 <li>Use <code>Rscript</code> for R work, <code>actionlint</code> for workflows, and <code>wolframscript</code> when a mathematical check calls for it. Follow the task-specific checks below.</li>
 <li>Poppler (<code>pdfinfo</code>, <code>pdftotext</code>, <code>pdftoppm</code>) and <code>qpdf</code> support document inspection. Windows Ghostscript is commonly <code>gswin64c</code>; use <code>magick</code> for ImageMagick. Check availability before promising a build or check.</li>
-<li>For Literature documents, use the shared catalog/extraction workflow below; do not replace its preserved evidence with ad hoc or in-place OCR.</li>
+<li>For external sources, use an available local source collection or public references. A personal library is not a package dependency.</li>
 </ul></div>
 <div class="section level2">
 <h2 id="working-rules-for-agents">Working rules for agents<a class="anchor" aria-label="anchor" href="#working-rules-for-agents"></a></h2>
@@ -104,10 +105,8 @@
 <p>If code, comments, and design notes conflict, treat the numbered design notes as current source of truth unless there is a stronger repository-level instruction added after this file.</p>
 </div>
 <div class="section level2">
-<h2 id="literature-and-source-lookup">Literature and source lookup<a class="anchor" aria-label="anchor" href="#literature-and-source-lookup"></a></h2>
-<p>For local literature work, use <code>literature-vault</code>; use <code>obsidian-paper-notes</code> for Obsidian paper/book notes. If a skill is not exposed, read its maintained <code>SKILL.md</code> under the vault’s <code>_ai/skills/</code>. Read the vault’s <code>AGENTS.md</code> and <code>_ai/AGENTS.md</code> before source or citation work.</p>
-<p>The WSL vault is <code>/home/jakob/research/Literature</code>; Windows uses <code>D:\Jakob_Clouds\Dropbox\Literature</code> on the desktop and <code>C:\Users\jakob\Dropbox\Literature</code> on the laptop. Preserve both Windows layouts and resolve the current machine’s paths. Project-local <code>01_Literature</code> collections and extraction caches are separate from this full vault.</p>
-<p>Use the vault’s <code>_bibliography/scripts/registry.py</code> by absolute path: <code>search</code> for passages, <code>search --find</code> for discovery, and <code>lookup</code> for citation identity. Preserve existing project keys and unresolved identities. Check <code>status</code>’s <code>catalog_schema_version</code> and <code>variants DOCUMENT_SHA</code>: baseline-only catalogs use original sidecars plus <code>supplemental</code> MinerU reads; registered v5 catalogs support preferred <code>read</code> and <code>--variant all --compare</code>. Follow the vault’s <code>_extractions/README.md</code> and <code>_bibliography/QUALITY.md</code> for exact commands and review scope. Preferred text is not verification; inspect relied-on mathematics, tables, figures, and uncertain exact wording unless a current scoped visual review covers it. Keep extraction identities and physical/printed pages distinct. The personal vault is a research resource, not a repository build dependency.</p>
+<h2 id="external-sources">External sources<a class="anchor" aria-label="anchor" href="#external-sources"></a></h2>
+<p>Use the package bibliography, public reference documentation and source papers for scientific claims. Check the relevant source before changing a mathematical contract, and preserve citation keys and the distinction between proved, conditional and illustrative claims. Personal library paths and machine-specific access instructions belong in private configuration. Package use, tests and maintainer documentation must remain understandable without that configuration.</p>
 </div>
 </div>
 

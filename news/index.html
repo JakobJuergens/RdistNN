@@ -18,7 +18,8 @@
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="../articles/index.html">Articles</a></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
-      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://jakobjuergens.com/">Author</a></li>
+      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN/blob/master/CONTRIBUTING.md">Contributing</a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://jakobjuergens.com/">Author</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
       </ul></div>
 
@@ -34,9 +35,15 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="rdistnn-development-version">RdistNN (development version)<a class="anchor" aria-label="anchor" href="#rdistnn-development-version"></a></h2>
-<ul><li>Replaced the superseded CATE and IV paper launchers with the current affine simulation and SIPP workflows. The bundle pins unchanged paper scientific source, all four accepted production configurations, and compressed evidence.</li>
-<li>Added portable evidence rendering and validation runs, Linux measured production launches with resume checks, and SIPP full-fit/OOB/held-out replication with frozen-score and localization diagnostics.</li>
-<li>Updated the replication article and package guidance to distinguish the current study from general simulation APIs. Accepted evidence regenerates all 21 manuscript tables and six PDF figures without refitting.</li>
+<ul><li><p>Reworked the README for package users, with current installation guidance, executable CATE, regression and CLATE examples, and shared reporting and plotting documentation. Updated the website reference descriptions and added contributor navigation.</p></li>
+<li><p>Aligned CLATE and generic affine ratios with exact/asymptotic single-scale DNN, general <code>k</code>, normalization, tuning grids and candidate views. Prediction and diagnostics retain the chosen weights and frozen paired signals.</p></li>
+<li><p>Standardized ratio summaries on the CATE coefficient-table schema, retaining component uncertainty and target statuses in separate fields. Added CATE-style estimate, weight, instrument-overlap, paired-score influence, tuning and dashboard plots, including <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">ggplot2::autoplot()</a></code> dispatch. Shared builders and rank-weight construction support both methods; TDNN remains separate NP-regression functionality.</p></li>
+<li><p>Added experimental conditional LATE from supplied nuisance predictions with <code><a href="../reference/clate_dnn.html">clate_dnn()</a></code>, <code><a href="../reference/iv_augmented_signals.html">iv_augmented_signals()</a></code> and the generic <code><a href="../reference/affine_ratio_dnn.html">affine_ratio_dnn()</a></code>. Both input formats retain paired components, covariance scales and explicit zero/negative-denominator statuses. Reporting, prediction and diagnostics reuse frozen signals; nuisance learning remains external.</p></li>
+<li><p>Added <code><a href="../reference/ratio_confidence_set.html">ratio_confidence_set()</a></code> with bounded, singleton, ray, half-line, all-real, empty and unresolved numerical results, plus a bounded <code><a href="../reference/clate_demo_data.html">clate_demo_data()</a></code> benchmark and internal ridge-series reference adapter. New guides explain the estimand, covariance and pointwise inference scope.</p></li>
+<li><p>Added independent subset/deletion references, signal identities, interface and validation tests, R/compiled parity, ridge refits and confidence-set geometry/rescaling tests. Hardened single-observation rank shapes, empty CLATE/ratio inputs and near-one confidence quantiles.</p></li>
+<li><p>Replaced the superseded CATE and IV paper launchers with the current affine simulation and SIPP workflows. The bundle pins unchanged paper scientific source, all four accepted production configurations, and compressed evidence.</p></li>
+<li><p>Added portable evidence rendering and validation runs, Linux measured production launches with resume checks, and SIPP full-fit/OOB/held-out replication with frozen-score and localization diagnostics.</p></li>
+<li><p>Updated the replication article and package guidance to distinguish the current study from general simulation APIs. Accepted evidence regenerates all 21 manuscript tables and six PDF figures without refitting.</p></li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.0" id="rdistnn-010">RdistNN 0.1.0<a class="anchor" aria-label="anchor" href="#rdistnn-010"></a></h2>
@@ -150,12 +157,12 @@
 <div class="section level3">
 <h3 id="plotting-data-layer-phase-0-1-0">Plotting data layer (Phase 0)<a class="anchor" aria-label="anchor" href="#plotting-data-layer-phase-0-1-0"></a></h3>
 <ul><li>Added the tidy data extractors behind the upcoming ggplot2-based plotting interface, with no plotting dependency: <code><a href="../reference/plot_data_estimates.html">plot_data_estimates()</a></code> (S3 generic with methods for <code>np_result</code>, <code>cate_result</code>, <code>plqr_result</code>, and <code>gmm_result</code>; TDNN fits dispatch through <code>np_result</code>) returns one row per target and coefficient with estimates, stored jackknife standard errors, and normal confidence bounds at a chosen <code>level</code>; <code><a href="../reference/plot_data_weights.html">plot_data_weights()</a></code> returns per-(target, rank) weight profiles with cumulative shares and distances when stored; <code><a href="../reference/plot_data_diagnostics.html">plot_data_diagnostics()</a></code> returns the per-target diagnostics frame with an integer <code>target_id</code> aligned with the other extractors.</li>
-<li>Design and phase plan: <code>markdown_notes/archive/completed_plans_2026-07-09/plotting_layer_implementation_plan.md</code>.</li>
+<li>Maintainer architecture: <code>markdown_notes/design/13_estimator_and_result_architecture.md</code>.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="fitted-objects-store-evaluation-points-0-1-0">Fitted objects store evaluation points<a class="anchor" aria-label="anchor" href="#fitted-objects-store-evaluation-points-0-1-0"></a></h3>
 <ul><li>
-<code><a href="../reference/np_dnn.html">np_dnn()</a></code>, <code><a href="../reference/cate_dnn.html">cate_dnn()</a></code>, <code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code>, <code><a href="../reference/gmm_dnn.html">gmm_dnn()</a></code>, and <code><a href="../reference/np_tdnn.html">np_tdnn()</a></code> result objects now include <code>x0</code>, the <code>m x p</code> matrix of evaluation points, with covariate column names propagated from the training data when the targets carry none. This is Phase 0 of the plotting layer (<code>markdown_notes/archive/completed_plans_2026-07-09/plotting_layer_implementation_plan.md</code>): profile plots need the target coordinates, which were previously not stored.</li>
+<code><a href="../reference/np_dnn.html">np_dnn()</a></code>, <code><a href="../reference/cate_dnn.html">cate_dnn()</a></code>, <code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code>, <code><a href="../reference/gmm_dnn.html">gmm_dnn()</a></code>, and <code><a href="../reference/np_tdnn.html">np_tdnn()</a></code> result objects now include <code>x0</code>, the <code>m x p</code> matrix of evaluation points, with covariate column names propagated from the training data when the targets carry none. Profile plots need the target coordinates, which were previously not stored.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="breaking-change-default-kernel-order-s-0-1-0">Breaking change: default kernel order <code>s</code>

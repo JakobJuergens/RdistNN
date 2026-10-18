@@ -34,6 +34,7 @@
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN/blob/master/CONTRIBUTING.md">Contributing</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://jakobjuergens.com/">Author</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/JakobJuergens/RdistNN" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
       </ul>
@@ -65,10 +66,11 @@ or data frames, including tibbles through the data-frame interface.
 Inputs must be finite and complete; choose covariate columns explicitly
 and supply one of <code>x0</code> (one target) or <code>X0</code> (one
 target per row).</p>
-<p>PLQR and local IV-GMM are experimental. Their reference material is
-available for research use, but they are outside the supported workflow
-focus of this release. PLQR evaluates moments at supplied coefficients;
-it does not solve for target-specific coefficients.</p>
+<p>Conditional LATE, PLQR and local IV-GMM are experimental. Their
+reference material is available for research use, but they are outside
+the supported workflow focus of this release. PLQR evaluates moments at
+supplied coefficients; it does not solve for target-specific
+coefficients.</p>
 <div class="section level2">
 <h2 id="conditional-average-treatment-effects">Conditional average treatment effects<a class="anchor" aria-label="anchor" href="#conditional-average-treatment-effects"></a>
 </h2>
@@ -285,6 +287,11 @@ views:</p>
 <h2 id="further-reading">Further reading<a class="anchor" aria-label="anchor" href="#further-reading"></a>
 </h2>
 <ul>
+<li>
+<a href="conditional-late.html">Conditional LATE</a>:
+binary-instrument estimation from supplied nuisance predictions,
+components and diagnostics. The companion <a href="conditional-late-inference.html">inference article</a> explains
+paired frozen covariance and ratio confidence sets.</li>
 <li>
 <a href="notation-and-conventions.html">Notation and
 conventions</a>: arguments, paper symbols, and uncertainty scales. Open

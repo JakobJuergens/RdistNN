@@ -35,8 +35,10 @@ diagnostics(object, candidates = "default", ...)
   A fitted estimator object, currently an object returned by
   [`np_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_dnn.md),
   [`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md),
+  [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md),
+  [`affine_ratio_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_dnn.md)
   or
-  [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md).
+  [`clate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/clate_dnn.md).
 
 - candidates:
 

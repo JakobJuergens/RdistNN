@@ -2,13 +2,58 @@
 
 ## RdistNN (development version)
 
+- Reworked the README for package users, with current installation
+  guidance, executable CATE, regression and CLATE examples, and shared
+  reporting and plotting documentation. Updated the website reference
+  descriptions and added contributor navigation.
+
+- Aligned CLATE and generic affine ratios with exact/asymptotic
+  single-scale DNN, general `k`, normalization, tuning grids and
+  candidate views. Prediction and diagnostics retain the chosen weights
+  and frozen paired signals.
+
+- Standardized ratio summaries on the CATE coefficient-table schema,
+  retaining component uncertainty and target statuses in separate
+  fields. Added CATE-style estimate, weight, instrument-overlap,
+  paired-score influence, tuning and dashboard plots, including
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) and
+  [`ggplot2::autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+  dispatch. Shared builders and rank-weight construction support both
+  methods; TDNN remains separate NP-regression functionality.
+
+- Added experimental conditional LATE from supplied nuisance predictions
+  with
+  [`clate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/clate_dnn.md),
+  [`iv_augmented_signals()`](https://JakobJuergens.github.io/RdistNN/reference/iv_augmented_signals.md)
+  and the generic
+  [`affine_ratio_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_dnn.md).
+  Both input formats retain paired components, covariance scales and
+  explicit zero/negative-denominator statuses. Reporting, prediction and
+  diagnostics reuse frozen signals; nuisance learning remains external.
+
+- Added
+  [`ratio_confidence_set()`](https://JakobJuergens.github.io/RdistNN/reference/ratio_confidence_set.md)
+  with bounded, singleton, ray, half-line, all-real, empty and
+  unresolved numerical results, plus a bounded
+  [`clate_demo_data()`](https://JakobJuergens.github.io/RdistNN/reference/clate_demo_data.md)
+  benchmark and internal ridge-series reference adapter. New guides
+  explain the estimand, covariance and pointwise inference scope.
+
+- Added independent subset/deletion references, signal identities,
+  interface and validation tests, R/compiled parity, ridge refits and
+  confidence-set geometry/rescaling tests. Hardened single-observation
+  rank shapes, empty CLATE/ratio inputs and near-one confidence
+  quantiles.
+
 - Replaced the superseded CATE and IV paper launchers with the current
   affine simulation and SIPP workflows. The bundle pins unchanged paper
   scientific source, all four accepted production configurations, and
   compressed evidence.
+
 - Added portable evidence rendering and validation runs, Linux measured
   production launches with resume checks, and SIPP full-fit/OOB/held-out
   replication with frozen-score and localization diagnostics.
+
 - Updated the replication article and package guidance to distinguish
   the current study from general simulation APIs. Accepted evidence
   regenerates all 21 manuscript tables and six PDF figures without
@@ -352,8 +397,8 @@ aliases for the old names are kept.
   [`plot_data_diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/plot_data_diagnostics.md)
   returns the per-target diagnostics frame with an integer `target_id`
   aligned with the other extractors.
-- Design and phase plan:
-  `markdown_notes/archive/completed_plans_2026-07-09/plotting_layer_implementation_plan.md`.
+- Maintainer architecture:
+  `markdown_notes/design/13_estimator_and_result_architecture.md`.
 
 ### Fitted objects store evaluation points
 
@@ -365,10 +410,8 @@ aliases for the old names are kept.
   [`np_tdnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_tdnn.md)
   result objects now include `x0`, the `m x p` matrix of evaluation
   points, with covariate column names propagated from the training data
-  when the targets carry none. This is Phase 0 of the plotting layer
-  (`markdown_notes/archive/completed_plans_2026-07-09/plotting_layer_implementation_plan.md`):
-  profile plots need the target coordinates, which were previously not
-  stored.
+  when the targets carry none. Profile plots need the target
+  coordinates, which were previously not stored.
 
 ### Breaking change: default kernel order `s`
 

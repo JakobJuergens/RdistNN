@@ -55,6 +55,17 @@ plot_tuning(
   ...
 )
 
+# S3 method for class 'affine_ratio_result'
+plot_tuning(
+  object,
+  tuning = tuning_dnn_paper(),
+  targets = NULL,
+  level = 0.95,
+  se = TRUE,
+  candidates = "all",
+  ...
+)
+
 # S3 method for class 'plqr_result'
 plot_tuning(
   object,
@@ -71,7 +82,8 @@ plot_tuning(
 
 - object:
 
-  A fitted `np_result`, `cate_result`, or `plqr_result`.
+  A fitted `np_result`, `cate_result`, `affine_ratio_result` (including
+  `clate_result`), or `plqr_result`.
 
 - tuning:
 

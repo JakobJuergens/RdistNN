@@ -8,8 +8,8 @@
 
 ## CATE and regression — estimators and weights
 
-The focus of the initial public release: conditional average treatment
-effects, nonparametric regression, and their DNN weight builders.
+The main estimation workflows: conditional average treatment effects,
+nonparametric regression, and their DNN weight builders.
 
 - [`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md)
   : CATE via DNN rank weights (orthogonalized local averaging)
@@ -103,21 +103,24 @@ visualization and diagnostics articles.
 - [`plot_estimates()`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
   [`autoplot.np_result()`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
   [`autoplot.cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
+  [`autoplot.affine_ratio_result()`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
   [`autoplot.plqr_result()`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
   [`autoplot.gmm_result()`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
   [`plot(`*`<np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
   [`plot(`*`<cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
+  [`plot(`*`<affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
   [`plot(`*`<plqr_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
   [`plot(`*`<gmm_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
   : Plot estimates with confidence bounds across target points
 - [`plot_weights()`](https://JakobJuergens.github.io/RdistNN/reference/plot_weights.md)
   : Plot DNN weight profiles, concentration, and effective kernels
 - [`plot_overlap()`](https://JakobJuergens.github.io/RdistNN/reference/plot_overlap.md)
-  : Plot local overlap for CATE fits
+  : Plot local overlap for CATE and CLATE fits
 - [`plot_dashboard()`](https://JakobJuergens.github.io/RdistNN/reference/plot_dashboard.md)
   : Compose a diagnostics dashboard for a fitted object
 - [`plot_influence()`](https://JakobJuergens.github.io/RdistNN/reference/plot_influence.md)
-  : Plot per-observation contributions to a CATE estimate
+  : Plot per-observation contributions to a CATE or CLATE estimating
+  equation
 - [`plot_tuning()`](https://JakobJuergens.github.io/RdistNN/reference/plot_tuning.md)
   : Plot estimate sensitivity to the kernel order
 - [`autoplot.dnn_diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/autoplot.dnn_diagnostics.md)
@@ -178,6 +181,36 @@ uses the separate study-specific replication bundle.
   : List available CATE simulation methods
 - [`summarise_sim_results()`](https://JakobJuergens.github.io/RdistNN/reference/summarise_sim_results.md)
   : Summarise raw per-replicate CATE simulation results
+
+## Experimental — conditional LATE
+
+Supplied-prediction binary-IV signals and paired ratios with exact or
+asymptotic DNN weights. Shared reporting, candidate views and plots,
+with frozen-score covariance, diagnostics and pointwise ratio
+confidence-set inversion.
+
+- [`clate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/clate_dnn.md)
+  : Conditional LATE from externally supplied nuisance predictions
+- [`iv_augmented_signals()`](https://JakobJuergens.github.io/RdistNN/reference/iv_augmented_signals.md)
+  : Construct augmented reduced-form and first-stage signals
+- [`affine_ratio_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_dnn.md)
+  : DNN inference for a ratio of two supplied signal averages
+- [`coef(`*`<affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_result.md)
+  [`vcov(`*`<affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_result.md)
+  [`confint(`*`<affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_result.md)
+  [`summary(`*`<affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_result.md)
+  [`print(`*`<affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_result.md)
+  [`print(`*`<summary.affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_result.md)
+  [`predict(`*`<affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_result.md)
+  : Reporting and prediction for paired affine-ratio results
+- [`diagnostics(`*`<affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/clate_diagnostics.md)
+  [`diagnostics(`*`<clate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/clate_diagnostics.md)
+  : Paired component and first-stage diagnostics
+- [`clate_demo_data()`](https://JakobJuergens.github.io/RdistNN/reference/clate_demo_data.md)
+  : Bounded endogenous-treatment data for conditional LATE examples
+- [`ratio_confidence_set()`](https://JakobJuergens.github.io/RdistNN/reference/ratio_confidence_set.md)
+  [`print(`*`<ratio_confidence_sets>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/ratio_confidence_set.md)
+  : Confidence sets for a ratio of paired component estimates
 
 ## Experimental — PLQR
 

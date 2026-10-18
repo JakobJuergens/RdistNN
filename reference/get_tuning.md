@@ -32,8 +32,8 @@ get_tuning("paper_undersmooth")
 #>     list(s = s, meta = list(lambda = as.numeric(lambda), formula = "lambda * n^((kx + 1)/(kx + 2))", 
 #>         rounding = rounding))
 #> }
-#> <bytecode: 0x5644c037ae00>
-#> <environment: 0x5644c0378508>
+#> <bytecode: 0x5631060b7198>
+#> <environment: 0x5631060b4c58>
 #> 
 #> $eval_grid
 #> function (n, kx, k, se, jackknife, ctx = NULL) 
@@ -43,8 +43,8 @@ get_tuning("paper_undersmooth")
 #>     data.frame(lambda = as.numeric(lambda_grid), s = as.integer(s_vec), 
 #>         stringsAsFactors = FALSE)
 #> }
-#> <bytecode: 0x5644c037b618>
-#> <environment: 0x5644c0378508>
+#> <bytecode: 0x5631060b79e8>
+#> <environment: 0x5631060b4c58>
 #> 
 #> $setup
 #> NULL

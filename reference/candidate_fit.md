@@ -22,6 +22,9 @@ candidate_fit(object, candidate, ...)
 # S3 method for class 'cate_result'
 candidate_fit(object, candidate, ...)
 
+# S3 method for class 'affine_ratio_result'
+candidate_fit(object, candidate, ...)
+
 # S3 method for class 'plqr_result'
 candidate_fit(object, candidate, ...)
 
@@ -36,6 +39,9 @@ candidate_fits(object, candidates = "all", ...)
 # S3 method for class 'cate_result'
 candidate_fits(object, candidates = "all", ...)
 
+# S3 method for class 'affine_ratio_result'
+candidate_fits(object, candidates = "all", ...)
+
 # S3 method for class 'plqr_result'
 candidate_fits(object, candidates = "all", ...)
 ```
@@ -47,6 +53,9 @@ candidate_fits(object, candidates = "all", ...)
   A grid fit returned by
   [`np_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_dnn.md),
   [`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md),
+  or
+  [`clate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/clate_dnn.md),
+  [`affine_ratio_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_dnn.md)
   or
   [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md)
   with `tuning_mode = "grid"`.
@@ -67,7 +76,9 @@ candidate_fits(object, candidates = "all", ...)
 
 ## Value
 
-A scalar-style `np_result`, `cate_result`, or `plqr_result` view.
+A scalar-style view with the same class as the parent. Affine-ratio
+views rebuild paired components and covariance from retained signals and
+frozen ranks; nuisance models and geometry are never refitted.
 
 A named list of scalar-style candidate views.
 

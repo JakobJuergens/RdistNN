@@ -7,10 +7,11 @@ or data frames, including tibbles through the data-frame interface.
 Inputs must be finite and complete; choose covariate columns explicitly
 and supply one of `x0` (one target) or `X0` (one target per row).
 
-PLQR and local IV-GMM are experimental. Their reference material is
-available for research use, but they are outside the supported workflow
-focus of this release. PLQR evaluates moments at supplied coefficients;
-it does not solve for target-specific coefficients.
+Conditional LATE, PLQR and local IV-GMM are experimental. Their
+reference material is available for research use, but they are outside
+the supported workflow focus of this release. PLQR evaluates moments at
+supplied coefficients; it does not solve for target-specific
+coefficients.
 
 ## Conditional average treatment effects
 
@@ -269,6 +270,12 @@ as.vector(crossprod(wt$W, fit_cate$psi))
 
 ## Further reading
 
+- [Conditional
+  LATE](https://JakobJuergens.github.io/RdistNN/articles/conditional-late.md):
+  binary-instrument estimation from supplied nuisance predictions,
+  components and diagnostics. The companion [inference
+  article](https://JakobJuergens.github.io/RdistNN/articles/conditional-late-inference.md)
+  explains paired frozen covariance and ratio confidence sets.
 - [Notation and
   conventions](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md):
   arguments, paper symbols, and uncertainty scales. Open locally with

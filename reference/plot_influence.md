@@ -1,4 +1,4 @@
-# Plot per-observation contributions to a CATE estimate
+# Plot per-observation contributions to a CATE or CLATE estimating equation
 
 For a target `j`, each observation contributes
 `w_ij (psi_i - tau_hat_j)` to the localized estimating equation; large
@@ -23,7 +23,8 @@ plot_influence(
 
 - object:
 
-  A `cate_result` with the weight matrix `W` stored (the default).
+  A `cate_result` or `clate_result` with the weight matrix `W` stored
+  (the default).
 
 - targets:
 
@@ -51,7 +52,10 @@ A ggplot object.
 ## Details
 
 The pseudo-outcome is taken from the fit; supply `pseudo_outcome` for
-fits that do not store it.
+fits that do not store it. For CLATE the contribution is w_ij (phi_Yi -
+theta_j phi_Di), using both retained signals at the target's fitted
+ratio. These are weighted score residuals, not delete-one pseudo-values
+or estimated individual effects.
 
 ## Examples
 

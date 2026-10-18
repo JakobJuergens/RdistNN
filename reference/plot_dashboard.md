@@ -2,13 +2,14 @@
 
 A patchwork composition of the estimate panel with the weight and
 overlap diagnostics, annotated with the fit's metadata (`n`, `m`, `k`,
-`s` with provenance, distance, and jackknife type). CATE dashboards use
-estimates, overlap mass, local propensity, and cumulative weight share;
-nonparametric-regression dashboards use estimates, the diagnostics
-facets, and the weight decay and concentration views. Panels whose
-inputs are unavailable are substituted (the diagnostics facets take the
-place of a missing overlap panel) or dropped rather than failing the
-dashboard.
+`s` with provenance, distance, and jackknife type). CATE and CLATE
+dashboards use estimates, overlap mass, local propensity, and cumulative
+weight share; CLATE overlap describes the instrument. Stored tuning
+grids add a sensitivity panel. nonparametric-regression dashboards use
+estimates, the diagnostics facets, and the weight decay and
+concentration views. Panels whose inputs are unavailable are substituted
+(the diagnostics facets take the place of a missing overlap panel) or
+dropped rather than failing the dashboard.
 
 ## Usage
 
@@ -21,6 +22,9 @@ plot_dashboard(object, ...)
 # S3 method for class 'cate_result'
 plot_dashboard(object, ...)
 
+# S3 method for class 'clate_result'
+plot_dashboard(object, ...)
+
 # S3 method for class 'np_result'
 plot_dashboard(object, ...)
 ```
@@ -29,7 +33,7 @@ plot_dashboard(object, ...)
 
 - object:
 
-  A fitted result object (`cate_result` or `np_result`).
+  A fitted result object (`cate_result`, `clate_result` or `np_result`).
 
 - ...:
 

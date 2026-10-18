@@ -59,6 +59,29 @@ Rscript tools/ci/check_pkgdown_reference_coverage.R
 Rscript tools/ci/check_generated_file_drift.R
 ```
 
+## Maintainer reference
+
+The [design
+index](https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/README.md)
+routes interface, validation, numerical and engineering contracts. The
+[result
+architecture](https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/13_estimator_and_result_architecture.md)
+explains shared generic dispatch and method-specific adapters; the
+[paired-ratio
+contract](https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/17_clate_ratio_inference.md)
+records CLATE signal, covariance and numerical-status requirements.
+[Package
+scope](https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/rdistnn_roadmap.md)
+distinguishes implemented capabilities from extensions requiring further
+justification.
+
+Public maintainer documentation should explain current decisions,
+scientific limits and reproducible development procedures. Keep personal
+source-library configuration, session instructions, completed task lists
+and local execution receipts in private working records. Local
+`archives/` is ignored and excluded from R source packages; check that
+private records are untracked before committing.
+
 ## Reporting problems
 
 Open an [issue](https://github.com/JakobJuergens/RdistNN/issues) with a
