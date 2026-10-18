@@ -893,9 +893,13 @@
     ord <- order(r)
     for (component in seq_len(q)) {
       sig_by_rank <- sig[ord, component]
+      active <- .jackknife_active_ranks(tab_jk)
+      level <- .jackknife_signal_level(matrix(sig_by_rank[active], ncol = 1L))
+      sig_by_rank[!active] <- 0
+      sig_by_rank[active] <- sig_by_rank[active] - level
       left_sum <- cumsum(sig_by_rank * tab_left)
       right_sum <- rev(cumsum(rev(sig_by_rank * tab_right)))
-      loo_j <- c(0, left_sum)[r] + c(right_sum, 0)[r + 1L]
+      loo_j <- (c(0, left_sum)[r] + c(right_sum, 0)[r + 1L]) + level * sum(tab_jk)
 
       if (q == 1L) {
         loo[, j] <- loo_j
@@ -908,7 +912,7 @@
   loo
 }
 
-.dnn_loo_loop <- function(sig, ranks, rw) {
+.dnn_loo_loop <- function(sig, ranks, rw, center = FALSE) {
   if (!is_rank_weight(rw)) {
     .abort_bad_arg("rw", "must be a rank_weight", quoted = FALSE)
   }
@@ -922,14 +926,8 @@
   sig <- .dnn_signal_matrix(sig, n = n, arg = "sig")
   q <- ncol(sig)
 
-  if (q == 1L) {
-    loo <- matrix(NA_real_, nrow = n, ncol = m)
-  } else {
-    loo <- array(NA_real_, dim = c(n, q, m))
-  }
-
   idx_all <- seq_len(n)
-  for (i in idx_all) {
+  weight_fun <- function(i) {
     keep <- (idx_all != i)
 
     r_i <- matrix(ranks[i, ], nrow = n - 1L, ncol = m, byrow = TRUE)
@@ -937,16 +935,9 @@
     rank_matrix_i <- rank_matrix_i - (rank_matrix_i > r_i)
     if (!is.integer(rank_matrix_i)) storage.mode(rank_matrix_i) <- "integer"
 
-    W_i <- rank_weight_eval_batch(rw, rank_matrix_i)
-    est_i <- crossprod(sig[keep, , drop = FALSE], W_i)
-    if (q == 1L) {
-      loo[i, ] <- as.numeric(est_i[1L, ])
-    } else {
-      loo[i, , ] <- est_i
-    }
+    rank_weight_eval_batch(rw, rank_matrix_i)
   }
-
-  loo
+  .jackknife_recomputed_centered(sig, weight_fun, restore = !center)
 }
 
 # Full delete-1 jackknife covariance of a vector estimate per target.
@@ -971,7 +962,8 @@
   list(vcov = vcov, se = se)
 }
 
-# Raw delete-1 leave-one-out estimates for a (possibly multi-component)
+# Numerically shifted delete-1 estimates for covariance calculations on a
+# (possibly multi-component)
 # signal at every target: n x m matrix for one component, n x q x m array
 # otherwise. Shared by the componentwise-SE and full-covariance routes.
 .dnn_jackknife_loo_array <- function(
@@ -1019,38 +1011,17 @@
 
     tab_jk <- .rank_weight_table(rw, n - 1L)
     loo <- if (is.null(tab_jk)) {
-      .dnn_loo_loop(sig, ranks_full, rw)
+      .dnn_loo_loop(sig, ranks_full, rw, center = TRUE)
     } else {
       tab_full <- .rank_weight_table(rw, n)
-      .dnn_loo_prefix(sig, ranks_full, tab_jk, tab_full = tab_full)
+      .dnn_loo_centered(sig, ranks_full, tab_jk, tab_full = tab_full)$loo
     }
     return(loo)
   }
 
-  if (q == 1L) {
-    loo <- matrix(NA_real_, nrow = n, ncol = m)
-    for (i in seq_len(n)) {
-      keep <- (seq_len(n) != i)
-      wt_i <- weights_dnn(
-        X = x_mat[keep, , drop = FALSE],
-        X0 = x0_mat,
-        distance = distance,
-        k = k,
-        s = s,
-        method = method,
-        normalize = normalize,
-        ctx = ctx,
-        return = "W"
-      )
-      loo[i, ] <- as.numeric(crossprod(sig[keep, 1L], wt_i$W))
-    }
-    return(loo)
-  }
-
-  loo <- array(NA_real_, dim = c(n, q, m))
-  for (i in seq_len(n)) {
+  weight_fun <- function(i) {
     keep <- (seq_len(n) != i)
-    wt_i <- weights_dnn(
+    weights_dnn(
       X = x_mat[keep, , drop = FALSE],
       X0 = x0_mat,
       distance = distance,
@@ -1060,10 +1031,9 @@
       normalize = normalize,
       ctx = ctx,
       return = "W"
-    )
-    loo[i, , ] <- crossprod(sig[keep, , drop = FALSE], wt_i$W)
+    )$W
   }
-  loo
+  .jackknife_recomputed_centered(sig, weight_fun)
 }
 
 .dnn_jackknife_se_loo_matrix <- function(

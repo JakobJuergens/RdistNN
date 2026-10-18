@@ -13,6 +13,7 @@ the first place to look, then the relevant integration or numerical suite.
 | --- | --- |
 | Component contracts | `test-api-*`, `test-distance-*`, `test-order-*`, `test-score-*`, `test-utils-validate.R` |
 | Numerical references and optimized paths | `test-rank-weight-*`, `test-jackknife-rank-*`, `test-dnn-scalar-reference.R`, `test-dnn-jackknife-prefix.R`, `test-tdnn-*`, `test-compiled-fallback-parity.R`, `test-errors-fastpaths.R` |
+| Support-aware jackknife centering across estimators, compiled/R and fast/naive paths | `test-jackknife-support-centering.R` |
 | CATE and nonparametric regression | `test-user-cate-*`, `test-user-np-dnn*`, `test-user-tdnn-np*`, `test-demo-data-npr.R` |
 | Experimental conditional LATE | `test-clate-*`, `test-user-clate-*`, `test-user-affine-ratio-*`, `test-weights-single-row.R` |
 | Tuning and stored candidate views | `test-api-tuning.R`, `test-user-dnn-tuning.R`, `test-tuning-*`, `test-candidate-fit.R`, `test-user-*-tuning-grid.R` |
@@ -34,6 +35,7 @@ PLQR score matrix is in `test-user-plqr-score-matrix.R`.
 ```r
 devtools::test(filter = "^sim-cate-summary$")
 devtools::test(filter = "^user-dnn-gmm-validation$")
+devtools::test(filter = "^jackknife-support-centering$")
 ```
 
 Select a complete family when a change crosses contracts:
@@ -53,6 +55,13 @@ also runs these tests against the installed package; see
 [RELEASING.md](../RELEASING.md).
 
 ## Helpers and optional tests
+
+`test-jackknife-support-centering.R` covers opposite-sign zero-weight outliers,
+extreme unused values, real local variation, target-specific deletion support,
+the boundary rank that gains weight after deletion, signed TDNN weights and
+asymptotic tails with both normalization settings. Its analytical variance-9
+fixture is also enforced in the Stata companion. Both packages retain their
+explicit deletion algorithms for parity comparisons and fallback use.
 
 Shared fixtures and reference calculations live in domain-specific
 `helper-*.R` files. Fixtures used only by one suite stay beside its tests.

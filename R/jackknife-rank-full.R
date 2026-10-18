@@ -40,6 +40,10 @@
 
     for (qq in seq_len(q)) {
       z <- PHI[ord, qq]          # signal in rank order (length n)
+      active <- .jackknife_active_ranks(wnm1)
+      level <- .jackknife_signal_level(matrix(z[active], ncol = 1L))
+      z[!active] <- 0
+      z[active] <- z[active] - level
 
       # Forward prefix  P[r] for r = 1..n:
       #   P[1] = 0
@@ -52,7 +56,7 @@
       S <- rev(c(0, cumsum(rev(wnm1 * z[-1]))))  # length n
 
       # Vectorised fill: all n deletions in one index operation
-      loo_arr[, qq, t] <- P[r_col] + S[r_col]
+      loo_arr[, qq, t] <- (P[r_col] + S[r_col]) + level * sum(wnm1)
     }
   }
 

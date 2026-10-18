@@ -78,6 +78,8 @@ Rcpp::List rustat_jackknife_rank_full(const IntegerMatrix &ranks, const NumericM
   std::vector<int> ord(n);
   std::vector<double> P(n); // P[r0]: prefix sum for 0-based rank r0
   std::vector<double> S(n); // S[r0]: shifted suffix sum for 0-based rank r0
+  std::vector<double> z(n);
+  double mass = std::accumulate(wnm1.begin(), wnm1.end(), 0.0);
 
   for (int t = 0; t < m; ++t) {
 
@@ -87,6 +89,22 @@ Rcpp::List rustat_jackknife_rank_full(const IntegerMatrix &ranks, const NumericM
     std::sort(ord.begin(), ord.end(), [&](int a, int b) { return ranks(a, t) < ranks(b, t); });
 
     for (int qq = 0; qq < q; ++qq) {
+      // The union of deletion support contains both ends of each nonzero
+      // table entry. Ignore unused extremes before choosing or subtracting a
+      // reference. Signed tables (TDNN) require nonzero, not positive, support.
+      double lo = R_PosInf, hi = R_NegInf;
+      for (int a = 0; a < n; ++a) {
+        bool used = (a < n - 1 && wnm1[a] != 0) || (a > 0 && wnm1[a - 1] != 0);
+        if (used) {
+          lo = std::min(lo, PHI(ord[a], qq));
+          hi = std::max(hi, PHI(ord[a], qq));
+        }
+      }
+      double level = lo == R_PosInf ? 0.0 : (lo > 0 ? lo : (hi < 0 ? hi : 0.0));
+      for (int a = 0; a < n; ++a) {
+        bool used = (a < n - 1 && wnm1[a] != 0) || (a > 0 && wnm1[a - 1] != 0);
+        z[a] = used ? PHI(ord[a], qq) - level : 0.0;
+      }
 
       // ---- forward prefix pass ----------------------------------------------
       // P[r0] = sum_{j=0}^{r0-1} wnm1[j] * z[j]   (0-based j, wnm1 size n-1)
@@ -97,7 +115,7 @@ Rcpp::List rustat_jackknife_rank_full(const IntegerMatrix &ranks, const NumericM
       // (P[n-1] is the last needed value; wnm1[r0-1] is valid for r0 <= n-1.)
       P[0] = 0.0;
       for (int r0 = 1; r0 < n; ++r0)
-        P[r0] = P[r0 - 1] + wnm1[r0 - 1] * PHI(ord[r0 - 1], qq);
+        P[r0] = P[r0 - 1] + wnm1[r0 - 1] * z[r0 - 1];
 
       // ---- backward shifted-suffix pass -------------------------------------
       // S[r0] = sum_{j=r0+1}^{n-1} wnm1[j-1] * z[j]
@@ -108,7 +126,7 @@ Rcpp::List rustat_jackknife_rank_full(const IntegerMatrix &ranks, const NumericM
       // (wnm1[r0] is valid for r0 <= n-2.)
       S[n - 1] = 0.0;
       for (int r0 = n - 2; r0 >= 0; --r0)
-        S[r0] = wnm1[r0] * PHI(ord[r0 + 1], qq) + S[r0 + 1];
+        S[r0] = wnm1[r0] * z[r0 + 1] + S[r0 + 1];
 
       // ---- fill theta_loo ---------------------------------------------------
       // For obs i with 0-based rank ri = ranks(i,t) - 1:
@@ -118,7 +136,7 @@ Rcpp::List rustat_jackknife_rank_full(const IntegerMatrix &ranks, const NumericM
       R_xlen_t offset = (R_xlen_t)n * qq + (R_xlen_t)n * q * t;
       for (int i = 0; i < n; ++i) {
         int ri = ranks(i, t) - 1; // 0-based rank
-        loo[offset + i] = P[ri] + S[ri];
+        loo[offset + i] = (P[ri] + S[ri]) + level * mass;
       }
       (void)base; // suppress unused-variable warning
     }

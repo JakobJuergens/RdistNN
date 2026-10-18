@@ -17,6 +17,19 @@ Reuse the distance/ranking, rank-weight, tuning, validation and jackknife layers
 Compiled routines implement the same numerical contract as their R fallbacks;
 they do not define another API. Keep user-facing validation at the R boundary.
 
+Jackknife covariance paths subtract a common numerical reference per target
+and signal before summing deletions. Choose that reference only from the union
+of observations with nonzero weight in any deletion. A nonzero entry at rank
+`r` in the `n-1` table can use original ranks `r` and `r+1`; support must include
+both. Ignore unused observations before subtraction, including extreme values
+that could overflow despite their zero weights. Signed TDNN tables use nonzero
+support. Asymptotic tables retain all represented nonzero weights without an
+extra cutoff or normalization. Covariance calculations keep the shifted values;
+requested raw deletion estimates restore the common weighted offset. Explicit
+deletion algorithms remain available and use the same centering rule. When a
+reference path recomputes geometry, determine its union from the actual deletion
+weights rather than imposing frozen full-sample ranks.
+
 ## Distinct result classes and common interfaces
 
 | Result | Main quantity | Uncertainty and interpretation |

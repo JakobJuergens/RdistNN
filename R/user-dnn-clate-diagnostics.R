@@ -54,11 +54,11 @@ diagnostics.affine_ratio_result <- function(object, candidates = "default", ...)
   }
   top1 <- top5 <- rep(NA_real_, m)
   if (!is.null(object$component_vcov) && model$s < nrow(model$x_mat)) {
-    loo <- .dnn_loo_prefix(
+    loo <- .dnn_loo_centered(
       model$signal, ranks,
       .rank_weight_table(rw, nrow(model$x_mat) - 1L),
       tab_full = .rank_weight_table(rw, nrow(model$x_mat))
-    )
+    )$loo
     for (j in seq_len(m)) {
       if (!is.finite(object$theta[j])) next
       centered <- sweep(loo[, , j], 2L, colMeans(loo[, , j]), "-")

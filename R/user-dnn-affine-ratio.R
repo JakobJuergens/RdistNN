@@ -191,15 +191,13 @@ affine_ratio_dnn <- function(
   loo <- NULL
   covariance <- list(se = NULL, component_vcov = NULL, theta_vcov = NULL, theta_omega = NULL)
   if (active) {
-    loo <- if (jackknife == "fast") {
-      .dnn_loo_prefix(signal, ranks, .rank_weight_table(rw, n - 1L),
-                      tab_full = .rank_weight_table(rw, n))
-    } else {
-      .dnn_loo_loop(signal, ranks, rw)
-    }
+    jk <- .dnn_loo_centered(signal, ranks, .rank_weight_table(rw, n - 1L),
+      tab_full = .rank_weight_table(rw, n), rw = if (jackknife == "fast") NULL else rw)
+    loo <- jk$loo
     covariance <- .affine_ratio_covariance(loo, components, theta, neff)
     status$covariance_status <- covariance$status
     status$wald_available <- is.finite(theta) & is.finite(covariance$se) & covariance$se > 0
+    loo <- .dnn_restore_loo(loo, jk$offset)
   }
   c(list(theta = as.numeric(theta)), covariance[c("se", "component_vcov", "theta_vcov", "theta_omega")],
     list(components = components, neff = neff, status = status, deletions = loo))

@@ -1,5 +1,9 @@
 # RdistNN (development version)
 
+- Stabilized frozen-score jackknife calculations with target-specific,
+  support-aware numerical centering across compiled, R, fast and explicit
+  deletion paths. Zero-weight outliers no longer manufacture variance in
+  locally constant signals. Exact and asymptotic weight rules are unchanged.
 - Reworked the README for package users, with current installation guidance,
   executable CATE, regression and CLATE examples, and shared reporting and
   plotting documentation. Updated the website reference descriptions and

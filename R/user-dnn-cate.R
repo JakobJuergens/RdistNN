@@ -447,14 +447,14 @@ cate_dnn <- function(
     se <- if (identical(jackknife, "fast")) {
       spec <- .cate_dnn_rank_weight_spec(method = method, k = k, s = s, normalize = normalize)
       loo <- if (is.null(tab_jk)) {
-        .dnn_loo_loop(psi, ranks, spec)
+        .dnn_loo_loop(psi, ranks, spec, center = TRUE)
       } else {
-        .dnn_loo_prefix(
+        .dnn_loo_centered(
           psi,
           ranks,
           tab_jk,
           tab_full = attr(tab_jk, "tab_full", exact = TRUE)
-        )
+        )$loo
       }
       as.numeric(.dnn_jackknife_se_from_loo(
         loo = loo,

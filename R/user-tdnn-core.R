@@ -112,73 +112,21 @@
                               dim = as.integer(dim), normalize = normalize)
     }
 
-    if (q == 1L) {
-      loo <- matrix(NA_real_, nrow = n, ncol = m)
-    } else {
-      loo <- array(NA_real_, dim = c(n, q, m))
-    }
-
-    idx_all <- seq_len(n)
-    for (i in idx_all) {
-      keep <- (idx_all != i)
-
-      # Decrement ranks of observations that were ranked below observation i
-      r_i          <- matrix(ranks_full[i, ], nrow = n - 1L, ncol = m, byrow = TRUE)
-      rank_matrix_i <- ranks_full[keep, , drop = FALSE]
-      rank_matrix_i <- rank_matrix_i - (rank_matrix_i > r_i)
-      if (!is.integer(rank_matrix_i)) storage.mode(rank_matrix_i) <- "integer"
-
-      W_i   <- rank_weight_eval_batch(rw, rank_matrix_i)
-      est_i <- crossprod(sig[keep, , drop = FALSE], W_i)
-      if (q == 1L) {
-        loo[i, ] <- as.numeric(est_i[1L, ])
-      } else {
-        loo[i, , ] <- est_i
-      }
-    }
+    loo <- .dnn_loo_centered(sig, ranks_full, .rank_weight_table(rw, n - 1L),
+                              rw = rw)$loo
 
     return(.dnn_jackknife_se_from_loo(loo = loo, q = q, n = n, m = m))
   }
 
-  # ---- loo fallback: recompute weights from scratch for each deletion ------
-  if (q == 1L) {
-    loo <- matrix(NA_real_, nrow = n, ncol = m)
-    for (i in seq_len(n)) {
-      keep  <- (seq_len(n) != i)
-      wt_i  <- weights_tdnn(
-        X         = x_mat[keep, , drop = FALSE],
-        X0        = x0_mat,
-        distance  = distance,
-        s1        = s1,
-        s2        = s2,
-        dim       = dim,
-        method    = method,
-        normalize = normalize,
-        ctx       = ctx,
-        return    = "W"
-      )
-      loo[i, ] <- as.numeric(crossprod(sig[keep, 1L], wt_i$W))
-    }
-    return(.dnn_jackknife_se_from_loo(loo = loo, q = q, n = n, m = m))
+  # Recompute each deletion's weights, including its sample-dependent metric.
+  weight_fun <- function(i) {
+    weights_tdnn(
+      X = x_mat[-i, , drop = FALSE], X0 = x0_mat, distance = distance,
+      s1 = s1, s2 = s2, dim = dim, method = method,
+      normalize = normalize, ctx = ctx, return = "W"
+    )$W
   }
-
-  loo <- array(NA_real_, dim = c(n, q, m))
-  for (i in seq_len(n)) {
-    keep  <- (seq_len(n) != i)
-    wt_i  <- weights_tdnn(
-      X         = x_mat[keep, , drop = FALSE],
-      X0        = x0_mat,
-      distance  = distance,
-      s1        = s1,
-      s2        = s2,
-      dim       = dim,
-      method    = method,
-      normalize = normalize,
-      ctx       = ctx,
-      return    = "W"
-    )
-    loo[i, , ] <- crossprod(sig[keep, , drop = FALSE], wt_i$W)
-  }
+  loo <- .jackknife_recomputed_centered(sig, weight_fun)
   .dnn_jackknife_se_from_loo(loo = loo, q = q, n = n, m = m)
 }
 
@@ -260,11 +208,7 @@
     wnm1 <- tdnn_rank_table_asymp(n - 1L,  s1i, s2i, dimi, normalize = normalize)
   }
 
-  res <- jackknife_rank_full(ranks_full, sig, wn, wnm1)
-
-  # theta_loo has dim c(n, q, m); squeeze q-dimension for q == 1
-  loo <- res$theta_loo
-  if (q == 1L) loo <- matrix(loo, n, m)
+  loo <- .dnn_loo_centered(sig, ranks_full, wnm1, tab_full = wn)$loo
 
   .dnn_jackknife_se_from_loo(loo = loo, q = q, n = n, m = m)
 }
