@@ -1,5 +1,9 @@
 # RdistNN (development version)
 
+- Reworked the README for package users, with current installation guidance,
+  executable CATE, regression and CLATE examples, and shared reporting and
+  plotting documentation. Updated the website reference descriptions and
+  added contributor navigation.
 - Aligned CLATE and generic affine ratios with exact/asymptotic single-scale
   DNN, general `k`, normalization, tuning grids and candidate views. Prediction
   and diagnostics retain the chosen weights and frozen paired signals.

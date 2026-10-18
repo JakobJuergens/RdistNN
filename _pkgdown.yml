@@ -9,8 +9,11 @@ redirects:
 navbar:
   structure:
     left:  [home, reference, articles, news]
-    right: [website, github]
+    right: [contributing, website, github]
   components:
+    contributing:
+      text: Contributing
+      href: https://github.com/JakobJuergens/RdistNN/blob/master/CONTRIBUTING.md
     website:
       text: Author
       href: https://jakobjuergens.com/
@@ -49,7 +52,7 @@ reference:
 
   - title: CATE and regression — estimators and weights
     desc: >
-      The focus of the initial public release: conditional average treatment
+      The main estimation workflows: conditional average treatment
       effects, nonparametric regression, and their DNN weight builders.
     contents:
       - cate_dnn
@@ -126,9 +129,10 @@ reference:
 
   - title: Experimental — conditional LATE
     desc: >
-      Supplied-prediction binary-IV signals, paired exact-DNN ratios,
-      frozen-score covariance, reporting and diagnostics. Includes a bounded
-      benchmark and separate pointwise ratio confidence-set inversion.
+      Supplied-prediction binary-IV signals and paired ratios with exact or
+      asymptotic DNN weights. Shared reporting, candidate views and plots,
+      with frozen-score covariance, diagnostics and pointwise ratio
+      confidence-set inversion.
     contents:
       - clate_dnn
       - iv_augmented_signals

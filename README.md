@@ -11,94 +11,98 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 [![test-coverage](https://github.com/JakobJuergens/RdistNN/actions/workflows/test-coverage.yaml/badge.svg)](https://github.com/JakobJuergens/RdistNN/actions/workflows/test-coverage.yaml)
 <!-- badges: end -->
 
-**RdistNN** is an R package for conditional average treatment effects
-(CATE) and nonparametric regression using distributional
-nearest-neighbor (DNN) weights. It provides local estimates, delete-1
-jackknife standard errors, weight and overlap diagnostics, and optional
-ggplot2 visualizations.
+**RdistNN** estimates conditional treatment effects and regression
+functions using distributional nearest-neighbor (DNN) weights. Fit at
+selected covariate profiles, report pointwise estimates and delete-one
+jackknife standard errors, and inspect localization, overlap and
+sensitivity to tuning choices.
 
-The initial public release focuses on `cate_dnn()`, `np_dnn()`, and the
-DNN weights and tuning tools supporting these workflows. Nuisance
-predictions for CATE are supplied by the user. **All PLQR functionality
-is experimental**, including its scores, demo data, inference methods,
-and plotting helpers. Conditional LATE and local IV-GMM are also
-experimental; advanced extensions remain available in the reference
-documentation.
+CATE and nonparametric regression are the main workflows. The
+development version also provides **experimental conditional LATE
+(CLATE)** estimation with the same reporting and plotting interfaces.
+You supply nuisance predictions for the causal estimators; RdistNN
+constructs the adjusted signals and performs the local estimation and
+inference calculations.
 
-The package accompanies [Orthogonal Inference for Conditional
-Z-Estimation without
-Cross-Fitting](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
-See the [documentation](https://JakobJuergens.github.io/RdistNN/) and
-[Jakob Juergens’s website](https://jakobjuergens.com/) for project
-context.
+[Get
+started](https://JakobJuergens.github.io/RdistNN/articles/getting-started.html)
+· [Function
+reference](https://JakobJuergens.github.io/RdistNN/reference/index.html)
+· [CLATE
+guide](https://JakobJuergens.github.io/RdistNN/articles/conditional-late.html)
+· [Report an issue](https://github.com/JakobJuergens/RdistNN/issues)
 
 ## Installation
 
-Install release **0.1.0** from GitHub (R 4.1.0 or newer):
+Install the **development version** from GitHub to use all functionality
+shown below, including CLATE and its shared plotting and tuning
+interfaces:
 
 ``` r
 install.packages("pak")  # once
-pak::pak("JakobJuergens/RdistNN@v0.1.0")
+pak::pak("JakobJuergens/RdistNN")
 ```
 
-The [v0.1.0
-release](https://github.com/JakobJuergens/RdistNN/releases/tag/v0.1.0)
-also provides `RdistNN_0.1.0.tar.gz` with built HTML vignettes and a
-`SHA256SUMS` file. After installing Rcpp, install that source asset
-directly:
+R 4.1.0 or newer, Rcpp and a C++17 toolchain are required. Use Rtools
+matching your R version on Windows, Xcode command line tools on macOS,
+or an R-compatible C++ compiler on Linux. OpenMP is optional; supported
+kernels run serially when it is unavailable. Install `ggplot2` for plots
+and `patchwork` for composed dashboards:
 
 ``` r
-install.packages("Rcpp")  # once
-install.packages(
-  "https://github.com/JakobJuergens/RdistNN/releases/download/v0.1.0/RdistNN_0.1.0.tar.gz",
-  repos = NULL, type = "source"
-)
+install.packages(c("ggplot2", "patchwork"))  # optional
 ```
 
-For the current development version, use
-`pak::pak("JakobJuergens/RdistNN")`.
+For the **tagged release**, use
+`pak::pak("JakobJuergens/RdistNN@v0.1.0")`. [Release
+0.1.0](https://github.com/JakobJuergens/RdistNN/releases/tag/v0.1.0)
+contains the original CATE and regression workflows; it does **not**
+include the recent CLATE functionality. Its release assets include a
+source package with built HTML vignettes and checksums. The online
+documentation describes the development version.
 
-This installs from source and requires a C++17 toolchain and Rcpp. Use
-Rtools matching your R version on Windows, Xcode command line tools on
-macOS, or an R-compatible C++ compiler on Linux. OpenMP is optional;
-supported kernels run serially when R’s toolchain does not supply OpenMP
-flags.
+## Choose a workflow
 
-The online guides are available independently of installation. To
-include local HTML vignettes, use:
+| Goal                                   | Entry point          | Inputs and scope                                                                                    |
+|----------------------------------------|----------------------|-----------------------------------------------------------------------------------------------------|
+| Conditional average treatment effects  | `cate_dnn()`         | Outcome, binary treatment and supplied outcome/propensity predictions, or a supplied pseudo-outcome |
+| Conditional mean regression            | `np_dnn()`           | Outcome and covariates; no nuisance predictions needed                                              |
+| Conditional effects among compliers    | `clate_dnn()`        | Binary instrument and treatment, outcome, and five supplied nuisance predictions; **experimental**  |
+| A ratio of two local conditional means | `affine_ratio_dnn()` | Two aligned signals, with paired covariance; **experimental**                                       |
+| Two-scale regression                   | `np_tdnn()`          | Signed combination of two DNN scales; additional smoothness conditions                              |
 
-``` r
-install.packages("remotes")  # once
-remotes::install_github("JakobJuergens/RdistNN", ref = "v0.1.0", build_vignettes = TRUE)
-vignette("getting-started", package = "RdistNN")
-```
+The estimators accept numeric matrices/vectors or a data frame
+(including a tibble) with explicit column selectors. Use `x0` for one
+reporting profile or `X0` for a matrix of profiles. CATE and CLATE
+support single-scale `method = "exact"` (default) and `method = "asymp"`
+DNN weights. Two-scale TDNN is available for nonparametric regression
+only.
 
 ## Conditional average treatment effects
 
-This example uses simulated data and **oracle nuisance values** to show
-the interface. For an application, replace these columns with your
-estimated conditional outcome means and treatment propensities.
+This example uses simulated data and **oracle nuisance values** to
+illustrate the interface. In an application, replace the oracle columns
+with aligned predictions of the two conditional outcome means and
+treatment propensity. The estimator does not fit these nuisance models.
 
 ``` r
 library(RdistNN)
 
 demo <- cate_demo_data(n = 180, p = 2, design = "hetero", seed = 1)
-df <- demo$data
-df$m1_oracle <- df$m0_oracle + df$tau_oracle
+d <- demo$data
+d$m1_oracle <- d$m0_oracle + d$tau_oracle
 
 fit_cate <- cate_dnn(
-  data = df, x_cols = c("X1", "X2"),
+  data = d, x_cols = c("X1", "X2"),
   y_col = "Y", t_col = "D",
   m0_col = "m0_oracle", m1_col = "m1_oracle", e_col = "e_oracle",
   x0 = c(0, 0), k = 1L, se = TRUE,
-  return = c("W", "psi", "nuisance")
+  return = c("W", "dx", "psi", "nuisance")
 )
 
-summary(fit_cate)
-#> <summary.cate_result>
-#>   targets: 1
-#>          estimate std.error statistic p.value conf.low conf.high
-#> target_1   0.4527    0.2607     1.737 0.08242 -0.05817    0.9636
+summary(fit_cate)$coefficients
+#>           estimate std.error statistic   p.value    conf.low conf.high
+#> target_1 0.4527139 0.2606611  1.736791 0.0824241 -0.05817257 0.9636003
 confint(fit_cate)
 #>             conf.low conf.high
 #> target_1 -0.05817257 0.9636003
@@ -107,28 +111,11 @@ predict(fit_cate, x0 = c(0.2, -0.1), interval = "confidence")
 #> [1,] 0.7890503 0.4451826 1.132918
 ```
 
-The matrix interface accepts an externally constructed pseudo-outcome:
-`cate_dnn(X = X, x0 = x0, pseudo_outcome = psi)`. The [getting-started
+The matrix interface also accepts a previously constructed
+pseudo-outcome: `cate_dnn(X = X, x0 = x0, pseudo_outcome = psi)`. The
+[getting-started
 guide](https://JakobJuergens.github.io/RdistNN/articles/getting-started.html)
-shows both input formats and how to inspect local overlap.
-
-### CATE inference conditions
-
-Neyman orthogonality controls first-order population nuisance drift.
-Valid full-sample nuisance reuse additionally requires the nuisance-rate
-and full-state stability conditions in the paper. `cate_dnn()` computes
-the estimator and jackknife procedure; it cannot establish those
-conditions for an arbitrary learner. Oracle, out-of-fold, and
-full-sample predictions can be supplied, but each inferential
-interpretation needs the corresponding assumptions, including overlap
-and localization bias control.
-
-For nuisance-based AIPW and Robinson scores, supplied propensities must
-be finite and lie in `[0, 1]`; they are clipped to `[clip, 1 - clip]`,
-with `clip = 1e-8` by default. Clipping does not establish overlap.
-Supplied pseudo-outcomes are used unchanged. Reported intervals are
-pointwise, and do not provide simultaneous coverage of an entire
-covariate profile.
+shows both input formats and how to inspect local treatment overlap.
 
 ## Nonparametric regression
 
@@ -143,48 +130,135 @@ fit_np$mu
 #> [1] 0.03318309
 fit_np$se
 #> [1] 0.1328814
-diagnostics(fit_np)[, c("target_id", "n_eff", "weighted_mean_y")]
-#> <dnn_diagnostics>
-#>   targets: 1
-#>   n_eff  : min=17.5249, median=17.5249, max=17.5249
-#>   dist   : available for 0/1 target(s)
+as.data.frame(diagnostics(fit_np))[, c("target_id", "n_eff", "weighted_mean_y")]
+#>          target_id    n_eff weighted_mean_y
+#> target_1  target_1 17.52493      0.03318309
 ```
 
 For matrices, use `np_dnn(X = X, x0 = x0, Y = y)`. Regression results
-expose `mu` and `se` directly; CATE additionally provides `summary()`,
-`confint()`, and `predict()` methods. Both workflows support
-`diagnostics()`, `plot_data_estimates()`, and optional `plot()` methods.
+expose `mu` and `se` directly and support the common diagnostics and
+plotting calls. Two-scale regression uses `np_tdnn()` with explicit
+`s1 < s2` (`s2 < n` for jackknife standard errors). See `?np_tdnn` for
+its signed weights and additional assumptions, and `plot_tdnn_scales()`
+to compare component scales.
 
-Two-scale regression is available through `np_tdnn()` with explicit
-`s1 < s2` (`s2 < n` for jackknife standard errors). Its signed weights
-and additional smoothness requirements are explained in the
-getting-started guide and `?np_tdnn`; `plot_tdnn_scales()` compares the
-component scales.
+## Conditional LATE (experimental)
 
-## Experimental conditional LATE
+With a binary instrument and binary treatment, `clate_dnn()` estimates
+the conditional effect among compliers under the IV assumptions. Supply
+the instrument propensity and the conditional means of the outcome and
+treatment in each **instrument arm**. Predictions may use more
+adjustment covariates than the reporting coordinates selected by
+`x_cols`.
 
-The development version adds `clate_dnn()` for a binary instrument and
-binary treatment, using externally supplied nuisance predictions. It
-reports the adjusted reduced form, first stage, their ratio and paired
-frozen-score uncertainty. `affine_ratio_dnn()` accepts the two signals
-directly; `iv_augmented_signals()` constructs them from predictions. No
-learner is fitted by these interfaces.
+This simulated example again uses explicitly labelled oracle
+predictions.
 
-The [CLATE
+``` r
+demo_iv <- clate_demo_data(n = 180, seed = 3, heterogeneous = TRUE)
+iv <- demo_iv$data
+targets <- rbind(c(.25, .25), c(.5, .5), c(.75, .75))
+
+fit_clate <- clate_dnn(
+  data = iv, x_cols = c("X1", "X2"), X0 = targets,
+  y_col = "Y", d_col = "D", a_col = "A", e_col = "e_oracle",
+  m_y0_col = "m_y0_oracle", m_y1_col = "m_y1_oracle",
+  m_d0_col = "m_d0_oracle", m_d1_col = "m_d1_oracle",
+  k = 1L, training = "oracle", return = c("W", "dx", "nuisance")
+)
+
+summary(fit_clate)$coefficients
+#>             estimate  std.error  statistic   p.value    conf.low conf.high
+#> target_1 -0.07602259 0.14836404 -0.5124058 0.6083671 -0.36681077 0.2147656
+#> target_2  0.08073146 0.09096502  0.8875000 0.3748098 -0.09755671 0.2590196
+#> target_3  0.19480142 0.14759758  1.3198144 0.1868970 -0.09448453 0.4840874
+summary(fit_clate)$components  # adjusted reduced form and first stage
+#>   target_id   numerator denominator numerator_se denominator_se     neff
+#> 1         1 -0.03134205   0.4122729   0.07177081      0.2303445 17.52493
+#> 2         2  0.05315069   0.6583641   0.05800726      0.1838949 17.52493
+#> 3         3  0.09823286   0.5042718   0.06347159      0.2162997 17.52493
+```
+
+Both component means use the same DNN weights. The ratio’s uncertainty
+retains their paired covariance, holding the supplied signals fixed.
+`affine_ratio_dnn()` accepts the signals directly;
+`iv_augmented_signals()` constructs them from predictions. The [CLATE
 guide](https://JakobJuergens.github.io/RdistNN/articles/conditional-late.html)
-shows matrix/data-frame calls, diagnostics and new reporting profiles.
-CATE and CLATE share exact/asymptotic DNN weighting controls, the
-`summary(fit)$coefficients` schema, candidate views and plotting calls:
-`plot_estimates()`, `plot_weights()`, `plot_overlap()`,
-`plot_influence()`, `plot_tuning()` and `plot_dashboard()`. CLATE
-overlap describes the instrument; its influence panels retain both
-augmented signals. Two-scale TDNN remains an NP-regression method. The
-[inference
-article](https://JakobJuergens.github.io/RdistNN/articles/conditional-late-inference.html)
-explains covariance scales, signed/zero denominators, and the optional
-`ratio_confidence_set()` output, including unbounded sets. These
-features require the development version; they are not in the original
-0.1.0 release.
+covers input alignment, diagnostics and reporting. The [inference
+guide](https://JakobJuergens.github.io/RdistNN/articles/conditional-late-inference.html)
+explains denominator status and `ratio_confidence_set()`, including
+unbounded sets. Inspect the first stage alongside the ratio; ordinary
+Wald intervals can be misleading when the first stage is weak.
+
+## Shared reporting and plots
+
+CATE and CLATE use the same calls, with the fitted object’s class
+selecting the appropriate implementation:
+
+``` r
+summary(fit)$coefficients
+coef(fit)
+confint(fit)
+predict(fit, X0 = new_profiles, interval = "confidence")
+diagnostics(fit)
+```
+
+Their coefficient tables contain `estimate`, `std.error`, `statistic`,
+`p.value`, `conf.low` and `conf.high`. CLATE also reports component and
+computation-status tables. Prediction changes the reporting profiles
+while retaining the supplied observations and signals; it does not
+retrain learners.
+
+With ggplot2 installed, use the same plotting functions for either fit:
+
+``` r
+plot_estimates(fit_clate, style = "forest")
+```
+
+<img src="man/figures/README-clate-plot-1.png" alt="" width="100%" />
+
+| Call                                 | What it shows                                                                            |
+|--------------------------------------|------------------------------------------------------------------------------------------|
+| `plot(fit)` or `plot_estimates(fit)` | Estimates and pointwise confidence bounds; profile, forest or pointrange styles          |
+| `plot_weights(fit)`                  | Localization and weight concentration                                                    |
+| `plot_overlap(fit)`                  | Treatment overlap for CATE; **instrument** overlap for CLATE                             |
+| `plot_influence(fit)`                | CATE score contributions or CLATE paired-score residual contributions                    |
+| `plot_tuning(fit)`                   | Sensitivity across stored tuning candidates                                              |
+| `plot_dashboard(fit)`                | A combined view; uses patchwork when installed, otherwise returns a named list of panels |
+
+Retain `return = c("W", "dx", "nuisance")` for weight, distance and
+overlap views. `plot_data_estimates()`, `plot_data_weights()` and
+`plot_data_diagnostics()` expose data for your own plots. See the
+[visualization
+guide](https://JakobJuergens.github.io/RdistNN/articles/visualising-fits.html)
+and the CLATE guide for method-specific panels.
+
+A CATE profile holds other covariates fixed and evaluates a sequence of
+reporting targets. This example uses oracle nuisances and holds `X2` at
+zero.
+
+``` r
+set.seed(42)
+n <- 1000
+X <- cbind(X1 = runif(n, -2, 2), X2 = rnorm(n))
+e <- plogis(0.4 * X[, "X1"])
+tau <- 1 + sin(X[, "X1"])
+m0 <- X[, "X1"] - 0.5 * X[, "X2"]
+treat <- as.integer(runif(n) < e)
+Y <- m0 + treat * tau + rnorm(n, sd = 0.5)
+
+profile_data <- data.frame(X, T = treat, Y = Y, e = e, m0 = m0, m1 = m0 + tau)
+X0 <- cbind(X1 = seq(-1.8, 1.8, length.out = 21), X2 = 0)
+
+profile_fit <- cate_dnn(
+  data = profile_data, x_cols = c("X1", "X2"), y_col = "Y", t_col = "T",
+  e_col = "e", m0_col = "m0", m1_col = "m1",
+  X0 = X0, k = 1L, se = TRUE, jackknife = "fast"
+)
+plot(profile_fit)
+```
+
+<img src="man/figures/README-cate-profile-1.png" alt="" width="100%" />
 
 ## Localization and tuning
 
@@ -196,99 +270,76 @@ permutation, with support through rank `n - s + k`. The optional
 `neighbors` extra reports the first `k` neighbors, rather than the full
 weight support.
 
-Use `tuning = tuning_dnn_paper()` to specify the paper’s rule, or
-`tuning_mode = "grid"` to compare its sensitivity grid
-`lambda = c(0.3, 0.4, 0.5, 0.75)`. `candidate_fit()` and `plot_tuning()`
-inspect the stored candidates. The manuscript derivations use `k = 1`;
-larger fixed `k` values are implementation-supported generalizations.
+Supply `s` directly, use `tuning = tuning_dnn_paper()`, or set
+`tuning_mode = "grid"` to compare the paper-default sensitivity grid
+`lambda = c(0.3, 0.4, 0.5, 0.75)`. The grid retains the default fit and
+candidate results. `candidate_fit()` and `candidate_fits()` expose
+candidate views for reporting, diagnostics and plots. This is
+sensitivity analysis; it does not automatically select a tuning value or
+justify inference after selection. See the [tuning
+guide](https://JakobJuergens.github.io/RdistNN/articles/kernel-order-tuning.html).
 
-Delete-1 standard errors require `s < n`. `jackknife = "fast"` uses
-cached ranks; `"loo"` recomputes leave-one-out weights. Set `se = FALSE`
-to skip uncertainty calculations. Weight ESS and overlap diagnostics
-help describe local support; they do not verify the assumptions needed
-for inference.
+Delete-one standard errors require `s < n`. `jackknife = "fast"` uses
+cached ranks; `"loo"` provides the estimator-specific leave-one-out
+calculation. Set `se = FALSE` to skip uncertainty calculations. The
+manuscript’s DNN derivations use exact weights and `k = 1`; larger fixed
+`k` values and asymptotic weights are computational options requiring
+their corresponding statistical conditions.
 
-## Visualizing CATE
+## Interpreting inference
 
-If ggplot2 is installed, `plot(fit)` displays estimates with pointwise
-jackknife confidence bounds. This profile holds the second covariate at
-zero and again uses oracle nuisance inputs.
+Reported intervals are **pointwise**, not simultaneous confidence bands.
+Neyman orthogonality controls first-order population nuisance drift;
+valid full-sample nuisance reuse additionally needs learner accuracy and
+deletion stability, together with design, overlap and localization-bias
+conditions. Supplying oracle, out-of-fold or full-sample predictions
+does not itself establish the conditions appropriate to that training
+procedure.
 
-``` r
-library(RdistNN)
+For nuisance-based CATE and CLATE scores, supplied propensities must be
+finite and lie in `[0, 1]`; they are clipped to `[clip, 1 - clip]`, with
+`clip = 1e-8` by default. Supplied pseudo-outcomes are used unchanged.
+Clipping does not establish overlap. Weight ESS and overlap diagnostics
+describe local support; they do not certify inference assumptions.
 
-set.seed(42)
-n <- 1000
-X <- cbind(X1 = runif(n, -2, 2), X2 = rnorm(n))
-e <- plogis(0.4 * X[, "X1"])                    # oracle propensity
-tau <- 1 + sin(X[, "X1"])                       # true CATE along X1
-m0 <- X[, "X1"] - 0.5 * X[, "X2"]               # oracle control mean
-treat <- as.integer(runif(n) < e)
-Y <- m0 + treat * tau + rnorm(n, sd = 0.5)
+CLATE’s causal interpretation additionally requires consistency,
+exclusion, conditional instrument independence, monotonicity and
+positive local compliance. It generally differs from population CATE.
+See the [conditional Z-estimation
+guide](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.html)
+and the CLATE articles for the theoretical scope and limitations.
 
-df <- data.frame(X, T = treat, Y = Y, e = e, m0 = m0, m1 = m0 + tau)
-X0 <- cbind(X1 = seq(-1.8, 1.8, length.out = 21), X2 = 0)
+## Further documentation
 
-fit <- cate_dnn(
-  data = df, x_cols = c("X1", "X2"), y_col = "Y", t_col = "T",
-  e_col = "e", m0_col = "m0", m1_col = "m1",
-  X0 = X0, k = 1L, se = TRUE, jackknife = "fast"
-)
+- [Notation and
+  conventions](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.html)
+  explains arguments and returned quantities.
+- [Diagnostics and
+  reporting](https://JakobJuergens.github.io/RdistNN/articles/diagnostics-reporting.html)
+  covers local support and uncertainty summaries.
+- [Affine paper
+  replication](https://JakobJuergens.github.io/RdistNN/articles/paper-affine-replication.html)
+  documents the study-specific simulations, SIPP application and saved
+  manuscript evidence. Locate the installed bundle with
+  `system.file("paper-replication/affine", package = "RdistNN")`.
+- The reference also includes **experimental PLQR** moment evaluation at
+  supplied coefficients (without root solving), **experimental local
+  IV-GMM**, simulation tools and extension interfaces.
 
-plot(fit)
-```
+If you installed the package with local vignettes, open the notation
+guide with `vignette("notation-and-conventions", package = "RdistNN")`.
 
-<img src="man/figures/README-cate-profile-1.png" alt="" width="100%" />
+The package accompanies [Orthogonal Inference for Conditional
+Z-Estimation without
+Cross-Fitting](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
+Use `citation("RdistNN")` for citation information.
 
-Use `plot_weights()` for weight concentration, `plot_overlap()` for
-local treatment support, and `plot_influence()` for score contributions.
-`plot_dashboard()` additionally requires patchwork. The [visualization
-guide](https://JakobJuergens.github.io/RdistNN/articles/visualising-fits.html)
-shows the available panels and their underlying data extractors.
+## Help and contributions
 
-## Documentation and release scope
-
-| Workflow                  | Entry points                                                          | Status                                                                         |
-|---------------------------|-----------------------------------------------------------------------|--------------------------------------------------------------------------------|
-| CATE                      | `cate_dnn()`, CATE methods and diagnostics                            | Release focus                                                                  |
-| Nonparametric regression  | `np_dnn()`, `np_tdnn()`, diagnostics and plots                        | Release focus; TDNN uses signed weights                                        |
-| Localization              | DNN weights, distances, tuning                                        | Supports the main workflows                                                    |
-| Affine paper replication  | Installed `paper-replication/affine` scripts                          | Current affine simulations, SIPP, and accepted evidence                        |
-| Synthetic CATE benchmarks | `sim_cate_*`, `summarise_sim_results()`                               | General simulation tools                                                       |
-| Conditional LATE          | `clate_dnn()`, `affine_ratio_dnn()`, paired inference and diagnostics | Experimental; supplied nuisance predictions                                    |
-| PLQR                      | `plqr_dnn()`, PLQR scores, helpers and methods                        | Experimental; evaluates moments at supplied coefficients, without root solving |
-| Local IV-GMM              | `gmm_dnn()`, `sim_iv_*`                                               | Experimental companion work                                                    |
-| Extensions                | Registries, generalized U-statistic utilities                         | Advanced reference material                                                    |
-
-Start with [Getting
-started](https://JakobJuergens.github.io/RdistNN/articles/getting-started.html),
-then read [notation and
-conventions](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.html),
-[diagnostics](https://JakobJuergens.github.io/RdistNN/articles/diagnostics-reporting.html),
-and
-[tuning](https://JakobJuergens.github.io/RdistNN/articles/kernel-order-tuning.html).
-The [affine paper replication
-guide](https://JakobJuergens.github.io/RdistNN/articles/paper-affine-replication.html)
-covers the current bounded simulations, SIPP application, and
-regeneration of accepted manuscript tables and figures. Validation runs
-are labeled separately from production. Locate the installed bundle with
-`system.file("paper-replication/affine", package = "RdistNN")`.
-
-With local vignettes installed, open the symbol guide with
-`vignette("notation-and-conventions", package = "RdistNN")`.
-
-## Development and help
-
-Report issues with a minimal reproducible example through the [issue
-tracker](https://github.com/JakobJuergens/RdistNN/issues). See
+Report problems or ask usage questions through the [issue
+tracker](https://github.com/JakobJuergens/RdistNN/issues), including a
+minimal reproducible example and `sessionInfo()`. Contributions are
+welcome;
 [CONTRIBUTING.md](https://github.com/JakobJuergens/RdistNN/blob/master/CONTRIBUTING.md)
-for local checks and
-[RELEASING.md](https://github.com/JakobJuergens/RdistNN/blob/master/RELEASING.md)
-for source packaging and publication instructions. The package is
-licensed under GPL version 3 or later.
-
-Supported R algorithmic fallbacks can be selected with
-`options(RdistNN.use_compiled = FALSE)`; source installation still
-requires a compiler. Cross-platform CI covers Linux, Windows, and both
-macOS architectures. Edit `README.Rmd` and regenerate with
-`devtools::build_readme()`.
+links development procedures and the maintained interface and numerical
+contracts. RdistNN is licensed under GPL version 3 or later.
