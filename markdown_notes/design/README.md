@@ -30,6 +30,8 @@ contracts for RdistNN. Use [AGENTS.md](../../AGENTS.md) for editing rules,
 15. [PLQR variance and nuisance notation](15_plqr_variance_estimation_rationale.md)
 16. [Affine replication integrity](16_affine_replication_contract.md)
 17. [CLATE and paired-ratio inference](17_clate_ratio_inference.md)
+18. [Geometry and covariance arithmetic](18_geometry_and_covariance_arithmetic.md)
+19. [Weighted accumulation](19_weighted_accumulation.md)
 
 User-facing estimators accept the documented matrix/vector or data-frame
 interface and then compute with canonical numeric inputs. Shared generics and

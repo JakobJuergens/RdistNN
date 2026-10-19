@@ -113,6 +113,9 @@ Two interfaces are supported.
 \item Matrix interface: pass \code{X}, one of \code{X0} or \code{x0}, and \code{Y}.
 }
 
+With \code{data}, omit \code{X} and \code{Y}; use exactly one of \code{y_col} or \code{y}.
+Column selectors require \code{data}. Conflicting routes are rejected.
+
 For \code{method = "exact"}, DNN weights are computed from the full rank
 permutation at each target. The exact support extends through rank
 \code{n - s + k} (\code{n - s + 1} in the paper-faithful \code{k = 1} case); this is not

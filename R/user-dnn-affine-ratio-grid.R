@@ -4,7 +4,8 @@
              se = if (is.null(fit$se)) rep(NA_real_, length(fit$theta)) else fit$se)
 }
 
-.affine_ratio_tuning_grid <- function(default, signal, ranks, model, active, jackknife, tol, tuning) {
+.affine_ratio_tuning_grid <- function(default, signal, ranks, model, active, jackknife, tol, tuning,
+                                     reuse_default = TRUE) {
   candidates <- tuning$grid$candidates
   skipped <- candidates[!candidates$feasible, , drop = FALSE]
   if (nrow(skipped)) {
@@ -21,11 +22,11 @@
     candidate_model$s <- row$s[[1L]]
     .affine_rank_weight(candidate_model)
   }
-  precomputed <- stats::setNames(list(list(
+  precomputed <- if (reuse_default) stats::setNames(list(list(
     estimates = .affine_grid_estimates(default),
     diagnostics = .dnn_grid_diagnostics_from_table(.rank_weight_table(spec(default_row), nrow(signal)),
                                                   nrow(signal), list(k = model$k))
-  )), key)
+  )), key) else NULL
   grid <- .dnn_grid_eval(candidates, ranks, weight_spec_fn = spec,
     estimate_fn = function(W, row) {
       fit <- .affine_ratio_evaluate(signal, W, ranks, spec(row), active, jackknife, tol)

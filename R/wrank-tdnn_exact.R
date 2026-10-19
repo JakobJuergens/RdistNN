@@ -28,27 +28,7 @@
 # ---- Internal: single-scale rank table for k = 1 -------------------------
 
 .dnn_rank_table_exact_k1 <- function(n, s) {
-  # Compute the rank-order exact DNN weight table for k = 1 (L-stat view).
-  # Returns a numeric vector w_rank[1:n] that sums to 1.
-  #
-  # For k=1 the formula simplifies to:
-  #   w_rank[j] = C(n-j, s-1) / C(n, s),   for j <= n - s + 1; else 0.
-  n <- as.integer(n)
-  s <- as.integer(s)
-  L_den <- lchoose(n, s)
-  w_rank <- numeric(n)
-  cutoff <- n - s + 1L
-  if (cutoff >= 1L) {
-    idx <- seq_len(cutoff)
-    w_rank[idx] <- exp(lchoose(n - idx, s - 1L) - L_den)
-  }
-  # normalize (guard numerical drift)
-  sw <- sum(w_rank)
-  if (!is.finite(sw) || sw <= 0) {
-    stop("Internal error: non-positive total weight in .dnn_rank_table_exact_k1.", call. = FALSE)
-  }
-  if (abs(sw - 1) > 1e-12) w_rank <- w_rank / sw
-  w_rank
+  .dnn_exact_table(as.integer(n), 1L, as.integer(s))
 }
 
 # ---- Bias-correction scalars ---------------------------------------------
@@ -118,7 +98,7 @@ tdnn_rank_table_exact <- function(n, s1, s2, dim) {
   w_rank <- sc["w1"] * t1 + sc["w2"] * t2
 
   # Guard: sum should equal 1 exactly (w1* + w2* = 1 and sum(t1) = sum(t2) = 1)
-  sw <- sum(w_rank)
+  sw <- .compensated_sum(w_rank)
   if (!is.finite(sw) || abs(sw) < .Machine$double.eps * 100) {
     stop("Internal error: TDNN rank table has zero/non-finite sum.", call. = FALSE)
   }

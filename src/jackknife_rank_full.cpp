@@ -1,8 +1,7 @@
 // [[Rcpp::plugins(cpp17)]]
 // [[Rcpp::depends(Rcpp)]]
 #include <Rcpp.h>
-#include <algorithm>
-#include <numeric>
+#include "compensated_arithmetic.hpp"
 using namespace Rcpp;
 
 // Generic O(n * m * q) rank-order delete-one jackknife via prefix/suffix sums.
@@ -60,90 +59,18 @@ Rcpp::List rustat_jackknife_rank_full(const IntegerMatrix &ranks, const NumericM
   if ((int)wnm1.size() != n - 1)
     stop("length(wnm1) must equal nrow(ranks) - 1.");
 
-  // ---- theta0 : q x m -------------------------------------------------------
   NumericMatrix theta0(q, m);
   for (int t = 0; t < m; ++t) {
-    for (int i = 0; i < n; ++i) {
-      int r0 = ranks(i, t) - 1; // 0-based rank
-      double wt = wn[r0];
-      for (int qq = 0; qq < q; ++qq)
-        theta0(qq, t) += wt * PHI(i, qq);
+    for (int component = 0; component < q; ++component) {
+      rdistnn_arithmetic::accumulator total;
+      for (int i = 0; i < n; ++i)
+        total.add_product(wn[ranks(i, t) - 1], PHI(i, component));
+      theta0(component, t) = total.value();
     }
   }
-
-  // ---- theta_loo : dim c(n, q, m), column-major [i + n*qq + n*q*t] ---------
-  NumericVector loo((R_xlen_t)n * q * m);
-
-  // Per-target working buffers (reused across targets and signal dims)
-  std::vector<int> ord(n);
-  std::vector<double> P(n); // P[r0]: prefix sum for 0-based rank r0
-  std::vector<double> S(n); // S[r0]: shifted suffix sum for 0-based rank r0
-  std::vector<double> z(n);
-  double mass = std::accumulate(wnm1.begin(), wnm1.end(), 0.0);
-
-  for (int t = 0; t < m; ++t) {
-
-    // Build ord: ord[r0] = 0-based obs index at 0-based rank r0.
-    // Sort observation indices by their rank in column t.
-    std::iota(ord.begin(), ord.end(), 0);
-    std::sort(ord.begin(), ord.end(), [&](int a, int b) { return ranks(a, t) < ranks(b, t); });
-
-    for (int qq = 0; qq < q; ++qq) {
-      // The union of deletion support contains both ends of each nonzero
-      // table entry. Ignore unused extremes before choosing or subtracting a
-      // reference. Signed tables (TDNN) require nonzero, not positive, support.
-      double lo = R_PosInf, hi = R_NegInf;
-      for (int a = 0; a < n; ++a) {
-        bool used = (a < n - 1 && wnm1[a] != 0) || (a > 0 && wnm1[a - 1] != 0);
-        if (used) {
-          lo = std::min(lo, PHI(ord[a], qq));
-          hi = std::max(hi, PHI(ord[a], qq));
-        }
-      }
-      double level = lo == R_PosInf ? 0.0 : (lo > 0 ? lo : (hi < 0 ? hi : 0.0));
-      for (int a = 0; a < n; ++a) {
-        bool used = (a < n - 1 && wnm1[a] != 0) || (a > 0 && wnm1[a - 1] != 0);
-        z[a] = used ? PHI(ord[a], qq) - level : 0.0;
-      }
-
-      // ---- forward prefix pass ----------------------------------------------
-      // P[r0] = sum_{j=0}^{r0-1} wnm1[j] * z[j]   (0-based j, wnm1 size n-1)
-      //
-      // P[0] = 0
-      // P[r0] = P[r0-1] + wnm1[r0-1] * z[r0-1]   for r0 = 1 .. n-1
-      //
-      // (P[n-1] is the last needed value; wnm1[r0-1] is valid for r0 <= n-1.)
-      P[0] = 0.0;
-      for (int r0 = 1; r0 < n; ++r0)
-        P[r0] = P[r0 - 1] + wnm1[r0 - 1] * z[r0 - 1];
-
-      // ---- backward shifted-suffix pass -------------------------------------
-      // S[r0] = sum_{j=r0+1}^{n-1} wnm1[j-1] * z[j]
-      //
-      // S[n-1] = 0
-      // S[r0]  = wnm1[r0] * z[r0+1] + S[r0+1]   for r0 = n-2 .. 0
-      //
-      // (wnm1[r0] is valid for r0 <= n-2.)
-      S[n - 1] = 0.0;
-      for (int r0 = n - 2; r0 >= 0; --r0)
-        S[r0] = wnm1[r0] * z[r0 + 1] + S[r0 + 1];
-
-      // ---- fill theta_loo ---------------------------------------------------
-      // For obs i with 0-based rank ri = ranks(i,t) - 1:
-      //   theta_loo[i, qq, t] = P[ri] + S[ri]
-      R_xlen_t base = (R_xlen_t)qq * n + (R_xlen_t)qq * 0 /* see below */;
-      // Correct flat index: i + n*qq + n*q*t
-      R_xlen_t offset = (R_xlen_t)n * qq + (R_xlen_t)n * q * t;
-      for (int i = 0; i < n; ++i) {
-        int ri = ranks(i, t) - 1; // 0-based rank
-        loo[offset + i] = (P[ri] + S[ri]) + level * mass;
-      }
-      (void)base; // suppress unused-variable warning
-    }
-  }
-
+  NumericVector loo(static_cast<R_xlen_t>(n) * q * m);
+  rdistnn_arithmetic::rank_loo(ranks.begin(), PHI.begin(), wnm1.begin(), n, m, q, loo.begin());
   loo.attr("dim") = IntegerVector::create(n, q, m);
-
   return List::create(_["theta0"] = theta0, _["theta_loo"] = loo,
                       _["info"] = List::create(_["n"] = n, _["m"] = m, _["q"] = q));
 }

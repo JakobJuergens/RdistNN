@@ -88,7 +88,8 @@ rank_weight_tdnn_exact <- function(s1, s2, dim) {
 #' Returns a `rank_weight` spec whose `eval_batch` uses the asymptotic TDNN
 #' rank table from `tdnn_rank_table_asymp()`.  Structurally identical to
 #' [rank_weight_tdnn_exact()] but uses the Beta order-statistic approximation,
-#' which gives full rank support (all n entries are non-zero).
+#' evaluated across the full rank grid. Combined entries can be zero through
+#' signed cancellation or numeric underflow.
 #'
 #' @param s1 Positive integer; smaller U-statistic order (\code{s1 < s2}).
 #' @param s2 Positive integer; larger U-statistic order.

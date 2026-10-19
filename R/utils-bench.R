@@ -7,9 +7,6 @@ rdistnn_bench_require <- function() {
 }
 
 #' @keywords internal
-`%||%` <- function(a, b) if (is.null(a)) b else a
-
-#' @keywords internal
 rdistnn_bench_make_idx <- function(n, n_subsets, subset_size) {
   replicate(n_subsets, sample.int(n, subset_size, replace = FALSE)) |> t()
 }

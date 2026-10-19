@@ -105,6 +105,9 @@ statuses do not verify causal assumptions, learner stability, point-target
 undersmoothing or weak-instrument-uniform validity.
 If nonzero component variation underflows its covariance, uncertainty is
 unavailable with numerical_failure status; it is not treated as deterministic.
+
+Prediction retains the resolved distance specification and fitted context;
+re-registering the distance name does not change an existing fit.
 }
 \examples{
 fit <- affine_ratio_dnn(

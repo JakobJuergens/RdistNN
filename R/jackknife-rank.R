@@ -22,6 +22,8 @@
 #'
 #' @param ranks Integer matrix (T x (s+1)) of positive neighbor indices
 #'   (1-based). Each row t lists the first s+1 neighbors of target t.
+#'   Use distinct indices within each row for observation deletion. For repeated
+#'   indices, the legacy convention adds each position's replacement change.
 #' @param a Finite numeric length-s vector of L-stat coefficients a_1..a_s.
 #' @param phi either:
 #'   - finite numeric matrix (n_ref x q): row j is the q-vector phi(j), or
@@ -78,7 +80,7 @@ jackknife_fast_rank <- function(ranks, a, phi, normalize = TRUE) {
       quoted = FALSE
     )
   }
-  if (normalize && sum(a) == 0) {
+  if (normalize && .compensated_sum(a) == 0) {
     .abort_bad_arg("a", "must have nonzero sum when `normalize = TRUE`", actual = "sum(a)=0")
   }
   list(ranks = ranks, a = a, normalize = normalize)
@@ -135,9 +137,6 @@ jackknife_fast_rank <- function(ranks, a, phi, normalize = TRUE) {
   Tn <- nrow(ranks)
   s <- length(a)
 
-  # Normalization constant
-  Z <- if (normalize) sum(a) else 1
-
   # Prepare y_tk: array (T x (s+1) x q) of per-(t,k) contributions
   if (is.matrix(phi) && is.numeric(phi)) {
     PHI <- .jackknife_validate_phi_matrix(phi, ranks, arg = "phi")
@@ -166,69 +165,5 @@ jackknife_fast_rank <- function(ranks, a, phi, normalize = TRUE) {
     stop("`phi` must be either a numeric matrix (n_ref x q) or a function(j, t).", call. = FALSE)
   }
 
-  # Baseline per-target sums: S_t = sum_{k<=s} a_k * y_{t,k}
-  S_t_divZ <- matrix(0.0, Tn, q)
-  for (k in seq_len(s)) {
-    S_t_divZ <- S_t_divZ + a[k] * matrix(y_tk[, k, ], Tn, q)
-  }
-  S_t_divZ <- S_t_divZ / Z
-
-  # theta0 = mean_t S_t_divZ[t,]
-  theta0 <- colMeans(S_t_divZ)
-
-  # pre_t[t, r] = sum_{k=r}^{s-1} (a_{k+1}-a_k) * y_{t, k+1}, r=1..s-1
-  if (s >= 2L) {
-    pre_t <- array(0.0, dim = c(Tn, s - 1L, q))
-    for (t in seq_len(Tn)) {
-      acc <- rep(0.0, q)
-      for (r in (s - 1L):1L) {
-        acc <- acc + (a[r] - a[r + 1L]) * y_tk[t, r + 1L, ]
-        pre_t[t, r, ] <- acc
-      }
-    }
-  } else {
-    pre_t <- array(0.0, dim = c(Tn, 0L, q)) # unused when s=1
-  }
-
-  # Build adjacency: for each i, list of (t, r) where i is rank r (1..s+1)
-  n_ref_adj <- if (exists("PHI")) nrow(PHI) else max(ranks)
-  affected <- vector("list", length = n_ref_adj)
-  for (t in seq_len(Tn)) {
-    for (k in seq_len(s + 1L)) {
-      i <- ranks[t, k]
-      if (is.null(affected[[i]])) {
-        affected[[i]] <- cbind(integer(0L), integer(0L))
-      }
-      affected[[i]] <- rbind(affected[[i]], c(t, k))
-    }
-  }
-
-  # Initialize theta_loo to theta0
-  theta_loo <- matrix(rep(theta0, each = n_ref_adj), n_ref_adj, q, byrow = FALSE)
-
-  # Per-i updates: only r <= s affect the sum (support)
-  for (i in seq_len(n_ref_adj)) {
-    lst <- affected[[i]]
-    if (is.null(lst) || nrow(lst) == 0L) next
-    delta <- rep(0.0, q)
-    for (row in seq_len(nrow(lst))) {
-      t <- lst[row, 1L]
-      r <- lst[row, 2L] # already scalar 1..s+1 here
-      if (r > s) next
-
-      base <- S_t_divZ[t, ]
-      term1 <- (a[r] / Z) * y_tk[t, r, ]
-      term2 <- if (s >= 2L && r <= s - 1L) pre_t[t, r, ] / Z else rep(0.0, q)
-      term3 <- (a[s] / Z) * y_tk[t, s + 1L, ]
-      Snew <- base - term1 + term2 + term3
-      delta <- delta + (Snew - base)
-    }
-    theta_loo[i, ] <- theta0 + delta / Tn
-  }
-
-  list(
-    theta0    = as.numeric(theta0),
-    theta_loo = theta_loo,
-    info      = list(s = s, T = Tn, q = q, normalize = normalize)
-  )
+  .jackknife_finite_accumulation_R(ranks, a, y_tk, n_ref, normalize)
 }

@@ -24,6 +24,8 @@ component_covariance reports the paired numerator-denominator covariance;
 geometry_rule and tie_rule identify the frozen geometry and tie convention.
 Zero denominator variance gives NA standardized magnitude/correlation.
 Disabled covariance gives unavailable uncertainty/concentration fields.
+physical_radius_90 uses original-coordinate Euclidean distance; radius_90
+uses the fitted localization metric. Both enclose 90 percent of weight.
 }
 \description{
 Paired component and first-stage diagnostics

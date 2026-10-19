@@ -9,18 +9,18 @@
 
 .plot_tuning_payload <- function(object, tuning, se) {
   payload <- if (!is.null(object$meta$tuning)) object$meta$tuning else object$tuning
-  if (!is.null(payload) && is.list(payload) &&
+  if (is.null(tuning) && is.list(payload) &&
+      !identical(payload$source, "manual") &&
       !is.null(payload$grid$candidates) &&
       is.data.frame(payload$grid$candidates)) {
+    payload$grid <- .tuning_validate_grid_output(
+      payload$grid$candidates, name = "retained fit", n = object$meta$n,
+      kx = object$meta$p, k = object$meta$k, se = se,
+      jackknife = .plot_tuning_jackknife(se))
+    payload$grid <- .dnn_resolve_candidate_schema(payload$grid, default = payload$default)
     return(payload)
   }
-  if (is.null(tuning)) {
-    .abort_bad_arg(
-      "tuning",
-      "must be supplied when the fit does not store a tuning grid",
-      quoted = FALSE
-    )
-  }
+  if (is.null(tuning)) tuning <- tuning_dnn_paper()
   meta <- object$meta
   model <- object$.model
   ctx <- if (is.list(model)) model$ctx else NULL
@@ -106,7 +106,8 @@
     ctx = model$ctx,
     se = se,
     jackknife = .plot_tuning_jackknife(se),
-    tuning_payload = payload
+    tuning_payload = payload,
+    reuse_default = FALSE
   ))
 }
 
@@ -138,7 +139,8 @@
     ctx = model$ctx,
     se = se,
     jackknife = .plot_tuning_jackknife(se),
-    tuning_payload = payload
+    tuning_payload = payload,
+    reuse_default = FALSE
   ))
 }
 
@@ -306,8 +308,11 @@
 #'
 #' @param object A fitted `np_result`, `cate_result`, `affine_ratio_result`
 #'   (including `clate_result`), or `plqr_result`.
-#' @param tuning A tuning specification for the candidate grid (default
-#'   [tuning_dnn_paper()]).
+#' @param tuning A tuning specification for the candidate grid. Scalar fits
+#'   use their retained tuning specification when omitted. Fits with a manually
+#'   chosen `s` use [tuning_dnn_paper()], including that fitted order; optional
+#'   return fields do not change the sweep. An explicit specification overrides
+#'   that scalar grid. Stored grid fits reuse their existing candidates.
 #' @param targets Optional integer vector of target ids (defaults to at
 #'   most three: first, middle, last).
 #' @param level Confidence level for the bounds (default `0.95`).
@@ -362,6 +367,8 @@ plot_tuning.np_result <- function(object, tuning = tuning_dnn_paper(),
                                   candidates = "all",
                                   ...) {
   .plot_require_ggplot2("plot_tuning")
+  se <- .validate_scalar_logical(se, "se")
+  if (missing(tuning)) tuning <- NULL
   grid <- .plot_tuning_grid_np(object, tuning = tuning, se = se)
   .plot_tuning_panel(object, grid = grid, targets = targets,
                      level = level, candidates = candidates)
@@ -373,6 +380,8 @@ plot_tuning.cate_result <- function(object, tuning = tuning_dnn_paper(),
                                     targets = NULL, level = 0.95,
                                     se = TRUE, candidates = "all", ...) {
   .plot_require_ggplot2("plot_tuning")
+  se <- .validate_scalar_logical(se, "se")
+  if (missing(tuning)) tuning <- NULL
   grid <- .plot_tuning_grid_cate(object, tuning = tuning, se = se)
   .plot_tuning_panel(object, grid = grid, targets = targets,
                      level = level, candidates = candidates)
@@ -383,19 +392,18 @@ plot_tuning.cate_result <- function(object, tuning = tuning_dnn_paper(),
 plot_tuning.affine_ratio_result <- function(object, tuning = tuning_dnn_paper(),
     targets = NULL, level = .95, se = TRUE, candidates = "all", ...) {
   .plot_require_ggplot2("plot_tuning")
+  if (missing(tuning)) tuning <- NULL
   se <- .validate_scalar_logical(se, "se")
   grid <- object$tuning_grid
   if (is.null(grid)) {
     model <- .affine_prediction_state(object)
     payload <- .plot_tuning_payload(object, tuning, se)
     engine <- .plot_tuning_jackknife(se)
-    rw <- .affine_rank_weight(model)
-    W <- rank_weight_eval_batch(rw, model$geometry$ranks)
-    default <- .affine_ratio_evaluate(model$signal, W, model$geometry$ranks,
-      rw, se, engine, model$denominator_tol)
-    default$meta <- object$meta
+    default <- object
+    default$meta$jackknife <- engine
     grid <- suppressWarnings(.affine_ratio_tuning_grid(default, model$signal,
-      model$geometry$ranks, model, se, engine, model$denominator_tol, payload))
+      model$geometry$ranks, model, se, engine, model$denominator_tol, payload,
+      reuse_default = FALSE))
   }
   .plot_tuning_panel(object, grid, targets, level, candidates)
 }
@@ -406,6 +414,7 @@ plot_tuning.plqr_result <- function(object, tuning = tuning_dnn_paper(),
                                     targets = NULL, level = 0.95,
                                     se = TRUE, candidates = "all", ...) {
   .plot_require_ggplot2("plot_tuning")
+  if (missing(tuning)) tuning <- NULL
   grid <- .plot_tuning_grid_plqr(object, tuning = tuning, se = se)
   .plot_tuning_panel(object, grid = grid, targets = targets,
                      level = level, candidates = candidates)

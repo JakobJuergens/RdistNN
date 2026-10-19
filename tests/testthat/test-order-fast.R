@@ -124,3 +124,9 @@ test_that("[det] determinism across repeated runs", {
   expect_identical(o1, o2)
   expect_identical(r1, r2)
 })
+
+test_that("signed zero is an input-order tie in compiled sorting", {
+  cpp <- .rdistnn_compiled_fun("rustat_argsort_dist")
+  expect_true(is.function(cpp))
+  expect_identical(cpp(c(-0, 0, 1, -0)), c(1L, 2L, 4L, 3L))
+})

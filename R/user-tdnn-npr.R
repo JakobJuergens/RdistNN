@@ -22,6 +22,9 @@
 #'    one of `y_col` or `y`.
 #' 2. Matrix interface: pass `X`, one of `X0` or `x0`, and `Y`.
 #'
+#' With `data`, omit `X` and `Y`; use exactly one of `y_col` or `y`.
+#' Column selectors require `data`. Conflicting routes are rejected.
+#'
 #' **Signed weights.** The columns of the TDNN weight matrix sum to 1, but
 #' individual entries can be negative.  This is expected and reflects the
 #' bias-correction structure; it does not indicate numerical problems.
@@ -133,6 +136,9 @@ np_tdnn <- function(
   # ------------------------------------------------------------------
   # Block 2: dispatch and input resolution
   # ------------------------------------------------------------------
+  .dnn_validate_input_route(data, list(X = X, Y = Y),
+    list(x_cols = x_cols, y_col = y_col))
+
   if (!is.null(data)) {
     if (!is.data.frame(data)) {
       .abort_bad_arg("data", "must be a data.frame")
@@ -205,7 +211,7 @@ np_tdnn <- function(
 
   # Request ranks on the first weights call so the fast jackknife can
   # reuse them without recomputing distances.
-  geometry <- .np_fitted_geometry(distance, x_mat, ctx)
+  geometry <- .dnn_fitted_geometry(distance, x_mat, ctx)
   weight_return <- return
   if (isTRUE(se) && identical(jackknife, "fast")) {
     weight_return <- unique(c(return, "ranks"))
@@ -275,7 +281,7 @@ np_tdnn <- function(
 
   out$.model <- c(list(
     kind = "tdnn", y_vec = y_vec, x_mat = x_mat,
-    x_cols = if (!is.null(data)) colnames(x_mat) else NULL,
+    x_cols = if (!is.null(data)) .dnn_resolve_data_cols(x_cols, data, "x_cols") else NULL,
     k = 1L, s1 = s1, s2 = s2, dim = dim, method = method,
     normalize = normalize, ranks = wt$ranks
   ), geometry)

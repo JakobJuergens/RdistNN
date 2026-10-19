@@ -155,10 +155,10 @@ test_that("distance_mahalanobis: near-singular covariance (constant column) fall
 
 # ── input validation ──────────────────────────────────────────────────────────
 
-test_that("distance_mahalanobis: rejects kx = 1", {
+test_that("distance_mahalanobis: supports kx = 1", {
   spec <- distance_mahalanobis()
-  X    <- matrix(rnorm(20L), 20L, 1L)
-  expect_error(spec$setup(X), "at least 2 covariates")
+  X    <- matrix(seq_len(20L), 20L, 1L)
+  expect_equal(spec$eval(X, 0, spec$setup(X)), as.numeric(X) / sd(as.numeric(X)))
 })
 
 test_that("distance_mahalanobis: rejects NA in X at eval", {
@@ -274,4 +274,10 @@ test_that("dnn_oracle_mahal benchmark method runs through sim_cate_one_rep", {
   expect_true(is.finite(r$tau_hat))
   expect_true(r$se > 0)
   expect_true(r$cover %in% c(0, 1))
+})
+
+test_that("one-dimensional Mahalanobis matches the sample-SD geometry", {
+  X <- matrix(1:8)
+  spec <- distance_mahalanobis()
+  expect_equal(spec$eval(X, 0), as.numeric(X) / stats::sd(as.numeric(X)), tolerance = 1e-14)
 })

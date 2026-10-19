@@ -3,9 +3,6 @@
 # or precomputed ranks/orders/distances. DNN wrappers provided below.
 # -----------------------------------------------------------------------------
 
-# tiny internal helper
-`%||%` <- function(a, b) if (is.null(a)) b else a
-
 # deterministic tie-breaker (distance, then index)
 .order_with_ties <- function(dx) order(dx, seq_along(dx))
 
@@ -342,7 +339,7 @@ weights_dnn_exact <- function(
   weights_matrix(
     X = X, X0 = X0, x0 = x0,
     ranking = distance,
-    weight = rank_weight_dnn_exact(k = as.integer(k), s = as.integer(s)),
+    weight = rank_weight_dnn_exact(k = k, s = s),
     ctx = ctx,
     return = return
   )
@@ -371,7 +368,7 @@ weights_dnn_asymp <- function(
   weights_matrix(
     X = X, X0 = X0, x0 = x0,
     ranking = distance,
-    weight = rank_weight_dnn_asymp(k = as.integer(k), s = as.integer(s), normalize = normalize),
+    weight = rank_weight_dnn_asymp(k = k, s = s, normalize = normalize),
     ctx = ctx,
     return = return
   )
@@ -474,9 +471,9 @@ weights_tdnn_exact <- function(
   weights_matrix(
     X = X, X0 = X0, x0 = x0,
     ranking = distance,
-    weight  = rank_weight_tdnn_exact(s1 = as.integer(s1),
-                                      s2 = as.integer(s2),
-                                      dim = as.integer(dim)),
+    weight  = rank_weight_tdnn_exact(s1 = s1,
+                                      s2 = s2,
+                                      dim = dim),
     ctx    = ctx,
     return = return
   )
@@ -485,8 +482,8 @@ weights_tdnn_exact <- function(
 #' TDNN weights (asymptotic, k = 1), distance-based ranking
 #'
 #' Computes Demirkaya two-scale DNN (TDNN) weights using the asymptotic
-#' rank-weight table (`tdnn_rank_table_asymp()`).  Full rank support: all
-#' `n` observations receive non-zero weight (though some are negative).
+#' rank-weight table (`tdnn_rank_table_asymp()`) over all `n` ranks. Weights
+#' may be negative or exactly zero through signed cancellation or underflow.
 #'
 #' @inheritParams weights_tdnn_exact
 #' @param normalize Logical; renormalize rank table columns to sum 1
@@ -515,9 +512,9 @@ weights_tdnn_asymp <- function(
   weights_matrix(
     X = X, X0 = X0, x0 = x0,
     ranking = distance,
-    weight  = rank_weight_tdnn_asymp(s1 = as.integer(s1),
-                                      s2 = as.integer(s2),
-                                      dim = as.integer(dim),
+    weight  = rank_weight_tdnn_asymp(s1 = s1,
+                                      s2 = s2,
+                                      dim = dim,
                                       normalize = normalize),
     ctx    = ctx,
     return = return

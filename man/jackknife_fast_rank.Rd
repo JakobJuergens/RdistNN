@@ -9,7 +9,9 @@ jackknife_fast_rank(ranks, a, phi, normalize = TRUE)
 }
 \arguments{
 \item{ranks}{Integer matrix (T x (s+1)) of positive neighbor indices
-(1-based). Each row t lists the first s+1 neighbors of target t.}
+(1-based). Each row t lists the first s+1 neighbors of target t.
+Use distinct indices within each row for observation deletion. For repeated
+indices, the legacy convention adds each position's replacement change.}
 
 \item{a}{Finite numeric length-s vector of L-stat coefficients a_1..a_s.}
 

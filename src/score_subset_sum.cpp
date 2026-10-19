@@ -2,6 +2,7 @@
 // [[Rcpp::plugins(cpp17)]]
 // [[Rcpp::depends(Rcpp)]]
 #include <Rcpp.h>
+#include "compensated_arithmetic.hpp"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -14,31 +15,29 @@ NumericVector rustat_subset_row_sums_g(IntegerMatrix subs, NumericVector g) {
   const int s = subs.ncol();
   const int n = g.size();
   NumericVector out(K);
-  int first_bad_index = -1;
+  int has_bad_index = 0;
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (K >= 256)
 #endif
   for (int r = 0; r < K; ++r) {
-    double acc = 0.0;
+    rdistnn_arithmetic::accumulator acc;
+    bool valid = true;
     for (int c = 0; c < s; ++c) {
-      const int i = subs(r, c) - 1;
-      if (i < 0 || i >= n) {
+      const int index = subs(r, c);
+      if (index == NA_INTEGER || index < 1 || index > n) {
 #ifdef _OPENMP
 #pragma omp critical(rustat_subset_row_sums_g_error)
 #endif
-        {
-          if (first_bad_index < 0)
-            first_bad_index = i + 1;
-        }
-        acc = NA_REAL;
+        { has_bad_index = 1; }
+        valid = false;
         break;
       }
-      acc += g[i];
+      acc.add(g[index - 1]);
     }
-    out[r] = acc;
+    out[r] = valid ? acc.value() : NA_REAL;
   }
-  if (first_bad_index >= 0) {
+  if (has_bad_index) {
     Rcpp::stop("Index out of bounds in rustat_subset_row_sums_g.");
   }
   return out;

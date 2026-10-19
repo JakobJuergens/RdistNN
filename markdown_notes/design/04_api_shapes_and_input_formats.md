@@ -41,6 +41,12 @@ Standard expectations:
 - extracted columns are validated immediately after resolution.
 
 The data-frame interface should never rely on NSE or implicit column guessing.
+Core NP/TDNN/CATE boundaries reject ignored direct inputs and selectors without
+`data`. NP/TDNN allow `data` plus a direct `y` vector in place of `y_col`, but
+not matrix-route `X` or `Y`. CATE allows `data` plus `pseudo_outcome`, but not
+`X`. `.dnn_validate_input_route()` checks these route conflicts before numeric
+canonicalization. Paired ratio and CLATE retain their strict column/direct
+signal exclusivity.
 
 ## 4. Canonical internal forms
 

@@ -22,11 +22,7 @@ rank_weight_dnn_exact <- function(k, s) {
 
   table_one <- function(n) {
     n <- .validate_scalar_int(n, "n")
-    w <- dnn_weights_exact_full_from_ranks(seq_len(n), k, s)$w_rank
-    w <- as.numeric(w)
-    sw <- sum(w)
-    if (!is.finite(sw) || sw <= 0) stop("DNN exact produced nonpositive/invalid sum.", call. = FALSE)
-    w / sw
+    dnn_weights_exact_full_from_ranks(seq_len(n), k, s)$w_rank
   }
 
   eval_one <- function(ranks, ctx = NULL) {
@@ -69,9 +65,9 @@ rank_weight_dnn_asymp <- function(k, s, normalize = TRUE) {
     n <- .validate_scalar_int(n, "n")
     w <- dnn_weights_asymp_full_from_ranks(seq_len(n), k, s, normalize)$w_rank
     w <- as.numeric(w)
-    sw <- sum(w)
+    sw <- .compensated_sum(w)
     if (!is.finite(sw) || sw <= 0) stop("DNN asymp produced nonpositive/invalid sum.", call. = FALSE)
-    w / sw
+    if (normalize) w / sw else w
   }
 
   eval_one <- function(ranks, ctx = NULL) {

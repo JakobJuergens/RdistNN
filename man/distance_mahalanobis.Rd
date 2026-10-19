@@ -2,7 +2,7 @@
 % Please edit documentation in R/dist_mahal.R
 \name{distance_mahalanobis}
 \alias{distance_mahalanobis}
-\title{Mahalanobis distance spec (with one-time covariance setup)}
+\title{Mahalanobis distance spec (with one-time factorization)}
 \usage{
 distance_mahalanobis()
 }
@@ -12,17 +12,28 @@ for use with \code{\link[=cate_dnn]{cate_dnn()}}, \code{\link[=weights_dnn]{weig
 The string alias \code{"mahalanobis"} is registered at package load.
 }
 \description{
-Returns a distance spec that estimates the sample covariance from the
+Returns a distance spec that fits the sample covariance geometry from the
 training matrix X in \code{setup(X)}, then evaluates
 \deqn{d(X_i, x_0) = \sqrt{(X_i - x_0)^\top \hat\Sigma^{-1}(X_i - x_0)}}
-in \code{eval()} / \code{eval_batch()}.  Requires at least two covariates.
+in \code{eval()} / \code{eval_batch()}. Requires at least two observations and one
+covariate. The inverse in this formula is the Moore-Penrose inverse when
+the centered design is numerically rank deficient.
 }
 \details{
-The covariance inverse is computed once in \code{setup()} and reused for all
-evaluations via the \code{ctx} argument, following the same convention as
-\code{\link[=distance_l2_scaled]{distance_l2_scaled()}}.  When the sample covariance is (near-)singular a
-pseudoinverse via SVD is used automatically; no external packages are
-required.
+A whitening factor is computed once by SVD of the binary-normalized,
+centered training design, avoiding an explicit covariance inverse and
+squaring the design's condition number. Singular values greater than
+\code{max(nrow(X), ncol(X)) * .Machine$double.eps * max(singular_values)}
+are retained. Null directions contribute zero distance; an all-constant
+training design gives zero distances. The cutoff uses variation in the
+original covariate units; changing individual column units can therefore
+change the retained numerical rank. The factor is reused through \code{ctx},
+including for subsets and new targets, following \code{\link[=distance_l2_scaled]{distance_l2_scaled()}}.
+Euclidean norms after projection use the selected C++ or R distance engine.
+Legacy contexts containing \code{Si} retain their original inverse metric.
+The explicit rank policy can change neighbors relative to older fits that
+truncated covariance singular values after an inverse failed. Different
+linear-algebra libraries can still differ at a numerical rank boundary.
 
 Particularly useful for DGPs with correlated covariates (e.g.\
 \code{"dgp5_correlated"}) where L2 or diagonal-scaled L2 distances fail to

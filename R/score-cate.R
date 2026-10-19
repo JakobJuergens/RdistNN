@@ -83,7 +83,7 @@ score_cate_rho <- function(
       gi <- ctx$g[idxs]
       if (.has_na_only(gi)) stop("g contains `NA` values.", call. = FALSE)
       if (.has_nonfinite_non_na(gi)) stop("g contains non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
-      as.numeric(sum(gi))
+      .compensated_sum(gi)
     },
     eval_batch = function(subs, data, ctx, rng) {
       gi <- ctx$g
@@ -98,7 +98,7 @@ score_cate_rho <- function(
       if (!is.null(cpp)) {
         return(cpp(subs, gi))
       }
-      rowSums(matrix(gi[subs], nrow = nrow(subs), ncol = ncol(subs)))
+      vapply(seq_len(nrow(subs)), function(i) .compensated_sum_R(gi[subs[i, ]]), numeric(1L))
     },
     randomized = FALSE,
     symmetric = TRUE,

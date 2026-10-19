@@ -185,11 +185,13 @@
   }
   out$s <- .tuning_validate_s_grid_output(out$s, arg = "tuning$eval_grid()")
   needs_jk <- .tuning_needs_jackknife(se = se, jackknife = jackknife)
-  out$feasible <- (as.integer(k) <= out$s) & (!needs_jk | (out$s < as.integer(n)))
+  out$feasible <- (as.integer(k) <= out$s) & (out$s <= as.integer(n)) &
+    (!needs_jk | (out$s < as.integer(n)))
   out$reason <- ifelse(
     out$feasible,
     "ok",
-    ifelse(as.integer(k) > out$s, "k > s", "jackknife requires s < n")
+    ifelse(as.integer(k) > out$s, "k > s",
+      ifelse(out$s > as.integer(n), "s > n", "jackknife requires s < n"))
   )
   list(
     candidates = out,

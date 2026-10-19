@@ -93,10 +93,12 @@ Fitted scale helpers reject nonfinite raw scales before epsilon clamping.
 SD calculations use common conservative range gates before intermediate
 overflow/underflow. Exceptional columns use exact binary normalization, an
 observed-value shift and compensated mean/squared-residual sums. This preserves
-local variation around large offsets; ordinary SD arithmetic is unchanged.
+local variation around large offsets. Ordinary SD also uses the shared
+observed-origin/exact-subtraction policy before vectorized centering.
 The Stata companion uses the same recovery convention and R-compatible guarded
-quantile interpolation. Compensated weighted/prefix sums remain separate planned
-work.
+quantile interpolation. Sensitive weighted/prefix sums use shared compensated
+arithmetic; [note 19](19_weighted_accumulation.md) defines ownership, correction
+state, workspace and cross-engine verification.
 
 Align engines toward stable mathematical reference calculations. Agreement
 between implementations is insufficient if they share an accuracy defect.

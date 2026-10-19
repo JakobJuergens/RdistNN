@@ -1,8 +1,13 @@
-.cate_validate_and_clip_propensity <- function(ehat, n, clip = 1e-8, arg = "ehat") {
+.validate_propensity_clip <- function(clip) {
   if (!is.numeric(clip) || length(clip) != 1L || is.na(clip) ||
-      !is.finite(clip) || clip <= 0 || clip >= 0.5) {
-    .abort_bad_arg("clip", "must be a finite numeric scalar in (0, 0.5)")
+      !is.finite(clip) || clip <= 0 || clip >= 0.5 || 1 - clip >= 1) {
+    .abort_bad_arg("clip", "must be a finite numeric scalar in (0, 0.5) with 1 - clip < 1")
   }
+  as.numeric(clip)
+}
+
+.cate_validate_and_clip_propensity <- function(ehat, n, clip = 1e-8, arg = "ehat") {
+  clip <- .validate_propensity_clip(clip)
   if (!is.numeric(ehat)) {
     .abort_bad_arg(arg, "must be numeric")
   }
@@ -22,7 +27,7 @@
   pmin(pmax(as.numeric(ehat), as.numeric(clip)), 1 - as.numeric(clip))
 }
 
-# R-learner style pseudo-outcome:
+# Normalized Robinson pseudo-outcome (not the R-learner regression root):
 #   rho_i = (D_i - ehat_i) * (Y_i - mhat_i) / (ehat_i * (1 - ehat_i))
 # ehat, mhat come from YOUR code; no fitting happens here.
 cate_rho_rlearner <- function(y, d, ehat, mhat, clip = 1e-8) {

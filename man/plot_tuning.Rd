@@ -73,8 +73,11 @@ plot_tuning(
 \item{object}{A fitted \code{np_result}, \code{cate_result}, \code{affine_ratio_result}
 (including \code{clate_result}), or \code{plqr_result}.}
 
-\item{tuning}{A tuning specification for the candidate grid (default
-\code{\link[=tuning_dnn_paper]{tuning_dnn_paper()}}).}
+\item{tuning}{A tuning specification for the candidate grid. Scalar fits
+use their retained tuning specification when omitted. Fits with a manually
+chosen \code{s} use \code{\link[=tuning_dnn_paper]{tuning_dnn_paper()}}, including that fitted order; optional
+return fields do not change the sweep. An explicit specification overrides
+that scalar grid. Stored grid fits reuse their existing candidates.}
 
 \item{targets}{Optional integer vector of target ids (defaults to at
 most three: first, middle, last).}

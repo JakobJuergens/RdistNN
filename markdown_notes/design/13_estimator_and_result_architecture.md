@@ -77,6 +77,15 @@ candidate adapters update the retained order; estimator adapters own the
 resulting means, effects or paired covariance/status quantities. Sharing the
 target boundary does not change these inference contracts.
 
+`R/user-dnn-geometry.R` owns `.dnn_fitted_geometry()` for NP/TDNN, CATE and
+paired-ratio/CLATE fits. It resolves the specification and training context once,
+retains a setup-free specification for prediction, and separately retains the
+original resolved specification/context for legacy deletion refitting. Registry
+replacement therefore cannot change a saved fit. NP/TDNN and CATE `loo` keep
+their established deletion-specific geometry; paired-ratio `loo` remains the
+frozen-rank reference. Custom closures with mutable external state retain their
+own reproducibility obligations.
+
 ## Nonparametric regression reporting and prediction
 
 DNN and TDNN regression share `np_result` methods for `summary()`, `coef()`,
@@ -112,10 +121,15 @@ reporting and does not supply simultaneous bands.
 
 | Responsibility | Shared module or helper | Estimator adapter owns |
 | --- | --- | --- |
+| Covariance arithmetic | `R/utils-covariance.R` | Statistical normalization, result classes and per-target failure statuses |
+| Fit input routes and canonical matrices | `R/user-dnn-inputs.R` | Allowed signal/selector combinations and estimator-specific validation |
+| Mahalanobis geometry | `R/dist_mahal.R` | Retained fitted context; existing L2 engines evaluate projected norms |
 | Prediction target interface | `.dnn_resolve_prediction_targets()` in `R/user-dnn-prediction.R` | Fitted-state validation and method-specific signal/uncertainty |
 | NP retained state and joint covariance | `R/user-dnn-np-core.R` | Local means and DNN/TDNN controls; public methods in `R/user-dnn-np-methods.R` |
 | DNN rank weights | `.dnn_rank_weight_spec()` in `R/user-dnn-core.R` | Exact/asymptotic rule, `k`, `s`, normalization |
-| Order and grid evaluation | `.dnn_resolve_s()`, `.dnn_grid_eval()` | Estimate/SE callbacks and target-specific statuses |
+| Order and candidate identities | `.dnn_resolve_s()` in `R/user-dnn-tuning.R` | Statistical feasibility and tuning specification |
+| Grid evaluation and cache reuse | `.dnn_grid_eval()` in `R/user-dnn-grid.R` | Estimate/SE callbacks and target-specific statuses |
+| Shared deletion orchestration | `R/user-dnn-jackknife.R` | Signal meaning, geometry refitting and statistical normalization |
 | Paired ratios | `.affine_ratio_evaluate()` | CLATE signal construction and IV metadata |
 | Candidate views | `R/candidate-fit.R` | Every candidate-dependent estimate, covariance and optional extra |
 | Tidy estimate frames | `R/plot-data.R`, `R/plot-common.R` | Estimate scale, coefficient names and unavailable bounds |

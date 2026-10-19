@@ -31,6 +31,7 @@ also read as relevant:
 - `markdown_notes/design/08_comments_and_function_docs.md`
 - `markdown_notes/design/09_testing_and_regression_policy.md`
 - `markdown_notes/design/10_rcpp_and_compiled_code_policy.md`
+- `markdown_notes/design/19_weighted_accumulation.md`
 - `markdown_notes/design/11_examples_vignettes_and_pkgdown_policy.md`
 - `markdown_notes/design/12_release_and_ci_policy.md`
 

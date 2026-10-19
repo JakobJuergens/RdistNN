@@ -1,6 +1,6 @@
-# DNN-based CATE wrapper (rank-weighted local DR learner)
+# DNN-based CATE wrapper (rank-weighted pseudo-outcome averaging)
 
-#' CATE via DNN rank weights (orthogonalized local averaging)
+#' CATE via DNN rank-weighted pseudo-outcome averaging
 #'
 #' Estimate conditional average treatment effects by combining a pseudo-outcome
 #' with DNN-based local weights.
@@ -34,8 +34,14 @@
 #' `degenerate`; `top_n` is fixed at 5 and is independent of the estimator's
 #' `k`.
 #'
-#' Neyman orthogonality controls first-order population nuisance drift, but it
-#' does not by itself validate arbitrary nuisance predictions fitted on the
+#' The AIPW signal is Neyman orthogonal at the true nuisance functions. The
+#' normalized Robinson signal identifies the effect with true nuisances but
+#' is generally not orthogonal to propensity error. If the pooled outcome
+#' mean is correct, its conditional expectation is
+#' \eqn{e_0(1-e_0)\tau / \{\hat e(1-\hat e)\}}. It can therefore have
+#' first-order propensity drift; AIPW's orthogonality argument does not apply
+#' to that route without additional propensity control. Orthogonality alone
+#' does not validate arbitrary nuisance predictions fitted on the
 #' same observations used for localization and inference. Valid full-sample
 #' reuse additionally requires the nuisance-rate and full-state stability
 #' conditions in the accompanying paper. This function computes the estimator
@@ -43,6 +49,10 @@
 #' arbitrary learner satisfies those conditions. Supply oracle quantities,
 #' cross-fitted or out-of-fold predictions, or full-sample predictions from a
 #' learner for which the paper's rate and stability conditions are credible.
+#'
+#' With `data`, omit `X`; a direct `pseudo_outcome` vector remains supported.
+#' Column selectors require `data`. Prediction retains the fitted metric and
+#' context even if a registered distance name is subsequently replaced.
 #'
 #' @param data Data frame with covariates and optional nuisance columns. Column
 #'   names must be non-missing, non-empty, and unique.
@@ -53,7 +63,8 @@
 #' @param m1_col Name or index for \eqn{E[Y(1)\mid X]} (full AIPW interface).
 #' @param m_col Name or index for \eqn{E[Y\mid X]} (Robinson interface).
 #' @param e_col Name or index for propensity \eqn{P(T=1\mid X)}.
-#' @param clip Finite propensity clipping constant in `(0, 0.5)`, default
+#' @param clip Finite propensity clipping constant in `(0, 0.5)` with
+#'   `1 - clip < 1` in double precision, default
 #'   `1e-8`. Raw nuisance propensities must be finite and lie in `[0, 1]`;
 #'   nuisance-based AIPW and Robinson scores use
 #'   `pmin(pmax(e, clip), 1 - clip)`. This argument does not alter a supplied
@@ -146,11 +157,7 @@ cate_dnn <- function(
   k <- .validate_scalar_int(k, "k")
   normalize <- .validate_scalar_logical(normalize, "normalize")
   se <- .validate_scalar_logical(se, "se")
-  if (!is.numeric(clip) || length(clip) != 1L || is.na(clip) ||
-      !is.finite(clip) || clip <= 0 || clip >= 0.5) {
-    .abort_bad_arg("clip", "must be a finite numeric scalar in (0, 0.5)")
-  }
-  clip <- as.numeric(clip)
+  clip <- .validate_propensity_clip(clip)
 
   .warn_unknown_return(return, valid = c("W", "ranks", "ord", "dx", "psi", "nuisance", "ess", "neighbors", "tuning"))
   if (identical(tuning_mode, "grid") && !is.null(s_arg)) {
@@ -165,6 +172,10 @@ cate_dnn <- function(
   }
   t_vec <- e_used <- m0 <- m1 <- m <- NULL
 
+  .dnn_validate_input_route(data, list(X = X),
+    list(x_cols = x_cols, y_col = y_col, t_col = t_col,
+      m0_col = m0_col, m1_col = m1_col, m_col = m_col, e_col = e_col))
+
   # Dispatch: data-frame API vs matrix API.
   if (!is.null(data)) {
     if (!is.data.frame(data)) {
@@ -177,6 +188,10 @@ cate_dnn <- function(
     if (!is.null(pseudo_outcome)) {
       psi <- .validate_vector_nrow(pseudo_outcome, n, arg = "pseudo_outcome", ref = "X", strict = TRUE)
     } else {
+      if (xor(is.null(m0_col), is.null(m1_col))) {
+        .abort_bad_arg("m0_col/m1_col", "must be supplied together for full AIPW; omit both for Robinson",
+          quoted = FALSE)
+      }
       # Determine which outcome-model interface is used
       has_aipw <- !is.null(m0_col) && !is.null(m1_col)
       has_robinson <- !is.null(m_col)
@@ -280,6 +295,10 @@ cate_dnn <- function(
   # Targets
   x0_mat <- .dnn_resolve_targets(x_mat, X0 = X0, x0 = x0)
 
+  geometry <- .dnn_fitted_geometry(distance, x_mat, ctx)
+  # Retain the resolved unfitted specification for legacy geometry-refitting LOO.
+  distance <- geometry$inference_distance
+
   # Weights (rank-only DNN).
   weight_return <- return
   if (identical(tuning_mode, "grid") || (isTRUE(se) && identical(jackknife, "fast"))) {
@@ -289,12 +308,12 @@ cate_dnn <- function(
   weight_fit <- .dnn_weights_with_extras(
     x_mat = x_mat,
     x0_mat = x0_mat,
-    distance = distance,
+    distance = geometry$distance,
     method = method,
     k = k,
     s = s,
     normalize = normalize,
-    ctx = ctx,
+    ctx = geometry$ctx,
     return = weight_return
   )
   wt <- weight_fit$wt
@@ -374,22 +393,20 @@ cate_dnn <- function(
   }
 
   # Internal fit state used by predict.cate_result().
-  out$.model <- list(
+  out$.model <- c(list(
     x_mat = x_mat,
     psi = psi,
     t_vec = t_vec,
     e = e_used,
     propensity_clip = if (!is.null(e_used)) clip else NULL,
     propensity_version = if (!is.null(e_used)) "clipped" else NULL,
-    x_cols = if (!is.null(data)) colnames(x_mat) else NULL,
-    distance = distance,
+    x_cols = if (!is.null(data)) .dnn_resolve_data_cols(x_cols, data, "x_cols") else NULL,
     method = method,
     k = k,
     s = s,
     normalize = normalize,
-    ctx = ctx,
     ranks = if (identical(tuning_mode, "grid")) wt$ranks else NULL
-  )
+  ), geometry)
 
   class(out) <- "cate_result"
   out
@@ -543,7 +560,8 @@ cate_dnn <- function(
   ctx,
   se,
   jackknife,
-  tuning_payload
+  tuning_payload,
+  reuse_default = TRUE
 ) {
   .cate_dnn_warn_infeasible_grid(candidates)
   se_fn <- if (isTRUE(se) && !identical(jackknife, "none")) {
@@ -585,7 +603,7 @@ cate_dnn <- function(
     },
     se_fn = se_fn,
     ctx = list(k = k),
-    precomputed = .cate_dnn_grid_default_precomputed(
+    precomputed = if (reuse_default) .cate_dnn_grid_default_precomputed(
       candidates = candidates,
       tau_hat = tau_hat,
       se_hat = se_hat,
@@ -593,7 +611,7 @@ cate_dnn <- function(
       k = k,
       method = method,
       normalize = normalize
-    )
+    ) else NULL
   )
   grid$meta <- .cate_dnn_grid_meta(
     tuning_payload = tuning_payload,

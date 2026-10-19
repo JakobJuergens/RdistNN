@@ -14,9 +14,9 @@ plot_data_estimates(object, level = 0.95, ...)
 
 \method{plot_data_estimates}{default}(object, level = 0.95, ...)
 
-\method{plot_data_estimates}{np_result}(object, level = 0.95, ...)
+\method{plot_data_estimates}{np_result}(object, level = 0.95, candidates = "default", ...)
 
-\method{plot_data_estimates}{cate_result}(object, level = 0.95, ...)
+\method{plot_data_estimates}{cate_result}(object, level = 0.95, candidates = "default", ...)
 
 \method{plot_data_estimates}{plqr_result}(object, level = 0.95, quantity = c("moment", "theta"), ...)
 
@@ -33,15 +33,15 @@ plot_data_estimates(object, level = 0.95, ...)
 
 \item{...}{Passed to methods; not used.}
 
+\item{candidates}{For grid-aware methods, \code{"default"}, \code{"all"}, or a
+character vector of stored candidate ids.}
+
 \item{quantity}{For \code{plqr_result} fits, which quantity to extract:
 \code{"moment"} (default) uses the localized PLQR moments and their
 jackknife \code{moment_se}; \code{"theta"} uses the supplied coefficient values
 (repeated \code{theta_eval}) and the direct-sandwich \code{theta_se}. While no
 root solver exists, moments are the target-specific quantity, so they
 are the default. The choice is recorded in \code{attr(., "quantity")}.}
-
-\item{candidates}{For grid-aware methods, \code{"default"}, \code{"all"}, or a
-character vector of stored candidate ids.}
 }
 \value{
 A \code{data.frame} with columns \code{target_id} (integer, \verb{1..m}),

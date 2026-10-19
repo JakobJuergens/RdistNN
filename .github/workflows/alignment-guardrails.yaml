@@ -39,8 +39,8 @@ jobs:
       - name: Check repository hygiene
         run: Rscript tools/ci/check_repository_hygiene.R
 
-      - name: Check affine bundle snapshot identity
-        run: python3 tests/ci/test_affine_bundle_sync.py
+      - name: Check package maintenance regressions
+        run: python3 -m unittest discover -s tests/ci -v
 
       - name: Check pkgdown reference coverage
         run: Rscript tools/ci/check_pkgdown_reference_coverage.R

@@ -14,6 +14,9 @@ src/*.dll
 src/*.dylib
 src/symbols.rds
 
+# Local build and verification outputs
+/build/
+
 # R CMD build/check outputs
 *.Rcheck/
 *.Rout

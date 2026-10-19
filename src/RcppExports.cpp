@@ -10,6 +10,41 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// rustat_compensated_sum
+double rustat_compensated_sum(const Rcpp::NumericVector& x);
+RcppExport SEXP _RdistNN_rustat_compensated_sum(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(rustat_compensated_sum(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rustat_weighted_cdf_index
+int rustat_weighted_cdf_index(const Rcpp::NumericVector& w, double prob);
+RcppExport SEXP _RdistNN_rustat_weighted_cdf_index(SEXP wSEXP, SEXP probSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type w(wSEXP);
+    Rcpp::traits::input_parameter< double >::type prob(probSEXP);
+    rcpp_result_gen = Rcpp::wrap(rustat_weighted_cdf_index(w, prob));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rustat_compensated_crossprod
+Rcpp::NumericMatrix rustat_compensated_crossprod(const Rcpp::NumericMatrix& x, const Rcpp::NumericMatrix& y);
+RcppExport SEXP _RdistNN_rustat_compensated_crossprod(SEXP xSEXP, SEXP ySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::NumericMatrix& >::type x(xSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericMatrix& >::type y(ySEXP);
+    rcpp_result_gen = Rcpp::wrap(rustat_compensated_crossprod(x, y));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rustat_dist_l1
 NumericVector rustat_dist_l1(NumericMatrix X, NumericVector x0);
 RcppExport SEXP _RdistNN_rustat_dist_l1(SEXP XSEXP, SEXP x0SEXP) {
@@ -228,6 +263,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rustat_exact_rank_table
+NumericVector rustat_exact_rank_table(int n, int k, int s);
+RcppExport SEXP _RdistNN_rustat_exact_rank_table(SEXP nSEXP, SEXP kSEXP, SEXP sSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< int >::type s(sSEXP);
+    rcpp_result_gen = Rcpp::wrap(rustat_exact_rank_table(n, k, s));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rustat_cate_ctx_create
 SEXP rustat_cate_ctx_create(NumericVector rho);
 RcppExport SEXP _RdistNN_rustat_cate_ctx_create(SEXP rhoSEXP) {
@@ -327,6 +375,9 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_RdistNN_rustat_compensated_sum", (DL_FUNC) &_RdistNN_rustat_compensated_sum, 1},
+    {"_RdistNN_rustat_weighted_cdf_index", (DL_FUNC) &_RdistNN_rustat_weighted_cdf_index, 2},
+    {"_RdistNN_rustat_compensated_crossprod", (DL_FUNC) &_RdistNN_rustat_compensated_crossprod, 2},
     {"_RdistNN_rustat_dist_l1", (DL_FUNC) &_RdistNN_rustat_dist_l1, 2},
     {"_RdistNN_rustat_dist_l1_scaled", (DL_FUNC) &_RdistNN_rustat_dist_l1_scaled, 3},
     {"_RdistNN_rustat_dist_l1_batch", (DL_FUNC) &_RdistNN_rustat_dist_l1_batch, 2},
@@ -344,6 +395,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_RdistNN_rustat_topk_dist", (DL_FUNC) &_RdistNN_rustat_topk_dist, 2},
     {"_RdistNN_rustat_jackknife_fast_rank", (DL_FUNC) &_RdistNN_rustat_jackknife_fast_rank, 4},
     {"_RdistNN_rustat_jackknife_rank_full", (DL_FUNC) &_RdistNN_rustat_jackknife_rank_full, 4},
+    {"_RdistNN_rustat_exact_rank_table", (DL_FUNC) &_RdistNN_rustat_exact_rank_table, 3},
     {"_RdistNN_rustat_cate_ctx_create", (DL_FUNC) &_RdistNN_rustat_cate_ctx_create, 1},
     {"_RdistNN_rustat_cate_g_all", (DL_FUNC) &_RdistNN_rustat_cate_g_all, 1},
     {"_RdistNN_rustat_cate_g_indexed", (DL_FUNC) &_RdistNN_rustat_cate_g_indexed, 2},

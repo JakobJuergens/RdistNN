@@ -11,7 +11,15 @@ the first place to look, then the relevant integration or numerical suite.
 
 | Area | Files in `tests/testthat/` |
 | --- | --- |
+| Saved geometry and shared inputs | `test-fitted-geometry-contract.R`, `test-input-route-contract.R`, `test-prediction-selectors.R` |
+| Weight control and scalar/grid consumers | `test-weight-control-contract.R`, `test-tuning-consumer-contract.R` |
+| Shared grid callbacks, failure rows, duplicate keys and cached target/inference reuse | `test-tuning-grid-engine.R` |
+| Local origins, offsets, translated SD and covariance | `test-centering-translation.R` |
+| Neighbor extras and CATE nuisance contracts | `test-result-neighbors.R`, `test-cate-nuisance-contract.R`, `test-score-cate-accumulation.R` |
+| Exact-table represented parity and near-full support | `test-exact-table-portability.R` |
+| Weighted CDF boundary indices, physical radius and outcome SD ranges | `test-weighted-distribution-range.R`, `fixtures/weighted-cdf.csv` |
 | Component contracts | `test-api-*`, `test-distance-*`, `test-order-*`, `test-score-*`, `test-utils-validate.R` |
+| Compensated weighted sums, native/R parity, retained deletion corrections and buffer boundaries | `test-compensated-accumulation.R` |
 | Numerical references and optimized paths | `test-rank-weight-*`, `test-jackknife-rank-*`, `test-dnn-scalar-reference.R`, `test-dnn-jackknife-prefix.R`, `test-tdnn-*`, `test-compiled-fallback-parity.R`, `test-errors-fastpaths.R` |
 | Native/R distance arithmetic, large-offset and accumulation-sensitive ranks, scalar/batch agreement and FMA-sensitive ties | `test-distance-scaled-arithmetic.R` |
 | Huge/tiny finite L2 norms, shared exceptional boundaries, exact ranks and serialized prediction | `test-distance-range-stability.R` |
@@ -124,3 +132,13 @@ RDISTNN_VDIFFR=true Rscript -e 'devtools::test(filter = "^plot-vdiffr$")'
 Review any changed SVGs in `tests/testthat/_snaps/plot-vdiffr/` before accepting
 them. A normal run retains numerical plot-data checks without enabling
 platform-dependent visual snapshots.
+
+## Package-maintenance checks
+
+`python3 -m unittest discover -s tests/ci -v` covers repository policy,
+generated-document drift, candidate-file hygiene and duplicate package-level
+function ownership in isolated fixtures. Local closures may reuse names.
+The generated-file gate regenerates the namespace, all roxygen Rd topics and
+Rcpp glue in a temporary source tree, leaving the checkout untouched. It
+rejects stale, missing and orphan generated topics and requires the declared
+roxygen2 version. Ordinary local build outputs remain ignored.

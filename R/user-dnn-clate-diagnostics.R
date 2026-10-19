@@ -13,6 +13,8 @@
 #'   geometry_rule and tie_rule identify the frozen geometry and tie convention.
 #'   Zero denominator variance gives NA standardized magnitude/correlation.
 #'   Disabled covariance gives unavailable uncertainty/concentration fields.
+#'   physical_radius_90 uses original-coordinate Euclidean distance; radius_90
+#'   uses the fitted localization metric. Both enclose 90 percent of weight.
 #' @examples
 #' f <- affine_ratio_dnn(
 #'   X = matrix(1:4, ncol = 1), x0 = 0,
@@ -87,6 +89,7 @@ diagnostics.affine_ratio_result <- function(object, candidates = "default", ...)
     denominator_variance_status = variance_status,
     theta = object$theta, se = if (is.null(object$se)) rep(NA_real_, m) else object$se,
     neff = object$neff,
+    physical_radius_90 = .dnn_physical_radius(W, model$x_mat, as.matrix(object$x0)),
     radius_90 = if (is.null(geometry$dx)) {
       rep(NA_real_, m)
     } else {

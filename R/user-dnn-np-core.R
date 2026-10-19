@@ -1,17 +1,6 @@
 # Retained-state and numerical adapters for DNN/TDNN regression.
 # Public result methods consume these helpers without changing estimand classes.
 
-# Resolve the named metric and its setup once. Keep the unfitted specification
-# separately for the established explicit-deletion (loo) reference path.
-.np_fitted_geometry <- function(distance, x_mat, ctx) {
-  spec <- .resolve_distance(distance)
-  fitted_ctx <- ctx
-  if (is.null(fitted_ctx) && is.function(spec$setup)) fitted_ctx <- spec$setup(x_mat)
-  frozen <- spec
-  frozen$setup <- NULL
-  list(distance = frozen, ctx = fitted_ctx, inference_distance = spec, inference_ctx = ctx)
-}
-
 .np_prediction_state <- function(object) {
   model <- object$.model
   if (!is.list(model) || is.null(model$x_mat) || is.null(model$y_vec) ||
@@ -77,7 +66,7 @@
 
 # Target columns share deletion row identities. Subtracting a target-specific
 # common offset preserves their cross covariance and small local variation.
-.np_centered_deletions <- function(model, x0_mat, ranks = NULL, jackknife = "fast") {
+.np_covariance_deletions <- function(model, x0_mat, ranks = NULL, jackknife = "fast") {
   n <- nrow(model$x_mat)
   order <- if (identical(model$kind, "tdnn")) model$s2 else model$s
   if (order >= n) {
@@ -97,19 +86,19 @@
     loo <- .dnn_loo_centered(model$y_vec, ranks, .rank_weight_table(rw, n - 1L),
       tab_full = .rank_weight_table(rw, n))$loo
   }
-  sweep(loo, 2L, colMeans(loo), "-")
+  loo
 }
 
 .np_marginal_variance <- function(model, x0_mat, ranks = NULL, jackknife = "fast") {
-  centered <- .np_centered_deletions(model, x0_mat, ranks, jackknife)
-  n <- nrow(centered)
-  (n - 1) / n * colSums(centered^2)
+  deletions <- .np_covariance_deletions(model, x0_mat, ranks, jackknife)
+  n <- nrow(deletions)
+  .covariance_matrix(deletions, (n - 1) / n, diagonal = TRUE)
 }
 
 .np_joint_covariance <- function(model, x0_mat, ranks = NULL, jackknife = "fast") {
-  centered <- .np_centered_deletions(model, x0_mat, ranks, jackknife)
-  n <- nrow(centered)
-  V <- (n - 1) / n * crossprod(centered)
+  deletions <- .np_covariance_deletions(model, x0_mat, ranks, jackknife)
+  n <- nrow(deletions)
+  V <- .covariance_matrix(deletions, (n - 1) / n)
   dimnames(V) <- rep(list(paste0("target_", seq_len(nrow(x0_mat)))), 2L)
   V
 }

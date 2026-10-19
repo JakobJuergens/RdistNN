@@ -48,6 +48,9 @@
 #' If nonzero component variation underflows its covariance, uncertainty is
 #' unavailable with numerical_failure status; it is not treated as deterministic.
 #'
+#' Prediction retains the resolved distance specification and fitted context;
+#' re-registering the distance name does not change an existing fit.
+#'
 #' @return An affine_ratio_result with theta, se, m-by-2 components,
 #'   lists component_vcov, theta_vcov and theta_omega (NULL without covariance),
 #'   x0, neff, per-target status, row_ids, meta and retained frozen model state.
@@ -129,9 +132,10 @@ affine_ratio_dnn <- function(
   if (active_covariance && (n < 2L || s >= n)) {
     .abort_bad_arg("s", sprintf("must satisfy s < n=%d for delete-1 covariance", n))
   }
+  geometry <- .dnn_fitted_geometry(distance, x_mat, ctx)
   # Resolve the geometry once, including for the explicit deletion reference.
   weights <- .dnn_weights_with_extras(
-    x_mat, x0_mat, distance, method, k, s, normalize, ctx,
+    x_mat, x0_mat, geometry$distance, method, k, s, normalize, geometry$ctx,
     return = c("ranks", "ord", "dx")
   )
   W <- weights$W
@@ -164,12 +168,12 @@ affine_ratio_dnn <- function(
     }
     out$pseudo_values <- pv
   }
-  out$.model <- list(
+  out$.model <- c(list(
     x_mat = x_mat, signal = signal, x_cols = resolved_x_cols,
-    distance = distance, ctx = ctx, k = k, s = s, method = method, normalize = normalize,
+    k = k, s = s, method = method, normalize = normalize,
     denominator_tol = denominator_tol, row_ids = ids,
     geometry = list(ranks = wt$ranks, ord = wt$ord, dx = wt$dx)
-  )
+  ), geometry)
   if (tuning_mode == "grid") {
     out$tuning_grid <- .affine_ratio_tuning_grid(out, signal, wt$ranks, model_weights,
       active_covariance, jackknife, denominator_tol, resolved$tuning)
@@ -181,7 +185,7 @@ affine_ratio_dnn <- function(
 # Common paired calculation for the default order and cached grid candidates.
 .affine_ratio_evaluate <- function(signal, W, ranks, rw, active, jackknife, tol) {
   n <- nrow(signal)
-  components <- t(crossprod(signal, W))
+  components <- t(.compensated_crossprod(signal, W))
   colnames(components) <- c("numerator", "denominator")
   rownames(components) <- NULL
   neff <- as.numeric(1 / colSums(W^2))
@@ -227,7 +231,8 @@ affine_ratio_dnn <- function(
 .affine_ratio_covariance <- function(loo, components, theta, neff) {
   n <- dim(loo)[1L]
   m <- nrow(components)
-  paired <- .dnn_jackknife_vcov_from_loo(loo, q = 2L, n = n, m = m)$vcov
+  paired <- .dnn_jackknife_vcov_from_loo(loo, q = 2L, n = n, m = m,
+    allow_failure = TRUE)$vcov
   theta_vcov <- theta_omega <- vector("list", m)
   se <- rep(NA_real_, m)
   status <- rep("ok", m)
@@ -251,8 +256,9 @@ affine_ratio_dnn <- function(
       status[j] <- "numerical_failure"
       next
     }
-    sd <- if (scale == 0) 0 else scale * sqrt((n - 1) / n * sum((g / scale)^2))
-    v <- sd^2
+    v <- .covariance_matrix(matrix(g), (n - 1) / n, center = FALSE,
+      allow_failure = TRUE)[1L, 1L]
+    sd <- sqrt(v)
     omega <- neff[j] * v
     if (!is.finite(v) || !is.finite(omega) || (scale > 0 && v == 0)) {
       status[j] <- "numerical_failure"

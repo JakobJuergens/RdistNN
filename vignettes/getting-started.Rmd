@@ -72,7 +72,10 @@ nuisance or pseudo-outcome vector.
 
 ### Interpreting CATE inference
 
-Orthogonality controls first-order population nuisance drift. Valid nuisance
+AIPW orthogonality controls first-order population nuisance drift. The normalized
+Robinson signal is generally not orthogonal to propensity errors (see the
+[signal formulas](notation-and-conventions.html#robinson-form-signal)); its
+inference needs additional propensity control. Valid nuisance
 reuse on the full estimation sample additionally requires the nuisance-rate
 and full-state stability conditions in the accompanying paper. The package
 cannot establish those conditions for an arbitrary learner. Out-of-fold
@@ -204,8 +207,10 @@ Unused rows are excluded before subtraction, including values whose
 subtraction would overflow. All `n` deletions and the original jackknife
 scaling factor are retained.
 
-The reference is the active signal's smallest value if all active values are
-positive, its largest value if all are negative, and zero otherwise. C++, R,
+The reference is the first active observation in localization-rank order when
+its subtractions stay in range and preserve the represented differences exactly.
+A range safeguard uses the same-sign endpoint or zero; an inexact subtraction
+falls back to zero to retain small separately represented signals. C++, R,
 fast and explicit deletion paths use this rule for NP, CATE, CLATE/affine
 ratios and PLQR; R's TDNN paths include every nonzero signed weight.
 Asymptotic weights retain every represented nonzero entry. Their support is
