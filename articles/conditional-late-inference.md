@@ -1,6 +1,6 @@
 # Paired frozen-score inference for conditional ratios
 
-The experimental
+The supported
 [`affine_ratio_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_dnn.md)
 and
 [`clate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/clate_dnn.md)
@@ -273,8 +273,9 @@ data-selected geometry need their own justification.
 
 ## Ratio confidence sets
 
+The experimental
 [`ratio_confidence_set()`](https://JakobJuergens.github.io/RdistNN/reference/ratio_confidence_set.md)
-inverts the candidate moment inequality
+helper inverts the candidate moment inequality
 
 ``` math
 (\widehat\Delta_Y-\theta\widehat\Delta_D)^2

@@ -36,8 +36,8 @@ The vignette collection has four complementary layers:
 
 1.  Start with the package tour and the common DNN localization
     machinery.
-2.  Move to an estimator article for the NP and CATE workflows or
-    experimental PLQR and IV details.
+2.  Move to an estimator article for the NP, CATE and CLATE workflows or
+    experimental PLQR and local IV-GMM details.
 3.  Consult the diagnostics and visualization articles when interpreting
     a fit.
 4.  Use the extension and replication articles only when you need those
@@ -218,8 +218,8 @@ return different statistical objects.
 | [`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md) | CATE pseudo-outcome $`\psi_i`$ | `tau` | Local conditional average treatment effect |
 | [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md) | Vector PLQR score $`\psi_i(\theta_{\mathrm{eval}})`$ | `moment`; supplied `theta` | Moment evaluation at a user-supplied coefficient |
 | [`gmm_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/gmm_dnn.md) | Model-defined vector moments $`g_i(\theta)`$ | solved `theta` | Experimental local GMM estimate |
-| [`clate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/clate_dnn.md) | Paired augmented reduced-form and first-stage signals | `theta`, `components` | Experimental conditional complier effect under the IV assumptions |
-| [`affine_ratio_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_dnn.md) | Two supplied scalar signals | `theta`, `components` | Experimental ratio of common-weight local averages |
+| [`clate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/clate_dnn.md) | Paired augmented reduced-form and first-stage signals | `theta`, `components` | Conditional complier effect under the IV assumptions |
+| [`affine_ratio_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_dnn.md) | Two supplied scalar signals | `theta`, `components` | Ratio of common-weight local averages |
 
 The word **score** means an observation-level contribution. The word
 **moment** means its DNN-weighted average at a target. For scalar NP and
@@ -326,7 +326,7 @@ for a worked CATE fit. For the paper-specific data-generating process
 and Monte Carlo harness, use [Affine paper
 replication](https://JakobJuergens.github.io/RdistNN/articles/paper-affine-replication.md).
 
-## Experimental CLATE conventions
+## CLATE conventions
 
 CLATE uses `A` for the binary instrument and `D` for binary treatment.
 Reporting uses `X`; nuisance predictions adjust for all pre-instrument

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9002</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,10 @@
 <div id="agent-instructions-for-rdistnn" class="section level1">
 
 <p>Read this file before modifying code. It is the canonical instruction file for LLM agents and automated coding assistants working in this repository.</p>
+<div class="section level2">
+<h2 id="development-and-production-branches">Development and production branches<a class="anchor" aria-label="anchor" href="#development-and-production-branches"></a></h2>
+<p>Develop on the local <code>development</code> branch. Keep it unpublished until the maintainer authorizes publication; branches in a public repository are public when pushed. Production is <code>master</code>. Submit production changes through a pull request and use a squash merge after review and required checks. Do not push development commits directly to <code>master</code> unless explicitly instructed to do so. See <code>CONTRIBUTING.md</code> for the workflow.</p>
+</div>
 <div class="section level2">
 <h2 id="mandatory-read-order">Mandatory read order<a class="anchor" aria-label="anchor" href="#mandatory-read-order"></a></h2>
 <p>Before making changes, read these files in order:</p>
@@ -76,7 +80,7 @@
 <li>Diagnostics should use clean user-facing <code><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop()</a></code> / <code><a href="https://rdrr.io/r/base/warning.html" class="external-link">warning()</a></code> messages, generally with <code>call. = FALSE</code>.</li>
 <li>Unknown <code>return</code> values must be handled consistently across wrappers.</li>
 <li>Do not hand-edit generated files such as <code>NAMESPACE</code> or <code>RcppExports.*</code>.</li>
-<li>New compiled paths must include fallback-equivalence tests.</li>
+<li>Preserve numerical parity between compiled and R engines and, for shared methods, the Stata companion. Follow design notes 09 and 10 for exact discrete decisions, justified floating-point tolerances and tests that establish which engine actually ran. New compiled paths need such tests.</li>
 <li>New user-visible validation or behavior changes must include tests.</li>
 <li>Do not introduce new interface conventions without updating the design notes.</li>
 <li>Mathematica / Wolfram Language is available through <code>wolframscript</code>. Use it when helpful for symbolic derivations, finite combinatorial checks, or estimator-formula sanity checks, and record any substantive conclusions back into code, tests, or design notes.</li>

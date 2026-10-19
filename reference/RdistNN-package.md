@@ -1,13 +1,17 @@
-# RdistNN: DNN Estimation for CATE and Nonparametric Regression
+# RdistNN: DNN Estimation for Conditional Effects and Regression
 
-The initial public release focuses on conditional average treatment
-effects with
-[`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md)
-and nonparametric regression with
+Supported workflows include conditional average treatment effects with
+[`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md),
+nonparametric regression with
 [`np_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_dnn.md),
+conditional LATE with
+[`clate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/clate_dnn.md)
+and ordinary supplied-signal ratios with
+[`affine_ratio_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_dnn.md),
 using distributional nearest-neighbor (DNN) weights and delete-1
-jackknife standard errors. Nuisance predictions for CATE are supplied
-externally. The underlying toolkit combines:
+jackknife standard errors. Nuisance predictions for causal estimators
+are supplied externally; the documented inference conditions remain
+estimator-specific. The underlying toolkit combines:
 
 - distance specifications (`dnn_distance`) for ranking observations
   around a target;
@@ -48,6 +52,17 @@ externally. The underlying toolkit combines:
   see its help for order constraints and additional smoothness
   requirements.
 
+- Estimate conditional LATE from supplied nuisance predictions with
+  [`clate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/clate_dnn.md),
+  or localize two supplied signals with
+  [`affine_ratio_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_dnn.md).
+  [`iv_augmented_signals()`](https://JakobJuergens.github.io/RdistNN/reference/iv_augmented_signals.md)
+  constructs the augmented binary-IV signals. Reporting methods and
+  [`diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/diagnostics.md)
+  retain components and statuses.
+  [`clate_demo_data()`](https://JakobJuergens.github.io/RdistNN/reference/clate_demo_data.md)
+  supplies a bounded synthetic benchmark with oracle predictions.
+
 - Inspect fitted local estimators with
   [`diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/diagnostics.md).
 
@@ -64,22 +79,10 @@ All PLQR functionality is **experimental**, including
 its scores, demo helpers, methods, and plots. The current wrapper
 evaluates moments at a supplied coefficient; it does not solve for local
 coefficients. Local IV-GMM functionality is also experimental. These
-workflows are outside the CATE and regression focus of the initial
-public release.
-
-- Estimate conditional LATE from supplied nuisance predictions with
-  [`clate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/clate_dnn.md),
-  or localize two supplied signals with
-  [`affine_ratio_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_dnn.md).
-  [`iv_augmented_signals()`](https://JakobJuergens.github.io/RdistNN/reference/iv_augmented_signals.md)
-  constructs the augmented binary-IV signals. Reporting methods and
-  [`diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/diagnostics.md)
-  retain components and statuses;
-  [`ratio_confidence_set()`](https://JakobJuergens.github.io/RdistNN/reference/ratio_confidence_set.md)
-  provides separate set-valued moment inversion.
-  [`clate_demo_data()`](https://JakobJuergens.github.io/RdistNN/reference/clate_demo_data.md)
-  supplies a bounded synthetic benchmark with oracle predictions. All
-  conditional-LATE functionality is experimental.
+workflows are outside the supported workflow focus. The optional
+[`ratio_confidence_set()`](https://JakobJuergens.github.io/RdistNN/reference/ratio_confidence_set.md)
+API remains experimental and provides separate set-valued moment
+inversion.
 
 - Build custom generalized U-statistics with
   [`new_score()`](https://JakobJuergens.github.io/RdistNN/reference/new_score.md),

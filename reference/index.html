@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9002</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,7 +47,7 @@
           <code><a href="RdistNN-package.html">RdistNN-package</a></code> <code><a href="RdistNN-package.html">RdistNN</a></code>
 
         </dt>
-        <dd>RdistNN: DNN Estimation for CATE and Nonparametric Regression</dd>
+        <dd>RdistNN: DNN Estimation for Conditional Effects and Regression</dd>
       </dl></div><div class="section level2">
       <h2 id="cate-and-regression-estimators-and-weights">CATE and regression — estimators and weights<a class="anchor" aria-label="anchor" href="#cate-and-regression-estimators-and-weights"></a></h2>
 
@@ -109,7 +109,7 @@
       </dl></div><div class="section level2">
       <h2 id="s-methods">S3 methods<a class="anchor" aria-label="anchor" href="#s-methods"></a></h2>
 
-      <div class="section-desc"><p>CATE inference methods, regression printing, and shared diagnostics and candidate views.</p></div>
+      <div class="section-desc"><p>Conditional-effect and regression inference, prediction, shared diagnostics and candidate views.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -143,6 +143,13 @@
 
         </dt>
         <dd>Print an <code>np_result</code> object</dd>
+
+        <dt>
+
+          <code><a href="np_result.html">coef(<i>&lt;np_result&gt;</i>)</a></code> <code><a href="np_result.html">vcov(<i>&lt;np_result&gt;</i>)</a></code> <code><a href="np_result.html">summary(<i>&lt;np_result&gt;</i>)</a></code> <code><a href="np_result.html">print(<i>&lt;summary.np_result&gt;</i>)</a></code> <code><a href="np_result.html">confint(<i>&lt;np_result&gt;</i>)</a></code> <code><a href="np_result.html">predict(<i>&lt;np_result&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Reporting and prediction for nonparametric regression results</dd>
 
         <dt>
 
@@ -432,9 +439,9 @@
         </dt>
         <dd>Summarise raw per-replicate CATE simulation results</dd>
       </dl></div><div class="section level2">
-      <h2 id="experimental-conditional-late">Experimental — conditional LATE<a class="anchor" aria-label="anchor" href="#experimental-conditional-late"></a></h2>
+      <h2 id="conditional-late-and-paired-ratios">Conditional LATE and paired ratios<a class="anchor" aria-label="anchor" href="#conditional-late-and-paired-ratios"></a></h2>
 
-      <div class="section-desc"><p>Supplied-prediction binary-IV signals and paired ratios with exact or asymptotic DNN weights. Shared reporting, candidate views and plots, with frozen-score covariance, diagnostics and pointwise ratio confidence-set inversion.</p></div>
+      <div class="section-desc"><p>Supported supplied-prediction binary-IV signals and paired ratios with exact or asymptotic DNN weights. Shared reporting, candidate views and plots, with frozen-score covariance, diagnostics and the documented pointwise inference conditions.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -482,8 +489,17 @@
 
         </dt>
         <dd>Bounded endogenous-treatment data for conditional LATE examples</dd>
+      </dl></div><div class="section level2">
+      <h2 id="experimental-ratio-confidence-sets">Experimental — ratio confidence sets<a class="anchor" aria-label="anchor" href="#experimental-ratio-confidence-sets"></a></h2>
 
-        <dt>
+      <div class="section-desc"><p>Optional pointwise normal-reference inversion of paired moment inequalities. This helper does not establish weak-instrument-uniform coverage.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
 
           <code><a href="ratio_confidence_set.html">ratio_confidence_set()</a></code> <code><a href="ratio_confidence_set.html">print(<i>&lt;ratio_confidence_sets&gt;</i>)</a></code>
 

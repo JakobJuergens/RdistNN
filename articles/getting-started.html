@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9002</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,18 +59,17 @@
 
     
     
-<p>The initial RdistNN release focuses on conditional average treatment
-effects and nonparametric regression with distributional
-nearest-neighbor (DNN) weights. Both estimators accept numeric matrices
-or data frames, including tibbles through the data-frame interface.
-Inputs must be finite and complete; choose covariate columns explicitly
-and supply one of <code>x0</code> (one target) or <code>X0</code> (one
-target per row).</p>
-<p>Conditional LATE, PLQR and local IV-GMM are experimental. Their
-reference material is available for research use, but they are outside
-the supported workflow focus of this release. PLQR evaluates moments at
-supplied coefficients; it does not solve for target-specific
-coefficients.</p>
+<p>RdistNN supports conditional average treatment effects, nonparametric
+regression, supplied-prediction conditional LATE and ordinary
+paired-signal ratios with distributional nearest-neighbor (DNN) weights.
+The estimators accept numeric matrices or data frames, including tibbles
+through the data-frame interface. Inputs must be finite and complete;
+choose covariate columns explicitly and supply one of <code>x0</code>
+(one target) or <code>X0</code> (one target per row).</p>
+<p>Optional ratio confidence-set inversion, PLQR and local IV-GMM remain
+experimental. Their reference material is available for research use.
+PLQR evaluates moments at supplied coefficients; it does not solve for
+target-specific coefficients.</p>
 <div class="section level2">
 <h2 id="conditional-average-treatment-effects">Conditional average treatment effects<a class="anchor" aria-label="anchor" href="#conditional-average-treatment-effects"></a>
 </h2>
@@ -258,6 +257,47 @@ not an automatic optimization rule. It cannot be combined with explicit
 ranks; <code>jackknife = "loo"</code> directly recomputes leave-one-out
 weights. Delete-1 inference requires <code>s &lt; n</code>. Set
 <code>se = FALSE</code> to omit standard errors.</p>
+<div class="section level3">
+<h3 id="numerical-centering-of-jackknife-signals">Numerical centering of jackknife signals<a class="anchor" aria-label="anchor" href="#numerical-centering-of-jackknife-signals"></a>
+</h3>
+<p>Large common signal levels can create rounding differences between
+mathematically identical deletion estimates. Before accumulating
+deletions, the estimator subtracts a fixed numerical reference from each
+signal at each target. The reference is the same for every deletion, so
+its contribution cancels when deletion estimates are centered for the
+jackknife covariance. Point estimates and requested raw deletion
+estimates remain on their original scale; this operation does not refit
+or statistically recenter the scores.</p>
+<p>Only observations with nonzero weight in at least one deletion
+determine the reference. An entry at rank <code>r</code> in the
+<code>n - 1</code> weight table can use original ranks <code>r</code>
+and 1, because deleting an earlier observation shifts ranks. For exact
+DNN this union ends at <code>n - s + k</code>, or <code>n - s + 1</code>
+when <code>k = 1</code>. Unused rows are excluded before subtraction,
+including values whose subtraction would overflow. All <code>n</code>
+deletions and the original jackknife scaling factor are retained.</p>
+<p>The reference is the active signal’s smallest value if all active
+values are positive, its largest value if all are negative, and zero
+otherwise. C++, R, fast and explicit deletion paths use this rule for
+NP, CATE, CLATE/affine ratios and PLQR; R’s TDNN paths include every
+nonzero signed weight. Asymptotic weights retain every represented
+nonzero entry. Their support is generally full, so the exact DNN cutoff
+is not imposed and no additional normalization is applied.</p>
+<p>For example, the last observation below has zero weight in every
+deletion. After subtracting the active reference, the deletion means are
+<code>(4, 0, 0, 0)</code>, giving jackknife variance
+<code>(3/4) * (9 + 1 + 1 + 1) = 9</code>:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">signal</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1e16</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">8</span>, <span class="fl">12</span><span class="op">)</span>, <span class="op">-</span><span class="fl">1</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fast"</span>, <span class="st">"loo"</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">engine</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/np_dnn.html">np_dnn</a></span><span class="op">(</span></span>
+<span>    X <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">)</span>, x0 <span class="op">=</span> <span class="fl">0</span>, Y <span class="op">=</span> <span class="va">signal</span>, s <span class="op">=</span> <span class="fl">3L</span>, jackknife <span class="op">=</span> <span class="va">engine</span></span>
+<span>  <span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">se</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span></span>
+<span><span class="op">}</span>, <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; fast  loo </span></span>
+<span><span class="co">#&gt;    9    9</span></span></code></pre></div>
+</div>
 </div>
 <div class="section level2">
 <h2 id="plots-and-reusable-weights">Plots and reusable weights<a class="anchor" aria-label="anchor" href="#plots-and-reusable-weights"></a>
@@ -265,15 +305,15 @@ weights. Delete-1 inference requires <code>s &lt; n</code>. Set
 <p>Plotting is optional and requires ggplot2. Dashboards additionally
 require patchwork. Both fitted workflows support the estimate and weight
 views:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit_np</span><span class="op">)</span></span></code></pre></div>
 <p><img src="getting-started_files/figure-html/plots-1.png" class="r-plt" alt="" width="576"></p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_weights.html">plot_weights</a></span><span class="op">(</span><span class="va">fit_cate</span>, type <span class="op">=</span> <span class="st">"profile"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="getting-started_files/figure-html/plots-2.png" class="r-plt" alt="" width="576"></p>
 <p>For your own scalar signal, build weights directly. Rows of
 <code>W</code> index observations and columns index target points:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">wt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/weights_dnn.html">weights_dnn</a></span><span class="op">(</span></span>
 <span>  X <span class="op">=</span> <span class="va">X</span>, X0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span>, k <span class="op">=</span> <span class="fl">1L</span>, s <span class="op">=</span> <span class="fl">12L</span>,</span>
 <span>  return <span class="op">=</span> <span class="st">"W"</span></span>

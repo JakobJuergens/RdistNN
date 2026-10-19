@@ -147,6 +147,10 @@ An object of class `np_result` with components:
   `diagnostics`, and `meta` tables. Candidate diagnostics report top-5
   weight concentration separately from the estimator's `k`;
 
+- `.model`: retained canonical training state and fitted geometry used
+  by prediction and covariance methods, independently of optional
+  extras;
+
 - optional extras requested via `return`.
 
 ## Details
@@ -178,7 +182,10 @@ estimator's `k`.
 ## See also
 
 [`weights_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/weights_dnn.md),
-[`np_demo_data()`](https://JakobJuergens.github.io/RdistNN/reference/np_demo_data.md).
+[`np_demo_data()`](https://JakobJuergens.github.io/RdistNN/reference/np_demo_data.md),
+[np_result](https://JakobJuergens.github.io/RdistNN/reference/np_result.md)
+for summary, coefficient, joint covariance, confidence interval and
+prediction methods.
 
 ## Examples
 

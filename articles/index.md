@@ -24,12 +24,15 @@
 - [Jackknife for Hájek-dominated generalized U-statistics
   (overview)](https://JakobJuergens.github.io/RdistNN/articles/jackknife-gen-ustats.md):
 
-### Experimental companion workflows
+### Conditional LATE and paired inference
 
 - [Conditional LATE from supplied nuisance
   predictions](https://JakobJuergens.github.io/RdistNN/articles/conditional-late.md):
 - [Paired frozen-score inference for conditional
   ratios](https://JakobJuergens.github.io/RdistNN/articles/conditional-late-inference.md):
+
+### Experimental companion workflows
+
 - [Local IV-GMM
   Estimation](https://JakobJuergens.github.io/RdistNN/articles/local-iv-estimation.md):
 

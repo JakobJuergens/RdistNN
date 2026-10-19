@@ -1,9 +1,8 @@
 # DNN inference for a ratio of two supplied signal averages
 
 Localizes two aligned, externally supplied signals with common DNN
-weights. This experimental estimator uses paired frozen-score
-covariance; it never divides individual signals or deleted component
-averages.
+weights. This estimator uses paired frozen-score covariance; it never
+divides individual signals or deleted component averages.
 
 ## Usage
 

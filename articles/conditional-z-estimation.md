@@ -2,11 +2,14 @@
 
 ## Overview
 
-The initial public release focuses on CATE and nonparametric regression.
-Start with [Getting
+This article focuses on CATE and nonparametric regression. Start with
+[Getting
 started](https://JakobJuergens.github.io/RdistNN/articles/getting-started.md)
-for executable examples of those workflows. This article gives
-additional moment details, including **experimental PLQR**:
+for executable examples, or the [CLATE
+guide](https://JakobJuergens.github.io/RdistNN/articles/conditional-late.md)
+for supplied-prediction binary-IV and paired-signal workflows. This
+article gives additional moment details, including **experimental
+PLQR**:
 
 - [`np_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_dnn.md)
   for localized conditional means

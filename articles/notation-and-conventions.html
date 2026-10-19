@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9002</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -91,8 +91,8 @@ diagnostics, extension patterns, and paper-specific replication.</p>
 <ol style="list-style-type: decimal">
 <li>Start with the package tour and the common DNN localization
 machinery.</li>
-<li>Move to an estimator article for the NP and CATE workflows or
-experimental PLQR and IV details.</li>
+<li>Move to an estimator article for the NP, CATE and CLATE workflows or
+experimental PLQR and local IV-GMM details.</li>
 <li>Consult the diagnostics and visualization articles when interpreting
 a fit.</li>
 <li>Use the extension and replication articles only when you need those
@@ -560,8 +560,7 @@ and return different statistical objects.</p>
 <td>
 <code>theta</code>, <code>components</code>
 </td>
-<td>Experimental conditional complier effect under the IV
-assumptions</td>
+<td>Conditional complier effect under the IV assumptions</td>
 </tr>
 <tr class="even">
 <td><code><a href="../reference/affine_ratio_dnn.html">affine_ratio_dnn()</a></code></td>
@@ -569,7 +568,7 @@ assumptions</td>
 <td>
 <code>theta</code>, <code>components</code>
 </td>
-<td>Experimental ratio of common-weight local averages</td>
+<td>Ratio of common-weight local averages</td>
 </tr>
 </tbody>
 </table>
@@ -804,7 +803,7 @@ data-generating process and Monte Carlo harness, use <a href="paper-affine-repli
 </div>
 </div>
 <div class="section level2">
-<h2 id="experimental-clate-conventions">Experimental CLATE conventions<a class="anchor" aria-label="anchor" href="#experimental-clate-conventions"></a>
+<h2 id="clate-conventions">CLATE conventions<a class="anchor" aria-label="anchor" href="#clate-conventions"></a>
 </h2>
 <p>CLATE uses <code>A</code> for the binary instrument and
 <code>D</code> for binary treatment. Reporting uses <code>X</code>;

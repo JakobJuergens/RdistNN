@@ -132,6 +132,9 @@ An object of class `tdnn_np_result` with components:
 - `meta`: metadata (`n`, `m`, `p`, `s1`, `s2`, `dim`, `method`,
   `distance`);
 
+- `.model`: retained canonical training state and fitted geometry used
+  by the inherited prediction and covariance methods;
+
 - optional extras requested via `return`.
 
 ## Details
@@ -164,7 +167,10 @@ validation.
 
 [`weights_tdnn()`](https://JakobJuergens.github.io/RdistNN/reference/weights_tdnn.md),
 [`np_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_dnn.md),
-[`np_demo_data()`](https://JakobJuergens.github.io/RdistNN/reference/np_demo_data.md).
+[`np_demo_data()`](https://JakobJuergens.github.io/RdistNN/reference/np_demo_data.md),
+[np_result](https://JakobJuergens.github.io/RdistNN/reference/np_result.md)
+for inherited summary, covariance, confidence interval and prediction
+methods.
 
 ## Examples
 

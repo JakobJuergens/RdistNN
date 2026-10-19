@@ -1,17 +1,17 @@
 # Getting started: CATE and regression
 
-The initial RdistNN release focuses on conditional average treatment
-effects and nonparametric regression with distributional
-nearest-neighbor (DNN) weights. Both estimators accept numeric matrices
-or data frames, including tibbles through the data-frame interface.
-Inputs must be finite and complete; choose covariate columns explicitly
-and supply one of `x0` (one target) or `X0` (one target per row).
+RdistNN supports conditional average treatment effects, nonparametric
+regression, supplied-prediction conditional LATE and ordinary
+paired-signal ratios with distributional nearest-neighbor (DNN) weights.
+The estimators accept numeric matrices or data frames, including tibbles
+through the data-frame interface. Inputs must be finite and complete;
+choose covariate columns explicitly and supply one of `x0` (one target)
+or `X0` (one target per row).
 
-Conditional LATE, PLQR and local IV-GMM are experimental. Their
-reference material is available for research use, but they are outside
-the supported workflow focus of this release. PLQR evaluates moments at
-supplied coefficients; it does not solve for target-specific
-coefficients.
+Optional ratio confidence-set inversion, PLQR and local IV-GMM remain
+experimental. Their reference material is available for research use.
+PLQR evaluates moments at supplied coefficients; it does not solve for
+target-specific coefficients.
 
 ## Conditional average treatment effects
 
@@ -232,6 +232,50 @@ not an automatic optimization rule. It cannot be combined with explicit
 For uncertainty, `jackknife = "fast"` reuses full-sample ranks;
 `jackknife = "loo"` directly recomputes leave-one-out weights. Delete-1
 inference requires `s < n`. Set `se = FALSE` to omit standard errors.
+
+### Numerical centering of jackknife signals
+
+Large common signal levels can create rounding differences between
+mathematically identical deletion estimates. Before accumulating
+deletions, the estimator subtracts a fixed numerical reference from each
+signal at each target. The reference is the same for every deletion, so
+its contribution cancels when deletion estimates are centered for the
+jackknife covariance. Point estimates and requested raw deletion
+estimates remain on their original scale; this operation does not refit
+or statistically recenter the scores.
+
+Only observations with nonzero weight in at least one deletion determine
+the reference. An entry at rank `r` in the `n - 1` weight table can use
+original ranks `r` and 1, because deleting an earlier observation shifts
+ranks. For exact DNN this union ends at `n - s + k`, or `n - s + 1` when
+`k = 1`. Unused rows are excluded before subtraction, including values
+whose subtraction would overflow. All `n` deletions and the original
+jackknife scaling factor are retained.
+
+The reference is the active signal’s smallest value if all active values
+are positive, its largest value if all are negative, and zero otherwise.
+C++, R, fast and explicit deletion paths use this rule for NP, CATE,
+CLATE/affine ratios and PLQR; R’s TDNN paths include every nonzero
+signed weight. Asymptotic weights retain every represented nonzero
+entry. Their support is generally full, so the exact DNN cutoff is not
+imposed and no additional normalization is applied.
+
+For example, the last observation below has zero weight in every
+deletion. After subtracting the active reference, the deletion means are
+`(4, 0, 0, 0)`, giving jackknife variance `(3/4) * (9 + 1 + 1 + 1) = 9`:
+
+``` r
+
+signal <- c(1e16 + c(4, 8, 12), -1)
+vapply(c("fast", "loo"), function(engine) {
+  fit <- np_dnn(
+    X = matrix(1:4), x0 = 0, Y = signal, s = 3L, jackknife = engine
+  )
+  as.numeric(fit$se)^2
+}, numeric(1))
+#> fast  loo 
+#>    9    9
+```
 
 ## Plots and reusable weights
 

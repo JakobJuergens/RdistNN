@@ -15,7 +15,7 @@ single-scale DNN under sufficient smoothness."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9002</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -172,6 +172,8 @@ is not the TDNN signed weight support.</p></dd>
 column names propagated from the training data when available;</p></li>
 <li><p><code>meta</code>: metadata (<code>n</code>, <code>m</code>, <code>p</code>, <code>s1</code>, <code>s2</code>, <code>dim</code>, <code>method</code>,
 <code>distance</code>);</p></li>
+<li><p><code>.model</code>: retained canonical training state and fitted geometry used
+by the inherited prediction and covariance methods;</p></li>
 <li><p>optional extras requested via <code>return</code>.</p></li>
 </ul></div>
     <div class="section level2">
@@ -194,7 +196,8 @@ and is useful for validation.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="weights_tdnn.html">weights_tdnn()</a></code>, <code><a href="np_dnn.html">np_dnn()</a></code>, <code><a href="np_demo_data.html">np_demo_data()</a></code>.</p></div>
+    <div class="dont-index"><p><code><a href="weights_tdnn.html">weights_tdnn()</a></code>, <code><a href="np_dnn.html">np_dnn()</a></code>, <code><a href="np_demo_data.html">np_demo_data()</a></code>, <a href="np_result.html">np_result</a> for
+inherited summary, covariance, confidence interval and prediction methods.</p></div>
     </div>
 
     <div class="section level2">

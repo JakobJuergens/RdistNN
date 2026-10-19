@@ -9,7 +9,7 @@ DNN-based local weights."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9002</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -176,6 +176,8 @@ column names propagated from the training data when available;</p></li>
 <li><p><code>tuning_grid</code>: in grid mode, a list with <code>candidates</code>, <code>estimates</code>,
 <code>diagnostics</code>, and <code>meta</code> tables. Candidate diagnostics report
 top-5 weight concentration separately from the estimator's <code>k</code>;</p></li>
+<li><p><code>.model</code>: retained canonical training state and fitted geometry used
+by prediction and covariance methods, independently of optional extras;</p></li>
 <li><p>optional extras requested via <code>return</code>.</p></li>
 </ul></div>
     <div class="section level2">
@@ -200,7 +202,8 @@ per-candidate weight matrices are not stored. Candidate diagnostics include
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="weights_dnn.html">weights_dnn()</a></code>, <code><a href="np_demo_data.html">np_demo_data()</a></code>.</p></div>
+    <div class="dont-index"><p><code><a href="weights_dnn.html">weights_dnn()</a></code>, <code><a href="np_demo_data.html">np_demo_data()</a></code>, <a href="np_result.html">np_result</a> for summary,
+coefficient, joint covariance, confidence interval and prediction methods.</p></div>
     </div>
 
     <div class="section level2">

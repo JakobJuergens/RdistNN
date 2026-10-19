@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9002</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,7 +35,18 @@
 
 <div id="contributing-to-rdistnn" class="section level1">
 
-<p>The initial public release focuses on CATE, nonparametric regression, and their supporting DNN weights, tuning, diagnostics, and plots. All PLQR functionality and local IV-GMM are experimental. Please open an issue before proposing a new estimator or a change to an exported interface.</p>
+<p>Supported workflows include CATE, nonparametric regression, supplied-prediction CLATE and ordinary paired-signal ratios, with shared weights, tuning, diagnostics, reporting and plots. Optional ratio confidence-set inversion, all PLQR functionality and local IV-GMM remain experimental. Please open an issue before proposing a new estimator or a change to an exported interface.</p>
+<div class="section level2">
+<h2 id="development-and-production-workflow">Development and production workflow<a class="anchor" aria-label="anchor" href="#development-and-production-workflow"></a></h2>
+<p>Use the local <code>development</code> branch for ongoing work. It has no upstream until publication is authorized. GitHub cannot make an individual branch private in a public repository; keeping development local preserves its unpublished state. Commit development changes there, with focused tests and documentation.</p>
+<p>When the maintainer authorizes a production update, publish a review branch and open a pull request targeting <code>master</code>. Include the problem, final behavior and verification in the description. Complete the required CI checks and review, then squash-merge the PR so production history records the reviewed change rather than each intermediate development commit. Do not push directly to <code>master</code> without an explicit override. Keep local development current with the reviewed production state before starting the next change.</p>
+</div>
+<div class="section level2">
+<h2 id="r-and-stata-parity">R and Stata parity<a class="anchor" aria-label="anchor" href="#r-and-stata-parity"></a></h2>
+<p>Use R as the numerical reference for shared estimator behavior. The companion Stata package retains its own command grammar, while reporting, candidate reuse and saved-fit prediction should agree on frozen observations/signals, fixed training geometry, weight normalization, covariance scale and undefined CLATE targets. PLQR parity currently concerns moments at supplied coefficients; Stata does not provide R’s density-backed coefficient inference.</p>
+<p>Cross-language regression fixtures and their R generators live in the sibling <code>RdistNN_stata/tests/fixtures/</code> and <code>RdistNN_stata/tools/</code> directories. In particular, <code>generate_r_reporting_fixtures.R</code> and <code>generate_r_reuse_fixtures.R</code> record reporting and reusable-fit reference values. Run their matching Stata regressions after an intentional shared-contract change, and retain independent delete-one references rather than accepting agreement between two fast paths alone. Do not regenerate golden values merely to make a failure pass.</p>
+<p>The same parity requirement applies within each package: compiled C++, R and Mata paths implement the same selected method. Require exact discrete decisions and justified tolerances for continuous quantities; verify forced engines and automatic fallback separately. The <a href="https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/10_rcpp_and_compiled_code_policy.md" class="external-link">compiled-code policy</a> defines arithmetic and cross-system reproducibility requirements, with coverage specified by the linked testing policy.</p>
+</div>
 <div class="section level2">
 <h2 id="local-setup">Local setup<a class="anchor" aria-label="anchor" href="#local-setup"></a></h2>
 <p>Use R 4.1.0 or newer and a C++17 toolchain. OpenMP is optional. Install the development tools and package dependencies from the repository root:</p>

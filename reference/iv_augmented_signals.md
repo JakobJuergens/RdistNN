@@ -1,7 +1,7 @@
 # Construct augmented reduced-form and first-stage signals
 
 Constructs two aligned signals from externally supplied nuisance
-predictions. This experimental interface fits no nuisance models.
+predictions. This interface fits no nuisance models.
 
 ## Usage
 

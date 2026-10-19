@@ -4,6 +4,15 @@ Read this file before modifying code. It is the canonical instruction
 file for LLM agents and automated coding assistants working in this
 repository.
 
+## Development and production branches
+
+Develop on the local `development` branch. Keep it unpublished until the
+maintainer authorizes publication; branches in a public repository are
+public when pushed. Production is `master`. Submit production changes
+through a pull request and use a squash merge after review and required
+checks. Do not push development commits directly to `master` unless
+explicitly instructed to do so. See `CONTRIBUTING.md` for the workflow.
+
 ## Mandatory read order
 
 Before making changes, read these files in order:
@@ -66,7 +75,11 @@ CLATE/ratio work read
 - Unknown `return` values must be handled consistently across wrappers.
 - Do not hand-edit generated files such as `NAMESPACE` or
   `RcppExports.*`.
-- New compiled paths must include fallback-equivalence tests.
+- Preserve numerical parity between compiled and R engines and, for
+  shared methods, the Stata companion. Follow design notes 09 and 10 for
+  exact discrete decisions, justified floating-point tolerances and
+  tests that establish which engine actually ran. New compiled paths
+  need such tests.
 - New user-visible validation or behavior changes must include tests.
 - Do not introduce new interface conventions without updating the design
   notes.

@@ -4,7 +4,7 @@
 
 - [`RdistNN-package`](https://JakobJuergens.github.io/RdistNN/reference/RdistNN-package.md)
   [`RdistNN`](https://JakobJuergens.github.io/RdistNN/reference/RdistNN-package.md)
-  : RdistNN: DNN Estimation for CATE and Nonparametric Regression
+  : RdistNN: DNN Estimation for Conditional Effects and Regression
 
 ## CATE and regression — estimators and weights
 
@@ -28,8 +28,8 @@ nonparametric regression, and their DNN weight builders.
 
 ## S3 methods
 
-CATE inference methods, regression printing, and shared diagnostics and
-candidate views.
+Conditional-effect and regression inference, prediction, shared
+diagnostics and candidate views.
 
 - [`candidate_fit()`](https://JakobJuergens.github.io/RdistNN/reference/candidate_fit.md)
   [`candidate_fits()`](https://JakobJuergens.github.io/RdistNN/reference/candidate_fit.md)
@@ -48,6 +48,14 @@ candidate views.
   :
 
   Print an `np_result` object
+
+- [`coef(`*`<np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/np_result.md)
+  [`vcov(`*`<np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/np_result.md)
+  [`summary(`*`<np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/np_result.md)
+  [`print(`*`<summary.np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/np_result.md)
+  [`confint(`*`<np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/np_result.md)
+  [`predict(`*`<np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/np_result.md)
+  : Reporting and prediction for nonparametric regression results
 
 - [`print(`*`<score_diff_path>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.score_diff_path.md)
   :
@@ -182,12 +190,12 @@ uses the separate study-specific replication bundle.
 - [`summarise_sim_results()`](https://JakobJuergens.github.io/RdistNN/reference/summarise_sim_results.md)
   : Summarise raw per-replicate CATE simulation results
 
-## Experimental — conditional LATE
+## Conditional LATE and paired ratios
 
-Supplied-prediction binary-IV signals and paired ratios with exact or
-asymptotic DNN weights. Shared reporting, candidate views and plots,
-with frozen-score covariance, diagnostics and pointwise ratio
-confidence-set inversion.
+Supported supplied-prediction binary-IV signals and paired ratios with
+exact or asymptotic DNN weights. Shared reporting, candidate views and
+plots, with frozen-score covariance, diagnostics and the documented
+pointwise inference conditions.
 
 - [`clate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/clate_dnn.md)
   : Conditional LATE from externally supplied nuisance predictions
@@ -208,6 +216,13 @@ confidence-set inversion.
   : Paired component and first-stage diagnostics
 - [`clate_demo_data()`](https://JakobJuergens.github.io/RdistNN/reference/clate_demo_data.md)
   : Bounded endogenous-treatment data for conditional LATE examples
+
+## Experimental — ratio confidence sets
+
+Optional pointwise normal-reference inversion of paired moment
+inequalities. This helper does not establish weak-instrument-uniform
+coverage.
+
 - [`ratio_confidence_set()`](https://JakobJuergens.github.io/RdistNN/reference/ratio_confidence_set.md)
   [`print(`*`<ratio_confidence_sets>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/ratio_confidence_set.md)
   : Confidence sets for a ratio of paired component estimates

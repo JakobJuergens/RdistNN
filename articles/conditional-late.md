@@ -2,7 +2,7 @@
 
 [`clate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/clate_dnn.md)
 estimates a conditional local average treatment effect from externally
-supplied nuisance predictions. This experimental workflow uses a binary
+supplied nuisance predictions. This supported workflow uses a binary
 instrument `A` and binary treatment `D`. For example, an encouragement
 may change participation without determining it perfectly. Under the IV
 assumptions, the target is the effect among people whose treatment
