@@ -3,6 +3,7 @@
 // [[Rcpp::depends(Rcpp)]]
 #include <Rcpp.h>
 #include "fast_order.hpp"
+#include "distance_arithmetic.hpp"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -11,8 +12,45 @@
 #include <vector>
 #include <cmath>   // std::sqrt
 #include <cstddef> // std::size_t
+#include <limits>
 
 using namespace Rcpp;
+
+// Common intermediate boundary: Stata reserves doubles >= 2^1023 as missing.
+static constexpr double l2_range_limit = rustat::distance_range_limit;
+
+// Round each squared coordinate before adding it, as in the R fallback.
+// The volatile boundary prevents fused multiply-add from changing exact ties.
+static inline double rounded_square(const double d) {
+  volatile double product = d * d;
+  return product;
+}
+
+// Exceptional recomputation only: scalar workspace, no per-row buffer.
+static inline double l2_range_row(const double *Xp, int n, int p, int i, const double *x0p,
+                                  int stride0, const double *invsp, bool squared) {
+  double scale = 0.0, ssq = 1.0;
+  for (int j = 0; j < p; ++j) {
+    const double x = Xp[i + static_cast<std::size_t>(j) * n];
+    const double target = x0p[static_cast<std::size_t>(j) * stride0];
+    double d = x - target;
+    if (invsp)
+      d = rustat::scaled_distance_difference(x, target, invsp[j]);
+    const double a = std::fabs(d);
+    if (!std::isfinite(a))
+      return a;
+    if (a != 0.0) {
+      if (scale < a) {
+        const double ratio = scale / a;
+        const volatile double term = ssq * rounded_square(ratio);
+        ssq = 1.0 + term;
+        scale = a;
+      } else
+        ssq += rounded_square(a / scale);
+    }
+  }
+  return squared ? (scale * ssq) * scale : scale * std::sqrt(ssq);
+}
 
 // =====================================================================
 // Single core for row-wise L2 distances with optional per-dim scaling.
@@ -29,12 +67,19 @@ static inline void dist_l2_core_ptr(const double *Xp, int n, int p, const double
 #endif
   for (int i = 0; i < n; ++i) {
     double acc = 0.0;
+    bool exceptional = false;
     for (int j = 0; j < p; ++j) {
       const double diff = Xp[i + j * stride_n] - x0p[j];
       const double d = invsp ? diff * invsp[j] : diff;
-      acc += d * d;
+      exceptional = exceptional || (invsp && std::fabs(diff) >= l2_range_limit);
+      const double square = rounded_square(d);
+      // Nonfinite squares propagate to acc; check that once after the loop.
+      exceptional = exceptional || (d != 0.0 && square < std::numeric_limits<double>::min());
+      acc += square;
     }
-    out[i] = squared ? acc : std::sqrt(acc);
+    out[i] = (exceptional || !std::isfinite(acc) || acc >= l2_range_limit)
+                 ? l2_range_row(Xp, n, p, i, x0p, 1, invsp, squared)
+                 : (squared ? acc : std::sqrt(acc));
   }
 }
 
@@ -53,13 +98,20 @@ static inline void dist_l2_batch_impl(const double *Xp, int n, int p, const doub
   for (int q = 0; q < m; ++q) {
     for (int i = 0; i < n; ++i) {
       double acc = 0.0;
+      bool exceptional = false;
       for (int j = 0; j < p; ++j) {
         const double x0j = X0p[q + j * stride_m];       // column-major X0
         const double diff = Xp[i + j * stride_n] - x0j; // column-major X
         const double d = invsp ? diff * invsp[j] : diff;
-        acc += d * d;
+        exceptional = exceptional || (invsp && std::fabs(diff) >= l2_range_limit);
+        const double square = rounded_square(d);
+        // Nonfinite squares propagate to acc; check that once after the loop.
+        exceptional = exceptional || (d != 0.0 && square < std::numeric_limits<double>::min());
+        acc += square;
       }
-      out[i + q * stride_n] = squared ? acc : std::sqrt(acc);
+      out[i + q * stride_n] = (exceptional || !std::isfinite(acc) || acc >= l2_range_limit)
+                                  ? l2_range_row(Xp, n, p, i, X0p + q, m, invsp, squared)
+                                  : (squared ? acc : std::sqrt(acc));
     }
   }
 }

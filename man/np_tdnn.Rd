@@ -85,6 +85,8 @@ An object of class \code{tdnn_np_result} with components:
 column names propagated from the training data when available;
 \item \code{meta}: metadata (\code{n}, \code{m}, \code{p}, \code{s1}, \code{s2}, \code{dim}, \code{method},
 \code{distance});
+\item \code{.model}: retained canonical training state and fitted geometry used
+by the inherited prediction and covariance methods;
 \item optional extras requested via \code{return}.
 }
 }
@@ -131,5 +133,6 @@ out <- np_tdnn(
 out$mu
 }
 \seealso{
-\code{\link[=weights_tdnn]{weights_tdnn()}}, \code{\link[=np_dnn]{np_dnn()}}, \code{\link[=np_demo_data]{np_demo_data()}}.
+\code{\link[=weights_tdnn]{weights_tdnn()}}, \code{\link[=np_dnn]{np_dnn()}}, \code{\link[=np_demo_data]{np_demo_data()}}, \link{np_result} for
+inherited summary, covariance, confidence interval and prediction methods.
 }

@@ -63,9 +63,66 @@ When an R fallback and a compiled path both exist, they must agree on:
 - output shapes;
 - return conventions;
 - edge-case behavior where documented;
-- numerical intent up to reasonable tolerance.
+- ranks, tie resolution, support, computational statuses and missing-value masks;
+- numerical values within the quantity-specific tolerances defined by tests.
 
-Compiled code should not quietly drift from the reference behavior.
+For methods shared with Stata, apply this same contract across R, C++ and Mata
+after mapping documented indexing, matrix layout and unavailable-value
+representations. Backend selection and automatic fallback are performance and
+availability choices; they must preserve the selected estimator's semantics.
+
+### Arithmetic and reproducibility
+
+Specify operation order and precision where rounding can change a discrete
+decision. Distance kernels subtract before applying fitted inverse scales,
+accumulate coordinates in order using doubles, and round each L2 squared
+coordinate before addition. L2 uses a shared exceptional-row recurrence when
+the accumulated squared sum reaches `2^1023`, a nonzero coordinate's square is
+subnormal or zero, or a scaled raw difference reaches `2^1023`. This common
+boundary accounts for Stata's missing-value range; waiting for IEEE overflow
+in R/C++ can change ranks relative to Mata. For a huge raw difference and an
+inverse scale below one, both L1 and L2 compute the difference of binary-halved operands and
+multiply by twice the inverse scale. Recover the norm with scaled sum of
+squares and constant accumulator state; rescan only exceptional rows. Squared
+R APIs still return squared results, including genuine squared overflow.
+Keep native and fallback implementations aligned;
+retain stable original-row tie breaking. Scale fitting and saved prediction
+must reuse the same fitted geometry contract.
+
+Fitted scale helpers reject nonfinite raw scales before epsilon clamping.
+SD calculations use common conservative range gates before intermediate
+overflow/underflow. Exceptional columns use exact binary normalization, an
+observed-value shift and compensated mean/squared-residual sums. This preserves
+local variation around large offsets; ordinary SD arithmetic is unchanged.
+The Stata companion uses the same recovery convention and R-compatible guarded
+quantile interpolation. Compensated weighted/prefix sums remain separate planned
+work.
+
+Align engines toward stable mathematical reference calculations. Agreement
+between implementations is insufficient if they share an accuracy defect.
+Prefer algebraically equivalent formulas that avoid cancellation, including
+`log1p`/`expm1` for small differences and direct tail probabilities instead of
+subtracting CDF values near one. Use scaled sums of squares where intermediate
+squaring would overflow or underflow. Consider compensated sums in existing
+accumulation loops when cancellation is consequential. Assess constant runtime
+and allocation costs, especially before replacing vectorized R/Mata operations
+with scalar loops. Apply a stability change consistently to affected engines
+and preserve the documented statistical method.
+
+Apply the same discipline to rank-weight normalization, support-aware centering
+and deletion/covariance accumulation. Reuse shared helpers within each package
+so estimator-specific paths cannot acquire their own arithmetic conventions.
+Compiler contraction, wider accumulators, reassociation and parallel reductions
+must not silently change an ordering or computational status. Protect sensitive
+operations explicitly and test compiler/architecture-sensitive counterexamples.
+
+Require exact discrete behavior and pursue exact numerical agreement where
+operations can be controlled. General bit-for-bit identity across all systems
+is not a package-wide promise: platform math libraries and linear algebra may
+produce small differences. Tests must use justified numeric tolerances while
+still checking discrete behavior exactly. A discrepancy that affects a decision
+requires investigation rather than a broader tolerance. See
+[the testing policy](09_testing_and_regression_policy.md) for acceptance coverage.
 
 The package-wide diagnostic switch is
 `options(RdistNN.use_compiled = FALSE)`. Internal compiled dispatch must
@@ -127,7 +184,7 @@ At minimum, test:
 - one ordinary valid case;
 - one edge case;
 - shape agreement;
-- numerical agreement within tolerance;
+- exact discrete decisions and numerical agreement at justified tolerances;
 - behavior when the fast path is unavailable, if applicable.
 
 ## 11. Performance changes

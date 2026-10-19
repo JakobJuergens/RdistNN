@@ -12,17 +12,18 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 library(RdistNN)
 ```
 
-The initial RdistNN release focuses on conditional average treatment effects
-and nonparametric regression with distributional nearest-neighbor (DNN)
-weights. Both estimators accept numeric matrices or data frames, including
+RdistNN supports conditional average treatment effects, nonparametric
+regression, supplied-prediction conditional LATE and ordinary paired-signal
+ratios with distributional nearest-neighbor (DNN) weights. The estimators
+accept numeric matrices or data frames, including
 tibbles through the data-frame interface. Inputs must be finite and complete;
 choose covariate columns explicitly and supply one of `x0` (one target) or
 `X0` (one target per row).
 
-Conditional LATE, PLQR and local IV-GMM are experimental. Their reference material is available
-for research use, but they are outside the supported workflow focus of this
-release. PLQR evaluates moments at supplied coefficients; it does not solve
-for target-specific coefficients.
+Optional ratio confidence-set inversion, PLQR and local IV-GMM remain
+experimental. Their reference material is available for research use.
+PLQR evaluates moments at supplied coefficients; it does not solve for
+target-specific coefficients.
 
 ## Conditional average treatment effects
 

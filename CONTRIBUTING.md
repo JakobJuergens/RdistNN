@@ -1,9 +1,10 @@
 # Contributing to RdistNN
 
-The initial public release focuses on CATE, nonparametric regression, and their
-supporting DNN weights, tuning, diagnostics, and plots. All PLQR functionality
-and local IV-GMM are experimental. Please open an issue before proposing a new
-estimator or a change to an exported interface.
+Supported workflows include CATE, nonparametric regression, supplied-prediction
+CLATE and ordinary paired-signal ratios, with shared weights, tuning,
+diagnostics, reporting and plots. Optional ratio confidence-set inversion,
+all PLQR functionality and local IV-GMM remain experimental. Please open an
+issue before proposing a new estimator or a change to an exported interface.
 
 ## Development and production workflow
 
@@ -36,6 +37,14 @@ record reporting and reusable-fit reference values. Run their matching Stata
 regressions after an intentional shared-contract change, and retain independent
 delete-one references rather than accepting agreement between two fast paths
 alone. Do not regenerate golden values merely to make a failure pass.
+
+The same parity requirement applies within each package: compiled C++, R and
+Mata paths implement the same selected method. Require exact discrete decisions
+and justified tolerances for continuous quantities; verify forced engines and
+automatic fallback separately. The
+[compiled-code policy](https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/10_rcpp_and_compiled_code_policy.md)
+defines arithmetic and cross-system reproducibility requirements, with coverage
+specified by the linked testing policy.
 
 ## Local setup
 

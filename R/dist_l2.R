@@ -1,12 +1,64 @@
 # L2 (Euclidean) distances: fast C++ path with robust R fallbacks.
 
+# Stata reserves 2^1023 and larger doubles for missing values. Use the same
+# intermediate boundary in every engine so exceptional arithmetic keeps ranks.
+.l2_range_limit <- 2^1023
+
+# Exceptional rows use a scaled sum of squares with scalar workspace. Recompute
+# differences only here so ordinary values retain subtract-then-scale rounding.
+.l2_range_row <- function(X, i, x0, inv_s, squared) {
+  scale <- 0
+  ssq <- 1
+  for (j in seq_len(ncol(X))) {
+    d <- X[i, j] - x0[j]
+    if (!is.null(inv_s)) d <- .scaled_distance_difference(X[i, j], x0[j], inv_s[j])
+    a <- abs(d)
+    if (!is.finite(a)) return(a)
+    if (a != 0) {
+      if (scale < a) {
+        ratio <- scale / a
+        term <- ssq * (ratio * ratio)
+        ssq <- 1 + term
+        scale <- a
+      } else {
+        ratio <- a / scale
+        ssq <- ssq + ratio * ratio
+      }
+    }
+  }
+  # Multiplying the normalized sum first recovers subnormal squared results
+  # even when every individual square rounds to zero.
+  if (isTRUE(squared)) (scale * ssq) * scale else scale * sqrt(ssq)
+}
+
 #' @noRd
-.dist_l2_R <- function(X, x0, squared = FALSE) {
+.dist_l2_R <- function(X, x0, squared = FALSE, inv_s = NULL) {
   X <- as.matrix(X)
   x0 <- .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X", finite = TRUE)
-  Z <- X - matrix(x0, nrow(X), ncol(X), byrow = TRUE)
-  s2 <- rowSums(Z * Z)
-  if (isTRUE(squared)) s2 else sqrt(s2)
+  # Match native arithmetic, including double-precision accumulation order;
+  # pre-scaling inputs or rowSums() can change distances and stable ranks.
+  s2 <- numeric(nrow(X))
+  exceptional <- FALSE
+  for (j in seq_len(ncol(X))) {
+    d <- X[, j] - x0[j]
+    if (!is.null(inv_s)) {
+      if (any(abs(d) >= .l2_range_limit)) {
+        exceptional <- exceptional | (abs(d) >= .l2_range_limit)
+      }
+      d <- d * inv_s[j]
+    }
+    square <- d * d
+    # Only allocate a row mask if a square can have underflowed. Nonfinite
+    # squares propagate to s2 and are detected once after accumulation.
+    if (any(square < .Machine$double.xmin, na.rm = TRUE)) {
+      exceptional <- exceptional | (d != 0 & square < .Machine$double.xmin)
+    }
+    s2 <- s2 + square
+  }
+  exceptional <- exceptional | !is.finite(s2) | (s2 >= .l2_range_limit)
+  out <- if (isTRUE(squared)) s2 else sqrt(s2)
+  for (i in which(exceptional)) out[i] <- .l2_range_row(X, i, x0, inv_s, squared)
+  out
 }
 
 # -----------------------------------------------------------------------------
@@ -131,9 +183,7 @@ dist_l2_scaled <- function(X, x0, inv_s, squared = FALSE) {
     return(cpp(X, x0, inv_s, isTRUE(squared)))
   }
 
-  Xs <- .scale_cols(X, inv_s)
-  x0s <- x0 * inv_s
-  dist_l2(Xs, x0s, squared = squared)
+  .dist_l2_R(X, x0, squared, inv_s)
 }
 
 # -----------------------------------------------------------------------------
@@ -160,7 +210,6 @@ distance_l2_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
                                scale_vec = NULL, eps = 1e-12,
                                squared = FALSE) {
   rule <- match.arg(rule)
-  base <- distance_l2(squared = squared)
 
   list(
     name = paste0(if (isTRUE(squared)) "l2_scaled_sq[" else "l2_scaled[", rule, "]"),
@@ -186,9 +235,7 @@ distance_l2_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
         return(cpp(X, x0, inv_s, isTRUE(squared)))
       }
 
-      Xs <- if (!is.null(ctx) && !is.null(ctx$Xs)) ctx$Xs else .scale_cols(X, inv_s)
-      x0s <- x0 * inv_s
-      base$eval(Xs, x0s, NULL)
+      .dist_l2_R(X, x0, squared, inv_s)
     },
     eval_batch = function(X, X0, ctx) {
       .assert_no_na(X)
@@ -218,9 +265,9 @@ distance_l2_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
         return(cpp(X, X0, inv_s, isTRUE(squared)))
       }
 
-      Xs <- if (!is.null(ctx$Xs)) ctx$Xs else .scale_cols(X, inv_s)
-      X0s <- .scale_cols(X0, inv_s)
-      base$eval_batch(Xs, X0s, NULL)
+      out <- matrix(NA_real_, nrow(X), nrow(X0))
+      for (j in seq_len(nrow(X0))) out[, j] <- .dist_l2_R(X, X0[j, ], squared, inv_s)
+      out
     }
   )
 }

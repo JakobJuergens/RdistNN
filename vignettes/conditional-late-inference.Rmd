@@ -12,7 +12,7 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 library(RdistNN)
 ```
 
-The experimental `affine_ratio_dnn()` and `clate_dnn()` workflows average
+The supported `affine_ratio_dnn()` and `clate_dnn()` workflows average
 two signals using common DNN weights, then take their ratio. Exact weights
 and one neighbor per subsample are the defaults; asymptotic DNN and general
 `k` use the same paired calculation. The worked example below is exact. This
@@ -215,7 +215,8 @@ outcomes and data-selected geometry need their own justification.
 
 ## Ratio confidence sets
 
-`ratio_confidence_set()` inverts the candidate moment inequality
+The experimental `ratio_confidence_set()` helper inverts the candidate moment
+inequality
 
 \[
 (\widehat\Delta_Y-\theta\widehat\Delta_D)^2

@@ -77,9 +77,12 @@
 #'   - `tuning_grid`: in grid mode, a list with `candidates`, `estimates`,
 #'     `diagnostics`, and `meta` tables. Candidate diagnostics report
 #'     top-5 weight concentration separately from the estimator's `k`;
+#'   - `.model`: retained canonical training state and fitted geometry used
+#'     by prediction and covariance methods, independently of optional extras;
 #'   - optional extras requested via `return`.
 #'
-#' @seealso [weights_dnn()], [np_demo_data()].
+#' @seealso [weights_dnn()], [np_demo_data()], [np_result] for summary,
+#'   coefficient, joint covariance, confidence interval and prediction methods.
 #'
 #' @examples
 #' set.seed(1)
@@ -185,6 +188,7 @@ np_dnn <- function(
 
   x0_mat <- .dnn_resolve_targets(x_mat, X0 = X0, x0 = x0)
 
+  geometry <- .np_fitted_geometry(distance, x_mat, ctx)
   weight_return <- return
   if (identical(tuning_mode, "grid") || (isTRUE(se) && identical(jackknife, "fast"))) {
     # Request ranks once so fast jackknife can reuse them.
@@ -193,12 +197,12 @@ np_dnn <- function(
   weight_fit <- .dnn_weights_with_extras(
     x_mat = x_mat,
     x0_mat = x0_mat,
-    distance = distance,
+    distance = geometry$distance,
     method = method,
     k = k,
     s = s,
     normalize = normalize,
-    ctx = ctx,
+    ctx = geometry$ctx,
     return = weight_return
   )
   wt <- weight_fit$wt
@@ -263,17 +267,12 @@ np_dnn <- function(
       tuning_payload = tuning_payload
     )
   }
-  # Internal fit state used by diagnostics and refit-based plotting
-  # panels (plot_tuning()).
-  out$.model <- list(
-    y_vec = y_vec,
-    x_mat = x_mat,
-    distance = distance,
-    method = method,
-    normalize = normalize,
-    ctx = ctx,
-    ranks = if (identical(tuning_mode, "grid")) wt$ranks else NULL
-  )
+  out$.model <- c(list(
+    kind = "dnn", y_vec = y_vec, x_mat = x_mat,
+    x_cols = if (!is.null(data)) colnames(x_mat) else NULL,
+    k = k, s = s, method = method, normalize = normalize,
+    ranks = wt$ranks
+  ), geometry)
 
   class(out) <- "np_result"
   out

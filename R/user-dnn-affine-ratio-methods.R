@@ -181,21 +181,12 @@ predict.affine_ratio_result <- function(
   se.fit <- .validate_scalar_logical(se.fit, "se.fit")
   level <- .validate_scalar_prob(level, "level")
   model <- .affine_prediction_state(object)
-  if (!is.null(newdata)) {
-    if (!is.null(X0) || !is.null(x0)) {
-      .abort_bad_arg("newdata/X0/x0", "must supply only one target interface", quoted = FALSE)
-    }
-    X0 <- if (is.data.frame(newdata) && !is.null(model$x_cols)) {
-      .dnn_col_mat(model$x_cols, newdata, "x_cols", out_arg = "newdata")
-    } else {
-      .validate_matrix(newdata, "newdata", numeric = TRUE, finite = TRUE)
-    }
-  }
+  x0_mat <- .dnn_resolve_prediction_targets(model, newdata, X0, x0)
   need_se <- se.fit || interval == "confidence"
   engine <- object$meta$jackknife
   if (is.null(engine) || !engine %in% c("fast", "loo")) engine <- "fast"
   fit <- affine_ratio_dnn(
-    X = model$x_mat, X0 = X0, x0 = x0,
+    X = model$x_mat, X0 = x0_mat,
     numerator = model$signal[, 1L], denominator = model$signal[, 2L],
     distance = model$distance, ctx = model$ctx, s = model$s, k = model$k,
     method = model$method, normalize = if (is.null(model$normalize)) TRUE else model$normalize,

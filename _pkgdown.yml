@@ -36,10 +36,12 @@ articles:
       - dnn-weights
       - extending
       - jackknife-gen-ustats
-  - title: Experimental companion workflows
+  - title: Conditional LATE and paired inference
     contents:
       - conditional-late
       - conditional-late-inference
+  - title: Experimental companion workflows
+    contents:
       - local-iv-estimation
   - title: Paper replication
     contents:
@@ -64,12 +66,13 @@ reference:
       - weights_dnn_asymp
 
   - title: S3 methods
-    desc: CATE inference methods, regression printing, and shared diagnostics and candidate views.
+    desc: Conditional-effect and regression inference, prediction, shared diagnostics and candidate views.
     contents:
       - candidate_fit
       - diagnostics
       - print.cate_result
       - print.np_result
+      - np_result
       - print.score_diff_path
       - print.summary.cate_result
       - print.tdnn_np_result
@@ -127,12 +130,12 @@ reference:
       - sim_cate_methods
       - summarise_sim_results
 
-  - title: Experimental — conditional LATE
+  - title: Conditional LATE and paired ratios
     desc: >
-      Supplied-prediction binary-IV signals and paired ratios with exact or
-      asymptotic DNN weights. Shared reporting, candidate views and plots,
-      with frozen-score covariance, diagnostics and pointwise ratio
-      confidence-set inversion.
+      Supported supplied-prediction binary-IV signals and paired ratios with
+      exact or asymptotic DNN weights. Shared reporting, candidate views and
+      plots, with frozen-score covariance, diagnostics and the documented
+      pointwise inference conditions.
     contents:
       - clate_dnn
       - iv_augmented_signals
@@ -140,6 +143,13 @@ reference:
       - affine_ratio_result
       - clate_diagnostics
       - clate_demo_data
+
+  - title: Experimental — ratio confidence sets
+    desc: >
+      Optional pointwise normal-reference inversion of paired moment
+      inequalities. This helper does not establish weak-instrument-uniform
+      coverage.
+    contents:
       - ratio_confidence_set
 
   - title: Experimental — PLQR

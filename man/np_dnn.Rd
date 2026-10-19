@@ -96,6 +96,8 @@ column names propagated from the training data when available;
 \item \code{tuning_grid}: in grid mode, a list with \code{candidates}, \code{estimates},
 \code{diagnostics}, and \code{meta} tables. Candidate diagnostics report
 top-5 weight concentration separately from the estimator's \code{k};
+\item \code{.model}: retained canonical training state and fitted geometry used
+by prediction and covariance methods, independently of optional extras;
 \item optional extras requested via \code{return}.
 }
 }
@@ -140,5 +142,6 @@ out <- np_dnn(
 out$mu
 }
 \seealso{
-\code{\link[=weights_dnn]{weights_dnn()}}, \code{\link[=np_demo_data]{np_demo_data()}}.
+\code{\link[=weights_dnn]{weights_dnn()}}, \code{\link[=np_demo_data]{np_demo_data()}}, \link{np_result} for summary,
+coefficient, joint covariance, confidence interval and prediction methods.
 }

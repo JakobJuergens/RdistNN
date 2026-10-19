@@ -13,9 +13,13 @@ the first place to look, then the relevant integration or numerical suite.
 | --- | --- |
 | Component contracts | `test-api-*`, `test-distance-*`, `test-order-*`, `test-score-*`, `test-utils-validate.R` |
 | Numerical references and optimized paths | `test-rank-weight-*`, `test-jackknife-rank-*`, `test-dnn-scalar-reference.R`, `test-dnn-jackknife-prefix.R`, `test-tdnn-*`, `test-compiled-fallback-parity.R`, `test-errors-fastpaths.R` |
+| Native/R distance arithmetic, large-offset and accumulation-sensitive ranks, scalar/batch agreement and FMA-sensitive ties | `test-distance-scaled-arithmetic.R` |
+| Huge/tiny finite L2 norms, shared exceptional boundaries, exact ranks and serialized prediction | `test-distance-range-stability.R` |
+| Close-order TDNN coefficients and tiny Beta interval masses against independent references | `test-weight-numerical-stability.R` |
 | Support-aware jackknife centering across estimators, compiled/R and fast/naive paths | `test-jackknife-support-centering.R` |
-| CATE and nonparametric regression | `test-user-cate-*`, `test-user-np-dnn*`, `test-user-tdnn-np*`, `test-demo-data-npr.R` |
-| Experimental conditional LATE | `test-clate-*`, `test-user-clate-*`, `test-user-affine-ratio-*`, `test-weights-single-row.R` |
+| Shared NP/CATE/paired-ratio prediction boundary | `test-prediction-targets-common.R` |
+| CATE and nonparametric regression | `test-user-cate-*`, `test-user-np-dnn*`, `test-user-np-methods.R`, `test-user-tdnn-np*`, `test-demo-data-npr.R` |
+| Conditional LATE and paired ratios | `test-clate-*`, `test-user-clate-*`, `test-user-affine-ratio-*`, `test-weights-single-row.R` |
 | Tuning and stored candidate views | `test-api-tuning.R`, `test-user-dnn-tuning.R`, `test-tuning-*`, `test-candidate-fit.R`, `test-user-*-tuning-grid.R` |
 | Diagnostics and plots | `test-user-dnn-diagnostics.R`, `test-plot-*`, `test-tuning-grid-diagnostics-plots.R` |
 | CATE simulations | `test-sim-cate-data.R`, `test-sim-cate-one-rep.R`, `test-sim-cate-run.R`, `test-sim-cate-summary.R`, `test-sim-cate-tuning*.R` |
@@ -55,6 +59,21 @@ also runs these tests against the installed package; see
 [RELEASING.md](../RELEASING.md).
 
 ## Helpers and optional tests
+
+`test-scale-fitting-range.R` checks finite extreme fitted SDs, large common
+offsets, invalid scales and frozen prediction. `test-distance-l1-range.R`
+checks exceptional subtraction across native/fallback scalar, batch and rank
+entry points. `test-np-prediction-memory.R` compares marginal uncertainty to
+explicit deletion references and bounds allocations for large target grids.
+
+Engine comparisons must force and establish each implementation, then compare
+the same method and fitted state. Numeric tolerances accompany exact assertions
+for ranks, support, statuses and missingness; they cannot excuse a changed
+discrete decision. Forcing `options(RdistNN.use_compiled = FALSE)` checks the
+R path; native tests also require the actual compiled symbols. Test automatic
+fallback separately. The [compiled-code policy](../markdown_notes/design/10_rcpp_and_compiled_code_policy.md)
+and [testing policy](../markdown_notes/design/09_testing_and_regression_policy.md)
+define the acceptance contract for engine and cross-package comparisons.
 
 `test-jackknife-support-centering.R` covers opposite-sign zero-weight outliers,
 extreme unused values, real local variation, target-specific deletion support,
