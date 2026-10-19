@@ -19,7 +19,7 @@
 .sample_sd <- function(x) {
   n <- length(x)
   amplitude <- max(abs(x))
-  if (amplitude < sqrt(4.4942328371557898e307 / n)) {
+  if (amplitude < sqrt(2^1022 / n)) {
     spread <- max(abs(x - mean(x)))
     if (spread == 0) return(0)
     if (spread >= sqrt(.Machine$double.xmin) * sqrt(n)) return(stats::sd(x))

@@ -38,13 +38,14 @@ test_that("failed fitted scales never become zero inverse scales", {
 })
 
 test_that("SD recovery preserves the independently checked near-tie neighbor", {
-  X <- cbind(c(0, 1e154, -1e154, 1.2919399763923139e154,
-    -1.2919399763923139e154, 1.7119028012966737e154, -1.7119028012966737e154, 0),
+  # Exact binary inputs isolate scale arithmetic from decimal-parser precision.
+  X <- cbind(c(0, 0x1.7dddf6b095ff1p+511, -0x1.7dddf6b095ff1p+511, 0x1.ed596bd58630ap+511,
+    -0x1.ed596bd58630ap+511, 0x1.46dc10de8429fp+512, -0x1.46dc10de8429fp+512, 0),
     c(0, 1, -3, 3, -3, 3, -3, 3))
-  target <- c(3.0000000000000002e153, 1.479959694125772)
+  target <- c(0x1.ca3d8e6d80cbbp+509, 0x1.7adea375ab194p+0)
   spec <- distance_l2_scaled("sd")
   ctx <- spec$setup(X)
-  expect_identical(ctx$inv_s[1], 1 / 1.2648794526061109e154)
+  expect_identical(ctx$inv_s[1], 1 / 0x1.e3040a1e6c41ap+511)
   old <- options(RdistNN.use_compiled = TRUE)
   on.exit(options(old), add = TRUE)
   for (compiled in c(TRUE, FALSE)) {

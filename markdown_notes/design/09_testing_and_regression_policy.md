@@ -119,7 +119,11 @@ candidates, covariance and saved-fit prediction when those consume the primitive
 
 Use the same exported numeric data for cross-language fixtures. Equal seed
 values in R and Stata do not establish identical random draws. Native portability
-jobs must run the relevant regressions on their supported architectures;
+fixtures that depend on individual binary digits should use hexadecimal numeric
+literals or exact binary constructions: decimal conversion can use different
+intermediate precision across R builds. Preserve the intended input bits and
+exact discrete assertions rather than relaxing tolerances.
+Native portability jobs must run the relevant regressions on their supported architectures;
 compiler contraction and parallel reduction changes need targeted coverage.
 Record compiler, architecture, math-library and thread settings when they help
 explain a discrepancy. The arithmetic contract is in
