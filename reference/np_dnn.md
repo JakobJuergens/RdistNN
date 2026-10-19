@@ -162,6 +162,9 @@ Two interfaces are supported.
 
 2.  Matrix interface: pass `X`, one of `X0` or `x0`, and `Y`.
 
+With `data`, omit `X` and `Y`; use exactly one of `y_col` or `y`. Column
+selectors require `data`. Conflicting routes are rejected.
+
 For `method = "exact"`, DNN weights are computed from the full rank
 permutation at each target. The exact support extends through rank
 `n - s + k` (`n - s + 1` in the paper-faithful `k = 1` case); this is

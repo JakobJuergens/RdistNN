@@ -9,7 +9,7 @@ theta_loo for generic rank-weighted L-stat rules with finite support s."></head>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9002</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,7 +52,9 @@ theta_loo for generic rank-weighted L-stat rules with finite support s."></head>
 
 <dl><dt id="arg-ranks">ranks<a class="anchor" aria-label="anchor" href="#arg-ranks"></a></dt>
 <dd><p>Integer matrix (T x (s+1)) of positive neighbor indices
-(1-based). Each row t lists the first s+1 neighbors of target t.</p></dd>
+(1-based). Each row t lists the first s+1 neighbors of target t.
+Use distinct indices within each row for observation deletion. For repeated
+indices, the legacy convention adds each position's replacement change.</p></dd>
 
 
 <dt id="arg-a">a<a class="anchor" aria-label="anchor" href="#arg-a"></a></dt>

@@ -77,13 +77,17 @@ every nuisance or pseudo-outcome vector.
 
 ### Interpreting CATE inference
 
-Orthogonality controls first-order population nuisance drift. Valid
-nuisance reuse on the full estimation sample additionally requires the
-nuisance-rate and full-state stability conditions in the accompanying
-paper. The package cannot establish those conditions for an arbitrary
-learner. Out-of-fold predictions are also accepted, but using them does
-not by itself establish all conditions needed for local inference.
-Overlap and localization bias control remain necessary.
+AIPW orthogonality controls first-order population nuisance drift. The
+normalized Robinson signal is generally not orthogonal to propensity
+errors (see the [signal
+formulas](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.html#robinson-form-signal));
+its inference needs additional propensity control. Valid nuisance reuse
+on the full estimation sample additionally requires the nuisance-rate
+and full-state stability conditions in the accompanying paper. The
+package cannot establish those conditions for an arbitrary learner.
+Out-of-fold predictions are also accepted, but using them does not by
+itself establish all conditions needed for local inference. Overlap and
+localization bias control remain necessary.
 
 Raw supplied propensities must lie in `[0, 1]` and are clipped to
 `[clip, 1 - clip]` with `clip = 1e-8` by default. Diagnostics use the
@@ -252,13 +256,15 @@ ranks. For exact DNN this union ends at `n - s + k`, or `n - s + 1` when
 whose subtraction would overflow. All `n` deletions and the original
 jackknife scaling factor are retained.
 
-The reference is the active signal’s smallest value if all active values
-are positive, its largest value if all are negative, and zero otherwise.
-C++, R, fast and explicit deletion paths use this rule for NP, CATE,
-CLATE/affine ratios and PLQR; R’s TDNN paths include every nonzero
-signed weight. Asymptotic weights retain every represented nonzero
-entry. Their support is generally full, so the exact DNN cutoff is not
-imposed and no additional normalization is applied.
+The reference is the first active observation in localization-rank order
+when its subtractions stay in range and preserve the represented
+differences exactly. A range safeguard uses the same-sign endpoint or
+zero; an inexact subtraction falls back to zero to retain small
+separately represented signals. C++, R, fast and explicit deletion paths
+use this rule for NP, CATE, CLATE/affine ratios and PLQR; R’s TDNN paths
+include every nonzero signed weight. Asymptotic weights retain every
+represented nonzero entry. Their support is generally full, so the exact
+DNN cutoff is not imposed and no additional normalization is applied.
 
 For example, the last observation below has zero weight in every
 deletion. After subtracting the active reference, the deletion means are

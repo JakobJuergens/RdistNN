@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9002</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,7 +70,9 @@
 <div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="ex">Rscript</span> tools/ci/check_tests_declared_deps.R</span>
 <span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="ex">Rscript</span> tools/ci/check_repository_hygiene.R</span>
 <span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="ex">Rscript</span> tools/ci/check_pkgdown_reference_coverage.R</span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="ex">Rscript</span> tools/ci/check_generated_file_drift.R</span></code></pre></div>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="ex">Rscript</span> tools/ci/check_generated_file_drift.R</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest discover <span class="at">-s</span> tests/ci <span class="at">-v</span></span></code></pre></div>
+<p>The generated-file check includes all roxygen Rd topics and rejects missing or obsolete generated files. It runs in isolation and uses the roxygen2 version in DESCRIPTION. Repository hygiene covers staged and new candidate files; keep verification output under ignored <code>build/</code> or <code>archives/</code> directories. The same hygiene gate rejects duplicate top-level function definitions across R modules; function-local closures may reuse names. Give each shared function one implementation owner so source-loading order cannot choose its behavior. With both checkouts present, verify shared native headers explicitly with <code>python3 ../RdistNN_stata/tools/ci/package_hygiene.py --r-root .</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="maintainer-reference">Maintainer reference<a class="anchor" aria-label="anchor" href="#maintainer-reference"></a></h2>

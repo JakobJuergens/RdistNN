@@ -15,10 +15,10 @@ plot_data_estimates(object, level = 0.95, ...)
 plot_data_estimates(object, level = 0.95, ...)
 
 # S3 method for class 'np_result'
-plot_data_estimates(object, level = 0.95, ...)
+plot_data_estimates(object, level = 0.95, candidates = "default", ...)
 
 # S3 method for class 'cate_result'
-plot_data_estimates(object, level = 0.95, ...)
+plot_data_estimates(object, level = 0.95, candidates = "default", ...)
 
 # S3 method for class 'plqr_result'
 plot_data_estimates(object, level = 0.95, quantity = c("moment", "theta"), ...)
@@ -46,6 +46,11 @@ plot_data_estimates(object, level = 0.95, candidates = "default", ...)
 
   Passed to methods; not used.
 
+- candidates:
+
+  For grid-aware methods, `"default"`, `"all"`, or a character vector of
+  stored candidate ids.
+
 - quantity:
 
   For `plqr_result` fits, which quantity to extract: `"moment"`
@@ -54,11 +59,6 @@ plot_data_estimates(object, level = 0.95, candidates = "default", ...)
   `theta_eval`) and the direct-sandwich `theta_se`. While no root solver
   exists, moments are the target-specific quantity, so they are the
   default. The choice is recorded in `attr(., "quantity")`.
-
-- candidates:
-
-  For grid-aware methods, `"default"`, `"all"`, or a character vector of
-  stored candidate ids.
 
 ## Value
 

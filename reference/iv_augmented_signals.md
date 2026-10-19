@@ -51,7 +51,8 @@ iv_augmented_signals(
 
 - clip:
 
-  Propensity clipping threshold in (0,0.5).
+  Propensity clipping threshold in (0,0.5), with `1 - clip < 1` in
+  double precision.
 
 - one_sided:
 

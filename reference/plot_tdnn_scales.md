@@ -45,5 +45,4 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
   )
   plot_tdnn_scales(fit)
 }
-#> Warning: NaNs produced
 ```

@@ -103,7 +103,19 @@ Rscript tools/ci/check_tests_declared_deps.R
 Rscript tools/ci/check_repository_hygiene.R
 Rscript tools/ci/check_pkgdown_reference_coverage.R
 Rscript tools/ci/check_generated_file_drift.R
+python3 -m unittest discover -s tests/ci -v
 ```
+
+The generated-file check includes all roxygen Rd topics and rejects
+missing or obsolete generated files. It runs in isolation and uses the
+roxygen2 version in DESCRIPTION. Repository hygiene covers staged and
+new candidate files; keep verification output under ignored `build/` or
+`archives/` directories. The same hygiene gate rejects duplicate
+top-level function definitions across R modules; function-local closures
+may reuse names. Give each shared function one implementation owner so
+source-loading order cannot choose its behavior. With both checkouts
+present, verify shared native headers explicitly with
+`python3 ../RdistNN_stata/tools/ci/package_hygiene.py --r-root .`.
 
 ## Maintainer reference
 

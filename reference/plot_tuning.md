@@ -87,8 +87,13 @@ plot_tuning(
 
 - tuning:
 
-  A tuning specification for the candidate grid (default
-  [`tuning_dnn_paper()`](https://JakobJuergens.github.io/RdistNN/reference/tuning_dnn_paper.md)).
+  A tuning specification for the candidate grid. Scalar fits use their
+  retained tuning specification when omitted. Fits with a manually
+  chosen `s` use
+  [`tuning_dnn_paper()`](https://JakobJuergens.github.io/RdistNN/reference/tuning_dnn_paper.md),
+  including that fitted order; optional return fields do not change the
+  sweep. An explicit specification overrides that scalar grid. Stored
+  grid fits reuse their existing candidates.
 
 - targets:
 

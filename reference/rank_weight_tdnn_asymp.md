@@ -3,8 +3,9 @@
 Returns a `rank_weight` spec whose `eval_batch` uses the asymptotic TDNN
 rank table from `tdnn_rank_table_asymp()`. Structurally identical to
 [`rank_weight_tdnn_exact()`](https://JakobJuergens.github.io/RdistNN/reference/rank_weight_tdnn_exact.md)
-but uses the Beta order-statistic approximation, which gives full rank
-support (all n entries are non-zero).
+but uses the Beta order-statistic approximation, evaluated across the
+full rank grid. Combined entries can be zero through signed cancellation
+or numeric underflow.
 
 ## Usage
 

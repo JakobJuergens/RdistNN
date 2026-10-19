@@ -1,8 +1,9 @@
 # TDNN weights (asymptotic, k = 1), distance-based ranking
 
 Computes Demirkaya two-scale DNN (TDNN) weights using the asymptotic
-rank-weight table (`tdnn_rank_table_asymp()`). Full rank support: all
-`n` observations receive non-zero weight (though some are negative).
+rank-weight table (`tdnn_rank_table_asymp()`) over all `n` ranks.
+Weights may be negative or exactly zero through signed cancellation or
+underflow.
 
 ## Usage
 

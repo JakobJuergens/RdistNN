@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9002</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -284,8 +284,10 @@ jackknife SEs when <code>se = TRUE</code>.</p>
 <code>"fast"</code> reuses full-sample ranks and applies rank
 updates per deletion.</li>
 <li>
-<code>"loo"</code> recomputes leave-one-out weights directly
-(reference-equivalent).</li>
+<code>"loo"</code> recomputes leave-one-out weights directly. For
+NP/TDNN/CATE it refits sample-dependent geometry and can differ from
+frozen-metric <code>"fast"</code> inference. Paired-ratio inference
+keeps the training geometry fixed.</li>
 <li>
 <code>"none"</code> skips SE computation.</li>
 </ul>

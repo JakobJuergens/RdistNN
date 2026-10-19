@@ -221,8 +221,10 @@ always use delete-1 jackknife SEs when `se = TRUE`.
 
 - `"fast"` reuses full-sample ranks and applies rank updates per
   deletion.
-- `"loo"` recomputes leave-one-out weights directly
-  (reference-equivalent).
+- `"loo"` recomputes leave-one-out weights directly. For NP/TDNN/CATE it
+  refits sample-dependent geometry and can differ from frozen-metric
+  `"fast"` inference. Paired-ratio inference keeps the training geometry
+  fixed.
 - `"none"` skips SE computation.
 
 `s < n` is required when jackknife SEs are requested.

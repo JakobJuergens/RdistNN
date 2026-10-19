@@ -1,4 +1,4 @@
-# CATE via DNN rank weights (orthogonalized local averaging)
+# CATE via DNN rank-weighted pseudo-outcome averaging
 
 Estimate conditional average treatment effects by combining a
 pseudo-outcome with DNN-based local weights.
@@ -89,10 +89,10 @@ cate_dnn(
 
 - clip:
 
-  Finite propensity clipping constant in `(0, 0.5)`, default `1e-8`. Raw
-  nuisance propensities must be finite and lie in `[0, 1]`;
-  nuisance-based AIPW and Robinson scores use
-  `pmin(pmax(e, clip), 1 - clip)`. This argument does not alter a
+  Finite propensity clipping constant in `(0, 0.5)` with `1 - clip < 1`
+  in double precision, default `1e-8`. Raw nuisance propensities must be
+  finite and lie in `[0, 1]`; nuisance-based AIPW and Robinson scores
+  use `pmin(pmax(e, clip), 1 - clip)`. This argument does not alter a
   supplied `pseudo_outcome`.
 
 - distance:
@@ -213,16 +213,27 @@ are not stored. Candidate diagnostics include `ess`, `max_weight`,
 `top_n`, `top5_weight_share`, and `degenerate`; `top_n` is fixed at 5
 and is independent of the estimator's `k`.
 
-Neyman orthogonality controls first-order population nuisance drift, but
-it does not by itself validate arbitrary nuisance predictions fitted on
-the same observations used for localization and inference. Valid
-full-sample reuse additionally requires the nuisance-rate and full-state
-stability conditions in the accompanying paper. This function computes
-the estimator and its requested jackknife procedure; it cannot diagnose
+The AIPW signal is Neyman orthogonal at the true nuisance functions. The
+normalized Robinson signal identifies the effect with true nuisances but
+is generally not orthogonal to propensity error. If the pooled outcome
+mean is correct, its conditional expectation is \\e_0(1-e_0)\tau /
+\\\hat e(1-\hat e)\\\\. It can therefore have first-order propensity
+drift; AIPW's orthogonality argument does not apply to that route
+without additional propensity control. Orthogonality alone does not
+validate arbitrary nuisance predictions fitted on the same observations
+used for localization and inference. Valid full-sample reuse
+additionally requires the nuisance-rate and full-state stability
+conditions in the accompanying paper. This function computes the
+estimator and its requested jackknife procedure; it cannot diagnose
 whether an arbitrary learner satisfies those conditions. Supply oracle
 quantities, cross-fitted or out-of-fold predictions, or full-sample
 predictions from a learner for which the paper's rate and stability
 conditions are credible.
+
+With `data`, omit `X`; a direct `pseudo_outcome` vector remains
+supported. Column selectors require `data`. Prediction retains the
+fitted metric and context even if a registered distance name is
+subsequently replaced.
 
 ## See also
 

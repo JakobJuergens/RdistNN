@@ -146,6 +146,9 @@ Two interfaces are supported.
 
 2.  Matrix interface: pass `X`, one of `X0` or `x0`, and `Y`.
 
+With `data`, omit `X` and `Y`; use exactly one of `y_col` or `y`. Column
+selectors require `data`. Conflicting routes are rejected.
+
 **Signed weights.** The columns of the TDNN weight matrix sum to 1, but
 individual entries can be negative. This is expected and reflects the
 bias-correction structure; it does not indicate numerical problems.

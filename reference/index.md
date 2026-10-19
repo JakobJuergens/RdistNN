@@ -12,7 +12,7 @@ The main estimation workflows: conditional average treatment effects,
 nonparametric regression, and their DNN weight builders.
 
 - [`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md)
-  : CATE via DNN rank weights (orthogonalized local averaging)
+  : CATE via DNN rank-weighted pseudo-outcome averaging
 - [`np_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_dnn.md)
   : Nonparametric regression via DNN rank weights
 - [`np_tdnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_tdnn.md)
@@ -445,7 +445,7 @@ registries, and built-in distance constructors.
 - [`distance_l1_scaled()`](https://JakobJuergens.github.io/RdistNN/reference/distance_l1_scaled.md)
   : Scaled L1 distance spec (one-time setup + eval/batch)
 - [`distance_mahalanobis()`](https://JakobJuergens.github.io/RdistNN/reference/distance_mahalanobis.md)
-  : Mahalanobis distance spec (with one-time covariance setup)
+  : Mahalanobis distance spec (with one-time factorization)
 
 ## Developer API — rank → weight mappings
 
