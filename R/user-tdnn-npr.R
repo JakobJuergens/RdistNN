@@ -77,9 +77,12 @@
 #'     column names propagated from the training data when available;
 #'   - `meta`: metadata (`n`, `m`, `p`, `s1`, `s2`, `dim`, `method`,
 #'     `distance`);
+#'   - `.model`: retained canonical training state and fitted geometry used
+#'     by the inherited prediction and covariance methods;
 #'   - optional extras requested via `return`.
 #'
-#' @seealso [weights_tdnn()], [np_dnn()], [np_demo_data()].
+#' @seealso [weights_tdnn()], [np_dnn()], [np_demo_data()], [np_result] for
+#'   inherited summary, covariance, confidence interval and prediction methods.
 #'
 #' @examples
 #' set.seed(1)
@@ -202,6 +205,7 @@ np_tdnn <- function(
 
   # Request ranks on the first weights call so the fast jackknife can
   # reuse them without recomputing distances.
+  geometry <- .np_fitted_geometry(distance, x_mat, ctx)
   weight_return <- return
   if (isTRUE(se) && identical(jackknife, "fast")) {
     weight_return <- unique(c(return, "ranks"))
@@ -210,13 +214,13 @@ np_tdnn <- function(
   weight_fit    <- .tdnn_weights_with_extras(
     x_mat     = x_mat,
     x0_mat    = x0_mat,
-    distance  = distance,
+    distance  = geometry$distance,
     method    = method,
     s1        = s1,
     s2        = s2,
     dim       = dim,
     normalize = normalize,
-    ctx       = ctx,
+    ctx       = geometry$ctx,
     return    = weight_return
   )
   wt            <- weight_fit$wt
@@ -269,16 +273,12 @@ np_tdnn <- function(
   out <- .dnn_attach_common_extras(out, return = return, wt = wt, W = weight_matrix, k = 1L)
   if ("y" %in% return) out$y <- y_vec
 
-  # Internal fit state used by refit-based plotting panels
-  # (plot_tdnn_scales()).
-  out$.model <- list(
-    y_vec = y_vec,
-    x_mat = x_mat,
-    distance = distance,
-    method = method,
-    normalize = normalize,
-    ctx = ctx
-  )
+  out$.model <- c(list(
+    kind = "tdnn", y_vec = y_vec, x_mat = x_mat,
+    x_cols = if (!is.null(data)) colnames(x_mat) else NULL,
+    k = 1L, s1 = s1, s2 = s2, dim = dim, method = method,
+    normalize = normalize, ranks = wt$ranks
+  ), geometry)
 
   class(out) <- c("tdnn_np_result", "np_result")
   out

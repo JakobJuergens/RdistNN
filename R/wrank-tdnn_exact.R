@@ -56,8 +56,9 @@
 .tdnn_scalars <- function(s1, s2, dim) {
   # Returns c(w1 = w1*, w2 = w2*) for the Demirkaya TDNN construction.
   # s1 < s2, dim > 0 (localization dimension).
-  ratio <- (s1 / s2)^(-2 / dim)   # > 1 since s1 < s2 and dim > 0
-  w1 <- 1 / (1 - ratio)           # < 0
+  # Retain the small order difference before taking logarithms, then avoid
+  # cancellation when the exponential is close to one.
+  w1 <- -1 / expm1((2 / dim) * log1p((s2 - s1) / s1))
   c(w1 = w1, w2 = 1 - w1)         # w2 > 1, w1 + w2 = 1
 }
 

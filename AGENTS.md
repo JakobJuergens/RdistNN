@@ -66,7 +66,10 @@ For CLATE/ratio work read `markdown_notes/design/17_clate_ratio_inference.md`.
   generally with `call. = FALSE`.
 - Unknown `return` values must be handled consistently across wrappers.
 - Do not hand-edit generated files such as `NAMESPACE` or `RcppExports.*`.
-- New compiled paths must include fallback-equivalence tests.
+- Preserve numerical parity between compiled and R engines and, for shared
+  methods, the Stata companion. Follow design notes 09 and 10 for exact
+  discrete decisions, justified floating-point tolerances and tests that
+  establish which engine actually ran. New compiled paths need such tests.
 - New user-visible validation or behavior changes must include tests.
 - Do not introduce new interface conventions without updating the design notes.
 - Mathematica / Wolfram Language is available through `wolframscript`. Use it

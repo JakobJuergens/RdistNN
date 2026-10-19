@@ -124,7 +124,7 @@ reduced_form and first_stage. Optional nuisance output is the complete
 iv_signals construction record, including raw/used propensity.
 }
 \description{
-An experimental augmented binary-IV estimator with rich adjustment and
+An augmented binary-IV estimator with rich adjustment and
 reduced-dimensional reporting. Nuisance functions are supplied as aligned
 predictions; the estimator fits no learners.
 }

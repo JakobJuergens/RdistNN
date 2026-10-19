@@ -1,16 +1,5 @@
 # Methods for cate_result objects.
 
-.cate_validate_prediction_targets <- function(x, arg) {
-  .validate_matrix(
-    x,
-    arg = arg,
-    min_rows = 1L,
-    min_cols = 1L,
-    numeric = TRUE,
-    finite = TRUE
-  )
-}
-
 .cate_validate_prediction_model <- function(model) {
   if (!is.list(model) || is.null(model$x_mat) || is.null(model$psi)) {
     .abort_bad_state(paste0(
@@ -69,50 +58,6 @@
   model$method <- model$method[[1L]]
   model$normalize <- model$normalize[[1L]]
   model
-}
-
-.cate_resolve_targets <- function(model, newdata = NULL, X0 = NULL, x0 = NULL) {
-  if (!is.null(newdata) && (!is.null(X0) || !is.null(x0))) {
-    .abort_bad_arg(
-      "newdata/X0/x0",
-      "must provide either `newdata` or `X0`/`x0`, not both",
-      quoted = FALSE
-    )
-  }
-
-  if (!is.null(newdata)) {
-    if (is.data.frame(newdata) && !is.null(model$x_cols)) {
-      x0_mat <- .dnn_col_mat(model$x_cols, data = newdata, arg = "x_cols", out_arg = "newdata")
-    } else {
-      x0_mat <- .cate_validate_prediction_targets(newdata, arg = "newdata")
-    }
-    x0_mat <- .cate_validate_prediction_targets(x0_mat, arg = "newdata")
-    return(.validate_ncol_relation(model$x_mat, x0_mat, y_arg = "newdata", x_arg = "X", relation = "match"))
-  }
-
-  if (!is.null(X0) && !is.null(x0)) {
-    .abort_bad_arg("X0/x0", "must provide either `X0` or `x0`, not both", quoted = FALSE)
-  }
-  if (is.null(X0)) {
-    if (is.null(x0)) {
-      .abort_bad_arg(
-        "newdata/X0/x0",
-        "must provide `newdata`, `X0`, or a single `x0`",
-        quoted = FALSE
-      )
-    }
-    x0_vec <- .validate_target_vector(
-      x0,
-      ncol(model$x_mat),
-      x0_arg = "x0",
-      x_arg = "X",
-      strict = TRUE,
-      finite = TRUE
-    )
-    return(matrix(x0_vec, nrow = 1L))
-  }
-  x0_mat <- .cate_validate_prediction_targets(X0, arg = "X0")
-  .validate_ncol_relation(model$x_mat, x0_mat, y_arg = "X0", x_arg = "X", relation = "equal")
 }
 
 #' Summarize a `cate_result` object
@@ -273,7 +218,7 @@ predict.cate_result <- function(
 
   model <- .cate_validate_prediction_model(object$.model)
 
-  x0_mat <- .cate_resolve_targets(model, newdata = newdata, X0 = X0, x0 = x0)
+  x0_mat <- .dnn_resolve_prediction_targets(model, newdata = newdata, X0 = X0, x0 = x0)
 
   need_se <- se.fit || interval == "confidence"
   wt_return <- if (need_se) c("W", "ranks") else "W"

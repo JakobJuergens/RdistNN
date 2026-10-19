@@ -17,10 +17,9 @@ selected covariate profiles, report pointwise estimates and delete-one
 jackknife standard errors, and inspect localization, overlap and
 sensitivity to tuning choices.
 
-CATE and nonparametric regression are the main workflows. The
-development version also provides **experimental conditional LATE
-(CLATE)** estimation with the same reporting and plotting interfaces.
-You supply nuisance predictions for the causal estimators; RdistNN
+CATE, nonparametric regression and conditional LATE (CLATE) are
+supported workflows, with shared reporting and plotting interfaces. You
+supply nuisance predictions for the causal estimators; RdistNN
 constructs the adjusted signals and performs the local estimation and
 inference calculations.
 
@@ -32,16 +31,29 @@ reference](https://JakobJuergens.github.io/RdistNN/reference/index.html)
 guide](https://JakobJuergens.github.io/RdistNN/articles/conditional-late.html)
 · [Report an issue](https://github.com/JakobJuergens/RdistNN/issues)
 
+These instructions describe development version **0.1.0.9002**,
+maintained on the local `development` branch until reviewed publication.
+The GitHub install below uses the published `master` snapshot; install a
+local checkout to use changes that have not yet been published.
+
+Use the common result methods to report estimates, inspect stored tuning
+candidates and predict from saved fits. The [Stata
+companion](https://github.com/JakobJuergens/RdistNN_stata) provides the
+same core estimation workflows; its
+[crosswalk](https://github.com/JakobJuergens/RdistNN_stata/blob/master/docs/r-documentation-crosswalk.md)
+records shared capabilities and R-only interfaces.
+
 ## Installation
 
-Install the **development version** from GitHub to use all functionality
-shown below, including CLATE and its shared plotting and tuning
-interfaces:
+Install the published GitHub snapshot:
 
 ``` r
 install.packages("pak")  # once
 pak::pak("JakobJuergens/RdistNN")
 ```
+
+From a local source checkout, use `pak::local_install(".")`. Check the
+installed version with `packageVersion("RdistNN")`.
 
 R 4.1.0 or newer, Rcpp and a C++17 toolchain are required. Use Rtools
 matching your R version on Windows, Xcode command line tools on macOS,
@@ -67,16 +79,19 @@ documentation describes the development version.
 |----------------------------------------|----------------------|-----------------------------------------------------------------------------------------------------|
 | Conditional average treatment effects  | `cate_dnn()`         | Outcome, binary treatment and supplied outcome/propensity predictions, or a supplied pseudo-outcome |
 | Conditional mean regression            | `np_dnn()`           | Outcome and covariates; no nuisance predictions needed                                              |
-| Conditional effects among compliers    | `clate_dnn()`        | Binary instrument and treatment, outcome, and five supplied nuisance predictions; **experimental**  |
-| A ratio of two local conditional means | `affine_ratio_dnn()` | Two aligned signals, with paired covariance; **experimental**                                       |
+| Conditional effects among compliers    | `clate_dnn()`        | Binary instrument and treatment, outcome, and five supplied nuisance predictions                    |
+| A ratio of two local conditional means | `affine_ratio_dnn()` | Two aligned signals, with paired covariance                                                         |
 | Two-scale regression                   | `np_tdnn()`          | Signed combination of two DNN scales; additional smoothness conditions                              |
+| Inspect or reuse DNN weights           | `weights_matrix()`   | Covariates and single/batch targets; reusable weights and optional rank/distance extras             |
 
 The estimators accept numeric matrices/vectors or a data frame
 (including a tibble) with explicit column selectors. Use `x0` for one
 reporting profile or `X0` for a matrix of profiles. CATE and CLATE
 support single-scale `method = "exact"` (default) and `method = "asymp"`
 DNN weights. Two-scale TDNN is available for nonparametric regression
-only.
+only. Shared localization choices include L1, L2, scaled L1/L2 and
+Mahalanobis distance; fitted geometry stays fixed across deletions and
+saved-fit prediction.
 
 ## Conditional average treatment effects
 
@@ -126,23 +141,32 @@ fit_np <- np_dnn(
   x0 = c(0, 0), k = 1L, se = TRUE, return = c("W", "dx", "ess")
 )
 
-fit_np$mu
-#> [1] 0.03318309
-fit_np$se
-#> [1] 0.1328814
+summary(fit_np)$coefficients
+#>            estimate std.error statistic   p.value   conf.low conf.high
+#> target_1 0.03318309 0.1328814 0.2497195 0.8028043 -0.2272597 0.2936259
+confint(fit_np)
+#>            conf.low conf.high
+#> target_1 -0.2272597 0.2936259
+predict(fit_np, x0 = c(0.2, -0.1), interval = "confidence")
+#>            fit       lwr       upr
+#> [1,] 0.3350931 0.1612576 0.5089286
 as.data.frame(diagnostics(fit_np))[, c("target_id", "n_eff", "weighted_mean_y")]
 #>          target_id    n_eff weighted_mean_y
 #> target_1  target_1 17.52493      0.03318309
 ```
 
 For matrices, use `np_dnn(X = X, x0 = x0, Y = y)`. Regression results
-expose `mu` and `se` directly and support the common diagnostics and
-plotting calls. Two-scale regression uses `np_tdnn()` with explicit
-`s1 < s2` (`s2 < n` for jackknife standard errors). See `?np_tdnn` for
-its signed weights and additional assumptions, and `plot_tdnn_scales()`
-to compare component scales.
+expose `mu` and `se` directly and share `summary()`, `coef()`,
+`confint()`, `vcov()` and `predict()` with the other estimator
+workflows. Joint covariance uses common deletions across targets;
+saved-fit prediction retains training outcomes and geometry. See
+`?np_result` for the result methods. The common diagnostics and plotting
+calls remain available. Two-scale regression uses `np_tdnn()` with
+explicit `s1 < s2` (`s2 < n` for jackknife standard errors). See
+`?np_tdnn` for its signed weights and additional assumptions, and
+`plot_tdnn_scales()` to compare component scales.
 
-## Conditional LATE (experimental)
+## Conditional LATE
 
 With a binary instrument and binary treatment, `clate_dnn()` estimates
 the conditional effect among compliers under the IV assumptions. Supply
@@ -186,14 +210,15 @@ retains their paired covariance, holding the supplied signals fixed.
 guide](https://JakobJuergens.github.io/RdistNN/articles/conditional-late.html)
 covers input alignment, diagnostics and reporting. The [inference
 guide](https://JakobJuergens.github.io/RdistNN/articles/conditional-late-inference.html)
-explains denominator status and `ratio_confidence_set()`, including
-unbounded sets. Inspect the first stage alongside the ratio; ordinary
-Wald intervals can be misleading when the first stage is weak.
+explains denominator status and the experimental
+`ratio_confidence_set()` helper, including unbounded sets. Inspect the
+first stage alongside the ratio; ordinary Wald intervals can be
+misleading when the first stage is weak.
 
 ## Shared reporting and plots
 
-CATE and CLATE use the same calls, with the fitted object’s class
-selecting the appropriate implementation:
+CATE, CLATE and regression use the same calls, with the fitted object’s
+class selecting the appropriate implementation:
 
 ``` r
 summary(fit)$coefficients
@@ -308,6 +333,25 @@ positive local compliance. It generally differs from population CATE.
 See the [conditional Z-estimation
 guide](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.html)
 and the CLATE articles for the theoretical scope and limitations.
+
+## Numerical behavior and engines
+
+The R and Stata implementations share stable close-order TDNN
+coefficients, Beta interval masses that preserve represented tail
+weights, and recovery of finite L2 norms when intermediate squares
+overflow or underflow. Ordinary distance arithmetic retains
+deterministic ranks and original-row tie breaking. Compensated weighted
+and prefix sums remain [planned
+work](https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/rdistnn_roadmap.md#planned-compensated-accumulation).
+
+Compiled C++ kernels accelerate distances and frozen-score jackknife
+calculations. R fallbacks implement the same numerical contracts; use
+`options(RdistNN.use_compiled = FALSE)` for reference-path comparisons.
+Source installation still requires the compiler described above. Engine
+tests check discrete decisions exactly and continuous results at
+justified tolerances. See the [compiled-code
+policy](https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/10_rcpp_and_compiled_code_policy.md)
+for the arithmetic and reproducibility contract.
 
 ## Further documentation
 

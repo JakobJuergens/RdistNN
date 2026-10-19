@@ -16,9 +16,10 @@ tuning_default <- tuning_dnn_paper()
 
 ## Overview
 
-The initial public release focuses on CATE and nonparametric regression.
-Start with [Getting started](getting-started.html) for executable examples of
-those workflows. This article gives additional moment details, including
+This article focuses on CATE and nonparametric regression. Start with
+[Getting started](getting-started.html) for executable examples, or the
+[CLATE guide](conditional-late.html) for supplied-prediction binary-IV and
+paired-signal workflows. This article gives additional moment details, including
 **experimental PLQR**:
 
 - `np_dnn()` for localized conditional means

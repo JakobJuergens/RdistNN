@@ -381,7 +381,7 @@ cate_dnn <- function(
     e = e_used,
     propensity_clip = if (!is.null(e_used)) clip else NULL,
     propensity_version = if (!is.null(e_used)) "clipped" else NULL,
-    x_cols = if (!is.null(data)) x_cols else NULL,
+    x_cols = if (!is.null(data)) colnames(x_mat) else NULL,
     distance = distance,
     method = method,
     k = k,

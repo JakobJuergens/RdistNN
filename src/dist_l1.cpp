@@ -3,6 +3,7 @@
 // [[Rcpp::depends(Rcpp)]]
 #include <Rcpp.h>
 #include "fast_order.hpp"
+#include "distance_arithmetic.hpp"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -31,7 +32,8 @@ static inline void dist_l1_core_ptr(const double *Xp, int n, int p, const double
     double acc = 0.0;
     for (int j = 0; j < p; ++j) {
       const double diff = Xp[i + j * stride_n] - x0p[j];
-      const double d = invsp ? diff * invsp[j] : diff;
+      const double d =
+          invsp ? rustat::scaled_distance_difference(Xp[i + j * stride_n], x0p[j], invsp[j]) : diff;
       acc += std::fabs(d);
     }
     out[i] = acc;
@@ -56,7 +58,8 @@ static inline void dist_l1_batch_impl(const double *Xp, int n, int p, const doub
       for (int j = 0; j < p; ++j) {
         const double x0j = X0p[q + j * stride_m];       // column-major X0
         const double diff = Xp[i + j * stride_n] - x0j; // column-major X
-        const double d = invsp ? diff * invsp[j] : diff;
+        const double d =
+            invsp ? rustat::scaled_distance_difference(Xp[i + j * stride_n], x0j, invsp[j]) : diff;
         acc += std::fabs(d);
       }
       out[i + q * stride_n] = acc; // column-major out

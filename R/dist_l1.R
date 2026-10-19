@@ -2,10 +2,24 @@
 
 # --- internal R fallback ------------------------------------------------------
 #' @noRd
-.dist_l1_R <- function(X, x0) {
+.dist_l1_R <- function(X, x0, inv_s = NULL) {
   X <- as.matrix(X)
   x0 <- .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X", finite = TRUE)
-  rowSums(abs(X - matrix(x0, nrow(X), ncol(X), byrow = TRUE)))
+  # Match native arithmetic: subtract, scale, then accumulate in coordinate
+  # order with double precision. rowSums() can break native ties differently.
+  out <- numeric(nrow(X))
+  for (j in seq_len(ncol(X))) {
+    d <- X[, j] - x0[j]
+    if (!is.null(inv_s)) {
+      d <- if (any(abs(d) >= 2^1023)) {
+        .scaled_distance_difference(X[, j], x0[j], inv_s[j])
+      } else {
+        d * inv_s[j]
+      }
+    }
+    out <- out + abs(d)
+  }
+  out
 }
 
 # -----------------------------------------------------------------------------
@@ -132,8 +146,8 @@ distance_l1 <- function() {
 #' Scaled L1 distance (per-coordinate scaling)
 #'
 #' Computes \eqn{\|(X_{i,\cdot} - x_0) \odot \mathrm{inv\_s}\|_1} for each row.
-#' A compiled fast path is used when available; else inputs are rescaled
-#' in R and passed to `dist_l1()`.
+#' A compiled fast path is used when available; otherwise the R fallback
+#' subtracts before scaling and accumulates coordinates in the same order.
 #'
 #' @inheritParams dist_l1
 #' @param inv_s Numeric vector of length \eqn{p} with elementwise scales
@@ -157,9 +171,7 @@ dist_l1_scaled <- function(X, x0, inv_s) {
     return(cpp(X, x0, inv_s))
   }
 
-  Xs <- .scale_cols(X, inv_s)
-  x0s <- x0 * inv_s
-  dist_l1(Xs, x0s)
+  .dist_l1_R(X, x0, inv_s)
 }
 
 # -----------------------------------------------------------------------------
@@ -184,7 +196,6 @@ dist_l1_scaled <- function(X, x0, inv_s) {
 distance_l1_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
                                scale_vec = NULL, eps = 1e-12) {
   rule <- match.arg(rule)
-  base <- distance_l1()
 
   list(
     name = paste0("l1_scaled[", rule, "]"),
@@ -210,9 +221,7 @@ distance_l1_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
         return(cpp(X, x0, inv_s))
       }
 
-      Xs <- if (!is.null(ctx) && !is.null(ctx$Xs)) ctx$Xs else .scale_cols(X, inv_s)
-      x0s <- x0 * inv_s
-      base$eval(Xs, x0s, NULL)
+      .dist_l1_R(X, x0, inv_s)
     },
     eval_batch = function(X, X0, ctx) {
       .assert_no_na(X)
@@ -242,9 +251,9 @@ distance_l1_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
         return(cpp(X, X0, inv_s))
       }
 
-      Xs <- if (!is.null(ctx$Xs)) ctx$Xs else .scale_cols(X, inv_s)
-      X0s <- .scale_cols(X0, inv_s)
-      base$eval_batch(Xs, X0s, NULL)
+      out <- matrix(NA_real_, nrow(X), nrow(X0))
+      for (j in seq_len(nrow(X0))) out[, j] <- .dist_l1_R(X, X0[j, ], inv_s)
+      out
     }
   )
 }

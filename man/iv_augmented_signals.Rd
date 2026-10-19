@@ -52,7 +52,7 @@ propensity (raw, used, clipped), nuisance
 }
 \description{
 Constructs two aligned signals from externally supplied nuisance predictions.
-This experimental interface fits no nuisance models.
+This interface fits no nuisance models.
 }
 \details{
 For either response \eqn{R}, the signal is

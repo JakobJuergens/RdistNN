@@ -12,15 +12,25 @@ documented, and staged where possible.
 
 ## 2. Lifecycle posture
 
-`RdistNN` is an early research package. The initial public release focuses on
-CATE (`cate_dnn()`), nonparametric regression (`np_dnn()`), and supporting DNN
-weights, tuning, diagnostics, and plots.
+`RdistNN` retains its package-wide experimental lifecycle. Supported workflows
+include CATE (`cate_dnn()`), nonparametric regression (`np_dnn()`, `np_tdnn()`),
+conditional LATE (`clate_dnn()`), ordinary supplied-signal ratios
+(`affine_ratio_dnn()`), and their supporting weights, tuning, diagnostics,
+reporting, plots and frozen-model reuse.
+
+Core CLATE support covers supplied-prediction binary-IV signals and the common
+paired-ratio calculation under the documented pointwise inference conditions.
+The signal constructor `iv_augmented_signals()` is part of that workflow.
+Supporting computational options does not expand the theorem's statistical
+scope. The optional `ratio_confidence_set()` inversion API remains experimental
+and does not establish weak-instrument-uniform coverage. Public arguments,
+result schemas and numerical statuses follow the deprecation discipline below.
 
 All PLQR functionality is explicitly experimental: estimator and score
 constructors, demo helpers, dedicated post-estimation methods, specialized
 plots, and PLQR dispatch through shared generics. Local IV-GMM is also
-experimental. These workflows remain available but fall outside the initial
-release's supported workflow focus. Mark their status in help, articles, and
+experimental. These workflows remain available but fall outside the
+supported workflow focus. Mark their status in help, articles, and
 the pkgdown reference; do not change computation or emit new runtime warnings
 solely to communicate lifecycle status.
 

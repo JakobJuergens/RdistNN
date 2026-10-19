@@ -87,7 +87,7 @@ matrices are marginal across targets, not cross-target covariances.
 }
 \description{
 Localizes two aligned, externally supplied signals with common DNN
-weights. This experimental estimator uses paired frozen-score covariance;
+weights. This estimator uses paired frozen-score covariance;
 it never divides individual signals or deleted component averages.
 }
 \details{

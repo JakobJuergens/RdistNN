@@ -142,8 +142,11 @@ scalar-style views with the parent's scientific class. They update the chosen
 order, estimate, uncertainty, metadata and any requested `W`, `ess` or
 `neighbors`. Neighbors are the first `k` observations, not the full DNN
 support. Ratio views also rebuild components, covariance and optional
-paired deletion/pseudo-value arrays. Retain candidate-independent nuisance
-and geometry state; do not copy stale candidate-dependent quantities.
+paired deletion/pseudo-value arrays. NP views update retained weight controls,
+allowing joint target covariance
+and prediction to use the selected order. Covariance is reconstructed on
+request from common deletions. Retain candidate-independent nuisance and
+geometry state; do not copy stale candidate-dependent quantities.
 
 The common display grammar is `candidates = "default"`, `"all"` or candidate
 IDs for grid-aware estimate/weight/diagnostic consumers. `plot_tuning()` uses

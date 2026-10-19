@@ -68,7 +68,7 @@ dnn_weights_asymp_full_from_ranks <- function(ranks, k, s, normalize = TRUE) {
   inc <- outer(
     j, ii,
     function(J, I) {
-      pbeta(J / n, I, s - I + 1) - pbeta((J - 1) / n, I, s - I + 1)
+      .beta_interval_mass((J - 1) / n, J / n, I, s - I + 1)
     }
   )
   w_rank <- as.numeric(rowMeans(inc))

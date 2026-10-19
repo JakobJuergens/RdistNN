@@ -26,7 +26,7 @@
   n <- as.integer(n)
   s <- as.integer(s)
   j <- seq_len(n)
-  w_rank <- pbeta(j / n, 1L, s) - pbeta((j - 1L) / n, 1L, s)
+  w_rank <- .beta_interval_mass((j - 1L) / n, j / n, 1L, s)
   w_rank <- as.numeric(w_rank)
   if (isTRUE(normalize)) {
     sw <- sum(w_rank)

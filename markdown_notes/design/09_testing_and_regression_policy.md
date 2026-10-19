@@ -61,9 +61,18 @@ If helper generators are reused across test files, centralize them.
 
 For floating-point results:
 
-- compare with tolerance;
+- use explicit absolute/relative tolerances appropriate to the quantity and scale;
 - test the property that matters;
-- avoid brittle equality unless exact arithmetic is intended.
+- require exact equality for discrete outputs such as ranks, stable tie order,
+  support, target identities, statuses and missing-value masks after documented
+  representation mappings;
+- use exact numeric equality where the numerical contract specifies identical
+  operations and rounding, as in the distance near-tie regressions.
+
+A small distance difference is consequential if it changes a neighbor or its
+weight. Check ranks and downstream decisions separately from numeric distance
+agreement. A tolerance must never conceal a changed ordering, support or status.
+Investigate an unexpected discrepancy before changing a tolerance or fixture.
 
 ## 7. Error and warning tests
 
@@ -89,10 +98,36 @@ Avoid tests that only assert incidental internal sequencing.
 
 ## 9. Fast path vs fallback
 
-When there is both a compiled and an R fallback path, tests should ensure:
+Verify both within-package engine parity (C++ versus R, C++ versus Mata in the
+companion) and cross-package parity for shared methods. Compare the same numeric
+inputs, row order, targets, fitted geometry, signals, weight controls and
+covariance definition. Exact and asymptotic weights are distinct methods;
+frozen-rank and geometry-refitting deletions also have different contracts.
+Engine equivalence applies to implementations of the same method and state.
 
-- both paths return compatible results where feasible;
-- the fallback remains correct if compiled code is unavailable.
+Force each engine and establish that it actually ran. A compiled parity job
+must fail if its required native entry point is unavailable; a portable-only
+run may skip native checks explicitly, but must report that limit. Exercise
+automatic fallback separately so a nominal native comparison cannot run the
+fallback twice. Retain independent analytic or explicit-loop references.
+
+For an affected primitive, cover ordinary inputs and consequential boundaries:
+exact/near ties, large common offsets, tiny or constant coordinates, clamped
+scales, signed weights, zero variance, missingness and overflow as applicable.
+Follow changes through scalar/batch calls, reordered/duplicate targets, tuning
+candidates, covariance and saved-fit prediction when those consume the primitive.
+
+Use the same exported numeric data for cross-language fixtures. Equal seed
+values in R and Stata do not establish identical random draws. Native portability
+fixtures that depend on individual binary digits should use hexadecimal numeric
+literals or exact binary constructions: decimal conversion can use different
+intermediate precision across R builds. Preserve the intended input bits and
+exact discrete assertions rather than relaxing tolerances.
+Native portability jobs must run the relevant regressions on their supported architectures;
+compiler contraction and parallel reduction changes need targeted coverage.
+Record compiler, architecture, math-library and thread settings when they help
+explain a discrepancy. The arithmetic contract is in
+[the compiled-code policy](10_rcpp_and_compiled_code_policy.md).
 
 ## 10. Simulation / replication code
 

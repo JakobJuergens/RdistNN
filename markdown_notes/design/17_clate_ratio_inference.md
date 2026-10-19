@@ -1,7 +1,9 @@
 # Conditional LATE and paired-ratio inference
 
 `clate_dnn()` constructs binary-IV augmented signals and delegates localization
-and uncertainty to `affine_ratio_dnn()`. Both workflows are experimental.
+and uncertainty to `affine_ratio_dnn()`. Core supplied-prediction CLATE and
+ordinary supplied-signal ratios are supported workflows under the contracts
+below. The optional `ratio_confidence_set()` inversion API remains experimental.
 Executable user examples are in [Conditional LATE](../../vignettes/conditional-late.Rmd)
 and [Paired frozen-score inference](../../vignettes/conditional-late-inference.Rmd).
 This document records the numerical and scientific contracts for maintenance.

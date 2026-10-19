@@ -1,19 +1,19 @@
 Package: RdistNN
 Title: Distributional Nearest-Neighbor Inference for Local Conditional Moment Models
-Version: 0.1.0.9001
+Version: 0.1.0.9002
 Authors@R: 
     person(given = "Jakob", family = "Juergens", email = "info@jakobjuergens.com", role = c("aut", "cre"))
 Author: Jakob Juergens [aut, cre]
 Maintainer: Jakob Juergens <info@jakobjuergens.com>
 Description: Implements distributional nearest-neighbor weights and
     diagnostics for local conditional moment and Z-estimation problems.
-    The initial public release focuses on nonparametric regression and
-    conditional average treatment effects, with delete-one jackknife standard
+    Supported workflows include nonparametric regression, conditional average
+    treatment effects, conditional LATE from supplied nuisance predictions,
+    and ratios of supplied signal averages, with delete-one jackknife standard
     errors, tuning-grid diagnostics, visualization, and study-specific
     replication workflows for the affine conditional Z-estimation paper.
-    Conditional LATE from supplied nuisance predictions, partially linear
-    quantile-regression moment evaluation and local IV-GMM functionality
-    are experimental.
+    Ratio confidence-set inversion, partially linear quantile-regression
+    moment evaluation and local IV-GMM functionality are experimental.
     Lower-level generalized U-statistic and jackknife utilities are included
     as supporting infrastructure. Uses compiled C++ fast paths with robust
     batched R fallbacks for supported algorithms; source installation still

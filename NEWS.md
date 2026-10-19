@@ -1,4 +1,31 @@
-# RdistNN (development version)
+# RdistNN 0.1.0.9002 (development version)
+
+- Recover finite fitted SD scales and scaled L1 differences after intermediate
+  overflow or underflow; reject nonfinite fitted scales before clamping.
+  NP/TDNN prediction standard errors now compute marginal variances without
+  allocating a full covariance matrix for the prediction grid.
+
+- Stabilize close-order TDNN coefficients with `log1p`/`expm1`, retain small
+  asymptotic Beta-increment weights with direct tail probabilities, and recover
+  representable extreme L2 norms through scaled sum-of-squares evaluation.
+  Share the calculations across affected native and fallback paths and retain
+  ordinary-input tie ordering and fitted geometry.
+
+- Align R L1/L2 distance fallbacks with compiled subtraction, scaling and
+  coordinate accumulation order, preserving stable ranks near numerical ties
+  and small differences at large coordinate offsets. Scaled evaluation reuses
+  fitted scales with the supplied training matrix in both engine modes.
+
+- Add `summary()`, `coef()`, `confint()`, `vcov()` and saved-fit `predict()`
+  methods for single- and two-scale NP regression, using retained training
+  state and full common-deletion target covariance. NP, CATE and paired-ratio
+  prediction share target validation; tabular covariate selectors retain
+  resolved names so reordered prediction columns remain aligned.
+
+- Promote supplied-prediction conditional LATE and ordinary paired-signal
+  ratios to supported workflows, including their shared reporting, diagnostics,
+  plots and frozen-model reuse. Pointwise inference conditions are unchanged;
+  ratio confidence-set inversion, PLQR and local IV-GMM remain experimental.
 
 - Advanced the shared development version to 0.1.0.9001 and documented local
   development branches, reviewed production PRs and R/Stata parity expectations.

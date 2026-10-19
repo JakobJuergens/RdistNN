@@ -4,12 +4,14 @@
 \name{RdistNN-package}
 \alias{RdistNN-package}
 \alias{RdistNN}
-\title{RdistNN: DNN Estimation for CATE and Nonparametric Regression}
+\title{RdistNN: DNN Estimation for Conditional Effects and Regression}
 \description{
-The initial public release focuses on conditional average treatment effects
-with \code{\link[=cate_dnn]{cate_dnn()}} and nonparametric regression with \code{\link[=np_dnn]{np_dnn()}}, using
-distributional nearest-neighbor (DNN) weights and delete-1 jackknife standard
-errors. Nuisance predictions for CATE are supplied externally.
+Supported workflows include conditional average treatment effects with
+\code{\link[=cate_dnn]{cate_dnn()}}, nonparametric regression with \code{\link[=np_dnn]{np_dnn()}}, conditional LATE with
+\code{\link[=clate_dnn]{clate_dnn()}} and ordinary supplied-signal ratios with \code{\link[=affine_ratio_dnn]{affine_ratio_dnn()}},
+using distributional nearest-neighbor (DNN) weights and delete-1 jackknife
+standard errors. Nuisance predictions for causal estimators are supplied
+externally; the documented inference conditions remain estimator-specific.
 The underlying toolkit combines:
 \itemize{
 \item distance specifications (\code{dnn_distance}) for ranking observations around a
@@ -31,6 +33,12 @@ target;
 \item Estimate local nonparametric means with \code{\link[=np_dnn]{np_dnn()}}.
 \item Use two-scale signed-weight regression with \code{\link[=np_tdnn]{np_tdnn()}}; see its help for
 order constraints and additional smoothness requirements.
+\item Estimate conditional LATE from supplied nuisance predictions with
+\code{\link[=clate_dnn]{clate_dnn()}}, or localize two supplied signals with \code{\link[=affine_ratio_dnn]{affine_ratio_dnn()}}.
+\code{\link[=iv_augmented_signals]{iv_augmented_signals()}} constructs the augmented binary-IV signals.
+Reporting methods and \code{\link[=diagnostics]{diagnostics()}} retain components and statuses.
+\code{\link[=clate_demo_data]{clate_demo_data()}} supplies a bounded synthetic benchmark with oracle
+predictions.
 \item Inspect fitted local estimators with \code{\link[=diagnostics]{diagnostics()}}.
 \item Plot CATE and regression estimates with \code{\link[=plot_estimates]{plot_estimates()}} and inspect
 local weights with \code{\link[=plot_weights]{plot_weights()}} (requires ggplot2).
@@ -43,15 +51,9 @@ All PLQR functionality is \strong{experimental}, including \code{\link[=plqr_dnn
 scores, demo helpers, methods, and plots. The current wrapper evaluates
 moments at a supplied coefficient; it does not solve for local coefficients.
 Local IV-GMM functionality is also experimental. These workflows are outside
-the CATE and regression focus of the initial public release.
+the supported workflow focus. The optional \code{\link[=ratio_confidence_set]{ratio_confidence_set()}} API
+remains experimental and provides separate set-valued moment inversion.
 \itemize{
-\item Estimate conditional LATE from supplied nuisance predictions with
-\code{\link[=clate_dnn]{clate_dnn()}}, or localize two supplied signals with \code{\link[=affine_ratio_dnn]{affine_ratio_dnn()}}.
-\code{\link[=iv_augmented_signals]{iv_augmented_signals()}} constructs the augmented binary-IV signals.
-Reporting methods and \code{\link[=diagnostics]{diagnostics()}} retain components and statuses;
-\code{\link[=ratio_confidence_set]{ratio_confidence_set()}} provides separate set-valued moment inversion.
-\code{\link[=clate_demo_data]{clate_demo_data()}} supplies a bounded synthetic benchmark with oracle
-predictions. All conditional-LATE functionality is experimental.
 \item Build custom generalized U-statistics with \code{\link[=new_score]{new_score()}},
 \code{\link[=score_eval_batch]{score_eval_batch()}}, and \code{\link[=score_diff_path]{score_diff_path()}}.
 \item Estimate uncertainty with \code{\link[=jackknife_fast_rank]{jackknife_fast_rank()}} and

@@ -34,7 +34,7 @@ weights rather than imposing frozen full-sample ranks.
 
 | Result | Main quantity | Uncertainty and interpretation |
 | --- | --- | --- |
-| `np_result` | `mu` | Conditional mean and its `se` |
+| `np_result` (including TDNN) | `mu` | Conditional mean, `se`, joint target covariance |
 | `cate_result` | `tau` | Conditional effect and its `se` |
 | `affine_ratio_result` / `clate_result` | `theta`, paired `components` | Component covariance, ratio variance and per-target computational status |
 | `plqr_result` | `moment`, supplied `theta_eval` | Moment diagnostics; coefficient inference requires the documented sandwich |
@@ -57,10 +57,63 @@ component uncertainty and target-status tables. Undefined or zero-score
 variance targets can have unavailable Wald bounds even when covariance was
 requested; retain these rows and report their status.
 
+## Shared prediction boundary and retained state
+
+NP, CATE and paired-ratio/CLATE methods validate their own fitted scientific
+state, then resolve `newdata`, `X0` or `x0` through
+`.dnn_resolve_prediction_targets()` in `R/user-dnn-prediction.R`. The shared
+boundary owns interface exclusivity, tabular column extraction and finite
+canonical target matrices. Explicit target resolution delegates to the same
+`.dnn_resolve_targets()` used by estimator wrappers. Tabular models retain
+resolved covariate names, so numeric fit-time selectors do not become positional
+selectors in reordered prediction data.
+
+Retained state follows the same structural grammar: canonical `x_mat`, resolved
+`x_cols`, weight controls (`method`, `k`, `s`, `normalize`) and geometry
+(`distance`, `ctx`, cached ranks where available). Signal fields remain
+explicit about their meaning: NP uses `y_vec`, CATE uses `psi`, and paired
+ratios use a two-column `signal`. TDNN adds `s1`, `s2` and `dim`. Common
+candidate adapters update the retained order; estimator adapters own the
+resulting means, effects or paired covariance/status quantities. Sharing the
+target boundary does not change these inference contracts.
+
+## Nonparametric regression reporting and prediction
+
+DNN and TDNN regression share `np_result` methods for `summary()`, `coef()`,
+`confint()`, `vcov()` and `predict()`. The adapter retains canonical training
+outcomes/covariates, resolved weight controls, column names and fitted distance
+specification/context independently of optional extras. Resolving a registered
+metric at fitting time protects saved fits from subsequent registry changes.
+Prediction passes the full retained training matrix and fitted context to the
+metric, never the new targets as a training sample. Custom metrics own the
+contract to respect their supplied context; arbitrary callable side effects
+cannot be frozen by the package.
+
+`vcov()` constructs the full joint estimator covariance across targets from
+common deletion rows, preserving off-diagonal dependence. It calculates this
+on request instead of retaining an additional quadratic target-size matrix in
+every fit. Candidate views update the retained order, so covariance and
+prediction reconstruct the selected candidate. The fitted covariance matches
+the stored SE calculation: `fast` uses frozen ranks, while the legacy `loo`
+reference recomputes deletion geometry using the original context. Prediction
+uncertainty always uses frozen training geometry and fast rank deletions.
+
+NP summaries follow the CATE coefficient-table grammar, labeling local means.
+Absent uncertainty stays missing; covariance/interval extraction requires an
+active fitted jackknife. Prediction can independently request uncertainty from
+a fit with `se = FALSE` when deletion orders are feasible. Exact zero variance
+is retained as zero SE/covariance. The shared computational Wald grammar
+reports collapsed bounds; nonzero means give infinite statistics and zero
+p-values, while zero-over-zero statistics and p-values are undefined. These
+outputs do not establish negligible bias or valid coverage. This is pointwise
+reporting and does not supply simultaneous bands.
+
 ## Implementation ownership
 
 | Responsibility | Shared module or helper | Estimator adapter owns |
 | --- | --- | --- |
+| Prediction target interface | `.dnn_resolve_prediction_targets()` in `R/user-dnn-prediction.R` | Fitted-state validation and method-specific signal/uncertainty |
+| NP retained state and joint covariance | `R/user-dnn-np-core.R` | Local means and DNN/TDNN controls; public methods in `R/user-dnn-np-methods.R` |
 | DNN rank weights | `.dnn_rank_weight_spec()` in `R/user-dnn-core.R` | Exact/asymptotic rule, `k`, `s`, normalization |
 | Order and grid evaluation | `.dnn_resolve_s()`, `.dnn_grid_eval()` | Estimate/SE callbacks and target-specific statuses |
 | Paired ratios | `.affine_ratio_evaluate()` | CLATE signal construction and IV metadata |
