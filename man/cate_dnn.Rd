@@ -2,7 +2,7 @@
 % Please edit documentation in R/user-dnn-cate.R
 \name{cate_dnn}
 \alias{cate_dnn}
-\title{CATE via DNN rank weights (orthogonalized local averaging)}
+\title{CATE via DNN rank-weighted pseudo-outcome averaging}
 \usage{
 cate_dnn(
   data = NULL,
@@ -59,7 +59,8 @@ columns are not required.}
 
 \item{x0}{Numeric vector of length \code{p} for a single target point.}
 
-\item{clip}{Finite propensity clipping constant in \verb{(0, 0.5)}, default
+\item{clip}{Finite propensity clipping constant in \verb{(0, 0.5)} with
+\code{1 - clip < 1} in double precision, default
 \code{1e-8}. Raw nuisance propensities must be finite and lie in \verb{[0, 1]};
 nuisance-based AIPW and Robinson scores use
 \code{pmin(pmax(e, clip), 1 - clip)}. This argument does not alter a supplied
@@ -154,8 +155,14 @@ diagnostics include \code{ess}, \code{max_weight}, \code{top_n}, \code{top5_weig
 \code{degenerate}; \code{top_n} is fixed at 5 and is independent of the estimator's
 \code{k}.
 
-Neyman orthogonality controls first-order population nuisance drift, but it
-does not by itself validate arbitrary nuisance predictions fitted on the
+The AIPW signal is Neyman orthogonal at the true nuisance functions. The
+normalized Robinson signal identifies the effect with true nuisances but
+is generally not orthogonal to propensity error. If the pooled outcome
+mean is correct, its conditional expectation is
+\eqn{e_0(1-e_0)\tau / \{\hat e(1-\hat e)\}}. It can therefore have
+first-order propensity drift; AIPW's orthogonality argument does not apply
+to that route without additional propensity control. Orthogonality alone
+does not validate arbitrary nuisance predictions fitted on the
 same observations used for localization and inference. Valid full-sample
 reuse additionally requires the nuisance-rate and full-state stability
 conditions in the accompanying paper. This function computes the estimator
@@ -163,6 +170,10 @@ and its requested jackknife procedure; it cannot diagnose whether an
 arbitrary learner satisfies those conditions. Supply oracle quantities,
 cross-fitted or out-of-fold predictions, or full-sample predictions from a
 learner for which the paper's rate and stability conditions are credible.
+
+With \code{data}, omit \code{X}; a direct \code{pseudo_outcome} vector remains supported.
+Column selectors require \code{data}. Prediction retains the fitted metric and
+context even if a registered distance name is subsequently replaced.
 }
 \examples{
 set.seed(1)

@@ -37,11 +37,10 @@
   good <- is.finite(w_sum) & w_sum > 0
   weighted_mean_y <- rep(NA_real_, m)
   weighted_sd_y <- rep(NA_real_, m)
-  weighted_mean_y[good] <- as.numeric(crossprod(y_num, w_mat))[good] / w_sum[good]
+  weighted_mean_y[good] <- as.numeric(.compensated_crossprod(y_num, w_mat))[good] / w_sum[good]
 
   for (j in which(good)) {
-    centered <- y_num - weighted_mean_y[j]
-    weighted_sd_y[j] <- sqrt(sum(w_mat[, j] * centered^2) / w_sum[j])
+    weighted_sd_y[j] <- .weighted_sd(y_num, w_mat[, j])
   }
 
   weighted_y_q10 <- vapply(

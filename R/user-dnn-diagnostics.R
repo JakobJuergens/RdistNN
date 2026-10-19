@@ -23,20 +23,20 @@
     return(NA_real_)
   }
 
-  w_sum <- sum(w)
-  if (!is.finite(w_sum) || w_sum <= 0) {
-    return(NA_real_)
-  }
-
   ord <- order(x, seq_along(x))
   x_ord <- as.numeric(x[ord])
   w_ord <- as.numeric(w[ord])
-  cum_w <- cumsum(w_ord) / sum(w_ord)
-  idx <- which(cum_w >= as.numeric(prob))[1L]
-  if (is.na(idx)) {
-    return(x_ord[length(x_ord)])
-  }
+  idx <- .weighted_cdf_index(w_ord, as.numeric(prob))
+  if (is.na(idx)) return(NA_real_)
   x_ord[idx]
+}
+
+# Original-coordinate physical radius, independent of fitted localization.
+# Callers provide canonical training/target matrices and nonnegative weights.
+.dnn_physical_radius <- function(W, X, X0, prob = .9) {
+  vapply(seq_len(ncol(W)), function(j) {
+    .dnn_weighted_quantile(dist_l2(X, X0[j, ]), W[, j], prob)
+  }, numeric(1L))
 }
 
 .dnn_tuning_diag_fields <- function(tuning_payload, m) {

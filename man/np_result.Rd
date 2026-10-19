@@ -78,6 +78,9 @@ delete-one observations. Its diagonal agrees with the fit's squared SEs.
 The legacy \code{jackknife = "loo"} fit and covariance recompute each deletion's
 geometry using the original context. Prediction uncertainty always uses
 frozen training geometry and rank deletions, as does \code{jackknife = "fast"}.
+Shared scaled covariance arithmetic recovers representable results after
+intermediate overflow or underflow. Unrepresentable nonzero variances
+raise a rescaling error instead of giving infinite or false-zero SEs.
 
 Intervals are pointwise normal-reference intervals. A zero SE gives
 collapsed Wald bounds and, for a nonzero mean, an infinite statistic and

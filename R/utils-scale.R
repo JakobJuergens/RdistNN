@@ -20,9 +20,10 @@
   n <- length(x)
   amplitude <- max(abs(x))
   if (amplitude < sqrt(2^1022 / n)) {
-    spread <- max(abs(x - mean(x)))
+    z <- x - .numeric_signal_level(matrix(x, ncol = 1L))
+    spread <- max(abs(z - mean(z)))
     if (spread == 0) return(0)
-    if (spread >= sqrt(.Machine$double.xmin) * sqrt(n)) return(stats::sd(x))
+    if (spread >= sqrt(.Machine$double.xmin) * sqrt(n)) return(stats::sd(z))
   }
   exponent <- max(-1074, min(1022, floor(log(amplitude) / log(2))))
   scale <- 2^exponent

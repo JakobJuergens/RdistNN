@@ -36,27 +36,18 @@
 
     # Baseline: theta0[qq, t] = sum_i wn[r_i] * PHI[i, qq]
     for (qq in seq_len(q))
-      theta0[qq, t] <- sum(wn[r_col] * PHI[, qq])
+      theta0[qq, t] <- .compensated_sum_R(wn[r_col] * PHI[, qq])
 
     for (qq in seq_len(q)) {
       z <- PHI[ord, qq]          # signal in rank order (length n)
       active <- .jackknife_active_ranks(wnm1)
-      level <- .jackknife_signal_level(matrix(z[active], ncol = 1L))
+      level <- .numeric_signal_level(matrix(z[active], ncol = 1L))
       z[!active] <- 0
       z[active] <- z[active] - level
 
-      # Forward prefix  P[r] for r = 1..n:
-      #   P[1] = 0
-      #   P[r] = P[r-1] + wnm1[r-1] * z[r-1]   (wnm1 has length n-1)
-      P <- c(0, cumsum(wnm1 * z[-n]))            # length n
-
-      # Backward shifted suffix  S[r] for r = 1..n:
-      #   S[n] = 0
-      #   S[r] = wnm1[r] * z[r+1] + S[r+1]
-      S <- rev(c(0, cumsum(rev(wnm1 * z[-1]))))  # length n
-
-      # Vectorised fill: all n deletions in one index operation
-      loo_arr[, qq, t] <- (P[r_col] + S[r_col]) + level * sum(wnm1)
+      value <- .compensated_deletions_R(z, wnm1,
+        level * .compensated_sum_R(wnm1))
+      loo_arr[, qq, t] <- value[r_col]
     }
   }
 

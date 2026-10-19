@@ -9,6 +9,7 @@
   x_mat, x0_mat, distance, method, s1, s2, dim, normalize, ctx, return
 ) {
   keep_extras <- intersect(return, c("ranks", "ord", "dx"))
+  if ("neighbors" %in% return) keep_extras <- unique(c(keep_extras, "ranks"))
   wt <- weights_tdnn(
     X         = x_mat,
     X0        = x0_mat,

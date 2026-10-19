@@ -66,6 +66,9 @@ static void argsort_radix64_nonneg(const double *x, int n, int *out_idx) {
   // Bulk bit copy: doubles -> uint64
   std::vector<std::uint64_t> keys(n);
   std::memcpy(keys.data(), x, sizeof(double) * (size_t)n);
+  for (int i = 0; i < n; ++i)
+    if (x[i] == 0)
+      keys[i] = 0;
 
   // Init permutation [0..n-1] and scratch buffer
   for (int i = 0; i < n; ++i)

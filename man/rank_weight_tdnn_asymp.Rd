@@ -23,7 +23,8 @@ A \code{rank_weight} spec (list with class \code{"rank_weight"}).
 Returns a \code{rank_weight} spec whose \code{eval_batch} uses the asymptotic TDNN
 rank table from \code{tdnn_rank_table_asymp()}.  Structurally identical to
 \code{\link[=rank_weight_tdnn_exact]{rank_weight_tdnn_exact()}} but uses the Beta order-statistic approximation,
-which gives full rank support (all n entries are non-zero).
+evaluated across the full rank grid. Combined entries can be zero through
+signed cancellation or numeric underflow.
 }
 \examples{
 rw <- rank_weight_tdnn_asymp(s1 = 3L, s2 = 6L, dim = 2L)

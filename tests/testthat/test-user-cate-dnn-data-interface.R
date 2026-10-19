@@ -151,7 +151,7 @@ test_that("data-frame API errors: conflicting / missing outcome model columns", 
       data = d$df, x_cols = d$x_cols, y_col = "Y", t_col = "D",
       m0_col = "m0_oracle", e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
     ),
-    regexp = "pseudo_outcome", ignore.case = TRUE
+    regexp = "m0_col/m1_col", ignore.case = TRUE
   )
 
   expect_error(
@@ -159,7 +159,7 @@ test_that("data-frame API errors: conflicting / missing outcome model columns", 
       data = d$df, x_cols = d$x_cols, y_col = "Y", t_col = "D",
       m1_col = "m1_oracle", e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
     ),
-    regexp = "pseudo_outcome", ignore.case = TRUE
+    regexp = "m0_col/m1_col", ignore.case = TRUE
   )
 
   expect_error(

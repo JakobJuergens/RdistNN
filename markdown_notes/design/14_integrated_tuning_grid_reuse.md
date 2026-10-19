@@ -73,8 +73,8 @@ emitting repeated warnings during a sensitivity sweep.
 
 ## Shared engine and frozen state
 
-`R/user-dnn-core.R` resolves orders and candidate identities.
-The same module provides `.dnn_grid_eval()`, driven by a candidate table,
+`R/user-dnn-tuning.R` resolves orders and candidate identities.
+`R/user-dnn-grid.R` provides `.dnn_grid_eval()`, driven by a candidate table,
 cached ranks, a rank-weight provider and estimate/SE callbacks. Precomputed
 default results anchor the grid. The engine deduplicates by `computed_key`,
 evaluates feasible candidates and maps results back to every requested row.

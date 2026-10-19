@@ -33,6 +33,9 @@ The general fields are available for `np_result`, `cate_result`, and
 Estimator-specific fields are added by the corresponding method:
 
 - NP: weighted outcome mean, standard deviation, and outcome quantiles;
+  signed TDNN weights do not define a probability distribution, so weighted
+  SD and quantiles are `NA` when weights are negative. Weight concentration
+  summaries then describe signed weights rather than probability mass.
 - CATE: treated/control mass and propensity summaries;
 - PLQR: residual-regressor Gram eigenvalues and condition number.
 

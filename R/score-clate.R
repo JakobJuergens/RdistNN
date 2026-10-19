@@ -10,7 +10,8 @@
 #' @param m_y0,m_y1 Outcome predictions conditional on instrument arm 0 and 1.
 #' @param m_d0,m_d1 Treatment predictions conditional on instrument arm 0 and 1,
 #'   in \eqn{[0,1]}. m_d0 may be omitted only with one_sided = TRUE.
-#' @param clip Propensity clipping threshold in (0,0.5).
+#' @param clip Propensity clipping threshold in (0,0.5), with
+#'   `1 - clip < 1` in double precision.
 #' @param one_sided Explicit structural restriction that treatment is impossible
 #'   under instrument 0. Requires D <= A and zero m_d0 if supplied.
 #' @param row_ids Optional unique, nonmissing character or numeric row identities.

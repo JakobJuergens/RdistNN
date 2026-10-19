@@ -25,14 +25,8 @@
   if (any(!is.finite(w_mat)) || any(!is.finite(col_sums)) || any(col_sums <= 0)) {
     .abort_bad_state("CATE paper diagnostic weights must be finite with positive column sums.")
   }
+  physical_radius_90 <- .dnn_physical_radius(w_mat, x_mat, x0_mat, radius_mass)
   w_mat <- sweep(w_mat, 2L, col_sums, FUN = "/")
-
-  physical_radius_90 <- vapply(seq_len(m), function(j) {
-    distance <- sqrt(rowSums(sweep(x_mat, 2L, x0_mat[j, ], FUN = "-")^2))
-    ord <- order(distance)
-    idx <- which(cumsum(w_mat[ord, j]) >= radius_mass)[1L]
-    distance[ord[[idx]]]
-  }, numeric(1L))
 
   arm_ess <- function(arm) {
     if (is.null(t_vec)) return(rep(NA_real_, m))

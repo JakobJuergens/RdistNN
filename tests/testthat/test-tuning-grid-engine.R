@@ -133,6 +133,46 @@ test_that("grid engine computes duplicate feasible keys once and reports all row
   expect_equal(out$meta$n_unique, 2L)
 })
 
+test_that("cached grid keys preserve target rows and inference without recomputation", {
+  ranks <- .grid_engine_ranks()
+  candidates <- .grid_engine_candidates(
+    s_grid = c(4L, 2L, 2L, 4L), lambda_grid = c(2, 1, 1.25, 2.25), k = 1L
+  )
+  signal <- seq_len(5L)
+  estimate <- .grid_engine_estimator(signal)
+  uncertainty <- function(candidate_row, tab_jk) {
+    data.frame(
+      target_id = c(3L, 1L, 2L), component = NA_character_,
+      se = as.numeric(candidate_row$s[[1L]]) + c(0.3, 0.1, 0.2),
+      stringsAsFactors = FALSE
+    )
+  }
+  cached <- RdistNN:::.dnn_grid_compute_key(
+    candidates[2L, , drop = FALSE], ranks,
+    function(candidate_row) rank_weight_dnn_exact(k = 1L, s = 2L),
+    estimate, uncertainty, list(k = 1L)
+  )
+  calls <- new.env(parent = emptyenv())
+  calls$keys <- character()
+  out <- RdistNN:::.dnn_grid_eval(
+    candidates, ranks, .grid_engine_counted_dnn_spec(calls, fail_s = 2L),
+    estimate, uncertainty, ctx = list(k = 1L), precomputed = list(s_2 = cached)
+  )
+
+  # k=1, s=2 at n=5 has rank weights (.4,.3,.2,.1,0); s=4 has (.8,.2,0,0,0).
+  expect_equal(calls$keys, "s_4")
+  expect_equal(out$candidates$candidate_id, candidates$candidate_id)
+  expect_equal(out$estimates$target_id, rep(1:3, 4L))
+  expect_equal(out$estimates$candidate_id, rep(candidates$candidate_id, each = 3L))
+  expect_equal(out$estimates$estimate, c(1.2, 4.8, 4.2, 2, 4, 3, 2, 4, 3, 1.2, 4.8, 4.2),
+               tolerance = 1e-14)
+  expect_equal(out$estimates$se,
+               c(4.1, 4.2, 4.3, 2.1, 2.2, 2.3, 2.1, 2.2, 2.3, 4.1, 4.2, 4.3),
+               tolerance = 1e-14)
+  expect_equal(out$candidates$status, rep("ok", 4L))
+  expect_equal(out$meta$n_unique, 2L)
+})
+
 test_that("grid engine emits NA rows for skipped infeasible candidates", {
   ranks <- .grid_engine_ranks()
   candidates <- .grid_engine_candidates()

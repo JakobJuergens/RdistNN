@@ -4,13 +4,6 @@
   c(table != 0, FALSE) | c(FALSE, table != 0)
 }
 
-.jackknife_signal_level <- function(signal) {
-  if (!nrow(signal)) return(rep(0, ncol(signal)))
-  lo <- apply(signal, 2L, min)
-  hi <- apply(signal, 2L, max)
-  ifelse(lo > 0, lo, ifelse(hi < 0, hi, 0))
-}
-
 # Prepare one target at a time, retaining O(n*q) working storage. The same
 # prepared inputs enter C++, R prefix sums or explicit frozen-rank deletions.
 # Offsets are retained only to reconstruct requested raw deletion estimates.
@@ -25,7 +18,8 @@
   offset <- matrix(0, q, m)
   for (j in seq_len(m)) {
     used <- active[ranks[, j]]
-    level <- .jackknife_signal_level(sig[used, , drop = FALSE])
+    local_order <- order(ranks[, j])[active]
+    level <- .numeric_signal_level(sig[local_order, , drop = FALSE])
     z <- matrix(0, n, q)
     z[used, ] <- sweep(sig[used, , drop = FALSE], 2L, level, "-")
     r <- ranks[, j, drop = FALSE]
@@ -35,7 +29,7 @@
       .dnn_loo_loop(z, r, rw)
     }
     loo[, , j] <- value
-    offset[, j] <- level * sum(tab_jk)
+    offset[, j] <- level * .compensated_sum(tab_jk)
   }
   if (q == 1L) loo <- matrix(loo, n, m)
   list(loo = loo, offset = offset)
@@ -59,14 +53,19 @@
   q <- ncol(sig)
   first <- weight_fun(1L)
   used <- matrix(FALSE, n, ncol(first))
+  leverage <- matrix(0, n, ncol(first))
   m <- ncol(used)
   for (i in seq_len(n)) {
     keep <- seq_len(n) != i
     W <- if (i == 1L) first else weight_fun(i)
     used[keep, ] <- used[keep, ] | (W != 0)
+    leverage[keep, ] <- leverage[keep, ] + abs(W)
   }
   levels <- vapply(seq_len(m), function(j) {
-    .jackknife_signal_level(sig[used[, j], , drop = FALSE])
+    local_order <- which(used[, j])
+    anchor <- which.max(leverage[, j])
+    local_order <- c(anchor, setdiff(local_order, anchor))
+    .numeric_signal_level(sig[local_order, , drop = FALSE])
   }, numeric(q))
   levels <- matrix(levels, q, m)
   loo <- array(0, c(n, q, m))
@@ -76,11 +75,14 @@
     z <- sig[keep, , drop = FALSE]
     for (j in seq_len(m)) {
       active <- W[, j] != 0
-      loo[i, , j] <- crossprod(W[active, j],
-        sweep(z[active, , drop = FALSE], 2L, levels[, j], "-"))
+      loo[i, , j] <- .compensated_crossprod(
+        sweep(z[active, , drop = FALSE], 2L, levels[, j], "-"),
+        matrix(W[active, j], ncol = 1L))
     }
   }
   if (q == 1L) loo <- matrix(loo, n, m)
-  if (restore) return(.dnn_restore_loo(loo, sweep(levels, 2L, colSums(first), "*")))
+  if (restore) return(.dnn_restore_loo(loo, sweep(
+    levels, 2L,
+    vapply(seq_len(ncol(first)), function(j) .compensated_sum(first[, j]), numeric(1L)), "*")))
   loo
 }

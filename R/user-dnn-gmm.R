@@ -43,7 +43,7 @@
 
 .gmm_gbar <- function(model, sample, theta, ctx, w, n) {
   g <- .gmm_eval_moment(model, sample, theta, ctx, n)
-  as.numeric(crossprod(g, w))
+  as.numeric(.compensated_crossprod(g, w))
 }
 
 .gmm_objective <- function(theta, model, sample, ctx, w, n, omega_inv = NULL) {
@@ -80,7 +80,7 @@
 }
 
 .gmm_regularize_omega <- function(Omega, omega_ridge) {
-  Omega <- (Omega + t(Omega)) / 2
+  Omega <- .covariance_symmetrize(Omega)
   scale <- max(1, mean(abs(diag(Omega))))
   ridge <- as.numeric(omega_ridge) * scale
   if (ridge > 0) {
@@ -113,7 +113,7 @@
         .abort_bad_arg("model$jacobian_obs()", "must be numeric", quoted = FALSE)
       }
       .abort_if_na_or_nonfinite(jac_mat, arg = "model$jacobian_obs()", quoted = FALSE)
-      return(matrix(as.numeric(crossprod(jac_mat, w)), nrow = q, ncol = 1L))
+      return(matrix(as.numeric(.compensated_crossprod(jac_mat, w)), nrow = q, ncol = 1L))
     }
     if (length(dim(jac)) != 3L) {
       .abort_bad_arg(
@@ -138,7 +138,7 @@
     D <- matrix(NA_real_, nrow = q, ncol = p)
     for (j in seq_len(p)) {
       jac_j <- matrix(jac[, , j], nrow = n, ncol = q)
-      D[, j] <- as.numeric(crossprod(jac_j, w))
+      D[, j] <- as.numeric(.compensated_crossprod(jac_j, w))
     }
     return(D)
   }
@@ -210,7 +210,7 @@
   )
   theta_first <- as.numeric(opt1$par)
   g1 <- .gmm_eval_moment(model, sample, theta_first, ctx, n)
-  Omega_raw <- crossprod(g1, g1 * w)
+  Omega_raw <- .covariance_matrix(g1 * sqrt(w), center = FALSE)
   omega_reg <- .gmm_regularize_omega(Omega_raw, omega_ridge = omega_ridge)
   Omega <- omega_reg$Omega
   rownames(Omega) <- colnames(Omega) <- moment_names
@@ -233,7 +233,7 @@
   )
   theta_hat <- as.numeric(opt2$par)
   g2 <- .gmm_eval_moment(model, sample, theta_hat, ctx, n)
-  gbar2 <- as.numeric(crossprod(g2, w))
+  gbar2 <- as.numeric(.compensated_crossprod(g2, w))
 
   D_hat <- if (need_jacobian) {
     .gmm_eval_jacobian(

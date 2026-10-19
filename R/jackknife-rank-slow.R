@@ -80,56 +80,33 @@ jackknife_slow_rank <- function(ranks, a, phi, normalize = TRUE) {
     stop("`phi` must be either a numeric matrix (n_ref x q) or a function(j, t).", call. = FALSE)
   }
 
-  # Normalization constant
-  Z <- if (normalize) sum(a) else 1
-
-  # Baseline per-target sums: S_t/Z where S_t = sum_{k<=s} a_k * y_{t,k}
-  S_t_divZ <- matrix(0.0, Tn, q)
-  for (k in seq_len(s)) {
-    # y_tk[, k, ] drops to (Tn × q) if q>1, but to length-Tn vector if q==1.
-    # Wrap in matrix(...) to guarantee (Tn × q).
-    S_t_divZ <- S_t_divZ + a[k] * matrix(y_tk[, k, ], Tn, q)
+  Z <- if (normalize) .compensated_sum_R(a) else 1
+  baseline <- matrix(0, Tn, q)
+  for (t in seq_len(Tn)) for (component in seq_len(q)) {
+    baseline[t, component] <- .compensated_sum_R(a * y_tk[t, seq_len(s), component]) / Z
   }
-  S_t_divZ <- S_t_divZ / Z
-  theta0 <- colMeans(S_t_divZ)
-
-  # Initialize theta_loo to theta0
-  theta_loo <- matrix(rep(theta0, each = n_ref), n_ref, q, byrow = FALSE)
-
-  # Slow (reference) delete-one loop:
-  # For each i, scan all targets, check position r where i appears, and
-  # rebuild the shifted sum with neighbor s+1 pulled in.
+  theta0 <- vapply(seq_len(q), function(component) {
+    .compensated_sum_R(baseline[, component]) / Tn
+  }, numeric(1L))
+  theta_loo <- matrix(0, n_ref, q)
+  # Independent reference: rebuild each single-position neighbor deletion.
+  # Repeated indices retain the fast API's additive single-position convention.
   for (i in seq_len(n_ref)) {
-    delta <- numeric(q)
+    terms <- lapply(seq_len(q), function(component) baseline[, component])
     for (t in seq_len(Tn)) {
-      # look only within first s+1 neighbors
-      pos <- which(ranks[t, 1L:(s + 1L)] == i)
-      if (length(pos) == 0L) next
-      r <- pos[1L] # ensure scalar
-      if (r > s) next # present only at s+1 -> no effect
-
-      base <- S_t_divZ[t, ]
-      term1 <- (a[r] / Z) * y_tk[t, r, ]
-
-      # shift block sum (scale by 1/Z to match base scale)
-      term2 <- if (s >= 2L && r <= s - 1L) {
-        acc <- rep(0.0, q)
-        for (k in r:(s - 1L)) acc <- acc - (a[k + 1L] - a[k]) * y_tk[t, k + 1L, ]
-        acc / Z
-      } else {
-        rep(0.0, q)
+      positions <- which(ranks[t, seq_len(s)] == i)
+      for (position in positions) {
+        keep <- seq_len(s + 1L) != position
+        for (component in seq_len(q)) {
+          replacement <- .compensated_sum_R(a * y_tk[t, keep, component]) / Z
+          terms[[component]] <- c(terms[[component]], -baseline[t, component], replacement)
+        }
       }
-
-      term3 <- (a[s] / Z) * y_tk[t, s + 1L, ]
-      Snew <- base - term1 + term2 + term3
-      delta <- delta + (Snew - base)
     }
-    theta_loo[i, ] <- theta0 + delta / Tn
+    for (component in seq_len(q)) {
+      theta_loo[i, component] <- .compensated_sum_R(terms[[component]]) / Tn
+    }
   }
-
-  list(
-    theta0    = as.numeric(theta0),
-    theta_loo = theta_loo,
-    info      = list(s = s, T = Tn, q = q, normalize = normalize)
-  )
+  list(theta0 = theta0, theta_loo = theta_loo,
+    info = list(s = s, T = Tn, q = q, normalize = normalize))
 }

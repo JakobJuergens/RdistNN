@@ -17,10 +17,34 @@ add_error <- function(message) {
   errors <<- c(errors, message)
 }
 
-tracked <- system2("git", c("ls-files"), stdout = TRUE, stderr = TRUE)
+# Direct namespace definitions have one owner; function-local closures may use
+# the same names because they do not replace package-level bindings.
+function_owners <- list()
+for (path in list.files("R", "[.]R$", full.names = TRUE)) {
+  for (expr in parse(path, keep.source = FALSE)) {
+    if (is.call(expr) && is.symbol(expr[[1L]]) &&
+        as.character(expr[[1L]]) %in% c("<-", "=")) {
+      # Inspect the RHS only for direct assignments, not bodies or local scopes.
+      if (is.symbol(expr[[2L]]) && is.call(expr[[3L]]) &&
+          identical(expr[[3L]][[1L]], as.name("function"))) {
+        name <- as.character(expr[[2L]])
+        function_owners[[name]] <- c(function_owners[[name]], path)
+      }
+    }
+  }
+}
+for (name in names(function_owners)) {
+  owners <- function_owners[[name]]
+  if (length(owners) > 1L) {
+    add_error(sprintf("duplicate function definition %s: %s", name,
+                      paste(owners, collapse = ", ")))
+  }
+}
+
+tracked <- system2("git", c("ls-files", "--cached", "--others", "--exclude-standard"), stdout = TRUE, stderr = TRUE)
 git_status <- attr(tracked, "status")
 if (!is.null(git_status) && git_status != 0L) {
-  stop("Could not enumerate tracked files with git ls-files.", call. = FALSE)
+  stop("Could not enumerate repository inputs with git ls-files.", call. = FALSE)
 }
 
 forbidden_tracked <- c(
@@ -35,6 +59,10 @@ for (path in forbidden_tracked) {
 }
 
 for (pattern in c(
+  "(^|/)__pycache__/",
+  "[.]py[co]$",
+  "^build/",
+  "^[^/]+[.]log$",
   "^GH_logs/",
   "^archives/",
   "[.]Rcheck/",
@@ -44,7 +72,7 @@ for (pattern in c(
   matches <- grep(pattern, tracked, value = TRUE)
   if (length(matches)) {
     add_error(sprintf(
-      "generated files match %s: %s",
+      "generated repository inputs match %s: %s",
       pattern,
       paste(matches, collapse = ", ")
     ))
@@ -58,7 +86,8 @@ required_ignores <- c(
   "/Local_Z_Est_JJuergens.pdf",
   "GH_logs/",
   "archives/",
-  "README.html"
+  "README.html",
+  "/build/"
 )
 for (entry in required_ignores) {
   if (!entry %in% ignore_lines) {
@@ -118,7 +147,7 @@ if (length(errors)) {
 }
 
 cat(sprintf(
-  "Repository hygiene check passed: %d tracked files, %d workflows.\n",
+  "Repository hygiene check passed: %d repository inputs, %d workflows.\n",
   length(tracked),
   length(workflow_files)
 ))

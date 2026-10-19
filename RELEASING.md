@@ -1,17 +1,25 @@
-# Releasing RdistNN 0.1.0
+# Releasing RdistNN
 
-The initial public release introduces CATE and nonparametric regression with
-DNN weights, jackknife uncertainty, tuning, diagnostics, and plots. PLQR and
-local IV-GMM remain experimental. Publishing this release does not promote
-those interfaces to stable status.
+Supported workflows include CATE, nonparametric regression, supplied-prediction
+CLATE and ordinary paired-signal ratios, with DNN weights, pointwise jackknife
+uncertainty, tuning, diagnostics and plots. Ratio confidence-set inversion,
+PLQR and local IV-GMM remain experimental.
+
+The local `development` branch carries version `0.1.0.9003`, aligned with the
+Stata companion. Its latest maintenance changes preserve estimator interfaces
+and inference limits. Choose a tagged release version after reviewing the
+scope in [NEWS.md](NEWS.md); a development-version bump does not publish a
+release. Matching R/Stata versions do not imply identical feature coverage.
 
 ## Prepare and verify the final source
 
 Run from the repository root with package dependencies and development tools
 installed as described in [CONTRIBUTING.md](CONTRIBUTING.md).
 
-1. Confirm that `DESCRIPTION`, `NEWS.md`, and the intended tag agree on version
-   `0.1.0`. Regenerate help and README from their sources:
+1. Confirm that `DESCRIPTION`, the current `NEWS.md` entry, and the intended
+   `v<version>` tag agree on the chosen version. Synchronize current README and
+   website draft references, while preserving historical release notes.
+   Regenerate help and README from their sources:
 
    ```r
    devtools::document()
@@ -44,7 +52,8 @@ installed as described in [CONTRIBUTING.md](CONTRIBUTING.md).
 
    Review `docs/index.html`, `docs/articles/getting-started.html`, and
    `docs/reference/index.html`. Verify that CATE and regression lead the
-   onboarding and that PLQR topics are grouped and labeled experimental.
+   onboarding, supported CLATE is described under its inference conditions,
+   and confidence-set inversion, PLQR and IV-GMM retain experimental labels.
    The generated `docs/` directory is ignored. The canonical site URL is
    <https://JakobJuergens.github.io/RdistNN/>.
 
@@ -56,32 +65,34 @@ installed as described in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Publish on GitHub
 
-Create the `v0.1.0` tag and GitHub release from the verified commit. Use the
+Create the chosen `v<version>` tag and GitHub release from the verified commit. Use the
 release-scope section of `NEWS.md` for the introduction, followed by a link
 to the getting-started guide and the explicit PLQR experimental status.
 
-Attach **`RdistNN_0.1.0.tar.gz`**, built above, as the installable R source
+Attach **`RdistNN_<version>.tar.gz`**, built above, as the installable R source
 asset. GitHub's automatically generated repository ZIP/tarball and the CI
 source-snapshot ZIP are repository snapshots; the R source package includes
 built vignettes and applies `.Rbuildignore` exclusions. Include a checksum:
 
 ```bash
 cd archives
-sha256sum RdistNN_0.1.0.tar.gz > SHA256SUMS
+rdistnn_release_version=$(Rscript -e 'cat(read.dcf("../DESCRIPTION")[1L, "Version"])')
+sha256sum "RdistNN_${rdistnn_release_version}.tar.gz" > SHA256SUMS
 ```
 
 After publication, download both assets without credentials and run
 `sha256sum --check SHA256SUMS` from their download directory. Install the
 downloaded tarball in a fresh library and execute the getting-started examples.
 For version-pinned GitHub installation, use
-`pak::pak("JakobJuergens/RdistNN@v0.1.0")`; the default branch remains available
+`pak::pak("JakobJuergens/RdistNN@v<version>")`, replacing `<version>` with the
+published version; the default branch remains available
 for development installations.
 
-Users can install a downloaded source asset with:
+Users can install a downloaded source asset with the actual version in its filename:
 
 ```r
 install.packages("Rcpp")  # required dependency, if not already installed
-install.packages("RdistNN_0.1.0.tar.gz", repos = NULL, type = "source")
+install.packages("RdistNN_<version>.tar.gz", repos = NULL, type = "source")
 ```
 
 Source installation needs C++17. Optional visualization requires ggplot2

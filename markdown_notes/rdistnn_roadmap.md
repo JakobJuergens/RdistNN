@@ -48,28 +48,18 @@ training labels and computational weighting choices do not establish them.
 Maintain a shared usage and presentation grammar where quantities agree in
 meaning; preserve method-specific scores, covariance and scientific limits.
 
-## Planned compensated accumulation
+## Compensated accumulation
 
-Compensated sensitive weighted and prefix/suffix sums are planned, not
-implemented. Evaluate a shared compensated accumulator for rank-weight mass,
-signed TDNN weighted estimates and the forward/backward deletion sums in
-`R/jackknife-rank-full.R` and `src/jackknife_rank_full.cpp`, alongside the
-corresponding Stata weight and rank-deletion helpers. Preserve support-aware
-centering, frozen geometry, normalization choices and paired covariance.
+Rank-weight normalization, weighted signal means and frozen-rank deletions
+use shared compensated arithmetic across native and R engines and the Stata
+companion. Prefix/suffix calculations retain correction state until the final
+merge. The finite-support jackknife adapter reuses the same primitive;
+explicit deletion references remain independently testable.
 
-Use constant correction state per active sum, reusing existing prefix/suffix
-buffers rather than adding another deletion array. Compare candidate schemes
-against independent high-accuracy and explicit-deletion references on long
-sums, mixed magnitudes/signs, near cancellation, constant signals and unused
-extremes. Run the same fixtures through C++, R and Mata, including returned
-deletions, covariance, candidates and saved prediction. Check exact discrete
-decisions separately from justified numeric tolerances.
-
-Adoption requires measured runtime and peak-memory results for representative
-and adversarial workloads. In particular, replacing vectorized R/Mata
-`cumsum`/`runningsum` or dot products with interpreted scalar loops may outweigh
-the numerical gain. Keep this work separate from the stable TDNN coefficient,
-Beta probability-increment and exceptional L2 norm implementations; those
-changes do not establish compensated-sum coverage. The
-[compiled-code policy](design/10_rcpp_and_compiled_code_policy.md) defines the
-cross-engine numerical contract.
+Support-aware centering, frozen geometry, signed TDNN weights and paired
+covariance retain their existing definitions. R/Mata reverse sweeps use bounded
+merge blocks rather than full-length vector temporaries for every addition.
+These finite double-precision safeguards do not promise arbitrary-precision
+results or recover information already lost in multiplication. See
+[weighted accumulation](design/19_weighted_accumulation.md) for ownership,
+workspace, engine controls and numerical verification.

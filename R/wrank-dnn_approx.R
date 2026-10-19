@@ -75,7 +75,7 @@ dnn_weights_asymp_full_from_ranks <- function(ranks, k, s, normalize = TRUE) {
 
   # numerical guard: renormalize if requested
   if (normalize) {
-    sw <- sum(w_rank)
+    sw <- .compensated_sum(w_rank)
     if (!is.finite(sw) || sw <= 0) stop("Internal error: nonpositive total weight.", call. = FALSE)
     if (abs(sw - 1) > 1e-12) w_rank <- w_rank / sw
   }

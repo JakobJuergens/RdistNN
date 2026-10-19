@@ -196,7 +196,7 @@ plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
       vcov_j <- matrix(NA_real_, nrow = p_d, ncol = p_d)
     } else {
       sandwiched <- J_inv %*% meat[[j]] %*% t(J_inv)
-      sandwiched <- (sandwiched + t(sandwiched)) / 2
+      sandwiched <- .covariance_symmetrize(sandwiched)
       if (isTRUE(meat_is_vcov)) {
         vcov_j <- sandwiched
         omega_j <- sandwiched * neff[[j]]
@@ -237,9 +237,8 @@ plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
 
   score_covariance <- vector("list", m)
   for (j in seq_len(m)) {
-    S <- as.numeric(tau) * (1 - as.numeric(tau)) *
-      crossprod(d_resid_mat, d_resid_mat * as.numeric(W[, j]))
-    S <- (S + t(S)) / 2
+    S <- .covariance_matrix(d_resid_mat * sqrt(as.numeric(W[, j])),
+      factor = as.numeric(tau) * (1 - as.numeric(tau)), center = FALSE)
     dimnames(S) <- list(coef_names, coef_names)
     score_covariance[[j]] <- S
   }

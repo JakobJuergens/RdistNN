@@ -12,6 +12,9 @@
 #'    `y_col` or `y` (exactly one).
 #' 2. Matrix interface: pass `X`, one of `X0` or `x0`, and `Y`.
 #'
+#' With `data`, omit `X` and `Y`; use exactly one of `y_col` or `y`.
+#' Column selectors require `data`. Conflicting routes are rejected.
+#'
 #' For `method = "exact"`, DNN weights are computed from the full rank
 #' permutation at each target. The exact support extends through rank
 #' `n - s + k` (`n - s + 1` in the paper-faithful `k = 1` case); this is not
@@ -136,6 +139,9 @@ np_dnn <- function(
     )
   }
 
+  .dnn_validate_input_route(data, list(X = X, Y = Y),
+    list(x_cols = x_cols, y_col = y_col))
+
   if (!is.null(data)) {
     if (!is.data.frame(data)) {
       .abort_bad_arg("data", "must be a data.frame")
@@ -188,7 +194,7 @@ np_dnn <- function(
 
   x0_mat <- .dnn_resolve_targets(x_mat, X0 = X0, x0 = x0)
 
-  geometry <- .np_fitted_geometry(distance, x_mat, ctx)
+  geometry <- .dnn_fitted_geometry(distance, x_mat, ctx)
   weight_return <- return
   if (identical(tuning_mode, "grid") || (isTRUE(se) && identical(jackknife, "fast"))) {
     # Request ranks once so fast jackknife can reuse them.
@@ -269,7 +275,7 @@ np_dnn <- function(
   }
   out$.model <- c(list(
     kind = "dnn", y_vec = y_vec, x_mat = x_mat,
-    x_cols = if (!is.null(data)) colnames(x_mat) else NULL,
+    x_cols = if (!is.null(data)) .dnn_resolve_data_cols(x_cols, data, "x_cols") else NULL,
     k = k, s = s, method = method, normalize = normalize,
     ranks = wt$ranks
   ), geometry)
@@ -426,7 +432,8 @@ np_dnn <- function(
   ctx,
   se,
   jackknife,
-  tuning_payload
+  tuning_payload,
+  reuse_default = TRUE
 ) {
   .np_dnn_warn_infeasible_grid(candidates)
   se_fn <- if (isTRUE(se) && !identical(jackknife, "none")) {
@@ -468,7 +475,7 @@ np_dnn <- function(
     },
     se_fn = se_fn,
     ctx = list(k = k),
-    precomputed = .np_dnn_grid_default_precomputed(
+    precomputed = if (reuse_default) .np_dnn_grid_default_precomputed(
       candidates = candidates,
       mu_hat = mu_hat,
       se_hat = se_hat,
@@ -476,7 +483,7 @@ np_dnn <- function(
       k = k,
       method = method,
       normalize = normalize
-    )
+    ) else NULL
   )
   grid$meta <- .np_dnn_grid_meta(
     tuning_payload = tuning_payload,

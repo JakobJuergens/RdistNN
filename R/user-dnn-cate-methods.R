@@ -233,7 +233,7 @@ predict.cate_result <- function(
     ctx = model$ctx,
     return = wt_return
   )
-  fit <- as.numeric(crossprod(model$psi, wt$W))
+  fit <- as.numeric(.compensated_crossprod(model$psi, wt$W))
 
   if (!need_se) {
     return(fit)
@@ -289,5 +289,5 @@ predict.cate_result <- function(
 #'   per target point.
 #' @export
 coef.cate_result <- function(object, ...) {
-  object$tau
+  stats::setNames(as.numeric(object$tau), paste0("target_", seq_along(object$tau)))
 }

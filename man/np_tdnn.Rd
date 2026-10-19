@@ -105,6 +105,9 @@ one of \code{y_col} or \code{y}.
 \item Matrix interface: pass \code{X}, one of \code{X0} or \code{x0}, and \code{Y}.
 }
 
+With \code{data}, omit \code{X} and \code{Y}; use exactly one of \code{y_col} or \code{y}.
+Column selectors require \code{data}. Conflicting routes are rejected.
+
 \strong{Signed weights.} The columns of the TDNN weight matrix sum to 1, but
 individual entries can be negative.  This is expected and reflects the
 bias-correction structure; it does not indicate numerical problems.

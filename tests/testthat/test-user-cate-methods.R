@@ -332,7 +332,13 @@ test_that("print.cate_result reports standard-error availability invisibly", {
   expect_true(any(grepl("SEs not requested", without_se_text, fixed = TRUE)))
 })
 
-test_that("coef.cate_result returns the tau vector", {
+test_that("coef.cate_result returns named target estimates", {
   obj <- .make_cate_fit(se = FALSE)
-  expect_equal(coef(obj$fit), obj$fit$tau)
+  expect_equal(unname(coef(obj$fit)), obj$fit$tau)
+  expect_identical(names(coef(obj$fit)), paste0("target_", seq_along(obj$fit$tau)))
+})
+
+test_that("two-target CATE coefficients retain target identities", {
+  fit <- cate_dnn(X = matrix(1:8), pseudo_outcome = 1:8, X0 = matrix(c(0, 9)), s = 3, se = FALSE)
+  expect_identical(names(coef(fit)), c("target_1", "target_2"))
 })

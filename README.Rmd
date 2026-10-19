@@ -34,10 +34,14 @@ and performs the local estimation and inference calculations.
 · [CLATE guide](https://JakobJuergens.github.io/RdistNN/articles/conditional-late.html)
 · [Report an issue](https://github.com/JakobJuergens/RdistNN/issues)
 
-These instructions describe development version **0.1.0.9002**, maintained on
+These instructions describe development version **0.1.0.9003**, maintained on
 the local `development` branch until reviewed publication. The GitHub install
 below uses the published `master` snapshot; install a local checkout to use
 changes that have not yet been published.
+
+The latest update strengthens tests for saved-fit reuse, candidate uncertainty
+and package installation. Estimator interfaces and pointwise inference limits
+are unchanged. See the [development notes](NEWS.md) for details.
 
 Use the common result methods to report estimates, inspect stored tuning
 candidates and predict from saved fits. The
@@ -92,7 +96,9 @@ tibble) with explicit column selectors. Use `x0` for one reporting profile or
 `method = "exact"` (default) and `method = "asymp"` DNN weights. Two-scale
 TDNN is available for nonparametric regression only. Shared localization
 choices include L1, L2, scaled L1/L2 and Mahalanobis distance; fitted geometry
-stays fixed across deletions and saved-fit prediction.
+stays fixed in fast rank deletions and saved-fit prediction. Legacy NP, TDNN
+and CATE `jackknife = "loo"` refits sample-dependent geometry on each deletion;
+its uncertainty can differ from the frozen-metric fast calculation.
 
 ## Conditional average treatment effects
 
@@ -142,8 +148,9 @@ as.data.frame(diagnostics(fit_np))[, c("target_id", "n_eff", "weighted_mean_y")]
 ```
 
 For matrices, use `np_dnn(X = X, x0 = x0, Y = y)`. Regression results expose
-`mu` and `se` directly and share `summary()`, `coef()`, `confint()`, `vcov()`
-and `predict()` with the other estimator workflows. Joint covariance uses
+`mu` and `se` directly, with `summary()`, `coef()`, `confint()` and `predict()`
+as in the CATE workflow. NP/TDNN additionally provide `vcov()`; CATE currently
+reports marginal SEs without a `vcov()` method. Joint NP covariance uses
 common deletions across targets; saved-fit prediction retains training outcomes
 and geometry. See `?np_result` for the result methods. The common diagnostics
 and plotting calls remain available.
@@ -280,7 +287,9 @@ statistical conditions.
 ## Interpreting inference
 
 Reported intervals are **pointwise**, not simultaneous confidence bands.
-Neyman orthogonality controls first-order population nuisance drift; valid
+AIPW CATE and augmented CLATE signals have Neyman orthogonality at the true
+nuisances. The normalized Robinson CATE signal generally has first-order
+propensity drift and needs additional propensity control. For orthogonal routes, valid
 full-sample nuisance reuse additionally needs learner accuracy and deletion
 stability, together with design, overlap and localization-bias conditions.
 Supplying oracle, out-of-fold or full-sample predictions does not itself
@@ -304,10 +313,18 @@ The R and Stata implementations share stable close-order TDNN coefficients,
 Beta interval masses that preserve represented tail weights, and recovery of
 finite L2 norms when intermediate squares overflow or underflow. Ordinary
 distance arithmetic retains deterministic ranks and original-row tie breaking.
-Compensated weighted and prefix sums remain
-[planned work](https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/rdistnn_roadmap.md#planned-compensated-accumulation).
+Mahalanobis geometry uses a cached SVD of the centered training design and
+then the same L2 norm engines. Shared covariance helpers recover representable
+extreme variances without forming overflowing raw sums. A nonzero variance
+outside the numeric range gives a rescaling error; paired ratios retain their
+per-target numerical-failure status. See
+[Mahalanobis distance](https://JakobJuergens.github.io/RdistNN/reference/distance_mahalanobis.html)
+for the explicit rank cutoff and compatibility with older saved fits.
+Compensated sums protect weighted means and rank-weight normalization.
+Deletion calculations retain corrections through the final prefix/suffix
+combination, using shared arithmetic across estimator and prediction paths.
 
-Compiled C++ kernels accelerate distances and frozen-score jackknife
+Compiled C++ kernels accelerate distances, weighted sums and frozen-score jackknife
 calculations. R fallbacks implement the same numerical contracts; use
 `options(RdistNN.use_compiled = FALSE)` for reference-path comparisons. Source
 installation still requires the compiler described above. Engine tests check

@@ -115,7 +115,10 @@ plot_data_estimates.default <- function(object, level = 0.95, ...) {
 
 #' @rdname plot_data_estimates
 #' @export
-plot_data_estimates.np_result <- function(object, level = 0.95, ...) {
+plot_data_estimates.np_result <- function(object, level = 0.95, candidates = "default", ...) {
+  if (!.plot_candidates_is_default(candidates)) {
+    return(.plot_candidate_estimates_frame(object, candidates, level, "plot_data_estimates")$data)
+  }
   mu <- matrix(as.numeric(object$mu), nrow = 1L)
   .plot_data_estimates_frame(
     est = mu, se = object$se, x0 = object$x0,
@@ -125,7 +128,10 @@ plot_data_estimates.np_result <- function(object, level = 0.95, ...) {
 
 #' @rdname plot_data_estimates
 #' @export
-plot_data_estimates.cate_result <- function(object, level = 0.95, ...) {
+plot_data_estimates.cate_result <- function(object, level = 0.95, candidates = "default", ...) {
+  if (!.plot_candidates_is_default(candidates)) {
+    return(.plot_candidate_estimates_frame(object, candidates, level, "plot_data_estimates")$data)
+  }
   tau <- matrix(as.numeric(object$tau), nrow = 1L)
   .plot_data_estimates_frame(
     est = tau, se = object$se, x0 = object$x0,

@@ -63,31 +63,7 @@ dnn_weights_exact_full_from_ranks <- function(ranks, k, s) {
   if (s > n) .abort_bad_arg("s", sprintf("must satisfy s <= n (got s=%d, n=%d)", s, n))
   if (k > s) .abort_bad_arg("k", sprintf("must satisfy k <= s (got k=%d, s=%d)", k, s))
 
-  # ---- exact rank-weights via hypergeometric law ----
-  # w_rank[j] = (1/k) * sum_{i=1}^k C(j-1, i-1) * C(n-j, s-i) / C(n, s)
-  # with the convention that out-of-range binomials contribute 0.
-  L_den <- lchoose(n, s)
-  w_rank <- numeric(n)
-
-  for (j in seq_len(n)) {
-    # i must satisfy: 1 <= i <= k, i <= j, and s - i <= n - j  <=>  i >= s - (n - j)
-    i_lo <- max(1L, s - (n - j))
-    i_hi <- min(k, j, s)
-    if (i_lo <= i_hi) {
-      acc <- 0.0
-      for (i in i_lo:i_hi) {
-        # log-probability; exp() is safe for moderate n and exact enough in double
-        lp <- lchoose(j - 1L, i - 1L) + lchoose(n - j, s - i) - L_den
-        acc <- acc + exp(lp)
-      }
-      w_rank[j] <- acc / k
-    } # else remains 0
-  }
-
-  # normalize (guard against tiny numerical drift)
-  sw <- sum(w_rank)
-  if (!is.finite(sw) || sw <= 0) stop("Internal error: nonpositive total weight.", call. = FALSE)
-  if (abs(sw - 1) > 1e-12) w_rank <- w_rank / sw
+  w_rank <- .dnn_exact_table(n, k, s)
 
   # map back to data order: w[i] = w_rank[ ranks[i] ]
   w <- w_rank[ranks]

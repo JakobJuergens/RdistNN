@@ -1,4 +1,59 @@
-# RdistNN 0.1.0.9002 (development version)
+# RdistNN 0.1.0.9003 (development version)
+
+- Use ordered compensated Mahalanobis projections so scalar and batch targets
+  retain the same cancellation residuals across compiled and fallback engines.
+- Recover cancellation-sensitive covariance cross terms with compensated products
+  and mean-subtraction residuals; test weight mass using the portable reduction.
+- Preserve scalar tuning sensitivity sweeps across optional return fields for
+  NP, CATE, paired-ratio and CLATE fits with a manually chosen kernel order.
+- Retain custom tuning in experimental moment plots and clarify the original-unit
+  Mahalanobis rank cutoff, with independent extreme-scale regression references.
+- Split shared input resolution, tuning schemas, grid evaluation and jackknife
+  orchestration into dedicated modules while preserving public interfaces and
+  numerical calculations. Remove unused duplicate helpers.
+- Strengthen cached-grid target and uncertainty alignment tests. Reorganize
+  regression suites by behavior and improve fixture-state cleanup.
+- Check unique package-level helper ownership, candidate-file hygiene, generated
+  Rd/namespace/Rcpp drift, and mirrored native headers. Keep the Stata companion
+  on the same development version and refresh the documentation entry points.
+
+# RdistNN 0.1.0.9002 (earlier development snapshot)
+
+- Stabilize mixed-sign, large-offset jackknife signals and ordinary SD/covariance
+  centering without dropping represented tails. Share portable exact rank-table
+  recurrences across C++, R and Mata, including subnormal-tail safeguards.
+- Preserve data-frame selectors in NP/TDNN/CATE prediction, compute requested
+  neighbors independently of SEs, and honor scalar tuning/uncertainty controls.
+  Make NP/CATE tidy extraction grid-aware and name CATE coefficients by target.
+- Reject unrepresentable clipping intervals and partial AIPW nuisance inputs;
+  support one-dimensional Mahalanobis geometry and stable signed-zero ties.
+  Clarify Robinson propensity sensitivity and estimator-specific covariance/LOO
+  contracts.
+
+
+- Retain resolved fitted geometry across NP/TDNN, CATE and paired-ratio/CLATE
+  prediction. Preserve legacy geometry-refitting LOO inference. Compensate
+  pure subset-score sums consistently in scalar, native and R evaluation.
+- Share an explicit compensated weighted-CDF boundary rule with Stata; keep
+  selected observations exact across engines. Recover finite physical radii
+  and weighted outcome SDs when intermediate squares overflow or underflow.
+- Reject fractional weight controls and conflicting core input routes; mark
+  orders above n infeasible even for point-only grids. Honor normalize=FALSE
+  in asymptotic DNN wrappers and correct TDNN zero-weight documentation.
+
+- Share compensated rank-weight normalization and weighted signal means across
+  native and R paths. Retain correction state through prefix/suffix deletion
+  merges, reuse the existing working-buffer budget, and align estimator,
+  candidate and saved-prediction calculations with the Stata companion.
+
+- Fit Mahalanobis whitening factors directly from the centered training design
+  with an explicit singular-value rank cutoff shared with Stata. Retain
+  resolvable near-collinear directions, reuse C++/R L2 norms after projection,
+  and preserve legacy saved inverse contexts.
+- Centralize covariance centering, binary range normalization and symmetric
+  assembly across jackknife, NP/TDNN, paired-ratio and moment-covariance paths.
+  Recover representable extreme variances; report unrepresentable nonzero
+  variances as rescaling errors, or existing paired-ratio failure statuses.
 
 - Recover finite fitted SD scales and scaled L1 differences after intermediate
   overflow or underflow; reject nonfinite fitted scales before clamping.

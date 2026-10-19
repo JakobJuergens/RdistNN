@@ -39,7 +39,8 @@
 }
 
 .validate_scalar_int <- function(x, arg = "x", min = 1L) {
-  if (!is.numeric(x) || length(x) != 1L || !is.finite(x) || x != as.integer(x)) {
+  if (!is.numeric(x) || length(x) != 1L || !is.finite(x) ||
+      x < -.Machine$integer.max || x > .Machine$integer.max || x != trunc(x)) {
     .abort_bad_arg(arg, "must be an integer scalar")
   }
   x_int <- as.integer(x)

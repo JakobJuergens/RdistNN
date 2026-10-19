@@ -29,7 +29,7 @@
   w_rank <- .beta_interval_mass((j - 1L) / n, j / n, 1L, s)
   w_rank <- as.numeric(w_rank)
   if (isTRUE(normalize)) {
-    sw <- sum(w_rank)
+    sw <- .compensated_sum(w_rank)
     if (!is.finite(sw) || sw <= 0) {
       stop("Internal error: non-positive total weight in .dnn_rank_table_asymp_k1.", call. = FALSE)
     }
@@ -94,7 +94,7 @@ tdnn_rank_table_asymp <- function(n, s1, s2, dim, normalize = TRUE) {
   w_rank <- sc["w1"] * t1 + sc["w2"] * t2
 
   if (normalize) {
-    sw <- sum(w_rank)
+    sw <- .compensated_sum(w_rank)
     if (!is.finite(sw) || abs(sw) < .Machine$double.eps * 100) {
       stop("Internal error: TDNN asymptotic rank table has zero/non-finite sum.", call. = FALSE)
     }
