@@ -79,7 +79,7 @@ fit_cate <- cate_dnn(
   x_cols = c("X1", "X2"),
   y_col = "Y",
   t_col = "D",
-  m_col = "m_oracle",
+  m0_col = "m0_oracle", m1_col = "m1_oracle",
   e_col = "e_oracle",
   x0 = demo_cate$x0,
   method = "exact",
@@ -96,12 +96,20 @@ d_cate[, c(
   "treated_mass",
   "control_mass",
   "treated_share",
-  "weighted_mean_propensity"
+  "weighted_mean_propensity",
+  "treated_ess", "control_ess", "weighted_propensity_q10",
+  "weighted_propensity_q90", "top5_score_share"
 )]
 #> <dnn_diagnostics>
 #>   targets: 1
 #>   n_eff  : min=64.9674, median=64.9674, max=64.9674
 #>   dist   : available for 0/1 target(s)
+#>   treated share: 0.429 to 0.429
+#>   treated ESS: 28.4 to 28.4
+#>   control ESS: 36.6 to 36.6
+#>   propensity q10: 0.37 to 0.37
+#>   propensity q90: 0.607 to 0.607
+#>   top-five absolute score-contribution share: 0.217 to 0.217
 ```
 
 Overlap diagnostics are available when the fit was constructed from
@@ -109,6 +117,15 @@ treatment and propensity inputs. If
 [`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md)
 was called with only a direct `pseudo_outcome`, overlap fields remain
 present but are marked unavailable.
+
+Printing summarizes available arm information, propensity quantiles and
+top-five absolute score-contribution shares; the data frame retains each
+profile’s values. CLATE distinguishes instrument support, clipped
+propensity mass and squared jackknife-contribution concentration. These
+quantities have different definitions and should not be interpreted
+interchangeably. Clipping prevents undefined arithmetic but does not
+establish overlap. The reported order fraction is descriptive and
+triggers no new warning policy.
 
 ## Experimental PLQR conditioning
 

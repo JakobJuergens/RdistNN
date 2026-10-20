@@ -134,6 +134,7 @@ coef(fit)
 #> 2.114286 4.828571 
 summary(fit)
 #> <summary.np_result>
+#>   localization: s = 3, s/n = 0.429
 #>          estimate std.error statistic   p.value conf.low conf.high
 #> target_1    2.114    0.9726     2.174 2.971e-02   0.2081     4.021
 #> target_2    4.829    1.0100     4.782 1.732e-06   2.8500     6.807

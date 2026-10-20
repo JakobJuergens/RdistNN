@@ -7,10 +7,7 @@ $$
   e(x) \;=\; \Pr(D=1 \mid X=x) \, ,
 $$
 where \(m_{0}(x) = \mathbb{E}[Y \mid X=x, D=0]\) and \(\tau(x)\) is the
-treatment effect. It also returns the R-learner–style pseudo-outcome
-$$
-  \rho \;=\; \frac{(D - e)\,(Y - m)}{e\,(1 - e)} \, .
-$$"><meta property="og:description" content="Generates a small synthetic dataset for experimenting with the CATE score.
+treatment effect. It also returns the oracle AIPW pseudo-outcome."><meta property="og:description" content="Generates a small synthetic dataset for experimenting with the CATE score.
 It returns \(X\), \(D\), \(Y\), along with oracle nuisance quantities:
 $$
   m(x) \;=\; \mathbb{E}[Y \mid X=x]
@@ -18,10 +15,7 @@ $$
   e(x) \;=\; \Pr(D=1 \mid X=x) \, ,
 $$
 where \(m_{0}(x) = \mathbb{E}[Y \mid X=x, D=0]\) and \(\tau(x)\) is the
-treatment effect. It also returns the R-learner–style pseudo-outcome
-$$
-  \rho \;=\; \frac{(D - e)\,(Y - m)}{e\,(1 - e)} \, .
-$$"></head><body>
+treatment effect. It also returns the oracle AIPW pseudo-outcome."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -29,7 +23,7 @@ $$"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9003</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,10 +59,7 @@ $$
   e(x) \;=\; \Pr(D=1 \mid X=x) \, ,
 $$
 where \(m_{0}(x) = \mathbb{E}[Y \mid X=x, D=0]\) and \(\tau(x)\) is the
-treatment effect. It also returns the R-learner–style pseudo-outcome
-$$
-  \rho \;=\; \frac{(D - e)\,(Y - m)}{e\,(1 - e)} \, .
-$$</p>
+treatment effect. It also returns the oracle AIPW pseudo-outcome.</p>
     </div>
 
     <div class="section level2">
@@ -82,7 +73,7 @@ $$</p>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  x0 <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  inject <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  inject_col <span class="op">=</span> <span class="st">"rho_oracle"</span>,</span>
+<span>  inject_col <span class="op">=</span> <span class="st">"aipw_oracle"</span>,</span>
 <span>  idx_inject <span class="op">=</span> <span class="fl">3L</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -127,8 +118,8 @@ at row <code>idx_inject</code>; useful for testing runtime guards.</p></dd>
 
 <dt id="arg-inject-col">inject_col<a class="anchor" aria-label="anchor" href="#arg-inject-col"></a></dt>
 <dd><p>Character; which column to corrupt when <code>inject</code> is not <code>NULL</code>.
-One of <code>"Y"</code>, <code>"rho_oracle"</code>, <code>"e_oracle"</code>, <code>"m_oracle"</code>,
-<code>"m0_oracle"</code>, <code>"tau_oracle"</code>. Default <code>"rho_oracle"</code>.</p></dd>
+One of <code>"Y"</code>, <code>"aipw_oracle"</code>, <code>"e_oracle"</code>, <code>"m_oracle"</code>,
+<code>"m0_oracle"</code>, <code>"tau_oracle"</code>. Default <code>"aipw_oracle"</code>.</p></dd>
 
 
 <dt id="arg-idx-inject">idx_inject<a class="anchor" aria-label="anchor" href="#arg-idx-inject"></a></dt>
@@ -141,8 +132,9 @@ One of <code>"Y"</code>, <code>"rho_oracle"</code>, <code>"e_oracle"</code>, <co
 and oracle nuisances <code>e_oracle</code> (=\(e(X)\)),
 <code>m_oracle</code> (=\(m(X)\)),
 <code>m0_oracle</code> (=\(m_{0}(X)\)),
+<code>m1_oracle</code> (treated outcome mean),
 <code>tau_oracle</code> (=\(\tau(X)\)),
-<code>rho_oracle</code> (=\(\rho\)).</p></li>
+<code>aipw_oracle</code> (oracle AIPW signal).</p></li>
 <li><p><code>x0</code>: the target point used (length \(p\)).</p></li>
 <li><p><code>truth</code>: list of closures <code>tau_fn(x)</code>, <code>e_fn(x)</code>,
 <code>m0_fn(x)</code>, <code>m_fn(x)</code> to evaluate ground truth at any \(x\).</p></li>
@@ -157,16 +149,17 @@ and oracle nuisances <code>e_oracle</code> (=\(e(X)\)),
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">demo</span> <span class="op">&lt;-</span> <span class="fu">cate_demo_data</span><span class="op">(</span>n <span class="op">=</span> <span class="fl">200</span>, p <span class="op">=</span> <span class="fl">2</span>, design <span class="op">=</span> <span class="st">"hetero"</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">demo</span><span class="op">$</span><span class="va">data</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 'data.frame':	200 obs. of  9 variables:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ X1        : num  -0.626 0.184 -0.836 1.595 0.33 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ X2        : num  0.409 1.689 1.587 -0.331 -2.285 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ D         : int  1 0 1 0 1 0 0 0 1 0 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ Y         : num  0.21 -0.654 -1.885 2.932 4.772 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ e_oracle  : num  0.373 0.32 0.23 0.724 0.787 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ m_oracle  : num  0.0414 -0.3159 -1.3926 3.6498 4.1356 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ m0_oracle : num  -0.0359 -0.5052 -1.4222 2.9262 3.6147 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ tau_oracle: num  0.207 0.591 0.129 1 0.662 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ rho_oracle: num  0.451 0.497 -2.144 2.599 0.809 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 'data.frame':	200 obs. of  10 variables:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ X1         : num  -0.626 0.184 -0.836 1.595 0.33 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ X2         : num  0.409 1.689 1.587 -0.331 -2.285 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ D          : int  1 0 1 0 1 0 0 0 1 0 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ Y          : num  0.21 -0.654 -1.885 2.932 4.772 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ e_oracle   : num  0.373 0.32 0.23 0.724 0.787 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ m_oracle   : num  0.0414 -0.3159 -1.3926 3.6498 4.1356 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ m0_oracle  : num  -0.0359 -0.5052 -1.4222 2.9262 3.6147 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ m1_oracle  : num  0.171 0.0861 -1.2931 3.926 4.2765 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ tau_oracle : num  0.207 0.591 0.129 1 0.662 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ aipw_oracle: num  0.31 0.81 -2.449 0.979 1.292 ...</span>
 <span class="r-in"><span><span class="va">demo</span><span class="op">$</span><span class="va">tau_x0</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.5</span>
 <span class="r-in"><span></span></span>

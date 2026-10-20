@@ -155,6 +155,10 @@ An object of class `np_result` with components:
 
 ## Details
 
+The documented sampling framework uses independent observations; cluster
+and survey-design inference are not supplied. Input row order breaks
+distance ties, so permuting tied observations can change estimates.
+
 Two interfaces are supported.
 
 1.  Data-frame interface (recommended): pass `data`, `x_cols`, and

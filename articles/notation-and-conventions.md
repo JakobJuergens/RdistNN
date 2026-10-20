@@ -62,7 +62,7 @@ or an inferential output.
 | Define a custom distance, rank-weight map, or score | [Extending RdistNN](https://JakobJuergens.github.io/RdistNN/articles/extending.md): [`vignette("extending", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/extending.md) |
 | Work directly with generalized U-statistic jackknife tools | [Jackknife generalized U-statistics](https://JakobJuergens.github.io/RdistNN/articles/jackknife-gen-ustats.md): [`vignette("jackknife-gen-ustats", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/jackknife-gen-ustats.md) |
 | Use the experimental local IV-GMM workflow | [Local IV estimation](https://JakobJuergens.github.io/RdistNN/articles/local-iv-estimation.md): [`vignette("local-iv-estimation", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/local-iv-estimation.md) |
-| Reproduce the current affine simulations and SIPP application | [Affine paper replication](https://JakobJuergens.github.io/RdistNN/articles/paper-affine-replication.md): [`vignette("paper-affine-replication", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/paper-affine-replication.md) |
+| Reproduce the paper simulations and SIPP application | [Paper replication](https://JakobJuergens.github.io/RdistNN/articles/paper-affine-replication.md): [`vignette("paper-affine-replication", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/paper-affine-replication.md) |
 
 ## Quick package-to-paper map
 
@@ -302,7 +302,7 @@ class.
 ## CATE nuisance conventions
 
 [`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md)
-accepts one of three signal specifications.
+accepts one of two signal specifications.
 
 ### Full AIPW signal
 
@@ -320,33 +320,8 @@ m_1(U_i)-m_0(U_i)
 The data-frame arguments are `m0_col`, `m1_col`, and `e_col`, together
 with `y_col` and `t_col`.
 
-### Robinson-form signal
-
-With $`m(u)=\mathbb E[Y\mid U=u]`$, the alternative signal uses `m_col`
-and `e_col`:
-
-``` math
-\psi_i
-=
-\frac{\{Y_i-m(U_i)\}\{D_i-e(U_i)\}}
-     {e(U_i)\{1-e(U_i)\}}.
-```
-
-This normalized residual product is not the R-learner
-weighted-regression root. Let $`e_0,m_0`$ be the true propensity and
-pooled mean and $`\tau`$ the conditional effect. For supplied
-$`\hat e,\hat m`$, its conditional expectation is
-
-``` math
-\frac{e_0(1-e_0)\tau+(e_0-\hat e)(m_0-\hat m)}
-     {\hat e(1-\hat e)}.
-```
-
-At $`\hat m=m_0`$, the derivative with respect to $`\hat e`$ at $`e_0`$
-is $`-\tau(1-2e_0)/\{e_0(1-e_0)\}`$, generally nonzero. Oracle
-identification therefore holds, but the AIPW orthogonality argument
-cannot be transferred to this signal without additional propensity
-control. Clipping does not remove this sensitivity.
+The normalized Robinson pseudo-outcome is not implemented because it
+falls outside the accompanying paper’s theoretical results.
 
 ### Precomputed pseudo-outcome
 
@@ -365,7 +340,7 @@ certify the stability of an arbitrary same-sample nuisance learner.
 Continue with [Conditional
 Z-estimation](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md)
 for a worked CATE fit. For the paper-specific data-generating process
-and Monte Carlo harness, use [Affine paper
+and Monte Carlo harness, use [Paper
 replication](https://JakobJuergens.github.io/RdistNN/articles/paper-affine-replication.md).
 
 ## CLATE conventions

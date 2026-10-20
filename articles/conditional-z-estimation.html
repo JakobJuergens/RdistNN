@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9003</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -134,7 +134,6 @@ implementation-supported generalization.</p>
 <ul>
 <li>Full AIPW nuisance inputs (<code>m0</code>, <code>m1</code>,
 <code>e</code>)</li>
-<li>Robinson-form nuisance inputs (<code>m</code>, <code>e</code>)</li>
 <li>Direct <code>pseudo_outcome</code>
 </li>
 </ul>
@@ -161,6 +160,7 @@ implementation-supported generalization.</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit_cate</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;summary.cate_result&gt;</span></span>
+<span><span class="co">#&gt;   localization: s = 28, s/n = 0.0933</span></span>
 <span><span class="co">#&gt;   targets: 1</span></span>
 <span><span class="co">#&gt;          estimate std.error statistic p.value conf.low conf.high</span></span>
 <span><span class="co">#&gt; target_1   0.5512    0.3181     1.733 0.08313 -0.07227     1.175</span></span>
@@ -174,6 +174,12 @@ implementation-supported generalization.</p>
 <span><span class="co">#&gt;   weights: max(top5 share)=0.3894, max(weight)=0.0933</span></span>
 <span><span class="co">#&gt;   dist   : available for 0/1 target(s)</span></span>
 <span><span class="co">#&gt;   overlap: available for 1/1 target(s)</span></span>
+<span><span class="co">#&gt;   treated share: 0.388 to 0.388</span></span>
+<span><span class="co">#&gt;   treated ESS: 8.73 to 8.73</span></span>
+<span><span class="co">#&gt;   control ESS: 11.5 to 11.5</span></span>
+<span><span class="co">#&gt;   propensity q10: 0.454 to 0.454</span></span>
+<span><span class="co">#&gt;   propensity q90: 0.549 to 0.549</span></span>
+<span><span class="co">#&gt;   top-five absolute score-contribution share: 0.586 to 0.586</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit_cate</span>, x0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.2</span>, <span class="op">-</span><span class="fl">0.1</span><span class="op">)</span>, interval <span class="op">=</span> <span class="st">"confidence"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;            fit       lwr      upr</span></span>
 <span><span class="co">#&gt; [1,] 0.8336633 0.3016249 1.365702</span></span></code></pre></div>

@@ -2,8 +2,7 @@
 
 Generates a synthetic dataset for the CATE simulation study, including
 oracle nuisance quantities \\e\\, \\m_0\\, \\m_1\\, the AIPW score used
-by the general DNN CATE benchmarks, and the Robinson pseudo-outcome
-\\\rho\\ used by the Robinson-style estimator route.
+by the general DNN CATE benchmarks.
 
 ## Usage
 
@@ -67,8 +66,7 @@ A list with:
 
 - `data`: a `data.frame` with columns `X1..Xkx`, `D`, `Y`, and oracle
   nuisances `e_oracle`, `m_oracle`, `m0_oracle`, `m1_oracle`,
-  `tau_oracle`, `aipw_oracle`, and the Robinson pseudo-outcome
-  `rho_oracle`.
+  `tau_oracle`, and `aipw_oracle`.
 
 - `x0`: numeric length-`kx` evaluation point.
 
@@ -140,13 +138,13 @@ head(dgp$data)
 #> 4  1.5952808 -0.3309078 0  2.9318349 0.7237409  3.65752847  2.92618860
 #> 5  0.3295078 -2.2852355 1  4.9663302 0.7870730  4.28830964  3.61474331
 #> 6 -0.8204684  2.4976616 0 -1.5211462 0.1598876 -2.35123350 -2.31812997
-#>    m1_oracle tau_oracle  rho_oracle  aipw_oracle
-#> 1 -0.1413830 -0.1055273 -0.07360245 -0.001997335
-#> 2  0.1987659  0.7039958  0.55004224  0.922362435
-#> 3 -1.6347655 -0.2125485 -3.29138258 -2.790362454
-#> 4  3.9366882  1.0104996  2.62685842  0.990060973
-#> 5  4.4705297  0.8557864  0.86144554  1.485715869
-#> 6 -2.5251725 -0.2070425 -0.98806684 -1.155705703
+#>    m1_oracle tau_oracle  aipw_oracle
+#> 1 -0.1413830 -0.1055273 -0.001997335
+#> 2  0.1987659  0.7039958  0.922362435
+#> 3 -1.6347655 -0.2125485 -2.790362454
+#> 4  3.9366882  1.0104996  0.990060973
+#> 5  4.4705297  0.8557864  1.485715869
+#> 6 -2.5251725 -0.2070425 -1.155705703
 dgp$tau_x0
 #> [1] 1.248121
 ```

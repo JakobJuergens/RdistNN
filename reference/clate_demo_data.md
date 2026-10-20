@@ -75,6 +75,7 @@ fit <- clate_dnn(
   x0 = z$x0, s = 8, training = "oracle"
 )
 summary(fit)
+#>   localization: s = 8, s/n = 0.16
 #> Components: numerator = reduced_form; denominator = first_stage
 #> Ratio statuses: ok=1
 #>          estimate std.error statistic p.value conf.low conf.high

@@ -5,8 +5,7 @@ score. It returns \\X\\, \\D\\, \\Y\\, along with oracle nuisance
 quantities: \$\$ m(x) \\=\\ \mathbb{E}\[Y \mid X=x\] \\=\\ m\_{0}(x)
 \\+\\ e(x)\\\tau(x) \\ , \qquad e(x) \\=\\ \Pr(D=1 \mid X=x) \\ , \$\$
 where \\m\_{0}(x) = \mathbb{E}\[Y \mid X=x, D=0\]\\ and \\\tau(x)\\ is
-the treatment effect. It also returns the R-learner–style pseudo-outcome
-\$\$ \rho \\=\\ \frac{(D - e)\\(Y - m)}{e\\(1 - e)} \\ . \$\$
+the treatment effect. It also returns the oracle AIPW pseudo-outcome.
 
 ## Usage
 
@@ -20,7 +19,7 @@ cate_demo_data(
   seed = NULL,
   x0 = NULL,
   inject = NULL,
-  inject_col = "rho_oracle",
+  inject_col = "aipw_oracle",
   idx_inject = 3L
 )
 ```
@@ -65,8 +64,8 @@ cate_demo_data(
 - inject_col:
 
   Character; which column to corrupt when `inject` is not `NULL`. One of
-  `"Y"`, `"rho_oracle"`, `"e_oracle"`, `"m_oracle"`, `"m0_oracle"`,
-  `"tau_oracle"`. Default `"rho_oracle"`.
+  `"Y"`, `"aipw_oracle"`, `"e_oracle"`, `"m_oracle"`, `"m0_oracle"`,
+  `"tau_oracle"`. Default `"aipw_oracle"`.
 
 - idx_inject:
 
@@ -78,8 +77,8 @@ A list with:
 
 - `data`: a `data.frame` with columns `X1..Xp`, `D`, `Y`, and oracle
   nuisances `e_oracle` (=\\e(X)\\), `m_oracle` (=\\m(X)\\), `m0_oracle`
-  (=\\m\_{0}(X)\\), `tau_oracle` (=\\\tau(X)\\), `rho_oracle`
-  (=\\\rho\\).
+  (=\\m\_{0}(X)\\), `m1_oracle` (treated outcome mean), `tau_oracle`
+  (=\\\tau(X)\\), `aipw_oracle` (oracle AIPW signal).
 
 - `x0`: the target point used (length \\p\\).
 
@@ -97,16 +96,17 @@ No model fitting is performed; all quantities come from the DGP.
 ``` r
 demo <- cate_demo_data(n = 200, p = 2, design = "hetero", seed = 1)
 str(demo$data)
-#> 'data.frame':    200 obs. of  9 variables:
-#>  $ X1        : num  -0.626 0.184 -0.836 1.595 0.33 ...
-#>  $ X2        : num  0.409 1.689 1.587 -0.331 -2.285 ...
-#>  $ D         : int  1 0 1 0 1 0 0 0 1 0 ...
-#>  $ Y         : num  0.21 -0.654 -1.885 2.932 4.772 ...
-#>  $ e_oracle  : num  0.373 0.32 0.23 0.724 0.787 ...
-#>  $ m_oracle  : num  0.0414 -0.3159 -1.3926 3.6498 4.1356 ...
-#>  $ m0_oracle : num  -0.0359 -0.5052 -1.4222 2.9262 3.6147 ...
-#>  $ tau_oracle: num  0.207 0.591 0.129 1 0.662 ...
-#>  $ rho_oracle: num  0.451 0.497 -2.144 2.599 0.809 ...
+#> 'data.frame':    200 obs. of  10 variables:
+#>  $ X1         : num  -0.626 0.184 -0.836 1.595 0.33 ...
+#>  $ X2         : num  0.409 1.689 1.587 -0.331 -2.285 ...
+#>  $ D          : int  1 0 1 0 1 0 0 0 1 0 ...
+#>  $ Y          : num  0.21 -0.654 -1.885 2.932 4.772 ...
+#>  $ e_oracle   : num  0.373 0.32 0.23 0.724 0.787 ...
+#>  $ m_oracle   : num  0.0414 -0.3159 -1.3926 3.6498 4.1356 ...
+#>  $ m0_oracle  : num  -0.0359 -0.5052 -1.4222 2.9262 3.6147 ...
+#>  $ m1_oracle  : num  0.171 0.0861 -1.2931 3.926 4.2765 ...
+#>  $ tau_oracle : num  0.207 0.591 0.129 1 0.662 ...
+#>  $ aipw_oracle: num  0.31 0.81 -2.449 0.979 1.292 ...
 demo$tau_x0
 #> [1] 0.5
 ```

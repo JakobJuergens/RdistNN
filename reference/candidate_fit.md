@@ -100,7 +100,8 @@ fit <- np_dnn(
 )
 candidate_fit(fit, fit$tuning_grid$candidates$candidate_id[[1L]])
 #> <np_result>
+#>   localization: s = 4, s/n = 0.1
 #>   data  : n=40, p=2, m=1
-#>   DNN   : method=exact, k=1, s=4, distance=l2
+#>   DNN   : method=exact, k=1, distance=l2
 #>   est   : mu[1:min(5,m)] = 0.0386  (SEs not requested)
 ```

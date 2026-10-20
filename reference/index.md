@@ -97,6 +97,9 @@ diagnostics and candidate views.
 
   Extract coefficients from a `cate_result`
 
+- [`vcov(`*`<cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/vcov.cate_result.md)
+  : Joint jackknife covariance across CATE reporting profiles
+
 - [`predict(`*`<cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/predict.cate_result.md)
   :
 
@@ -176,8 +179,8 @@ Tuning specifications, registry helpers, and paper-default rules.
 
 ## General CATE simulation tools
 
-Synthetic benchmarks and Monte Carlo summaries. The current affine paper
-uses the separate study-specific replication bundle.
+Synthetic benchmarks and Monte Carlo summaries. The conditional
+Z-estimation paper uses the separate study-specific replication bundle.
 
 - [`sim_cate_data()`](https://JakobJuergens.github.io/RdistNN/reference/sim_cate_data.md)
   : Draw one sample from a named CATE simulation DGP

@@ -199,6 +199,10 @@ iv_signals construction record, including raw/used propensity.
 
 ## Details
 
+The documented sampling framework uses independent observations; cluster
+and survey-design inference are not supplied. Input row order breaks
+distance ties, so permuting tied observations can change estimates.
+
 Let V=(X,Z) contain all pre-instrument adjustment variables. Supplied
 predictions condition on V, while weights use only reporting coordinates
 X. The target averages both adjusted instrument-arm contrasts over the

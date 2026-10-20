@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9003</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,33 +34,49 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.1.0.9003" id="rdistnn-0109003-development-version">RdistNN 0.1.0.9003 (development version)<a class="anchor" aria-label="anchor" href="#rdistnn-0109003-development-version"></a></h2>
-<ul><li>Use ordered compensated Mahalanobis projections so scalar and batch targets retain the same cancellation residuals across compiled and fallback engines.</li>
-<li>Recover cancellation-sensitive covariance cross terms with compensated products and mean-subtraction residuals; test weight mass using the portable reduction.</li>
-<li>Preserve scalar tuning sensitivity sweeps across optional return fields for NP, CATE, paired-ratio and CLATE fits with a manually chosen kernel order.</li>
-<li>Retain custom tuning in experimental moment plots and clarify the original-unit Mahalanobis rank cutoff, with independent extreme-scale regression references.</li>
-<li>Split shared input resolution, tuning schemas, grid evaluation and jackknife orchestration into dedicated modules while preserving public interfaces and numerical calculations. Remove unused duplicate helpers.</li>
-<li>Strengthen cached-grid target and uncertainty alignment tests. Reorganize regression suites by behavior and improve fixture-state cleanup.</li>
-<li>Check unique package-level helper ownership, candidate-file hygiene, generated Rd/namespace/Rcpp drift, and mirrored native headers. Keep the Stata companion on the same development version and refresh the documentation entry points.</li>
+<h2 class="pkg-version" data-toc-text="0.1.0.9004" id="rdistnn-0109004-development-snapshot">RdistNN 0.1.0.9004 (development snapshot)<a class="anchor" aria-label="anchor" href="#rdistnn-0109004-development-snapshot"></a></h2>
+<p>The changes below are grouped in one reviewed, flattened (squash-merged) production update carrying version 0.1.0.9004. Publishing this source update does not create a tag or replace assets from the existing v0.1.0 release.</p>
+<ul><li><p>Add on-demand joint CATE covariance from common deletions, including retained geometry, candidate views and serialized fits without optional weights.</p></li>
+<li><p>Draw finite estimates independently of unavailable intervals and preserve profile gaps. Support ggplot2 &gt;= 3.4.1 with focused older-version checks.</p></li>
+<li><p>Report order fractions and available causal support/contribution summaries without new warning thresholds. Clarify CATE migration, sampling assumptions and row-order ties; remove six unused suggested dependencies.</p></li>
+<li><p>Remove the normalized Robinson CATE pseudo-outcome route and its demo signals; it is outside the accompanying paper’s theoretical results. Use AIPW nuisance inputs or an externally justified supplied signal.</p></li>
+<li><p>Clarify accepted-evidence rendering, historical dependency reproduction and current-engine validation. Bind release candidates and dependency comparisons to source/archive/installed-file identities; correct development chronology and local documentation news links.</p></li>
 </ul></div>
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.1.0.9002" id="rdistnn-0109002-earlier-development-snapshot">RdistNN 0.1.0.9002 (earlier development snapshot)<a class="anchor" aria-label="anchor" href="#rdistnn-0109002-earlier-development-snapshot"></a></h2>
-<ul><li><p>Stabilize mixed-sign, large-offset jackknife signals and ordinary SD/covariance centering without dropping represented tails. Share portable exact rank-table recurrences across C++, R and Mata, including subnormal-tail safeguards.</p></li>
+<h2 class="pkg-version" data-toc-text="0.1.0.9003" id="rdistnn-0109003-merged-development-snapshot">RdistNN 0.1.0.9003 (merged development snapshot)<a class="anchor" aria-label="anchor" href="#rdistnn-0109003-merged-development-snapshot"></a></h2>
+<p>The numerical changes below first entered the public production source in <code>f2c7bc36e8da040831b668281e50e18b2f1a4b3c</code>. Version 0.1.0.9003 is a merged development snapshot; candidate verification, public tags and downloadable release assets are separate. The existing v0.1.0 release is unchanged.</p>
+<ul><li><p>Use ordered compensated Mahalanobis projections so scalar and batch targets retain the same cancellation residuals across compiled and fallback engines.</p></li>
+<li><p>Recover cancellation-sensitive covariance cross terms with compensated products and mean-subtraction residuals; test weight mass using the portable reduction.</p></li>
+<li><p>Preserve scalar tuning sensitivity sweeps across optional return fields for NP, CATE, paired-ratio and CLATE fits with a manually chosen kernel order.</p></li>
+<li><p>Retain custom tuning in experimental moment plots and clarify the original-unit Mahalanobis rank cutoff, with independent extreme-scale regression references.</p></li>
+<li><p>Split shared input resolution, tuning schemas, grid evaluation and jackknife orchestration into dedicated modules while preserving public interfaces and numerical calculations. Remove unused duplicate helpers.</p></li>
+<li><p>Strengthen cached-grid target and uncertainty alignment tests. Reorganize regression suites by behavior and improve fixture-state cleanup.</p></li>
+<li><p>Check unique package-level helper ownership, candidate-file hygiene, generated Rd/namespace/Rcpp drift, and mirrored native headers. Keep the Stata companion on the same development version and refresh the documentation entry points.</p></li>
+<li><p>Stabilize mixed-sign, large-offset jackknife signals and ordinary SD/covariance centering without dropping represented tails. Share portable exact rank-table recurrences across C++, R and Mata, including subnormal-tail safeguards.</p></li>
 <li><p>Preserve data-frame selectors in NP/TDNN/CATE prediction, compute requested neighbors independently of SEs, and honor scalar tuning/uncertainty controls. Make NP/CATE tidy extraction grid-aware and name CATE coefficients by target.</p></li>
-<li><p>Reject unrepresentable clipping intervals and partial AIPW nuisance inputs; support one-dimensional Mahalanobis geometry and stable signed-zero ties. Clarify Robinson propensity sensitivity and estimator-specific covariance/LOO contracts.</p></li>
+<li><p>Reject unrepresentable clipping intervals and partial AIPW nuisance inputs; support one-dimensional Mahalanobis geometry and stable signed-zero ties. Clarify estimator-specific covariance/LOO contracts.</p></li>
 <li><p>Retain resolved fitted geometry across NP/TDNN, CATE and paired-ratio/CLATE prediction. Preserve legacy geometry-refitting LOO inference. Compensate pure subset-score sums consistently in scalar, native and R evaluation.</p></li>
 <li><p>Share an explicit compensated weighted-CDF boundary rule with Stata; keep selected observations exact across engines. Recover finite physical radii and weighted outcome SDs when intermediate squares overflow or underflow.</p></li>
 <li><p>Reject fractional weight controls and conflicting core input routes; mark orders above n infeasible even for point-only grids. Honor normalize=FALSE in asymptotic DNN wrappers and correct TDNN zero-weight documentation.</p></li>
 <li><p>Share compensated rank-weight normalization and weighted signal means across native and R paths. Retain correction state through prefix/suffix deletion merges, reuse the existing working-buffer budget, and align estimator, candidate and saved-prediction calculations with the Stata companion.</p></li>
 <li><p>Fit Mahalanobis whitening factors directly from the centered training design with an explicit singular-value rank cutoff shared with Stata. Retain resolvable near-collinear directions, reuse C++/R L2 norms after projection, and preserve legacy saved inverse contexts.</p></li>
 <li><p>Centralize covariance centering, binary range normalization and symmetric assembly across jackknife, NP/TDNN, paired-ratio and moment-covariance paths. Recover representable extreme variances; report unrepresentable nonzero variances as rescaling errors, or existing paired-ratio failure statuses.</p></li>
-<li><p>Recover finite fitted SD scales and scaled L1 differences after intermediate overflow or underflow; reject nonfinite fitted scales before clamping. NP/TDNN prediction standard errors now compute marginal variances without allocating a full covariance matrix for the prediction grid.</p></li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.1.0.9002" id="rdistnn-0109002-earlier-development-snapshot">RdistNN 0.1.0.9002 (earlier development snapshot)<a class="anchor" aria-label="anchor" href="#rdistnn-0109002-earlier-development-snapshot"></a></h2>
+<ul><li><p>Recover finite fitted SD scales and scaled L1 differences after intermediate overflow or underflow; reject nonfinite fitted scales before clamping. NP/TDNN prediction standard errors now compute marginal variances without allocating a full covariance matrix for the prediction grid.</p></li>
 <li><p>Stabilize close-order TDNN coefficients with <code>log1p</code>/<code>expm1</code>, retain small asymptotic Beta-increment weights with direct tail probabilities, and recover representable extreme L2 norms through scaled sum-of-squares evaluation. Share the calculations across affected native and fallback paths and retain ordinary-input tie ordering and fitted geometry.</p></li>
 <li><p>Align R L1/L2 distance fallbacks with compiled subtraction, scaling and coordinate accumulation order, preserving stable ranks near numerical ties and small differences at large coordinate offsets. Scaled evaluation reuses fitted scales with the supplied training matrix in both engine modes.</p></li>
 <li><p>Add <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>, <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code>, <code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code>, <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code> and saved-fit <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> methods for single- and two-scale NP regression, using retained training state and full common-deletion target covariance. NP, CATE and paired-ratio prediction share target validation; tabular covariate selectors retain resolved names so reordered prediction columns remain aligned.</p></li>
 <li><p>Promote supplied-prediction conditional LATE and ordinary paired-signal ratios to supported workflows, including their shared reporting, diagnostics, plots and frozen-model reuse. Pointwise inference conditions are unchanged; ratio confidence-set inversion, PLQR and local IV-GMM remain experimental.</p></li>
-<li><p>Advanced the shared development version to 0.1.0.9001 and documented local development branches, reviewed production PRs and R/Stata parity expectations.</p></li>
-<li><p>Stabilized frozen-score jackknife calculations with target-specific, support-aware numerical centering across compiled, R, fast and explicit deletion paths. Zero-weight outliers no longer manufacture variance in locally constant signals. Exact and asymptotic weight rules are unchanged.</p></li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.1.0.9001" id="rdistnn-0109001-merged-development-snapshot">RdistNN 0.1.0.9001 (merged development snapshot)<a class="anchor" aria-label="anchor" href="#rdistnn-0109001-merged-development-snapshot"></a></h2>
+<ul><li>Advance the shared development version and document local development branches, reviewed production PRs and R/Stata parity expectations.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.1.0.9000" id="rdistnn-0109000-merged-development-snapshot">RdistNN 0.1.0.9000 (merged development snapshot)<a class="anchor" aria-label="anchor" href="#rdistnn-0109000-merged-development-snapshot"></a></h2>
+<ul><li><p>Stabilized frozen-score jackknife calculations with target-specific, support-aware numerical centering across compiled, R, fast and explicit deletion paths. Zero-weight outliers no longer manufacture variance in locally constant signals. Exact and asymptotic weight rules are unchanged.</p></li>
 <li><p>Reworked the README for package users, with current installation guidance, executable CATE, regression and CLATE examples, and shared reporting and plotting documentation. Updated the website reference descriptions and added contributor navigation.</p></li>
 <li><p>Aligned CLATE and generic affine ratios with exact/asymptotic single-scale DNN, general <code>k</code>, normalization, tuning grids and candidate views. Prediction and diagnostics retain the chosen weights and frozen paired signals.</p></li>
 <li><p>Standardized ratio summaries on the CATE coefficient-table schema, retaining component uncertainty and target statuses in separate fields. Added CATE-style estimate, weight, instrument-overlap, paired-score influence, tuning and dashboard plots, including <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">ggplot2::autoplot()</a></code> dispatch. Shared builders and rank-weight construction support both methods; TDNN remains separate NP-regression functionality.</p></li>

@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9003</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -221,6 +221,7 @@ are marginal across reporting targets; they do not supply covariance
 between different targets or simultaneous confidence bands.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   localization: s = 2, s/n = 0.5</span></span>
 <span><span class="co">#&gt; Components: numerator = numerator; denominator = denominator</span></span>
 <span><span class="co">#&gt; Ratio statuses: ok=1</span></span>
 <span><span class="co">#&gt;          estimate std.error statistic p.value conf.low conf.high</span></span>
@@ -233,7 +234,12 @@ between different targets or simultaneous confidence bands.</p>
 <span><span class="co">#&gt;   targets: 1</span></span>
 <span><span class="co">#&gt;   n_eff  : min=2.5714, median=2.5714, max=2.5714</span></span>
 <span><span class="co">#&gt;   weights: max(top5 share)=1, max(weight)=0.5</span></span>
-<span><span class="co">#&gt;   dist   : available for 1/1 target(s)</span></span></code></pre></div>
+<span><span class="co">#&gt;   dist   : available for 1/1 target(s)</span></span>
+<span><span class="co">#&gt;   instrument 1 mass: unavailable</span></span>
+<span><span class="co">#&gt;   instrument 0 mass: unavailable</span></span>
+<span><span class="co">#&gt;   clipped propensity mass: unavailable</span></span>
+<span><span class="co">#&gt;   first-stage statistic: 0.577 to 0.577</span></span>
+<span><span class="co">#&gt;   top-five squared jackknife-contribution share: 1 to 1</span></span></code></pre></div>
 <p>Effective sample size describes rank-weight concentration. It is not
 a count of compliers. Physical radius, instrument-arm support, score
 dispersion and first-stage strength can vary even when <code>neff</code>

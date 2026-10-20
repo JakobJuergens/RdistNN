@@ -18,8 +18,8 @@ The example uses the doubly robust IV moment model created by
 and the IV simulation DGPs exposed through
 [`sim_iv_data()`](https://JakobJuergens.github.io/RdistNN/reference/sim_iv_data.md).
 
-These synthetic IV examples are experimental benchmarks. The current
-affine paper replication is described in [Affine paper
+These synthetic IV examples are experimental benchmarks. The paper
+replication is described in [Paper
 replication](https://JakobJuergens.github.io/RdistNN/articles/paper-affine-replication.md).
 
 ## One Local IV Dataset

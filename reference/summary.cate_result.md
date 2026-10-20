@@ -37,6 +37,7 @@ x_mat <- matrix(rnorm(n * 2), n, 2)
 out <- cate_dnn(X = x_mat, x0 = c(0, 0), pseudo_outcome = rnorm(n))
 summary(out)
 #> <summary.cate_result>
+#>   localization: s = 5, s/n = 0.167
 #>   targets: 1
 #>          estimate std.error statistic p.value conf.low conf.high
 #> target_1   0.2394    0.2734    0.8758  0.3811  -0.2964    0.7753

@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9003</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -143,7 +143,7 @@ estimate when the weights are normalized.</p>
 <span>  x_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X1"</span>, <span class="st">"X2"</span><span class="op">)</span>,</span>
 <span>  y_col <span class="op">=</span> <span class="st">"Y"</span>,</span>
 <span>  t_col <span class="op">=</span> <span class="st">"D"</span>,</span>
-<span>  m_col <span class="op">=</span> <span class="st">"m_oracle"</span>,</span>
+<span>  m0_col <span class="op">=</span> <span class="st">"m0_oracle"</span>, m1_col <span class="op">=</span> <span class="st">"m1_oracle"</span>,</span>
 <span>  e_col <span class="op">=</span> <span class="st">"e_oracle"</span>,</span>
 <span>  x0 <span class="op">=</span> <span class="va">demo_cate</span><span class="op">$</span><span class="va">x0</span>,</span>
 <span>  method <span class="op">=</span> <span class="st">"exact"</span>,</span>
@@ -160,16 +160,32 @@ estimate when the weights are normalized.</p>
 <span>  <span class="st">"treated_mass"</span>,</span>
 <span>  <span class="st">"control_mass"</span>,</span>
 <span>  <span class="st">"treated_share"</span>,</span>
-<span>  <span class="st">"weighted_mean_propensity"</span></span>
+<span>  <span class="st">"weighted_mean_propensity"</span>,</span>
+<span>  <span class="st">"treated_ess"</span>, <span class="st">"control_ess"</span>, <span class="st">"weighted_propensity_q10"</span>,</span>
+<span>  <span class="st">"weighted_propensity_q90"</span>, <span class="st">"top5_score_share"</span></span>
 <span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt; &lt;dnn_diagnostics&gt;</span></span>
 <span><span class="co">#&gt;   targets: 1</span></span>
 <span><span class="co">#&gt;   n_eff  : min=64.9674, median=64.9674, max=64.9674</span></span>
-<span><span class="co">#&gt;   dist   : available for 0/1 target(s)</span></span></code></pre></div>
+<span><span class="co">#&gt;   dist   : available for 0/1 target(s)</span></span>
+<span><span class="co">#&gt;   treated share: 0.429 to 0.429</span></span>
+<span><span class="co">#&gt;   treated ESS: 28.4 to 28.4</span></span>
+<span><span class="co">#&gt;   control ESS: 36.6 to 36.6</span></span>
+<span><span class="co">#&gt;   propensity q10: 0.37 to 0.37</span></span>
+<span><span class="co">#&gt;   propensity q90: 0.607 to 0.607</span></span>
+<span><span class="co">#&gt;   top-five absolute score-contribution share: 0.217 to 0.217</span></span></code></pre></div>
 <p>Overlap diagnostics are available when the fit was constructed from
 treatment and propensity inputs. If <code><a href="../reference/cate_dnn.html">cate_dnn()</a></code> was called
 with only a direct <code>pseudo_outcome</code>, overlap fields remain
 present but are marked unavailable.</p>
+<p>Printing summarizes available arm information, propensity quantiles
+and top-five absolute score-contribution shares; the data frame retains
+each profile’s values. CLATE distinguishes instrument support, clipped
+propensity mass and squared jackknife-contribution concentration. These
+quantities have different definitions and should not be interpreted
+interchangeably. Clipping prevents undefined arithmetic but does not
+establish overlap. The reported order fraction is descriptive and
+triggers no new warning policy.</p>
 </div>
 <div class="section level2">
 <h2 id="experimental-plqr-conditioning">Experimental PLQR conditioning<a class="anchor" aria-label="anchor" href="#experimental-plqr-conditioning"></a>

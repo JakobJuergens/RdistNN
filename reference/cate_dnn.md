@@ -13,7 +13,6 @@ cate_dnn(
   t_col = NULL,
   m0_col = NULL,
   m1_col = NULL,
-  m_col = NULL,
   e_col = NULL,
   pseudo_outcome = NULL,
   X = NULL,
@@ -61,10 +60,6 @@ cate_dnn(
 
   Name or index for \\E\[Y(1)\mid X\]\\ (full AIPW interface).
 
-- m_col:
-
-  Name or index for \\E\[Y\mid X\]\\ (Robinson interface).
-
 - e_col:
 
   Name or index for propensity \\P(T=1\mid X)\\.
@@ -91,8 +86,8 @@ cate_dnn(
 
   Finite propensity clipping constant in `(0, 0.5)` with `1 - clip < 1`
   in double precision, default `1e-8`. Raw nuisance propensities must be
-  finite and lie in `[0, 1]`; nuisance-based AIPW and Robinson scores
-  use `pmin(pmax(e, clip), 1 - clip)`. This argument does not alter a
+  finite and lie in `[0, 1]`; nuisance-based AIPW scores use
+  `pmin(pmax(e, clip), 1 - clip)`. This argument does not alter a
   supplied `pseudo_outcome`.
 
 - distance:
@@ -180,15 +175,16 @@ An object of class `cate_result` with components:
 
 ## Details
 
+The documented sampling framework uses independent observations; cluster
+and survey-design inference are not supplied. Input row order breaks
+distance ties, so permuting tied observations can change estimates.
+
 Two interfaces are supported.
 
 1.  Data-frame interface (recommended): pass `data` and `x_cols`, then
     provide either `pseudo_outcome` directly or nuisance columns used to
-    construct it. For nuisance columns, use either:
-
-    - full AIPW form: `y_col`, `t_col`, `e_col`, `m0_col`, `m1_col`;
-
-    - Robinson form: `y_col`, `t_col`, `e_col`, `m_col`.
+    construct it. For AIPW nuisance construction, use `y_col`, `t_col`,
+    `e_col`, `m0_col`, and `m1_col`.
 
 2.  Matrix interface: pass `X`, one of `X0` or `x0`, and
     `pseudo_outcome`.
@@ -214,15 +210,11 @@ are not stored. Candidate diagnostics include `ess`, `max_weight`,
 and is independent of the estimator's `k`.
 
 The AIPW signal is Neyman orthogonal at the true nuisance functions. The
-normalized Robinson signal identifies the effect with true nuisances but
-is generally not orthogonal to propensity error. If the pooled outcome
-mean is correct, its conditional expectation is \\e_0(1-e_0)\tau /
-\\\hat e(1-\hat e)\\\\. It can therefore have first-order propensity
-drift; AIPW's orthogonality argument does not apply to that route
-without additional propensity control. Orthogonality alone does not
-validate arbitrary nuisance predictions fitted on the same observations
-used for localization and inference. Valid full-sample reuse
-additionally requires the nuisance-rate and full-state stability
+normalized Robinson pseudo-outcome is not implemented because it is
+outside the accompanying paper's theoretical results. Orthogonality
+alone does not validate arbitrary nuisance predictions fitted on the
+same observations used for localization and inference. Valid full-sample
+reuse additionally requires the nuisance-rate and full-state stability
 conditions in the accompanying paper. This function computes the
 estimator and its requested jackknife procedure; it cannot diagnose
 whether an arbitrary learner satisfies those conditions. Supply oracle

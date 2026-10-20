@@ -138,6 +138,7 @@ targets or simultaneous confidence bands.
 ``` r
 
 summary(fit)
+#>   localization: s = 2, s/n = 0.5
 #> Components: numerator = numerator; denominator = denominator
 #> Ratio statuses: ok=1
 #>          estimate std.error statistic p.value conf.low conf.high
@@ -151,6 +152,11 @@ diagnostics(fit)
 #>   n_eff  : min=2.5714, median=2.5714, max=2.5714
 #>   weights: max(top5 share)=1, max(weight)=0.5
 #>   dist   : available for 1/1 target(s)
+#>   instrument 1 mass: unavailable
+#>   instrument 0 mass: unavailable
+#>   clipped propensity mass: unavailable
+#>   first-stage statistic: 0.577 to 0.577
+#>   top-five squared jackknife-contribution share: 1 to 1
 ```
 
 Effective sample size describes rank-weight concentration. It is not a

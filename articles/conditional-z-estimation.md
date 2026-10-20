@@ -69,7 +69,6 @@ diagnostics(fit_np)
 supports either:
 
 - Full AIPW nuisance inputs (`m0`, `m1`, `e`)
-- Robinson-form nuisance inputs (`m`, `e`)
 - Direct `pseudo_outcome`
 
 ``` r
@@ -96,6 +95,7 @@ fit_cate <- cate_dnn(
 
 summary(fit_cate)
 #> <summary.cate_result>
+#>   localization: s = 28, s/n = 0.0933
 #>   targets: 1
 #>          estimate std.error statistic p.value conf.low conf.high
 #> target_1   0.5512    0.3181     1.733 0.08313 -0.07227     1.175
@@ -109,6 +109,12 @@ diagnostics(fit_cate)
 #>   weights: max(top5 share)=0.3894, max(weight)=0.0933
 #>   dist   : available for 0/1 target(s)
 #>   overlap: available for 1/1 target(s)
+#>   treated share: 0.388 to 0.388
+#>   treated ESS: 8.73 to 8.73
+#>   control ESS: 11.5 to 11.5
+#>   propensity q10: 0.454 to 0.454
+#>   propensity q90: 0.549 to 0.549
+#>   top-five absolute score-contribution share: 0.586 to 0.586
 predict(fit_cate, x0 = c(0.2, -0.1), interval = "confidence")
 #>            fit       lwr      upr
 #> [1,] 0.8336633 0.3016249 1.365702

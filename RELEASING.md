@@ -6,13 +6,59 @@ weights, pointwise jackknife uncertainty, tuning, diagnostics and plots.
 Ratio confidence-set inversion, PLQR and local IV-GMM remain
 experimental.
 
-The local `development` branch carries version `0.1.0.9003`, aligned
-with the Stata companion. Its latest maintenance changes preserve
-estimator interfaces and inference limits. Choose a tagged release
-version after reviewing the scope in
-[NEWS.md](https://JakobJuergens.github.io/RdistNN/NEWS.md); a
-development-version bump does not publish a release. Matching R/Stata
-versions do not imply identical feature coverage.
+Version `0.1.0.9004` identifies the current development snapshot,
+aligned with the Stata companion. Publish its changes together in a
+reviewed squash merge carrying version `0.1.0.9004`. Version
+`0.1.0.9003` identifies the previous production snapshot. The
+exact-table recurrence, compensated reductions, numerical origins,
+shared covariance and fitted whitening policy first shipped in the
+merged 0.1.0.9003 snapshot, not 0.1.0.9002. See
+[NEWS.md](https://JakobJuergens.github.io/RdistNN/NEWS.md). A verified
+candidate requires the final-source checks below. Public tags and assets
+require separate authorization. Retain the development version during
+candidate preparation. Matching R/Stata versions do not imply identical
+feature coverage.
+
+## Candidate identity and scientific reproduction
+
+Commit candidates locally. Publish review branches/PRs, tags,
+downloadable assets and websites only when authorized; do not push
+directly to `master`. After both package commits are final, bind them in
+one external release-set manifest under ignored outputs. Include tested
+trees, artifact filenames, sizes and SHA-256, commands, runtime/compiler
+information, hosted run IDs/tested SHAs and explicit
+PASS/FAIL/BLOCKED/NOT_RUN gates. Do not create circular committed HEAD
+references or embed an archive’s own hash inside it.
+
+`pak::pak("JakobJuergens/RdistNN@f2c7bc36e8da040831b668281e50e18b2f1a4b3c")`
+installs immutable previous 0.1.0.9003 source. The unpinned README
+command follows `master`; `@v0.1.0` selects the existing older public
+tag. An unpublished local candidate is not remotely installable. Check
+out its full recorded commit in a separate local checkout and use
+`pak::local_install(".")`, or install its checked tarball. Put exact
+candidate commands in the external handoff once both final identities
+are known.
+
+The paper-evidence renderer verifies accepted stored bytes and
+reconstructs 21 tables and six figures. It does not run the candidate
+estimator. Simulation freezes bind source commit
+`40060f155cc4d84d59ee5af119f6a2534c569bab`, a source override and a
+native-library hash. SIPP binds installed files and its DLL; its
+recorded sibling checkout alone does not identify the loaded package.
+Preserve both historical records. Historical recomputation requires the
+matching dependency. Fresh launchers use and record actual installed
+software; outputs require review before promotion. Candidate agreement
+does not change the historical reproduction reference. See the installed
+bundle README.
+
+Use
+`Rscript --vanilla tools/replication/compare_paper_dependency.R --help`
+for bounded validation with explicit installations, file-hashed
+identities and a frozen case manifest declaring quantity-specific
+budgets. Fresh processes compare fixed-table arithmetic, exact-table
+construction and geometry separately. Retained SIPP arrays stay private;
+dependency comparison requires neither forest refitting nor production
+simulation.
 
 ## Prepare and verify the final source
 
@@ -20,11 +66,11 @@ Run from the repository root with package dependencies and development
 tools installed as described in
 [CONTRIBUTING.md](https://JakobJuergens.github.io/RdistNN/CONTRIBUTING.md).
 
-1.  Confirm that `DESCRIPTION`, the current `NEWS.md` entry, and the
-    intended `v<version>` tag agree on the chosen version. Synchronize
-    current README and website draft references, while preserving
-    historical release notes. Regenerate help and README from their
-    sources:
+1.  Confirm that `DESCRIPTION` and the current `NEWS.md` entry agree.
+    Check the chosen tag only for a separately authorized public
+    release. Synchronize README and website draft references, while
+    preserving historical release notes. Regenerate help and README from
+    their sources:
 
     ``` r
 
@@ -52,6 +98,16 @@ tools installed as described in
     agent settings, CI logs, prior archives, and repository-only
     publication instructions. `archives/` is ignored and excluded from
     future source builds.
+
+    Run the full **source** suite with `devtools::test()` as well
+    (including checkout-only documentation contracts), mirrored-header
+    checks and focused compiled/forced-R numerical/consumer regressions
+    from `tests/README.md`. Install this exact archive in a fresh
+    library, execute installed examples, and run its paper-replication
+    `verify.R` and `render_evidence.R --output-dir=NEW_DIR`. Verify
+    exports, the installed bundle, accepted table reconstruction and
+    unchanged installed files afterward. Record rendering separately
+    from estimator recomputation.
 
 3.  Build the documentation site, including examples and articles:
 

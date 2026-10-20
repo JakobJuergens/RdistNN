@@ -20,16 +20,6 @@ reference](https://JakobJuergens.github.io/RdistNN/reference/index.html)
 guide](https://JakobJuergens.github.io/RdistNN/articles/conditional-late.html)
 · [Report an issue](https://github.com/JakobJuergens/RdistNN/issues)
 
-These instructions describe development version **0.1.0.9003**,
-maintained on the local `development` branch until reviewed publication.
-The GitHub install below uses the published `master` snapshot; install a
-local checkout to use changes that have not yet been published.
-
-The latest update strengthens tests for saved-fit reuse, candidate
-uncertainty and package installation. Estimator interfaces and pointwise
-inference limits are unchanged. See the [development
-notes](https://JakobJuergens.github.io/RdistNN/NEWS.md) for details.
-
 Use the common result methods to report estimates, inspect stored tuning
 candidates and predict from saved fits. The [Stata
 companion](https://github.com/JakobJuergens/RdistNN_stata) provides the
@@ -47,8 +37,11 @@ install.packages("pak")  # once
 pak::pak("JakobJuergens/RdistNN")
 ```
 
-From a local source checkout, use `pak::local_install(".")`. Check the
-installed version with `packageVersion("RdistNN")`.
+These examples describe the **0.1.0.9004 development snapshot**. GitHub
+installation follows the production source on `master`. Check
+`packageVersion("RdistNN")` and retain the source commit or archive
+identity: different source snapshots can share the same development
+version.
 
 R 4.1.0 or newer, Rcpp and a C++17 toolchain are required. Use Rtools
 matching your R version on Windows, Xcode command line tools on macOS,
@@ -104,22 +97,28 @@ library(RdistNN)
 
 demo <- cate_demo_data(n = 180, p = 2, design = "hetero", seed = 1)
 d <- demo$data
-d$m1_oracle <- d$m0_oracle + d$tau_oracle
 
 fit_cate <- cate_dnn(
   data = d, x_cols = c("X1", "X2"),
   y_col = "Y", t_col = "D",
   m0_col = "m0_oracle", m1_col = "m1_oracle", e_col = "e_oracle",
-  x0 = c(0, 0), k = 1L, se = TRUE,
+  X0 = rbind(c(0, 0), c(0.2, -0.1)), k = 1L, se = TRUE,
   return = c("W", "dx", "psi", "nuisance")
 )
 
 summary(fit_cate)$coefficients
-#>           estimate std.error statistic   p.value    conf.low conf.high
-#> target_1 0.4527139 0.2606611  1.736791 0.0824241 -0.05817257 0.9636003
+#>           estimate std.error statistic      p.value    conf.low conf.high
+#> target_1 0.4527139 0.2606611  1.736791 8.242410e-02 -0.05817257 0.9636003
+#> target_2 0.7890503 0.1754459  4.497400 6.878959e-06  0.44518265 1.1329179
 confint(fit_cate)
 #>             conf.low conf.high
 #> target_1 -0.05817257 0.9636003
+#> target_2  0.44518265 1.1329179
+V <- vcov(fit_cate)
+a <- c(1, -1)  # contrast between the two prespecified profiles
+cat(sprintf("Contrast = %.4f; standard error = %.4f\n",
+  sum(a * coef(fit_cate)), sqrt(drop(crossprod(a, V %*% a)))))
+#> Contrast = -0.3363; standard error = 0.1740
 predict(fit_cate, x0 = c(0.2, -0.1), interval = "confidence")
 #>            fit       lwr      upr
 #> [1,] 0.7890503 0.4451826 1.132918
@@ -130,6 +129,16 @@ pseudo-outcome: `cate_dnn(X = X, x0 = x0, pseudo_outcome = psi)`. The
 [getting-started
 guide](https://JakobJuergens.github.io/RdistNN/articles/getting-started.html)
 shows both input formats and how to inspect local treatment overlap.
+Joint covariance supplies the contrast calculation; valid contrast
+inference requires the corresponding joint assumptions and does not
+supply simultaneous bands.
+
+`diagnostics(fit_cate)` reports localization and overlap. For
+profile-level details, inspect `as.data.frame(diagnostics(fit_cate))`,
+including `treated_ess`, `control_ess`, `weighted_propensity_q10`,
+`weighted_propensity_q90` and `top5_score_share`. These describe support
+and absolute score-contribution concentration without certifying overlap
+or inference.
 
 ## Nonparametric regression
 
@@ -161,11 +170,10 @@ expose `mu` and `se` directly, with
 [`coef()`](https://rdrr.io/r/stats/coef.html),
 [`confint()`](https://rdrr.io/r/stats/confint.html) and
 [`predict()`](https://rdrr.io/r/stats/predict.html) as in the CATE
-workflow. NP/TDNN additionally provide
-[`vcov()`](https://rdrr.io/r/stats/vcov.html); CATE currently reports
-marginal SEs without a [`vcov()`](https://rdrr.io/r/stats/vcov.html)
-method. Joint NP covariance uses common deletions across targets;
-saved-fit prediction retains training outcomes and geometry. See
+workflow. NP/TDNN and CATE provide
+[`vcov()`](https://rdrr.io/r/stats/vcov.html). Joint covariance uses
+common deletions across targets; saved-fit prediction retains training
+outcomes and geometry. See
 [`?np_result`](https://JakobJuergens.github.io/RdistNN/reference/np_result.md)
 for the result methods. The common diagnostics and plotting calls remain
 available. Two-scale regression uses
@@ -231,6 +239,13 @@ ratio; ordinary Wald intervals can be misleading when the first stage is
 weak.
 
 ## Shared reporting and plots
+
+**Saved-fit confidentiality:** fitted R objects retain observation-level
+numeric inputs, outcomes or signals for prediction and diagnostics,
+including when optional weight extras were not requested. Objects
+written with [`saveRDS()`](https://rdrr.io/r/base/readRDS.html) or
+[`save()`](https://rdrr.io/r/base/save.html) inherit the underlying
+data’s sharing restrictions.
 
 CATE, CLATE and regression use the same calls, with the fitted object’s
 class selecting the appropriate implementation:
@@ -337,14 +352,19 @@ their corresponding statistical conditions.
 
 ## Interpreting inference
 
+The documented sampling framework uses independent observations. Cluster
+and survey-design inference are not supplied. Equal distances are
+ordered by input row, so permuting observations within tied-distance
+blocks can change an estimate.
+
 Reported intervals are **pointwise**, not simultaneous confidence bands.
 AIPW CATE and augmented CLATE signals have Neyman orthogonality at the
-true nuisances. The normalized Robinson CATE signal generally has
-first-order propensity drift and needs additional propensity control.
-For orthogonal routes, valid full-sample nuisance reuse additionally
-needs learner accuracy and deletion stability, together with design,
-overlap and localization-bias conditions. Supplying oracle, out-of-fold
-or full-sample predictions does not itself establish the conditions
+true nuisances. The normalized Robinson pseudo-outcome is not
+implemented because it falls outside the accompanying paper’s
+theoretical results. Valid full-sample nuisance reuse additionally needs
+learner accuracy and deletion stability, together with design, overlap
+and localization-bias conditions. Supplying oracle, out-of-fold or
+full-sample predictions does not itself establish the conditions
 appropriate to that training procedure.
 
 For nuisance-based CATE and CLATE scores, supplied propensities must be
@@ -396,7 +416,7 @@ for the arithmetic and reproducibility contract.
 - [Diagnostics and
   reporting](https://JakobJuergens.github.io/RdistNN/articles/diagnostics-reporting.html)
   covers local support and uncertainty summaries.
-- [Affine paper
+- [Paper
   replication](https://JakobJuergens.github.io/RdistNN/articles/paper-affine-replication.html)
   documents the study-specific simulations, SIPP application and saved
   manuscript evidence. Locate the installed bundle with

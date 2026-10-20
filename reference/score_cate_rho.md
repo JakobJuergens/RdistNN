@@ -70,10 +70,10 @@ are accepted for API consistency and basic dimension checks; only
 demo <- cate_demo_data(n = 200, p = 2, design = "hetero", seed = 1)
 sc <- score_cate_rho(
   x0 = rep(0, 2), x_cols = paste0("X", 1:2),
-  s = 5, rho_col = "rho_oracle"
+  s = 5, rho_col = "aipw_oracle"
 )
 ctx <- score_setup(sc, demo$data)
 subs <- cate_demo_subsets(n = nrow(demo$data), K = 3, s = 5, seed = 1)
 score_eval_batch(sc, subs, demo$data, ctx) # three subset evaluations
-#> [1] 1.9200414 0.8397658 4.4934999
+#> [1] 3.187566 2.527508 3.965492
 ```

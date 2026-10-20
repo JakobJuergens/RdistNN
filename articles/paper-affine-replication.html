@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Affine Paper Replication • RdistNN</title>
+<title>Conditional Z-Estimation Paper Replication • RdistNN</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Affine Paper Replication">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Conditional Z-Estimation Paper Replication">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9003</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,7 +50,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Affine Paper Replication</h1>
+      <h1>Conditional Z-Estimation Paper Replication</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/master/vignettes/paper-affine-replication.Rmd" class="external-link"><code>vignettes/paper-affine-replication.Rmd</code></a></small>
@@ -62,21 +62,19 @@
 <div class="section level2">
 <h2 id="the-study-represented-here">The study represented here<a class="anchor" aria-label="anchor" href="#the-study-represented-here"></a>
 </h2>
-<p>The installed replication layer represents the current <strong>affine
-paper variant</strong> of <em>Orthogonal Inference for Conditional
-Z-Estimation without Cross-Fitting: A Distributional Nearest-Neighbor
-Approach</em>. The snapshot is October 14, 2026;
+<p>The installed replication layer accompanies <em>Orthogonal Inference
+for Conditional Z-Estimation without Cross-Fitting: A Distributional
+Nearest-Neighbor Approach</em>. The snapshot is October 14, 2026;
 <code>manifest.json</code> pins the exact paper and source snapshot
 commits. It includes the bounded CATE and residualized-slope simulation
 campaign, the overhauled SIPP application, and accepted evidence for the
-current manuscript and supplement. The independent coupled-score
-manuscript is separate.</p>
+current manuscript and supplement.</p>
 <p>The paper’s scientific R files are bundled unchanged. Package
 launchers handle installation paths, dependencies, output directories
 and verification. Superseded CATE and IV study launchers are removed.
 General <code>sim_cate_*</code> and experimental <code>sim_iv_*</code>
-APIs remain synthetic benchmark tools; they do not implement this affine
-campaign.</p>
+APIs remain synthetic benchmark tools; they do not implement this
+study-specific campaign.</p>
 </div>
 <div class="section level2">
 <h2 id="install-the-replication-bundle">Install the replication bundle<a class="anchor" aria-label="anchor" href="#install-the-replication-bundle"></a>
@@ -84,7 +82,7 @@ campaign.</p>
 <p>The bundle was introduced in development version
 <code>0.1.0.9000</code>. Install the current <code>master</code> branch
 before following this guide; the initial <code>v0.1.0</code> release
-does not contain the affine bundle.</p>
+does not contain the paper-replication bundle.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"pak"</span><span class="op">)</span></span>
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"JakobJuergens/RdistNN@master"</span><span class="op">)</span></span></code></pre></div>
@@ -110,7 +108,7 @@ installed script:</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"digest"</span>, <span class="st">"jsonlite"</span>, <span class="st">"ggplot2"</span>, <span class="st">"patchwork"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/system2.html" class="external-link">system2</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Rhome.html" class="external-link">R.home</a></span><span class="op">(</span><span class="st">"bin"</span><span class="op">)</span>, <span class="st">"Rscript"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/shQuote.html" class="external-link">shQuote</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">bundle</span>, <span class="st">"render_evidence.R"</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  <span class="st">"--output-dir=affine-paper-displays"</span></span>
+<span>  <span class="st">"--output-dir=paper-displays"</span></span>
 <span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>Rendering uses R’s Cairo PDF device. With the CRAN build of R on
 macOS, install <a href="https://www.xquartz.org/" class="external-link">XQuartz</a> to provide
@@ -130,13 +128,13 @@ workflow is not included. The overhauled application uses raw
 dollars.</p>
 </div>
 <div class="section level2">
-<h2 id="run-the-current-affine-simulation-campaign">Run the current affine simulation campaign<a class="anchor" aria-label="anchor" href="#run-the-current-affine-simulation-campaign"></a>
+<h2 id="run-the-paper-simulation-campaign">Run the paper simulation campaign<a class="anchor" aria-label="anchor" href="#run-the-paper-simulation-campaign"></a>
 </h2>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"digest"</span>, <span class="st">"jsonlite"</span>, <span class="st">"future"</span>, <span class="st">"future.apply"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/system2.html" class="external-link">system2</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Rhome.html" class="external-link">R.home</a></span><span class="op">(</span><span class="st">"bin"</span><span class="op">)</span>, <span class="st">"Rscript"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/shQuote.html" class="external-link">shQuote</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">bundle</span>, <span class="st">"run_simulations.R"</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  <span class="st">"--mode=smoke"</span>, <span class="st">"--output-dir=affine-smoke"</span></span>
+<span>  <span class="st">"--mode=smoke"</span>, <span class="st">"--output-dir=paper-smoke"</span></span>
 <span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>Smoke runs are explicitly validation: two preflight draw families at
 n=128. They exercise both CATE and slope,
@@ -190,7 +188,7 @@ resources:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/system2.html" class="external-link">system2</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Rhome.html" class="external-link">R.home</a></span><span class="op">(</span><span class="st">"bin"</span><span class="op">)</span>, <span class="st">"Rscript"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/shQuote.html" class="external-link">shQuote</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">bundle</span>, <span class="st">"run_simulations.R"</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  <span class="st">"--mode=production"</span>, <span class="st">"--output-dir=affine-production"</span></span>
+<span>  <span class="st">"--mode=production"</span>, <span class="st">"--output-dir=paper-production"</span></span>
 <span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>The original monitor enforces profile wall limits and a sampled
 40-GiB RSS cap. The scientific runner uses four workers, eight-family
@@ -233,7 +231,7 @@ rows.</p>
 <p>The launcher fits and saves models/predictions, computes diagnostics,
 exports paired component covariance and frozen-score influence
 information, and runs localization sensitivity without refitting. Its
-output lives in <code>runs/affine-current/</code>, with separate stage
+output lives in <code>runs/paper-current/</code>, with separate stage
 logs and hashed run receipts. Smoke uses 300 households, 50 trees and
 two folds; its exports carry validation labels. Output directories are
 never silently overwritten.</p>

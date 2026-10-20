@@ -104,7 +104,7 @@ fit_cate <- cate_dnn(
   x_cols = c("X1", "X2"),
   y_col = "Y",
   t_col = "D",
-  m_col = "m_oracle",
+  m0_col = "m0_oracle", m1_col = "m1_oracle",
   e_col = "e_oracle",
   x0 = demo_cate$x0,
   se = FALSE
@@ -116,6 +116,12 @@ diagnostics(fit_cate)
 #>   weights: max(top5 share)=0.5457, max(weight)=0.14
 #>   dist   : available for 0/1 target(s)
 #>   overlap: available for 1/1 target(s)
+#>   treated share: 0.47 to 0.47
+#>   treated ESS: 6.5 to 6.5
+#>   control ESS: 6.07 to 6.07
+#>   propensity q10: 0.398 to 0.398
+#>   propensity q90: 0.626 to 0.626
+#>   top-five absolute score-contribution share: 0.642 to 0.642
 
 demo_plqr <- plqr_demo_data(n = 60, p = 2, p_d = 1, seed = 3)
 fit_plqr <- plqr_dnn(

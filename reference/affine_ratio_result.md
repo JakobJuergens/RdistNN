@@ -116,6 +116,7 @@ confint(f)
 #>           conf.low conf.high
 #> target_1 -7.428456  15.42846
 summary(f)
+#>   localization: s = 2, s/n = 0.5
 #> Components: numerator = numerator; denominator = denominator
 #> Ratio statuses: ok=1
 #>          estimate std.error statistic p.value conf.low conf.high

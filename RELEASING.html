@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9003</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,12 +36,19 @@
 <div id="releasing-rdistnn" class="section level1">
 
 <p>Supported workflows include CATE, nonparametric regression, supplied-prediction CLATE and ordinary paired-signal ratios, with DNN weights, pointwise jackknife uncertainty, tuning, diagnostics and plots. Ratio confidence-set inversion, PLQR and local IV-GMM remain experimental.</p>
-<p>The local <code>development</code> branch carries version <code>0.1.0.9003</code>, aligned with the Stata companion. Its latest maintenance changes preserve estimator interfaces and inference limits. Choose a tagged release version after reviewing the scope in <a href="NEWS.html">NEWS.md</a>; a development-version bump does not publish a release. Matching R/Stata versions do not imply identical feature coverage.</p>
+<p>Version <code>0.1.0.9004</code> identifies the current development snapshot, aligned with the Stata companion. Publish its changes together in a reviewed squash merge carrying version <code>0.1.0.9004</code>. Version <code>0.1.0.9003</code> identifies the previous production snapshot. The exact-table recurrence, compensated reductions, numerical origins, shared covariance and fitted whitening policy first shipped in the merged 0.1.0.9003 snapshot, not 0.1.0.9002. See <a href="NEWS.html">NEWS.md</a>. A verified candidate requires the final-source checks below. Public tags and assets require separate authorization. Retain the development version during candidate preparation. Matching R/Stata versions do not imply identical feature coverage.</p>
+<div class="section level2">
+<h2 id="candidate-identity-and-scientific-reproduction">Candidate identity and scientific reproduction<a class="anchor" aria-label="anchor" href="#candidate-identity-and-scientific-reproduction"></a></h2>
+<p>Commit candidates locally. Publish review branches/PRs, tags, downloadable assets and websites only when authorized; do not push directly to <code>master</code>. After both package commits are final, bind them in one external release-set manifest under ignored outputs. Include tested trees, artifact filenames, sizes and SHA-256, commands, runtime/compiler information, hosted run IDs/tested SHAs and explicit PASS/FAIL/BLOCKED/NOT_RUN gates. Do not create circular committed HEAD references or embed an archive’s own hash inside it.</p>
+<p><code>pak::pak("JakobJuergens/RdistNN@f2c7bc36e8da040831b668281e50e18b2f1a4b3c")</code> installs immutable previous 0.1.0.9003 source. The unpinned README command follows <code>master</code>; <code>@v0.1.0</code> selects the existing older public tag. An unpublished local candidate is not remotely installable. Check out its full recorded commit in a separate local checkout and use <code>pak::local_install(".")</code>, or install its checked tarball. Put exact candidate commands in the external handoff once both final identities are known.</p>
+<p>The paper-evidence renderer verifies accepted stored bytes and reconstructs 21 tables and six figures. It does not run the candidate estimator. Simulation freezes bind source commit <code>40060f155cc4d84d59ee5af119f6a2534c569bab</code>, a source override and a native-library hash. SIPP binds installed files and its DLL; its recorded sibling checkout alone does not identify the loaded package. Preserve both historical records. Historical recomputation requires the matching dependency. Fresh launchers use and record actual installed software; outputs require review before promotion. Candidate agreement does not change the historical reproduction reference. See the installed bundle README.</p>
+<p>Use <code>Rscript --vanilla tools/replication/compare_paper_dependency.R --help</code> for bounded validation with explicit installations, file-hashed identities and a frozen case manifest declaring quantity-specific budgets. Fresh processes compare fixed-table arithmetic, exact-table construction and geometry separately. Retained SIPP arrays stay private; dependency comparison requires neither forest refitting nor production simulation.</p>
+</div>
 <div class="section level2">
 <h2 id="prepare-and-verify-the-final-source">Prepare and verify the final source<a class="anchor" aria-label="anchor" href="#prepare-and-verify-the-final-source"></a></h2>
 <p>Run from the repository root with package dependencies and development tools installed as described in <a href="CONTRIBUTING.html">CONTRIBUTING.md</a>.</p>
 <ol style="list-style-type: decimal"><li>
-<p>Confirm that <code>DESCRIPTION</code>, the current <code>NEWS.md</code> entry, and the intended <code>v&lt;version&gt;</code> tag agree on the chosen version. Synchronize current README and website draft references, while preserving historical release notes. Regenerate help and README from their sources:</p>
+<p>Confirm that <code>DESCRIPTION</code> and the current <code>NEWS.md</code> entry agree. Check the chosen tag only for a separately authorized public release. Synchronize README and website draft references, while preserving historical release notes. Regenerate help and README from their sources:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">document</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">build_readme</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
@@ -56,6 +63,7 @@
 <span>  check_dir <span class="op">=</span> <span class="st">"archives/check"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Investigate all errors and warnings, and review any notes. Inspect the archive’s file list: it should contain package code, generated help, tests, and built vignettes, while excluding private notes, agent settings, CI logs, prior archives, and repository-only publication instructions. <code>archives/</code> is ignored and excluded from future source builds.</p>
+<p>Run the full <strong>source</strong> suite with <code>devtools::test()</code> as well (including checkout-only documentation contracts), mirrored-header checks and focused compiled/forced-R numerical/consumer regressions from <code>tests/README.md</code>. Install this exact archive in a fresh library, execute installed examples, and run its paper-replication <code>verify.R</code> and <code>render_evidence.R --output-dir=NEW_DIR</code>. Verify exports, the installed bundle, accepted table reconstruction and unchanged installed files afterward. Record rendering separately from estimator recomputation.</p>
 </li>
 <li>
 <p>Build the documentation site, including examples and articles:</p>

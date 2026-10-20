@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9003</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -190,10 +190,9 @@ U-statistics</a>:
 </td>
 </tr>
 <tr class="odd">
-<td>Reproduce the current affine simulations and SIPP application</td>
+<td>Reproduce the paper simulations and SIPP application</td>
 <td>
-<a href="paper-affine-replication.html">Affine paper
-replication</a>:
+<a href="paper-affine-replication.html">Paper replication</a>:
 <code><a href="../articles/paper-affine-replication.html">vignette("paper-affine-replication", package = "RdistNN")</a></code>
 </td>
 </tr>
@@ -774,8 +773,7 @@ vector Z-estimation it may still require evaluation or solving</td>
 <div class="section level2">
 <h2 id="cate-nuisance-conventions">CATE nuisance conventions<a class="anchor" aria-label="anchor" href="#cate-nuisance-conventions"></a>
 </h2>
-<p><code><a href="../reference/cate_dnn.html">cate_dnn()</a></code> accepts one of three signal
-specifications.</p>
+<p><code><a href="../reference/cate_dnn.html">cate_dnn()</a></code> accepts one of two signal specifications.</p>
 <div class="section level3">
 <h3 id="full-aipw-signal">Full AIPW signal<a class="anchor" aria-label="anchor" href="#full-aipw-signal"></a>
 </h3>
@@ -794,44 +792,8 @@ m_1(U_i)-m_0(U_i)
 <p>The data-frame arguments are <code>m0_col</code>,
 <code>m1_col</code>, and <code>e_col</code>, together with
 <code>y_col</code> and <code>t_col</code>.</p>
-</div>
-<div class="section level3">
-<h3 id="robinson-form-signal">Robinson-form signal<a class="anchor" aria-label="anchor" href="#robinson-form-signal"></a>
-</h3>
-<p>With
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mo stretchy="false" form="prefix">(</mo><mi>u</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>𝔼</mi><mo stretchy="false" form="prefix">[</mo><mi>Y</mi><mo>∣</mo><mi>U</mi><mo>=</mo><mi>u</mi><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">m(u)=\mathbb E[Y\mid U=u]</annotation></semantics></math>,
-the alternative signal uses <code>m_col</code> and
-<code>e_col</code>:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ψ</mi><mi>i</mi></msub><mo>=</mo><mfrac><mrow><mo stretchy="false" form="prefix">{</mo><msub><mi>Y</mi><mi>i</mi></msub><mo>−</mo><mi>m</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>U</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="postfix">}</mo><mo stretchy="false" form="prefix">{</mo><msub><mi>D</mi><mi>i</mi></msub><mo>−</mo><mi>e</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>U</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="postfix">}</mo></mrow><mrow><mi>e</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>U</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="prefix">{</mo><mn>1</mn><mo>−</mo><mi>e</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>U</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="postfix">}</mo></mrow></mfrac><mi>.</mi></mrow><annotation encoding="application/x-tex">
-\psi_i
-=
-\frac{\{Y_i-m(U_i)\}\{D_i-e(U_i)\}}
-     {e(U_i)\{1-e(U_i)\}}.
-</annotation></semantics></math></p>
-<p>This normalized residual product is not the R-learner
-weighted-regression root. Let
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>e</mi><mn>0</mn></msub><mo>,</mo><msub><mi>m</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">e_0,m_0</annotation></semantics></math>
-be the true propensity and pooled mean and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>τ</mi><annotation encoding="application/x-tex">\tau</annotation></semantics></math>
-the conditional effect. For supplied
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><mi>e</mi><mo accent="true">̂</mo></mover><mo>,</mo><mover><mi>m</mi><mo accent="true">̂</mo></mover></mrow><annotation encoding="application/x-tex">\hat e,\hat m</annotation></semantics></math>,
-its conditional expectation is</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mrow><msub><mi>e</mi><mn>0</mn></msub><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>e</mi><mn>0</mn></msub><mo stretchy="false" form="postfix">)</mo><mi>τ</mi><mo>+</mo><mo stretchy="false" form="prefix">(</mo><msub><mi>e</mi><mn>0</mn></msub><mo>−</mo><mover><mi>e</mi><mo accent="true">̂</mo></mover><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="prefix">(</mo><msub><mi>m</mi><mn>0</mn></msub><mo>−</mo><mover><mi>m</mi><mo accent="true">̂</mo></mover><mo stretchy="false" form="postfix">)</mo></mrow><mrow><mover><mi>e</mi><mo accent="true">̂</mo></mover><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo>−</mo><mover><mi>e</mi><mo accent="true">̂</mo></mover><mo stretchy="false" form="postfix">)</mo></mrow></mfrac><mi>.</mi></mrow><annotation encoding="application/x-tex">
-\frac{e_0(1-e_0)\tau+(e_0-\hat e)(m_0-\hat m)}
-     {\hat e(1-\hat e)}.
-</annotation></semantics></math></p>
-<p>At
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><mi>m</mi><mo accent="true">̂</mo></mover><mo>=</mo><msub><mi>m</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">\hat m=m_0</annotation></semantics></math>,
-the derivative with respect to
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><mi>e</mi><mo accent="true">̂</mo></mover><annotation encoding="application/x-tex">\hat e</annotation></semantics></math>
-at
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>e</mi><mn>0</mn></msub><annotation encoding="application/x-tex">e_0</annotation></semantics></math>
-is
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>−</mi><mi>τ</mi><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo>−</mo><mn>2</mn><msub><mi>e</mi><mn>0</mn></msub><mo stretchy="false" form="postfix">)</mo><mi>/</mi><mo stretchy="false" form="prefix">{</mo><msub><mi>e</mi><mn>0</mn></msub><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>e</mi><mn>0</mn></msub><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">-\tau(1-2e_0)/\{e_0(1-e_0)\}</annotation></semantics></math>,
-generally nonzero. Oracle identification therefore holds, but the AIPW
-orthogonality argument cannot be transferred to this signal without
-additional propensity control. Clipping does not remove this
-sensitivity.</p>
+<p>The normalized Robinson pseudo-outcome is not implemented because it
+falls outside the accompanying paper’s theoretical results.</p>
 </div>
 <div class="section level3">
 <h3 id="precomputed-pseudo-outcome">Precomputed pseudo-outcome<a class="anchor" aria-label="anchor" href="#precomputed-pseudo-outcome"></a>
@@ -848,7 +810,7 @@ orthogonality does not by itself certify the stability of an arbitrary
 same-sample nuisance learner.</p>
 <p>Continue with <a href="conditional-z-estimation.html">Conditional
 Z-estimation</a> for a worked CATE fit. For the paper-specific
-data-generating process and Monte Carlo harness, use <a href="paper-affine-replication.html">Affine paper replication</a>.</p>
+data-generating process and Monte Carlo harness, use <a href="paper-affine-replication.html">Paper replication</a>.</p>
 </div>
 </div>
 <div class="section level2">

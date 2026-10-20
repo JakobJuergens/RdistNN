@@ -1,27 +1,26 @@
-# Affine Paper Replication
+# Conditional Z-Estimation Paper Replication
 
 ## The study represented here
 
-The installed replication layer represents the current **affine paper
-variant** of *Orthogonal Inference for Conditional Z-Estimation without
-Cross-Fitting: A Distributional Nearest-Neighbor Approach*. The snapshot
-is October 14, 2026; `manifest.json` pins the exact paper and source
-snapshot commits. It includes the bounded CATE and residualized-slope
-simulation campaign, the overhauled SIPP application, and accepted
-evidence for the current manuscript and supplement. The independent
-coupled-score manuscript is separate.
+The installed replication layer accompanies *Orthogonal Inference for
+Conditional Z-Estimation without Cross-Fitting: A Distributional
+Nearest-Neighbor Approach*. The snapshot is October 14, 2026;
+`manifest.json` pins the exact paper and source snapshot commits. It
+includes the bounded CATE and residualized-slope simulation campaign,
+the overhauled SIPP application, and accepted evidence for the current
+manuscript and supplement.
 
 The paper’s scientific R files are bundled unchanged. Package launchers
 handle installation paths, dependencies, output directories and
 verification. Superseded CATE and IV study launchers are removed.
 General `sim_cate_*` and experimental `sim_iv_*` APIs remain synthetic
-benchmark tools; they do not implement this affine campaign.
+benchmark tools; they do not implement this study-specific campaign.
 
 ## Install the replication bundle
 
 The bundle was introduced in development version `0.1.0.9000`. Install
 the current `master` branch before following this guide; the initial
-`v0.1.0` release does not contain the affine bundle.
+`v0.1.0` release does not contain the paper-replication bundle.
 
 ``` r
 
@@ -55,7 +54,7 @@ installed script:
 install.packages(c("digest", "jsonlite", "ggplot2", "patchwork"))
 system2(file.path(R.home("bin"), "Rscript"), c(
   shQuote(file.path(bundle, "render_evidence.R")),
-  "--output-dir=affine-paper-displays"
+  "--output-dir=paper-displays"
 ))
 ```
 
@@ -77,14 +76,14 @@ Historical transformed SIPP estimates remain saved evidence because the
 current supplement reports that distinct target. Their old fitting
 workflow is not included. The overhauled application uses raw dollars.
 
-## Run the current affine simulation campaign
+## Run the paper simulation campaign
 
 ``` r
 
 install.packages(c("digest", "jsonlite", "future", "future.apply"))
 system2(file.path(R.home("bin"), "Rscript"), c(
   shQuote(file.path(bundle, "run_simulations.R")),
-  "--mode=smoke", "--output-dir=affine-smoke"
+  "--mode=smoke", "--output-dir=paper-smoke"
 ))
 ```
 
@@ -123,7 +122,7 @@ Launch the full campaign on Linux with Python3 and sufficient resources:
 
 system2(file.path(R.home("bin"), "Rscript"), c(
   shQuote(file.path(bundle, "run_simulations.R")),
-  "--mode=production", "--output-dir=affine-production"
+  "--mode=production", "--output-dir=paper-production"
 ))
 ```
 
@@ -171,7 +170,7 @@ profile/mechanism/order rows.
 The launcher fits and saves models/predictions, computes diagnostics,
 exports paired component covariance and frozen-score influence
 information, and runs localization sensitivity without refitting. Its
-output lives in `runs/affine-current/`, with separate stage logs and
+output lives in `runs/paper-current/`, with separate stage logs and
 hashed run receipts. Smoke uses 300 households, 50 trees and two folds;
 its exports carry validation labels. Output directories are never
 silently overwritten.

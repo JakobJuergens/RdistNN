@@ -38,7 +38,8 @@ out <- cate_dnn(
 )
 print(out)
 #> <cate_result>
+#>   localization: s = 3, s/n = 0.15
 #>   data  : n=20, p=2, m=1
-#>   DNN   : method=exact, k=1, s=3, distance=l2
+#>   DNN   : method=exact, k=1, distance=l2
 #>   est   : tau[1:min(5,m)] = 0.1451  (SEs not requested)
 ```

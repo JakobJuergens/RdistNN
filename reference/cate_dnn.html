@@ -9,7 +9,7 @@ with DNN-based local weights."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9003</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,7 +50,6 @@ with DNN-based local weights.</p>
 <span>  t_col <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  m0_col <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  m1_col <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  m_col <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  e_col <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  pseudo_outcome <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  X <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -100,10 +99,6 @@ names must be non-missing, non-empty, and unique.</p></dd>
 <dd><p>Name or index for \(E[Y(1)\mid X]\) (full AIPW interface).</p></dd>
 
 
-<dt id="arg-m-col">m_col<a class="anchor" aria-label="anchor" href="#arg-m-col"></a></dt>
-<dd><p>Name or index for \(E[Y\mid X]\) (Robinson interface).</p></dd>
-
-
 <dt id="arg-e-col">e_col<a class="anchor" aria-label="anchor" href="#arg-e-col"></a></dt>
 <dd><p>Name or index for propensity \(P(T=1\mid X)\).</p></dd>
 
@@ -130,7 +125,7 @@ columns are not required.</p></dd>
 <dd><p>Finite propensity clipping constant in <code>(0, 0.5)</code> with
 <code>1 - clip &lt; 1</code> in double precision, default
 <code>1e-8</code>. Raw nuisance propensities must be finite and lie in <code>[0, 1]</code>;
-nuisance-based AIPW and Robinson scores use
+nuisance-based AIPW scores use
 <code>pmin(pmax(e, clip), 1 - clip)</code>. This argument does not alter a supplied
 <code>pseudo_outcome</code>.</p></dd>
 
@@ -210,11 +205,13 @@ top-5 weight concentration separately from the estimator's <code>k</code>;</p></
 </ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Two interfaces are supported.</p><ol><li><p>Data-frame interface (recommended): pass <code>data</code> and <code>x_cols</code>, then provide
+    <p>The documented sampling framework uses independent observations; cluster
+and survey-design inference are not supplied. Input row order breaks
+distance ties, so permuting tied observations can change estimates.</p>
+<p>Two interfaces are supported.</p><ol><li><p>Data-frame interface (recommended): pass <code>data</code> and <code>x_cols</code>, then provide
 either <code>pseudo_outcome</code> directly or nuisance columns used to construct it.
-For nuisance columns, use either:</p><ul><li><p>full AIPW form: <code>y_col</code>, <code>t_col</code>, <code>e_col</code>, <code>m0_col</code>, <code>m1_col</code>;</p></li>
-<li><p>Robinson form: <code>y_col</code>, <code>t_col</code>, <code>e_col</code>, <code>m_col</code>.</p></li>
-</ul></li>
+For AIPW nuisance construction, use <code>y_col</code>, <code>t_col</code>, <code>e_col</code>,
+<code>m0_col</code>, and <code>m1_col</code>.</p></li>
 <li><p>Matrix interface: pass <code>X</code>, one of <code>X0</code> or <code>x0</code>,
 and <code>pseudo_outcome</code>.</p></li>
 </ol><p>As in <code><a href="weights_dnn.html">weights_dnn()</a></code>, exact DNN localization uses the full rank permutation
@@ -234,12 +231,8 @@ diagnostics include <code>ess</code>, <code>max_weight</code>, <code>top_n</code
 <code>degenerate</code>; <code>top_n</code> is fixed at 5 and is independent of the estimator's
 <code>k</code>.</p>
 <p>The AIPW signal is Neyman orthogonal at the true nuisance functions. The
-normalized Robinson signal identifies the effect with true nuisances but
-is generally not orthogonal to propensity error. If the pooled outcome
-mean is correct, its conditional expectation is
-\(e_0(1-e_0)\tau / \{\hat e(1-\hat e)\}\). It can therefore have
-first-order propensity drift; AIPW's orthogonality argument does not apply
-to that route without additional propensity control. Orthogonality alone
+normalized Robinson pseudo-outcome is not implemented because it is outside
+the accompanying paper's theoretical results. Orthogonality alone
 does not validate arbitrary nuisance predictions fitted on the
 same observations used for localization and inference. Valid full-sample
 reuse additionally requires the nuisance-rate and full-state stability

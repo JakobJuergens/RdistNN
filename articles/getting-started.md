@@ -25,7 +25,6 @@ choosing a nuisance learner.
 
 demo_cate <- cate_demo_data(n = 180, p = 2, design = "hetero", seed = 1)
 df <- demo_cate$data
-df$m1_oracle <- df$m0_oracle + df$tau_oracle
 
 fit_cate <- cate_dnn(
   data = df, x_cols = c("X1", "X2"), y_col = "Y", t_col = "D",
@@ -36,6 +35,7 @@ fit_cate <- cate_dnn(
 
 summary(fit_cate)
 #> <summary.cate_result>
+#>   localization: s = 19, s/n = 0.106
 #>   targets: 1
 #>          estimate std.error statistic p.value conf.low conf.high
 #> target_1   0.4527    0.2607     1.737 0.08242 -0.05817    0.9636
@@ -69,25 +69,56 @@ c(data_frame = fit_cate$tau, matrix = fit_cate_matrix$tau)
 #>  0.4527139  0.4527139
 ```
 
-The data-frame pathway also accepts `pseudo_outcome`, or a Robinson-form
-score via `y_col`, `t_col`, `m_col`, and `e_col`. See
+The data-frame pathway also accepts `pseudo_outcome`. See
 [`?cate_dnn`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md)
 for the complete input contract. Preserve the same observation order for
 every nuisance or pseudo-outcome vector.
 
+### Migrating earlier CATE inputs
+
+The normalized Robinson construction has been removed. Replace earlier
+`m_col` calls with propensity and both arm-specific outcome means for
+AIPW, or supply an externally justified signal through `pseudo_outcome`.
+A pooled outcome mean is not a substitute for the two arm means. Demo
+data now include `m1_oracle` and `aipw_oracle`; the former `rho_oracle`
+used a different signal, so this is not a numerically equivalent column
+rename.
+
+### Covariance between prespecified profiles
+
+``` r
+
+profiles <- rbind(c(0, 0), c(0.2, -0.1))
+joint <- cate_dnn(X = X, X0 = profiles, pseudo_outcome = fit_cate$psi,
+                 s = fit_cate$meta$s, return = character())
+V <- vcov(joint)
+a <- c(1, -1)
+c(contrast = sum(a * coef(joint)),
+  contrast_se = sqrt(drop(crossprod(a, V %*% a))))
+#>    contrast contrast_se 
+#>  -0.3363364   0.1739546
+```
+
+Both covariance axes follow `coef(joint)`. Common deleted observations
+retain dependence between profiles. Valid contrast inference requires
+the relevant joint assumptions; pointwise intervals alone do not
+establish it.
+
+The documented sampling framework uses independent observations and
+supplies neither cluster nor survey-design inference. Input row order
+breaks equal distance ties, so reordering tied observations can change a
+fit. The reported `s/n` is descriptive; it is not a calibrated inference
+threshold.
+
 ### Interpreting CATE inference
 
-AIPW orthogonality controls first-order population nuisance drift. The
-normalized Robinson signal is generally not orthogonal to propensity
-errors (see the [signal
-formulas](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.html#robinson-form-signal));
-its inference needs additional propensity control. Valid nuisance reuse
-on the full estimation sample additionally requires the nuisance-rate
-and full-state stability conditions in the accompanying paper. The
-package cannot establish those conditions for an arbitrary learner.
-Out-of-fold predictions are also accepted, but using them does not by
-itself establish all conditions needed for local inference. Overlap and
-localization bias control remain necessary.
+AIPW orthogonality controls first-order population nuisance drift. Valid
+nuisance reuse on the full estimation sample additionally requires the
+nuisance-rate and full-state stability conditions in the accompanying
+paper. The package cannot establish those conditions for an arbitrary
+learner. Out-of-fold predictions are also accepted, but using them does
+not by itself establish all conditions needed for local inference.
+Overlap and localization bias control remain necessary.
 
 Raw supplied propensities must lie in `[0, 1]` and are clipped to
 `[clip, 1 - clip]` with `clip = 1e-8` by default. Diagnostics use the
@@ -341,7 +372,7 @@ as.vector(crossprod(wt$W, fit_cate$psi))
 - [Visualizing fitted
   estimators](https://JakobJuergens.github.io/RdistNN/articles/visualising-fits.md):
   CATE profiles, overlap, influence, and dashboards.
-- [Affine paper
+- [Paper
   replication](https://JakobJuergens.github.io/RdistNN/articles/paper-affine-replication.md):
   the current simulation and SIPP workflows, plus regeneration of
   accepted manuscript evidence.

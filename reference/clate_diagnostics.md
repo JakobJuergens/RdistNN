@@ -59,4 +59,9 @@ diagnostics(f)
 #>   n_eff  : min=2.5714, median=2.5714, max=2.5714
 #>   weights: max(top5 share)=1, max(weight)=0.5
 #>   dist   : available for 1/1 target(s)
+#>   instrument 1 mass: unavailable
+#>   instrument 0 mass: unavailable
+#>   clipped propensity mass: unavailable
+#>   first-stage statistic: 0.577 to 0.577
+#>   top-five squared jackknife-contribution share: 1 to 1
 ```
