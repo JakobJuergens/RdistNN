@@ -27,20 +27,7 @@
   pmin(pmax(as.numeric(ehat), as.numeric(clip)), 1 - as.numeric(clip))
 }
 
-# Normalized Robinson pseudo-outcome (not the R-learner regression root):
-#   rho_i = (D_i - ehat_i) * (Y_i - mhat_i) / (ehat_i * (1 - ehat_i))
-# ehat, mhat come from YOUR code; no fitting happens here.
-cate_rho_rlearner <- function(y, d, ehat, mhat, clip = 1e-8) {
-  n <- length(y)
-  if (length(d) != n)
-    stop(sprintf("`d` must have length equal to `y` (%d); got %d.", n, length(d)), call. = FALSE)
-  if (length(mhat) != n)
-    stop(sprintf("`mhat` must have length equal to `y` (%d); got %d.", n, length(mhat)), call. = FALSE)
-  e_used <- .cate_validate_and_clip_propensity(ehat, n = n, clip = clip)
-  (d - e_used) * (y - mhat) / (e_used * (1 - e_used))
-}
-
-# AIPW / doubly-robust pseudo-outcome (optional alternative):
+# AIPW / doubly-robust pseudo-outcome:
 #   tau_i = m1hat(X_i) - m0hat(X_i)
 #           + D_i * (Y_i - m1hat(X_i))/ehat_i
 #           - (1 - D_i) * (Y_i - m0hat(X_i))/(1 - ehat_i)

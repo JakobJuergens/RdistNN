@@ -98,6 +98,10 @@ cancels the leading bias term and achieves a faster MSE rate than
 single-scale DNN under sufficient smoothness.
 }
 \details{
+The documented sampling framework uses independent observations; cluster
+and survey-design inference are not supplied. Input row order breaks
+distance ties, so permuting tied observations can change estimates.
+
 Two interfaces are supported.
 \enumerate{
 \item Data-frame interface (recommended): pass \code{data}, \code{x_cols}, and exactly

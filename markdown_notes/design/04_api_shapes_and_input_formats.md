@@ -97,7 +97,7 @@ Prefer consistent names across the package.
 - `x_cols`
 
 ### Outcomes / treatment / nuisances
-- `y_col`, `t_col`, `m_col`, `m0_col`, `m1_col`, `e_col`
+- `y_col`, `t_col`, `m0_col`, `m1_col`, `e_col`
 - analogous matrix/vector names in lower-level APIs
 
 ### DNN controls

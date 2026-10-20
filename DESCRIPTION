@@ -1,6 +1,6 @@
 Package: RdistNN
 Title: Distributional Nearest-Neighbor Inference for Local Conditional Moment Models
-Version: 0.1.0.9003
+Version: 0.1.0.9004
 Authors@R: 
     person(given = "Jakob", family = "Juergens", email = "info@jakobjuergens.com", role = c("aut", "cre"))
 Author: Jakob Juergens [aut, cre]
@@ -11,7 +11,7 @@ Description: Implements distributional nearest-neighbor weights and
     treatment effects, conditional LATE from supplied nuisance predictions,
     and ratios of supplied signal averages, with delete-one jackknife standard
     errors, tuning-grid diagnostics, visualization, and study-specific
-    replication workflows for the affine conditional Z-estimation paper.
+    replication workflows for the conditional Z-estimation paper.
     Ratio confidence-set inversion, partially linear quantile-regression
     moment evaluation and local IV-GMM functionality are experimental.
     Lower-level generalized U-statistic and jackknife utilities are included
@@ -29,16 +29,10 @@ Imports:
 LinkingTo:
     Rcpp
 Suggests:
-    nleqslv,
-    minpack.lm,
-    optimx,
-    nloptr,
-    quantreg,
     tibble,
     pkgbuild,
     bench,
     lintr,
-    styler,
     knitr,
     rmarkdown,
     methods,
@@ -47,7 +41,7 @@ Suggests:
     jsonlite,
     hdm,
     grf,
-    ggplot2,
+    ggplot2 (>= 3.4.1),
     patchwork,
     vdiffr,
     future,

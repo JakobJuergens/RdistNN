@@ -13,7 +13,7 @@ cate_demo_data(
   seed = NULL,
   x0 = NULL,
   inject = NULL,
-  inject_col = "rho_oracle",
+  inject_col = "aipw_oracle",
   idx_inject = 3L
 )
 }
@@ -37,8 +37,8 @@ inject a single non-finite value into one of the returned columns (see \code{inj
 at row \code{idx_inject}; useful for testing runtime guards.}
 
 \item{inject_col}{Character; which column to corrupt when \code{inject} is not \code{NULL}.
-One of \code{"Y"}, \code{"rho_oracle"}, \code{"e_oracle"}, \code{"m_oracle"},
-\code{"m0_oracle"}, \code{"tau_oracle"}. Default \code{"rho_oracle"}.}
+One of \code{"Y"}, \code{"aipw_oracle"}, \code{"e_oracle"}, \code{"m_oracle"},
+\code{"m0_oracle"}, \code{"tau_oracle"}. Default \code{"aipw_oracle"}.}
 
 \item{idx_inject}{Integer index to corrupt (default 3).}
 }
@@ -49,8 +49,9 @@ A list with:
 and oracle nuisances \code{e_oracle} (=\eqn{e(X)}),
 \code{m_oracle} (=\eqn{m(X)}),
 \code{m0_oracle} (=\eqn{m_{0}(X)}),
+\code{m1_oracle} (treated outcome mean),
 \code{tau_oracle} (=\eqn{\tau(X)}),
-\code{rho_oracle} (=\eqn{\rho}).
+\code{aipw_oracle} (oracle AIPW signal).
 \item \code{x0}: the target point used (length \eqn{p}).
 \item \code{truth}: list of closures \code{tau_fn(x)}, \code{e_fn(x)},
 \code{m0_fn(x)}, \code{m_fn(x)} to evaluate ground truth at any \eqn{x}.
@@ -66,10 +67,7 @@ It returns \eqn{X}, \eqn{D}, \eqn{Y}, along with oracle nuisance quantities:
   e(x) \;=\; \Pr(D=1 \mid X=x) \, ,
 }
 where \eqn{m_{0}(x) = \mathbb{E}[Y \mid X=x, D=0]} and \eqn{\tau(x)} is the
-treatment effect. It also returns the R-learner–style pseudo-outcome
-\deqn{
-  \rho \;=\; \frac{(D - e)\,(Y - m)}{e\,(1 - e)} \, .
-}
+treatment effect. It also returns the oracle AIPW pseudo-outcome.
 }
 \details{
 No model fitting is performed; all quantities come from the DGP.

@@ -35,53 +35,7 @@ test_that("data-frame AIPW path: psi matches manual formula", {
   expect_length(out$tau, nrow(d$X0))
 })
 
-test_that("data-frame Robinson path: psi matches manual formula", {
-  d <- .make_df_data()
-  out <- cate_dnn(
-    data = d$df,
-    x_cols = d$x_cols,
-    y_col = "Y",
-    t_col = "D",
-    m_col = "m_oracle",
-    e_col = "e_oracle",
-    X0 = d$X0,
-    k = 3L, s = 5L, method = "exact", se = FALSE,
-    return = c("W", "psi")
-  )
-
-  expect_equal(out$psi, d$psi_robinson, tolerance = 1e-12)
-  expect_equal(out$psi, as.numeric(d$df$rho_oracle), tolerance = 1e-12)
-  tau_manual <- as.numeric(crossprod(out$psi, out$W))
-  expect_equal(out$tau, tau_manual, tolerance = 1e-12)
-})
-
-test_that("AIPW and Robinson paths produce different psi (and tau) on the same data", {
-  d <- .make_df_data(seed = 11L)
-  run <- function(use_aipw) {
-    if (use_aipw) {
-      cate_dnn(
-        data = d$df, x_cols = d$x_cols,
-        y_col = "Y", t_col = "D",
-        m0_col = "m0_oracle", m1_col = "m1_oracle", e_col = "e_oracle",
-        X0 = d$X0, k = 2L, s = 4L, se = FALSE, return = "psi"
-      )
-    } else {
-      cate_dnn(
-        data = d$df, x_cols = d$x_cols,
-        y_col = "Y", t_col = "D",
-        m_col = "m_oracle", e_col = "e_oracle",
-        X0 = d$X0, k = 2L, s = 4L, se = FALSE, return = "psi"
-      )
-    }
-  }
-  out_a <- run(TRUE)
-  out_r <- run(FALSE)
-  expect_true(all(is.finite(out_a$psi)))
-  expect_true(all(is.finite(out_r$psi)))
-  expect_false(isTRUE(all.equal(out_a$psi, out_r$psi)))
-})
-
-test_that("nuisance return slot: AIPW path returns m0/m1/e; Robinson path returns m/e", {
+test_that("nuisance return slot: AIPW path returns m0/m1/e", {
   d <- .make_df_data(seed = 13L)
 
   out_a <- cate_dnn(
@@ -97,17 +51,7 @@ test_that("nuisance return slot: AIPW path returns m0/m1/e; Robinson path return
   expect_equal(out_a$nuisance$m1, as.numeric(d$df$m1_oracle), tolerance = 1e-12)
   expect_equal(out_a$nuisance$e, as.numeric(d$df$e_oracle), tolerance = 1e-12)
 
-  out_r <- cate_dnn(
-    data = d$df, x_cols = d$x_cols,
-    y_col = "Y", t_col = "D",
-    m_col = "m_oracle", e_col = "e_oracle",
-    X0 = d$X0, k = 2L, s = 3L, se = FALSE,
-    return = "nuisance"
-  )
-  expect_true(!is.null(out_r$nuisance))
-  expect_setequal(names(out_r$nuisance), c("m", "e"))
-  expect_equal(out_r$nuisance$m, as.numeric(d$df$m_oracle), tolerance = 1e-12)
-  expect_equal(out_r$nuisance$e, as.numeric(d$df$e_oracle), tolerance = 1e-12)
+
 })
 
 test_that("ESS equals 1/colSums(W^2) exactly", {
@@ -128,15 +72,6 @@ test_that("ESS equals 1/colSums(W^2) exactly", {
 
 test_that("data-frame API errors: conflicting / missing outcome model columns", {
   d <- .make_df_data(seed = 17L)
-
-  expect_error(
-    cate_dnn(
-      data = d$df, x_cols = d$x_cols, y_col = "Y", t_col = "D",
-      m_col = "m_oracle", m0_col = "m0_oracle", m1_col = "m1_oracle",
-      e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
-    ),
-    regexp = "not both", ignore.case = TRUE
-  )
 
   expect_error(
     cate_dnn(
@@ -165,14 +100,14 @@ test_that("data-frame API errors: conflicting / missing outcome model columns", 
   expect_error(
     cate_dnn(
       data = d$df, x_cols = d$x_cols, t_col = "D",
-      m_col = "m_oracle", e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
+      m0_col = "m0_oracle", m1_col = "m1_oracle", e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
     )
   )
   expect_error(
     cate_dnn(
       data = d$df, x_cols = c("X1", "X_missing"),
       y_col = "Y", t_col = "D",
-      m_col = "m_oracle", e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
+      m0_col = "m0_oracle", m1_col = "m1_oracle", e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
     ),
     regexp = "specified by `x_cols`", ignore.case = TRUE
   )
@@ -186,7 +121,7 @@ test_that("data-frame API distinguishes NA vs non-finite treatment diagnostics",
   expect_error(
     cate_dnn(
       data = df_na, x_cols = d$x_cols, y_col = "Y", t_col = "D",
-      m_col = "m_oracle", e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
+      m0_col = "m0_oracle", m1_col = "m1_oracle", e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
     ),
     regexp = "t_col.*NA",
     ignore.case = TRUE
@@ -197,7 +132,7 @@ test_that("data-frame API distinguishes NA vs non-finite treatment diagnostics",
   expect_error(
     cate_dnn(
       data = df_inf, x_cols = d$x_cols, y_col = "Y", t_col = "D",
-      m_col = "m_oracle", e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
+      m0_col = "m0_oracle", m1_col = "m1_oracle", e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
     ),
     regexp = "t_col.*non-finite",
     ignore.case = TRUE
@@ -210,7 +145,7 @@ test_that("data-frame API distinguishes NA vs non-finite covariate diagnostics",
     tryCatch(
       cate_dnn(
         data = df, x_cols = d$x_cols, y_col = "Y", t_col = "D",
-        m_col = "m_oracle", e_col = "e_oracle",
+        m0_col = "m0_oracle", m1_col = "m1_oracle", e_col = "e_oracle",
         X0 = d$X0, k = 2L, s = 3L, se = FALSE
       ),
       error = conditionMessage
@@ -236,7 +171,7 @@ test_that("data-frame API distinguishes NA vs non-finite x_cols index diagnostic
   expect_error(
     cate_dnn(
       data = d$df, x_cols = c(1L, NA_integer_), y_col = "Y", t_col = "D",
-      m_col = "m_oracle", e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
+      m0_col = "m0_oracle", m1_col = "m1_oracle", e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
     ),
     regexp = "x_cols.*NA",
     ignore.case = TRUE
@@ -245,7 +180,7 @@ test_that("data-frame API distinguishes NA vs non-finite x_cols index diagnostic
   expect_error(
     cate_dnn(
       data = d$df, x_cols = c(1L, Inf), y_col = "Y", t_col = "D",
-      m_col = "m_oracle", e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
+      m0_col = "m0_oracle", m1_col = "m1_oracle", e_col = "e_oracle", X0 = d$X0, k = 2L, s = 3L
     ),
     regexp = "x_cols.*non-finite",
     ignore.case = TRUE
@@ -307,40 +242,6 @@ test_that("AIPW nuisance path matches matrix pseudo_outcome path", {
   )
   out_mat <- cate_dnn(
     X = x_mat, X0 = d$X0, pseudo_outcome = d$psi_aipw,
-    k = 2L, s = 4L, method = "exact", se = FALSE
-  )
-
-  expect_equal(out_df_name$tau, out_mat$tau, tolerance = 1e-12)
-  expect_equal(out_df_idx$tau, out_mat$tau, tolerance = 1e-12)
-})
-
-test_that("Robinson nuisance path matches matrix pseudo_outcome path", {
-  d <- .make_df_data(seed = 103L)
-  nms <- names(d$df)
-  x_mat <- as.matrix(d$df[, d$x_cols, drop = FALSE])
-
-  out_df_name <- cate_dnn(
-    data = d$df,
-    x_cols = d$x_cols,
-    y_col = "Y",
-    t_col = "D",
-    m_col = "m_oracle",
-    e_col = "e_oracle",
-    X0 = d$X0,
-    k = 2L, s = 4L, method = "exact", se = FALSE
-  )
-  out_df_idx <- cate_dnn(
-    data = d$df,
-    x_cols = match(d$x_cols, nms),
-    y_col = match("Y", nms),
-    t_col = match("D", nms),
-    m_col = match("m_oracle", nms),
-    e_col = match("e_oracle", nms),
-    X0 = d$X0,
-    k = 2L, s = 4L, method = "exact", se = FALSE
-  )
-  out_mat <- cate_dnn(
-    X = x_mat, X0 = d$X0, pseudo_outcome = d$psi_robinson,
     k = 2L, s = 4L, method = "exact", se = FALSE
   )
 
@@ -497,7 +398,6 @@ test_that("tibble input matches data.frame input on pseudo_outcome path", {
 
 test_that("propensity score constructors validate raw values and use the clipping contract", {
   aipw <- getFromNamespace("cate_rho_aipw", "RdistNN")
-  robinson <- getFromNamespace("cate_rho_rlearner", "RdistNN")
   e_raw <- c(0, 1, 1e-12, 1 - 1e-12, 0.2, 0.8)
   clip <- 1e-8
   e_used <- pmin(pmax(e_raw, clip), 1 - clip)
@@ -513,20 +413,14 @@ test_that("propensity score constructors validate raw values and use the clippin
       (1 - d) * (y - m0) / (1 - e_used),
     tolerance = 1e-12
   )
-  expect_equal(
-    robinson(y, d, e_raw, m),
-    (d - e_used) * (y - m) / (e_used * (1 - e_used)),
-    tolerance = 1e-12
-  )
+
 
   for (bad in list(c(e_raw[-1], NA_real_), c(e_raw[-1], Inf),
                    c(e_raw[-1], -1e-12), c(e_raw[-1], 1 + 1e-12))) {
     expect_error(aipw(y, d, m1, m0, bad), "ehat")
-    expect_error(robinson(y, d, bad, m), "ehat")
   }
   for (bad_clip in c(NA_real_, Inf, 0, 0.5, -1e-8)) {
     expect_error(aipw(y, d, m1, m0, e_raw, clip = bad_clip), "clip")
-    expect_error(robinson(y, d, e_raw, m, clip = bad_clip), "clip")
   }
 })
 
@@ -576,7 +470,7 @@ test_that("cate_dnn rejects invalid raw propensities before clipping", {
     dat$e_bad <- e
     cate_dnn(
       data = dat, x_cols = d$x_cols,
-      y_col = "Y", t_col = "D", m_col = "m_oracle", e_col = "e_bad",
+      y_col = "Y", t_col = "D", m0_col = "m0_oracle", m1_col = "m1_oracle", e_col = "e_bad",
       X0 = d$X0, k = 1L, s = 2L, se = FALSE
     )
   }

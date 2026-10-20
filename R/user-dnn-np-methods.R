@@ -8,8 +8,9 @@
 #' @export
 print.np_result <- function(x, ...) {
   cat("<np_result>\n", sep = "")
+  .dnn_print_localization(x$meta)
   cat("  data  : n=", x$meta$n, ", p=", x$meta$p, ", m=", x$meta$m, "\n", sep = "")
-  cat("  DNN   : method=", x$meta$method, ", k=", x$meta$k, ", s=", x$meta$s,
+  cat("  DNN   : method=", x$meta$method, ", k=", x$meta$k,
     ", distance=", x$meta$distance, "\n",
     sep = ""
   )
@@ -139,6 +140,7 @@ summary.np_result <- function(object, level = .95, ...) {
 #' @export
 print.summary.np_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
   cat("<summary.np_result>\n")
+  .dnn_print_localization(x$meta)
   if (!isTRUE(x$has_se)) cat("  Standard errors are not available.\n")
   print(signif(x$coefficients, digits))
   invisible(x)

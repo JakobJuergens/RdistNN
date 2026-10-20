@@ -83,7 +83,7 @@ fit_cate <- cate_dnn(
   x_cols = c("X1", "X2"),
   y_col = "Y",
   t_col = "D",
-  m_col = "m_oracle",
+  m0_col = "m0_oracle", m1_col = "m1_oracle",
   e_col = "e_oracle",
   x0 = demo_cate$x0,
   se = FALSE

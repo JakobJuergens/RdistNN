@@ -12,7 +12,7 @@
   )
 }
 
-.cate_grid_cate_case <- function(kind = c("direct", "aipw", "robinson"),
+.cate_grid_cate_case <- function(kind = c("direct", "aipw"),
                               n = 42L, p = 2L, m = 3L, seed = 6606L) {
   kind <- match.arg(kind)
   d <- .make_df_data(n = n, p = p, m = m, seed = seed)
@@ -23,19 +23,10 @@
       scalar_args = list(X = x_mat, X0 = d$X0, pseudo_outcome = d$psi_aipw)
     ))
   }
-  if (identical(kind, "aipw")) {
-    args <- list(
-      data = d$df, x_cols = d$x_cols,
-      y_col = "Y", t_col = "D",
-      m0_col = "m0_oracle", m1_col = "m1_oracle", e_col = "e_oracle",
-      X0 = d$X0
-    )
-    return(list(grid_args = args, scalar_args = args))
-  }
   args <- list(
     data = d$df, x_cols = d$x_cols,
     y_col = "Y", t_col = "D",
-    m_col = "m_oracle", e_col = "e_oracle",
+    m0_col = "m0_oracle", m1_col = "m1_oracle", e_col = "e_oracle",
     X0 = d$X0
   )
   list(grid_args = args, scalar_args = args)
@@ -174,12 +165,11 @@ test_that("cate_dnn grid mode preserves default-candidate fields and extras", {
 test_that("cate_dnn grid mode candidate rows match scalar fits on every pseudo-outcome path", {
   .cate_grid_expect_grid_matches_scalar("direct", seed = 6611L)
   .cate_grid_expect_grid_matches_scalar("aipw", seed = 6612L)
-  .cate_grid_expect_grid_matches_scalar("robinson", seed = 6613L)
 })
 
 test_that("cate_dnn grid diagnostics use fixed top-5 shares on every pseudo-outcome path", {
   tun <- .cate_grid_cate_tuning(default_s = 5L, s_grid = c(2L, 5L, 5L, 7L))
-  seeds <- c(direct = 6619L, aipw = 6620L, robinson = 6621L)
+  seeds <- c(direct = 6619L, aipw = 6620L)
   for (kind in names(seeds)) {
     case <- .cate_grid_cate_case(kind = kind, n = 40L, m = 3L, seed = seeds[[kind]])
     grid <- .cate_grid_do_cate(
@@ -195,8 +185,8 @@ test_that("cate_dnn grid diagnostics use fixed top-5 shares on every pseudo-outc
 
 test_that("cate_dnn grid mode keeps nuisance extras anchored to the default candidate", {
   tun <- .cate_grid_cate_tuning()
-  for (kind in c("aipw", "robinson")) {
-    case <- .cate_grid_cate_case(kind, seed = if (identical(kind, "aipw")) 6617L else 6618L)
+  for (kind in "aipw") {
+    case <- .cate_grid_cate_case(kind, seed = 6617L)
     scalar <- .cate_grid_do_cate(
       case$scalar_args,
       method = "exact", k = 1L, tuning = tun,
@@ -243,7 +233,6 @@ test_that("cate_dnn grid mode rejects explicit s and can use the paper default g
 
 test_that("cate_dnn grid mode constructs nuisance pseudo-outcomes once per fit", {
   aipw_case <- .cate_grid_cate_case("aipw", n = 40L, m = 2L, seed = 6615L)
-  robinson_case <- .cate_grid_cate_case("robinson", n = 40L, m = 2L, seed = 6616L)
   tun <- .cate_grid_cate_tuning()
 
   aipw_calls <- .cate_grid_count_traced_calls("cate_rho_aipw", {
@@ -258,15 +247,4 @@ test_that("cate_dnn grid mode constructs nuisance pseudo-outcomes once per fit",
   })
   expect_equal(aipw_calls, 1L)
 
-  robinson_calls <- .cate_grid_count_traced_calls("cate_rho_rlearner", {
-    grid <- .cate_grid_do_cate(
-      robinson_case$grid_args,
-      method = "exact", k = 1L, tuning = tun, tuning_mode = "grid",
-      se = FALSE,
-      return = "psi"
-    )
-    expect_true(is.list(grid$tuning_grid))
-    expect_true(is.numeric(grid$psi))
-  })
-  expect_equal(robinson_calls, 1L)
 })

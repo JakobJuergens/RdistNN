@@ -111,13 +111,14 @@ plot_estimates <- function(object, level = 0.95,
       p <- p + ggplot2::geom_vline(xintercept = 0, linetype = "dashed")
     }
     if (has_se) {
-      p <- p + ggplot2::geom_pointrange(
-        ggplot2::aes(xmin = .data$ci_lower, xmax = .data$ci_upper),
+      p <- p + ggplot2::geom_segment(
+        data = .plot_finite_intervals(df),
+        ggplot2::aes(x = .data$ci_lower, xend = .data$ci_upper,
+          yend = .data$target_label),
         colour = .plot_col_single, na.rm = TRUE
       )
-    } else {
-      p <- p + ggplot2::geom_point(colour = .plot_col_single, na.rm = TRUE)
     }
+    p <- p + ggplot2::geom_point(colour = .plot_col_single, na.rm = TRUE)
     p <- p + ggplot2::labs(x = "Estimate", y = NULL)
   } else {
     xcol <- if (!is.null(axis$var)) axis$var else "target_id"
@@ -128,11 +129,14 @@ plot_estimates <- function(object, level = 0.95,
     if (mode == "profile") {
       if (has_se) {
         p <- p + ggplot2::geom_ribbon(
-          ggplot2::aes(ymin = .data$ci_lower, ymax = .data$ci_upper),
+          data = .plot_interval_runs(df, xcol),
+          ggplot2::aes(ymin = .data$ci_lower, ymax = .data$ci_upper,
+            group = .data$interval_group),
           alpha = 0.25, fill = .plot_col_single, na.rm = TRUE
         )
       }
-      p <- p + ggplot2::geom_line(colour = .plot_col_single, na.rm = TRUE)
+      p <- p + ggplot2::geom_line(colour = .plot_col_single, na.rm = TRUE) +
+        ggplot2::geom_point(colour = .plot_col_single, na.rm = TRUE)
       if (isTRUE(shade_significant) && has_se) {
         sig <- df[!is.na(df$ci_lower) &
                     sign(df$ci_lower) == sign(df$ci_upper) &
@@ -146,13 +150,14 @@ plot_estimates <- function(object, level = 0.95,
       }
     } else {
       if (has_se) {
-        p <- p + ggplot2::geom_pointrange(
-          ggplot2::aes(ymin = .data$ci_lower, ymax = .data$ci_upper),
+        p <- p + ggplot2::geom_segment(
+          data = .plot_finite_intervals(df),
+          ggplot2::aes(y = .data$ci_lower, yend = .data$ci_upper,
+            xend = .data[[xcol]]),
           colour = .plot_col_single, na.rm = TRUE
         )
-      } else {
-        p <- p + ggplot2::geom_point(colour = .plot_col_single, na.rm = TRUE)
       }
+      p <- p + ggplot2::geom_point(colour = .plot_col_single, na.rm = TRUE)
     }
     p <- p + ggplot2::labs(x = axis$label, y = "Estimate")
   }
@@ -164,6 +169,24 @@ plot_estimates <- function(object, level = 0.95,
     p <- p + ggplot2::labs(caption = paste(captions, collapse = "\n"))
   }
   p + .rdistnn_theme()
+}
+
+.plot_finite_intervals <- function(df) {
+  df[is.finite(df$estimate) & is.finite(df$ci_lower) & is.finite(df$ci_upper), , drop = FALSE]
+}
+
+# Split ribbon groups at unavailable intervals before removing their rows.
+.plot_interval_runs <- function(df, xcol) {
+  candidate <- if ("candidate_id" %in% names(df)) df$candidate_id else rep("fit", nrow(df))
+  groups <- split(seq_len(nrow(df)), interaction(candidate, df$coef, drop = TRUE))
+  df$interval_group <- rep(NA_character_, nrow(df))
+  for (g in seq_along(groups)) {
+    ids <- groups[[g]]
+    ids <- ids[order(df[[xcol]][ids], df$target_id[ids])]
+    available <- is.finite(df$estimate[ids]) & is.finite(df$ci_lower[ids]) & is.finite(df$ci_upper[ids])
+    df$interval_group[ids] <- paste(g, cumsum(!available), sep = ":")
+  }
+  .plot_finite_intervals(df)
 }
 
 .plot_estimates_candidates <- function(object, level, style, x_var,
@@ -194,7 +217,10 @@ plot_estimates <- function(object, level = 0.95,
     captions <- c(captions, payload$drop_caption)
   }
   zero_line <- inherits(object, "cate_result") || inherits(object, "clate_result") || inherits(object, "plqr_result")
-  dodge <- ggplot2::position_dodge(width = 0.5)
+  # All layers use positions from the complete candidate grid, so missing
+  # intervals cannot change a candidate's offset relative to its point.
+  candidate_index <- match(df$candidate_id, unique(df$candidate_id))
+  offset <- 0.5 * ((candidate_index - 0.5) / max(candidate_index) - 0.5)
 
   if (mode == "forest") {
     labs_map <- .plot_target_labels(df)
@@ -202,11 +228,12 @@ plot_estimates <- function(object, level = 0.95,
       labs_map[as.character(df$target_id)],
       levels = rev(unname(labs_map))
     )
+    df$plot_y <- as.numeric(df$target_label) + offset
     p <- ggplot2::ggplot(
       df,
       ggplot2::aes(
         x = .data$estimate,
-        y = .data$target_label,
+        y = .data$plot_y,
         colour = .data$candidate_label,
         linetype = .data$candidate_label,
         linewidth = .data$default_linewidth
@@ -216,20 +243,23 @@ plot_estimates <- function(object, level = 0.95,
       p <- p + ggplot2::geom_vline(xintercept = 0, linetype = "dashed")
     }
     if (has_se) {
-      p <- p + ggplot2::geom_pointrange(
-        ggplot2::aes(xmin = .data$ci_lower, xmax = .data$ci_upper),
-        position = dodge, na.rm = TRUE
+      p <- p + ggplot2::geom_segment(
+        data = .plot_finite_intervals(df),
+        ggplot2::aes(x = .data$ci_lower, xend = .data$ci_upper, yend = .data$plot_y),
+        na.rm = TRUE
       )
-    } else {
-      p <- p + ggplot2::geom_point(position = dodge, na.rm = TRUE)
     }
-    p <- p + ggplot2::labs(x = "Estimate", y = NULL)
+    p <- p + ggplot2::geom_point(na.rm = TRUE) +
+      ggplot2::scale_y_continuous(breaks = seq_along(levels(df$target_label)),
+        labels = levels(df$target_label), expand = ggplot2::expansion(add = 0.6)) +
+      ggplot2::labs(x = "Estimate", y = NULL)
   } else {
     xcol <- if (!is.null(axis$var)) axis$var else "target_id"
+    df$plot_x <- df[[xcol]] + if (mode == "profile") 0 else offset
     p <- ggplot2::ggplot(
       df,
       ggplot2::aes(
-        x = .data[[xcol]],
+        x = .data$plot_x,
         y = .data$estimate,
         colour = .data$candidate_label,
         linetype = .data$candidate_label,
@@ -243,17 +273,19 @@ plot_estimates <- function(object, level = 0.95,
     if (mode == "profile") {
       if (has_se) {
         p <- p + ggplot2::geom_ribbon(
+          data = .plot_interval_runs(df, xcol),
           ggplot2::aes(
             ymin = .data$ci_lower,
             ymax = .data$ci_upper,
-            fill = .data$candidate_label
+            fill = .data$candidate_label,
+            group = .data$interval_group
           ),
           alpha = 0.18,
           colour = NA,
           linewidth = 0, na.rm = TRUE
         )
       }
-      p <- p + ggplot2::geom_line(na.rm = TRUE)
+      p <- p + ggplot2::geom_line(na.rm = TRUE) + ggplot2::geom_point(na.rm = TRUE)
       if (isTRUE(shade_significant) && has_se) {
         sig <- df[!is.na(df$ci_lower) &
                     sign(df$ci_lower) == sign(df$ci_upper) &
@@ -270,13 +302,13 @@ plot_estimates <- function(object, level = 0.95,
       }
     } else {
       if (has_se) {
-        p <- p + ggplot2::geom_pointrange(
-          ggplot2::aes(ymin = .data$ci_lower, ymax = .data$ci_upper),
-          position = dodge, na.rm = TRUE
+        p <- p + ggplot2::geom_segment(
+          data = .plot_finite_intervals(df),
+          ggplot2::aes(y = .data$ci_lower, yend = .data$ci_upper, xend = .data$plot_x),
+          na.rm = TRUE
         )
-      } else {
-        p <- p + ggplot2::geom_point(position = dodge, na.rm = TRUE)
       }
+      p <- p + ggplot2::geom_point(na.rm = TRUE)
     }
     p <- p + ggplot2::labs(x = axis$label, y = "Estimate")
   }

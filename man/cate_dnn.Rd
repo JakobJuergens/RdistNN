@@ -11,7 +11,6 @@ cate_dnn(
   t_col = NULL,
   m0_col = NULL,
   m1_col = NULL,
-  m_col = NULL,
   e_col = NULL,
   pseudo_outcome = NULL,
   X = NULL,
@@ -45,8 +44,6 @@ names must be non-missing, non-empty, and unique.}
 
 \item{m1_col}{Name or index for \eqn{E[Y(1)\mid X]} (full AIPW interface).}
 
-\item{m_col}{Name or index for \eqn{E[Y\mid X]} (Robinson interface).}
-
 \item{e_col}{Name or index for propensity \eqn{P(T=1\mid X)}.}
 
 \item{pseudo_outcome}{Numeric vector of length \code{n}. If supplied, nuisance
@@ -62,7 +59,7 @@ columns are not required.}
 \item{clip}{Finite propensity clipping constant in \verb{(0, 0.5)} with
 \code{1 - clip < 1} in double precision, default
 \code{1e-8}. Raw nuisance propensities must be finite and lie in \verb{[0, 1]};
-nuisance-based AIPW and Robinson scores use
+nuisance-based AIPW scores use
 \code{pmin(pmax(e, clip), 1 - clip)}. This argument does not alter a supplied
 \code{pseudo_outcome}.}
 
@@ -124,15 +121,16 @@ Estimate conditional average treatment effects by combining a pseudo-outcome
 with DNN-based local weights.
 }
 \details{
+The documented sampling framework uses independent observations; cluster
+and survey-design inference are not supplied. Input row order breaks
+distance ties, so permuting tied observations can change estimates.
+
 Two interfaces are supported.
 \enumerate{
 \item Data-frame interface (recommended): pass \code{data} and \code{x_cols}, then provide
 either \code{pseudo_outcome} directly or nuisance columns used to construct it.
-For nuisance columns, use either:
-\itemize{
-\item full AIPW form: \code{y_col}, \code{t_col}, \code{e_col}, \code{m0_col}, \code{m1_col};
-\item Robinson form: \code{y_col}, \code{t_col}, \code{e_col}, \code{m_col}.
-}
+For AIPW nuisance construction, use \code{y_col}, \code{t_col}, \code{e_col},
+\code{m0_col}, and \code{m1_col}.
 \item Matrix interface: pass \code{X}, one of \code{X0} or \code{x0},
 and \code{pseudo_outcome}.
 }
@@ -156,12 +154,8 @@ diagnostics include \code{ess}, \code{max_weight}, \code{top_n}, \code{top5_weig
 \code{k}.
 
 The AIPW signal is Neyman orthogonal at the true nuisance functions. The
-normalized Robinson signal identifies the effect with true nuisances but
-is generally not orthogonal to propensity error. If the pooled outcome
-mean is correct, its conditional expectation is
-\eqn{e_0(1-e_0)\tau / \{\hat e(1-\hat e)\}}. It can therefore have
-first-order propensity drift; AIPW's orthogonality argument does not apply
-to that route without additional propensity control. Orthogonality alone
+normalized Robinson pseudo-outcome is not implemented because it is outside
+the accompanying paper's theoretical results. Orthogonality alone
 does not validate arbitrary nuisance predictions fitted on the
 same observations used for localization and inference. Valid full-sample
 reuse additionally requires the nuisance-rate and full-state stability

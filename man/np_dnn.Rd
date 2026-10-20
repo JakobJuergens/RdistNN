@@ -106,6 +106,10 @@ Estimate a localized nonparametric mean by combining observed outcomes with
 DNN-based local weights.
 }
 \details{
+The documented sampling framework uses independent observations; cluster
+and survey-design inference are not supplied. Input row order breaks
+distance ties, so permuting tied observations can change estimates.
+
 Two interfaces are supported.
 \enumerate{
 \item Data-frame interface (recommended): pass \code{data}, \code{x_cols}, and either

@@ -665,7 +665,7 @@
 # Uses externally supplied oracle nuisances (Y.hat = m_oracle,
 # W.hat = e_oracle) to compare localization and forest inference while holding
 # first-stage nuisance quality fixed. This is the modern
-# Robinson-orthogonalized GRF estimator with explicit nuisance inputs, not a
+# Residualized GRF estimator with explicit nuisance inputs, not a
 # reproduction of the historical original causal-forest algorithm.
 # Use one GRF thread per Monte Carlo worker: the outer simulation harness
 # parallelizes over replications, so letting each forest fit use all cores would

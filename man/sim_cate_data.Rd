@@ -44,7 +44,7 @@ A list with:
 \itemize{
 \item \code{data}: a \code{data.frame} with columns \code{X1..Xkx}, \code{D}, \code{Y}, and oracle
 nuisances \code{e_oracle}, \code{m_oracle}, \code{m0_oracle}, \code{m1_oracle},
-\code{tau_oracle}, \code{aipw_oracle}, and the Robinson pseudo-outcome \code{rho_oracle}.
+\code{tau_oracle}, and \code{aipw_oracle}.
 \item \code{x0}: numeric length-\code{kx} evaluation point.
 \item \code{tau_x0}: true treatment effect at \code{x0}.
 \item \code{truth}: named list of closures \code{tau_fn}, \code{e_fn}, \code{m0_fn}, \code{m_fn}.
@@ -53,8 +53,7 @@ nuisances \code{e_oracle}, \code{m_oracle}, \code{m0_oracle}, \code{m1_oracle},
 \description{
 Generates a synthetic dataset for the CATE simulation study, including
 oracle nuisance quantities \eqn{e}, \eqn{m_0}, \eqn{m_1}, the AIPW score used
-by the general DNN CATE benchmarks, and the Robinson pseudo-outcome
-\eqn{\rho} used by the Robinson-style estimator route.
+by the general DNN CATE benchmarks.
 }
 \details{
 Six designs are available:

@@ -14,11 +14,19 @@ utils::globalVariables(".data")
   requireNamespace(pkg, quietly = TRUE)
 }
 
+.plot_pkg_version <- function(pkg) utils::packageVersion(pkg)
+
 .plot_require_ggplot2 <- function(fn) {
   if (!.plot_pkg_installed("ggplot2")) {
     .abort_bad_state(sprintf(
       "%s() requires the suggested package 'ggplot2'; install it with install.packages(\"ggplot2\").",
       fn
+    ))
+  }
+  if (.plot_pkg_version("ggplot2") < "3.4.1") {
+    .abort_bad_state(sprintf(
+      "%s() requires ggplot2 >= 3.4.1; installed version is %s. Update with install.packages(\"ggplot2\").",
+      fn, .plot_pkg_version("ggplot2")
     ))
   }
   invisible(NULL)
@@ -93,9 +101,9 @@ utils::globalVariables(".data")
   meta <- object$meta
   s_txt <- if (!is.null(meta$s)) {
     src <- if (!is.null(meta$tuning$source)) meta$tuning$source else "manual"
-    sprintf("s = %d (%s)", as.integer(meta$s), src)
+    sprintf("%s (%s)", .dnn_localization_label(meta), src)
   } else if (!is.null(meta$s1)) {
-    sprintf("s1 = %d, s2 = %d", as.integer(meta$s1), as.integer(meta$s2))
+    .dnn_localization_label(meta)
   } else {
     NULL
   }

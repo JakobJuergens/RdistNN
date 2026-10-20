@@ -147,6 +147,7 @@ print.affine_ratio_result <- function(x, digits = max(3L, getOption("digits") - 
 #' @rdname affine_ratio_result
 #' @export
 print.summary.affine_ratio_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
+  .dnn_print_localization(x$meta)
   roles <- x$meta$component_roles
   if (!is.null(roles)) {
     cat("Components: numerator = ", roles[[1L]], "; denominator = ", roles[[2L]], "\n", sep = "")

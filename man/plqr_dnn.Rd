@@ -186,6 +186,10 @@ intervals. No local root solving is performed: \code{theta} in the result is the
 supplied evaluation value (\code{meta$theta_source = "supplied"}).
 }
 \details{
+The documented sampling framework uses independent observations; cluster
+and survey-design inference are not supplied. Input row order breaks
+distance ties, so permuting tied observations can change estimates.
+
 Two interfaces are supported.
 \enumerate{
 \item Data-frame interface (recommended): pass \code{data} with \code{x_cols}, \code{D_cols},

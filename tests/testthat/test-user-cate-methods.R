@@ -116,7 +116,7 @@ test_that("predict handles data.frame newdata via stored x_cols", {
   d <- .make_df_data(n = 55L, p = 2L, m = 4L, seed = 31L)
   fit <- cate_dnn(
     data = d$df, x_cols = d$x_cols,
-    y_col = "Y", t_col = "D", m_col = "m_oracle", e_col = "e_oracle",
+    y_col = "Y", t_col = "D", m0_col = "m0_oracle", m1_col = "m1_oracle", e_col = "e_oracle",
     X0 = d$X0, k = 2L, s = 3L, method = "exact", se = TRUE
   )
 
@@ -179,7 +179,7 @@ test_that("predict validates data-frame newdata columns", {
   d <- .make_df_data(n = 55L, p = 2L, m = 4L, seed = 34L)
   fit <- cate_dnn(
     data = d$df, x_cols = d$x_cols,
-    y_col = "Y", t_col = "D", m_col = "m_oracle", e_col = "e_oracle",
+    y_col = "Y", t_col = "D", m0_col = "m0_oracle", m1_col = "m1_oracle", e_col = "e_oracle",
     X0 = d$X0, k = 2L, s = 3L, method = "exact", se = FALSE
   )
 

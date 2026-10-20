@@ -2,7 +2,7 @@
 
 Prepared for a software entry or research-page addition on
 [jakobjuergens.com](https://jakobjuergens.com/). The text below introduces the
-local `0.1.0.9003` development snapshot. Publish an announcement only after
+unpublished `0.1.0.9004` development candidate. Publish an announcement only after
 reviewed source, checked release assets and documentation links are live.
 
 ## Software entry
@@ -26,13 +26,14 @@ remain experimental.
 
 ## Announcement draft
 
-RdistNN 0.1.0.9003 combines conditional average treatment effects, nonparametric
+RdistNN 0.1.0.9004 combines conditional average treatment effects, nonparametric
 regression and supplied-prediction conditional LATE with distributional
 nearest-neighbor weights. Shared result methods provide pointwise uncertainty,
-tuning comparisons, diagnostics and saved-fit reuse. The latest maintenance
-update consolidates shared components and strengthens tests for candidate
-uncertainty, numerical parity and package installation. Estimator interfaces
-and inference limits are unchanged. The guides demonstrate data-frame and
+tuning comparisons, diagnostics and saved-fit reuse. The update adds joint CATE covariance,
+preserves finite estimates when intervals are unavailable, and makes localization
+and support diagnostics easier to interpret. Built-in CATE signals use AIPW;
+externally justified supplied signals remain available. The inference scope
+and migration from removed nuisance inputs are documented. The guides demonstrate data-frame and
 matrix interfaces and distinguish supported workflows from experimental
 confidence sets, PLQR and local IV-GMM.
 

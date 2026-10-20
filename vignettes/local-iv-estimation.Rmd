@@ -26,8 +26,8 @@ This vignette shows the local IV-GMM workflow built on `gmm_dnn()`. The example
 uses the doubly robust IV moment model created by `gmm_model_dr_iv()` and the IV
 simulation DGPs exposed through `sim_iv_data()`.
 
-These synthetic IV examples are experimental benchmarks. The current affine
-paper replication is described in [Affine paper replication](paper-affine-replication.html).
+These synthetic IV examples are experimental benchmarks. The paper
+replication is described in [Paper replication](paper-affine-replication.html).
 
 ## One Local IV Dataset
 

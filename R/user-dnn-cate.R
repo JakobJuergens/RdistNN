@@ -6,13 +6,16 @@
 #' with DNN-based local weights.
 #'
 #' @details
+#' The documented sampling framework uses independent observations; cluster
+#' and survey-design inference are not supplied. Input row order breaks
+#' distance ties, so permuting tied observations can change estimates.
+#'
 #' Two interfaces are supported.
 #'
 #' 1. Data-frame interface (recommended): pass `data` and `x_cols`, then provide
 #'    either `pseudo_outcome` directly or nuisance columns used to construct it.
-#'    For nuisance columns, use either:
-#'    - full AIPW form: `y_col`, `t_col`, `e_col`, `m0_col`, `m1_col`;
-#'    - Robinson form: `y_col`, `t_col`, `e_col`, `m_col`.
+#'    For AIPW nuisance construction, use `y_col`, `t_col`, `e_col`,
+#'    `m0_col`, and `m1_col`.
 #' 2. Matrix interface: pass `X`, one of `X0` or `x0`,
 #'    and `pseudo_outcome`.
 #'
@@ -35,12 +38,8 @@
 #' `k`.
 #'
 #' The AIPW signal is Neyman orthogonal at the true nuisance functions. The
-#' normalized Robinson signal identifies the effect with true nuisances but
-#' is generally not orthogonal to propensity error. If the pooled outcome
-#' mean is correct, its conditional expectation is
-#' \eqn{e_0(1-e_0)\tau / \{\hat e(1-\hat e)\}}. It can therefore have
-#' first-order propensity drift; AIPW's orthogonality argument does not apply
-#' to that route without additional propensity control. Orthogonality alone
+#' normalized Robinson pseudo-outcome is not implemented because it is outside
+#' the accompanying paper's theoretical results. Orthogonality alone
 #' does not validate arbitrary nuisance predictions fitted on the
 #' same observations used for localization and inference. Valid full-sample
 #' reuse additionally requires the nuisance-rate and full-state stability
@@ -61,12 +60,11 @@
 #' @param t_col Name or index of the treatment column in `data` (must be 0/1).
 #' @param m0_col Name or index for \eqn{E[Y(0)\mid X]} (full AIPW interface).
 #' @param m1_col Name or index for \eqn{E[Y(1)\mid X]} (full AIPW interface).
-#' @param m_col Name or index for \eqn{E[Y\mid X]} (Robinson interface).
 #' @param e_col Name or index for propensity \eqn{P(T=1\mid X)}.
 #' @param clip Finite propensity clipping constant in `(0, 0.5)` with
 #'   `1 - clip < 1` in double precision, default
 #'   `1e-8`. Raw nuisance propensities must be finite and lie in `[0, 1]`;
-#'   nuisance-based AIPW and Robinson scores use
+#'   nuisance-based AIPW scores use
 #'   `pmin(pmax(e, clip), 1 - clip)`. This argument does not alter a supplied
 #'   `pseudo_outcome`.
 #' @param pseudo_outcome Numeric vector of length `n`. If supplied, nuisance
@@ -135,7 +133,7 @@ cate_dnn <- function(
   data = NULL,
   x_cols = NULL, y_col = NULL, t_col = NULL,
   m0_col = NULL, m1_col = NULL,
-  m_col = NULL, e_col = NULL,
+  e_col = NULL,
   pseudo_outcome = NULL,
   X = NULL, X0 = NULL, x0 = NULL,
   clip = 1e-8,
@@ -170,11 +168,11 @@ cate_dnn <- function(
       quoted = FALSE
     )
   }
-  t_vec <- e_used <- m0 <- m1 <- m <- NULL
+  t_vec <- e_used <- m0 <- m1 <- NULL
 
   .dnn_validate_input_route(data, list(X = X),
     list(x_cols = x_cols, y_col = y_col, t_col = t_col,
-      m0_col = m0_col, m1_col = m1_col, m_col = m_col, e_col = e_col))
+      m0_col = m0_col, m1_col = m1_col, e_col = e_col))
 
   # Dispatch: data-frame API vs matrix API.
   if (!is.null(data)) {
@@ -189,26 +187,16 @@ cate_dnn <- function(
       psi <- .validate_vector_nrow(pseudo_outcome, n, arg = "pseudo_outcome", ref = "X", strict = TRUE)
     } else {
       if (xor(is.null(m0_col), is.null(m1_col))) {
-        .abort_bad_arg("m0_col/m1_col", "must be supplied together for full AIPW; omit both for Robinson",
+        .abort_bad_arg("m0_col/m1_col", "must be supplied together for full AIPW",
           quoted = FALSE)
       }
-      # Determine which outcome-model interface is used
       has_aipw <- !is.null(m0_col) && !is.null(m1_col)
-      has_robinson <- !is.null(m_col)
-      if (has_aipw && has_robinson) {
-        .abort_bad_arg(
-          "m_col/m0_col/m1_col",
-          "must specify either {`m0_col`, `m1_col`} (full AIPW) or `m_col` (Robinson), but not both",
-          quoted = FALSE
-        )
-      }
-      if (!has_aipw && !has_robinson) {
+      if (!has_aipw) {
         .abort_bad_arg(
           "pseudo_outcome",
           "must be provided, or supply nuisance columns for the `data=` interface",
           expected = paste0(
-            "`pseudo_outcome`, or full AIPW columns {`y_col`,`t_col`,`m0_col`,`m1_col`,`e_col`}, ",
-            "or Robinson columns {`y_col`,`t_col`,`m_col`,`e_col`}"
+            "`pseudo_outcome`, or full AIPW columns {`y_col`,`t_col`,`m0_col`,`m1_col`,`e_col`}"
           )
         )
       }
@@ -231,34 +219,20 @@ cate_dnn <- function(
         e_raw, n = n, clip = clip, arg = "e_col"
       )
 
-      if (has_aipw) {
-        # Full doubly-robust AIPW pseudo-outcome:
-        # tau_hat_i = mu1_hat - mu0_hat
-        #           + T_i (Y_i - mu1_hat) / pi_hat
-        #           - (1-T_i) (Y_i - mu0_hat) / (1-pi_hat)
-        m0  <- .dnn_col_vec(m0_col, data, n, arg = "m0_col", ref = "data")
-        m1  <- .dnn_col_vec(m1_col, data, n, arg = "m1_col", ref = "data")
-        m   <- NULL
-        psi <- cate_rho_aipw(
-          y = y_vec,
-          d = t_vec,
-          m1hat = m1,
-          m0hat = m0,
-          ehat = e_used,
-          clip = clip
-        )
-      } else {
-        # Robinson-form: (Y - m(X))(T - e) / (e(1-e))
-        m0 <- m1 <- NULL
-        m   <- .dnn_col_vec(m_col,  data, n, arg = "m_col",  ref = "data")
-        psi <- cate_rho_rlearner(
-          y = y_vec,
-          d = t_vec,
-          ehat = e_used,
-          mhat = m,
-          clip = clip
-        )
-      }
+      # Full doubly-robust AIPW pseudo-outcome:
+      # tau_hat_i = mu1_hat - mu0_hat
+      #           + T_i (Y_i - mu1_hat) / pi_hat
+      #           - (1-T_i) (Y_i - mu0_hat) / (1-pi_hat)
+      m0  <- .dnn_col_vec(m0_col, data, n, arg = "m0_col", ref = "data")
+      m1  <- .dnn_col_vec(m1_col, data, n, arg = "m1_col", ref = "data")
+      psi <- cate_rho_aipw(
+        y = y_vec,
+        d = t_vec,
+        m1hat = m1,
+        m0hat = m0,
+        ehat = e_used,
+        clip = clip
+      )
     }
   } else {
     # matrix API
@@ -368,8 +342,6 @@ cate_dnn <- function(
   if ("nuisance" %in% return) {
     if (!is.null(m0) && !is.null(m1) && !is.null(e_used)) {
       out$nuisance <- list(m0 = m0, m1 = m1, e = e_used)
-    } else if (!is.null(m) && !is.null(e_used)) {
-      out$nuisance <- list(m = m, e = e_used)
     }
   }
   if (identical(tuning_mode, "grid")) {
@@ -673,8 +645,9 @@ cate_dnn <- function(
 #' @export
 print.cate_result <- function(x, ...) {
   cat("<cate_result>\n", sep = "")
+  .dnn_print_localization(x$meta)
   cat("  data  : n=", x$meta$n, ", p=", x$meta$p, ", m=", x$meta$m, "\n", sep = "")
-  cat("  DNN   : method=", x$meta$method, ", k=", x$meta$k, ", s=", x$meta$s,
+  cat("  DNN   : method=", x$meta$method, ", k=", x$meta$k,
     ", distance=", x$meta$distance, "\n",
     sep = ""
   )

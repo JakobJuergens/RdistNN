@@ -22,7 +22,7 @@ test_that("CLATE estimate plot styles and generic dispatch mirror CATE", {
     expect_equal(profile$data$ci_upper, as.numeric(confint(fit)[, 2L]))
     expect_s3_class(ggplot2::autoplot(fit), "ggplot")
     expect_true("GeomVline" %in% .plot_layer_geoms(plot_estimates(fit, style = "forest")))
-    expect_true("GeomPointrange" %in% .plot_layer_geoms(plot_estimates(fit, style = "pointrange")))
+    expect_true("GeomSegment" %in% .plot_layer_geoms(plot_estimates(fit, style = "pointrange")))
     for (type in c("profile", "cumulative", "kernel")) {
       p <- plot_weights(fit, type = type)
       expect_s3_class(p, "ggplot")

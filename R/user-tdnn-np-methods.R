@@ -8,6 +8,7 @@
 #' @export
 print.tdnn_np_result <- function(x, ...) {
   cat("<tdnn_np_result>\n", sep = "")
+  .dnn_print_localization(x$meta)
   cat("  data  : n=", x$meta$n, ", p=", x$meta$p, ", m=", x$meta$m, "\n", sep = "")
   cat("  TDNN  : method=", x$meta$method,
     ", s1=", x$meta$s1, ", s2=", x$meta$s2,

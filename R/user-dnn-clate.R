@@ -12,7 +12,12 @@
 #' @param m_d0_col,m_d1_col Data-frame treatment predictions by instrument arm.
 #'   The zero-arm prediction may be omitted with one_sided = TRUE.
 #'
-#' @details Let V=(X,Z) contain all pre-instrument adjustment variables. Supplied
+#' @details
+#' The documented sampling framework uses independent observations; cluster
+#' and survey-design inference are not supplied. Input row order breaks
+#' distance ties, so permuting tied observations can change estimates.
+#'
+#' Let V=(X,Z) contain all pre-instrument adjustment variables. Supplied
 #' predictions condition on V, while weights use only reporting coordinates X.
 #' The target averages both adjusted instrument-arm contrasts over the same
 #' conditional law of Z given X=x, then takes their ratio.

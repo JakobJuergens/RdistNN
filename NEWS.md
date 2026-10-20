@@ -1,4 +1,32 @@
-# RdistNN 0.1.0.9003 (development version)
+# RdistNN 0.1.0.9004 (development snapshot)
+
+The changes below are grouped in one reviewed, flattened (squash-merged)
+production update carrying version 0.1.0.9004. Publishing this source update
+does not create a tag or replace assets from the existing v0.1.0 release.
+
+- Add on-demand joint CATE covariance from common deletions, including retained
+  geometry, candidate views and serialized fits without optional weights.
+- Draw finite estimates independently of unavailable intervals and preserve
+  profile gaps. Support ggplot2 >= 3.4.1 with focused older-version checks.
+- Report order fractions and available causal support/contribution summaries
+  without new warning thresholds. Clarify CATE migration, sampling assumptions
+  and row-order ties; remove six unused suggested dependencies.
+
+- Remove the normalized Robinson CATE pseudo-outcome route and its demo signals;
+  it is outside the accompanying paper's theoretical results. Use AIPW nuisance
+  inputs or an externally justified supplied signal.
+
+- Clarify accepted-evidence rendering, historical dependency reproduction and
+  current-engine validation. Bind release candidates and dependency comparisons
+  to source/archive/installed-file identities; correct development chronology
+  and local documentation news links.
+
+# RdistNN 0.1.0.9003 (merged development snapshot)
+
+The numerical changes below first entered the public production source in
+`f2c7bc36e8da040831b668281e50e18b2f1a4b3c`. Version 0.1.0.9003 is a merged
+development snapshot; candidate verification, public tags and downloadable
+release assets are separate. The existing v0.1.0 release is unchanged.
 
 - Use ordered compensated Mahalanobis projections so scalar and batch targets
   retain the same cancellation residuals across compiled and fallback engines.
@@ -16,9 +44,6 @@
 - Check unique package-level helper ownership, candidate-file hygiene, generated
   Rd/namespace/Rcpp drift, and mirrored native headers. Keep the Stata companion
   on the same development version and refresh the documentation entry points.
-
-# RdistNN 0.1.0.9002 (earlier development snapshot)
-
 - Stabilize mixed-sign, large-offset jackknife signals and ordinary SD/covariance
   centering without dropping represented tails. Share portable exact rank-table
   recurrences across C++, R and Mata, including subnormal-tail safeguards.
@@ -27,8 +52,7 @@
   Make NP/CATE tidy extraction grid-aware and name CATE coefficients by target.
 - Reject unrepresentable clipping intervals and partial AIPW nuisance inputs;
   support one-dimensional Mahalanobis geometry and stable signed-zero ties.
-  Clarify Robinson propensity sensitivity and estimator-specific covariance/LOO
-  contracts.
+  Clarify estimator-specific covariance/LOO contracts.
 
 
 - Retain resolved fitted geometry across NP/TDNN, CATE and paired-ratio/CLATE
@@ -54,6 +78,8 @@
   assembly across jackknife, NP/TDNN, paired-ratio and moment-covariance paths.
   Recover representable extreme variances; report unrepresentable nonzero
   variances as rescaling errors, or existing paired-ratio failure statuses.
+
+# RdistNN 0.1.0.9002 (earlier development snapshot)
 
 - Recover finite fitted SD scales and scaled L1 differences after intermediate
   overflow or underflow; reject nonfinite fitted scales before clamping.
@@ -82,8 +108,12 @@
   plots and frozen-model reuse. Pointwise inference conditions are unchanged;
   ratio confidence-set inversion, PLQR and local IV-GMM remain experimental.
 
-- Advanced the shared development version to 0.1.0.9001 and documented local
-  development branches, reviewed production PRs and R/Stata parity expectations.
+# RdistNN 0.1.0.9001 (merged development snapshot)
+
+- Advance the shared development version and document local development branches,
+  reviewed production PRs and R/Stata parity expectations.
+
+# RdistNN 0.1.0.9000 (merged development snapshot)
 
 - Stabilized frozen-score jackknife calculations with target-specific,
   support-aware numerical centering across compiled, R, fast and explicit
