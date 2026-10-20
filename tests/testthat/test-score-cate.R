@@ -30,7 +30,7 @@ testthat::local_edition(3)
   set.seed(seed)
   X <- matrix(rnorm(n * p), n, p, dimnames = list(NULL, paste0("X", 1:p)))
   rho <- rnorm(n)
-  df <- data.frame(X, rho_oracle = rho)
+  df <- data.frame(X, aipw_oracle = rho)
   list(
     data = df,
     x0 = rep(0, p),
@@ -39,7 +39,7 @@ testthat::local_edition(3)
     subs_all = matrix(seq_len(n), ncol = 1L),
     subs_empty = matrix(integer(0), ncol = 1L),
     subs_2col = cbind(seq_len(n), rev(seq_len(n))),
-    cols = list(rho = "rho_oracle")
+    cols = list(rho = "aipw_oracle")
   )
 }
 

@@ -115,6 +115,47 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
+  plotting-compatibility:
+    runs-on: ubuntu-latest
+    name: ggplot2 ${{ matrix.ggplot2 }} / R 4.3.3
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        ggplot2: ['3.4.1', '3.4.4']
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: r-lib/actions/setup-r@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2.14.0
+        with:
+          r-version: '4.3.3'
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2.14.0
+        with:
+          extra-packages: |
+            any::pkgload
+            any::remotes
+            any::testthat
+          needs: check
+      - name: Install and verify the selected plotting dependency
+        shell: Rscript {0}
+        env:
+          GGPLOT2_VERSION: ${{ matrix.ggplot2 }}
+        run: |
+          version <- Sys.getenv("GGPLOT2_VERSION")
+          remotes::install_version("ggplot2", version = version,
+            dependencies = FALSE, upgrade = "never")
+          remotes::install_version("patchwork", version = "1.1.3",
+            dependencies = FALSE, upgrade = "never")
+          stopifnot(as.character(packageVersion("ggplot2")) == version)
+          stopifnot(requireNamespace("patchwork", quietly = TRUE))
+      - name: Run focused source plotting tests
+        shell: Rscript {0}
+        run: |
+          testthat::test_local(filter = "^(plot|clate-plots|tuning-grid-diagnostics-plots)",
+            reporter = "summary", stop_on_failure = TRUE)
+
   save_logs:
     if: ${{ !cancelled() && always() && needs.R-CMD-check.result != 'success' && github.actor != 'github-actions[bot]' }}
     needs: [R-CMD-check]

@@ -418,13 +418,13 @@ replication_sipp <- function(bundle, output, mode = c("smoke", "production")) {
   output <- replication_new_output(output)
   app <- file.path(bundle, "source", "sipp")
   fit_args <- c(
-    "--run-id=affine-current", "--outcomes=raw", "--method-family=affine",
+    "--run-id=paper-current", "--outcomes=raw", "--method-family=affine",
     paste0("--cache-dir=", output)
   )
   if (mode == "smoke") fit_args <- c(fit_args, "--smoke", "--num-threads=1")
   fit_log <- file.path(output, "fit.log")
   replication_run_r(file.path(app, "02_fit_cate_profiles.R"), fit_args, fit_log)
-  run <- file.path(output, "runs", "affine-current")
+  run <- file.path(output, "runs", "paper-current")
   fit_cache <- file.path(run, "02_fit_cate_profiles.rds")
   fit <- readRDS(fit_cache)
   if (mode == "production" && nrow(fit$analysis_data) != 9915L) {
@@ -459,7 +459,7 @@ replication_sipp <- function(bundle, output, mode = c("smoke", "production")) {
       purpose = if (mode == "smoke") {
         "validation_only"
       } else {
-        "fresh current affine SIPP replication; not automatic manuscript promotion"
+        "fresh SIPP paper replication; not automatic manuscript promotion"
       },
       paper_commit = replication_manifest(bundle)$paper_commit,
       fit_manifest_sha256 = digest::digest(file = file.path(run, "manifest.json"), algo = "sha256")

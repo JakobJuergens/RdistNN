@@ -152,7 +152,7 @@ test_that("candidate_fit reconstructs CATE candidate views and methods work", {
   fit <- cate_dnn(
     data = d$df, x_cols = d$x_cols,
     y_col = "Y", t_col = "D",
-    m_col = "m_oracle", e_col = "e_oracle",
+    m0_col = "m0_oracle", m1_col = "m1_oracle", e_col = "e_oracle",
     X0 = d$X0,
     method = "exact", k = 1L, tuning = tun, tuning_mode = "grid",
     se = TRUE, jackknife = "fast",
@@ -164,7 +164,7 @@ test_that("candidate_fit reconstructs CATE candidate views and methods work", {
   ref <- cate_dnn(
     data = d$df, x_cols = d$x_cols,
     y_col = "Y", t_col = "D",
-    m_col = "m_oracle", e_col = "e_oracle",
+    m0_col = "m0_oracle", m1_col = "m1_oracle", e_col = "e_oracle",
     X0 = d$X0,
     method = "exact", k = 1L, s = cand$s,
     se = TRUE, jackknife = "fast",
@@ -190,7 +190,7 @@ test_that("CATE candidate prediction works without retained W but diagnostics re
   fit <- cate_dnn(
     data = d$df, x_cols = d$x_cols,
     y_col = "Y", t_col = "D",
-    m_col = "m_oracle", e_col = "e_oracle",
+    m0_col = "m0_oracle", m1_col = "m1_oracle", e_col = "e_oracle",
     X0 = d$X0,
     method = "exact", k = 1L, tuning = tun, tuning_mode = "grid",
     se = FALSE,
@@ -202,7 +202,7 @@ test_that("CATE candidate prediction works without retained W but diagnostics re
   ref <- cate_dnn(
     data = d$df, x_cols = d$x_cols,
     y_col = "Y", t_col = "D",
-    m_col = "m_oracle", e_col = "e_oracle",
+    m0_col = "m0_oracle", m1_col = "m1_oracle", e_col = "e_oracle",
     X0 = d$X0,
     method = "exact", k = 1L, s = cand$s,
     se = FALSE,

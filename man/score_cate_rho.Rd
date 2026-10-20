@@ -54,7 +54,7 @@ is used to construct the score.
 demo <- cate_demo_data(n = 200, p = 2, design = "hetero", seed = 1)
 sc <- score_cate_rho(
   x0 = rep(0, 2), x_cols = paste0("X", 1:2),
-  s = 5, rho_col = "rho_oracle"
+  s = 5, rho_col = "aipw_oracle"
 )
 ctx <- score_setup(sc, demo$data)
 subs <- cate_demo_subsets(n = nrow(demo$data), K = 3, s = 5, seed = 1)

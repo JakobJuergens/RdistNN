@@ -5,6 +5,7 @@ template:
 
 redirects:
   - [README.html, index.html]
+  - [NEWS.html, news/index.html]
 
 navbar:
   structure:
@@ -81,6 +82,7 @@ reference:
       - summary.cate_result
       - confint.cate_result
       - coef.cate_result
+      - vcov.cate_result
       - predict.cate_result
 
   - title: Plotting
@@ -121,7 +123,7 @@ reference:
 
   - title: General CATE simulation tools
     desc: >
-      Synthetic benchmarks and Monte Carlo summaries. The current affine
+      Synthetic benchmarks and Monte Carlo summaries. The conditional Z-estimation
       paper uses the separate study-specific replication bundle.
     contents:
       - sim_cate_data

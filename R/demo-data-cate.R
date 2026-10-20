@@ -13,10 +13,7 @@
 #'   e(x) \;=\; \Pr(D=1 \mid X=x) \, ,
 #' }
 #' where \eqn{m_{0}(x) = \mathbb{E}[Y \mid X=x, D=0]} and \eqn{\tau(x)} is the
-#' treatment effect. It also returns the R-learner–style pseudo-outcome
-#' \deqn{
-#'   \rho \;=\; \frac{(D - e)\,(Y - m)}{e\,(1 - e)} \, .
-#' }
+#' treatment effect. It also returns the oracle AIPW pseudo-outcome.
 #'
 #' No model fitting is performed; all quantities come from the DGP.
 #'
@@ -31,8 +28,8 @@
 #'   inject a single non-finite value into one of the returned columns (see \code{inject_col})
 #'   at row \code{idx_inject}; useful for testing runtime guards.
 #' @param inject_col Character; which column to corrupt when \code{inject} is not \code{NULL}.
-#'   One of \code{"Y"}, \code{"rho_oracle"}, \code{"e_oracle"}, \code{"m_oracle"},
-#'   \code{"m0_oracle"}, \code{"tau_oracle"}. Default \code{"rho_oracle"}.
+#'   One of \code{"Y"}, \code{"aipw_oracle"}, \code{"e_oracle"}, \code{"m_oracle"},
+#'   \code{"m0_oracle"}, \code{"tau_oracle"}. Default \code{"aipw_oracle"}.
 #' @param idx_inject Integer index to corrupt (default 3).
 #'
 #' @return A list with:
@@ -41,8 +38,9 @@
 #'         and oracle nuisances \code{e_oracle} (=\eqn{e(X)}),
 #'         \code{m_oracle} (=\eqn{m(X)}),
 #'         \code{m0_oracle} (=\eqn{m_{0}(X)}),
+#'         \code{m1_oracle} (treated outcome mean),
 #'         \code{tau_oracle} (=\eqn{\tau(X)}),
-#'         \code{rho_oracle} (=\eqn{\rho}).
+#'         \code{aipw_oracle} (oracle AIPW signal).
 #'   \item \code{x0}: the target point used (length \eqn{p}).
 #'   \item \code{truth}: list of closures \code{tau_fn(x)}, \code{e_fn(x)},
 #'         \code{m0_fn(x)}, \code{m_fn(x)} to evaluate ground truth at any \eqn{x}.
@@ -63,7 +61,7 @@ cate_demo_data <- function(n = 200,
                            seed = NULL,
                            x0 = NULL,
                            inject = NULL,
-                           inject_col = "rho_oracle",
+                           inject_col = "aipw_oracle",
                            idx_inject = 3L) {
   n <- .validate_scalar_int(n, arg = "n", min = 1L)
   p <- .validate_scalar_int(p, arg = "p", min = 2L)
@@ -126,16 +124,18 @@ cate_demo_data <- function(n = 200,
   # Unconditional regression function m(x) = E[Y|X=x]
   m_true <- m0_true + e_true * tau_true
 
-  # R-learner pseudo-outcome (oracle nuisances)
-  rho <- (D - e_true) * (Y - m_true) / (e_true * (1 - e_true))
+  # AIPW pseudo-outcome (oracle nuisances)
+  m1_true <- m0_true + tau_true
+  rho <- cate_rho_aipw(Y, D, m1_true, m0_true, e_true, clip = clip)
 
   df <- data.frame(X,
     D = D, Y = as.numeric(Y),
     e_oracle = as.numeric(e_true),
     m_oracle = as.numeric(m_true),
     m0_oracle = as.numeric(m0_true),
+    m1_oracle = as.numeric(m1_true),
     tau_oracle = as.numeric(tau_true),
-    rho_oracle = as.numeric(rho)
+    aipw_oracle = as.numeric(rho)
   )
 
   # Optional injection of non-finites for guard testing
@@ -147,7 +147,7 @@ cate_demo_data <- function(n = 200,
     if (idx_inject > n) {
       .abort_bad_arg("idx_inject", sprintf("must be <= n (got idx_inject=%d, n=%d)", idx_inject, n))
     }
-    allowed_inject_cols <- c("Y", "rho_oracle", "e_oracle", "m_oracle", "m0_oracle", "tau_oracle")
+    allowed_inject_cols <- c("Y", "aipw_oracle", "e_oracle", "m_oracle", "m0_oracle", "tau_oracle")
     if (!inject_col %in% allowed_inject_cols) {
       stop(sprintf(
         "Column '%s' (specified by `inject_col`) is not a valid injection target.\nValid options: %s",
@@ -228,7 +228,7 @@ cate_demo_subsets <- function(n, K = 1000L, s = 8L, seed = NULL) {
 #' \itemize{
 #'   \item \code{data}: a \code{data.frame} containing \code{X1..Xp}, \code{D}, \code{Y},
 #'         and oracle columns (\code{e_oracle}, \code{m_oracle}, \code{m0_oracle},
-#'         \code{tau_oracle}, \code{rho_oracle}).
+#'         \code{tau_oracle}, \code{aipw_oracle}).
 #'   \item \code{x0}: numeric length-\eqn{p} vector.
 #'   \item \code{x_cols}: character names of the X columns (or integer indices).
 #'   \item \code{s}, \code{k}: integers for score factories that accept these (uniform API).
@@ -259,7 +259,7 @@ cate_demo_sets <- function(n = 80L, p = 2L) {
     m   = "m_oracle",
     m0  = "m0_oracle",
     tau = "tau_oracle",
-    rho = "rho_oracle"
+    rho = "aipw_oracle"
   )
 
   # Helper to assemble a scenario
@@ -286,11 +286,11 @@ cate_demo_sets <- function(n = 80L, p = 2L) {
   # --- EDGE / FAILURE CASES (non-finites injected) ---
   nf_rho_na <- cate_demo_data(
     n = n, p = p, design = "hetero", sigma = 0.3, clip = 1e-3, seed = 5,
-    inject = "na", inject_col = "rho_oracle", idx_inject = 3L
+    inject = "na", inject_col = "aipw_oracle", idx_inject = 3L
   )
   nf_rho_inf <- cate_demo_data(
     n = n, p = p, design = "hetero", sigma = 0.3, clip = 1e-3, seed = 6,
-    inject = "inf", inject_col = "rho_oracle", idx_inject = 2L
+    inject = "inf", inject_col = "aipw_oracle", idx_inject = 2L
   )
   nf_Y_na <- cate_demo_data(
     n = n, p = p, design = "simple", sigma = 0.3, clip = 1e-3, seed = 7,

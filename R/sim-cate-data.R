@@ -19,7 +19,7 @@
 #                            nonlinear tau; isolates full-sample vs cross-fit
 #                            nuisance-efficiency tradeoff
 #
-# All DGPs supply oracle nuisances (e, m0, m1, tau, rho) so that
+# All DGPs supply oracle nuisances (e, m0, m1, tau) so that
 # DGP isolation is possible; first-stage estimation error is deferred.
 #
 # Public API: sim_cate_data()   (exported)
@@ -28,8 +28,6 @@
 # ── internal helpers ─────────────────────────────────────────────────────────
 
 .sim_cate_m0 <- function(X) 1 + X[, 1] - X[, 2]
-
-.sim_cate_pseudo <- function(D, Y, e, m) (D - e) * (Y - m) / (e * (1 - e))
 
 .sim_cate_aipw <- function(D, Y, e, m0, m1) {
   m1 - m0 + D * (Y - m1) / e - (1 - D) * (Y - m0) / (1 - e)
@@ -45,7 +43,6 @@
                                 m0_fn = .sim_cate_m0) {
   m1_true <- m0_true + tau_true
   m_true  <- m0_true + e_true * tau_true
-  rho     <- .sim_cate_pseudo(D, Y, e_true, m_true)
   aipw    <- .sim_cate_aipw(D, Y, e_true, m0_true, m1_true)
   p       <- ncol(X)
   e_x0    <- as.numeric(e_fn(matrix(x0, nrow = 1L)))
@@ -60,7 +57,6 @@
     m0_oracle  = as.numeric(m0_true),
     m1_oracle  = as.numeric(m1_true),
     tau_oracle = as.numeric(tau_true),
-    rho_oracle = as.numeric(rho),
     aipw_oracle = as.numeric(aipw)
   )
   colnames(df)[seq_len(p)] <- paste0("X", seq_len(p))
@@ -302,7 +298,7 @@
 
 # ── DGP 6: nuisance-efficiency design ────────────────────────────────────────
 
-# Propensity and the Robinson marginal outcome nuisance are aligned with
+# Propensity and the marginal outcome nuisance are aligned with
 # simple benchmark models.  The DNN simulation methods now use AIPW potential
 # outcome nuisances, so this design mainly remains a full-sample versus
 # cross-fit precision stress test rather than a fully correctly specified
@@ -351,8 +347,7 @@
 #'
 #' Generates a synthetic dataset for the CATE simulation study, including
 #' oracle nuisance quantities \eqn{e}, \eqn{m_0}, \eqn{m_1}, the AIPW score used
-#' by the general DNN CATE benchmarks, and the Robinson pseudo-outcome
-#' \eqn{\rho} used by the Robinson-style estimator route.
+#' by the general DNN CATE benchmarks.
 #'
 #' Six designs are available:
 #' \describe{
@@ -411,7 +406,7 @@
 #' \itemize{
 #'   \item `data`: a `data.frame` with columns `X1..Xkx`, `D`, `Y`, and oracle
 #'     nuisances `e_oracle`, `m_oracle`, `m0_oracle`, `m1_oracle`,
-#'     `tau_oracle`, `aipw_oracle`, and the Robinson pseudo-outcome `rho_oracle`.
+#'     `tau_oracle`, and `aipw_oracle`.
 #'   \item `x0`: numeric length-`kx` evaluation point.
 #'   \item `tau_x0`: true treatment effect at `x0`.
 #'   \item `truth`: named list of closures `tau_fn`, `e_fn`, `m0_fn`, `m_fn`.

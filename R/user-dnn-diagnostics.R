@@ -350,7 +350,7 @@
 #'   x_cols = c("X1", "X2"),
 #'   y_col = "Y",
 #'   t_col = "D",
-#'   m_col = "m_oracle",
+#'   m0_col = "m0_oracle", m1_col = "m1_oracle",
 #'   e_col = "e_oracle",
 #'   x0 = demo_cate$x0,
 #'   se = FALSE
@@ -435,6 +435,15 @@ print.dnn_diagnostics <- function(x, ...) {
       sep = ""
     )
   }
+  fields <- c(treated_share = "treated share", treated_ess = "treated ESS",
+    control_ess = "control ESS", weighted_propensity_q10 = "propensity q10",
+    weighted_propensity_q90 = "propensity q90",
+    top5_score_share = "top-five absolute score-contribution share",
+    instrument_1_mass = "instrument 1 mass", instrument_0_mass = "instrument 0 mass",
+    propensity_clipped_mass = "clipped propensity mass",
+    denominator_stat = "first-stage statistic",
+    jk_top5_sq_share = "top-five squared jackknife-contribution share")
+  for (field in names(fields)) .dnn_print_diagnostic_range(x, field, fields[[field]])
   if ("gram_available" %in% names(x)) {
     cat(
       "  gram   : available for ", sum(x$gram_available), "/", nrow(x),

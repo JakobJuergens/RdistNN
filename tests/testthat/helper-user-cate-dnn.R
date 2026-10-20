@@ -21,17 +21,13 @@
   m0 <- df$m0_oracle
   m1 <- df$m1_oracle
   e <- df$e_oracle
-  m_oracle <- df$m_oracle
-  den <- pmax(e * (1 - e), 1e-8)
   psi_aipw <- (m1 - m0) + T_ * (Y - m1) / pmax(e, 1e-8) -
     (1 - T_) * (Y - m0) / pmax(1 - e, 1e-8)
-  psi_robinson <- (Y - m_oracle) * (T_ - e) / den
 
   list(
     df = df,
     x_cols = x_cols,
     X0 = X0,
-    psi_aipw = psi_aipw,
-    psi_robinson = psi_robinson
+    psi_aipw = psi_aipw
   )
 }

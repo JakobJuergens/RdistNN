@@ -14,5 +14,5 @@ if (opts$help) {
   )
 } else {
   replication_render(bundle, opts$output_dir)
-  cat("Verified current affine manuscript evidence:", opts$output_dir, "\n")
+  cat("Verified accepted manuscript evidence:", opts$output_dir, "\n")
 }

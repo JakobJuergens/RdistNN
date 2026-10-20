@@ -70,15 +70,15 @@
     "Paper/affine_scores_supplement.tex": "cb630fb41f85a7e99733785f2fe5a6c1808d099d32fed808e1b299c3abeec6c3"
   },
   "files": {
-    "README.md": "58f9262612a0cce77f714f18116cba3d61efc9cb2532a2fd1c4212451b8b0f57",
+    "README.md": "610fd9304e7bae105a98ea3b999f638d788a8e8606b9d4cc9db844ba989c8188",
     "configs/M3/config.rds": "08085f9ad2fd2f9f577443090ca203f4a84d6642b48788b1c83e21f2ec77f432",
     "configs/dnn/config.rds": "cd31d5a95b700a14152313455ee51b5d9c13e76ece6635963b092132a3b79cf0",
     "configs/kernel_comparison/config.rds": "d6b6ac69fcc48ff549515f781d5eb5aaa781fcceb73cad2851906abe312f8a99",
     "configs/proposal.json": "c667f55f810e1f4bb49d3c8b8c342f1355b3b8c6dd2a17ac07dcb0d972db8554",
     "configs/settings_comparison/config.rds": "f584b4259ede7a7235b2f78c7980d3866ee0e5ff56df6d3e7b39defd40034c5a",
     "evidence.zip": "1aa2f24ab8ea58882b4dfb47d34ff775208c0046556b852be45c8b825eb82d12",
-    "helpers.R": "ed7d1fe0f6dcd1285d8e913bcb7f8913716a4e560a332e5f6595f08da707eb1c",
-    "render_evidence.R": "57bbe4b5aeac3ee3018a0f057272f62f84558a4ab40b739ea1a50e051550609d",
+    "helpers.R": "dcb51a41da54d197902e3eced5c82ccfccdb9082358198428eaae492e505da24",
+    "render_evidence.R": "5e4a5b5018bb5f897fae69667b030efb636f54f2f0b5f43133898e0f65881a91",
     "run_simulations.R": "bd962a47e7a988efb0f52e5a03fdcf072d5b01d5d6c0eb71256a77c5675e7e68",
     "run_sipp.R": "d34d1e81370791421d3b3a122c979a63598e4b980f8a9eb7ca8e427f058a3fbe",
     "source/bootstrap.R": "21b6b9d00d79a2da2ae4794bf17176ed5552023659e555e0c58cd9ed9968bfa7",
@@ -112,7 +112,7 @@
     "source/sipp/R/manuscript_export.R": "c81b0ee4a12d1a8b1bca0ca0ba305f3e766870d5f76c8b134ecd6fa1b3c37e9a",
     "source/sipp/R/prediction_helpers.R": "e13ba6cf1fe756c5195fcf3f6f87def1872ef6a3c11cd294cbf426a348aacc45",
     "source/sipp/R/run_store.R": "7ff09112a33eb6ca70bd28b45fa3abb42e7c9b6ebe926e3003079367cd20a92a",
-    "verify.R": "de4cb8f11bda003f17fdd72b331ea723229f944d34918d278abf72883821e3ec"
+    "verify.R": "35852fddfea900a8fbbf271d11d02cd0a30aaf6eaaad516404625f9dcf658a3f"
   },
   "source_mapping": {
     "source/bootstrap.R": "Codes/Simulations/bootstrap.R",

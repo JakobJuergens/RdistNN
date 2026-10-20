@@ -65,7 +65,6 @@ diagnostics(fit_np)
 `cate_dnn()` supports either:
 
 - Full AIPW nuisance inputs (`m0`, `m1`, `e`)
-- Robinson-form nuisance inputs (`m`, `e`)
 - Direct `pseudo_outcome`
 
 ```{r cate}

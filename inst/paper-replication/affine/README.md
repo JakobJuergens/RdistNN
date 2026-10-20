@@ -1,12 +1,11 @@
-# Current affine paper replication
+# Conditional Z-estimation paper replication
 
-This bundle represents the affine variant of *Orthogonal Inference for
+This bundle accompanies *Orthogonal Inference for
 Conditional Z-Estimation without Cross-Fitting: A Distributional
 Nearest-Neighbor Approach*, refreshed October 14, 2026.
 `manifest.json` pins the exact paper commit, manuscript and supplement source
 snapshot, accepted production run, SIPP run,
-source hashes and saved evidence. The independent coupled-score manuscript
-is outside this bundle. Superseded study launchers are not included.
+source hashes and saved evidence. Superseded study launchers are not included.
 
 Locate these files after installation:
 
@@ -17,7 +16,7 @@ list.files(bundle)
 
 Run the entry points with `Rscript`, passing an explicit **new output
 directory**. They work from any working directory and never write into the
-installed package. In the commands below, replace `/path/to/affine` with
+installed package. In the commands below, replace `/path/to/bundle` with
 `bundle`. Paths containing spaces should be quoted.
 
 ## Recreate the accepted paper displays
@@ -26,8 +25,8 @@ Install the optional dependencies `digest`, `jsonlite`, `ggplot2` and
 `patchwork`. Then run:
 
 ```bash
-Rscript /path/to/affine/verify.R
-Rscript /path/to/affine/render_evidence.R --output-dir=affine-paper-displays
+Rscript /path/to/bundle/verify.R
+Rscript /path/to/bundle/render_evidence.R --output-dir=paper-displays
 ```
 
 Rendering requires R's Cairo PDF device. On macOS with the CRAN build of R,
@@ -45,13 +44,13 @@ Historical transformed SIPP estimates are saved evidence because the current
 supplement reports them as a distinct target. Their deprecated fitting
 workflow is not included. The newly overhauled application uses raw dollars.
 
-## Run the current affine simulations
+## Run the paper simulations
 
 Required packages: `RdistNN`, `digest`, `jsonlite`, `future`, `future.apply`.
 
 ```bash
-Rscript /path/to/affine/run_simulations.R --mode=smoke --output-dir=affine-smoke
-Rscript /path/to/affine/run_simulations.R --mode=production --output-dir=affine-production
+Rscript /path/to/bundle/run_simulations.R --mode=smoke --output-dir=paper-smoke
+Rscript /path/to/bundle/run_simulations.R --mode=production --output-dir=paper-production
 ```
 
 Smoke uses two preflight draw families at n=128. It checks CATE, residualized
@@ -95,11 +94,28 @@ A stopped or partial campaign is not
 accepted production. The proposal's `not_started` field is a historical
 prelaunch snapshot; completed run manifests determine execution status.
 
-The historical dependency pin is RdistNN commit
-`40060f155cc4d84d59ee5af119f6a2534c569bab`. Fresh runs use and record the actual
-installed package. Matching version labels alone do not establish executable
-identity. The original run's R/package metadata are retained in the evidence
-packet. Fresh outputs require review before manuscript promotion.
+The accepted simulation freezes identify RdistNN source commit
+`40060f155cc4d84d59ee5af119f6a2534c569bab`, all 87 executable source/metadata
+hashes and an explicit `SIM_RDISTNN_SOURCE_DIR` override. Their loaded native
+library SHA-256 is
+`757e97ce54b39ce0f3f42133be7125acfe3ec6178ea11c904b0e25d06d198c94`.
+The paper constructs its k=1 full/deletion weight tables itself and calls the
+package's public full-rank deletion engine.
+
+Three operations have distinct meanings:
+
+1. `render_evidence.R` reconstructs accepted displays from stored evidence;
+   it does not recompute estimates with the current engine.
+2. Historical simulation recomputation requires the pinned source and matching
+   dependency/runtime identity. An installation rebuilt from historical source
+   must be labeled as a rebuild unless its executable identity also matches.
+3. `run_simulations.R` uses and records the actual installed package. A current
+   installation runs the current implementation on the study's scientific
+   configuration; it did not generate the accepted campaign.
+
+Matching version labels alone do not identify executable code. Fresh output
+and dependency comparisons require review before manuscript promotion. The
+historical dependency remains the accepted reproduction reference.
 
 ## Run the current SIPP application
 
@@ -107,8 +123,8 @@ Required packages: `hdm`, `grf`, `RdistNN`, `digest`, `jsonlite`.
 The data are the public `hdm::pension` sample; no private data are required.
 
 ```bash
-Rscript /path/to/affine/run_sipp.R --mode=smoke --output-dir=sipp-smoke
-Rscript /path/to/affine/run_sipp.R --mode=production --output-dir=sipp-production
+Rscript /path/to/bundle/run_sipp.R --mode=smoke --output-dir=sipp-smoke
+Rscript /path/to/bundle/run_sipp.R --mode=production --output-dir=sipp-production
 ```
 
 Production uses all 9,915 complete households, raw accumulated net financial
@@ -121,15 +137,30 @@ s=397; the fitted order grid is 298,397,496,745. Exploratory localization uses
 99,149,198,248,298,397,496,745 and retains all 168 profile/mechanism/order rows.
 
 The launcher fits, saves models and prediction arrays, computes frozen-score
-diagnostics and paired component covariance, exports the affine application,
+diagnostics and paired component covariance, exports the application,
 and exports localization sensitivity. Each stage has a log. Results live in
-`runs/affine-current/`; the run cannot overwrite an earlier output. Smoke uses
+`runs/paper-current/`; the run cannot overwrite an earlier output. Smoke uses
 300 households, 50 trees and two folds, with explicit validation export labels.
 
 The empirical forests, unbounded dollars, selected scales/profiles and observed
 geometry are outside the bounded-series primitive theorem. Frozen deletions
 do not refit learners; order sensitivity does not estimate spatial bias or
 select an optimal order. Full-fit/OOB agreement is not a stability-rate check.
+
+The accepted SIPP run has a separate executable identity: installed RdistNN
+0.1.0 files recorded in its `fit_manifest.json`, including native-library SHA-256
+`ed485a99bef23ebcaaed1ac1211a9b7a33f79fe3088a682074a4b7558fd724e3` and R
+lazy-load database hashes. This differs from the simulation DLL. The saved fit
+also records a clean sibling source checkout at `40060f1`; that field does not
+prove that the installed package was built from it. Preserve the installed-file
+hashes as the SIPP reference rather than substituting the simulation source pin
+or today's installed package. Re-rendering SIPP evidence does not require its
+historical estimator binary; historical estimator recomputation does.
+
+Saved fits and retained nuisance arrays contain observation-level numeric
+inputs and signals. They inherit the underlying data's sharing restrictions
+and are not part of this public bundle. A dependency comparison should reuse
+verified retained arrays locally and must not refit forests just for comparison.
 
 ## Maintain the bundle
 
@@ -140,7 +171,7 @@ source and configurations, preserves evidence bytes in a deterministic ZIP,
 and updates the manifest and reference table hashes. All launchers are covered
 by the installed-package replication tests.
 The shared paper bootstrap is replaced by a small explicit-path adapter so
-the unused older CATE orchestration is not installed. All nine frozen affine
+the unused older CATE orchestration is not installed. All nine frozen
 scientific files retain their accepted hashes.
 The rendering adapter supplies the pinned source identity and uses forward
 slashes and literal path prefixes for portable output directories.

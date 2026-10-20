@@ -45,3 +45,25 @@ test_that("deterministic ties in distances lead to deterministic ordering and st
   ))
   expect_equal(out$tau, out2$tau, tolerance = 1e-12)
 })
+
+test_that("nonuniform tied-distance weights agree with subsets and expose row order", {
+  X <- matrix(c(0, 0, 1, 1), ncol = 1L)
+  y <- c(1, 3, 10, 20)
+  reference <- function(X, y) {
+    subsets <- utils::combn(length(y), 2L)
+    mean(vapply(seq_len(ncol(subsets)), function(j) {
+      ids <- subsets[, j]
+      y[ids[order(X[ids, 1L]^2, ids)[1L]]]
+    }, numeric(1L)))
+  }
+  loo <- vapply(1:4, function(i) reference(X[-i, , drop = FALSE], y[-i]), numeric(1L))
+  V <- 3 / 4 * sum((loo - mean(loo))^2)
+  f <- cate_dnn(X = X, x0 = 0, pseudo_outcome = y, k = 1, s = 2)
+  expect_equal(f$tau, reference(X, y), tolerance = 1e-12)
+  expect_equal(unname(vcov(f)), matrix(V), tolerance = 1e-12)
+  expect_equal(V, 89 / 12, tolerance = 1e-12)
+  perm <- c(2, 1, 3, 4)
+  changed <- cate_dnn(X = X[perm, , drop = FALSE], x0 = 0,
+    pseudo_outcome = y[perm], k = 1, s = 2)
+  expect_equal(changed$tau - f$tau, 1 / 3, tolerance = 1e-12)
+})

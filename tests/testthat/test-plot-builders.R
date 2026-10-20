@@ -46,7 +46,7 @@ test_that("profile mode draws ribbon + line with the profile axis", {
   expect_identical(p$labels$x, "X1")
   expect_identical(p$labels$y, "Estimate")
   expect_match(p$labels$caption, "n_eff")
-  expect_match(p$labels$caption, "s = 12 \\(manual\\)")
+  expect_match(p$labels$caption, "s = 12.*s/n =.*\\(manual\\)")
 })
 
 test_that("se = FALSE drops the band and says so; x_var overrides the axis", {
@@ -72,7 +72,7 @@ test_that("cate panels draw the zero line; small target sets go forest", {
 
   # Non-profile with 3 targets: forest layout, zero vline, pointranges.
   expect_true("GeomVline" %in% geoms)
-  expect_true("GeomPointrange" %in% geoms)
+  expect_true("GeomSegment" %in% geoms)
   expect_identical(levels(p$data$target_label)[1L], "X1 = -1, X2 = 2")
 
   # Explicit pointrange style over target ids uses hline instead.

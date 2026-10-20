@@ -95,6 +95,10 @@ identity moment weighting matrix; the second step uses the local moment
 covariance estimated at the first-step solution.
 }
 \details{
+The documented sampling framework uses independent observations; cluster
+and survey-design inference are not supplied. Input row order breaks
+distance ties, so permuting tied observations can change estimates.
+
 Two interfaces are supported.
 \enumerate{
 \item Data-frame interface: pass \code{data}, \code{x_cols}, and a \code{gmm_model}.

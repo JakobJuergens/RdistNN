@@ -97,7 +97,7 @@ test_that("display-mode boundaries follow the documented rules", {
   fit3 <- .pbc_np_fit(m = 3L, se = TRUE)
   g3 <- geoms_of(plot_estimates(fit3))
   expect_false("GeomRibbon" %in% g3)
-  expect_true("GeomPointrange" %in% g3)
+  expect_true("GeomSegment" %in% g3)
 
   # Non-profile targets: forest through m = 12, pointrange at m = 13.
   fit12 <- .pbc_cate_fit(m = 12L, se = FALSE)
@@ -111,7 +111,7 @@ test_that("display-mode boundaries follow the documented rules", {
   # m = 1: single pointrange (or point without se).
   fit1 <- .pbc_np_fit(m = 1L, se = TRUE)
   g1 <- geoms_of(plot_estimates(fit1))
-  expect_true("GeomPointrange" %in% g1)
+  expect_true("GeomSegment" %in% g1)
 })
 
 test_that("forest ordering puts the first target on top", {
@@ -232,7 +232,7 @@ test_that("weight panels are class-agnostic and honest about provenance", {
   fit_cate <- .pbc_cate_fit(m = 2L, se = FALSE)
   p <- plot_weights(fit_cate, type = "profile")
   expect_s3_class(p, "ggplot")
-  expect_match(p$labels$caption, "s = 12 \\(manual\\)")
+  expect_match(p$labels$caption, "s = 12.*s/n =.*\\(manual\\)")
 
   # Default-s fits report paper_default provenance in the caption.
   set.seed(65)
@@ -279,7 +279,7 @@ test_that("autoplot passes arguments through to plot_estimates", {
   expect_identical(attr(p80$data, "level"), 0.8)
   p_pr <- ggplot2::autoplot(fit, style = "pointrange")
   geoms <- vapply(p_pr$layers, function(l) class(l$geom)[1L], character(1L))
-  expect_true("GeomPointrange" %in% geoms)
+  expect_true("GeomSegment" %in% geoms)
 
   # TDNN fits dispatch through the np_result autoplot method.
   set.seed(66)
@@ -289,5 +289,5 @@ test_that("autoplot passes arguments through to plot_estimates", {
                       s1 = 4L, s2 = 8L, se = FALSE)
   p_tdnn <- ggplot2::autoplot(fit_tdnn)
   expect_s3_class(p_tdnn, "ggplot")
-  expect_match(p_tdnn$labels$caption, "s1 = 4, s2 = 8")
+  expect_match(p_tdnn$labels$caption, "s1 = 4.*s2 = 8")
 })

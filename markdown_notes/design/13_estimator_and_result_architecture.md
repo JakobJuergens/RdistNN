@@ -35,7 +35,7 @@ weights rather than imposing frozen full-sample ranks.
 | Result | Main quantity | Uncertainty and interpretation |
 | --- | --- | --- |
 | `np_result` (including TDNN) | `mu` | Conditional mean, `se`, joint target covariance |
-| `cate_result` | `tau` | Conditional effect and its `se` |
+| `cate_result` | `tau` | Conditional effect, `se` and on-demand joint target covariance |
 | `affine_ratio_result` / `clate_result` | `theta`, paired `components` | Component covariance, ratio variance and per-target computational status |
 | `plqr_result` | `moment`, supplied `theta_eval` | Moment diagnostics; coefficient inference requires the documented sandwich |
 | `gmm_result` | Solved `theta` | GMM covariance, convergence and identification diagnostics |
@@ -87,6 +87,16 @@ frozen-rank reference. Custom closures with mutable external state retain their
 own reproducibility obligations.
 
 ## Nonparametric regression reporting and prediction
+
+CATE also exposes `vcov()` from retained frozen signals, without requiring
+optional weights. Common deletion rows supply cross-target covariance;
+`fast` freezes fitted geometry while `loo` uses the retained original metric
+and inference context for deletion-specific refitting. A missing original
+context field differs from an explicitly retained `NULL`. Covariance requires
+an active fitted jackknife, preserves zero/singular matrices and follows
+coefficient target names. This calculation does not establish joint inference
+assumptions. Printing reports order fractions descriptively and causal
+diagnostics summarize existing quantities without warning thresholds or schema changes.
 
 DNN and TDNN regression share `np_result` methods for `summary()`, `coef()`,
 `confint()`, `vcov()` and `predict()`. The adapter retains canonical training

@@ -5,7 +5,7 @@ test_that("sim_cate_data: output schema is correct for each design", {
   expected_cols <- c(
     "X1", "X2", "D", "Y",
     "e_oracle", "m_oracle", "m0_oracle", "m1_oracle",
-    "tau_oracle", "rho_oracle", "aipw_oracle"
+    "tau_oracle", "aipw_oracle"
   )
 
   for (des in designs) {
@@ -68,7 +68,7 @@ test_that("sim_cate_data: aipw_oracle matches the dormant-source AIPW score", {
   )
 
   expect_equal(dat$aipw_oracle, aipw_manual, tolerance = 1e-12)
-  expect_false(isTRUE(all.equal(dat$aipw_oracle, dat$rho_oracle)))
+  expect_false("rho_oracle" %in% names(dat))
 })
 
 test_that("sim_cate_data: unknown design gives informative error", {

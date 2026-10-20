@@ -1,5 +1,55 @@
 # Methods for cate_result objects.
 
+#' Joint jackknife covariance across CATE reporting profiles
+#'
+#' @param object A fitted `cate_result` from [cate_dnn()].
+#' @param ... Not used.
+#' @return An `m` by `m` covariance matrix, with axes in `coef(object)` order.
+#' @details Uses common deleted observations with frozen supplied signals.
+#'   The diagonal agrees with the fit's squared standard errors. The `fast`
+#'   route freezes fitted geometry; `loo` retains deletion-specific geometry
+#'   refitting. Covariance is calculated on request from retained model state,
+#'   independently of optional `return` extras, including after serialization.
+#'   Fitted uncertainty and an active jackknife are required. Singular matrices
+#'   and exact zero covariance are retained. Joint covariance supplies the
+#'   arithmetic for prespecified contrasts; valid contrast inference requires
+#'   the corresponding joint assumptions and does not supply simultaneous bands.
+#' @examples
+#' fit <- cate_dnn(X = matrix(1:7, ncol = 1),
+#'   X0 = matrix(c(2, 5), ncol = 1),
+#'   pseudo_outcome = c(2, 1, 4, 3, 6, 5, 7), s = 3,
+#'   return = character())
+#' vcov(fit)
+#' @export
+vcov.cate_result <- function(object, ...) {
+  jackknife <- object$meta$jackknife
+  if (is.null(object$se) || is.null(jackknife) ||
+      !(jackknife %in% c("fast", "loo"))) {
+    .abort_bad_state("Covariance is not available. Refit with `se = TRUE` and an active jackknife.")
+  }
+  model <- .cate_validate_prediction_model(object$.model)
+  required <- if (identical(jackknife, "loo")) {
+    c("inference_distance", "inference_ctx")
+  } else {
+    c("distance", "ctx")
+  }
+  if (!all(required %in% names(model))) {
+    .abort_bad_state("This object lacks fitted geometry for covariance. Refit with the current cate_dnn().")
+  }
+  x0_mat <- .dnn_resolve_targets(model$x_mat, X0 = object$x0)
+  loo <- .dnn_jackknife_loo_array(
+    x_mat = model$x_mat, x0_mat = x0_mat, signal = model$psi,
+    distance = model[[required[[1L]]]], ctx = model[[required[[2L]]]],
+    method = model$method, k = model$k, s = model$s,
+    normalize = model$normalize, signal_arg = "pseudo_outcome",
+    jackknife = jackknife, precomputed_ranks = model$ranks
+  )
+  n <- nrow(model$x_mat)
+  V <- .covariance_matrix(matrix(loo, nrow = n), (n - 1) / n)
+  dimnames(V) <- rep(list(names(stats::coef(object))), 2L)
+  V
+}
+
 .cate_validate_prediction_model <- function(model) {
   if (!is.list(model) || is.null(model$x_mat) || is.null(model$psi)) {
     .abort_bad_state(paste0(
@@ -125,6 +175,7 @@ summary.cate_result <- function(object, level = 0.95, ...) {
 #' @export
 print.summary.cate_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
   cat("<summary.cate_result>\n", sep = "")
+  .dnn_print_localization(x$meta)
   cat("  targets: ", nrow(x$coefficients), "\n", sep = "")
   if (!isTRUE(x$has_se)) {
     cat("  note   : standard errors are not available in this object.\n", sep = "")
