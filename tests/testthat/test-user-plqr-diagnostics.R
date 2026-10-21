@@ -1,0 +1,197 @@
+test_that("diagnostics(plqr_result) reports residual-regressor Gram diagnostics", {
+  .test_rng_scope({
+    demo <- plqr_demo_data(n = 75L, p = 2L, p_d = 1L, tau = 0.5, seed = 21L)
+    fit <- plqr_dnn(
+      data = demo$data,
+      x_cols = c("X1", "X2"),
+      D_cols = "D1",
+      g_col = "g_oracle",
+      mD_cols = "mD1",
+      y_col = "Y",
+      theta_eval = demo$truth$theta_true,
+      tau = 0.5,
+      x0 = demo$x0,
+      method = "exact",
+      k = 2L,
+      s = 4L,
+      se = FALSE,
+      return = "W"
+    )
+    d <- diagnostics(fit)
+
+    d_resid <- demo$data$D1 - demo$data$mD1
+    expected_gram <- as.numeric(crossprod(d_resid^2, fit$W))
+
+    expect_s3_class(d, "dnn_diagnostics")
+    expect_true(all(d$gram_available))
+    expect_equal(d$gram_min_eig, expected_gram, tolerance = 1e-12)
+    expect_equal(d$gram_max_eig, expected_gram, tolerance = 1e-12)
+    expect_equal(d$gram_condition_number, rep(1, nrow(d)), tolerance = 1e-12)
+
+    bad_state <- fit
+    bad_state$.model <- NULL
+    expect_error(diagnostics(bad_state), "residualized design state.*[Rr]efit")
+  }, seed = 777L)
+})
+
+test_that("diagnostics(plqr_result) reports multi-column and singular Gram diagnostics", {
+  .test_rng_scope({
+    demo <- plqr_demo_data(n = 85L, p = 2L, p_d = 2L, tau = 0.5, seed = 24L)
+    fit <- plqr_dnn(
+      data = demo$data,
+      x_cols = c("X1", "X2"),
+      D_cols = c("D1", "D2"),
+      g_col = "g_oracle",
+      mD_cols = c("mD1", "mD2"),
+      y_col = "Y",
+      theta_eval = demo$truth$theta_true,
+      tau = 0.5,
+      x0 = demo$x0,
+      method = "exact",
+      k = 2L,
+      s = 4L,
+      se = FALSE,
+      return = "W"
+    )
+    d <- diagnostics(fit)
+
+    d_resid <- fit$.model$d_resid_mat
+    expected <- lapply(seq_len(ncol(fit$W)), function(j) {
+      G <- crossprod(d_resid, d_resid * as.numeric(fit$W[, j]))
+      G <- (G + t(G)) / 2
+      eigen(G, symmetric = TRUE, only.values = TRUE)$values
+    })
+    expect_equal(d$gram_min_eig, vapply(expected, min, numeric(1L)), tolerance = 1e-12)
+    expect_equal(d$gram_max_eig, vapply(expected, max, numeric(1L)), tolerance = 1e-12)
+    expect_true(all(is.finite(d$gram_condition_number)))
+
+    singular <- fit
+    singular$.model$d_resid_mat[, 2L] <- singular$.model$d_resid_mat[, 1L]
+    d_singular <- diagnostics(singular)
+    expect_true(all(d_singular$gram_min_eig <= d_singular$gram_rank_tol))
+    expect_true(all(is.infinite(d_singular$gram_condition_number)))
+  }, seed = 777L)
+})
+
+test_that("diagnostics(plqr_result) validates retained residual-regressor state", {
+  .test_rng_scope({
+    demo <- plqr_demo_data(n = 70L, p = 2L, p_d = 2L, tau = 0.5, seed = 25L)
+    fit <- plqr_dnn(
+      data = demo$data,
+      x_cols = c("X1", "X2"),
+      D_cols = c("D1", "D2"),
+      g_col = "g_oracle",
+      mD_cols = c("mD1", "mD2"),
+      y_col = "Y",
+      theta_eval = demo$truth$theta_true,
+      tau = 0.5,
+      x0 = demo$x0,
+      method = "exact",
+      k = 2L,
+      s = 4L,
+      se = FALSE,
+      return = "W"
+    )
+
+    bad_rows <- fit
+    bad_rows$.model$d_resid_mat <- bad_rows$.model$d_resid_mat[-1L, , drop = FALSE]
+    expect_error(diagnostics(bad_rows), "row count equal to nrow\\(object\\$W\\)")
+
+    bad_value <- fit
+    bad_value$.model$d_resid_mat[1L, 1L] <- NaN
+    expect_error(diagnostics(bad_value), "object\\$\\.model\\$d_resid_mat cannot contain non-finite values")
+  }, seed = 777L)
+})
+
+test_that("diagnostics report target-level Jacobian conditioning for direct-sandwich fits", {
+  .test_rng_scope({
+    d <- .make_plqr_inference_data(n = 70L, m = 2L)
+    fit <- plqr_dnn(
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, density = d$density,
+      X0 = d$X0, method = "exact", k = 2L, s = 8L,
+      se = TRUE, return = "W"
+    )
+    dd <- diagnostics(fit)
+
+    cols <- c(
+      "jacobian_available", "jacobian_min_singular_value",
+      "jacobian_condition_number", "jacobian_rank",
+      "density_min_support", "density_mean_weighted",
+      "density_median_weighted", "density_max_support",
+      "theta_vcov_available"
+    )
+    expect_true(all(cols %in% names(dd)))
+    expect_true(all(dd$jacobian_available))
+    expect_true(all(is.finite(dd$jacobian_min_singular_value)))
+    expect_true(all(dd$jacobian_min_singular_value > 0))
+    expect_true(all(is.finite(dd$jacobian_condition_number)))
+    expect_true(all(dd$jacobian_rank == length(d$theta_eval)))
+    expect_true(all(dd$theta_vcov_available))
+    expect_true(all(dd$density_min_support >= min(d$density)))
+    expect_true(all(dd$density_max_support <= max(d$density)))
+    expect_equal(
+      dd$density_mean_weighted,
+      as.numeric(crossprod(fit$W, d$density)),
+      tolerance = 1e-12
+    )
+    expect_true(all(dd$density_mean_weighted >= dd$density_min_support))
+    expect_true(all(dd$density_mean_weighted <= dd$density_max_support))
+    expect_true(all(is.finite(dd$density_median_weighted)))
+  }, seed = 818L)
+})
+
+test_that("diagnostics flag singular PLQR Jacobians and unavailable coefficient inference", {
+  .test_rng_scope({
+    d <- .make_plqr_inference_data(n = 60L, m = 1L)
+    # D == mD makes the residualized design identically zero, so J is singular.
+    d_singular <- d
+    d_singular$mD <- d_singular$D
+    fit <- suppressWarnings(plqr_dnn(
+      X = d_singular$X, D = d_singular$D, g = d_singular$g,
+      mD = d_singular$mD, Y = d_singular$Y,
+      theta_eval = d_singular$theta_eval, tau = d_singular$tau,
+      density = d_singular$density,
+      X0 = d_singular$X0, method = "exact", k = 2L, s = 8L,
+      se = TRUE, return = "W"
+    ))
+    dd <- diagnostics(fit)
+
+    expect_true(all(dd$jacobian_available))
+    expect_true(all(dd$jacobian_condition_number == Inf))
+    expect_true(all(dd$jacobian_rank == 0L))
+    expect_false(any(dd$theta_vcov_available))
+
+    # Fits without density report the Jacobian block as unavailable.
+    fit_no_density <- plqr_dnn(
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau,
+      X0 = d$X0, method = "exact", k = 2L, s = 8L,
+      se = FALSE, return = "W"
+    )
+    dd_no <- diagnostics(fit_no_density)
+    expect_false(any(dd_no$jacobian_available))
+    expect_true(all(is.na(dd_no$jacobian_min_singular_value)))
+    expect_false(any(dd_no$theta_vcov_available))
+  }, seed = 818L)
+})
+
+test_that("nearly singular PLQR Jacobians report large condition numbers", {
+  .test_rng_scope({
+    d <- .make_plqr_inference_data(n = 60L, m = 1L)
+    # Make the second residualized column an almost-exact copy of the first so
+    # J is finite-rank but ill-conditioned rather than exactly singular.
+    eps <- 1e-7
+    d$D[, 2L] <- d$D[, 1L] + eps * d$D[, 2L]
+    d$mD[, 2L] <- d$mD[, 1L] + eps * d$mD[, 2L]
+    fit <- plqr_dnn(
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, density = d$density,
+      X0 = d$X0, method = "exact", k = 2L, s = 8L,
+      se = TRUE, return = "W"
+    )
+    dd <- diagnostics(fit)
+    expect_true(all(dd$jacobian_available))
+    expect_true(all(dd$jacobian_condition_number > 1e6))
+  }, seed = 818L)
+})

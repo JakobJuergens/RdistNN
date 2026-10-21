@@ -17,8 +17,11 @@
       "`theta` length (%d) must equal length(D_cols) (%d).",
       length(theta), length(D_cols)
     ))
+  } else {
+    tryCatch(.abort_if_na_or_nonfinite(theta, arg = "theta", quoted = TRUE),
+      error = function(e) errs <<- c(errs, conditionMessage(e)))
   }
-  if (!is.numeric(j) || length(j) != 1L || j != as.integer(j) ||
+  if (!is.numeric(j) || length(j) != 1L || !is.finite(j) || j != floor(j) ||
     j < 1L || j > max(1L, length(D_cols))) {
     errs <- c(errs, sprintf(
       "`j` must be an integer in 1..length(D_cols) (=%d).",
@@ -161,14 +164,19 @@ score_plqr_component <- function(
         score <- as.numeric(g_all(ptr_ctx))
       } else {
         # R fallback
-        thr <- as.vector(D %*% as.numeric(theta)) + gx
-        resid <- (as.numeric(tau) - as.numeric(Y <= thr))
+        below <- .plqr_below_threshold(D, as.numeric(theta), gx, Y)
+        resid <- as.numeric(tau) - as.numeric(below)
         score <- resid * (D[, j] - mD[, j])
       }
 
-      if (.has_na_only(score)) stop("Computed score contains `NA` values.", call. = FALSE)
+      if (.has_na_only(score)) {
+        stop("Computed score contains `NA` values; rescale regressors, coefficients and outcome inputs.", call. = FALSE)
+      }
       if (.has_nonfinite_non_na(score)) {
-        stop("Computed score contains non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+        stop(
+          "Computed score contains non-finite values (`Inf`, `-Inf`, or `NaN`); rescale regressor and nuisance inputs.",
+          call. = FALSE
+        )
       }
 
       list(
@@ -182,7 +190,7 @@ score_plqr_component <- function(
       psi <- ctx$score[idxs]
       if (.has_na_only(psi)) stop("score contains `NA` values.", call. = FALSE)
       if (.has_nonfinite_non_na(psi)) stop("score contains non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
-      as.numeric(sum(psi))
+      .compensated_sum(psi)
     },
     eval_batch = function(subs, data, ctx, rng) {
       psi <- ctx$score
@@ -197,7 +205,7 @@ score_plqr_component <- function(
       if (!is.null(cpp)) {
         return(cpp(subs, psi))
       }
-      rowSums(matrix(psi[subs], nrow = nrow(subs), ncol = ncol(subs)))
+      vapply(seq_len(nrow(subs)), function(i) .compensated_sum_R(psi[subs[i, ]]), numeric(1L))
     },
     randomized = FALSE,
     symmetric = TRUE,

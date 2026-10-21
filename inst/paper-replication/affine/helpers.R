@@ -346,6 +346,12 @@ replication_run_renderer <- function(script, args, paper_commit) {
   env$normalizePath <- function(path, winslash = "/", mustWork = NA) {
     base::normalizePath(path, winslash = winslash, mustWork = mustWork)
   }
+  env$source <- function(file, local = TRUE, ...) {
+    # Standalone scripts and their dependencies share this private renderer
+    # environment instead of importing helper definitions into the caller.
+    if (isTRUE(local)) local <- parent.frame()
+    base::source(file, local = local, ...)
+  }
   env$sub <- function(pattern, replacement, x, ...) {
     # The upstream simulation renderer strips its repository prefix with sub().
     # Treat that prefix literally, including Windows drives and punctuation.
@@ -401,7 +407,7 @@ replication_render <- function(bundle, output) {
       bundle_manifest_sha256 = digest::digest(file = file.path(bundle, "manifest.json"), algo = "sha256"),
       tables_matched = length(manifest$reference_tables), simulation_performed = FALSE, estimation_performed = FALSE,
       provenance_adapter = paste0(
-        "unchanged renderers; portable script/relative paths supplied by launcher; ",
+        "unchanged renderers; private dependency environment and portable script/relative paths supplied by launcher; ",
         "Git source identity taken from the pinned paper manifest"
       )
     ),

@@ -98,6 +98,9 @@ are excluded from the public evidence bundle.
 
 ## Reproducibility and maintenance
 
+Saved-evidence PDF rendering requires Cairo support in R (`capabilities("cairo")`).
+The three SIPP manuscript figures are redrawn from portable summaries with embedded fonts; accepted historical evidence remains unchanged.
+
 Re-rendering saved evidence and recomputing an estimator are different tasks.
 The accepted simulations and SIPP run have distinct historical executable
 identities. A current installation records its own identity; matching version

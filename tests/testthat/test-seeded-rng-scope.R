@@ -1,16 +1,3 @@
-# Preserve the test runner's state even in tests that remove .Random.seed.
-.rng_scope_test <- function(code) {
-  had_seed <- exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
-  seed <- get0(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
-  kind <- RNGkind()
-  on.exit({
-    suppressWarnings(do.call(RNGkind, as.list(kind)))
-    if (had_seed) assign(".Random.seed", seed, envir = .GlobalEnv)
-    else if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) rm(".Random.seed", envir = .GlobalEnv)
-  })
-  force(code)
-}
-
 .rng_seeded_calls <- function() {
   calls <- list(
     np = function(seed) np_demo_data(16, seed = seed)$data,
@@ -40,7 +27,7 @@
 }
 
 test_that("seeded generators preserve caller state and retain their draws", {
-  .rng_scope_test({
+  .test_rng_scope({
     for (generate in .rng_seeded_calls()) {
       set.seed(19)
       expected <- generate(NULL)
@@ -60,7 +47,7 @@ test_that("seeded generators preserve caller state and retain their draws", {
 })
 
 test_that("seeded replicate and grid entry points restore caller state", {
-  .rng_scope_test({
+  .test_rng_scope({
     calls <- list(
       function(seed) sim_cate_one_rep(40, 2, 1, 5, "dgp2_nonlinear", seed = seed),
       function(seed) sim_iv_one_rep(40, 2, 2, 1, 5, "dgp2_iv_homog_overid", seed = seed),
@@ -86,7 +73,7 @@ test_that("seeded replicate and grid entry points restore caller state", {
 })
 
 test_that("seed scopes restore state after errors and RNG-kind changes", {
-  .rng_scope_test({
+  .test_rng_scope({
     errors <- list(
       function() np_demo_data(12, seed = 19, inject = "bad"),
       function() cate_demo_data(12, seed = 19, inject = "bad"),
@@ -128,7 +115,7 @@ test_that("seed scopes restore state after errors and RNG-kind changes", {
 })
 
 test_that("seed scopes include successful user tuning callbacks", {
-  .rng_scope_test({
+  .test_rng_scope({
     for (had_seed in c(TRUE, FALSE)) {
       set.seed(271)
       before <- .Random.seed
@@ -146,7 +133,7 @@ test_that("seed scopes include successful user tuning callbacks", {
 })
 
 test_that("replicate seeds determine stochastic tuning independently of caller state", {
-  .rng_scope_test({
+  .test_rng_scope({
     set.seed(19)
     selected_s <- sample(3:20, 1L)
     expected <- sim_cate_one_rep(40, 2, 1, s = selected_s,

@@ -271,19 +271,32 @@ test_that("sim_cate_one_rep exposes the theorem-facing DNN decomposition", {
     seed = 706L
   )
   diagnostics <- c(
-    "localized_truth", "branch_drift", "estimator_remainder",
-    "studentized_error", "score_sd0", "standardized_branch_drift",
+    "localized_truth", "localization_drift", "estimator_remainder",
+    "studentized_error", "score_sd0", "standardized_localization_drift",
     "physical_radius_90", "treated_ess", "control_ess", "top5_score_share"
   )
   expect_true(all(diagnostics %in% names(r)))
   expect_true(all(is.finite(as.matrix(r[, diagnostics]))))
-  expect_equal(r$bias, r$branch_drift + r$estimator_remainder, tolerance = 1e-12)
+  expect_equal(r$bias, r$localization_drift + r$estimator_remainder, tolerance = 1e-12)
   expect_equal(r$studentized_error, r$bias / r$se, tolerance = 1e-12)
 
   dnn <- r[grepl("^dnn_", r$method), , drop = FALSE]
   expect_equal(length(unique(dnn$localized_truth)), 1L)
-  expect_equal(length(unique(dnn$branch_drift)), 1L)
+  expect_equal(length(unique(dnn$localization_drift)), 1L)
   expect_equal(length(unique(dnn$physical_radius_90)), 1L)
   expect_equal(length(unique(dnn$treated_ess)), 1L)
   expect_equal(length(unique(dnn$control_ess)), 1L)
+})
+test_that("simulation method rows require the current explicit status and schema", {
+  metric <- getFromNamespace(".sim_metric", "RdistNN")
+  validate <- getFromNamespace(".sim_cate_normalize_method_rows", "RdistNN")
+  row <- metric(tau_hat = 1, se_hat = .2, tau0 = 0, alpha = .05)
+  expect_identical(validate(row), row)
+  for (field in c("status", "tau_hat", "method_variant", "w_hat_supplied")) {
+    bad <- row[, setdiff(names(row), field), drop = FALSE]
+    expect_error(validate(bad), paste0("missing required column\\(s\\): ", field))
+  }
+  expect_error(validate(as.list(row)), "must be a data.frame")
+  row$status <- "failed"
+  expect_identical(validate(row)$status, "failed")
 })

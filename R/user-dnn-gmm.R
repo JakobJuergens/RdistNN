@@ -334,8 +334,10 @@
 #'
 #' @details
 #' The documented sampling framework uses independent observations; cluster
-#' and survey-design inference are not supplied. Input row order breaks
-#' distance ties, so permuting tied observations can change estimates.
+#' and survey-design inference are not supplied. Exact distance ties use
+#' lexicographic order of the original covariates, in their supplied column
+#' order. Identical covariate rows retain input-order ties; permuting those
+#' duplicates can change estimates. Ordering uses no outcomes or nuisances.
 #'
 #' Two interfaces are supported.
 #'
@@ -465,6 +467,9 @@ gmm_dnn <- function(
     x_mat <- .dnn_col_mat(x_cols, data = data, arg = "x_cols", out_arg = "X")
     sample <- data
   } else {
+    if (!is.null(x_cols)) {
+      .abort_bad_arg("data", "must be supplied when column selectors are used")
+    }
     if (is.null(X)) {
       .abort_bad_arg(
         "X",

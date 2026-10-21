@@ -75,7 +75,7 @@ fitted preprocessing. A named distance is resolved at fitting time.
 
 \code{vcov()} returns the full joint covariance across targets from common
 delete-one observations. Its diagonal agrees with the fit's squared SEs.
-The legacy \code{jackknife = "loo"} fit and covariance recompute each deletion's
+The \code{jackknife = "loo"} fit and covariance recompute each deletion's
 geometry using the original context. Prediction uncertainty always uses
 frozen training geometry and rank deletions, as does \code{jackknife = "fast"}.
 Shared scaled covariance arithmetic recovers representable results after

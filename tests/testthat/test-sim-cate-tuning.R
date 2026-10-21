@@ -1,4 +1,4 @@
-test_that("sim_cate_run tuning matches legacy s_fn for paper default", {
+test_that("sim_cate_run tuning matches s_fn for the paper default", {
   base_args <- list(
     designs = "dgp1_linear",
     n_vals = 120L,

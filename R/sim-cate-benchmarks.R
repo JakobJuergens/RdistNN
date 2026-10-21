@@ -29,8 +29,8 @@
 .sim_cate_metric_names <- function() {
   c(
     "tau_hat", "tau0", "bias", "sq_err", "se", "cover", "ci_len", "neff",
-    "localized_truth", "branch_drift", "estimator_remainder",
-    "studentized_error", "score_sd0", "standardized_branch_drift",
+    "localized_truth", "localization_drift", "estimator_remainder",
+    "studentized_error", "score_sd0", "standardized_localization_drift",
     "physical_radius_90", "treated_ess", "control_ess", "top5_score_share"
   )
 }
@@ -120,8 +120,8 @@
   )
 
   diagnostic_names <- c(
-    "localized_truth", "branch_drift", "estimator_remainder",
-    "studentized_error", "score_sd0", "standardized_branch_drift",
+    "localized_truth", "localization_drift", "estimator_remainder",
+    "studentized_error", "score_sd0", "standardized_localization_drift",
     "physical_radius_90", "treated_ess", "control_ess", "top5_score_share"
   )
   for (name in diagnostic_names) {
@@ -189,29 +189,28 @@
   )
 
   # `localized_truth` is the realized DNN-weighted truth, not the deterministic
-  # population branch. `branch_drift` is retained as a historical output name;
-  # it stores realized localization drift.
+  # population branch. `localization_drift` measures the realized displacement.
   localized_truth <- as.numeric(crossprod(W, dgp$data$tau_oracle))
-  branch_drift <- localized_truth - dgp$tau_x0
+  localization_drift <- localized_truth - dgp$tau_x0
   score_sd0 <- rep(as.numeric(dgp$truth$score_sd_x0), m)
   studentized_error <- ifelse(
     is.finite(se_hat) & se_hat > 0,
     (tau_hat - dgp$tau_x0) / se_hat,
     NA_real_
   )
-  standardized_branch_drift <- ifelse(
+  standardized_localization_drift <- ifelse(
     is.finite(neff) & neff > 0 & is.finite(score_sd0) & score_sd0 > 0,
-    sqrt(neff) * branch_drift / score_sd0,
+    sqrt(neff) * localization_drift / score_sd0,
     NA_real_
   )
 
   data.frame(
     localized_truth = localized_truth,
-    branch_drift = branch_drift,
+    localization_drift = localization_drift,
     estimator_remainder = tau_hat - localized_truth,
     studentized_error = studentized_error,
     score_sd0 = score_sd0,
-    standardized_branch_drift = standardized_branch_drift,
+    standardized_localization_drift = standardized_localization_drift,
     physical_radius_90 = paper_diag$physical_radius_90,
     treated_ess = paper_diag$treated_ess,
     control_ess = paper_diag$control_ess,
@@ -252,11 +251,11 @@
   diag_idx <- match(candidates$candidate_id, diag$candidate_id)
   diagnostics <- data.frame(
     localized_truth = rep(NA_real_, nrow(candidates)),
-    branch_drift = NA_real_,
+    localization_drift = NA_real_,
     estimator_remainder = NA_real_,
     studentized_error = NA_real_,
     score_sd0 = NA_real_,
-    standardized_branch_drift = NA_real_,
+    standardized_localization_drift = NA_real_,
     physical_radius_90 = NA_real_,
     treated_ess = NA_real_,
     control_ess = NA_real_,

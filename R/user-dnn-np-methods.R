@@ -67,7 +67,7 @@ print.np_result <- function(x, ...) {
 #'
 #'   `vcov()` returns the full joint covariance across targets from common
 #'   delete-one observations. Its diagonal agrees with the fit's squared SEs.
-#'   The legacy `jackknife = "loo"` fit and covariance recompute each deletion's
+#'   The `jackknife = "loo"` fit and covariance recompute each deletion's
 #'   geometry using the original context. Prediction uncertainty always uses
 #'   frozen training geometry and rank deletions, as does `jackknife = "fast"`.
 #'   Shared scaled covariance arithmetic recovers representable results after
@@ -112,7 +112,8 @@ vcov.np_result <- function(object, ...) {
     .abort_bad_state("Covariance is not available. Refit with `se = TRUE` and an active jackknife.")
   }
   model <- .np_prediction_state(object)
-  .np_joint_covariance(model, object$x0, model$ranks, object$meta$jackknife)
+  ranking <- if (identical(object$meta$jackknife, "fast")) .dnn_retained_ranking(object) else NULL
+  .np_joint_covariance(model, object$x0, ranking$ranks, object$meta$jackknife)
 }
 
 #' @rdname np_result

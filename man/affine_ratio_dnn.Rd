@@ -46,7 +46,8 @@ sample vectors.}
 \item{numerator, denominator}{Finite numeric signal vectors for the matrix route.}
 
 \item{distance}{Existing distance specification, registered name or function.
-Geometry is frozen across deletions; input position resolves distance ties.}
+Geometry is frozen across deletions. Exact distance ties use original
+covariates lexicographically; identical covariate rows use input position.}
 
 \item{method}{One of "exact" or "asymp", as in \code{\link[=cate_dnn]{cate_dnn()}} and \code{\link[=np_dnn]{np_dnn()}}.}
 

@@ -1,3 +1,34 @@
+test_that("computed negative extremes retain finite rank-one geometry", {
+  old <- options(RdistNN.use_compiled = TRUE)
+  on.exit(options(old), add = TRUE)
+  X <- cbind(c((-5e307) * 2, 2e-300, 3e-300), 0)
+  targets <- rbind(c(0, 0), X[1L, ])
+  # The tiny local coordinates underflow only after division by the finite
+  # sample SD. The distant row still has the independent distance sqrt(3).
+  expected <- rbind(c(sqrt(3), 0), c(0, sqrt(3)), c(0, sqrt(3)))
+  expected_ranks <- cbind(c(3L, 1L, 2L), c(1L, 2L, 3L))
+  for (native in c(TRUE, FALSE)) {
+    options(RdistNN.use_compiled = native)
+    if (native) expect_true(is.function(.rdistnn_compiled_fun("rustat_dist_l2_batch")))
+    for (metric in list(distance_l2_scaled(), distance_mahalanobis())) {
+      ctx <- metric$setup(X)
+      if (metric$name == "mahalanobis") expect_identical(ctx$rank, 1L)
+      expect_equal(metric$eval_batch(X, targets, ctx), expected, tolerance = 2e-14)
+      weights <- weights_dnn(X, X0 = targets, k = 1L, s = 3L,
+        distance = metric, return = c("W", "ranks"))
+      expect_identical(weights$ranks, expected_ranks)
+      fit <- np_dnn(X = X, X0 = targets, Y = 1:3, k = 1L, s = 3L,
+        distance = metric, se = FALSE)
+      expect_identical(as.numeric(fit$mu), c(2, 1))
+      restored <- unserialize(serialize(fit, NULL))
+      expect_identical(as.numeric(predict(restored, X0 = targets)), c(2, 1))
+      at <- c(3L, 1L, 2L)
+      expect_equal(metric$eval_batch(X[at, , drop = FALSE], targets,
+        metric$setup(X[at, , drop = FALSE])), expected[at, ], tolerance = 2e-14)
+    }
+  }
+})
+
 test_that("whitening projections retain small contributions across row shapes", {
   X <- rbind(c(2^54, 1, -2^54), c(1, 2, 3))
   # A rank-one whitening map with three equal loadings has an exact unit
@@ -13,6 +44,51 @@ test_that("whitening projections retain small contributions across row shapes", 
     for (i in 1:2) expect_identical(.mahal_project(X[i, , drop = FALSE], ctx),
       expected[i, , drop = FALSE])
   }
+})
+
+test_that("fresh Mahalanobis origins preserve small neighbors beside a distant observation", {
+  old <- options(RdistNN.use_compiled = TRUE)
+  on.exit(options(old), add = TRUE)
+  X <- matrix(c(2^100, 1, 2, 3))
+  targets <- matrix(c(2.1, 1.1, 2.1))
+  y <- c(100, 10, 20, 30)
+  # In one dimension the covariance metric has this direct scalar formula.
+  expected <- abs(outer(X[, 1L], targets[, 1L], "-")) / stats::sd(X[, 1L])
+  expected_ranks <- apply(expected, 2L, function(d) order(order(d)))
+  expected_fit <- c(20, 10, 20)
+  for (native in c(TRUE, FALSE)) {
+    options(RdistNN.use_compiled = native)
+    if (native) expect_false(is.null(.rdistnn_compiled_fun("rustat_dist_l2_batch")))
+    metric <- distance_mahalanobis()
+    ctx <- metric$setup(X)
+    value <- metric$eval_batch(X, targets, ctx)
+    # Relative comparisons preserve the tiny, positive distances in the oracle.
+    expect_equal(value / expected, matrix(1, 4, 3), tolerance = 1e-14)
+    for (j in seq_len(nrow(targets))) {
+      expect_identical(metric$eval(X, targets[j, ], ctx), value[, j])
+    }
+    weights <- weights_dnn(X, X0 = targets, k = 1L, s = 4L,
+      distance = metric, return = c("W", "ranks"))
+    expect_identical(weights$ranks, expected_ranks)
+    fit <- np_dnn(X = X, X0 = targets, Y = y, k = 1L, s = 4L,
+      distance = metric, se = FALSE)
+    expect_identical(as.numeric(fit$mu), expected_fit)
+    restored <- unserialize(serialize(fit, NULL))
+    expect_identical(as.numeric(predict(restored, X0 = targets[c(2, 1, 2), , drop = FALSE])),
+      expected_fit[c(2, 1, 2)])
+    at <- c(2:4, 1L)
+    reordered <- metric$eval_batch(X[at, , drop = FALSE], targets,
+      metric$setup(X[at, , drop = FALSE]))
+    expect_equal(reordered[order(at), ] / expected, matrix(1, 4, 3), tolerance = 1e-14)
+  }
+})
+
+test_that("fresh Mahalanobis origins retain ordinary variation around large offsets", {
+  metric <- distance_mahalanobis()
+  X <- matrix(2^100 + (0:3) * 2^49)
+  target <- 2^100 + 5 * 2^48
+  expected <- abs(X[, 1L] - target) / stats::sd(X[, 1L] - X[1L, 1L])
+  expect_equal(metric$eval(X, target, metric$setup(X)), expected, tolerance = 1e-14)
 })
 
 test_that("Mahalanobis rank cutoff follows original covariate scales", {
@@ -83,7 +159,7 @@ test_that("exceptional projection preserves tiny target differences beside offse
   expect_true(D[1] > 0)
 })
 
-test_that("Mahalanobis factor handles extreme scales, zero rank and legacy contexts", {
+test_that("Mahalanobis factor handles extreme scales, zero rank and current contexts", {
   base <- rbind(c(2, 1), c(2, -1), c(-2, 1), c(-2, -1), c(0, 0))
   spec <- distance_mahalanobis()
   expected <- sqrt(base[, 1]^2 / 4 + base[, 2]^2)
@@ -98,11 +174,12 @@ test_that("Mahalanobis factor handles extreme scales, zero rank and legacy conte
   expect_identical(ctx$rank, 1L)
   expect_equal(spec$eval(X, c(1, -1), ctx), abs(-2:2) / sqrt(2.5), tolerance = 2e-14)
   expect_identical(spec$eval(matrix(7, 3, 2), c(8, -1), spec$setup(matrix(7, 3, 2))), rep(0, 3))
-  expect_equal(spec$eval(base, c(0, 0), list(Si = diag(c(.25, 1)))), expected, tolerance = 1e-15)
+  expect_error(spec$eval(base, c(0, 0), list(Si = diag(c(.25, 1)))),
+    "current.*whitening.*refit")
   expect_error(spec$setup(matrix(1, 1, 2)), "at least two")
 })
 
-test_that("Mahalanobis factor handles wide designs and empty legacy contexts", {
+test_that("Mahalanobis factor handles wide designs and rejects incomplete contexts", {
   X <- rbind(c(1, 0, 1, 0), c(0, 1, 0, 1), c(-1, -1, -1, -1))
   X0 <- matrix(c(.25, .125, .25, .125), 1)
   d <- sweep(X[, 1:2], 2L, X0[1, 1:2], "-")
@@ -111,7 +188,7 @@ test_that("Mahalanobis factor handles wide designs and empty legacy contexts", {
   ctx <- spec$setup(X)
   expect_identical(ctx$rank, 2L)
   expect_equal(spec$eval_batch(X, X0, ctx)[, 1], expected, tolerance = 2e-14)
-  expect_identical(spec$eval_batch(X, X0, list()), spec$eval_batch(X, X0))
+  expect_error(spec$eval_batch(X, X0, list()), "current.*whitening.*refit")
   constant <- matrix(2^-600, 3, 2)
   expect_identical(spec$eval(constant, c(2^1000, -2^1000), spec$setup(constant)), rep(0, 3))
 })

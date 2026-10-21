@@ -376,3 +376,72 @@ test_that("removed legacy PLQR argument names fail instead of aliasing", {
     "unused argument"
   )
 })
+
+test_that("plqr_dnn validates direct sandwich density inputs", {
+  .test_rng_scope({
+    d <- .make_plqr_inference_data(n = 50L, m = 1L)
+
+    expect_error(
+      plqr_dnn(
+        X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+        theta_eval = d$theta_eval, tau = d$tau, density = d$density[-1L],
+        X0 = d$X0, method = "exact", k = 1L, s = 6L, se = FALSE
+      ),
+      "density.*length",
+      ignore.case = TRUE
+    )
+
+    density_zero <- d$density
+    density_zero[1L] <- 0
+    expect_error(
+      plqr_dnn(
+        X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+        theta_eval = d$theta_eval, tau = d$tau, density = density_zero,
+        X0 = d$X0, method = "exact", k = 1L, s = 6L, se = FALSE
+      ),
+      "density.*positive",
+      ignore.case = TRUE
+    )
+
+    expect_error(
+      plqr_dnn(
+        data = d$df,
+        x_cols = d$x_cols,
+        D_cols = d$D_cols,
+        g_col = "g_oracle",
+        mD_cols = d$mD_cols,
+        y_col = "Y",
+        density_col = "missing_density",
+        theta_eval = d$theta_eval,
+        tau = d$tau,
+        X0 = d$X0,
+        method = "exact", k = 1L, s = 6L, se = FALSE
+      ),
+      "density_col",
+      ignore.case = TRUE
+    )
+
+    expect_error(
+      plqr_dnn(
+        X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+        theta_eval = d$theta_eval, tau = d$tau, density = d$density,
+        X0 = d$X0, method = "exact", k = 1L,
+        tuning_mode = "grid",
+        se = TRUE
+      ),
+      "tuning_mode.*density",
+      ignore.case = TRUE
+    )
+
+    expect_error(
+      plqr_dnn(
+        X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+        theta_eval = d$theta_eval, tau = d$tau, density = d$density,
+        X0 = d$X0, method = "asymp", k = 1L, s = 6L,
+        normalize = FALSE, se = TRUE
+      ),
+      "normalize.*direct PLQR coefficient inference",
+      ignore.case = TRUE
+    )
+  }, seed = 818L)
+})

@@ -190,7 +190,7 @@ predict.affine_ratio_result <- function(
     X = model$x_mat, X0 = x0_mat,
     numerator = model$signal[, 1L], denominator = model$signal[, 2L],
     distance = model$distance, ctx = model$ctx, s = model$s, k = model$k,
-    method = model$method, normalize = if (is.null(model$normalize)) TRUE else model$normalize,
+    method = model$method, normalize = model$normalize,
     se = need_se, jackknife = engine, denominator_tol = model$denominator_tol,
     row_ids = model$row_ids, return = character()
   )

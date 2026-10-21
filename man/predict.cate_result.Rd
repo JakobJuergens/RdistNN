@@ -44,6 +44,8 @@ after serialization and without optional \code{return} extras. Prediction
 uncertainty uses frozen-geometry rank deletions, even if the fit used
 \code{jackknife = "loo"}. It can be requested from a fit with \code{se = FALSE}
 when \code{s < n}.
+Prediction localizes the retained signal without establishing new
+inferential guarantees.
 }
 \examples{
 set.seed(3)

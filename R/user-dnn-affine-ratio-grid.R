@@ -7,12 +7,7 @@
 .affine_ratio_tuning_grid <- function(default, signal, ranks, model, active, jackknife, tol, tuning,
                                      reuse_default = TRUE) {
   candidates <- tuning$grid$candidates
-  skipped <- candidates[!candidates$feasible, , drop = FALSE]
-  if (nrow(skipped)) {
-    warning(sprintf("Skipped infeasible tuning candidate(s): %s.",
-                    paste(sprintf("%s (%s)", skipped$candidate_id, skipped$reason), collapse = ", ")),
-            call. = FALSE)
-  }
+  .dnn_warn_infeasible_grid(candidates)
   cache <- new.env(parent = emptyenv())
   default_row <- candidates[candidates$is_default, , drop = FALSE]
   key <- default_row$computed_key[[1L]]

@@ -51,6 +51,39 @@ sipp_401k_localization_sensitivity <- function(fit, orders, profile_ids = NULL) 
   do.call(rbind,output)
 }
 
+# Draw the same localization paths from either saved-fit or portable CSV rows.
+plot_sipp_401k_localization <- function(r,selected,profile_titles,reference_orders,
+                                        alpha,plot_path,validation=FALSE) {
+  scale <- unique(r$outcome_scale)
+  stopifnot(length(scale)==1L,length(profile_titles)==length(selected))
+  multiplier <- switch(scale,raw_dollars=.001,capped_dollars=.001,positive_assets=100,asinh_dollars=1)
+  units <- switch(scale,raw_dollars="$1,000",capped_dollars="capped $1,000",
+                  positive_assets="percentage points",asinh_dollars="asinh dollars")
+  z <- qnorm(1-alpha/2)
+  limits <- range(c(r$tau-z*r$se,r$tau+z*r$se))*multiplier
+  if(diff(limits)==0)limits<-c(-1,1)
+  if (!capabilities("cairo"))
+    stop("SIPP PDF rendering requires an R installation with Cairo support.", call.=FALSE)
+  grDevices::cairo_pdf(plot_path,width=10.5,height=4.4)
+  tryCatch({
+    par(mfrow=c(1,length(selected)),mar=c(5,4,3,1),oma=c(2,0,0,0),las=1)
+    for(id in selected) {
+      a <- r[r$profile_id==id,]
+      plot(a$s,a$tau*multiplier,type="b",pch=16,col="#17688c",ylim=limits,
+        xlab="Exact DNN order s",ylab=paste0("Contrast / interval (",units,")"),
+        main=paste0(if(validation)"VALIDATION: " else "",profile_titles[match(id,selected)]),bty="l")
+      arrows(a$s,(a$tau-z*a$se)*multiplier,a$s,(a$tau+z*a$se)*multiplier,
+        angle=90,code=3,length=.035,col="#17688c")
+      abline(h=0,col="grey60")
+      abline(v=reference_orders,lty=3,col="#a65d28")
+    }
+    mtext(paste0("Single-fit/OOB predictions held fixed; dotted line marks s=",
+      paste(reference_orders,collapse=", "),".\nSmaller s broadens support. This comparison does not estimate spatial bias."),
+      side=1,outer=TRUE,line=.2,cex=.8)
+  },finally=dev.off())
+  invisible(NULL)
+}
+
 export_sipp_401k_localization <- function(fit,orders,output_dir,allow_validation=FALSE) {
   if (dir.exists(output_dir)||file.exists(output_dir))
     stop("Sensitivity directory already exists.",call.=FALSE)
@@ -71,29 +104,12 @@ export_sipp_401k_localization <- function(fit,orders,output_dir,allow_validation
   method <- if("dnn_oob"%in%fit$estimates$method)"dnn_oob" else "dnn_fullsample"
   for (scale in unique(rows$outcome_scale)) {
     r <- rows[rows$outcome_scale==scale & rows$method==method & rows$profile_id%in%selected,]
-    multiplier <- switch(scale,raw_dollars=.001,capped_dollars=.001,positive_assets=100,asinh_dollars=1)
-    units <- switch(scale,raw_dollars="$1,000",capped_dollars="capped $1,000",
-                    positive_assets="percentage points",asinh_dollars="asinh dollars")
-    z <- qnorm(1-fit$config$alpha/2)
-    limits <- range(c(r$tau-z*r$se,r$tau+z*r$se))*multiplier
-    if(diff(limits)==0)limits<-c(-1,1)
-    pdf(file.path(output_dir,paste0(scale,"_localization.pdf")),width=10.5,height=4.4)
-    tryCatch({
-      par(mfrow=c(1,length(selected)),mar=c(5,4,3,1),oma=c(2,0,0,0),las=1)
-      for(id in selected) {
-        a <- r[r$profile_id==id,]; income <- fit$profiles$inc[match(id,fit$profiles$profile_id)]
-        plot(a$s,a$tau*multiplier,type="b",pch=16,col="#17688c",ylim=limits,
-          xlab="Exact DNN order s",ylab=paste0("Contrast / interval (",units,")"),
-          main=paste0(if(validation)"VALIDATION: " else "", "Income $",
-                     format(round(income),big.mark=",",scientific=FALSE,trim=TRUE)),bty="l")
-        arrows(a$s,(a$tau-z*a$se)*multiplier,a$s,(a$tau+z*a$se)*multiplier,
-          angle=90,code=3,length=.035,col="#17688c")
-        abline(h=0,col="grey60")
-        abline(v=unique(fit$estimates$s),lty=3,col="#a65d28")
-      }
-      mtext("Saved single-fit/OOB signals held fixed; dotted line marks the retained default.\nSmaller s broadens support. This comparison does not estimate spatial bias.",
-        side=1,outer=TRUE,line=.2,cex=.8)
-    },finally=dev.off())
+    profile_titles <- vapply(selected,function(id) {
+      income <- fit$profiles$inc[match(id,fit$profiles$profile_id)]
+      paste0("Income $",format(round(income),big.mark=",",scientific=FALSE,trim=TRUE))
+    },character(1))
+    plot_sipp_401k_localization(r,selected,profile_titles,unique(fit$estimates$s),
+      fit$config$alpha,file.path(output_dir,paste0(scale,"_localization.pdf")),validation)
   }
   files <- list.files(output_dir,full.names=TRUE);names(files)<-basename(files)
   metadata <- list(purpose=if(validation)"validation" else "empirical",

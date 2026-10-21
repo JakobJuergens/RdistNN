@@ -30,7 +30,6 @@ original covariate units; changing individual column units can therefore
 change the retained numerical rank. The factor is reused through \code{ctx},
 including for subsets and new targets, following \code{\link[=distance_l2_scaled]{distance_l2_scaled()}}.
 Euclidean norms after projection use the selected C++ or R distance engine.
-Legacy contexts containing \code{Si} retain their original inverse metric.
 The explicit rank policy can change neighbors relative to older fits that
 truncated covariance singular values after an inverse failed. Different
 linear-algebra libraries can still differ at a numerical rank boundary.

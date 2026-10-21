@@ -202,6 +202,39 @@ test_that("plot_tuning uses stored grids or internal engines without public refi
   expect_identical(class(p_plqr$facet)[1L], "FacetWrap")
 })
 
+test_that("scalar PLQR tuning plots apply one requested uncertainty policy", {
+  skip_if_not_installed("ggplot2")
+  tuning <- new_tuning("scalar_plqr_plot_policy",
+    eval = function(...) list(s = 2L),
+    eval_grid = function(...) data.frame(s = c(2L, 3L, 4L)))
+  args <- list(X = matrix(1:5), D = matrix(c(1, 2, 3, 2, 1)),
+    mD = matrix(0, 5L, 1L), Y = c(-1, 1, -2, 2, 0), g = rep(0, 5L),
+    theta_eval = .2, x0 = 2, tuning = tuning)
+  for (fitted_se in c(FALSE, TRUE)) {
+    fit <- do.call(plqr_dnn, c(args, list(se = fitted_se)))
+    with_se <- plot_tuning(fit, se = TRUE)$data
+    without_se <- plot_tuning(fit, se = FALSE)$data
+    expect_true(all(is.finite(with_se$se)))
+    expect_true(all(is.na(without_se$se)))
+    expect_equal(with_se$estimate, without_se$estimate, tolerance = 1e-12)
+    # A supplied fit-level SE is not a cache for a different plot policy.
+    for (i in seq_len(nrow(with_se))) {
+      scalar_args <- args
+      scalar_args$tuning <- NULL
+      scalar_args$s <- with_se$s[[i]]
+      scalar <- do.call(plqr_dnn, scalar_args)
+      expect_equal(with_se$se[[i]], unname(scalar$moment_se[1L, 1L]),
+        tolerance = 1e-12)
+    }
+
+    stored <- do.call(plqr_dnn, c(args, list(se = fitted_se, tuning_mode = "grid")))
+    stored_true <- plot_tuning(stored, se = TRUE)$data
+    stored_false <- plot_tuning(stored, se = FALSE)$data
+    expect_identical(stored_true$se, stored_false$se)
+    expect_identical(is.finite(stored_true$se), rep(fitted_se, nrow(stored_true)))
+  }
+})
+
 test_that("grid dashboards include a tuning panel while preserving default panels", {
   skip_if_not_installed("ggplot2")
   fit <- .grid_plot_np_grid()

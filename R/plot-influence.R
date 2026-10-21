@@ -106,11 +106,24 @@ plot_influence <- function(object,
         "must select targets with a finite CLATE ratio; inspect ratio_status in diagnostics(object)"
       ))
     }
-    dw$contribution <- dw$weight * (psi[dw$obs_id, 1L] -
-      object$theta[dw$target_id] * psi[dw$obs_id, 2L])
-  } else {
-    tau_hat <- as.numeric(object$tau)
-    dw$contribution <- dw$weight * (psi[dw$obs_id] - tau_hat[dw$target_id])
+  }
+  dw$contribution <- 0
+  for (j in targets) {
+    rows <- which(dw$target_id == j)
+    obs <- dw$obs_id[rows]
+    w <- dw$weight[rows]
+    left <- if (clate) psi[obs, 1L] else psi[obs]
+    right <- if (clate) numeric(length(rows)) else rep(object$tau[j], length(rows))
+    if (clate) {
+      active <- which(w > 0)
+      right[active] <- object$theta[j] * psi[obs[active], 2L]
+    }
+    dw$contribution[rows] <- .dnn_score_contributions(w, left, right)$contribution
+  }
+  if (any(!is.finite(dw$contribution))) {
+    .abort_bad_arg("object", paste0(
+      "has unrepresentable weighted score contributions; rescale the retained signals"
+    ))
   }
   has_dx <- !all(is.na(dw$distance))
   dw$xval <- if (has_dx) dw$distance else dw$rank

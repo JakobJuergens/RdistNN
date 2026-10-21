@@ -216,7 +216,7 @@ gap_plot <- ggplot(gaps, aes(N, q95_absolute_Omega_units, colour = gap, linetype
   scale_shape_manual(values = c("Full minus five-fold" = 16, "Full minus true nuisance" = 1)) +
   scale_x_log10(breaks = c(8.5, 15, 30, 53), labels = c("8.5", "15", "30", "53")) +
   scale_y_continuous(limits = c(0, 1.8), breaks = c(0, .5, 1, 1.5)) +
-  labs(x = "Exact DNN N (C0)", y = "Paired absolute-gap q95\n(point-limit SD units)") +
+  labs(x = "Exact DNN N (C0)", y = "Paired absolute-gap q95\n(asymptotic SD units)") +
   guides(colour = guide_legend(nrow = 2, byrow = TRUE), linetype = guide_legend(nrow = 2, byrow = TRUE),
          shape = guide_legend(nrow = 2, byrow = TRUE))
 centers <- S[S$localization_method == "dnn" & S$training_method == "full" &
@@ -251,7 +251,7 @@ center_plot <- ggplot(components, aes(case, value, fill = component)) +
   facet_grid(app ~ .) + scale_fill_manual(values = c("Spatial drift" = "grey65", "Remainder" = "white")) +
   scale_shape_manual(values = c("Total bias" = 18)) +
   scale_y_continuous(limits = c(-.04, 1.8), breaks = c(0, .5, 1, 1.5)) +
-  labs(x = "Selected full-fit cases", y = "Mean component\n(point-limit SD units)") +
+  labs(x = "Design and sample size", y = "Mean component\n(asymptotic SD units)") +
   guides(fill = guide_legend(nrow = 2, byrow = TRUE), shape = guide_legend(nrow = 1)) +
   theme(legend.box = "vertical", legend.spacing.y = grid::unit(0, "pt"))
 save_plot("mechanisms", gap_plot + center_plot + plot_layout(widths = c(1, 1.05)), 4.65,
@@ -485,8 +485,8 @@ endpoint_metrics <- c("bias", "rmse", "point_coverage", "coverage_lower", "cover
                       "mean_estimated_normalized_variance_over_point_Omega",
                       "actual_normalized_MC_variance_over_point_Omega", "RMS_SE_over_MC_SD")
 endpoint_labels <- c("Bias", "RMSE", "Point coverage", "95\\% coverage lower", "95\\% coverage upper", "Mean interval length", "Fresh-point risk sum", "Analytic projection risk",
-                     "\\shortstack[l]{Absolute full/five-fold q95\\\\(point-limit SD units)}",
-                     "\\shortstack[l]{Absolute full/true-nuisance q95\\\\(point-limit SD units)}",
+                     "\\shortstack[l]{Absolute full/five-fold q95\\\\(asymptotic SD units)}",
+                     "\\shortstack[l]{Absolute full/true-nuisance q95\\\\(asymptotic SD units)}",
                      "\\shortstack[l]{Absolute full/true-nuisance q95\\\\(estimate units)}",
                      "$\\Ex{\\widehat\\Omega}/\\Omega_x$", "$N\\Varbi{\\rm MC}{\\widehat a}/\\Omega_x$", "RMS SE/MC SD")
 endpoint_digits <- c(4, 4, 4, 4, 4, 3, 5, 5, 3, 3, 4, 3, 3, 3)
@@ -494,7 +494,7 @@ endpoint_rows <- vapply(seq_along(endpoint_metrics), function(i)
   row(endpoint_labels[i], fmt(endpoint_records[[endpoint_metrics[i]]], endpoint_digits[i])), character(1))
 tabular("appendix_endpoint", "@{}lrrrr@{}",
         row("Metric", "\\shortstack{M2\\\\CATE}", "\\shortstack{M2\\\\Slope}", "\\shortstack{M3\\\\CATE}", "\\shortstack{M3\\\\Slope}"),
-        endpoint_rows, list(M2_n = 65536, M3_n = 531441, normalized_gap_units = "point-limit SD",
+        endpoint_rows, list(M2_n = 65536, M3_n = 531441, normalized_gap_units = "asymptotic SD",
              estimated_variance_reference = "asymptotic point constant; not finite oracle-array ratio",
              main_and_risk_count = 10000, projection_control_count = c(M2 = 1000, M3 = 100),
              intensive_count = c(M2 = 200, M3 = 0)))
@@ -607,7 +607,7 @@ if (check_only) {
     join_keys = row_keys, diagnostic_keys = c(cell_keys, "field"),
     pairing = "replication_id in accepted summaries and analysis; direct left-minus-right contrast and paired MCSE; 10000 families, zero exclusions",
     calibration_mask = "successful finite estimates with finite positive SE and available finite interval; SD and SE moments on identical mask; calibration_pairs=10000 in selected main cells",
-    diagnostic_centers = "Monte Carlo group-mean center and draw-specific realized weighted truth are unavailable diagnostics, with no added binomial uncertainty for empirical centering",
+    diagnostic_centers = "Monte Carlo group-mean and draw-specific realized weighted-truth centers are infeasible diagnostic centers; no independent-binomial uncertainty is added for empirical centering.",
     transformations = list(gaps = "q95(abs(sqrt(N)*(full-comparator)))/sqrt(Omega_point), type 8",
       centering = "sqrt(N)*(mean spatial drift or remainder)/sqrt(Omega_point); remainder includes oracle noise",
       absolute_oracle_gap = "accepted q95_absolute/sqrt(exact DNN N)",

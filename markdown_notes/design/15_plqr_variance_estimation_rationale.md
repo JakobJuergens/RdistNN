@@ -32,7 +32,7 @@ S(bx) = tau(1-tau) * sum_i w_i * tilde_D_i tilde_D_i'
 J(bx) = sum_i w_i * q_i * tilde_D_i * D_i'        (q_i estimates the local conditional density)
 ```
 
-`.plqr_direct_sandwich()` in `R/user-dnn-plqr.R` implements this
+`.plqr_direct_sandwich()` in `R/user-dnn-plqr-core.R` implements this
 bread/meat/bread calculation. Preserve the distinction between its
 limit-covariance scale and the estimator covariance after division by `neff`.
 

@@ -108,7 +108,7 @@ the stored model state; public estimators are not refit.
 }
 \details{
 Scalar grid evaluation uses the training data stored on the fit; fits
-from package versions predating that storage must be re-estimated first.
+without the required fitted training state must be refitted first.
 }
 \section{Experimental methods}{
 

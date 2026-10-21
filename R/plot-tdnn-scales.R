@@ -48,7 +48,7 @@ plot_tdnn_scales <- function(object, X = NULL, Y = NULL, ...) {
   if (is.null(x_mat) || is.null(y_vec)) {
     .abort_bad_arg(
       "X",
-      "and `Y` are required: this fit predates stored training data; refit, or supply both",
+      "and `Y` are required when fitted training data are unavailable; refit or supply both",
       quoted = FALSE
     )
   }

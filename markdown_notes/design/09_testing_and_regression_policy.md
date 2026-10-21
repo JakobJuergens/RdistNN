@@ -12,6 +12,22 @@ random setup. Test shape, invariants, interface equivalence and known identities
 not incidental execution order. Match consequential errors/warnings on meaningful
 substrings unless exact wording is part of the contract.
 
+Keep the flat `tests/testthat/` layout and assign test blocks to their observable
+contract: primitive arithmetic, estimator behavior, input validation, result
+methods, retained-state reuse or execution infrastructure. Numerical consumer
+regressions may intentionally span these layers. Shared fixtures and independent
+references belong in `helper-*.R`; single-suite fixtures stay beside their tests.
+Loading helpers must not consume or reseed the caller's RNG stream. Fixture
+generators use explicit scoped seeds, and test-only state guards stay independent
+of the production restoration code they help test. Keep future-plan/options
+cleanup with the backend tests that own those resources.
+
+When splitting suites, preserve reference calculations, assertion strength,
+tolerances and native-engine requirements. Update the suite map and complete-family
+filters together, then run each moved suite independently. Cross-estimator suites
+such as subset shapes and simulation backends remain cohesive; include them in
+the relevant family selections even when their filenames have a shared prefix.
+
 ## Numerical assertions
 
 Use explicit absolute/relative tolerances appropriate to quantity and scale.
@@ -66,6 +82,29 @@ Capture before user callbacks as well. CATE seeds tuning callbacks separately,
 then restarts the data/learner stream to preserve its established draws.
 R's saved state excludes the Box-Muller
 normal cache; the scope does not promise to restore that hidden state.
+
+RNG restoration, repeatability, future-plan agreement and optional-dependency
+agreement are separate contracts. Repetition requires the same seed, RNG kind,
+dependency route, methods, tuning callbacks and execution configuration. CATE
+and IV runners use `future_lapply(..., future.seed = TRUE)` when `future.apply`
+is installed, including under a sequential future plan. The replicate bodies
+then receive L'Ecuyer-CMRG streams, and their explicit `set.seed()` inherits that
+kind. Package-controlled draws agree across sequential and multisession future
+plans for a fixed RNG configuration; external learners and callbacks retain
+their own reproducibility obligations.
+
+Without `future.apply`, the `lapply` route inherits the caller's RNG kind.
+The same integer replicate seeds can therefore yield different data draws
+across dependency routes. A caller L'Ecuyer-CMRG kind aligns oracle draws with
+fixed deterministic cell orders, but does not establish general dependency
+invariance: future mapping advances the caller stream differently, so
+stochastic cell-level tuning can select different orders in later cells.
+Keep these established streams. Record RNG kind, optional-dependency
+availability, package versions and the future plan with a simulation's seeds.
+Bounded backend regressions use oracle methods, feasible fixed orders or small
+stochastic tuning callbacks, a few replications and at most two workers. Restore
+the caller's plan, options, RNG kind and seed on failure as well as success,
+and shut down only resources created by the test.
 
 Check seeded determinism, default resolution, return schemas and summarizers.
 Small simulation tests establish computation rather than general coverage or

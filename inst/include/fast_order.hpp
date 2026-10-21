@@ -11,6 +11,11 @@ bool all_finite_nonneg(const double *x, int n) noexcept;
 // Finite/>=0 -> radix path; otherwise stable comparison sort fallback.
 void argsort_indices(const double *x, int n, int *out_idx);
 
+// Metric ordering: exact distance ties use original raw covariate columns
+// lexicographically, with row position only for identical covariate rows.
+void argsort_indices_covariates(const double *distance, const double *X, int n, int p,
+                                int *out_idx);
+
 // Stable 1-based ranks from values (ties by original index).
 // ranks_out[i] = rank of x[i] in {1..n}.
 void ranks_from_values(const double *x, int n, int *ranks_out);

@@ -47,12 +47,21 @@ export_sipp_401k_affine <- function(fit, diagnostics, output_dir, profile_ids = 
 }
 
 render_sipp_401k_affine_displays <- function(fit, frozen, output_dir, profiles, scale, validation) {
-  methods <- sipp_401k_estimation_methods()
-  colors <- c("#a65d28", "#17688c", "#7f6188")
-  labels <- c("All-tree", "Single fit/OOB", paste0(fit$config$n_folds, "-fold"))
   p <- fit$profiles[match(profiles, fit$profiles$profile_id), ]
   incomes <- paste0("$", format(round(p$inc), big.mark = ",", scientific = FALSE, trim = TRUE))
-  rows <- fit$estimates[fit$estimates$outcome_scale == scale & fit$estimates$profile_id %in% profiles, ]
+  plot_sipp_401k_affine_summaries(fit$estimates, frozen$information, output_dir,
+    profiles, incomes, fit$config$n_folds, scale, validation)
+}
+
+# Draw either saved-fit or portable CSV summaries without evaluating a learner.
+plot_sipp_401k_affine_summaries <- function(estimates, information, output_dir,
+    profiles, incomes, n_folds, scale, validation = FALSE) {
+  if (!capabilities("cairo"))
+    stop("SIPP PDF rendering requires an R installation with Cairo support.", call. = FALSE)
+  methods <- c("dnn_fullsample", "dnn_oob", "dnn_crossfit")
+  colors <- c("#a65d28", "#17688c", "#7f6188")
+  labels <- c("All-tree", "Single fit/OOB", paste0(n_folds, "-fold"))
+  rows <- estimates[estimates$outcome_scale == scale & estimates$profile_id %in% profiles, ]
   multiplier <- switch(scale, raw_dollars = .001, capped_dollars = .001,
                        positive_assets = 100, asinh_dollars = 1)
   units <- switch(scale, raw_dollars = "$1,000", capped_dollars = "capped $1,000",
@@ -87,8 +96,8 @@ render_sipp_401k_affine_displays <- function(fit, frozen, output_dir, profiles, 
       main = paste0(prefix, outcome_title, ": frozen covariance"), bty = "l")
     y <- rev(seq_along(profiles)); axis(2, at = y, labels = incomes)
     for (k in seq_along(methods)) {
-      r <- frozen$information[frozen$information$outcome_scale == scale &
-        frozen$information$method == methods[k], ]; r <- r[match(profiles, r$profile_id), ]
+      r <- information[information$outcome_scale == scale &
+        information$method == methods[k], ]; r <- r[match(profiles, r$profile_id), ]
       yy <- y + c(.14, 0, -.14)[k]
       segments(100 * r$jk_top1_sq_share, yy, 100 * r$jk_top5_sq_share, yy, col = colors[k])
       points(100 * r$jk_top1_sq_share, yy, pch = 16, col = colors[k])
@@ -99,7 +108,8 @@ render_sipp_401k_affine_displays <- function(fit, frozen, output_dir, profiles, 
           side = 1, line = 4.8, cex = .75)
   }
   for (kind in c("intervals", "concentration")) {
-    pdf(file.path(output_dir, paste0(scale, "_", kind, ".pdf")), width = 8, height = 4.5)
+    grDevices::cairo_pdf(file.path(output_dir, paste0(scale, "_", kind, ".pdf")),
+      width = 8, height = 4.5)
     tryCatch(if (kind == "intervals") draw_intervals() else draw_concentration(),
              finally = dev.off())
   }

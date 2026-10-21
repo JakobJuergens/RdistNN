@@ -320,3 +320,38 @@ test_that("data-frame API reports y_col as missing when omitted", {
     regexp = "missing: y_col", ignore.case = TRUE
   )
 })
+
+test_that("plqr_dnn direct sandwich agrees across matrix and data-frame interfaces", {
+  .test_rng_scope({
+    d <- .make_plqr_inference_data(n = 80L, m = 3L)
+
+    fit_mat <- plqr_dnn(
+      X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
+      theta_eval = d$theta_eval, tau = d$tau, density = d$density,
+      X0 = d$X0, method = "exact", k = 2L, s = 9L,
+      se = TRUE
+    )
+    fit_df <- plqr_dnn(
+      data = d$df,
+      x_cols = d$x_cols,
+      D_cols = d$D_cols,
+      g_col = "g_oracle",
+      mD_cols = d$mD_cols,
+      y_col = "Y",
+      density_col = "density_oracle",
+      theta_eval = d$theta_eval,
+      tau = d$tau,
+      X0 = d$X0,
+      method = "exact", k = 2L, s = 9L,
+      se = TRUE
+    )
+
+    expect_equal(fit_df$moment, fit_mat$moment, tolerance = 1e-12)
+    expect_equal(fit_df$theta, fit_mat$theta, tolerance = 1e-12)
+    expect_equal(fit_df$theta_se, fit_mat$theta_se, tolerance = 1e-12)
+    expect_equal(fit_df$neff, fit_mat$neff, tolerance = 1e-12)
+    expect_equal(fit_df$jacobian, fit_mat$jacobian, tolerance = 1e-12)
+    expect_equal(fit_df$score_covariance, fit_mat$score_covariance, tolerance = 1e-12)
+    expect_equal(fit_df$theta_vcov, fit_mat$theta_vcov, tolerance = 1e-12)
+  }, seed = 818L)
+})

@@ -1,33 +1,5 @@
 # DNN-based PLQR wrapper (rank-weighted local orthogonal moments)
 
-.plqr_dnn_score_matrix <- function(d_mat, mD_mat, g_vec, y_vec, theta_eval, tau) {
-  thresh <- as.vector(d_mat %*% theta_eval) + g_vec
-  resid <- as.numeric(tau) - as.numeric(y_vec <= thresh)
-  (d_mat - mD_mat) * resid
-}
-
-.plqr_dnn_jackknife_se_loo <- function(
-  x_mat, x0_mat, score_mat, distance, method, k, s, normalize, ctx,
-  jackknife = c("fast", "loo"),
-  precomputed_ranks = NULL
-) {
-  jackknife <- match.arg(jackknife)
-  .dnn_jackknife_se_loo_matrix(
-    x_mat = x_mat,
-    x0_mat = x0_mat,
-    signal = score_mat,
-    distance = distance,
-    method = method,
-    k = k,
-    s = s,
-    normalize = normalize,
-    ctx = ctx,
-    signal_arg = "score",
-    jackknife = jackknife,
-    precomputed_ranks = precomputed_ranks
-  )
-}
-
 #' Observation-level orthogonal PLQR scores at a supplied coefficient (experimental)
 #'
 #' Computes, for each observation \eqn{i}, the orthogonal PLQR score
@@ -113,218 +85,6 @@ plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
   .plqr_dnn_score_matrix(d_mat, mD_mat, g_vec, y_vec, theta_eval = theta, tau = tau)
 }
 
-.plqr_validate_density <- function(density, n, arg = "density") {
-  density_vec <- .validate_vector_nrow(
-    density,
-    n,
-    arg = arg,
-    ref = "X",
-    strict = TRUE,
-    finite = TRUE
-  )
-  if (any(density_vec <= 0)) {
-    .abort_bad_arg(arg, "must contain positive density values", quoted = FALSE)
-  }
-  density_vec
-}
-
-.plqr_safe_solve <- function(A) {
-  tryCatch(solve(A), error = function(e) NULL)
-}
-
-.plqr_dimnames_matrix <- function(x, coef_names, target_names) {
-  rownames(x) <- coef_names
-  colnames(x) <- target_names
-  x
-}
-
-# The direct-sandwich theorem convention assumes weights that sum to one per
-# target; unnormalized weights would make coefficient SEs scale-dependent.
-.plqr_validate_normalized_weights <- function(W, tol = 1e-8) {
-  col_sums <- colSums(as.matrix(W))
-  if (any(!is.finite(col_sums)) || any(abs(col_sums - 1) > tol)) {
-    .abort_bad_state(
-      "Direct PLQR sandwich requires normalized weight columns (each summing to 1)."
-    )
-  }
-  invisible(NULL)
-}
-
-# Density-backed bread of the PLQR coefficient sandwich: per-target Jacobian
-# J(x) = sum_i w_i f_i tilde_D_i D_i' plus effective sample sizes.
-.plqr_direct_bread <- function(d_mat, mD_mat, density_vec, W,
-                               coef_names, target_names) {
-  d_resid_mat <- d_mat - mD_mat
-  m <- ncol(W)
-  jacobian <- vector("list", m)
-  for (j in seq_len(m)) {
-    J <- crossprod(d_resid_mat, d_mat * as.numeric(density_vec * W[, j]))
-    dimnames(J) <- list(coef_names, coef_names)
-    jacobian[[j]] <- J
-  }
-  names(jacobian) <- target_names
-  list(
-    jacobian = jacobian,
-    neff = stats::setNames(as.numeric(1 / colSums(W^2)), target_names)
-  )
-}
-
-# Sandwich J^-1 meat J^-T per target. `meat_is_vcov = FALSE` treats the meat
-# as an asymptotic score covariance (analytic route): omega = J^-1 S J^-T and
-# vcov = omega / neff. `meat_is_vcov = TRUE` treats the meat as a direct
-# estimate of Var(moment) (jackknife route): vcov = J^-1 meat J^-T and
-# omega = vcov * neff.
-.plqr_sandwich_from_meat <- function(jacobian, meat, neff,
-                                     coef_names, target_names,
-                                     meat_is_vcov) {
-  m <- length(jacobian)
-  p_d <- length(coef_names)
-  theta_omega <- vector("list", m)
-  theta_vcov <- vector("list", m)
-  theta_se <- matrix(NA_real_, nrow = p_d, ncol = m)
-
-  for (j in seq_len(m)) {
-    J_inv <- .plqr_safe_solve(jacobian[[j]])
-    if (is.null(J_inv) || any(!is.finite(J_inv))) {
-      warning(sprintf(
-        "plqr_dnn: direct PLQR Jacobian is singular at target %d; coefficient SEs set to NA.",
-        j
-      ), call. = FALSE)
-      omega_j <- matrix(NA_real_, nrow = p_d, ncol = p_d)
-      vcov_j <- matrix(NA_real_, nrow = p_d, ncol = p_d)
-    } else {
-      sandwiched <- J_inv %*% meat[[j]] %*% t(J_inv)
-      sandwiched <- .covariance_symmetrize(sandwiched)
-      if (isTRUE(meat_is_vcov)) {
-        vcov_j <- sandwiched
-        omega_j <- sandwiched * neff[[j]]
-      } else {
-        omega_j <- sandwiched
-        vcov_j <- sandwiched / neff[[j]]
-      }
-      theta_se[, j] <- sqrt(pmax(diag(vcov_j), 0))
-    }
-    dimnames(omega_j) <- list(coef_names, coef_names)
-    dimnames(vcov_j) <- list(coef_names, coef_names)
-    theta_omega[[j]] <- omega_j
-    theta_vcov[[j]] <- vcov_j
-  }
-
-  names(theta_omega) <- names(theta_vcov) <- target_names
-  list(
-    theta_se = .plqr_dimnames_matrix(theta_se, coef_names, target_names),
-    theta_vcov = theta_vcov,
-    theta_omega = theta_omega
-  )
-}
-
-.plqr_direct_sandwich <- function(d_mat, mD_mat, density_vec, W, tau,
-                                  coef_names, target_names) {
-  .plqr_validate_normalized_weights(W)
-  d_resid_mat <- d_mat - mD_mat
-  m <- ncol(W)
-
-  bread <- .plqr_direct_bread(
-    d_mat = d_mat,
-    mD_mat = mD_mat,
-    density_vec = density_vec,
-    W = W,
-    coef_names = coef_names,
-    target_names = target_names
-  )
-
-  score_covariance <- vector("list", m)
-  for (j in seq_len(m)) {
-    S <- .covariance_matrix(d_resid_mat * sqrt(as.numeric(W[, j])),
-      factor = as.numeric(tau) * (1 - as.numeric(tau)), center = FALSE)
-    dimnames(S) <- list(coef_names, coef_names)
-    score_covariance[[j]] <- S
-  }
-  names(score_covariance) <- target_names
-
-  sandwich <- .plqr_sandwich_from_meat(
-    jacobian = bread$jacobian,
-    meat = score_covariance,
-    neff = bread$neff,
-    coef_names = coef_names,
-    target_names = target_names,
-    meat_is_vcov = FALSE
-  )
-
-  c(
-    sandwich,
-    list(
-      jacobian = bread$jacobian,
-      score_covariance = score_covariance,
-      neff = bread$neff
-    )
-  )
-}
-
-# Jackknife-meat coefficient sandwich: full delete-1 covariance of the
-# localized vector moment as the meat, density-backed bread unchanged.
-.plqr_jackknife_meat_sandwich <- function(
-  x_mat, x0_mat, score_mat, d_mat, mD_mat, density_vec, W,
-  distance, method, k, s, normalize, ctx, jackknife,
-  precomputed_ranks, coef_names, target_names
-) {
-  .plqr_validate_normalized_weights(W)
-
-  loo <- .dnn_jackknife_loo_array(
-    x_mat = x_mat,
-    x0_mat = x0_mat,
-    signal = score_mat,
-    distance = distance,
-    method = method,
-    k = k,
-    s = s,
-    normalize = normalize,
-    ctx = ctx,
-    signal_arg = "score",
-    jackknife = jackknife,
-    precomputed_ranks = precomputed_ranks
-  )
-  jk <- .dnn_jackknife_vcov_from_loo(
-    loo = loo,
-    q = ncol(score_mat),
-    n = nrow(x_mat),
-    m = ncol(W)
-  )
-  moment_vcov <- lapply(jk$vcov, function(v) {
-    dimnames(v) <- list(coef_names, coef_names)
-    v
-  })
-  names(moment_vcov) <- target_names
-  moment_se <- .plqr_dimnames_matrix(jk$se, coef_names, target_names)
-
-  bread <- .plqr_direct_bread(
-    d_mat = d_mat,
-    mD_mat = mD_mat,
-    density_vec = density_vec,
-    W = W,
-    coef_names = coef_names,
-    target_names = target_names
-  )
-  sandwich <- .plqr_sandwich_from_meat(
-    jacobian = bread$jacobian,
-    meat = moment_vcov,
-    neff = bread$neff,
-    coef_names = coef_names,
-    target_names = target_names,
-    meat_is_vcov = TRUE
-  )
-
-  c(
-    sandwich,
-    list(
-      jacobian = bread$jacobian,
-      neff = bread$neff,
-      moment_vcov = moment_vcov,
-      moment_se = moment_se
-    )
-  )
-}
-
 #' PLQR local moment evaluation and direct coefficient inference via DNN rank weights (experimental)
 #'
 #' Compute localized orthogonal PLQR moments
@@ -344,8 +104,10 @@ plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
 #'
 #' @details
 #' The documented sampling framework uses independent observations; cluster
-#' and survey-design inference are not supplied. Input row order breaks
-#' distance ties, so permuting tied observations can change estimates.
+#' and survey-design inference are not supplied. Exact distance ties use
+#' lexicographic order of the original covariates, in their supplied column
+#' order. Identical covariate rows retain input-order ties; permuting those
+#' duplicates can change estimates. Ordering uses no outcomes or nuisances.
 #'
 #' Two interfaces are supported.
 #'
@@ -733,13 +495,15 @@ plqr_dnn <- function(
     }
   }
 
+  moment_jackknife <- isTRUE(se) &&
+    (is.null(density_vec) || identical(theta_meat, "jackknife"))
   s_resolved <- .dnn_resolve_s(
     s = s_arg,
     tuning = tuning,
     n = n,
     p = p,
     k = k,
-    se = se,
+    se = moment_jackknife,
     jackknife = jackknife,
     ctx = ctx
   )
@@ -749,6 +513,7 @@ plqr_dnn <- function(
 
   x0_mat <- .dnn_resolve_targets(x_mat, X0 = X0, x0 = x0)
 
+  geometry <- .dnn_fitted_geometry(distance, x_mat, ctx)
   weight_return <- return
   if (identical(tuning_mode, "grid") || (isTRUE(se) && identical(jackknife, "fast"))) {
     # Request ranks once so fast jackknife can reuse them.
@@ -757,12 +522,12 @@ plqr_dnn <- function(
   weight_fit <- .dnn_weights_with_extras(
     x_mat = x_mat,
     x0_mat = x0_mat,
-    distance = distance,
+    distance = geometry$distance,
     method = method,
     k = k,
     s = s,
     normalize = normalize,
-    ctx = ctx,
+    ctx = geometry$ctx,
     return = weight_return
   )
   wt <- weight_fit$wt
@@ -770,7 +535,9 @@ plqr_dnn <- function(
   m_out <- weight_fit$m
 
   d_resid_mat <- d_mat - mD_mat
-  score_mat <- .plqr_dnn_score_matrix(d_mat, mD_mat, g_vec, y_vec, theta_eval = theta_eval, tau = tau)
+  below_threshold <- .plqr_below_threshold(d_mat, theta_eval, g_vec, y_vec)
+  score_mat <- .plqr_dnn_score_matrix(d_mat, mD_mat, g_vec, y_vec,
+    theta_eval = theta_eval, tau = tau, below_threshold = below_threshold)
   moment_hat <- .dnn_estimate_from_signal(score_mat, weight_matrix, n = n, arg = "score")
   rownames(moment_hat) <- paste0("comp_", seq_len(p_d))
   colnames(moment_hat) <- paste0("target_", seq_len(m_out))
@@ -858,6 +625,7 @@ plqr_dnn <- function(
       } else {
         "none"
       },
+      tie_rule = "distance_then_covariates_then_input_position",
       theta_source = "supplied",
       theta_se_method = if (isTRUE(se) && isTRUE(direct_available)) "direct_sandwich" else "none",
       theta_meat_method = theta_meat_method,
@@ -906,250 +674,24 @@ plqr_dnn <- function(
   # below_threshold is the indicator 1{Y <= D'theta_eval + g} entering the
   # quantile score; its weighted mean per target is the local quantile
   # calibration checked by plot_calibration().
-  out$.model <- list(
+  out$.model <- c(list(
     x_mat = x_mat,
     d_mat = d_mat,
     mD_mat = mD_mat,
-    distance = distance,
     method = method,
     k = k,
     s = s,
     normalize = normalize,
-    ctx = ctx,
     ranks = if (identical(tuning_mode, "grid")) wt$ranks else NULL,
     d_resid_mat = d_resid_mat,
-    below_threshold = as.numeric(y_vec <= as.vector(d_mat %*% theta_eval) + g_vec),
+    below_threshold = as.numeric(below_threshold),
     density = density_vec,
     theta_eval = theta_eval,
     tau = tau,
-    x_cols = if (!is.null(data)) x_cols else NULL,
+    x_cols = if (!is.null(data)) .dnn_resolve_data_cols(x_cols, data, "x_cols") else NULL,
     coef_names = coef_names
-  )
+  ), geometry)
 
   class(out) <- "plqr_result"
   out
-}
-
-.plqr_dnn_rank_weight_spec <- function(method, k, s, normalize) {
-  if (identical(method, "exact")) {
-    rank_weight_dnn_exact(k = as.integer(k), s = as.integer(s))
-  } else {
-    rank_weight_dnn_asymp(k = as.integer(k), s = as.integer(s), normalize = normalize)
-  }
-}
-
-.plqr_dnn_grid_estimates <- function(moment, se) {
-  component <- rownames(moment)
-  if (is.null(component)) {
-    component <- paste0("comp_", seq_len(nrow(moment)))
-  }
-  out <- data.frame(
-    target_id = rep(seq_len(ncol(moment)), each = nrow(moment)),
-    component = rep(component, times = ncol(moment)),
-    estimate = as.numeric(moment),
-    stringsAsFactors = FALSE
-  )
-  out$se <- if (is.null(se)) rep(NA_real_, nrow(out)) else as.numeric(se)
-  out
-}
-
-.plqr_dnn_grid_default_precomputed <- function(
-  candidates, moment_hat, se_hat, n, k, method, normalize
-) {
-  default_row <- candidates[candidates$is_default, , drop = FALSE]
-  spec <- .plqr_dnn_rank_weight_spec(
-    method = method,
-    k = k,
-    s = default_row$s[[1L]],
-    normalize = normalize
-  )
-  tab <- .rank_weight_table(spec, n)
-  result <- list(
-    estimates = .plqr_dnn_grid_estimates(moment = moment_hat, se = se_hat),
-    diagnostics = .dnn_grid_diagnostics_from_table(tab, n = n, ctx = list(k = k))
-  )
-  stats::setNames(list(result), as.character(default_row$computed_key[[1L]]))
-}
-
-.plqr_dnn_grid_se_fn <- function(
-  ranks, score_mat, x_mat, x0_mat, distance, method, k, normalize, ctx, jackknife
-) {
-  force(ranks)
-  force(score_mat)
-  force(x_mat)
-  force(x0_mat)
-  force(distance)
-  force(method)
-  force(k)
-  force(normalize)
-  force(ctx)
-  force(jackknife)
-
-  function(candidate_row, tab_jk) {
-    s <- as.integer(candidate_row$s[[1L]])
-    se <- if (identical(jackknife, "fast")) {
-      spec <- .plqr_dnn_rank_weight_spec(method = method, k = k, s = s, normalize = normalize)
-      loo <- if (is.null(tab_jk)) {
-        .dnn_loo_loop(score_mat, ranks, spec, center = TRUE)
-      } else {
-        .dnn_loo_centered(
-          score_mat,
-          ranks,
-          tab_jk,
-          tab_full = attr(tab_jk, "tab_full", exact = TRUE)
-        )$loo
-      }
-      .dnn_jackknife_se_from_loo(
-        loo = loo,
-        q = ncol(score_mat),
-        n = nrow(ranks),
-        m = ncol(ranks)
-      )
-    } else {
-      .plqr_dnn_jackknife_se_loo(
-        x_mat = x_mat,
-        x0_mat = x0_mat,
-        score_mat = score_mat,
-        distance = distance,
-        method = method,
-        k = k,
-        s = s,
-        normalize = normalize,
-        ctx = ctx,
-        jackknife = "loo",
-        precomputed_ranks = NULL
-      )
-    }
-
-    out <- .plqr_dnn_grid_estimates(moment = se, se = NULL)
-    data.frame(
-      target_id = out$target_id,
-      component = out$component,
-      se = out$estimate,
-      stringsAsFactors = FALSE
-    )
-  }
-}
-
-.plqr_dnn_warn_infeasible_grid <- function(candidates) {
-  skipped <- candidates[!candidates$feasible, c("candidate_id", "reason"), drop = FALSE]
-  if (nrow(skipped) < 1L) {
-    return(invisible(NULL))
-  }
-  details <- paste(
-    sprintf("%s (%s)", skipped$candidate_id, skipped$reason),
-    collapse = ", "
-  )
-  warning(
-    sprintf("Skipped infeasible tuning candidate(s): %s.", details),
-    call. = FALSE
-  )
-  invisible(NULL)
-}
-
-.plqr_dnn_grid_meta <- function(
-  tuning_payload, engine_meta, n, p, p_d, k, method, distance, se, jackknife
-) {
-  grid_meta <- tuning_payload$grid$meta
-  name <- if (!is.null(grid_meta$name)) {
-    as.character(grid_meta$name)
-  } else if (!is.null(tuning_payload$default$meta$name)) {
-    as.character(tuning_payload$default$meta$name)
-  } else {
-    as.character(tuning_payload$source)
-  }
-  list(
-    name = name,
-    n = as.integer(n),
-    kx = as.integer(p),
-    p_d = as.integer(p_d),
-    k = as.integer(k),
-    method = method,
-    distance = .dnn_distance_name(distance),
-    jackknife = if (isTRUE(se)) jackknife else "none",
-    n_candidates = engine_meta$n_candidates,
-    n_feasible = engine_meta$n_feasible,
-    n_skipped = engine_meta$n_skipped,
-    n_failed = engine_meta$n_failed,
-    n_unique = engine_meta$n_unique
-  )
-}
-
-.plqr_dnn_tuning_grid <- function(
-  candidates,
-  ranks,
-  moment_hat,
-  se_hat,
-  x_mat,
-  x0_mat,
-  score_mat,
-  distance,
-  method,
-  k,
-  normalize,
-  ctx,
-  se,
-  jackknife,
-  tuning_payload
-) {
-  .plqr_dnn_warn_infeasible_grid(candidates)
-  se_fn <- if (isTRUE(se) && !identical(jackknife, "none")) {
-    .plqr_dnn_grid_se_fn(
-      ranks = ranks,
-      score_mat = score_mat,
-      x_mat = x_mat,
-      x0_mat = x0_mat,
-      distance = distance,
-      method = method,
-      k = k,
-      normalize = normalize,
-      ctx = ctx,
-      jackknife = jackknife
-    )
-  } else {
-    NULL
-  }
-
-  grid <- .dnn_grid_eval(
-    candidates = candidates,
-    ranks = ranks,
-    weight_spec_fn = function(candidate_row) {
-      .plqr_dnn_rank_weight_spec(
-        method = method,
-        k = k,
-        s = candidate_row$s[[1L]],
-        normalize = normalize
-      )
-    },
-    estimate_fn = function(W, candidate_row) {
-      moment <- .dnn_estimate_from_signal(score_mat, W, n = nrow(x_mat), arg = "score")
-      rownames(moment) <- paste0("comp_", seq_len(nrow(moment)))
-      colnames(moment) <- paste0("target_", seq_len(ncol(moment)))
-      .plqr_dnn_grid_estimates(moment = moment, se = NULL)
-    },
-    se_fn = se_fn,
-    ctx = list(k = k),
-    precomputed = .plqr_dnn_grid_default_precomputed(
-      candidates = candidates,
-      moment_hat = moment_hat,
-      se_hat = se_hat,
-      n = nrow(x_mat),
-      k = k,
-      method = method,
-      normalize = normalize
-    )
-  )
-  grid$meta <- .plqr_dnn_grid_meta(
-    tuning_payload = tuning_payload,
-    engine_meta = grid$meta,
-    n = nrow(x_mat),
-    p = ncol(x_mat),
-    p_d = ncol(score_mat),
-    k = k,
-    method = method,
-    distance = distance,
-    se = se,
-    jackknife = jackknife
-  )
-  grid
 }

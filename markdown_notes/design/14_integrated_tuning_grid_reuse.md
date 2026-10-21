@@ -80,6 +80,11 @@ default results anchor the grid. The engine deduplicates by `computed_key`,
 evaluates feasible candidates and maps results back to every requested row.
 Estimator callbacks own score construction, solving and uncertainty; the
 engine does not assume every estimator is a scalar weighted mean.
+NP, CATE and PLQR callbacks are owned by their respective `user-dnn-*-grid.R`
+modules; paired-ratio callbacks remain in `user-dnn-affine-ratio-grid.R`.
+The shared engine module owns infeasible-candidate warning text and the
+NP/CATE/PLQR descriptive metadata builder. Estimator adapters retain their
+existing schemas, private entry points and statistical policies.
 
 Grid point estimates use the same observations, targets, nuisance predictions
 and cached full-sample geometry. Changing `s` changes their rank weights;
@@ -87,11 +92,11 @@ it does not refit nuisance learners. The fast jackknife reuses this geometry
 and rank tables, so its candidate loop requires no new ranking or RNG work.
 Randomized preprocessing belongs before that loop.
 
-The legacy NP/CATE/PLQR `jackknife = "loo"` path remains an
+The NP/CATE/PLQR `jackknife = "loo"` reference path remains an
 explicit-deletion calculation: it recomputes weights and reranks retained
 samples for each candidate. Grid acceleration therefore primarily concerns
 `jackknife = "fast"`. With custom data-dependent or stateful metrics, the
-legacy loop can differ from a frozen-full-rank deletion and can consume RNG
+reference loop can differ from a frozen-full-rank deletion and can consume RNG
 if the metric itself does. Do not silently substitute the fast path for a
 requested loop. Paired affine-ratio/CLATE estimators deliberately freeze the
 full-sample geometry under both `"fast"` and `"loo"`, as specified in the
@@ -169,7 +174,7 @@ that do not depend on `s` run once per replication and have missing candidate
 labels/orders; do not duplicate them into the raw results for every candidate.
 Summaries group by candidate identity with missing benchmark labels handled
 explicitly. Reuse data, folds and nuisance predictions across candidates.
-The fast-path candidate loop is RNG-neutral; custom metrics used by the legacy
+The fast-path candidate loop is RNG-neutral; custom metrics used by the reference
 explicit-deletion path are subject to the caveat above.
 
 The acceptance contracts are candidate/scalar equality, a preserved default

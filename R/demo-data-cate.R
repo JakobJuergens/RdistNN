@@ -203,9 +203,8 @@ cate_demo_data <- function(n = 200,
 #' @param seed Optional integer seed, used locally without changing the caller's
 #'   RNG state. `NULL` uses the current stream.
 #'
-#' @return For `s > 1`, an integer `K x s` matrix with one subset per row.
-#'   For `s = 1`, the current helper returns a `1 x K` matrix; reshape it
-#'   with `matrix(result, ncol = 1L)` before passing it to [score_eval_batch()].
+#' @return An integer `K x s` matrix with one sorted subset per row, including
+#'   when `K = 1` or `s = 1`. The result can be passed to [score_eval_batch()].
 #'
 #' @examples
 #' subs <- cate_demo_subsets(n = 200, K = 1000, s = 8, seed = 1)
@@ -225,7 +224,7 @@ cate_demo_subsets <- function(n, K = 1000L, s = 8L, seed = NULL) {
     set.seed(seed)
   }
   # Efficient in base R for moderate sizes
-  t(replicate(K, sort(sample.int(n, s))))
+  t(matrix(replicate(K, sort(sample.int(n, s))), nrow = s, ncol = K))
 }
 
 #' Ready-made multi-scenario generator for CATE score tests

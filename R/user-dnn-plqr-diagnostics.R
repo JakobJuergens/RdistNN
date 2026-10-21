@@ -1,24 +1,9 @@
 # PLQR-specific diagnostics for plqr_result objects.
 
-.plqr_gram_diagnostics <- function(W, d_resid_mat = NULL, rank_tol = sqrt(.Machine$double.eps)) {
+.plqr_gram_diagnostics <- function(W, d_resid_mat, rank_tol = sqrt(.Machine$double.eps)) {
   w_mat <- as.matrix(W)
   n <- nrow(w_mat)
   m <- ncol(w_mat)
-
-  unavailable <- function() {
-    data.frame(
-      gram_available = rep(FALSE, m),
-      gram_min_eig = rep(NA_real_, m),
-      gram_max_eig = rep(NA_real_, m),
-      gram_condition_number = rep(NA_real_, m),
-      gram_rank_tol = rep(as.numeric(rank_tol), m),
-      stringsAsFactors = FALSE
-    )
-  }
-
-  if (is.null(d_resid_mat)) {
-    return(unavailable())
-  }
 
   d_resid <- as.matrix(d_resid_mat)
   if (!is.numeric(d_resid)) {
@@ -143,14 +128,16 @@ diagnostics.plqr_result <- function(object, candidates = "default", ...) {
   if (!.plot_candidates_is_default(candidates)) {
     return(.dnn_candidate_diagnostics(object, candidates = candidates))
   }
+  model <- object$.model
+  if (!is.list(model) || is.null(model$d_resid_mat)) {
+    .abort_bad_state("This object lacks residualized design state. Refit with plqr_dnn().")
+  }
   out <- .dnn_weight_diagnostics(
     W = .dnn_diag_require_W(object),
     meta = object$meta,
     dx = object$dx,
     tuning_payload = .dnn_diag_tuning_payload(object)
   )
-  model <- object$.model
-  d_resid_mat <- if (is.list(model)) model$d_resid_mat else NULL
-  out <- .dnn_diag_append(out, .plqr_gram_diagnostics(object$W, d_resid_mat = d_resid_mat))
+  out <- .dnn_diag_append(out, .plqr_gram_diagnostics(object$W, d_resid_mat = model$d_resid_mat))
   .dnn_diag_append(out, .plqr_jacobian_diagnostics(object, W = object$W))
 }

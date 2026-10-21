@@ -24,7 +24,9 @@ test_that("L2 retains finite huge and tiny norms through scalar, batch and order
                          D[c(3, 1), , drop = FALSE])
         ordered <- if (scaled) order_by_l2_scaled(XX, X0[1, ], "custom", c(2, 4)) else order_by_l2(XX, X0[1, ])
         expect_identical(ordered$dx, D[, 1])
-        expect_identical(ordered$ord, c(4L, 3L, 1L, 2L, 5L))
+        # The 5h tie uses raw covariates: (0,5h), (3h,4h), (4h,3h).
+        # Positive column scaling preserves that lexicographic order.
+        expect_identical(ordered$ord, c(4L, 3L, 5L, 1L, 2L))
         if (!is.null(previous)) expect_identical(D, previous)
         previous <- D
       }

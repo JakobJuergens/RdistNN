@@ -110,7 +110,7 @@ order_by_l2 <- function(X, x0, squared = FALSE) {
   }
 
   dx <- dist_l2(X, x0, squared)
-  ord <- order(dx, seq_along(dx))
+  ord <- .order_with_ties(dx, X)
   list(dx = dx, ord = as.integer(ord))
 }
 
@@ -316,6 +316,6 @@ order_by_l2_scaled <- function(X, x0,
   }
 
   dx <- dist_l2_scaled(X, x0, inv_s, squared)
-  ord <- order(dx, seq_along(dx))
+  ord <- .order_with_ties(dx, X)
   list(dx = dx, ord = as.integer(ord))
 }

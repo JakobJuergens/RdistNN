@@ -10,7 +10,7 @@
     distance <- rowSums(sweep(X, 2L, X0[j, ], "-")^2)
     mean(vapply(seq_len(ncol(subsets)), function(b) {
       ids <- subsets[, b]
-      mean(psi[ids[order(distance[ids], ids)[seq_len(k)]]])
+      mean(psi[ids[.tie_reference_order(distance[ids], X[ids, , drop = FALSE], ids)[seq_len(k)]]])
     }, numeric(1L)))
   }, numeric(1L))
 }
@@ -97,7 +97,7 @@ test_that("CATE covariance follows supplied AIPW signals and asymptotic normaliz
   }
 })
 
-test_that("CATE covariance retains registered geometry and checks legacy inference state", {
+test_that("CATE covariance retains registered geometry and validates inference state", {
   d <- .cate_vcov_data()
   name <- "stage1_covariance_metric"
   register_distance(name, distance_l2_scaled("sd"))

@@ -432,3 +432,17 @@ test_that("candidate_fit errors are actionable", {
   failed$tuning_grid$candidates$reason[[1L]] <- "boom in candidate"
   expect_error(candidate_fit(failed, 1L), "failed.*boom in candidate")
 })
+test_that("candidate views require current metadata and weight controls", {
+  tuning <- new_tuning("candidate_required_state",
+    eval = function(...) list(s = 2L),
+    eval_grid = function(...) data.frame(s = c(2L, 3L)))
+  fit <- np_dnn(X = matrix(1:6), Y = c(2, 1, 4, 3, 6, 5), x0 = 0,
+    tuning = tuning, tuning_mode = "grid", se = FALSE)
+  for (field in c("n", "m", "method")) {
+    bad <- fit
+    bad$meta[[field]] <- NULL
+    expect_error(candidate_fit(bad, 1L), "object\\$meta")
+  }
+  fit$.model$normalize <- NULL
+  expect_error(candidate_fit(fit, 1L), "object\\$\\.model\\$normalize")
+})

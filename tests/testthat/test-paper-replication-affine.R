@@ -14,6 +14,64 @@
   list(path = path, env = env)
 }
 
+test_that("renderer adapters preserve caller bindings when nested scripts reject arguments", {
+  bundle <- .affine_helpers()
+  if (is.null(bundle)) return(invisible(NULL))
+  before_names <- ls(globalenv(), all.names = TRUE)
+  before <- as.list(globalenv(), all.names = TRUE)
+  on.exit({
+    added <- setdiff(ls(globalenv(), all.names = TRUE), before_names)
+    if (length(added)) rm(list = added, envir = globalenv())
+    list2env(before, envir = globalenv())
+  }, add = TRUE)
+  sentinels <- c("plot_sipp_401k_affine_summaries", "plot_sipp_401k_localization")
+  for (name in sentinels) assign(name, function(...) "caller helper", envir = globalenv())
+  expected <- mget(sentinels, envir = globalenv(), inherits = FALSE)
+  expected_names <- ls(globalenv(), all.names = TRUE)
+  script <- file.path(bundle$path, "source", "sipp", "07_render_affine_manuscript.R")
+  expect_error(bundle$env$replication_run_renderer(script, "--unknown-audit-probe", "unused"),
+    "Unknown argument")
+  expect_identical(mget(sentinels, envir = globalenv(), inherits = FALSE), expected)
+  expect_setequal(ls(globalenv(), all.names = TRUE), expected_names)
+})
+
+test_that("renderer adapters keep nested dependencies in their requested environments", {
+  bundle <- .affine_helpers()
+  if (is.null(bundle)) return(invisible(NULL))
+  directory <- tempfile("renderer scope (test) ")
+  dir.create(directory)
+  on.exit(unlink(directory, recursive = TRUE), add = TRUE)
+  script <- file.path(directory, "script.R")
+  first <- file.path(directory, "first.R")
+  second <- file.path(directory, "second.R")
+  output <- file.path(directory, "result.rds")
+  literal <- function(path) encodeString(path, quote = '"')
+  writeLines(".rdistnn_renderer_scope_helper <- function() 'private dependency'", second)
+  writeLines(paste0("source(", literal(second), ")"), first)
+  writeLines(c(
+    paste0("source(", literal(first), ")"),
+    "nested_local <- identical(environment(.rdistnn_renderer_scope_helper), environment())",
+    "explicit <- new.env(parent = environment())",
+    paste0("source(", literal(second), ", local = explicit)"),
+    "explicit_local <- identical(environment(explicit$.rdistnn_renderer_scope_helper), explicit)",
+    paste0("source(", literal(second), ", local = TRUE)"),
+    "true_local <- identical(environment(.rdistnn_renderer_scope_helper), environment())",
+    paste0("saveRDS(list(value = .rdistnn_renderer_scope_helper(), nested = nested_local, ",
+      "explicit = explicit_local, local_true = true_local), ", literal(output), ")")
+  ), script)
+  before_names <- ls(globalenv(), all.names = TRUE)
+  before <- as.list(globalenv(), all.names = TRUE)
+  on.exit({
+    added <- setdiff(ls(globalenv(), all.names = TRUE), before_names)
+    if (length(added)) rm(list = added, envir = globalenv())
+    list2env(before, envir = globalenv())
+  }, add = TRUE)
+  expect_true(bundle$env$replication_run_renderer(script, character(), "unused"))
+  expect_identical(readRDS(output), list(value = "private dependency", nested = TRUE,
+    explicit = TRUE, local_true = TRUE))
+  expect_setequal(ls(globalenv(), all.names = TRUE), before_names)
+})
+
 test_that("affine replication verifies scientific source and rejects corruption", {
   skip_if_not_installed("digest")
   skip_if_not_installed("jsonlite")

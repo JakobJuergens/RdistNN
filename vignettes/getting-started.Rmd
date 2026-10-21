@@ -77,6 +77,30 @@ is not a substitute for the two arm means. Demo data now include `m1_oracle`
 and `aipw_oracle`; the former `rho_oracle` used a different signal, so this is
 not a numerically equivalent column rename.
 
+Fresh nuisance-based fitting constructs
+`mu1 - mu0 + D*(Y-mu1)/e - (1-D)*(Y-mu0)/(1-e)`, with validated and clipped
+propensities. The retired `m_col` argument remains rejected. A directly supplied
+`pseudo_outcome` takes precedence over accompanying nuisance selectors and is
+localized unchanged; its construction, causal interpretation and inferential
+justification remain the caller's responsibility. The paper's residualized-slope
+estimating equation is distinct from the removed normalized pseudo-outcome.
+
+Each new fit records `meta$signal_source`: `"aipw"` means the package constructed
+the signal through its nuisance-input branch, and `"supplied"` means the caller
+provided it. A supplied vector remains `"supplied"` even when it equals AIPW or
+comes from a column named `aipw_oracle`. `meta$created_with_version` records the
+version of the package actually loaded when the original fit was created.
+Candidate views and summaries preserve that version. Neither field certifies
+identification, same-sample nuisance accuracy or stability, localization bias,
+or the conditions for pointwise inference.
+
+Refit objects created by older development versions. Both packages reuse
+current fitted state for prediction, covariance, candidates and diagnostics;
+they do not reconstruct retired object schemas or score methods. Prediction
+returns ordinary numeric vectors, matrices or `list(fit, se.fit)`.
+See the companion's
+[saved-fit guide](https://github.com/JakobJuergens/RdistNN_stata/blob/master/docs/reusing-fits.md).
+
 ### Covariance between prespecified profiles
 
 ```{r cate-covariance}
@@ -94,8 +118,11 @@ dependence between profiles. Valid contrast inference requires the relevant
 joint assumptions; pointwise intervals alone do not establish it.
 
 The documented sampling framework uses independent observations and supplies
-neither cluster nor survey-design inference. Input row order breaks equal
-distance ties, so reordering tied observations can change a fit. The reported
+neither cluster nor survey-design inference. Exact distance ties use the
+original covariates lexicographically in their supplied column order.
+Only identical covariate rows retain input-order ties. Outcomes, treatments
+and nuisance values do not enter this ordering, and the rank-weight vector
+and ESS are preserved. The reported
 `s/n` is descriptive; it is not a calibrated inference threshold.
 
 ### Check local support
@@ -188,7 +215,11 @@ inference requires `s < n`. Set `se = FALSE` to omit standard errors.
 
 The demo helpers' explicit `seed` arguments restore the caller's saved RNG
 state. `seed = NULL` draws from the current stream. Simulation grids use
-`master_seed` to generate their replicate seeds.
+`master_seed` to generate their replicate seeds. To reproduce a grid, also retain
+the RNG kind, dependency versions and availability, future plan and tuning
+configuration; equal integer seeds alone do not guarantee agreement between
+the `future.apply` route and its fallback. See `?sim_cate_run` for the
+reproducibility contract shared with `sim_iv_run()`.
 
 Native routines default to at most two OpenMP threads. Set
 `options(RdistNN.num_threads = 4L)` to request four, or `1L` for one native

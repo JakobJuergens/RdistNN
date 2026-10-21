@@ -2,16 +2,19 @@
 # --------------------------------------------
 
 gen_X <- function(n = 20L, p = 6L, seed = 1L) {
-  set.seed(seed)
-  matrix(rnorm(n * p), n, p)
+  .test_rng_scope({
+    matrix(rnorm(n * p), n, p)
+  }, seed = seed)
 }
 gen_X0 <- function(m = 5L, p = 6L, seed = 2L) {
-  set.seed(seed)
-  matrix(rnorm(m * p), m, p)
+  .test_rng_scope({
+    matrix(rnorm(m * p), m, p)
+  }, seed = seed)
 }
 gen_x0 <- function(p = 6L, seed = 3L) {
-  set.seed(seed)
-  rnorm(p)
+  .test_rng_scope({
+    rnorm(p)
+  }, seed = seed)
 }
 
 # Return BOTH an X with a constant column and an inv scale that triggers eps-floor

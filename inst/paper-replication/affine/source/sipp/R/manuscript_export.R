@@ -1,11 +1,17 @@
 # Manuscript publication from pinned portable SIPP evidence; no learner fitting.
 .sipp_manuscript_frames <- Filter(Negate(is.null),lapply(sys.frames(),function(x)x$ofile))
 .sipp_manuscript_source <- normalizePath(tail(.sipp_manuscript_frames,1L)[[1L]])
+.sipp_localization_source <- file.path(dirname(.sipp_manuscript_source),"localization_sensitivity.R")
+.sipp_affine_source <- file.path(dirname(.sipp_manuscript_source),"affine_export.R")
+source(.sipp_localization_source)
+source(.sipp_affine_source)
 
 render_sipp_401k_manuscript <- function(input_dir,historical_dir,output_dir,table_dir,
                                       repo_root,check_only=FALSE) {
   for(pkg in c("digest","jsonlite"))
     if(!requireNamespace(pkg,quietly=TRUE))stop("Required package: ",pkg,call.=FALSE)
+  if(!check_only&&!capabilities("cairo"))
+    stop("SIPP PDF rendering requires an R installation with Cairo support.",call.=FALSE)
   sha <- function(path)digest::digest(file=path,algo="sha256")
   json <- function(path)jsonlite::read_json(path,simplifyVector=TRUE)
   repo_root <- normalizePath(repo_root,winslash="/")
@@ -206,13 +212,50 @@ render_sipp_401k_manuscript <- function(input_dir,historical_dir,output_dir,tabl
     vapply(names(tables),function(x)file.path(table_dir,x),character(1))),
     setNames(list(encoded(anchors)),file.path(output_dir,"prose_anchors.json")))
   figure_names <- c("raw_dollars_intervals.pdf","raw_dollars_concentration.pdf","raw_dollars_localization.pdf")
-  figure_records <- setNames(lapply(figure_names,function(name)list(
-    input=relative(file.path(evidence,name)),output=relative(file.path(output_dir,name)),
-    profiles=display)),figure_names)
+  # Redraw the manuscript copies from portable summaries; historical PDFs stay intact.
+  profile_titles <- c("Income $19,413","Income $31,476","Income $48,584")
+  figure_records <- setNames(lapply(figure_names[1:2],function(name)list(
+    input=relative(file.path(evidence,if(name==figure_names[1])"estimates_all.csv" else "information.csv")),
+    reference_figure=relative(file.path(evidence,name)),
+    output=relative(file.path(output_dir,name)),profiles=display,device="cairo_pdf",
+    dimensions_inches=c(8,4.5),income_labels=sub("Income ","",profile_titles,fixed=TRUE),
+    n_folds=fit$config$n_folds,
+    records=if(name==figure_names[1])selected[,c("profile_id","method","tau","se","ci_lo","ci_hi")] else
+      info[info$profile_id%in%display,c("profile_id","method","jk_top1_sq_share","jk_top5_sq_share")]
+  )),figure_names[1:2])
+  localization_name <- "raw_dollars_localization.pdf"
+  localization_path <- file.path(output_dir,localization_name)
+  localization_rows <- orders[orders$profile_id%in%display&orders$method=="dnn_oob",]
+  figure_records[[localization_name]] <- list(
+    input=relative(file.path(evidence,"localization_all.csv")),
+    reference_figure=relative(file.path(evidence,localization_name)),
+    output=relative(localization_path),profiles=display,method="dnn_oob",
+    reference_order=397L,alpha=fit$config$alpha,profile_titles=profile_titles,
+    device="cairo_pdf",dimensions_inches=c(10.5,4.4),
+    records=localization_rows[,c("profile_id","method","s","tau","se")])
+  if(check_only) {
+    stored <- json(file.path(output_dir,"manifest.json"))
+    figure_hashes <- setNames(lapply(figure_names,function(name) {
+      h <- stored$output_hashes[[relative(file.path(output_dir,name))]]
+      if(is.null(h))stop("Missing figure hash: ",name,call.=FALSE)
+      h
+    }),figure_names)
+  } else {
+    temporary_figures <- tempfile("sipp-manuscript-")
+    dir.create(temporary_figures)
+    on.exit(unlink(temporary_figures,recursive=TRUE),add=TRUE)
+    plot_sipp_401k_affine_summaries(estimates,info,temporary_figures,display,
+      sub("Income ","",profile_titles,fixed=TRUE),fit$config$n_folds,"raw_dollars")
+    plot_sipp_401k_localization(localization_rows,display,profile_titles,397L,
+      fit$config$alpha,file.path(temporary_figures,localization_name))
+    figure_sources <- setNames(file.path(temporary_figures,figure_names),figure_names)
+    figure_hashes <- lapply(figure_sources,sha)
+  }
   output_hashes <- lapply(output_text,function(x)digest::digest(x,serialize=FALSE,algo="sha256"))
   names(output_hashes) <- vapply(names(output_text),relative,character(1))
-  for(name in figure_names)output_hashes[[relative(file.path(output_dir,name))]] <- sha(file.path(evidence,name))
-  sources <- c(.sipp_manuscript_source,file.path(repo_root,"Codes/Applications/SIPP_401k/07_render_affine_manuscript.R"))
+  for(name in figure_names)output_hashes[[relative(file.path(output_dir,name))]] <- figure_hashes[[name]]
+  sources <- c(.sipp_manuscript_source,.sipp_localization_source,.sipp_affine_source,
+    file.path(repo_root,"Codes/Applications/SIPP_401k/07_render_affine_manuscript.R"))
   source_hashes <- setNames(lapply(sources,sha),vapply(sources,relative,character(1)))
   manifest <- list(schema_version=1L,as_of="2026-10-13",run_id=accepted$run_id,
     fit_fingerprint=accepted$fit_fingerprint,estimation_performed=FALSE,simulation_performed=FALSE,
@@ -233,14 +276,14 @@ render_sipp_401k_manuscript <- function(input_dir,historical_dir,output_dir,tabl
     }
     for(name in figure_names) {
       path <- file.path(output_dir,name)
-      if(!file.exists(path)||sha(path)!=sha(file.path(evidence,name)))
+      if(!file.exists(path)||sha(path)!=output_hashes[[relative(path)]])
         stop("Generated figure hash differs or is stale: ",relative(path),call.=FALSE)
     }
   } else {
     dir.create(output_dir,recursive=TRUE,showWarnings=FALSE)
     dir.create(table_dir,recursive=TRUE,showWarnings=FALSE)
     for(path in names(output_text))writeLines(output_text[[path]],path,useBytes=TRUE,sep="")
-    for(name in figure_names)if(!file.copy(file.path(evidence,name),file.path(output_dir,name),overwrite=TRUE))
+    for(name in figure_names)if(!file.copy(figure_sources[[name]],file.path(output_dir,name),overwrite=TRUE))
       stop("Cannot publish figure: ",name,call.=FALSE)
   }
   invisible(manifest)

@@ -52,6 +52,27 @@ test_that("np_demo_data supports diagnostic injection and validates it", {
   )
 })
 
+test_that("one-coordinate NP bumps match scalar truth and restore seeded RNG", {
+  .test_rng_scope({
+    for (seeded in c(TRUE, FALSE)) {
+      set.seed(276L)
+      before <- .Random.seed
+      if (!seeded) rm(".Random.seed", envir = .GlobalEnv)
+      demo <- np_demo_data(n = 8L, p = 1L, design = "bump", sigma = 0,
+        x0 = .2, seed = 72L)
+      expected <- .2 + .8 * exp(-.5 * (demo$data$X1 - .5)^2)
+      expect_equal(demo$data$m_oracle, expected, tolerance = 1e-15)
+      expect_equal(demo$data$Y, expected, tolerance = 1e-15)
+      expect_equal(demo$truth$m_fn(matrix(c(-.1, .2, .5))),
+        .2 + .8 * exp(-.5 * (c(-.1, .2, .5) - .5)^2), tolerance = 1e-15)
+      expect_equal(demo$m_x0, .2 + .8 * exp(-.5 * (.2 - .5)^2),
+        tolerance = 1e-15)
+      if (seeded) expect_identical(.Random.seed, before) else
+        expect_false(exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE))
+    }
+  })
+})
+
 test_that("public demo subset helpers return deterministic valid subsets", {
   helpers <- list(
     np = np_demo_subsets,

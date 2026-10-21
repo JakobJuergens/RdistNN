@@ -367,3 +367,50 @@
     meta = .dnn_grid_meta(candidates, ranks, feasible_keys)
   )
 }
+
+# Shared descriptive grid policy; estimator adapters own inference and statuses.
+.dnn_warn_infeasible_grid <- function(candidates) {
+  skipped <- candidates[!candidates$feasible, c("candidate_id", "reason"), drop = FALSE]
+  if (nrow(skipped) < 1L) {
+    return(invisible(NULL))
+  }
+  details <- paste(
+    sprintf("%s (%s)", skipped$candidate_id, skipped$reason),
+    collapse = ", "
+  )
+  warning(
+    sprintf("Skipped infeasible tuning candidate(s): %s.", details),
+    call. = FALSE
+  )
+  invisible(NULL)
+}
+
+.dnn_estimator_grid_meta <- function(tuning_payload, engine_meta, n, p, k, method,
+                                     distance, se, jackknife, p_d = NULL) {
+  grid_meta <- tuning_payload$grid$meta
+  name <- if (!is.null(grid_meta$name)) {
+    as.character(grid_meta$name)
+  } else if (!is.null(tuning_payload$default$meta$name)) {
+    as.character(tuning_payload$default$meta$name)
+  } else {
+    as.character(tuning_payload$source)
+  }
+  out <- list(
+    name = name,
+    n = as.integer(n),
+    kx = as.integer(p),
+    k = as.integer(k),
+    method = method,
+    distance = .dnn_distance_name(distance),
+    jackknife = if (isTRUE(se)) jackknife else "none",
+    n_candidates = engine_meta$n_candidates,
+    n_feasible = engine_meta$n_feasible,
+    n_skipped = engine_meta$n_skipped,
+    n_failed = engine_meta$n_failed,
+    n_unique = engine_meta$n_unique
+  )
+  if (!is.null(p_d)) {
+    out <- append(out, list(p_d = as.integer(p_d)), after = match("kx", names(out)))
+  }
+  out
+}

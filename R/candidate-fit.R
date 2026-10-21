@@ -72,7 +72,7 @@
 .candidate_meta_int <- function(object, field) {
   value <- object$meta[[field, exact = TRUE]]
   if (is.null(value)) {
-    return(NULL)
+    .abort_bad_state(sprintf("`object$meta$%s` is missing. Refit the current estimator.", field))
   }
   if (!is.numeric(value) || length(value) != 1L || !is.finite(value) || value != as.integer(value)) {
     .abort_bad_state(sprintf("`object$meta$%s` must be an integer scalar.", field))
@@ -93,10 +93,7 @@
       meta_m
     ))
   }
-  if (!is.null(meta_m)) {
-    return(meta_m)
-  }
-  x0_m
+  meta_m
 }
 
 .candidate_validate_estimate_rows <- function(object, rows, id) {
@@ -189,12 +186,12 @@
 }
 
 .candidate_rank_weight_spec <- function(object, candidate_row) {
-  method <- if (!is.null(object$meta$method)) as.character(object$meta$method) else "exact"
-  normalize <- if (is.list(object$.model) && !is.null(object$.model$normalize)) {
-    isTRUE(object$.model$normalize)
-  } else {
-    TRUE
+  method <- object$meta$method
+  if (!is.character(method) || length(method) != 1L || is.na(method) ||
+      !method %in% c("exact", "asymp")) {
+    .abort_bad_state("`object$meta$method` must be 'exact' or 'asymp'. Refit the current estimator.")
   }
+  normalize <- .validate_scalar_logical(object$.model$normalize, "object$.model$normalize")
   k <- as.integer(object$meta$k)
   s <- as.integer(candidate_row$s[[1L]])
   .dnn_rank_weight_spec(method, k, s, normalize)
@@ -221,14 +218,7 @@
 }
 
 .candidate_cached_ranks <- function(object) {
-  ranks <- NULL
-  if (is.list(object$.model) && !is.null(object$.model$ranks)) {
-    ranks <- object$.model$ranks
-  } else if (is.list(object$.model) && !is.null(object$.model$geometry$ranks)) {
-    ranks <- object$.model$geometry$ranks
-  } else if (!is.null(object$ranks)) {
-    ranks <- object$ranks
-  }
+  ranks <- .dnn_retained_ranking(object, allow_recompute = FALSE)$ranks
   if (is.null(ranks)) {
     .abort_bad_arg(
       "object",
@@ -365,6 +355,7 @@
   row <- .candidate_resolve_row(object, candidate)
   rows <- .candidate_estimates(object, row)
   out <- object
+  out$meta <- .cate_result_meta(out$meta)
   out$tau <- as.numeric(rows$estimate)
   out$se <- .candidate_se_vector(rows)
   .candidate_attach_common_view_fields(out, object, row)

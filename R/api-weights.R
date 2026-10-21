@@ -3,9 +3,6 @@
 # or precomputed ranks/orders/distances. DNN wrappers provided below.
 # -----------------------------------------------------------------------------
 
-# deterministic tie-breaker (distance, then index)
-.order_with_ties <- function(dx) order(dx, seq_along(dx))
-
 # ---- resolvers ---------------------------------------------------------------
 
 # Use your existing distance stack
@@ -90,7 +87,10 @@
 
   make_from_dx <- function(dist_matrix) {
     dist_matrix <- validate_nm_matrix(dist_matrix, arg = "dx", finite = TRUE)
-    order_matrix <- apply(dist_matrix, 2L, .order_with_ties) # n x m
+    tie_key <- .covariate_tie_key(x_mat)
+    order_matrix <- apply(dist_matrix, 2L, function(dx) {
+      .order_with_ties(dx, tie_key = tie_key)
+    }) # n x m
     if (is.null(dim(order_matrix))) order_matrix <- matrix(order_matrix, nrow = n, ncol = m)
     rank_matrix <- apply(order_matrix, 2L, ord_to_ranks) # n x m
     if (is.null(dim(rank_matrix))) rank_matrix <- matrix(rank_matrix, nrow = n, ncol = m)

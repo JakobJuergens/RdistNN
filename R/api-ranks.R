@@ -120,7 +120,18 @@ new_rank_weight <- function(name, eval = NULL, eval_batch = NULL, setup = NULL) 
   }
 
   tab <- as.numeric(tab)
-  tab_sum <- sum(tab)
+  tab_sum <- .compensated_sum(tab)
+  if (!is.finite(tab_sum)) {
+    # Bound every normalized partial sum without dividing tiny terms into
+    # underflow. Keep those terms in original units to retain their sign when
+    # the larger signed terms cancel. Only mass validation uses this fallback.
+    scale <- 2^ceiling(log2(length(tab)))
+    if (scale < length(tab)) scale <- scale * 2
+    large <- abs(tab) >= .Machine$double.xmin * scale
+    tab_sum <- .compensated_sum(c(
+      .compensated_sum(tab[large] / scale) * scale,
+      .compensated_sum(tab[!large])))
+  }
   if (!is.finite(tab_sum) || tab_sum <= 0) {
     .abort_bad_state("`rank_weight$table(n)` must have positive finite sum.")
   }

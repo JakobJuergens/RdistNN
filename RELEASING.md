@@ -5,8 +5,10 @@ CLATE and ordinary paired-signal ratios, with DNN weights, pointwise jackknife
 uncertainty, tuning, diagnostics and plots. Ratio confidence-set inversion,
 PLQR and local IV-GMM remain experimental.
 
-Version `0.1.0.9005` packages the documentation and maintenance improvements
-as one flattened production update, aligned with the Stata companion.
+Version `0.1.1` combines numerical fixes, canonical covariate tie ordering,
+shared implementation modules and a current-only interface, aligned with the
+Stata companion. Earlier development fit schemas and obsolete aliases require
+refitting with current syntax.
 The previous version `0.1.0.9004` entered production `master` through the reviewed squash
 merge of [PR #16](https://github.com/JakobJuergens/RdistNN/pull/16) at
 [`3394ae55383ffa4cb6bfad909730378dd8c7d4cb`](https://github.com/JakobJuergens/RdistNN/commit/3394ae55383ffa4cb6bfad909730378dd8c7d4cb),
@@ -16,7 +18,7 @@ The exact-table recurrence, compensated reductions, numerical origins, shared
 covariance and fitted whitening policy first shipped in the merged 0.1.0.9003
 snapshot, not 0.1.0.9002. See [NEWS.md](NEWS.md). A verified candidate requires
 the final-source checks below. Public tags and assets require separate
-authorization. Retain the development version during candidate preparation.
+authorization. Retain the intended release version during candidate preparation.
 Matching R/Stata versions do not imply identical feature coverage.
 
 ## Candidate identity and scientific reproduction

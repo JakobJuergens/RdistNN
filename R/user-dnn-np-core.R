@@ -102,3 +102,27 @@
   dimnames(V) <- rep(list(paste0("target_", seq_len(nrow(x0_mat)))), 2L)
   V
 }
+
+.np_dnn_jackknife_se_loo <- function(
+  x_mat, x0_mat, y, distance, method, k, s, normalize, ctx,
+  jackknife = c("fast", "loo"),
+  precomputed_ranks = NULL
+) {
+  jackknife <- match.arg(jackknife)
+  as.numeric(
+    .dnn_jackknife_se_loo_matrix(
+      x_mat = x_mat,
+      x0_mat = x0_mat,
+      signal = y,
+      distance = distance,
+      method = method,
+      k = k,
+      s = s,
+      normalize = normalize,
+      ctx = ctx,
+      signal_arg = "Y",
+      jackknife = jackknife,
+      precomputed_ranks = precomputed_ranks
+    )[1L, ]
+  )
+}
