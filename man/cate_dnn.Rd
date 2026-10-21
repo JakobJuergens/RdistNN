@@ -40,11 +40,11 @@ names must be non-missing, non-empty, and unique.}
 
 \item{t_col}{Name or index of the treatment column in \code{data} (must be 0/1).}
 
-\item{m0_col}{Name or index for \eqn{E[Y(0)\mid X]} (full AIPW interface).}
+\item{m0_col}{Name or index of the supplied control-arm conditional outcome mean.}
 
-\item{m1_col}{Name or index for \eqn{E[Y(1)\mid X]} (full AIPW interface).}
+\item{m1_col}{Name or index of the supplied treated-arm conditional outcome mean.}
 
-\item{e_col}{Name or index for propensity \eqn{P(T=1\mid X)}.}
+\item{e_col}{Name or index of the supplied treatment propensity predictions.}
 
 \item{pseudo_outcome}{Numeric vector of length \code{n}. If supplied, nuisance
 columns are not required.}
@@ -99,8 +99,8 @@ recomputes leave-one-out weights directly, and \code{"none"} skips SEs.}
 \item{return}{Optional extras in addition to the always-returned \code{tau}, \code{se},
 and \code{meta}. Allowed values:
 \code{c("W", "ranks", "ord", "dx", "psi", "nuisance", "ess", "neighbors", "tuning")}.
-The \code{neighbors} extra returns the first \code{k} nearest observations used
-inside each size-\code{s} subsample, not the full DNN weight support.}
+\code{neighbors} is a \verb{k x m} matrix of nearest training-observation indices,
+one column per target. It is a rank summary, not the full DNN weight support.}
 }
 \value{
 An object of class \code{cate_result} with components:
@@ -113,6 +113,8 @@ column names propagated from the training data when available;
 \item \code{tuning_grid}: in grid mode, a list with \code{candidates}, \code{estimates},
 \code{diagnostics}, and \code{meta} tables. Candidate diagnostics report
 top-5 weight concentration separately from the estimator's \code{k};
+\item \code{.model}: retained observations, supplied signals and fitted geometry
+used by prediction and joint covariance, independently of optional extras;
 \item optional extras requested via \code{return}.
 }
 }
@@ -153,17 +155,12 @@ diagnostics include \code{ess}, \code{max_weight}, \code{top_n}, \code{top5_weig
 \code{degenerate}; \code{top_n} is fixed at 5 and is independent of the estimator's
 \code{k}.
 
-The AIPW signal is Neyman orthogonal at the true nuisance functions. The
-normalized Robinson pseudo-outcome is not implemented because it is outside
-the accompanying paper's theoretical results. Orthogonality alone
-does not validate arbitrary nuisance predictions fitted on the
-same observations used for localization and inference. Valid full-sample
-reuse additionally requires the nuisance-rate and full-state stability
-conditions in the accompanying paper. This function computes the estimator
-and its requested jackknife procedure; it cannot diagnose whether an
-arbitrary learner satisfies those conditions. Supply oracle quantities,
-cross-fitted or out-of-fold predictions, or full-sample predictions from a
-learner for which the paper's rate and stability conditions are credible.
+For causal identification and pointwise inference, including conditions on
+nuisance accuracy and deletion stability, see the accompanying
+\href{https://jakobjuergens.com/research/#orthogonal-inference-conditional-z}{paper}.
+This function accepts supplied oracle, out-of-fold or full-sample predictions;
+it does not verify those conditions for a learner. The normalized Robinson
+construction is not implemented; use AIPW inputs or a justified supplied signal.
 
 With \code{data}, omit \code{X}; a direct \code{pseudo_outcome} vector remains supported.
 Column selectors require \code{data}. Prediction retains the fitted metric and
@@ -184,5 +181,5 @@ out$tau
 }
 \seealso{
 \code{\link[=weights_dnn]{weights_dnn()}}, \code{\link[=weights_matrix]{weights_matrix()}}, \code{\link[=score_cate_rho]{score_cate_rho()}},
-\code{\link[=cate_demo_data]{cate_demo_data()}}.
+\code{\link[=cate_demo_data]{cate_demo_data()}}, \code{\link[=vcov.cate_result]{vcov.cate_result()}}, \code{\link[=predict.cate_result]{predict.cate_result()}}.
 }

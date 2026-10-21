@@ -18,11 +18,12 @@
 #' No model fitting is performed; all quantities come from the DGP.
 #'
 #' @param n Integer sample size.
-#' @param p Integer feature dimension (recommend \eqn{p \ge 2}).
+#' @param p Integer feature dimension, at least 2.
 #' @param design Character; one of \code{"simple"}, \code{"hetero"}, \code{"bump"} for \eqn{\tau(x)}.
 #' @param sigma Noise standard deviation in \eqn{Y}.
 #' @param clip Propensity clipping in \eqn{(0,\,0.5)}; applied to \eqn{e(x)}.
-#' @param seed Optional integer seed for reproducibility.
+#' @param seed Optional integer seed, used locally without changing the caller's
+#'   RNG state. `NULL` uses the current stream.
 #' @param x0 Optional numeric length-\eqn{p} target point (defaults to the zero vector).
 #' @param inject Optional, one of \code{NULL}, \code{"na"}, \code{"inf"}; if provided,
 #'   inject a single non-finite value into one of the returned columns (see \code{inject_col})
@@ -74,11 +75,15 @@ cate_demo_data <- function(n = 200,
   }
   clip <- as.numeric(clip)
   design <- match.arg(design)
-  if (!is.null(seed)) set.seed(seed)
   if (is.null(x0)) {
     x0 <- rep(0, p)
   } else {
     x0 <- .validate_target_vector(x0, p = p, x0_arg = "x0", x_arg = "X", finite = TRUE)
+  }
+  if (!is.null(seed)) {
+    restore_rng <- .rdistnn_rng_restore()
+    on.exit(restore_rng(), add = TRUE)
+    set.seed(seed)
   }
 
   # Draw covariates
@@ -189,16 +194,18 @@ cate_demo_data <- function(n = 200,
 #'
 #' Draws \eqn{K} subsets of size \eqn{s} uniformly at random from
 #' \eqn{\{1,\ldots,n\}}. Within each subset, elements are sampled **without**
-#' replacement (all indices are distinct). Across rows, subsets are sampled
+#' replacement (all indices are distinct). Across draws, subsets are sampled
 #' independently (the same index may reappear in different rows).
 #'
 #' @param n Integer; number of observations.
 #' @param K Integer; number of subsets to sample.
 #' @param s Integer; subset size (order of the kernel).
-#' @param seed Optional integer seed for reproducibility.
+#' @param seed Optional integer seed, used locally without changing the caller's
+#'   RNG state. `NULL` uses the current stream.
 #'
-#' @return An integer matrix of size \eqn{K \times s}. Each row contains
-#' \eqn{s} distinct integers in \eqn{\{1,\ldots,n\}} representing one subset.
+#' @return For `s > 1`, an integer `K x s` matrix with one subset per row.
+#'   For `s = 1`, the current helper returns a `1 x K` matrix; reshape it
+#'   with `matrix(result, ncol = 1L)` before passing it to [score_eval_batch()].
 #'
 #' @examples
 #' subs <- cate_demo_subsets(n = 200, K = 1000, s = 8, seed = 1)
@@ -212,7 +219,11 @@ cate_demo_subsets <- function(n, K = 1000L, s = 8L, seed = NULL) {
   if (s > n) {
     .abort_bad_arg("s", sprintf("must satisfy s <= n (got s=%d, n=%d)", s, n))
   }
-  if (!is.null(seed)) set.seed(seed)
+  if (!is.null(seed)) {
+    restore_rng <- .rdistnn_rng_restore()
+    on.exit(restore_rng(), add = TRUE)
+    set.seed(seed)
+  }
   # Efficient in base R for moderate sizes
   t(replicate(K, sort(sample.int(n, s))))
 }

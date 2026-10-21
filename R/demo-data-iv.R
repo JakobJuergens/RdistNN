@@ -12,7 +12,8 @@
 #' @param design Character; one of `"homog"`, `"heterog"`, or `"weak"`.
 #' @param sigma Noise standard deviation in `Y`.
 #' @param clip Clipping bound in `(0, 0.5)` for binary instrument probabilities.
-#' @param seed Optional integer seed for reproducibility.
+#' @param seed Optional integer seed, used locally without changing the caller's
+#'   RNG state. `NULL` uses the current stream.
 #' @param x0 Optional numeric length-`p` target point.
 #' @param inject Optional, one of `NULL`, `"na"`, or `"inf"`; if provided,
 #'   injects a single non-finite value into `inject_col` at `idx_inject`.

@@ -134,19 +134,17 @@ cutoff or target filtering is implied.
 
 ## Statistical scope
 
-Pointwise inference requires local design and oracle regularity, a fixed
-nonzero population first stage, undersmoothing and the corresponding learner
-accuracy, boundedness and deletion-stability conditions. Orthogonality and
-prediction convergence alone do not justify full-sample nuisance reuse.
-One-/two-deleted nuisance fits used in theoretical arguments are proof devices;
-the implemented covariance freezes the supplied predictions.
+See the [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
+for pointwise inference assumptions: local/oracle regularity, nonzero population
+first stage, bias control and learner accuracy/deletion stability. Supplied
+training labels and numerical tests do not certify them. The covariance freezes
+predictions; theoretical one-/two-deleted nuisance fits are proof devices.
 
-For a valid fixed target, the population ratio limit variance has the form
-`Var(theta * phi_d - phi_y | X=x) / Delta_D(x)^2`. A training label or a
-successful numerical test does not verify its assumptions. Asymptotic DNN and
-general-k computational support do not automatically extend an exact-k=1
-theorem. Automatic nuisance fitting, adaptive selection, simultaneous bands,
-multiple instruments and weak-IV-uniform claims require separate justification.
+At a valid fixed target the limit variance is
+`Var(theta * phi_d - phi_y | X=x) / Delta_D(x)^2`. General-k/asymptotic
+computational support does not extend an exact-k=1 theorem. Automatic nuisance
+fitting, adaptive selection, simultaneous bands, multiple instruments and
+weak-IV-uniform inference require separate justification.
 
 ## Independent numerical references
 

@@ -21,6 +21,14 @@ The [design reference](design/README.md) specifies maintained contracts.
 - NP DNN and TDNN expose conditional-mean summaries, coefficients, pointwise
   intervals, full joint target covariance and prediction from retained training
   state, including serialized fits without optional weight/outcome extras.
+- CATE accepts AIPW nuisance inputs or supplied signals. With fitted uncertainty
+  and an active jackknife, `vcov()` supplies joint target covariance from
+  retained model state, including serialized fits without optional extras.
+  Common deletions follow the fitted jackknife: `fast` freezes geometry and
+  `loo` refits deletion geometry.
+  Covariance supplies the arithmetic for prespecified contrasts; valid contrast
+  inference requires the corresponding joint assumptions. See the
+  [covariance reference](https://JakobJuergens.github.io/RdistNN/reference/vcov.cate_result.html).
 - CLATE constructs paired augmented binary-IV signals from supplied nuisance
   predictions, retaining components, estimator-scale covariance and numerical
   statuses. Its summaries, plots and candidate views use the shared interfaces.

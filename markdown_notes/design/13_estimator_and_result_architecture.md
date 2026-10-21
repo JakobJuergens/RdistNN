@@ -86,7 +86,7 @@ their established deletion-specific geometry; paired-ratio `loo` remains the
 frozen-rank reference. Custom closures with mutable external state retain their
 own reproducibility obligations.
 
-## Nonparametric regression reporting and prediction
+## CATE joint covariance
 
 CATE also exposes `vcov()` from retained frozen signals, without requiring
 optional weights. Common deletion rows supply cross-target covariance;
@@ -98,8 +98,12 @@ coefficient target names. This calculation does not establish joint inference
 assumptions. Printing reports order fractions descriptively and causal
 diagnostics summarize existing quantities without warning thresholds or schema changes.
 
+## Nonparametric regression reporting and prediction
+
 DNN and TDNN regression share `np_result` methods for `summary()`, `coef()`,
-`confint()`, `vcov()` and `predict()`. The adapter retains canonical training
+`confint()`, `vcov()`, `nobs()` and `predict()`. For NP/TDNN and CATE, `nobs()`
+returns the training observation count, distinct from target count or local
+effective sample size. The adapter retains canonical training
 outcomes/covariates, resolved weight controls, column names and fitted distance
 specification/context independently of optional extras. Resolving a registered
 metric at fitting time protects saved fits from subsequent registry changes.
@@ -126,6 +130,11 @@ reports collapsed bounds; nonzero means give infinite statistics and zero
 p-values, while zero-over-zero statistics and p-values are undefined. These
 outputs do not establish negligible bias or valid coverage. This is pointwise
 reporting and does not supply simultaneous bands.
+
+Stored prediction selectors retain original data-frame column names, including
+repeated selectors and matrix-valued columns, separately from canonical matrix
+column labels. Neighbor extras request ranks internally without exposing
+unrequested extras.
 
 ## Implementation ownership
 

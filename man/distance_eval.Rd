@@ -23,6 +23,7 @@ Numeric vector length \code{n}.
 Evaluate a distance spec at a single target
 }
 \examples{
+set.seed(1)
 x_mat <- matrix(rnorm(12), 4, 3)
 x0_vec <- c(0, 0, 0)
 distance_eval(distance_l2(), x_mat, x0_vec)

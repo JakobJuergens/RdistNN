@@ -5,6 +5,12 @@ contracts for RdistNN. Use [AGENTS.md](../../AGENTS.md) for editing rules,
 [CONTRIBUTING.md](../../CONTRIBUTING.md) for commands and checks, and
 [the package scope](../rdistnn_roadmap.md) for current capabilities and limits.
 
+The [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
+owns statistical derivations. These notes retain formulas, numerical
+choices and scope limits needed to implement the package correctly. Read the
+contract for the surface being changed; the numbered files are references,
+not a release task list.
+
 ## Interface and validation
 
 1. [Interface decisions](01_interface_standardization_decisions.md)

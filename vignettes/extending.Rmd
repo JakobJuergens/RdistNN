@@ -13,93 +13,33 @@ library(RdistNN)
 set.seed(3)
 ```
 
-## Why The Package Is Modular
+## Choose an extension point
 
-`RdistNN` is built in layers:
+Most extensions replace one part of the estimation pipeline:
 
-- ranking: turn `X` and `x0` / `X0` into distances, orders, and ranks;
-- weighting: turn ranks into localization weights;
-- tuning: resolve kernel order `s` from `(n, kx, k)` using a pluggable rule;
-- scoring: evaluate a kernel or estimating function on subsets of the data;
-- wrappers: combine the pieces into user-facing workflows such as `np_dnn()`,
-  `cate_dnn()`, or `plqr_dnn()`.
+| Goal | Extension |
+|---|---|
+| Change closeness or observation ordering | Distance or ranking provider |
+| Change the weight profile for given ranks | Rank-weight rule |
+| Change the order `s` for a given `(n, kx, k)` | Tuning specification |
+| Evaluate another kernel on data subsets | Score |
+| Reuse external distances, orders or ranks | `weights_matrix(ranking = ...)` |
 
-That separation is deliberate. Most new methods only need to replace one layer.
+Use `as_distance()`, `as_rank_weight()` or `as_score()` for a simple function.
+Their `new_*()` counterparts support batch evaluation, setup context and
+parameter-aware score derivatives.
 
-As a rule of thumb:
+For kernel-order specifications, use [Kernel-order tuning](kernel-order-tuning.html).
+For result classes and reporting conventions, use [Notation and conventions](notation-and-conventions.html).
 
-- use `as_distance()`, `as_rank_weight()`, or `as_score()` for quick scalar
-  prototypes;
-- use `new_distance()`, `new_rank_weight()`, or `new_score()` when you need
-  explicit batch evaluation, reusable setup context, registration, or
-  parameter-aware score derivatives.
-
-## Choose The Right Extension Point
-
-- If you want a different notion of closeness, implement a custom distance or a
-  custom ranking provider.
-- If you like the ranks but want a different localization profile, implement a
-  custom rank-weight rule.
-- If you want a different kernel-order rule, implement a custom tuning spec.
-- If the localization stays fixed but the target moment changes, implement a
-  custom score.
-- If you already have distances, orders, or ranks from another engine, pass
-  them directly into `weights_matrix()` instead of rebuilding that layer inside
-  `RdistNN`.
-
-## Fitted-object interfaces
-
-Presentation is another shared layer. Result classes retain their scientific
-meaning, while S3 methods connect them to `summary()`, `confint()`,
-`predict()`, `diagnostics()`, `plot_data_estimates()`, `candidate_fit()` and
-`candidate_fits()`. Plot builders consume these common tables. CATE and CLATE,
-for example, use the same estimate, weight, overlap, influence, tuning and
-dashboard calls; their overlap arms and score contributions differ.
-See [Reading fitted objects](notation-and-conventions.html#reading-fitted-objects)
-for the capability table and [the CLATE guide](conditional-late.html) for
-executed examples.
-
-When adding a result class, first document its estimate and covariance scales.
-Provide a tidy estimate extractor and the existing generic methods that are
-scientifically meaningful. Reuse shared frame and panel builders, retaining
-method-specific score, covariance and labels in adapters. An estimator that
-reports evaluated moments should not label them solved coefficients, and a
-CLATE object should not inherit from CATE merely to reuse a plot.
-
-Grid adapters must preserve frozen model state, distinguish infeasible
-candidates from undefined target estimates, and rebuild every dependent field
-when extracting a candidate view. Tests should compare candidates with direct
-scalar fits, check analytic special cases and missing uncertainty, exercise
-serialization and optional dependencies, and build actual plots. Matching
-interfaces never establishes a new theorem for an additional weighting rule.
-
-## 0) Kernel-Order Tuning Specs
-
-Tuning specs mirror the same constructor/registry style as distances and rank
-weights. The built-in paper default is:
-
-```{r tuning-paper, eval=FALSE}
-tun <- tuning_dnn_paper(lambda = 1)
-tuning_eval(tun, n = 500, kx = 2, k = 1)
-tuning_eval(tun, n = 500, kx = 2, k = 1, mode = "grid")
-```
-
-You can add custom rules:
-
-```{r tuning-custom, eval=FALSE}
-tun_fast <- as_tuning(function(n, kx, ...) floor(0.8 * n ^ ((kx + 1) / (kx + 2))), name = "fast_rule")
-register_tuning("fast_rule", tun_fast)
-tuning_names()
-```
-
-## 1) Custom Distances
+## Custom distances
 
 ### Quick Prototype With `as_distance()`
 
 Use `as_distance()` when a simple function `(X, x0, ctx) -> numeric(n)` is
 enough.
 
-```{r distance-simple, eval=FALSE}
+```{r distance-simple}
 # L-infinity distance
 linf <- as_distance(
   function(X, x0, ctx = NULL) {
@@ -114,7 +54,7 @@ distance_names()
 
 You can test the distance directly before registering it:
 
-```{r distance-eval, eval=FALSE}
+```{r distance-eval}
 X <- matrix(rnorm(40), 20, 2)
 x0 <- c(0, 0)
 
@@ -126,7 +66,7 @@ distance_eval(linf, X, x0)
 Use `new_distance()` when you want to precompute context once on `X` and reuse
 it across many targets.
 
-```{r distance-batch, eval=FALSE}
+```{r distance-batch}
 scaled_l2 <- new_distance(
   name = "scaled_l2_demo",
   setup = function(X) {
@@ -135,12 +75,10 @@ scaled_l2 <- new_distance(
     list(scale = scale)
   },
   eval_batch = function(X, X0, ctx) {
-    Xs <- sweep(X, 2L, ctx$scale, "/")
-    X0s <- sweep(X0, 2L, ctx$scale, "/")
-
-    vapply(seq_len(nrow(X0s)), function(j) {
-      rowSums((Xs - matrix(X0s[j, ], nrow(Xs), ncol(Xs), byrow = TRUE))^2)
-    }, numeric(nrow(Xs)))
+    vapply(seq_len(nrow(X0)), function(j) {
+      delta <- sweep(X, 2L, X0[j, ], "-")
+      sqrt(rowSums(sweep(delta, 2L, ctx$scale, "/")^2))
+    }, numeric(nrow(X)))
   }
 )
 
@@ -155,7 +93,7 @@ dim(D)
 When you call `weights_matrix()` with a distance spec and `ctx = NULL`,
 `RdistNN` automatically uses the distance-side `setup(X)` if it exists.
 
-## 2) Custom Rank-Weight Rules
+## Custom rank weights
 
 Rank weights only see integer ranks, not raw distances. Rank `1` means "closest
 observation," rank `2` means "second closest," and so on.
@@ -165,7 +103,7 @@ without changing the ranking logic.
 
 ### Quick Prototype With `as_rank_weight()`
 
-```{r rank-simple, eval=FALSE}
+```{r rank-simple}
 rw_inv <- as_rank_weight(
   function(ranks, ctx = NULL) {
     w <- 1 / as.numeric(ranks)
@@ -183,9 +121,11 @@ rank_weight_names()
 This example keeps only the first `m` closest observations in rank order. That
 is a generic finite-support rule. It is not the same thing as exact DNN.
 
-```{r rank-support, eval=FALSE}
+```{r rank-support}
 make_top_m <- function(m) {
-  stopifnot(length(m) == 1L, m >= 1L)
+  if (length(m) != 1L || !is.numeric(m) || !is.finite(m) || m < 1 || m != floor(m)) {
+    stop("`m` must be a positive integer.", call. = FALSE)
+  }
 
   as_rank_weight(
     function(ranks) {
@@ -203,7 +143,7 @@ rw_top10 <- make_top_m(10L)
 
 For performance, prefer `eval_batch()` once the prototype is stable.
 
-```{r rank-batch, eval=FALSE}
+```{r rank-batch}
 rw_exp <- new_rank_weight(
   name = "exp_decay",
   eval_batch = function(R, ctx = NULL) {
@@ -221,15 +161,11 @@ At the top level, `weights_matrix()` passes any supplied `ctx` through to both
 the ranking and weight evaluators. If both sides need context, build one shared
 list.
 
-Also note one current API detail: `new_rank_weight(..., setup = ...)` is a
-low-level hook, but `weights_matrix()` does not automatically call
-rank-weight-side `setup()` for you. In practice, the cleanest high-level
-patterns are:
+`weights_matrix()` does not call rank-weight-side `setup()` automatically.
+Close over fixed parameters in the constructor, or build and pass a shared
+`ctx` when both the ranking and weights need context.
 
-- close over fixed tuning parameters inside the constructor; or
-- build a shared `ctx` object yourself and pass it into `weights_matrix()`.
-
-## 3) Put Ranking And Weighting Together With `weights_matrix()`
+## Combine ranking and weights
 
 `weights_matrix()` is the main modular entry point. The `ranking` argument can
 be:
@@ -242,7 +178,7 @@ be:
 That makes it the right place to integrate custom ranking code, precomputed
 distances, or external nearest-neighbor engines.
 
-```{r weights-matrix, eval=FALSE}
+```{r weights-matrix}
 n <- 80
 p <- 2
 X <- matrix(rnorm(n * p), n, p)
@@ -274,23 +210,11 @@ dim(out2$W)
 
 For debugging custom ranking behavior, request the intermediate objects:
 
-```{r weights-debug, eval=FALSE}
-out_dbg <- weights_matrix(
-  X = X,
-  X0 = X0,
-  ranking = scaled_l2,
-  weight = rw_exp,
-  ctx = ctx_both,
-  return = c("dx", "ord", "ranks", "W")
-)
-
-head(out_dbg$dx[, 1])
-head(out_dbg$ord[, 1])
-head(out_dbg$ranks[, 1])
-head(out_dbg$W[, 1])
+```{r weights-debug}
+lapply(out2[c("dx", "ord", "ranks", "W")], function(x) head(x[, 1L]))
 ```
 
-## 4) Custom Scores
+## Custom scores
 
 The score layer is separate from localization. A score describes what happens
 once a subset of observations has been selected.
@@ -299,7 +223,7 @@ once a subset of observations has been selected.
 
 Use `as_score()` for a simple kernel with fixed order `s`.
 
-```{r score-simple, eval=FALSE}
+```{r score-simple}
 sc_avg2 <- as_score(
   function(idxs, data, ctx = NULL, rng = NULL) {
     mean(data$Y[idxs])
@@ -321,7 +245,7 @@ score_eval_batch(sc_avg2, subs = subs, data = df)
 Use `setup()` when the score repeatedly accesses the same data columns or
 transformed objects.
 
-```{r score-setup, eval=FALSE}
+```{r score-setup}
 sc_pair_gap <- new_score(
   name = "pair_gap_sq",
   order = 2L,
@@ -344,7 +268,7 @@ If your score depends on a parameter vector, implement `eval_param` or an
 `eval` that accepts `theta`, then use `score_diff_path()` to get reusable value
 and gradient closures.
 
-```{r score-diff, eval=FALSE}
+```{r score-diff}
 sc_affine <- new_score(
   name = "affine_order1",
   order = 1L,
@@ -366,12 +290,12 @@ path$grad(2L, theta = c(0.5, 1))
 If you do not provide an analytic gradient, `score_diff_path(..., method = "fd")`
 uses finite differences based on `eval_param` / `eval_param_batch`.
 
-## 5) A Minimal Custom Estimator Pattern
+## A minimal estimator
 
 The modular API is meant to let you assemble your own localized estimators
 without rewriting the whole package. A minimal pattern is:
 
-```{r estimator-pattern, eval=FALSE}
+```{r estimator-pattern}
 my_local_mean <- function(X, x0, y, ranking = "l2", weight) {
   W <- weights_matrix(
     X = X,
@@ -383,39 +307,26 @@ my_local_mean <- function(X, x0, y, ranking = "l2", weight) {
 
   sum(W * y)
 }
+
+my_local_mean(X, x0 = X0[1, ], y = X[, 1], weight = rw_top10)
 ```
 
 For more complicated estimators, replace the scalar `y` contribution with your
 own score or estimating equation.
 
-## 6) Validation And Debugging Checklist
+## Check an extension
 
-- Start by testing the low-level evaluator directly:
-  `distance_eval()`, `distance_eval_batch()`, `rank_weight_eval()`,
-  `rank_weight_eval_batch()`, `score_eval()`, or `score_eval_batch()`.
-- Remember that rank weights receive ranks, not distances. Smaller rank means
-  closer observation.
-- Prototype with `as_*()` first. Once the logic is stable, move to `new_*()`
-  with `eval_batch()` for speed.
-- Use `weights_matrix(return = c("dx", "ord", "ranks", "W"))` to debug ranking
-  and tie handling before worrying about the downstream estimator.
-- If both ranking and weighting need context, create it explicitly and pass it
-  through `ctx`.
-- For scores, check `score_order()` and `score_setup()` before wiring the score
-  into root finding, optimization, or jackknife code.
-- For parameter-aware scores, test `score_diff_path()` in isolation before
-  embedding it in a solver.
-- Register names only after the underlying object works directly. The registry
-  is a convenience layer, not a debugging tool.
+Test the evaluator on a small dataset before registering its name. Check its
+output shape and finite values, and request `W`, `dx`, `ord` and `ranks` to
+inspect the weighting pipeline. Specs receive ranks rather than raw distances;
+when both ranking and weighting need setup, pass an explicit shared `ctx`.
+
+Custom estimators need their own statistical justification. The examples here
+show software composition; the [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
+and its references give the background for the package's estimators.
 
 ## Related Articles
 
-- [Notation and package conventions](notation-and-conventions.html):
-  `vignette("notation-and-conventions", package = "RdistNN")` locates custom
-  distances, rank weights, and scores within the full estimator pipeline.
-- [DNN weights](dnn-weights.html):
-  `vignette("dnn-weights", package = "RdistNN")` documents the built-in weight
-  machinery that extensions should match.
-- [Jackknife generalized U-statistics](jackknife-gen-ustats.html):
-  `vignette("jackknife-gen-ustats", package = "RdistNN")` covers the low-level
-  delete-one aggregation tools used by user-level inference.
+- [Notation and conventions](notation-and-conventions.html): inputs and fitted objects.
+- [DNN weights](dnn-weights.html): built-in rank-weight rules.
+- [Rank-jackknife utilities](jackknife-gen-ustats.html): compact-support deletion calculations.

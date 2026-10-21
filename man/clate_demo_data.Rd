@@ -14,8 +14,8 @@ clate_demo_data(
 \arguments{
 \item{n}{Positive integer number of observations.}
 
-\item{seed}{Optional nonnegative integer seed. Like the other package demos,
-supplying a seed resets the R random-number stream.}
+\item{seed}{Optional nonnegative integer seed, used locally without changing
+the caller's saved RNG state. \code{NULL} uses the current stream.}
 
 \item{heterogeneous}{Whether effects also vary with an adjustment coordinate.
 This makes CLATE differ from CATE by 3/1024.}

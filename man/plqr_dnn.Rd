@@ -111,11 +111,13 @@ in \code{tuning_grid}. Grid mode cannot be combined with explicit \code{s}.}
 
 \item{normalize}{Logical; renormalize columns of \code{W} to sum to 1.}
 
-\item{se}{Logical; compute delete-1 jackknife standard errors.}
+\item{se}{Logical; compute moment or density-backed coefficient uncertainty.}
 
 \item{jackknife}{One of \code{"fast"}, \code{"loo"}, or \code{"none"}. \code{"fast"} (default)
 uses cached full-sample ranks with delete-1 rank updates, \code{"loo"}
-recomputes leave-one-out weights directly, and \code{"none"} skips SEs.}
+recomputes leave-one-out weights directly, and \code{"none"} skips moment
+jackknifing. Analytic coefficient uncertainty is controlled by \code{se} and
+the density input, independently of this selector.}
 
 \item{theta_meat}{Meat estimator for the coefficient sandwich when
 \code{density}/\code{density_col} is supplied. \code{"analytic"} (default) uses the
@@ -132,15 +134,15 @@ density-backed in both routes. \code{"jackknife"} requires
 \item{return}{Optional extras in addition to the always-returned \code{moment},
 \code{theta}, \code{theta_eval}, \code{tau}, and \code{meta}. Allowed values:
 \code{c("W", "ranks", "ord", "dx", "score", "ess", "neighbors", "tuning")}.
-The \code{neighbors} extra returns the first \code{k} nearest observations used
-inside each size-\code{s} subsample, not the full DNN weight support.}
+\code{neighbors} is a \verb{k x m} matrix of nearest training-observation indices,
+one column per target. It is a rank summary, not the full DNN weight support.}
 }
 \value{
 An object of class \code{plqr_result} with components:
 \itemize{
 \item \code{moment}: matrix (\verb{p_d x m}) of localized PLQR moments;
 \item \code{theta}: matrix (\verb{p_d x m}) of the supplied coefficient values, repeated
-across targets until a root-solving path is requested in future versions;
+across targets; no root solving is performed;
 \item \code{theta_eval}: the supplied coefficient vector used in the moment map;
 \item \code{theta_se}: coefficient standard errors (\verb{p_d x m}), present only when
 \code{density} or \code{density_col} supplies the direct PLQR sandwich route;
@@ -197,30 +199,16 @@ Two interfaces are supported.
 \item Matrix interface: pass \code{X}, \code{D}, \code{g}, \code{mD}, and \code{Y}.
 }
 
-No nuisance models are fit internally; this wrapper assumes the
-partially-linear shape nuisance \eqn{g_0(U)} and the residualizing nuisance
-\eqn{m_D(U) = E[D \mid U]} are supplied. The threshold is
-\eqn{D'\theta + g_0(U)}; \eqn{g_0} alone is not itself a quantile function.
-Both \code{g} and \code{mD} may depend on covariates beyond \code{x_cols} (the paper's
-\eqn{U = (X, Z)}); the package does not restrict their domain, since they
-are supplied pre-computed. Density values for direct coefficient inference
-are also supplied by the user rather than estimated internally; they play
-the role of the paper's local conditional density at the threshold,
-entering only the coefficient Jacobian. See
-\verb{markdown_notes/design/15_plqr_variance_estimation_rationale.md} for the
-full nuisance-notation mapping and for why coefficient-level inference
-requires this direct-sandwich route rather than the jackknife SE used by
-\code{\link[=cate_dnn]{cate_dnn()}}/\code{\link[=np_dnn]{np_dnn()}}. Direct coefficient inference requires
-\code{normalize = TRUE}, matching the theorem convention of weights summing to
-one per target.
+Supply the shape component \code{g}, residualized-regressor means \code{mD} and,
+for coefficient uncertainty, positive threshold densities. These can use
+adjustment variables beyond the reporting covariates. The threshold is
+\verb{D' theta_eval + g}; \code{g} alone is not a conditional quantile.
 
-With a density input, the coefficient sandwich supports two meat
-estimators (\code{theta_meat}): the analytic score covariance (default) and
-the full delete-1 jackknife covariance of the localized vector moment.
-The bread is density-backed in both routes; only the meat changes. A
-componentwise \code{moment_se} alone is never coefficient inference — see
-\verb{markdown_notes/design/15_plqr_variance_estimation_rationale.md} for the
-route table.
+Coefficient uncertainty requires \code{normalize = TRUE} and a density-backed
+Jacobian. \code{theta_meat} chooses analytic score covariance or the full
+jackknife covariance of the localized moment. \code{moment_se} alone is not a
+coefficient standard error. For statistical background and conditions,
+see the \href{https://jakobjuergens.com/research/#orthogonal-inference-conditional-z}{paper}.
 
 As in \code{\link[=weights_dnn]{weights_dnn()}}, exact DNN localization uses the full rank permutation
 at each target rather than an \code{s}-nearest-neighbor truncation. The \code{"fast"}
@@ -241,9 +229,7 @@ is independent of the estimator's \code{k}. Direct PLQR sandwich inference from
 }
 \section{Lifecycle}{
 
-\strong{Experimental.} PLQR functionality is outside the CATE and regression
-workflow focus of the initial public release. Its API and inference
-interfaces may change in later releases.
+\strong{Experimental.} The PLQR API and inference interfaces may change.
 }
 
 \examples{

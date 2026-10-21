@@ -5,8 +5,8 @@
 #' endogenous conditional on the observed adjustment variables.
 #'
 #' @param n Positive integer number of observations.
-#' @param seed Optional nonnegative integer seed. Like the other package demos,
-#'   supplying a seed resets the R random-number stream.
+#' @param seed Optional nonnegative integer seed, used locally without changing
+#'   the caller's saved RNG state. `NULL` uses the current stream.
 #' @param heterogeneous Whether effects also vary with an adjustment coordinate.
 #'   This makes CLATE differ from CATE by 3/1024.
 #' @param keep_latent Whether to return the simulated latent rank, potential
@@ -54,6 +54,8 @@ clate_demo_data <- function(n = 200L, seed = NULL, heterogeneous = FALSE, keep_l
       .abort_bad_arg("seed", "must be NULL or a nonnegative integer scalar")
     }
     seed <- as.integer(seed)
+    restore_rng <- .rdistnn_rng_restore()
+    on.exit(restore_rng(), add = TRUE)
     set.seed(seed)
   }
   X <- matrix(stats::runif(2L * n), n, 2L)

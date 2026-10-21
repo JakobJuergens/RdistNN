@@ -1,8 +1,8 @@
 ---
-title: "Conditional Z-Estimation Paper Replication"
+title: "Reproduce the affine paper results"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Conditional Z-Estimation Paper Replication}
+  %\VignetteIndexEntry{Reproduce the affine paper results}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -12,169 +12,103 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 library(RdistNN)
 ```
 
-## The study represented here
+The installed `paper-replication/affine` bundle provides three workflows:
+recreate manuscript displays from saved evidence, rerun the simulation
+campaign, and fit the SIPP application. It is a study-specific companion to
+this [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
+For general estimation, start with [Getting started](getting-started.html).
 
-The installed replication layer accompanies *Orthogonal Inference for Conditional Z-Estimation without
-Cross-Fitting: A Distributional Nearest-Neighbor Approach*. The snapshot is
-October 14, 2026; `manifest.json` pins the exact paper and source snapshot commits.
-It includes the bounded CATE and residualized-slope simulation campaign, the
-overhauled SIPP application, and accepted evidence for the current manuscript
-and supplement.
+## Locate the installed bundle
 
-The paper's scientific R files are bundled unchanged. Package launchers handle
-installation paths, dependencies, output directories and verification.
-Superseded CATE and IV study launchers are removed. General `sim_cate_*` and
-experimental `sim_iv_*` APIs remain synthetic benchmark tools; they do not
-implement this study-specific campaign.
-
-## Install the replication bundle
-
-The bundle was introduced in development version `0.1.0.9000`. Install the
-current `master` branch before following this guide; the initial `v0.1.0`
-release does not contain the paper-replication bundle.
-
-```{r install-bundle, eval=FALSE}
-install.packages("pak")
-pak::pak("JakobJuergens/RdistNN@master")
-```
+Install current production source using the [README](https://github.com/JakobJuergens/RdistNN#installation).
+The historical `v0.1.0` release predates this bundle.
 
 ```{r locate}
 bundle <- system.file("paper-replication/affine", package = "RdistNN")
 list.files(bundle)
 ```
 
-Read `README.md` in that directory for the complete protocol and dependencies.
-`manifest.json` pins the paper commit, source and evidence hashes, production
-configuration and SIPP run. No paper checkout or native run cache is needed.
+Read its `README.md` for the full protocol and dependencies. `manifest.json`
+pins the paper/source identity, accepted configurations and evidence hashes.
+No paper checkout or original run cache is needed to render the saved results.
 
-## Recreate the accepted manuscript displays
+## Recreate tables and figures without refitting
 
-This is the quickest way to reproduce the paper's reported numerical displays.
-Install the optional rendering dependencies and launch the installed script:
+Install optional rendering dependencies once:
+
+```{r rendering-dependencies, eval=FALSE}
+install.packages(c("digest", "jsonlite", "ggplot2", "patchwork"))
+```
+
+Run the portable launcher with a new output directory:
 
 ```{r render, eval=FALSE}
-install.packages(c("digest", "jsonlite", "ggplot2", "patchwork"))
 system2(file.path(R.home("bin"), "Rscript"), c(
   shQuote(file.path(bundle, "render_evidence.R")),
   "--output-dir=paper-displays"
 ))
 ```
 
-Rendering uses R's Cairo PDF device. With the CRAN build of R on macOS, install
-[XQuartz](https://www.xquartz.org/) to provide its X11 libraries. This requirement
-is described in the [R for macOS installation notes](https://mac.r-project.org/bin/macosx/).
+It verifies the saved evidence, recreates **21 table fragments and six PDF
+figures**, and compares tables with the accepted references. It performs no
+simulation or estimation. Output manifests record provenance and comparison
+results. Historical transformed SIPP estimates remain saved evidence because
+the supplement reports that distinct target; the current fitting workflow
+uses raw dollars.
 
-The script verifies the compressed evidence, regenerates **eight simulation
-tables, thirteen SIPP tables and six PDF figures**, runs the upstream check
-routines, and compares all tables with accepted references. It performs no
-simulation or estimation. Generated display manifests record the input hashes;
-`replication.json` records the pinned paper identity and successful comparison.
-The unchanged renderers receive the pinned paper commit as source provenance
-through the portable launcher.
+Rendering uses Cairo PDF. CRAN R on macOS may require
+[XQuartz](https://www.xquartz.org/), as explained in the
+[R for macOS notes](https://mac.r-project.org/bin/macosx/).
 
-Historical transformed SIPP estimates remain saved evidence because the
-current supplement reports that distinct target. Their old fitting workflow
-is not included. The overhauled application uses raw dollars.
+## Validate the simulation workflow
 
-## Run the paper simulation campaign
+A smoke run uses two small preflight draw families. It checks execution and
+outputs; it does not reproduce the production study or provide manuscript evidence.
+
+```{r simulation-dependencies, eval=FALSE}
+install.packages(c("digest", "jsonlite", "future", "future.apply"))
+```
 
 ```{r simulation, eval=FALSE}
-install.packages(c("digest", "jsonlite", "future", "future.apply"))
 system2(file.path(R.home("bin"), "Rscript"), c(
   shQuote(file.path(bundle, "run_simulations.R")),
   "--mode=smoke", "--output-dir=paper-smoke"
 ))
 ```
 
-Smoke runs are explicitly validation: two preflight draw families at n=128.
-They exercise both CATE and slope, full-sample/pooled-five-fold/oracle nuisances,
-DNN and Gaussian localization, and all three covariance routes. They do not
-reproduce the large-dictionary endpoint or constitute manuscript evidence.
+The full campaign is substantial and requires Linux, Python 3 and the resource
+budget in the installed README. Use `--mode=production` with a new directory;
+`--profiles=...` selects profiles and `--resume` requires an identical runtime
+freeze. The launcher records the executed package, seed/configuration identities
+and process receipts. Incomplete campaigns are not production evidence; fresh
+results require review before manuscript promotion.
 
-The accepted production grid contains:
+## Validate or rerun the SIPP application
 
-| Profile | Cells | Main replications per cell |
-|---|---:|---:|
-| DNN C0/C1/C2 | 14 | 10,000 |
-| DNN/kernel comparison | 9 | 10,000 |
-| M=3 endpoint, n=531,441 | 1 | 10,000 |
-| C0H/C2S settings | 4 | 10,000 |
+The application studies raw-dollar net financial assets in 9,915 complete
+households, with full-fit, own-arm OOB and held-out five-fold nuisance
+predictions. The installed README defines the accepted specification, profiles,
+orders, seed and export layout.
 
-Both applications have point target 1/8 at X=(1/2,1/2). There are two reporting
-coordinates and four adjustment coordinates. First stages use clipped growing
-ridge series with penalty n^(-1/2). The primary DNN order is floor(n^(3/4)); C2
-also uses multiplier 0.4. This study-specific schedule overrides the general
-package tuning default. The Gaussian comparison matches population DNN ESS.
-
-The covariance routes are frozen-score jackknife, direct moment and direct
-squared-weight estimates. Diagnostics distinguish point targets, realized
-weighted truth, spatial drift, remainders and joint slope coefficient
-covariance. The shared seed schedule supports paired comparisons. The
-2,516,400 rows contain 10,000 common independent draw families and 480,000
-duplicated DNN rows across profiles.
-
-Launch the full campaign on Linux with Python3 and sufficient resources:
-
-```{r production, eval=FALSE}
-system2(file.path(R.home("bin"), "Rscript"), c(
-  shQuote(file.path(bundle, "run_simulations.R")),
-  "--mode=production", "--output-dir=paper-production"
-))
+```{r sipp-dependencies, eval=FALSE}
+install.packages(c("hdm", "grf", "digest", "jsonlite"))
 ```
 
-The original monitor enforces profile wall limits and a sampled 40-GiB RSS cap.
-The scientific runner uses four workers, eight-family chunks and one inner
-thread. The M3 endpoint is substantial. Source/dependency hashes, actual
-DLL identity, seed maps, schemas and process receipts accompany each run.
-The launcher audits and analyzes the completed four-profile campaign.
-Use `--profiles=...` for selected profiles and `--resume` for an existing
-production directory with an identical runtime freeze. Partial/stopped runs
-are not complete production. See the installed README for budgets and layout.
-
-The historical production package pin is
-`40060f155cc4d84d59ee5af119f6a2534c569bab`. Fresh runs record the package actually
-executed. A version label alone does not certify executable identity, and fresh
-results require review before promotion into the manuscript.
-
-## Run the overhauled SIPP application
-
 ```{r sipp, eval=FALSE}
-install.packages(c("hdm", "grf", "digest", "jsonlite"))
 system2(file.path(R.home("bin"), "Rscript"), c(
   shQuote(file.path(bundle, "run_sipp.R")),
   "--mode=smoke", "--output-dir=sipp-smoke"
 ))
 ```
 
-Use `--mode=production` and a new directory for the accepted specification:
-9,915 complete households from `hdm::pension`, eligibility treatment,
-raw-dollar net financial assets, baseline adjustment, seven age-40 income
-profiles, standardized age/asinh-income reporting coordinates, 2,000-tree
-forests, five folds and seed 20260709.
+Smoke uses a small sample and validation-labelled outputs. Use
+`--mode=production` with a new directory for the full application. Output
+directories are not silently overwritten.
 
-The three prediction mechanisms are literal **all-tree full-fit**, **own-arm
-OOB** from the same full forests, and **held-out five-fold** predictions.
-Final DNN weights are common across mechanisms. Default s=397; fitted orders
-are 298,397,496,745. The eight-order exploratory grid
-99,149,198,248,298,397,496,745 retains all 168 profile/mechanism/order rows.
+These practical forests, unbounded outcomes and data-selected profiles/scales
+are outside the bounded-series primitive theorem. Frozen deletions do not refit
+nuisance learners. Order sensitivity does not estimate localization bias or
+select an optimal order; full-fit/OOB agreement does not verify a stability rate.
 
-The launcher fits and saves models/predictions, computes diagnostics, exports
-paired component covariance and frozen-score influence information, and runs
-localization sensitivity without refitting. Its output lives in
-`runs/paper-current/`, with separate stage logs and hashed run receipts.
-Smoke uses 300 households, 50 trees and two folds; its exports carry validation
-labels. Output directories are never silently overwritten.
-
-These practical forests, unbounded dollar outcomes and data-selected reporting
-scales/profiles are outside the bounded-series primitive theorem. Frozen
-deletions do not refit nuisance learners. Order sensitivity does not estimate
-spatial bias or select an optimal order, and full-fit/OOB agreement does not
-verify a stability rate.
-
-## Related guides
-
-- [Notation and conventions](notation-and-conventions.html):
-  `vignette("notation-and-conventions", package = "RdistNN")`.
-- [Getting started](getting-started.html): general NP and CATE usage.
-- [Diagnostics and reporting](diagnostics-reporting.html): estimator diagnostics.
-- [Kernel-order tuning](kernel-order-tuning.html): general package tuning.
+For package-wide argument and covariance conventions, see
+[Notation and conventions](notation-and-conventions.html).

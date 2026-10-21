@@ -23,9 +23,7 @@ solved. The source is attached as \code{attr(., "theta_source")}.
 }
 \section{Lifecycle}{
 
-\strong{Experimental.} PLQR functionality is outside the CATE and regression
-workflow focus of the initial public release. Its API and inference
-interfaces may change in later releases.
+\strong{Experimental.} The PLQR API and inference interfaces may change.
 }
 
 \seealso{

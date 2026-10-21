@@ -1,8 +1,8 @@
 ---
-title: "DNN weights: exact and asymptotic L-statistics"
+title: "DNN weights and ranks"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{DNN weights: exact and asymptotic L-statistics}
+  %\VignetteIndexEntry{DNN weights and ranks}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -22,7 +22,7 @@ set.seed(2)
 
 Use `weights_dnn()` to switch between them with a common interface.
 
-Two support facts matter in practice:
+The following support conventions matter in practice:
 
 - exact DNN weights are computed from the **full rank permutation** for each
   target, not by keeping only the first `s` observations;
@@ -31,13 +31,14 @@ Two support facts matter in practice:
 - the asymptotic Beta-increment approximation is typically treated as a
   full-support rank-weight sequence.
 
-Fixed top-`k` DNN kernels are fully implemented for `1 <= k <= s`. The fixed-`k`
-extension of the 1-NN theory is essentially direct, but the accompanying
-manuscript currently writes out the theoretical derivations only for `k = 1`.
+Fixed top-`k` DNN kernels are implemented for `1 <= k <= s`. The accompanying
+[paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
+gives the theory for `k = 1`; accepting another `k` does not establish its
+inferential justification.
 
 ## Basic Usage
 
-```{r basic, eval=FALSE}
+```{r basic}
 n <- 150
 p <- 2
 X <- matrix(rnorm(n * p), n, p)
@@ -68,7 +69,7 @@ colSums(wt_asymp$W)
 
 Use `x0` for one target instead of a one-row `X0`.
 
-```{r single-target, eval=FALSE}
+```{r single-target}
 x0 <- c(0, 0)
 wt_single <- weights_dnn(
   X = X, x0 = x0,
@@ -97,7 +98,7 @@ These are useful when you want to:
 
 ## Exact vs Asymptotic
 
-```{r compare, eval=FALSE}
+```{r compare}
 mu_signal <- rnorm(n)
 mu_exact <- as.numeric(crossprod(mu_signal, wt_exact$W))
 mu_asymp <- as.numeric(crossprod(mu_signal, wt_asymp$W))
@@ -105,18 +106,12 @@ mu_asymp <- as.numeric(crossprod(mu_signal, wt_asymp$W))
 cbind(mu_exact, mu_asymp)
 ```
 
-For moderate samples and small `s`, exact weights are often preferred when
-you want finite-sample fidelity. Asymptotic weights can be cheaper and are
-often a practical default for larger-scale usage.
+Exact weights are the package default. Setting `method = "asymp"` changes
+the weight construction; it is separate from choosing a compiled or R
+calculation engine.
 
 ## Related Articles
 
-- [Notation and package conventions](notation-and-conventions.html):
-  `vignette("notation-and-conventions", package = "RdistNN")` distinguishes
-  kernel order, neighbor count, support, effective size, and radius notation.
-- [Kernel-order tuning](kernel-order-tuning.html):
-  `vignette("kernel-order-tuning", package = "RdistNN")` covers selection of
-  the kernel order `s`.
-- [Extending RdistNN](extending.html):
-  `vignette("extending", package = "RdistNN")` shows how to define custom
-  distances and rank-weight maps.
+- [Notation and conventions](notation-and-conventions.html): orders, support and effective size.
+- [Kernel-order tuning](kernel-order-tuning.html): sensitivity comparisons for `s`.
+- [Extending RdistNN](extending.html): custom distances and rank-weight maps.

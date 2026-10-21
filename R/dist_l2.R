@@ -71,6 +71,7 @@
 #' @param squared Logical; if `TRUE`, return squared distances.
 #' @return Numeric vector of length \eqn{n}.
 #' @examples
+#' set.seed(1)
 #' X <- matrix(rnorm(12), 4, 3)
 #' dist_l2(X, c(0, 0, 0))
 #' @keywords internal
@@ -93,6 +94,7 @@ dist_l2 <- function(X, x0, squared = FALSE) {
 #' @inheritParams dist_l2
 #' @return A list with `dx` and `ord`.
 #' @examples
+#' set.seed(1)
 #' X <- matrix(rnorm(10), 5, 2)
 #' order_by_l2(X, c(0, 0))
 #' @keywords internal
@@ -128,6 +130,7 @@ order_by_l2 <- function(X, x0, squared = FALSE) {
 #' `eval_batch(X, X0)` expects an \eqn{m \times p} matrix of queries `X0`.
 #'
 #' @examples
+#' set.seed(1)
 #' X <- matrix(rnorm(12), 4, 3)
 #' X0 <- matrix(rnorm(6), 2, 3)
 #' dspec <- distance_l2()
@@ -167,6 +170,7 @@ distance_l2 <- function(squared = FALSE) {
 #' @param inv_s Numeric vector of length \eqn{p} with elementwise scales.
 #' @return Numeric vector of length \eqn{n}.
 #' @examples
+#' set.seed(1)
 #' X <- matrix(rnorm(12), 4, 3)
 #' dist_l2_scaled(X, c(0, 0, 0), inv_s = c(1, 2, 0.5))
 #' @keywords internal
@@ -200,6 +204,7 @@ dist_l2_scaled <- function(X, x0, inv_s, squared = FALSE) {
 #'
 #' @return A list with `name`, `setup()`, `eval()`, and `eval_batch()`.
 #' @examples
+#' set.seed(1)
 #' X <- matrix(rnorm(12), 4, 3)
 #' X0 <- matrix(rnorm(6), 2, 3)
 #' dspec <- distance_l2_scaled(rule = "sd")
@@ -285,6 +290,7 @@ distance_l2_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
 #'
 #' @return A list with `dx` and `ord`.
 #' @examples
+#' set.seed(1)
 #' X <- matrix(rnorm(10), 5, 2)
 #' order_by_l2_scaled(X, c(0, 0), rule = "sd")
 #' @keywords internal

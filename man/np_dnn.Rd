@@ -82,8 +82,8 @@ recomputes leave-one-out weights directly, and \code{"none"} skips SEs.}
 \item{return}{Optional extras in addition to the always-returned \code{mu}, \code{se},
 and \code{meta}. Allowed values:
 \code{c("W", "ranks", "ord", "dx", "y", "ess", "neighbors", "tuning")}.
-The \code{neighbors} extra returns the first \code{k} nearest observations used
-inside each size-\code{s} subsample, not the full DNN weight support.}
+\code{neighbors} is a \verb{k x m} matrix of nearest training-observation indices,
+one column per target. It is a rank summary, not the full DNN weight support.}
 }
 \value{
 An object of class \code{np_result} with components:

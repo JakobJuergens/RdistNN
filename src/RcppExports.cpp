@@ -263,6 +263,16 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rustat_thread_info
+Rcpp::List rustat_thread_info();
+RcppExport SEXP _RdistNN_rustat_thread_info() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(rustat_thread_info());
+    return rcpp_result_gen;
+END_RCPP
+}
 // rustat_exact_rank_table
 NumericVector rustat_exact_rank_table(int n, int k, int s);
 RcppExport SEXP _RdistNN_rustat_exact_rank_table(SEXP nSEXP, SEXP kSEXP, SEXP sSEXP) {
@@ -395,6 +405,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_RdistNN_rustat_topk_dist", (DL_FUNC) &_RdistNN_rustat_topk_dist, 2},
     {"_RdistNN_rustat_jackknife_fast_rank", (DL_FUNC) &_RdistNN_rustat_jackknife_fast_rank, 4},
     {"_RdistNN_rustat_jackknife_rank_full", (DL_FUNC) &_RdistNN_rustat_jackknife_rank_full, 4},
+    {"_RdistNN_rustat_thread_info", (DL_FUNC) &_RdistNN_rustat_thread_info, 0},
     {"_RdistNN_rustat_exact_rank_table", (DL_FUNC) &_RdistNN_rustat_exact_rank_table, 3},
     {"_RdistNN_rustat_cate_ctx_create", (DL_FUNC) &_RdistNN_rustat_cate_ctx_create, 1},
     {"_RdistNN_rustat_cate_g_all", (DL_FUNC) &_RdistNN_rustat_cate_g_all, 1},

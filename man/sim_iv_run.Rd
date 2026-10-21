@@ -36,7 +36,8 @@ just-identified design is run once with realized \code{q = 1}.}
 
 \item{n_reps}{Number of Monte Carlo replications per cell.}
 
-\item{master_seed}{Seed used to generate replicate seeds.}
+\item{master_seed}{Integer seed used locally to generate replicate seeds;
+the caller's saved RNG state is restored. \code{NULL} uses the current stream.}
 
 \item{k}{Integer DNN neighbor count.}
 

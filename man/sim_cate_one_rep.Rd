@@ -41,9 +41,11 @@ Default: \code{"dnn_oracle"}.}
 one scalar kernel order. \code{"grid"} requires \code{tuning} and emits one row per
 DNN candidate while non-DNN benchmarks remain one row per replicate.}
 
-\item{alpha}{Nominal coverage level (default 0.05).}
+\item{alpha}{Nominal interval noncoverage probability (default \code{0.05},
+giving 95-percent confidence intervals).}
 
-\item{seed}{Optional integer seed for this replicate.}
+\item{seed}{Optional integer seed for tuning, data and fitting, used locally
+without changing the caller's saved RNG state. \code{NULL} uses the current stream.}
 
 \item{sigma}{Noise SD forwarded to the DGP.}
 
@@ -58,7 +60,7 @@ A \code{data.frame} with one or more rows per method and columns
 based on GRF also record \code{method_variant}, \code{forest_nuisance}, and whether
 \code{Y.hat} and \code{W.hat} were supplied. The maintained \code{causal_forest} route
 uses externally supplied oracle nuisance inputs.
-with explicit localization weights also report the realized DNN-weighted
+Methods with explicit localization weights also report the realized DNN-weighted
 truth, realized localization drift, estimator remainder, studentized error, physical
 90-percent-mass radius, treatment-arm effective sample sizes, and the
 top-five score-contribution share. The \code{localized_truth} field is the
@@ -77,7 +79,8 @@ method.
 \description{
 Draws one dataset from the named DGP (via \code{\link[=sim_cate_data]{sim_cate_data()}}), then runs each
 requested method on the \strong{same} dataset and returns per-replicate performance
-metrics aligned with the paper's evaluation criteria.
+metrics. The paper's study-specific workflow is in the installed
+\code{paper-replication/affine} bundle; these are general simulation tools.
 }
 \examples{
 rep1 <- sim_cate_one_rep(

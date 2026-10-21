@@ -346,8 +346,8 @@
 #' \deqn{
 #'   (Z_k - \pi_k(X))\{Y - \mu_Y(X) - (D - \mu_D(X))\theta\}.
 #' }
-#' The returned data are estimator-free and are intended for simulation
-#' benchmarks, examples, and future `gmm_dnn()` integration.
+#' Use the returned data with [gmm_dnn()], [gmm_model_dr_iv()] or the
+#' simulation methods listed by [sim_iv_methods()]. No model is fit here.
 #'
 #' @param design Character DGP name. One of `"dgp1_iv_justid_linear"`,
 #'   `"dgp2_iv_homog_overid"`, `"dgp3_iv_heterog_overid"`,
@@ -355,11 +355,12 @@
 #'   `"dgp6_iv_nonlinear_firststage"`.
 #' @param n Integer sample size.
 #' @param kx Integer covariate dimension, at least 2.
-#' @param q Integer number of instruments. Phase-A simulation DGPs support
+#' @param q Integer number of instruments. The simulation DGPs support
 #'   `1 <= q <= 3`. The just-identified design always returns `q = 1`.
 #' @param sigma Noise standard deviation in `Y`.
 #' @param clip Clipping bound in `(0, 0.5)` for binary instrument probabilities.
-#' @param seed Optional integer seed for reproducibility.
+#' @param seed Optional integer seed, used locally without changing the caller's
+#'   RNG state. `NULL` uses the current stream.
 #' @param x0 Optional numeric length-`kx` evaluation point. When omitted, a
 #'   design-specific interior point is used.
 #' @param ... Extra arguments forwarded to the underlying DGP. Currently `rho`
@@ -420,6 +421,10 @@ sim_iv_data <- function(design, n, kx = 2L, q = 2L, sigma = 0.5,
     x0 <- .validate_target_vector(x0, p = kx, x0_arg = "x0", x_arg = "X", finite = TRUE)
   }
 
+  if (!is.null(seed)) {
+    restore_rng <- .rdistnn_rng_restore()
+    on.exit(restore_rng(), add = TRUE)
+  }
   switch(design,
     dgp1_iv_justid_linear = .sim_iv_dgp1(n, kx, sigma, clip, seed, x0, ...),
     dgp2_iv_homog_overid = .sim_iv_dgp2(n, kx, q, sigma, clip, seed, x0, ...),

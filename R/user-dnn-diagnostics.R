@@ -326,8 +326,10 @@
 #' Methods for `plqr_result` objects are experimental, as is all PLQR
 #' functionality in this release; see [plqr_dnn()].
 #'
-#' @param object A fitted estimator object, currently an object returned by
-#'   [np_dnn()], [cate_dnn()], [plqr_dnn()], [affine_ratio_dnn()] or [clate_dnn()].
+#' @param object A fitted object from [np_dnn()], [np_tdnn()], [cate_dnn()],
+#'   [plqr_dnn()], [affine_ratio_dnn()] or [clate_dnn()]. Target diagnostics for
+#'   NP/TDNN, CATE and PLQR require retained `W`; paired-ratio/CLATE methods
+#'   reconstruct weights from cached ranks without optional extras.
 #' @param candidates Candidate rows to report for grid fits. The default
 #'   `"default"` preserves the per-target diagnostics table for the selected
 #'   fit. Use `"all"` or a character vector of candidate ids to report

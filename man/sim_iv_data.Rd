@@ -26,14 +26,15 @@ sim_iv_data(
 
 \item{kx}{Integer covariate dimension, at least 2.}
 
-\item{q}{Integer number of instruments. Phase-A simulation DGPs support
+\item{q}{Integer number of instruments. The simulation DGPs support
 \verb{1 <= q <= 3}. The just-identified design always returns \code{q = 1}.}
 
 \item{sigma}{Noise standard deviation in \code{Y}.}
 
 \item{clip}{Clipping bound in \verb{(0, 0.5)} for binary instrument probabilities.}
 
-\item{seed}{Optional integer seed for reproducibility.}
+\item{seed}{Optional integer seed, used locally without changing the caller's
+RNG state. \code{NULL} uses the current stream.}
 
 \item{x0}{Optional numeric length-\code{kx} evaluation point. When omitted, a
 design-specific interior point is used.}
@@ -59,8 +60,8 @@ the doubly-robust IV moment
 \deqn{
   (Z_k - \pi_k(X))\{Y - \mu_Y(X) - (D - \mu_D(X))\theta\}.
 }
-The returned data are estimator-free and are intended for simulation
-benchmarks, examples, and future \code{gmm_dnn()} integration.
+Use the returned data with \code{\link[=gmm_dnn]{gmm_dnn()}}, \code{\link[=gmm_model_dr_iv]{gmm_model_dr_iv()}} or the
+simulation methods listed by \code{\link[=sim_iv_methods]{sim_iv_methods()}}. No model is fit here.
 }
 \examples{
 dgp <- sim_iv_data("dgp2_iv_homog_overid", n = 200, kx = 2, q = 2, seed = 1)

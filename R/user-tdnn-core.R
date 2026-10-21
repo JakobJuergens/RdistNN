@@ -35,10 +35,9 @@
 #' Mirrors `.dnn_jackknife_se_loo_matrix()` with the DNN rank-weight spec
 #' replaced by the TDNN rank-weight spec.
 #'
-#' **Fast path** (`jackknife = "fast"`): computes full-sample ranks once, then
-#' for each deleted observation `i` adjusts ranks by decrementing entries that
-#' were ranked below `i` and re-evaluates the TDNN rank-weight spec on the
-#' resulting `(n-1) x m` rank matrix.  No distances are recomputed.
+#' **Fast path** (`jackknife = "fast"`): computes full-sample ranks and the
+#' deletion weight table once, then uses the shared centered prefix/suffix
+#' engine. No distances are recomputed.
 #'
 #' **LOO fallback** (`jackknife = "loo"`): for each `i`, recomputes weights
 #' from scratch on the `(n-1)` reduced dataset.  Strictly slower; useful for
@@ -136,14 +135,13 @@
 #' Delete-one jackknife SE for TDNN via prefix/suffix rank-order engine
 #'
 #' Computes the jackknife standard error for a TDNN rank-weighted estimator
-#' using the generic \eqn{O(n \cdot m \cdot q)} prefix/suffix engine
-#' ([jackknife_rank_full()]).  Unlike `.tdnn_jackknife_se_loo_matrix()`, this
-#' path does **not** re-evaluate the rank-weight spec for each deletion; it
-#' precomputes the TDNN rank tables at sizes \eqn{n} and \eqn{n-1} once and
-#' passes them directly to the engine.
+#' using the shared centered prefix/suffix engine. It precomputes the TDNN
+#' rank tables at sizes \eqn{n} and \eqn{n-1} and passes them to
+#' `.dnn_loo_centered()`, as does the `fast` route of
+#' `.tdnn_jackknife_se_loo_matrix()`.
 #'
 #' The C++ engine is used automatically when the package has been compiled;
-#' otherwise [jackknife_rank_full()] falls back to its pure-R implementation.
+#' otherwise the same centered calculation uses its R fallback.
 #'
 #' @param x_mat    Numeric matrix (n x p).
 #' @param x0_mat   Numeric matrix (m x p) of target points.

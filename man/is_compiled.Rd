@@ -2,7 +2,7 @@
 % Please edit documentation in R/api-scores.R
 \name{is_compiled}
 \alias{is_compiled}
-\title{Does a score have a compiled implementation?}
+\title{Does a score carry compiled-score pointer metadata?}
 \usage{
 is_compiled(score)
 }
@@ -13,7 +13,9 @@ is_compiled(score)
 logical
 }
 \description{
-Does a score have a compiled implementation?
+Checks whether \code{ptr} is non-NULL. This does not validate the pointer or
+indicate which evaluator will run; \code{\link[=score_eval]{score_eval()}} and \code{\link[=score_eval_batch]{score_eval_batch()}}
+use the R functions stored on the score.
 }
 \examples{
 is_compiled(new_score("r_only", order = 1L, eval = function(idxs, data, ctx, rng) data[idxs]))

@@ -13,10 +13,14 @@
 #' - `phi` as a numeric **matrix** (n_ref x q): row `j` equals \eqn{\phi(j)}.
 #' - `phi` as a **function** `function(j, t)` that returns a length-`q` numeric,
 #'   allowing target-dependent contributions.
+#' With matrix `phi`, `n_ref = nrow(phi)`. With function-valued `phi`, it is
+#' inferred as `max(ranks)`.
 #'
 #' @param ranks Integer matrix (T x (s+1)): for each target `t`, `ranks[t, k]`
 #'   gives the positive 1-based index of the k-th neighbor, for `k = 1, ..., s+1`.
-#'   (Must exclude `t` itself if targets are a subset of reference.)
+#'   Use distinct indices within each row for observation deletion. A target
+#'   may coincide with a reference observation; self-exclusion is not required.
+#'   Repeated indices follow the additive convention in [jackknife_fast_rank()].
 #' @param a Finite numeric length-`s` vector of L-stat coefficients \eqn{(a_1,\dots,a_s)}.
 #' @param phi Either a finite numeric matrix (n_ref x q) with row `j` equal to
 #'   \eqn{\phi(j)}, or a function `phi(j, t)` returning a finite length-`q`
@@ -25,19 +29,17 @@
 #'
 #' @return A list with:
 #' \describe{
-#'   \item{theta0}{numeric length-`q` baseline aggregate}
+#'   \item{theta0}{numeric length-`q` baseline aggregate, averaged across targets}
 #'   \item{theta_loo}{numeric matrix (n_ref x q) of delete-one aggregates}
 #'   \item{info}{list with fields `s`, `T`, `q`, `normalize`}
 #' }
 #' @examples
 #' set.seed(1)
 #' n <- 20
-#' p <- 3
-#' s <- 4
-#' X <- matrix(rnorm(n * p), n, p)
-#' # toy ranks: nearest-neighbor indices precomputed elsewhere (T x (s+1))
-#' # here we fake something deterministic just for the example
-#' ranks <- cbind(matrix(rep(1:s, each = n), n, s), s + 1L)
+#' s <- 3L
+#' X <- matrix(rnorm(n * 2), n, 2)
+#' wt <- weights_dnn(X, X0 = rbind(c(0, 0), c(1, 0)), k = 1L, s = s, return = "ord")
+#' ranks <- t(wt$ord[seq_len(s + 1L), , drop = FALSE])
 #' y <- rnorm(n)
 #' a <- rep(1, s)
 #' out <- jackknife_slow_rank(ranks, a, cbind(y))

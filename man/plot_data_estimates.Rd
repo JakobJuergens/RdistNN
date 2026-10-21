@@ -56,7 +56,10 @@ in \code{se} and the bound columns. The confidence level is recorded in
 }
 \description{
 Returns one row per target point and coefficient with the point estimate,
-stored jackknife standard error, and symmetric normal confidence bounds.
+stored standard error, and symmetric pointwise normal confidence bounds.
+The uncertainty calculation follows the estimator: jackknife for NP/CATE,
+paired-score linearization for ratios, and sandwich inference for GMM or
+density-backed PLQR coefficients.
 This is the data layer of the plotting interface: plot builders consume
 these frames, and users can consume them directly for custom figures.
 }

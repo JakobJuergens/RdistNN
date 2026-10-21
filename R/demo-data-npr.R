@@ -13,7 +13,8 @@
 #' @param p Integer; number of features in \eqn{X}.
 #' @param design Character; one of \code{"linear"}, \code{"sinusoidal"}, \code{"bump"}, \code{"constant"}.
 #' @param sigma Noise standard deviation in \eqn{Y}.
-#' @param seed Optional integer seed for reproducibility.
+#' @param seed Optional integer seed, used locally without changing the caller's
+#'   RNG state. `NULL` uses the current stream.
 #' @param x0 Optional target point in \eqn{\mathbb{R}^p} (defaults to the zero vector).
 #' @param inject Optional, one of \code{NULL}, \code{"na"}, \code{"inf"}; if provided,
 #'   inject a single non-finite value into \code{Y} at \code{idx_inject} (useful for tests).
@@ -48,11 +49,15 @@ np_demo_data <- function(n = 200,
   }
   sigma <- as.numeric(sigma)
   design <- match.arg(design)
-  if (!is.null(seed)) set.seed(seed)
   if (is.null(x0)) {
     x0 <- rep(0, p)
   } else {
     x0 <- .validate_target_vector(x0, p = p, x0_arg = "x0", x_arg = "X", finite = TRUE)
+  }
+  if (!is.null(seed)) {
+    restore_rng <- .rdistnn_rng_restore()
+    on.exit(restore_rng(), add = TRUE)
+    set.seed(seed)
   }
 
   # Covariates
@@ -112,8 +117,10 @@ np_demo_data <- function(n = 200,
 
 #' Quick helper: sample a batch of subsets (singleton by default)
 #' @inheritParams cate_demo_subsets
+#' @inherit cate_demo_subsets return
 #' @examples
-#' np_demo_subsets(n = 10, K = 4, s = 1, seed = 1)
+#' draws <- np_demo_subsets(n = 10, K = 4, s = 1, seed = 1)
+#' matrix(draws, ncol = 1L)  # one singleton subset per row
 #' @export
 np_demo_subsets <- function(n, K = 1000L, s = 1L, seed = NULL) {
   n <- .validate_scalar_int(n, arg = "n", min = 1L)
@@ -122,7 +129,11 @@ np_demo_subsets <- function(n, K = 1000L, s = 1L, seed = NULL) {
   if (s > n) {
     .abort_bad_arg("s", sprintf("must satisfy s <= n (got s=%d, n=%d)", s, n))
   }
-  if (!is.null(seed)) set.seed(seed)
+  if (!is.null(seed)) {
+    restore_rng <- .rdistnn_rng_restore()
+    on.exit(restore_rng(), add = TRUE)
+    set.seed(seed)
+  }
   t(replicate(K, sort(sample.int(n, s))))
 }
 

@@ -32,7 +32,8 @@
 #' @param design IV DGP name; passed to [sim_iv_data()].
 #' @param methods Character vector of method names; see [sim_iv_methods()].
 #' @param alpha Nominal test size for confidence intervals and J-tests.
-#' @param seed Optional integer seed.
+#' @param seed Optional integer seed for this replicate, used locally without
+#'   changing the caller's saved RNG state. `NULL` uses the current stream.
 #' @param sigma Noise SD forwarded to [sim_iv_data()].
 #' @param clip Clipping bound forwarded to DGPs and simulation nuisance fits.
 #' @param n_folds Number of cross-fitting folds for cross-fit methods.
@@ -55,6 +56,12 @@ sim_iv_one_rep <- function(n, kx, q, k, s, design,
                            sigma = 0.5,
                            clip = 1e-3,
                            n_folds = 5L) {
+  # Learner/fold draws follow data draws in the same replicate seed scope.
+  if (!is.null(seed)) {
+    restore_rng <- .rdistnn_rng_restore()
+    on.exit(restore_rng(), add = TRUE)
+    set.seed(seed)
+  }
   dgp <- sim_iv_data(
     design = design,
     n = n,
@@ -62,7 +69,7 @@ sim_iv_one_rep <- function(n, kx, q, k, s, design,
     q = q,
     sigma = sigma,
     clip = clip,
-    seed = seed
+    seed = NULL
   )
   x_cols <- paste0("X", seq_len(kx))
   metric_names <- .sim_iv_metric_names()
@@ -157,7 +164,8 @@ sim_iv_one_rep <- function(n, kx, q, k, s, design,
 #' @param q_vals Integer vector of requested instrument counts.  The
 #'   just-identified design is run once with realized `q = 1`.
 #' @param n_reps Number of Monte Carlo replications per cell.
-#' @param master_seed Seed used to generate replicate seeds.
+#' @param master_seed Integer seed used locally to generate replicate seeds;
+#'   the caller's saved RNG state is restored. `NULL` uses the current stream.
 #' @param k Integer DNN neighbor count.
 #' @param s_fn Function `f(n, kx)` returning kernel order. The finite-sample
 #'   default is \eqn{\lfloor 0.4 n^{(k_x+1)/(k_x+2)} \rfloor}.
@@ -230,7 +238,11 @@ sim_iv_run <- function(
     lapply
   }
 
-  set.seed(master_seed)
+  if (!is.null(master_seed)) {
+    restore_rng <- .rdistnn_rng_restore()
+    on.exit(restore_rng(), add = TRUE)
+    set.seed(master_seed)
+  }
   seeds <- sample.int(1e6L, n_reps)
   cells <- .sim_iv_cells(
     designs = designs,

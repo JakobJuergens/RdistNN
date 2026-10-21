@@ -13,16 +13,18 @@ cate_demo_subsets(n, K = 1000L, s = 8L, seed = NULL)
 
 \item{s}{Integer; subset size (order of the kernel).}
 
-\item{seed}{Optional integer seed for reproducibility.}
+\item{seed}{Optional integer seed, used locally without changing the caller's
+RNG state. \code{NULL} uses the current stream.}
 }
 \value{
-An integer matrix of size \eqn{K \times s}. Each row contains
-\eqn{s} distinct integers in \eqn{\{1,\ldots,n\}} representing one subset.
+For \code{s > 1}, an integer \verb{K x s} matrix with one subset per row.
+For \code{s = 1}, the current helper returns a \verb{1 x K} matrix; reshape it
+with \code{matrix(result, ncol = 1L)} before passing it to \code{\link[=score_eval_batch]{score_eval_batch()}}.
 }
 \description{
 Draws \eqn{K} subsets of size \eqn{s} uniformly at random from
 \eqn{\{1,\ldots,n\}}. Within each subset, elements are sampled \strong{without}
-replacement (all indices are distinct). Across rows, subsets are sampled
+replacement (all indices are distinct). Across draws, subsets are sampled
 independently (the same index may reappear in different rows).
 }
 \examples{

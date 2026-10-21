@@ -20,17 +20,12 @@ An object of class \code{summary.plqr_result}.
 Summarize a \code{plqr_result} (experimental)
 }
 \details{
-Coefficient-level standard errors and intervals require the direct PLQR
-sandwich (fit with \code{density} or \code{density_col}); the moment-level jackknife
-SE available on fits without a density input has no proven translation
-into a coefficient-level interval in this package's source theory — see
-\verb{markdown_notes/design/15_plqr_variance_estimation_rationale.md}.
+Coefficient uncertainty requires a fit with \code{density} or \code{density_col}.
+\code{moment_se} describes score variation and is not a coefficient standard error.
 }
 \section{Lifecycle}{
 
-\strong{Experimental.} PLQR functionality is outside the CATE and regression
-workflow focus of the initial public release. Its API and inference
-interfaces may change in later releases.
+\strong{Experimental.} The PLQR API and inference interfaces may change.
 }
 
 \seealso{

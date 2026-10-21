@@ -17,10 +17,9 @@ library(RdistNN)
 
 ## Overview
 
-> **Experimental companion functionality.** The local IV-GMM layer exists
-> for ongoing companion-paper development; its API and theorem alignment
-> may change before the GMM paper is released. It is not at the maturity
-> level of `np_dnn()`, `cate_dnn()`, or `plqr_dnn()`.
+> **Experimental.** The local IV-GMM interface may change. For the supported
+> regression, CATE and conditional-LATE workflows, start with
+> [Getting started](getting-started.html) and [Conditional LATE](conditional-late.html).
 
 This vignette shows the local IV-GMM workflow built on `gmm_dnn()`. The example
 uses the doubly robust IV moment model created by `gmm_model_dr_iv()` and the IV
@@ -93,6 +92,8 @@ confint(fit_iv)
 `sim_iv_run()` expands a grid over designs, sample sizes, covariate dimensions,
 instrument counts, and Monte Carlo replications. The just-identified design
 `dgp1_iv_justid_linear` is always run only once with realized `q = 1`.
+An explicit `master_seed` restores the caller's saved RNG state; `NULL` uses
+the current stream. Each replicate keeps data and learner draws together.
 
 ```{r small-run}
 raw_iv <- sim_iv_run(
@@ -108,10 +109,11 @@ raw_iv <- sim_iv_run(
   verbose = FALSE
 )
 
-head(raw_iv)
+raw_iv[, c("method", "design", "theta_hat", "se")]
 ```
 
-`summarise_iv_results()` aggregates to one row per `(method, design, n, kx, q)`
+These two-replicate cells demonstrate the output format; they are not
+coverage evidence. `summarise_iv_results()` aggregates to one row per `(method, design, n, kx, q)`
 cell and includes local overidentification diagnostics when `q > 1`.
 
 ```{r summary}
@@ -121,13 +123,6 @@ print(tab_iv, digits = 3)
 
 ## Related Articles
 
-- [Notation and package conventions](notation-and-conventions.html):
-  `vignette("notation-and-conventions", package = "RdistNN")` distinguishes
-  solved GMM coefficients, local moments, Jacobians, covariance fields, and the
-  overidentification statistic.
-- [Conditional Z-estimation](conditional-z-estimation.html):
-  `vignette("conditional-z-estimation", package = "RdistNN")` covers the
-  stable NP, CATE, and supplied-theta PLQR interfaces.
-- [Diagnostics and reporting](diagnostics-reporting.html):
-  `vignette("diagnostics-reporting", package = "RdistNN")` explains the common
-  DNN localization diagnostics shared with the experimental fit.
+- [Notation and conventions](notation-and-conventions.html): GMM fields and uncertainty scales.
+- [Experimental PLQR](conditional-z-estimation.html): supplied-coefficient moments.
+- [Diagnostics and reporting](diagnostics-reporting.html): localization diagnostics.

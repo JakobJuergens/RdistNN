@@ -17,27 +17,20 @@
 #' and survey-design inference are not supplied. Input row order breaks
 #' distance ties, so permuting tied observations can change estimates.
 #'
-#' Let V=(X,Z) contain all pre-instrument adjustment variables. Supplied
-#' predictions condition on V, while weights use only reporting coordinates X.
-#' The target averages both adjusted instrument-arm contrasts over the same
-#' conditional law of Z given X=x, then takes their ratio.
+#' Nuisance predictions use all pre-instrument adjustment variables, while
+#' weights use the reporting coordinates X. The estimate is the ratio of the
+#' adjusted local reduced form and first stage, using common weights.
 #'
-#' Under consistency, exclusion, conditional instrument independence given V,
-#' monotonicity, overlap and positive local compliance, this functional is the
-#' treatment effect among compliers at the reporting profile. Without those
-#' causal assumptions it remains a standardized observed-data Wald functional.
-#' These assumptions cannot be verified from prediction arrays.
+#' The accompanying
+#' [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
+#' gives the IV identifying assumptions and conditions for pointwise inference.
+#' A training label or a computational choice of k or weight method does not
+#' establish those conditions. Inspect the local first stage alongside the ratio.
 #'
-#' The score is \eqn{\theta\phi_D-\phi_Y}. Full-sample pointwise inference
-#' additionally requires the affine theorem's design, oracle, learner accuracy,
-#' deletion-stability and undersmoothing conditions. A training label alone does
-#' not establish them. The covariance keeps paired variation of both signals;
-#' existing residualized IV-GMM uses a different moment and covariance route.
-#' Exact/asymptotic single-scale DNN and general k share the CATE/NP controls.
-#' These computational choices require their corresponding statistical
-#' conditions; they do not extend the exact-k=1 theorem automatically.
-#' Reporting and plotting use the common generics; overlap panels describe
-#' the instrument and influence panels retain both augmented signals.
+#' Covariance keeps paired variation of both frozen signals. The residualized
+#' IV-GMM workflow uses a different moment and can have a different target.
+#' Reporting uses the common generics; overlap panels describe the instrument
+#' and influence panels retain both augmented signals.
 #'
 #' @return A clate_result inheriting affine_ratio_result. Component roles are
 #'   reduced_form and first_stage. Optional nuisance output is the complete

@@ -31,9 +31,8 @@ articles:
       - diagnostics-reporting
       - visualising-fits
       - kernel-order-tuning
-  - title: Theory & details
+  - title: Weights and extension APIs
     contents:
-      - conditional-z-estimation
       - dnn-weights
       - extending
       - jackknife-gen-ustats
@@ -43,6 +42,7 @@ articles:
       - conditional-late-inference
   - title: Experimental companion workflows
     contents:
+      - conditional-z-estimation
       - local-iv-estimation
   - title: Paper replication
     contents:
@@ -74,6 +74,7 @@ reference:
       - print.cate_result
       - print.np_result
       - np_result
+      - nobs.np_result
       - print.score_diff_path
       - print.summary.cate_result
       - print.tdnn_np_result
@@ -156,9 +157,8 @@ reference:
 
   - title: Experimental — PLQR
     desc: >
-      All PLQR interfaces are experimental and outside the CATE and
-      regression focus of this release. The wrapper evaluates moments
-      at supplied coefficients; it does not solve for local coefficients.
+      Experimental moments and density-backed uncertainty at supplied
+      coefficients. The wrapper does not solve for local coefficients;
       APIs and inference interfaces may change.
     contents:
       - plqr_dnn

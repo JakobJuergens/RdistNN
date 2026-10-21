@@ -61,6 +61,15 @@ test_that("scalar sensitivity honors tuning and a single uncertainty policy", {
       if (se) expect_equal(grid$estimates$se[grid$estimates$s == 3],
         np_dnn(X = matrix(1:8), Y = 1:8, x0 = 0, s = 3)$se, tolerance = 1e-14)
     }
+  }
+})
+
+test_that("tuning plots reject nonlogical uncertainty controls", {
+  skip_if_not_installed("ggplot2")
+  for (family in c("np", "cate")) for (fit_se in c(FALSE, TRUE)) {
+    fit <- if (family == "np") np_dnn(X = matrix(1:8), Y = 1:8, x0 = 0,
+      tuning = .consumer_tuning(), se = fit_se) else cate_dnn(X = matrix(1:8),
+      pseudo_outcome = 1:8, x0 = 0, tuning = .consumer_tuning(), se = fit_se)
     expect_error(plot_tuning(fit, se = "yes"), "se.*TRUE or FALSE")
   }
 })
@@ -92,6 +101,7 @@ test_that("scalar plots revalidate point-only candidate feasibility for SEs", {
 })
 
 test_that("explicit grids skip an inserted default with infeasible uncertainty", {
+  skip_if_not_installed("ggplot2")
   for (family in c("np", "cate", "ratio")) {
     f <- switch(family,
       np = np_dnn(X = matrix(1:8), Y = 1:8, x0 = 0, s = 8, se = FALSE),

@@ -45,9 +45,7 @@
 #' any aggregation/weights are handled outside the score layer.
 #'
 #' @section Lifecycle:
-#' **Experimental.** PLQR functionality is outside the CATE and regression
-#' workflow focus of the initial public release. Its API and inference
-#' interfaces may change in later releases.
+#' **Experimental.** The PLQR API and inference interfaces may change.
 #' @param x0 Numeric length-\eqn{p} target point. Used only for basic dimension
 #'   checks against \code{x_cols}; not used in the kernel.
 #' @param x_cols Integer or character indices of the \eqn{X} columns in

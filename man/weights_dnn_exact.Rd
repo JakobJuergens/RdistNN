@@ -40,9 +40,9 @@ Exact DNN weights are derived from the full rank permutation for each target.
 They are not constructed by keeping only the first \code{s} observations. For the
 exact finite-population rule, the support in rank order is \code{j <= n - s + k};
 in particular, for the paper-faithful \code{k = 1} DNN this becomes \code{j <= n - s + 1}.
-Fixed top-\code{k} kernels are implemented for any \verb{1 <= k <= s}. The fixed-\code{k}
-extension of the theory is essentially direct, but the currently written
-manuscript derivations cover the \code{k = 1} case.
+Fixed top-\code{k} kernels are implemented for \verb{1 <= k <= s}. The accompanying
+\href{https://jakobjuergens.com/research/#orthogonal-inference-conditional-z}{paper}
+gives the theory for \code{k = 1}.
 }
 \examples{
 set.seed(1)

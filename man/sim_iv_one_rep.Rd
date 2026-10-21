@@ -34,7 +34,8 @@ sim_iv_one_rep(
 
 \item{alpha}{Nominal test size for confidence intervals and J-tests.}
 
-\item{seed}{Optional integer seed.}
+\item{seed}{Optional integer seed for this replicate, used locally without
+changing the caller's saved RNG state. \code{NULL} uses the current stream.}
 
 \item{sigma}{Noise SD forwarded to \code{\link[=sim_iv_data]{sim_iv_data()}}.}
 

@@ -87,7 +87,7 @@ it does not refit nuisance learners. The fast jackknife reuses this geometry
 and rank tables, so its candidate loop requires no new ranking or RNG work.
 Randomized preprocessing belongs before that loop.
 
-The legacy NP/CATE/PLQR `jackknife = "loo"` path remains a conservative
+The legacy NP/CATE/PLQR `jackknife = "loo"` path remains an
 explicit-deletion calculation: it recomputes weights and reranks retained
 samples for each candidate. Grid acceleration therefore primarily concerns
 `jackknife = "fast"`. With custom data-dependent or stateful metrics, the
@@ -155,6 +155,12 @@ state and the same internal grid engine, not repeated public estimator calls.
 Stored grids reuse their stored uncertainty. Rowwise ratio Wald availability
 must survive tidy extraction and plotting. Dashboards include tuning panels
 when appropriate, under the same optional-package policy as scalar displays.
+
+Scalar tuning plots re-evaluate all candidates under one
+requested SE policy; stored grid fits reuse their recorded uncertainty.
+An explicit scalar order's one-row bookkeeping payload is not a tuning sweep:
+use the paper grid unless a tuning specification was retained or supplied.
+Optional return fields cannot change these candidate orders.
 
 ## Simulation integration and verification
 

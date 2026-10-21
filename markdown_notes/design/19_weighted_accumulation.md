@@ -134,15 +134,6 @@ exact-subtraction safeguard before observed-origin mean centering, after any
 required binary normalization. Raw restored doubles can
 still round away sub-ULP variation; inference uses the shifted values.
 
-Stored prediction selectors retain original data-frame column names, including
-repeated selectors and matrix-valued columns, separately from canonical matrix
-column labels. Neighbor extras request ranks internally without exposing
-unrequested extras. Scalar tuning plots re-evaluate all candidates under one
-requested SE policy; stored grid fits reuse their recorded uncertainty.
-An explicit scalar order's one-row bookkeeping payload is not a tuning sweep:
-use the paper grid unless a tuning specification was retained or supplied.
-Optional return fields cannot change these candidate orders.
-
 ## Maintenance checks
 
 The source modules own their helpers directly; jackknife callers use

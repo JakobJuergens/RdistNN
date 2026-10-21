@@ -155,6 +155,7 @@ distance_l1 <- function() {
 #'
 #' @return Numeric vector of length \eqn{n}.
 #' @examples
+#' set.seed(1)
 #' X <- matrix(rnorm(12), 4, 3)
 #' dist_l1_scaled(X, c(0, 0, 0), inv_s = c(1, 2, 0.5))
 #' @keywords internal
@@ -187,6 +188,7 @@ dist_l1_scaled <- function(X, x0, inv_s) {
 #'
 #' @return A list with `name`, `setup()`, `eval()`, and `eval_batch()`.
 #' @examples
+#' set.seed(1)
 #' X <- matrix(rnorm(12), 4, 3)
 #' X0 <- matrix(rnorm(6), 2, 3)
 #' dspec <- distance_l1_scaled(rule = "sd")

@@ -27,6 +27,7 @@ Uses compiled paths when present.
 }
 
 \examples{
+set.seed(1)
 X <- matrix(rnorm(12), 4, 3)
 X0 <- matrix(rnorm(6), 2, 3)
 dspec <- distance_l2()

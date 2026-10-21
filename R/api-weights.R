@@ -312,9 +312,9 @@ print.weights_result <- function(x, ...) {
 #' They are not constructed by keeping only the first `s` observations. For the
 #' exact finite-population rule, the support in rank order is `j <= n - s + k`;
 #' in particular, for the paper-faithful `k = 1` DNN this becomes `j <= n - s + 1`.
-#' Fixed top-`k` kernels are implemented for any `1 <= k <= s`. The fixed-`k`
-#' extension of the theory is essentially direct, but the currently written
-#' manuscript derivations cover the `k = 1` case.
+#' Fixed top-`k` kernels are implemented for `1 <= k <= s`. The accompanying
+#' [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
+#' gives the theory for `k = 1`.
 #'
 #' @param X numeric matrix (n x p)
 #' @param X0 numeric matrix (m x p); mutually exclusive with \code{x0}

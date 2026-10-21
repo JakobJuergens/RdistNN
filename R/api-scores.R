@@ -31,7 +31,7 @@
 #' Score specification (S3) for U-stat kernels
 #'
 #' A score (kernel) is a symmetric function evaluated on s-sized subsets.
-#' Provide either `ptr` (compiled fast path), or an R `eval_batch`, or an R `eval`.
+#' Supply `eval` or `eval_batch` for [score_eval()] and [score_eval_batch()].
 #'
 #' If your score depends on a parameter vector (for example Z-estimation), use
 #' `eval_param`/`eval_param_batch` and optionally `grad`/`grad_batch` to enable
@@ -55,7 +55,8 @@
 #' @param fd_scheme Finite-difference scheme used by [score_diff_path()] when
 #'   `method = "fd"` and no explicit scheme is supplied. One of
 #'   `c("central", "forward")`.
-#' @param ptr External pointer to compiled score (see vignette); if present, used by engine.
+#' @param ptr Optional compiled-score pointer metadata. The public R evaluators
+#'   do not dispatch through this pointer; they require `eval` or `eval_batch`.
 #' @param randomized Logical: does the kernel draw randomness?
 #' @param symmetric Logical: permutation symmetry (engine assumes TRUE).
 #' @return An object of class `ustat_score`.
@@ -144,7 +145,11 @@ as_score <- function(f, s, name = deparse(substitute(f))) {
 #' @export
 is_score <- function(x) inherits(x, "ustat_score")
 
-#' Does a score have a compiled implementation?
+#' Does a score carry compiled-score pointer metadata?
+#'
+#' Checks whether `ptr` is non-NULL. This does not validate the pointer or
+#' indicate which evaluator will run; [score_eval()] and [score_eval_batch()]
+#' use the R functions stored on the score.
 #' @param score a \code{ustat_score}
 #' @return logical
 #' @examples
@@ -259,7 +264,8 @@ print.ustat_score <- function(x, ...) {
 
 #' Set up score context (precomputation)
 #' @param score ustat_score
-#' @param data data.frame/matrix
+#' @param data Data object understood by the score, such as a vector, matrix
+#'   or data frame.
 #' @param ... passed to score$setup
 #' @return context object or NULL
 #' @examples
@@ -317,9 +323,11 @@ score_order.ustat_score <- function(score, n, data, ctx = NULL) {
 #'
 #' @param score ustat_score
 #' @param idxs integer vector of length \code{s}
-#' @param data data.frame/matrix
+#' @param data Data object understood by the score, such as a vector, matrix
+#'   or data frame.
 #' @param ctx optional context
-#' @param rng optional RNG key/seed
+#' @param rng Optional object passed unchanged to the evaluator. The caller or
+#'   evaluator manages random-number seeding.
 #' @return numeric(1)
 #' @examples
 #' sc <- as_score(function(idxs, data) sum(data[idxs]), s = 2L)
@@ -372,9 +380,11 @@ score_eval.ustat_score <- function(score, idxs, data, ctx = NULL, rng = NULL) {
 #'
 #' @param score ustat_score
 #' @param subs integer matrix with nrow=K, ncol=s
-#' @param data data.frame/matrix
+#' @param data Data object understood by the score, such as a vector, matrix
+#'   or data frame.
 #' @param ctx optional context
-#' @param rng optional RNG key/seed
+#' @param rng Optional object passed unchanged to the evaluator. The caller or
+#'   evaluator manages random-number seeding.
 #' @return numeric vector of length \code{K}
 #' @examples
 #' sc <- as_score(function(idxs, data) sum(data[idxs]), s = 2L)

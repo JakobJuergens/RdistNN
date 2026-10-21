@@ -12,83 +12,28 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 library(RdistNN)
 ```
 
-The supported `affine_ratio_dnn()` and `clate_dnn()` workflows average
-two signals using common DNN weights, then take their ratio. Exact weights
-and one neighbor per subsample are the defaults; asymptotic DNN and general
-`k` use the same paired calculation. The worked example below is exact. This
-article explains the paired covariance calculation and its numerical
-diagnostics. Start with [Conditional LATE from supplied nuisance
-predictions](conditional-late.html) for the economic target and input roles.
+This guide explains the covariance and status fields returned by
+`affine_ratio_dnn()` and `clate_dnn()`. Start with the
+[CLATE workflow](conditional-late.html) for inputs and a complete example.
+For identification, nuisance-learning conditions and asymptotic inference,
+see the accompanying [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
 
-## A four-observation calculation
-
-The following fixed arrays isolate the computation from nuisance learning.
-The signed denominator signal is intentional.
+## A small paired-signal example
 
 ```{r fixture}
 fit <- affine_ratio_dnn(
   X = matrix(1:4, ncol = 1), x0 = 0,
-  numerator = c(2, 1, 4, 3), denominator = c(1, -1, 2, 1), s = 2,
-  return = c("W", "signals", "deletions", "pseudo_values")
+  numerator = c(2, 1, 4, 3), denominator = c(1, -1, 2, 1), s = 2
 )
-fit$W
 fit$components
-coef(fit)
+summary(fit)$coefficients
 ```
 
-The weights are \((1/2,1/3,1/6,0)\), the components are \((2,1/2)\),
-and the fitted ratio is four. Here `s` counts observations competing to be
-the nearest in each subsample. It does not count the nonzero weights.
-
-For each deletion, keep the signals, target point, metric and order `s`
-fixed, and recompute exact weights on the retained observations. The fitted
-ratio remains fixed when forming the score. This calculation requires
-`s < n` and involves no nuisance refitting.
-
-```{r deletions}
-fit$deletions[, , 1]
-P <- fit$pseudo_values[, , 1]
-P
-centered <- sweep(P, 2, colMeans(P), "-")
-V <- crossprod(centered) / (4 * 3)
-V
-stopifnot(isTRUE(all.equal(unname(V), matrix(c(.5, .5, .5, .75), 2))))
-```
-
-The pseudo-values are \(P_Y=(2,0,3,3)\) and
-\(P_D=(2,-2,1,1)\). The first deleted denominator is zero, but all
-component deletion averages and pseudo-values are finite. A jackknife of
-deleted ratios would perform an undefined division at this deletion; it is
-a different statistic.
-
-With \(\hat\theta=4\), score pseudo-values are
-\(Q_j=\hat\theta P_{D,j}-P_{Y,j}\). Their centered variation gives
-the same variance as the paired component covariance:
-
-\[
-\widehat V_\theta=
-\frac{V_{YY}+\hat\theta^2V_{DD}-2\hat\theta V_{YD}}
-     {\hat\Delta_D^2}.
-\]
-
-```{r paired-variance}
-Q <- fit$theta * P[, 2] - P[, 1]
-Q
-variance <- sum((Q - mean(Q))^2) / (4 * 3 * fit$components[1, 2]^2)
-c(paired_variance = variance,
-  omitting_cross_covariance = (V[1, 1] + fit$theta^2 * V[2, 2]) /
-    fit$components[1, 2]^2)
-fit$theta_vcov
-fit$neff
-fit$theta_omega
-stopifnot(abs(variance - 34) < 1e-10,
-          abs(fit$neff - 18 / 7) < 1e-10,
-          abs(fit$theta_omega[[1]][1, 1] - 612 / 7) < 1e-10)
-```
-
-Discarding the cross-covariance gives variance 50 instead of 34 in this
-example. Dividing the numerator standard error by the first stage also
-omits denominator uncertainty.
+The numerator and denominator use the same weights, and their paired
+covariance enters ratio uncertainty. Dividing the numerator SE by the first
+stage or discarding the component cross-covariance gives a different
+calculation. Deletions hold supplied signals and geometry fixed; nuisance
+models are not refitted.
 
 ## Keep the variance scales distinct
 
@@ -120,113 +65,38 @@ The largest centered pseudo-value-square shares attribute fitted variance
 to deletion indices, including rank changes; they differ from raw weighted
 score contributions.
 
-## Singular covariance and signed signals
+## Signed signals and unavailable intervals
 
-With perfect compliance, treatment equals instrument assignment and the
-augmented first-stage signal equals one. Its estimated variance is zero,
-while the outcome signal and ratio can still have positive variance.
-Positive definiteness of the full two-component covariance is unnecessary
-for this scalar calculation.
+Augmented treatment signals can be negative even with one-sided compliance;
+they are not individual compliance indicators. A finite negative aggregate
+denominator gives a signed ratio, without replacement or trimming.
 
-```{r perfect-compliance}
-A <- c(0, 1, 0, 1)
-sig <- iv_augmented_signals(
-  Y = c(0, 1, .2, 1.2), D = A, A = A, e = rep(.5, 4),
-  m_y0 = rep(0, 4), m_y1 = rep(.5, 4),
-  m_d0 = rep(0, 4), m_d1 = rep(1, 4)
-)
-constant_first_stage <- affine_ratio_dnn(
-  X = matrix(1:4), x0 = 0, numerator = sig$phi_y,
-  denominator = sig$phi_d, s = 2
-)
-sig$phi_d
-constant_first_stage$component_vcov
-```
+Inspect these fields before reporting a CLATE result:
 
-Even in a one-sided compliance model, eligible nonparticipants can have
-negative augmented first-stage signals:
+| Field | What to check |
+|---|---|
+| `ratio_status` | `ok`, zero denominator, component overflow or ratio overflow |
+| `negative_denominator` | A finite negative first stage |
+| `near_zero_denominator` | Numerical cancellation; not a calibrated weak-IV test |
+| `covariance_status` | Available, missing, zero-score or numerically failed covariance |
+| `wald_available` | Whether the reported SE supports the computational Wald output |
 
-```{r signed-signals}
-iv_augmented_signals(
-  Y = c(0, 1), D = c(0, 1), A = c(1, 1), e = c(.5, .5),
-  m_y0 = c(0, 0), m_y1 = c(1, 1), m_d1 = c(.6, .6), one_sided = TRUE
-)$phi_d
-```
+An exactly zero first stage gives an undefined ratio while retaining component
+estimates and available covariance. Exact zero score variance gives SE zero
+and unavailable Wald bounds. A finite ratio may also have unavailable
+uncertainty. These cases stay visible in summaries and plots; inspect the
+first stage and status rather than interpreting missing bounds as precision.
 
-The output is \((-0.6,1.4)\). Treatment predictions may lie in
-\([0,1]\), but augmented treatment signals need not. The estimator keeps
-signed signals and finite negative denominators. At an exactly zero
-aggregate denominator it retains both components and their covariance,
-while reporting an undefined ratio and unavailable Wald interval.
-
-The `near_zero_denominator` flag is a numerical cancellation diagnostic;
-it does not change the estimator. The first-stage standardized magnitude
-is a different, descriptive diagnostic. No universal weak-instrument
-cutoff is attached to it. An exactly zero score norm gives a computational
-SE of zero and `wald_available = FALSE`, with `NA` interval bounds.
-
-## Which IV effect is being reported?
-
-Within a reporting profile, consider two equally common adjustment strata:
-
-```{r estimands}
-strata <- data.frame(compliance = c(1 / 4, 3 / 4),
-                     effect = c(0, 2), propensity = c(1 / 2, 1 / 4))
-with(strata, c(
-  CLATE = sum(compliance * effect) / sum(compliance),
-  average_stratum_LATE = mean(effect),
-  residualized_IV = sum(propensity * (1 - propensity) * compliance * effect) /
-    sum(propensity * (1 - propensity) * compliance)
-))
-```
-
-The three answers are \(3/2\), \(1\), and \(18/13\).
-Residualized IV introduces instrument-variance weights. Its target can
-coincide with CLATE under additional restrictions, but equality should be
-checked. The [local IV-GMM article](local-iv-estimation.html) documents the
-package's separate residualized moment and covariance workflow.
-
-## What justifies full-sample inference?
-
-For response \(R=Y,D\), holding candidate nuisance functions fixed gives
-the exact conditional mean error
-
-\[
-(e-e_0)\left\{\frac{m_{R,1}-m_{R,1,0}}e+
-\frac{m_{R,0}-m_{R,0,0}}{1-e}\right\}.
-\]
-
-This product removes first-order nuisance mean bias. Individual scores
-still depend on observations used for training. The affine theorem also
-requires expected prediction convergence over the specified retained fits,
-quantitative deletion stability, bounded envelopes and exceptional-event
-control, together with oracle moments, local design, positive score
-variance, fixed relevance and point-target undersmoothing. Proof-only
-deleted nuisance fits are distinct from the frozen-array deletions used
-for standard errors.
-
-The bounded `clate_demo_data()` construction and its designated growing
-ridge-series training rule provide a concrete sufficient route developed
-in the research notes. The internal ridge adapter is a reference study
-tool; `clate_dnn()` still accepts predictions rather than fitting learners.
-Array parity tests verify the algorithm. They do not prove asymptotic
-learner rates or causal assumptions. Practical forests, unbounded asset
-outcomes and data-selected geometry need their own justification.
+CLATE generally differs from an average of stratum-specific LATEs or an
+ordinary residualized-IV coefficient. Use the paper's estimand definition
+when choosing the appropriate workflow.
 
 ## Ratio confidence sets
 
-The experimental `ratio_confidence_set()` helper inverts the candidate moment
-inequality
-
-\[
-(\widehat\Delta_Y-\theta\widehat\Delta_D)^2
-\le z^2(V_{YY}-2\theta V_{YD}+\theta^2V_{DD}).
-\]
-
-This helper uses the same paired estimator-scale covariance. It can return
-bounded intervals, singletons, half-lines, two rays, all real numbers or
-empty sets. It remains separate from `confint()`, which reports pointwise
-Wald intervals for fitted ratio objects.
+The experimental `ratio_confidence_set()` helper uses the paired
+estimator-scale covariance. It can return bounded intervals, singletons,
+half-lines, two rays, all real numbers or empty sets. It remains separate
+from `confint()`, which reports pointwise Wald intervals.
 
 ```{r confidence-sets}
 ratio_confidence_set(fit$components, fit$component_vcov)
@@ -238,27 +108,12 @@ sets
 vapply(sets, function(x) x$type, character(1))
 ```
 
-Finite endpoints are included; infinite endpoints use open notation.
-An `unresolved` result has a numerical status and no asserted set geometry,
-and differs from a mathematically `empty` result. Materially indefinite
-covariance is rejected. Power-of-two scaling and stable roots limit
-overflow and cancellation; near-boundary or unrepresentable calculations
-remain explicit in the returned record.
+Finite endpoints are included. An `unresolved` result reports a numerical
+status without asserting a set geometry; it differs from a mathematically
+empty set. Materially indefinite or unavailable covariance is rejected.
+See `?ratio_confidence_set` for input validation and returned fields.
 
-With a deterministic nonzero denominator, the helper computes the interval
-width directly from the numerator SE. This preserves small positive
-uncertainty that can disappear when quadratic coefficients are expanded.
-An apparent repeated root of rounded coefficients alone cannot certify a
-singleton; an uncertifiable result is `unresolved`. If the estimator's
-component covariance underflows despite nonzero component variation, it
-returns unavailable covariance with `numerical_failure` status. The helper
-rejects that unavailable input rather than interpreting it as zero variance.
-
-At a fixed true candidate, inclusion probability is the acceptance
-probability of that one candidate's score test. Simultaneous validity of
-all candidate tests is unnecessary for this pointwise statement. The test
-still needs its own local-score CLT, consistent variance, nuisance and bias
-conditions, including positive variance. Algebraic zero-variance branches
-are not automatically covered by that theorem. Uniform coverage over
-changing models with increasingly weak first stages requires an additional
-sequence-specific argument; the quadratic calculation does not establish it.
+Neither a finite Wald interval nor this experimental inversion establishes
+uniform coverage under weak first stages. The paper describes the scope of
+its inference results. Numerical safeguards and successful array tests do
+not establish the statistical assumptions for a particular application.

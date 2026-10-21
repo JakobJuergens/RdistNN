@@ -21,7 +21,7 @@ plqr_demo_data(
 \arguments{
 \item{n}{Integer; sample size.}
 
-\item{p}{Integer; number of features in \eqn{X} (recommend \eqn{p \ge 2}).}
+\item{p}{Positive integer number of features in \eqn{X}.}
 
 \item{p_d}{Integer; dimension of \eqn{D} (number of partially linear regressors).}
 
@@ -31,7 +31,8 @@ plqr_demo_data(
 
 \item{design}{Character; one of \code{"linear"}, \code{"sinusoidal"}, \code{"bump"} for \eqn{g_{0}}.}
 
-\item{seed}{Optional integer seed.}
+\item{seed}{Optional integer seed, used locally without changing the caller's
+RNG state. \code{NULL} uses the current stream.}
 
 \item{x0}{Optional target point in \eqn{\mathbb{R}^{p}} for localization (defaults to the zero vector).}
 
@@ -40,7 +41,7 @@ inject a single non-finite into \code{inject_col} at row \code{idx_inject}.
 Useful for testing runtime guards.}
 
 \item{inject_col}{Character; which column to corrupt when \code{inject} is not \code{NULL}.
-One of \code{"Y"}, \code{"g_oracle"}, \code{"D1"}, \code{"mD1"}, \code{"rD1"} (extend as needed).}
+One of \code{"Y"}, \code{"g_oracle"}, \code{"D1"}, \code{"mD1"}, \code{"rD1"}.}
 
 \item{idx_inject}{Integer row index to corrupt (default 3).}
 }
@@ -86,9 +87,7 @@ The function also returns the oracle
 }
 \section{Lifecycle}{
 
-\strong{Experimental.} PLQR functionality is outside the CATE and regression
-workflow focus of the initial public release. Its API and inference
-interfaces may change in later releases.
+\strong{Experimental.} The PLQR API and inference interfaces may change.
 }
 
 \examples{

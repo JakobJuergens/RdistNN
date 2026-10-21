@@ -5,10 +5,13 @@ CLATE and ordinary paired-signal ratios, with DNN weights, pointwise jackknife
 uncertainty, tuning, diagnostics and plots. Ratio confidence-set inversion,
 PLQR and local IV-GMM remain experimental.
 
-Version `0.1.0.9004` identifies the current development snapshot, aligned
-with the Stata companion. Publish its changes together in a reviewed squash
-merge carrying version `0.1.0.9004`. Version `0.1.0.9003` identifies the
-previous production snapshot.
+Version `0.1.0.9005` packages the documentation and maintenance improvements
+as one flattened production update, aligned with the Stata companion.
+The previous version `0.1.0.9004` entered production `master` through the reviewed squash
+merge of [PR #16](https://github.com/JakobJuergens/RdistNN/pull/16) at
+[`3394ae55383ffa4cb6bfad909730378dd8c7d4cb`](https://github.com/JakobJuergens/RdistNN/commit/3394ae55383ffa4cb6bfad909730378dd8c7d4cb),
+aligned with the Stata companion. Version `0.1.0.9003` identifies the previous
+production snapshot.
 The exact-table recurrence, compensated reductions, numerical origins, shared
 covariance and fitted whitening policy first shipped in the merged 0.1.0.9003
 snapshot, not 0.1.0.9002. See [NEWS.md](NEWS.md). A verified candidate requires
@@ -26,11 +29,20 @@ sizes and SHA-256, commands, runtime/compiler information, hosted run IDs/tested
 SHAs and explicit PASS/FAIL/BLOCKED/NOT_RUN gates. Do not create circular
 committed HEAD references or embed an archive's own hash inside it.
 
-`pak::pak("JakobJuergens/RdistNN@f2c7bc36e8da040831b668281e50e18b2f1a4b3c")`
-installs immutable previous 0.1.0.9003 source. The unpinned README command follows
-`master`; `@v0.1.0` selects the existing older public tag. An unpublished local
-candidate is not remotely installable. Check out its full recorded commit in
-a separate local checkout and use `pak::local_install(".")`, or install its
+For a historical reference, install the previous immutable `0.1.0.9004` source with:
+
+```r
+pak::pak("JakobJuergens/RdistNN@3394ae55383ffa4cb6bfad909730378dd8c7d4cb")
+```
+
+The unpinned README command follows production `master`; `@v0.1.0` selects the
+existing older public tag. The `0.1.0.9004` source update and pkgdown deployment
+did not create a new tag or replace the `v0.1.0` release assets. Different source
+snapshots can share a development version, so retain the full commit or checked
+archive identity.
+
+For an unpublished future candidate, check out its full recorded commit in a
+separate local checkout and use `pak::local_install(".")`, or install its
 checked tarball. Put exact candidate commands in the external handoff once
 both final identities are known.
 

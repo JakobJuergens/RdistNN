@@ -248,9 +248,7 @@
 #' Print a `plqr_result` object (experimental)
 #'
 #' @section Lifecycle:
-#' **Experimental.** PLQR functionality is outside the CATE and regression
-#' workflow focus of the initial public release. Its API and inference
-#' interfaces may change in later releases.
+#' **Experimental.** The PLQR API and inference interfaces may change.
 #' @param x An object returned by [plqr_dnn()].
 #' @param ... Not used.
 #' @return `x`, invisibly.
@@ -305,9 +303,7 @@ print.plqr_result <- function(x, ...) {
 #' solved. The source is attached as `attr(., "theta_source")`.
 #'
 #' @section Lifecycle:
-#' **Experimental.** PLQR functionality is outside the CATE and regression
-#' workflow focus of the initial public release. Its API and inference
-#' interfaces may change in later releases.
+#' **Experimental.** The PLQR API and inference interfaces may change.
 #' @param object A `plqr_result` object.
 #' @param ... Not used.
 #' @return Matrix of PLQR coefficient values with a `theta_source`
@@ -323,9 +319,7 @@ coef.plqr_result <- function(object, ...) {
 #' Variance-covariance matrices for `plqr_result` (experimental)
 #'
 #' @section Lifecycle:
-#' **Experimental.** PLQR functionality is outside the CATE and regression
-#' workflow focus of the initial public release. Its API and inference
-#' interfaces may change in later releases.
+#' **Experimental.** The PLQR API and inference interfaces may change.
 #' @param object A `plqr_result` object.
 #' @param target Optional target index. When omitted, returns one matrix for a
 #'   single-target fit and a named list for a multi-target fit.
@@ -363,11 +357,8 @@ vcov.plqr_result <- function(object, target = NULL, ...) {
 #' Confidence intervals for `plqr_result` (experimental)
 #'
 #' @details
-#' Coefficient-level standard errors and intervals require the direct PLQR
-#' sandwich (fit with `density` or `density_col`); the moment-level jackknife
-#' SE available on fits without a density input has no proven translation
-#' into a coefficient-level interval in this package's source theory — see
-#' `markdown_notes/design/15_plqr_variance_estimation_rationale.md`.
+#' Coefficient uncertainty requires a fit with `density` or `density_col`.
+#' `moment_se` describes score variation and is not a coefficient standard error.
 #'
 #' Intervals are centered at the coefficient value the object represents:
 #' for current fits the supplied `theta_eval`
@@ -375,9 +366,7 @@ vcov.plqr_result <- function(object, target = NULL, ...) {
 #' source is attached as `attr(., "theta_source")`.
 #'
 #' @section Lifecycle:
-#' **Experimental.** PLQR functionality is outside the CATE and regression
-#' workflow focus of the initial public release. Its API and inference
-#' interfaces may change in later releases.
+#' **Experimental.** The PLQR API and inference interfaces may change.
 #' @param object A `plqr_result` object from [plqr_dnn()].
 #' @param parm Optional coefficient names or indices.
 #' @param level Confidence level.
@@ -437,16 +426,11 @@ confint.plqr_result <- function(object, parm = NULL, level = 0.95,
 #' Summarize a `plqr_result` (experimental)
 #'
 #' @details
-#' Coefficient-level standard errors and intervals require the direct PLQR
-#' sandwich (fit with `density` or `density_col`); the moment-level jackknife
-#' SE available on fits without a density input has no proven translation
-#' into a coefficient-level interval in this package's source theory — see
-#' `markdown_notes/design/15_plqr_variance_estimation_rationale.md`.
+#' Coefficient uncertainty requires a fit with `density` or `density_col`.
+#' `moment_se` describes score variation and is not a coefficient standard error.
 #'
 #' @section Lifecycle:
-#' **Experimental.** PLQR functionality is outside the CATE and regression
-#' workflow focus of the initial public release. Its API and inference
-#' interfaces may change in later releases.
+#' **Experimental.** The PLQR API and inference interfaces may change.
 #' @param object A `plqr_result` object from [plqr_dnn()].
 #' @param level Confidence level.
 #' @param ... Not used.
@@ -470,9 +454,7 @@ summary.plqr_result <- function(object, level = 0.95, ...) {
 #' Print a `summary.plqr_result` (experimental)
 #'
 #' @section Lifecycle:
-#' **Experimental.** PLQR functionality is outside the CATE and regression
-#' workflow focus of the initial public release. Its API and inference
-#' interfaces may change in later releases.
+#' **Experimental.** The PLQR API and inference interfaces may change.
 #' @param x A `summary.plqr_result` object.
 #' @param digits Number of significant digits for printing.
 #' @param ... Not used.
@@ -508,20 +490,15 @@ print.summary.plqr_result <- function(x, digits = max(3L, getOption("digits") - 
 #' through the DNN weights and the resulting direct-sandwich standard
 #' errors; no target-specific PLQR root is solved.
 #'
-#' Coefficient-level standard errors and intervals require the direct PLQR
-#' sandwich (fit with `density` or `density_col`); a componentwise
-#' moment-level jackknife SE on a fit without a density input is not by
-#' itself a coefficient-level interval — see
-#' `markdown_notes/design/15_plqr_variance_estimation_rationale.md`.
+#' Coefficient uncertainty requires a fit with `density` or `density_col`.
+#' `moment_se` describes score variation and is not a coefficient standard error.
 #' Prediction standard errors always use the analytic sandwich meat,
 #' regardless of the fit's `theta_meat` choice, because the fitted object
 #' does not retain the outcome data needed to re-run the jackknife at new
 #' targets.
 #'
 #' @section Lifecycle:
-#' **Experimental.** PLQR functionality is outside the CATE and regression
-#' workflow focus of the initial public release. Its API and inference
-#' interfaces may change in later releases.
+#' **Experimental.** The PLQR API and inference interfaces may change.
 #' @param object A `plqr_result` object from [plqr_dnn()].
 #' @param newdata Optional matrix/data frame of target covariates.
 #' @param X0 Optional numeric matrix of targets (rows).

@@ -24,7 +24,8 @@ np_demo_data(
 
 \item{sigma}{Noise standard deviation in \eqn{Y}.}
 
-\item{seed}{Optional integer seed for reproducibility.}
+\item{seed}{Optional integer seed, used locally without changing the caller's
+RNG state. \code{NULL} uses the current stream.}
 
 \item{x0}{Optional target point in \eqn{\mathbb{R}^p} (defaults to the zero vector).}
 

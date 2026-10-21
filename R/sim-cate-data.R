@@ -355,34 +355,30 @@
 #'     propensity. Correctly specified for the OLS-interaction benchmark.}
 #'   \item{`dgp2_nonlinear`}{Sharpened nonlinear CATE
 #'     \eqn{\tau(x) = 0.5 + 0.75\sin(1.5 x_1)};
-#'     same propensity. Misspecified for OLS; primary horse-race DGP. Default
+#'     same propensity. Default
 #'     target is the interior point \eqn{x_0 = (1,0,\ldots)} so the local CATE
 #'     is visibly nonlinear around the evaluation point.}
 #'   \item{`dgp3_sparse_overlap`}{Same \eqn{\tau} as DGP 2; propensity
 #'     interpolates between 0.5 at `x0` and a much sharper near-boundary
-#'     logistic far from `x0`, using a tighter Gaussian overlap pocket. Tests
-#'     estimators that do not adapt to local effective sample size. Default
+#'     logistic far from `x0`, using a tighter Gaussian overlap pocket. Default
 #'     target is the same interior point \eqn{x_0 = (1,0,\ldots)}.}
 #'   \item{`dgp4_clustered`}{Same \eqn{\tau} and propensity as DGP 2; covariates
 #'     from a three-component mixture: 80\% \eqn{N(x_0, 0.2^2 I)} (dense spike at
 #'     `x0`) plus two diffuse 10\% remote clusters centered at
 #'     \eqn{(4.5,2,0,\ldots)} and \eqn{(-2.5,-2,0,\ldots)} with covariance
-#'     \eqn{1.25^2 I}. Tests density adaptivity: the DNN s-NN bandwidth
-#'     automatically shrinks at the dense `x0`, while a fixed-bandwidth kernel
-#'     over-smooths. Default target is the interior point
+#'     \eqn{1.25^2 I}. Observations are independent draws from this mixture;
+#'     the name does not indicate clustered sampling. Default target is
 #'     \eqn{x_0 = (1,0,\ldots)} and the inner cluster is recentered there.}
 #'   \item{`dgp5_correlated`}{Covariates \eqn{X \sim N(0,\Sigma)} with
 #'     \eqn{\Sigma_{12} = \rho = 0.85}; \eqn{\tau(x) = \sin(2x_1) + 0.5x_1^2};
-#'     evaluation point at \eqn{x_0 = (0.75, 0)}. Tests shape adaptivity: L2
-#'     and diagonal-scaled neighbourhoods are misaligned with the elliptical
-#'     covariate isocontours; the `dnn_oracle_mahal` benchmark (Mahalanobis
-#'     distance) corrects for the off-diagonal covariance.}
+#'     evaluation point at \eqn{x_0 = (0.75, 0)}. The `dnn_oracle_mahal`
+#'     benchmark uses Mahalanobis distance to account for off-diagonal covariance.}
 #'   \item{`dgp6_nuisance_efficiency`}{Propensity
 #'     \eqn{e(x) = \operatorname{logit}^{-1}(1.25(x_1 - 1) - 0.75x_2)} and
 #'     marginal regression \eqn{m(x) = 1 + 1.5(x_1 - 1) - x_2} are aligned with
 #'     simple benchmark nuisance models, while
 #'     \eqn{\tau(x) = 0.5 + 0.60\sin(1.5 x_1)} remains nonlinear. Tests the
-#'     precision gap between `dnn_fullsample` and `dnn_crossfit`. Default target
+#'     full-sample and cross-fitted nuisance workflows. Default target
 #'     is \eqn{x_0 = (1,0,\ldots)}.}
 #' }
 #'
@@ -393,7 +389,8 @@
 #' @param kx Integer covariate dimension (must be \eqn{\ge 2}).
 #' @param sigma Noise standard deviation in \eqn{Y}.
 #' @param clip Propensity clipping bound in \eqn{(0, 0.5)}.
-#' @param seed Optional integer seed for reproducibility.
+#' @param seed Optional integer seed, used locally without changing the caller's
+#'   RNG state. `NULL` uses the current stream.
 #' @param x0 Optional numeric length-`kx` evaluation point. Defaults are
 #'   DGP-specific interior points: \eqn{(0,\ldots,0)} for `dgp1_linear`,
 #'   \eqn{(1,0,\ldots)} for `dgp2_nonlinear`, `dgp3_sparse_overlap`, and
@@ -432,6 +429,11 @@ sim_cate_data <- function(design, n, kx = 2L, sigma = 0.5, clip = 1e-3,
   clip <- as.numeric(clip)
   if (!is.null(x0)) {
     x0 <- .validate_target_vector(x0, p = kx, x0_arg = "x0", x_arg = "X", finite = TRUE)
+  }
+
+  if (!is.null(seed)) {
+    restore_rng <- .rdistnn_rng_restore()
+    on.exit(restore_rng(), add = TRUE)
   }
 
   # Each DGP has its own natural default for x0; resolve here so callers that

@@ -66,79 +66,49 @@ Use the full suite for changes shared across families. The release check
 also runs these tests against the installed package; see
 [RELEASING.md](../RELEASING.md).
 
-## Helpers and optional tests
+## References, engines and optional checks
 
-`test-scale-fitting-range.R` checks finite extreme fitted SDs, large common
-offsets, invalid scales and frozen prediction. `test-distance-l1-range.R`
-checks exceptional subtraction across native/fallback scalar, batch and rank
-entry points. `test-np-prediction-memory.R` compares marginal uncertainty to
-explicit deletion references and bounds allocations for large target grids.
+Domain-specific `helper-*.R` files define reusable fixtures without fitting
+models eagerly. Single-suite fixtures stay beside their tests.
+`helper-dnn-reference.R` supplies explicit scalar deletions,
+`helper-sim-cate.R` independent AIPW calculations, `helper-user-dnn-gmm.R`
+custom models, and `helper-clate-reference.R` complete-subset enumeration.
+CLATE tests retain independent dense ridge solves, one-/two-deleted fits and
+confidence-set geometry references. Small simulations check execution, not
+coverage or manuscript claims.
 
-Engine comparisons must force and establish each implementation, then compare
-the same method and fitted state. Numeric tolerances accompany exact assertions
-for ranks, support, statuses and missingness; they cannot excuse a changed
-discrete decision. Forcing `options(RdistNN.use_compiled = FALSE)` checks the
-R path; native tests also require the actual compiled symbols. Test automatic
-fallback separately. The [compiled-code policy](../markdown_notes/design/10_rcpp_and_compiled_code_policy.md)
-and [testing policy](../markdown_notes/design/09_testing_and_regression_policy.md)
-define the acceptance contract for engine and cross-package comparisons.
+Force and establish each engine; test automatic fallback separately. Use
+`options(RdistNN.use_compiled = FALSE)` for the R path and require actual native
+symbols for native acceptance. Exact ranks, support, statuses and missingness
+accompany quantity-specific numeric tolerances. The
+[testing policy](../markdown_notes/design/09_testing_and_regression_policy.md)
+and [compiled-code policy](../markdown_notes/design/10_rcpp_and_compiled_code_policy.md)
+own these acceptance rules. Shared primitive changes also require their
+estimator, candidate, covariance and saved-prediction consumers.
 
-`test-jackknife-support-centering.R` covers opposite-sign zero-weight outliers,
-extreme unused values, real local variation, target-specific deletion support,
-the boundary rank that gains weight after deletion, signed TDNN weights and
-asymptotic tails with both normalization settings. Its analytical variance-9
-fixture is also enforced in the Stata companion. Both packages retain their
-explicit deletion algorithms for parity comparisons and fallback use.
-
-Shared fixtures and reference calculations live in domain-specific
-`helper-*.R` files. Fixtures used only by one suite stay beside its tests.
-`helper-dnn-reference.R` preserves an explicit scalar deletion reference;
-`helper-sim-cate.R` holds independent AIPW calculations;
-`helper-user-dnn-gmm.R` supplies custom GMM model fixtures. Helper files define
-support functions rather than fitting models eagerly.
-
-`helper-clate-reference.R` enumerates complete subsamples independently of the
-package's weight/deletion engines. CLATE suites cover paired covariance,
-signed and zero denominators, deterministic ties, R/compiled/explicit-loop
-parity, methods and serialization. The bounded ridge suite checks independent
-dense normal equations and all required one-/two-deleted fits. Confidence-set
-tests cover every quadratic geometry, membership, singular covariance and
-extreme scales. Small generated examples test execution, not coverage.
-
-The CLATE alignment suites additionally check literal asymptotic weights and
-paired deletions, exhaustive exact general-k subset averages, perfect-compliance
-reduction to CATE, common summary/tidy schemas and every candidate-dependent
-covariance/extras field. Plot tests cover instrument versus treatment overlap,
-paired score contributions, unavailable bounds, serialization, optional packages,
-and real ggplot builds. The shared rank-weight and plot-builder changes also
-require the CATE/NP suites. The implementation/extension map is in
-[result architecture](../markdown_notes/design/13_estimator_and_result_architecture.md)
-and [paired-ratio contract](../markdown_notes/design/17_clate_ratio_inference.md).
-
-Test files should run independently. Testthat's helper loading and file
-conventions are documented in its
+Tests must run independently through public interfaces. Exercise S3 methods
+through their generics on fitted objects; missing unexported aliases must not
+skip installed-package coverage. Helper loading follows testthat's
 [special-files guide](https://testthat.r-lib.org/articles/special-files.html).
-The package's seed, numerical, validation, and fallback requirements remain
-in [the testing policy](../markdown_notes/design/09_testing_and_regression_policy.md),
-routed from [AGENTS.md](../AGENTS.md).
+Optional packages and compiled capabilities have explicit guards; native
+requirements in native checks are failures rather than silent skips.
+The Linux R-release job runs installed tests in an isolated library containing
+Rcpp, testthat and their strong dependencies. Reproduce it with
+`Rscript tools/ci/check_minimal_dependencies.R path/to/RdistNN_VERSION.tar.gz`.
 
-Optional plotting packages and compiled capabilities have explicit guards.
-Visual snapshots additionally require a deliberate local opt-in:
+Visual snapshots require a deliberate opt-in:
 
-```bash
+```sh
 RDISTNN_VDIFFR=true Rscript -e 'devtools::test(filter = "^plot-vdiffr$")'
 ```
 
-Review any changed SVGs in `tests/testthat/_snaps/plot-vdiffr/` before accepting
-them. A normal run retains numerical plot-data checks without enabling
-platform-dependent visual snapshots.
+Inspect changed SVGs in `tests/testthat/_snaps/plot-vdiffr/`. Ordinary runs
+retain numerical plot-data checks without platform-dependent visual snapshots.
 
 ## Package-maintenance checks
 
-`python3 -m unittest discover -s tests/ci -v` covers repository policy,
-generated-document drift, candidate-file hygiene and duplicate package-level
-function ownership in isolated fixtures. Local closures may reuse names.
-The generated-file gate regenerates the namespace, all roxygen Rd topics and
-Rcpp glue in a temporary source tree, leaving the checkout untouched. It
-rejects stale, missing and orphan generated topics and requires the declared
-roxygen2 version. Ordinary local build outputs remain ignored.
+[CONTRIBUTING.md](../CONTRIBUTING.md#editing-and-checking) lists the commands.
+`tests/ci/` uses isolated positive/negative fixtures for repository/workflow
+policy, generated-file drift, candidate hygiene and function ownership.
+Release checks run the installed-package suite; see
+[RELEASING.md](../RELEASING.md).

@@ -9,7 +9,8 @@ score_setup(score, data, ...)
 \arguments{
 \item{score}{ustat_score}
 
-\item{data}{data.frame/matrix}
+\item{data}{Data object understood by the score, such as a vector, matrix
+or data frame.}
 
 \item{...}{passed to score$setup}
 }
