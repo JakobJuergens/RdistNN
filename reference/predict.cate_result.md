@@ -1,6 +1,10 @@
 # Predict from a `cate_result` object at new targets
 
-Predict from a `cate_result` object at new targets
+Uses retained observations, supplied signals and fitted geometry,
+including after serialization and without optional `return` extras.
+Prediction uncertainty uses frozen-geometry rank deletions, even if the
+fit used `jackknife = "loo"`. It can be requested from a fit with
+`se = FALSE` when `s < n`.
 
 ## Usage
 
@@ -55,9 +59,10 @@ predict(
 
 ## Value
 
-If `interval = "none"` and `se.fit = FALSE`, a numeric vector of
-predictions. Otherwise a matrix/list analogous to
-[`predict.lm()`](https://rdrr.io/r/stats/predict.lm.html).
+A numeric vector when no uncertainty is requested; a list with `fit` and
+`se.fit` when `se.fit = TRUE`. With `interval = "confidence"`, `fit` is
+a matrix with columns `fit`, `lwr`, `upr`, returned directly unless
+`se.fit = TRUE`.
 
 ## Examples
 

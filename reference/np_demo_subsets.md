@@ -24,12 +24,24 @@ np_demo_subsets(n, K = 1000L, s = 1L, seed = NULL)
 
 - seed:
 
-  Optional integer seed for reproducibility.
+  Optional integer seed, used locally without changing the caller's RNG
+  state. `NULL` uses the current stream.
+
+## Value
+
+For `s > 1`, an integer `K x s` matrix with one subset per row. For
+`s = 1`, the current helper returns a `1 x K` matrix; reshape it with
+`matrix(result, ncol = 1L)` before passing it to
+[`score_eval_batch()`](https://JakobJuergens.github.io/RdistNN/reference/score_eval_batch.md).
 
 ## Examples
 
 ``` r
-np_demo_subsets(n = 10, K = 4, s = 1, seed = 1)
-#>      [,1] [,2] [,3] [,4]
-#> [1,]    9    4    7    1
+draws <- np_demo_subsets(n = 10, K = 4, s = 1, seed = 1)
+matrix(draws, ncol = 1L)  # one singleton subset per row
+#>      [,1]
+#> [1,]    9
+#> [2,]    4
+#> [3,]    7
+#> [4,]    1
 ```

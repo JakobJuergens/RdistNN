@@ -33,7 +33,7 @@ plqr_demo_data(
 
 - p:
 
-  Integer; number of features in \\X\\ (recommend \\p \ge 2\\).
+  Positive integer number of features in \\X\\.
 
 - p_d:
 
@@ -54,7 +54,8 @@ plqr_demo_data(
 
 - seed:
 
-  Optional integer seed.
+  Optional integer seed, used locally without changing the caller's RNG
+  state. `NULL` uses the current stream.
 
 - x0:
 
@@ -70,7 +71,7 @@ plqr_demo_data(
 - inject_col:
 
   Character; which column to corrupt when `inject` is not `NULL`. One of
-  `"Y"`, `"g_oracle"`, `"D1"`, `"mD1"`, `"rD1"` (extend as needed).
+  `"Y"`, `"g_oracle"`, `"D1"`, `"mD1"`, `"rD1"`.
 
 - idx_inject:
 
@@ -106,9 +107,7 @@ m\_{D}(U))\\ . \$\$
 
 ## Lifecycle
 
-**Experimental.** PLQR functionality is outside the CATE and regression
-workflow focus of the initial public release. Its API and inference
-interfaces may change in later releases.
+**Experimental.** The PLQR API and inference interfaces may change.
 
 ## Examples
 

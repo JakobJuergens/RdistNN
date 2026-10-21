@@ -1,261 +1,107 @@
-# Conditional Z-Estimation with DNN weights
+# Experimental PLQR: moments and coefficient uncertainty
 
-## Overview
+[`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md)
+evaluates localized quantile-score moments at a **supplied coefficient
+vector**. It does not solve for coefficients. This guide shows how
+moment uncertainty differs from density-backed coefficient uncertainty;
+the entire PLQR interface remains experimental.
 
-This article focuses on CATE and nonparametric regression. Start with
-[Getting
+For statistical background, see the
+[paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
+For the supported CATE, regression and CLATE workflows, use [Getting
 started](https://JakobJuergens.github.io/RdistNN/articles/getting-started.md)
-for executable examples, or the [CLATE
-guide](https://JakobJuergens.github.io/RdistNN/articles/conditional-late.md)
-for supplied-prediction binary-IV and paired-signal workflows. This
-article gives additional moment details, including **experimental
-PLQR**:
+and [Conditional
+LATE](https://JakobJuergens.github.io/RdistNN/articles/conditional-late.md).
 
-- [`np_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_dnn.md)
-  for localized conditional means
-- [`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md)
-  for conditional average treatment effects
-- [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md)
-  for experimental moment evaluation at supplied coefficients
+## Supply the predictions and coefficient
 
-Each wrapper supports:
+The demo provides oracle nuisance values. In an application, supply
+aligned external predictions: `g` is the model’s shape component, `mD`
+contains the regressor means, and `density` is the conditional outcome
+density at the threshold `D' theta_eval + g`. Nuisance fitting is
+external.
 
-- matrix and data-frame interfaces
-- DNN method choice (`"exact"` or `"asymp"`)
-- delete-1 jackknife SEs (`"fast"`, `"loo"`, `"none"`)
-- modular kernel-order tuning via `tuning = tuning_dnn_paper(...)`
-- fitted-object diagnostics via
-  [`diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/diagnostics.md)
-
-The wrappers implement fixed top-`k` DNN kernels for `1 <= k <= s`. The
-accompanying manuscript derivations are stated for `k = 1`; larger fixed
-`k` is an implementation-supported generalization.
-
-## Local Mean (`np_dnn`)
+This example requests both the full moment covariance and a
+density-backed coefficient sandwich with `theta_meat = "jackknife"`:
 
 ``` r
 
-demo_np <- np_demo_data(n = 250, p = 2, design = "sinusoidal", seed = 1)
-
-fit_np <- np_dnn(
-  data = demo_np$data,
-  x_cols = c("X1", "X2"),
-  y_col = "Y",
-  x0 = c(0, 0),
-  method = "exact",
-  k = 1L,
-  tuning = tuning_default,
-  se = TRUE,
-  jackknife = "fast",
-  return = c("W", "ess", "tuning")
+demo <- plqr_demo_data(n = 160, p = 2, p_d = 2, tau = 0.5, seed = 1)
+fit <- plqr_dnn(
+  data = demo$data, x_cols = c("X1", "X2"),
+  D_cols = c("D1", "D2"), g_col = "g_oracle",
+  mD_cols = c("mD1", "mD2"), y_col = "Y",
+  density_col = "density_oracle", theta_eval = demo$truth$theta_true,
+  tau = 0.5, x0 = c(0, 0), k = 1L, s = 10L,
+  theta_meat = "jackknife", se = TRUE
 )
 
-fit_np$mu
-#> [1] -0.02251305
-fit_np$se
-#> [1] 0.1782743
-diagnostics(fit_np)
-#> <dnn_diagnostics>
-#>   targets: 1
-#>   n_eff  : min=18.6582, median=18.6582, max=18.6582
-#>   weights: max(top5 share)=0.4122, max(weight)=0.1
-#>   dist   : available for 0/1 target(s)
-#>   outcome: available for 1/1 target(s)
-```
-
-## CATE (`cate_dnn`)
-
-[`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md)
-supports either:
-
-- Full AIPW nuisance inputs (`m0`, `m1`, `e`)
-- Direct `pseudo_outcome`
-
-``` r
-
-demo_cate <- cate_demo_data(n = 300, p = 2, design = "hetero", seed = 1)
-df <- demo_cate$data
-df$m1_oracle <- df$m0_oracle + df$tau_oracle
-
-fit_cate <- cate_dnn(
-  data = df,
-  x_cols = c("X1", "X2"),
-  y_col = "Y",
-  t_col = "D",
-  m0_col = "m0_oracle",
-  m1_col = "m1_oracle",
-  e_col = "e_oracle",
-  x0 = c(0, 0),
-  method = "exact",
-  k = 1L,
-  tuning = tuning_default,
-  se = TRUE,
-  return = c("W", "psi", "nuisance", "tuning")
+data.frame(
+  supplied_coefficient = as.numeric(coef(fit)),
+  moment = as.numeric(fit$moment),
+  moment_se = as.numeric(fit$moment_se),
+  coefficient_se = as.numeric(fit$theta_se)
 )
-
-summary(fit_cate)
-#> <summary.cate_result>
-#>   localization: s = 28, s/n = 0.0933
-#>   targets: 1
-#>          estimate std.error statistic p.value conf.low conf.high
-#> target_1   0.5512    0.3181     1.733 0.08313 -0.07227     1.175
-confint(fit_cate)
-#>             conf.low conf.high
-#> target_1 -0.07226519  1.174624
-diagnostics(fit_cate)
-#> <dnn_diagnostics>
-#>   targets: 1
-#>   n_eff  : min=20.098, median=20.098, max=20.098
-#>   weights: max(top5 share)=0.3894, max(weight)=0.0933
-#>   dist   : available for 0/1 target(s)
-#>   overlap: available for 1/1 target(s)
-#>   treated share: 0.388 to 0.388
-#>   treated ESS: 8.73 to 8.73
-#>   control ESS: 11.5 to 11.5
-#>   propensity q10: 0.454 to 0.454
-#>   propensity q90: 0.549 to 0.549
-#>   top-five absolute score-contribution share: 0.586 to 0.586
-predict(fit_cate, x0 = c(0.2, -0.1), interval = "confidence")
-#>            fit       lwr      upr
-#> [1,] 0.8336633 0.3016249 1.365702
+#>   supplied_coefficient      moment  moment_se coefficient_se
+#> 1                  0.5 -0.12784942 0.05934042     0.06939776
+#> 2                  0.5 -0.03771978 0.05977131     0.07589505
 ```
 
-## Experimental PLQR moments and coefficient uncertainty (`plqr_dnn`)
-
-All PLQR functions, including score and demo helpers, methods, and
-specialized plots, are experimental. Their APIs and inference interfaces
-may change. The current wrapper does not estimate a local coefficient
-root.
+The two SE columns have different units. `moment_se` describes variation
+in the localized score; `theta_se` additionally uses the density-backed
+Jacobian. A small moment is not an estimated coefficient. `coef(fit)`
+repeats `theta_eval`, and intervals are centered at that supplied value:
 
 ``` r
 
-demo_plqr <- plqr_demo_data(n = 250, p = 2, p_d = 2, tau = 0.5, seed = 1)
-# demo_plqr$data$density_oracle holds the true threshold density of the
-# demo DGP (constant, 4 * tau * (1 - tau) / sigma).
-
-fit_plqr <- plqr_dnn(
-  data = demo_plqr$data,
-  x_cols = c("X1", "X2"),
-  D_cols = c("D1", "D2"),
-  g_col = "g_oracle",
-  mD_cols = c("mD1", "mD2"),
-  y_col = "Y",
-  density_col = "density_oracle",
-  theta_eval = demo_plqr$truth$theta_true,
-  tau = 0.5,
-  x0 = c(0, 0),
-  method = "exact",
-  k = 1L,
-  tuning = tuning_default,
-  se = TRUE,
-  return = c("W", "score", "ess", "tuning")
-)
-
-summary(fit_plqr)
-confint(fit_plqr)
-predict(fit_plqr, x0 = c(0.25, -0.25), interval = "confidence")
-fit_plqr$moment
-diagnostics(fit_plqr)
+confint(fit)
+#>     target term  conf.low conf.high
+#> 1 target_1   D1 0.3639829 0.6360171
+#> 2 target_1   D2 0.3512484 0.6487516
 ```
 
-### PLQR nuisances and inference
+Without a density input, leave `theta_meat` at its default and use the
+fit for moment diagnostics only; coefficient intervals are unavailable.
+With a density input, the default `theta_meat = "analytic"` uses
+analytic score covariance. See
+[`?plqr_dnn`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md)
+for the two sandwich routes and returned arrays.
 
-[`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md)
-localizes the moment
+## Inspect conditioning and new profiles
 
-``` math
-\mathbb{E}\!\left[
-  \left(\tau - \mathbf{1}\{Y \le D^\top \theta + g_0(U)\}\right)
-  \left(D - m_D(U)\right)
-  \;\middle|\; X \approx x_0
-\right]
-```
-
-at the supplied coefficient value `theta_eval`. Here `g` is the
-partially-linear model’s nonparametric shape nuisance (paper notation
-$`g_0(U)`$), not itself a quantile — the sum $`D'\theta_0 + g_0`$ is the
-conditional quantile. `mD` residualizes the design
-($`m_0(U) = E[D \mid U]`$). Both are supplied by the user; no nuisance
-model is fit internally, and no root solving is performed: the result’s
-`theta` repeats the supplied `theta_eval`
-(`meta$theta_source = "supplied"`).
-
-Coefficient-level standard errors and confidence intervals require
-supplying `density`/`density_col` (an estimate of the local conditional
-density of `Y` at the fitted quantile). This is not an optional
-convenience: every valid coefficient route needs the density-backed
-sandwich bread. Two coefficient-meat routes are available through
-`theta_meat`: the analytic score covariance (default) and a full
-delete-1 jackknife covariance of the localized vector moment
-(`theta_meat = "jackknife"`, stored in `moment_vcov`). A fit without a
-density input can still report `moment_se` (a componentwise jackknife SE
-on the *moment*, useful as a diagnostic) but
-[`confint()`](https://rdrr.io/r/stats/confint.html)/`predict(se.fit = TRUE)`
-will error, by design, until refit with a density input — a
-componentwise `moment_se` alone is never coefficient inference.
-Coefficient-level results live in `theta_se` / `theta_vcov`; the routes
-are never mixed in one field.
-
-## Diagnostics and Reporting
-
-The three wrappers return enough retained state for
-[`diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/diagnostics.md)
-to compute fit-level summaries without rerunning the estimator.
+A well-conditioned regressor Gram matrix does not guarantee a
+well-conditioned density-weighted Jacobian. Inspect both:
 
 ``` r
 
-d_np <- diagnostics(fit_np)
-d_cate <- diagnostics(fit_cate)
-d_plqr <- diagnostics(fit_plqr)
-
-d_np[, c("target_id", "n_eff", "weighted_mean_y")]
-d_cate[, c("target_id", "treated_mass", "control_mass", "treated_share")]
-d_plqr[, c("target_id", "gram_min_eig", "gram_condition_number")]
+d <- as.data.frame(diagnostics(fit))
+d[, c("target_id", "gram_condition_number", "jacobian_condition_number",
+      "theta_vcov_available")]
+#>          target_id gram_condition_number jacobian_condition_number
+#> target_1  target_1              1.228876                  1.263684
+#>          theta_vcov_available
+#> target_1                 TRUE
 ```
 
-General diagnostics summarize weight concentration, realized distance
-radii when `dx` was retained, and tuning metadata. Estimator-specific
-diagnostics add NP outcome summaries, CATE overlap summaries, and PLQR
-residual-regressor Gram conditioning.
+Prediction relocalizes the retained sample. It repeats the supplied
+coefficient and computes new uncertainty; it does not fit a new PLQR
+root. Prediction uncertainty uses the analytic sandwich even when the
+original fit used jackknife meat.
 
-## Notes on Standard Errors
+``` r
 
-[`np_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_dnn.md)
+pred <- predict(fit, X0 = rbind(c(0, 0), c(0.25, -0.25)), se.fit = TRUE)
+pred$se.fit
+#>      target_1   target_2
+#> D1 0.07219991 0.08500969
+#> D2 0.07391976 0.08562597
+```
+
+For array shapes and scales, see [Notation and
+conventions](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md).
+For the optional conditioning and calibration plots, see
+[`?plot_conditioning`](https://JakobJuergens.github.io/RdistNN/reference/plot_conditioning.md)
 and
-[`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md)
-always use delete-1 jackknife SEs when `se = TRUE`.
-
-- `"fast"` reuses full-sample ranks and applies rank updates per
-  deletion.
-- `"loo"` recomputes leave-one-out weights directly. For NP/TDNN/CATE it
-  refits sample-dependent geometry and can differ from frozen-metric
-  `"fast"` inference. Paired-ratio inference keeps the training geometry
-  fixed.
-- `"none"` skips SE computation.
-
-`s < n` is required when jackknife SEs are requested.
-
-Experimental
-[`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md)
-differs: with `density`/`density_col`, `se = TRUE` reports a
-density-backed coefficient sandwich. Its meat uses either the analytic
-score covariance (default) or the vector-moment jackknife covariance
-with `theta_meat = "jackknife"`. Without density, `moment_se` is a
-moment jackknife diagnostic and does not support coefficient intervals.
-See “PLQR nuisances and inference” above.
-
-## Related Articles
-
-- [Notation and package
-  conventions](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md):
-  [`vignette("notation-and-conventions", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md)
-  maps arguments, paper symbols, fitted-object fields, and uncertainty
-  scales.
-- [Diagnostics and
-  reporting](https://JakobJuergens.github.io/RdistNN/articles/diagnostics-reporting.md):
-  [`vignette("diagnostics-reporting", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/diagnostics-reporting.md)
-  documents the diagnostics available for each estimator.
-- [Kernel-order
-  tuning](https://JakobJuergens.github.io/RdistNN/articles/kernel-order-tuning.md):
-  [`vignette("kernel-order-tuning", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/kernel-order-tuning.md)
-  explains how `s` is selected when it is not supplied directly.
+[`?plot_calibration`](https://JakobJuergens.github.io/RdistNN/reference/plot_calibration.md).
+Intervals are pointwise; numerical conditioning does not verify nuisance
+accuracy, localization bias or the paper’s assumptions.

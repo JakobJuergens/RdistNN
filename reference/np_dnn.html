@@ -9,7 +9,7 @@ DNN-based local weights."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -162,8 +162,8 @@ recomputes leave-one-out weights directly, and <code>"none"</code> skips SEs.</p
 <dd><p>Optional extras in addition to the always-returned <code>mu</code>, <code>se</code>,
 and <code>meta</code>. Allowed values:
 <code>c("W", "ranks", "ord", "dx", "y", "ess", "neighbors", "tuning")</code>.
-The <code>neighbors</code> extra returns the first <code>k</code> nearest observations used
-inside each size-<code>s</code> subsample, not the full DNN weight support.</p></dd>
+<code>neighbors</code> is a <code>k x m</code> matrix of nearest training-observation indices,
+one column per target. It is a rank summary, not the full DNN weight support.</p></dd>
 
 </dl></div>
     <div class="section level2">

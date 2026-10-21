@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -106,11 +106,8 @@ the fit as <code>attr(., "theta_source")</code>.</p>
 (<code>meta$theta_source = "supplied"</code>). Target-specific variation enters only
 through the DNN weights and the resulting direct-sandwich standard
 errors; no target-specific PLQR root is solved.</p>
-<p>Coefficient-level standard errors and intervals require the direct PLQR
-sandwich (fit with <code>density</code> or <code>density_col</code>); a componentwise
-moment-level jackknife SE on a fit without a density input is not by
-itself a coefficient-level interval — see
-<code>markdown_notes/design/15_plqr_variance_estimation_rationale.md</code>.
+<p>Coefficient uncertainty requires a fit with <code>density</code> or <code>density_col</code>.
+<code>moment_se</code> describes score variation and is not a coefficient standard error.
 Prediction standard errors always use the analytic sandwich meat,
 regardless of the fit's <code>theta_meat</code> choice, because the fitted object
 does not retain the outcome data needed to re-run the jackknife at new
@@ -120,9 +117,7 @@ targets.</p>
     <h2 id="lifecycle">Lifecycle<a class="anchor" aria-label="anchor" href="#lifecycle"></a></h2>
 
 
-<p><strong>Experimental.</strong> PLQR functionality is outside the CATE and regression
-workflow focus of the initial public release. Its API and inference
-interfaces may change in later releases.</p>
+<p><strong>Experimental.</strong> The PLQR API and inference interfaces may change.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

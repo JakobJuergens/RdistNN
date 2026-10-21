@@ -9,7 +9,7 @@ Uses compiled paths when present."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -69,15 +69,16 @@ Uses compiled paths when present.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">12</span><span class="op">)</span>, <span class="fl">4</span>, <span class="fl">3</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">12</span><span class="op">)</span>, <span class="fl">4</span>, <span class="fl">3</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">X0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">6</span><span class="op">)</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">dspec</span> <span class="op">&lt;-</span> <span class="fu">distance_l2</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">dspec</span><span class="op">$</span><span class="fu">eval_batch</span><span class="op">(</span><span class="va">X</span>, <span class="va">X0</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          [,1]     [,2]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1,] 1.758800 3.425654</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [2,] 2.780884 1.186027</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [3,] 1.184679 2.962925</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [4,] 2.149800 3.330523</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1,] 0.991542 1.672781</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [2,] 2.125100 2.813195</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [3,] 1.669451 1.583606</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [4,] 2.286328 3.928913</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

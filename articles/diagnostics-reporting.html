@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,21 +62,14 @@
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
-<p><code><a href="../reference/diagnostics.html">diagnostics()</a></code> gives a compact table for fitted
-DNN-localized estimators. The method is intentionally fit-object
-based:</p>
-<ul>
-<li>it uses retained weights rather than refitting;</li>
-<li>it uses retained distances only when <code>dx</code> was
-requested;</li>
-<li>it uses hidden estimator state for NP, CATE, and PLQR
-diagnostics;</li>
-<li>it marks unavailable diagnostics explicitly instead of
-reconstructing missing inputs from assumptions.</li>
-</ul>
-<p>The general fields are available for <code>np_result</code>,
-<code>cate_result</code>, and <code>plqr_result</code> objects when
-weights are retained:</p>
+<p><code><a href="../reference/diagnostics.html">diagnostics()</a></code> reports localization and
+estimator-specific information from a fitted object. NP/TDNN, CATE and
+PLQR use retained weights and model state; paired-ratio/CLATE
+diagnostics reconstruct weights from cached ranks and can evaluate
+deletion-score concentration. No nuisance models are refitted. For
+NP/TDNN and CATE, <code><a href="https://rdrr.io/r/stats/nobs.html" class="external-link">nobs()</a></code> reports training rows;
+<code>n_eff</code> below describes local weight concentration.</p>
+<p>The shared fields include:</p>
 <ul>
 <li>
 <code>n_eff</code>, <code>max_weight</code>, and top-weight
@@ -93,11 +86,15 @@ so weighted SD and quantiles are <code>NA</code> when weights are
 negative. Weight concentration summaries then describe signed weights
 rather than probability mass.</li>
 <li>CATE: treated/control mass and propensity summaries;</li>
+<li>CLATE/paired ratios: component uncertainty, first-stage statuses,
+physical radii and squared deletion-score concentration; CLATE adds
+instrument support;</li>
 <li>PLQR: residual-regressor Gram eigenvalues and condition number.</li>
 </ul>
-<p>Diagnostics require <code>W</code>. The default
-<code>return = "W"</code> keeps it. If a fit was created without
-weights, refit with <code>return</code> including <code>"W"</code>.</p>
+<p>NP/TDNN, CATE and PLQR target diagnostics require <code>W</code>,
+retained by default. Use <code>return</code> including <code>"W"</code>
+for those fits. Paired-ratio/CLATE diagnostics also work without
+optional weight or distance extras; see <a href="conditional-late-inference.html">their guide</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="nonparametric-regression">Nonparametric Regression<a class="anchor" aria-label="anchor" href="#nonparametric-regression"></a>
@@ -118,17 +115,15 @@ weights, refit with <code>return</code> including <code>"W"</code>.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">d_np</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">fit_np</span><span class="op">)</span></span>
-<span><span class="va">d_np</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">d_np</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="st">"target_id"</span>,</span>
 <span>  <span class="st">"n_eff"</span>,</span>
 <span>  <span class="st">"weighted_mean_y"</span>,</span>
 <span>  <span class="st">"weighted_sd_y"</span>,</span>
 <span>  <span class="st">"weighted_y_q50"</span></span>
 <span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="co">#&gt; &lt;dnn_diagnostics&gt;</span></span>
-<span><span class="co">#&gt;   targets: 1</span></span>
-<span><span class="co">#&gt;   n_eff  : min=51.8421, median=51.8421, max=51.8421</span></span>
-<span><span class="co">#&gt;   dist   : available for 0/1 target(s)</span></span></code></pre></div>
+<span><span class="co">#&gt;          target_id    n_eff weighted_mean_y weighted_sd_y weighted_y_q50</span></span>
+<span><span class="co">#&gt; target_1  target_1 51.84209         0.08698       0.54151      0.1091348</span></span></code></pre></div>
 <p>For NP fits, <code>weighted_mean_y</code> equals the local mean
 estimate when the weights are normalized.</p>
 </div>
@@ -154,7 +149,7 @@ estimate when the weights are normalized.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">d_cate</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">fit_cate</span><span class="op">)</span></span>
-<span><span class="va">d_cate</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">d_cate</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="st">"target_id"</span>,</span>
 <span>  <span class="st">"n_eff"</span>,</span>
 <span>  <span class="st">"treated_mass"</span>,</span>
@@ -164,16 +159,12 @@ estimate when the weights are normalized.</p>
 <span>  <span class="st">"treated_ess"</span>, <span class="st">"control_ess"</span>, <span class="st">"weighted_propensity_q10"</span>,</span>
 <span>  <span class="st">"weighted_propensity_q90"</span>, <span class="st">"top5_score_share"</span></span>
 <span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="co">#&gt; &lt;dnn_diagnostics&gt;</span></span>
-<span><span class="co">#&gt;   targets: 1</span></span>
-<span><span class="co">#&gt;   n_eff  : min=64.9674, median=64.9674, max=64.9674</span></span>
-<span><span class="co">#&gt;   dist   : available for 0/1 target(s)</span></span>
-<span><span class="co">#&gt;   treated share: 0.429 to 0.429</span></span>
-<span><span class="co">#&gt;   treated ESS: 28.4 to 28.4</span></span>
-<span><span class="co">#&gt;   control ESS: 36.6 to 36.6</span></span>
-<span><span class="co">#&gt;   propensity q10: 0.37 to 0.37</span></span>
-<span><span class="co">#&gt;   propensity q90: 0.607 to 0.607</span></span>
-<span><span class="co">#&gt;   top-five absolute score-contribution share: 0.217 to 0.217</span></span></code></pre></div>
+<span><span class="co">#&gt;          target_id    n_eff treated_mass control_mass treated_share</span></span>
+<span><span class="co">#&gt; target_1  target_1 64.96742    0.4291109    0.5708891     0.4291109</span></span>
+<span><span class="co">#&gt;          weighted_mean_propensity treated_ess control_ess</span></span>
+<span><span class="co">#&gt; target_1                0.4935985    28.38508    36.59798</span></span>
+<span><span class="co">#&gt;          weighted_propensity_q10 weighted_propensity_q90 top5_score_share</span></span>
+<span><span class="co">#&gt; target_1               0.3696287               0.6065485        0.2167448</span></span></code></pre></div>
 <p>Overlap diagnostics are available when the fit was constructed from
 treatment and propensity inputs. If <code><a href="../reference/cate_dnn.html">cate_dnn()</a></code> was called
 with only a direct <code>pseudo_outcome</code>, overlap fields remain
@@ -184,15 +175,13 @@ each profile’s values. CLATE distinguishes instrument support, clipped
 propensity mass and squared jackknife-contribution concentration. These
 quantities have different definitions and should not be interpreted
 interchangeably. Clipping prevents undefined arithmetic but does not
-establish overlap. The reported order fraction is descriptive and
-triggers no new warning policy.</p>
+establish overlap. The reported order fraction is descriptive, rather
+than a calibrated validity threshold.</p>
 </div>
 <div class="section level2">
 <h2 id="experimental-plqr-conditioning">Experimental PLQR conditioning<a class="anchor" aria-label="anchor" href="#experimental-plqr-conditioning"></a>
 </h2>
-<p>All PLQR functionality, including these diagnostics and its
-specialized plots, is experimental and outside the CATE and regression
-focus of this release.</p>
+<p>PLQR diagnostics and specialized plots remain experimental.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">demo_plqr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plqr_demo_data.html">plqr_demo_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">160</span>, p <span class="op">=</span> <span class="fl">2</span>, p_d <span class="op">=</span> <span class="fl">2</span>, tau <span class="op">=</span> <span class="fl">0.5</span>, seed <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
 <span></span>
@@ -215,7 +204,7 @@ focus of this release.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">d_plqr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">fit_plqr</span><span class="op">)</span></span>
-<span><span class="va">d_plqr</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">d_plqr</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="st">"target_id"</span>,</span>
 <span>  <span class="st">"n_eff"</span>,</span>
 <span>  <span class="st">"gram_min_eig"</span>,</span>
@@ -223,7 +212,13 @@ focus of this release.</p>
 <span>  <span class="st">"jacobian_min_singular_value"</span>,</span>
 <span>  <span class="st">"jacobian_condition_number"</span>,</span>
 <span>  <span class="st">"theta_vcov_available"</span></span>
-<span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
+<span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;          target_id    n_eff gram_min_eig gram_condition_number</span></span>
+<span><span class="co">#&gt; target_1  target_1 69.34251     0.286607              1.333248</span></span>
+<span><span class="co">#&gt;          jacobian_min_singular_value jacobian_condition_number</span></span>
+<span><span class="co">#&gt; target_1                   0.5965432                  1.274692</span></span>
+<span><span class="co">#&gt;          theta_vcov_available</span></span>
+<span><span class="co">#&gt; target_1                 TRUE</span></span></code></pre></div>
 <p>The PLQR Gram diagnostic is based on the localized residual-regressor
 matrix <code>D - m_D(X)</code>. It is an identification and conditioning
 diagnostic, not a local bread estimate.</p>
@@ -248,16 +243,17 @@ grid into every row.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">d_tuned</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">fit_tuned</span><span class="op">)</span></span>
-<span><span class="va">d_tuned</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">d_tuned</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="st">"target_id"</span>,</span>
 <span>  <span class="st">"tuning_name"</span>,</span>
 <span>  <span class="st">"tuning_default_s"</span>,</span>
 <span>  <span class="st">"tuning_grid_n_candidates"</span>,</span>
 <span>  <span class="st">"tuning_lambda_default"</span></span>
 <span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="co">#&gt; &lt;dnn_diagnostics&gt;</span></span>
-<span><span class="co">#&gt;   targets: 1</span></span>
-<span><span class="co">#&gt;   dist   : available for 0/1 target(s)</span></span>
+<span><span class="co">#&gt;          target_id       tuning_name tuning_default_s tuning_grid_n_candidates</span></span>
+<span><span class="co">#&gt; target_1  target_1 paper_undersmooth               45                        5</span></span>
+<span><span class="co">#&gt;          tuning_lambda_default</span></span>
+<span><span class="co">#&gt; target_1                  1.25</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">d_tuned</span>, <span class="st">"tuning_grid"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   candidate_id computed_key is_default feasible reason status lambda  s</span></span>
@@ -272,41 +268,36 @@ candidate table.</p>
 <div class="section level2">
 <h2 id="availability-rules">Availability Rules<a class="anchor" aria-label="anchor" href="#availability-rules"></a>
 </h2>
-<p>Diagnostics avoid hidden recomputation.</p>
 <ul>
-<li>If <code>W</code> is missing, <code><a href="../reference/diagnostics.html">diagnostics()</a></code> errors and
-asks for a refit with weights.</li>
-<li>If <code>dx</code> is missing, distance fields are returned as
-<code>NA</code> with
-<code>distance_diagnostics_available = FALSE</code>.</li>
+<li>Missing <code>W</code> prevents NP/TDNN, CATE and PLQR target
+diagnostics. Stored grid summaries and paired-ratio/CLATE diagnostics
+have their own retained state.</li>
+<li>Rank radii and weighted metric distances require retained
+<code>dx</code>; otherwise those fields are <code>NA</code> with
+<code>distance_diagnostics_available = FALSE</code>. CATE/CLATE physical
+radii can still use retained observations in original units.</li>
 <li>If CATE treatment/propensity state is unavailable, overlap fields
 are present but marked unavailable.</li>
 <li>If PLQR residual-regressor state is unavailable, Gram fields are
 present but marked unavailable.</li>
 </ul>
-<p>This behavior keeps diagnostics predictable and prevents the
-diagnostics layer from silently rerunning expensive estimator
-construction.</p>
+<p>The <a href="https://jakobjuergens.com/research/#orthogonal-inference-conditional-z" class="external-link">paper</a>
+states the conditions for inference. These diagnostics do not check all
+of them.</p>
 </div>
 <div class="section level2">
 <h2 id="related-articles">Related Articles<a class="anchor" aria-label="anchor" href="#related-articles"></a>
 </h2>
 <ul>
 <li>
-<a href="notation-and-conventions.html">Notation and package
-conventions</a>:
-<code><a href="../articles/notation-and-conventions.html">vignette("notation-and-conventions", package = "RdistNN")</a></code>
-distinguishes similarly named fields and moment- from coefficient-scale
-uncertainty.</li>
+<a href="notation-and-conventions.html">Notation and
+conventions</a>: field meanings and uncertainty scales.</li>
 <li>
-<a href="visualising-fits.html">Visualising fits</a>:
-<code><a href="../articles/visualising-fits.html">vignette("visualising-fits", package = "RdistNN")</a></code> turns
-diagnostic fields into reusable plot panels.</li>
+<a href="visualising-fits.html">Visualising fits</a>: reusable plot
+panels.</li>
 <li>
-<a href="conditional-z-estimation.html">Conditional
-Z-estimation</a>:
-<code><a href="../articles/conditional-z-estimation.html">vignette("conditional-z-estimation", package = "RdistNN")</a></code>
-supplies the estimator workflows that create these objects.</li>
+<a href="conditional-z-estimation.html">Experimental PLQR</a>:
+moment and coefficient uncertainty.</li>
 </ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

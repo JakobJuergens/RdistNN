@@ -55,7 +55,8 @@ sim_iv_run(
 
 - master_seed:
 
-  Seed used to generate replicate seeds.
+  Integer seed used locally to generate replicate seeds; the caller's
+  saved RNG state is restored. `NULL` uses the current stream.
 
 - k:
 

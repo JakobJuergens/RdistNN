@@ -15,7 +15,7 @@ single-scale DNN under sufficient smoothness."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -189,8 +189,8 @@ Column selectors require <code>data</code>. Conflicting routes are rejected.</p>
 <p><strong>Signed weights.</strong> The columns of the TDNN weight matrix sum to 1, but
 individual entries can be negative.  This is expected and reflects the
 bias-correction structure; it does not indicate numerical problems.</p>
-<p><strong>Localization dimension.</strong> <code>dim</code> governs the rate at which TDNN order
-weights decay with rank.  It defaults to <code>ncol(X)</code> (the covariate
+<p><strong>Localization dimension.</strong> <code>dim</code> governs the coefficients combining the
+two DNN scales. It defaults to <code>ncol(X)</code> (the covariate
 dimension) and should be overridden only when a custom distance has a
 different effective dimension.</p>
 <p><strong>Jackknife.</strong> <code>"fast"</code> (default) uses the prefix/suffix rank-order engine

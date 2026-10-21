@@ -13,7 +13,7 @@ draws."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -96,7 +96,8 @@ just-identified design is run once with realized <code>q = 1</code>.</p></dd>
 
 
 <dt id="arg-master-seed">master_seed<a class="anchor" aria-label="anchor" href="#arg-master-seed"></a></dt>
-<dd><p>Seed used to generate replicate seeds.</p></dd>
+<dd><p>Integer seed used locally to generate replicate seeds;
+the caller's saved RNG state is restored. <code>NULL</code> uses the current stream.</p></dd>
 
 
 <dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>

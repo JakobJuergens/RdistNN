@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,16 +60,21 @@
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Optional integer seed for reproducibility.</p></dd>
+<dd><p>Optional integer seed, used locally without changing the caller's
+RNG state. <code>NULL</code> uses the current stream.</p></dd>
 
 </dl></div>
+    <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+    <p>For <code>s &gt; 1</code>, an integer <code>K x s</code> matrix with one subset per row.
+For <code>s = 1</code>, the current helper returns a <code>1 x K</code> matrix; reshape it
+with <code>matrix(result, ncol = 1L)</code> before passing it to <code><a href="score_eval_batch.html">score_eval_batch()</a></code>.</p>
+    </div>
     <div class="section level2">
     <h2 id="lifecycle">Lifecycle<a class="anchor" aria-label="anchor" href="#lifecycle"></a></h2>
 
 
-<p><strong>Experimental.</strong> PLQR functionality is outside the CATE and regression
-workflow focus of the initial public release. Its API and inference
-interfaces may change in later releases.</p>
+<p><strong>Experimental.</strong> The PLQR API and inference interfaces may change.</p>
     </div>
 
     <div class="section level2">

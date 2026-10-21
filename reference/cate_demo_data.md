@@ -32,7 +32,7 @@ cate_demo_data(
 
 - p:
 
-  Integer feature dimension (recommend \\p \ge 2\\).
+  Integer feature dimension, at least 2.
 
 - design:
 
@@ -48,7 +48,8 @@ cate_demo_data(
 
 - seed:
 
-  Optional integer seed for reproducibility.
+  Optional integer seed, used locally without changing the caller's RNG
+  state. `NULL` uses the current stream.
 
 - x0:
 

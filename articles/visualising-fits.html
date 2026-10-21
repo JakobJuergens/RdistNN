@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,11 +59,9 @@
 
     
     
-<p>RdistNN ships ggplot2-based views of fitted local estimators. ggplot2
-(and, for dashboards, patchwork) are suggested dependencies: everything
-in this vignette degrades with an actionable message when they are
-missing, and every panel is a regular ggplot object that can be extended
-with <code>+</code>.</p>
+<p>RdistNN’s plotting functions return ggplot objects that can be
+extended with <code>+</code>. The examples below run when ggplot2 is
+installed; the composed dashboard also uses patchwork.</p>
 <p>The running example is a CATE fit with oracle nuisance columns,
 evaluated along a profile in the first covariate.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
@@ -92,10 +90,11 @@ evaluated along a profile in the first covariate.</p>
 </h2>
 <p><code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> (equivalently <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">ggplot2::autoplot()</a></code>,
 or <code><a href="../reference/plot_estimates.html">plot_estimates()</a></code> with more options) draws the profile
-with jackknife confidence bounds, a zero reference line, and the honesty
-caption: the median effective sample size across targets and the kernel
-order <code>s</code> with its provenance — here the default paper rule,
-since neither <code>s</code> nor <code>tuning</code> was supplied.</p>
+with pointwise jackknife confidence bounds, a zero reference line, and a
+caption reporting the median effective sample size across targets and
+the kernel order <code>s</code> with its provenance — here the default
+paper rule, since neither <code>s</code> nor <code>tuning</code> was
+supplied.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualising-fits_files/figure-html/estimates-1.png" class="r-plt" alt="" width="672"></p>
@@ -108,9 +107,9 @@ choices.</p>
 <h2 id="weight-geometry">Weight geometry<a class="anchor" aria-label="anchor" href="#weight-geometry"></a>
 </h2>
 <p>The weight panels show what the estimator averaged over. The
-effective kernel view is the most instructive: DNN weights as a
-data-driven kernel in distance space, with the rank-<code>s</code>
-radius marked.</p>
+effective kernel view plots weight against distance, with the
+rank-<code>s</code> radius marked as a scale diagnostic. That marker is
+not the DNN support radius.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_weights.html">plot_weights</a></span><span class="op">(</span><span class="va">fit</span>, type <span class="op">=</span> <span class="st">"kernel"</span>, targets <span class="op">=</span> <span class="fl">6L</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualising-fits_files/figure-html/weights-kernel-1.png" class="r-plt" alt="" width="672"></p>
@@ -125,7 +124,8 @@ radius marked.</p>
 treatment arms carry weight near each target. With simplex weights the
 treated and control masses partition one, so the treated mass is the
 local treated share; shaded bands mark shares outside
-<code>share_limits</code>.</p>
+<code>share_limits</code>. These visual guides are not calibrated tests
+of overlap.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_overlap.html">plot_overlap</a></span><span class="op">(</span><span class="va">fit</span>, type <span class="op">=</span> <span class="st">"mass"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualising-fits_files/figure-html/overlap-mass-1.png" class="r-plt" alt="" width="672"></p>
@@ -153,9 +153,9 @@ across targets.</p>
 </h2>
 <p><code><a href="../reference/plot_dashboard.html">plot_dashboard()</a></code> composes the panels with a metadata
 annotation. It requires patchwork; without it the panels are returned as
-a named list. Panels whose inputs are unavailable are substituted rather
-than failing the dashboard — a matrix-interface fit without stored
-treatment gets the diagnostics facets in place of the overlap panel.</p>
+a named list. Unavailable panels are substituted or omitted. For
+example, a supplied-signal CATE fit without treatment inputs gets
+diagnostics in place of overlap.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_dashboard.html">plot_dashboard</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualising-fits_files/figure-html/dashboard-1.png" class="r-plt" alt="" width="672"></p>
@@ -180,19 +180,14 @@ exported: <code><a href="../reference/plot_data_estimates.html">plot_data_estima
 </h2>
 <ul>
 <li>
-<a href="notation-and-conventions.html">Notation and package
-conventions</a>:
-<code><a href="../articles/notation-and-conventions.html">vignette("notation-and-conventions", package = "RdistNN")</a></code>
-explains the statistical scale and provenance of the fields being
-plotted.</li>
+<a href="notation-and-conventions.html">Notation and
+conventions</a>: fields and uncertainty scales.</li>
 <li>
 <a href="diagnostics-reporting.html">Diagnostics and reporting</a>:
-<code><a href="../articles/diagnostics-reporting.html">vignette("diagnostics-reporting", package = "RdistNN")</a></code>
-documents the underlying diagnostic fields and availability rules.</li>
+diagnostic inputs and availability.</li>
 <li>
-<a href="getting-started.html">Getting started</a>:
-<code><a href="../articles/getting-started.html">vignette("getting-started", package = "RdistNN")</a></code> provides
-compact fitted objects for a first plotting workflow.</li>
+<a href="getting-started.html">Getting started</a>: first CATE and
+regression fits.</li>
 </ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

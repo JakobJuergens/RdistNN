@@ -2,8 +2,8 @@
 
 Draws \\K\\ subsets of size \\s\\ uniformly at random from
 \\\\1,\ldots,n\\\\. Within each subset, elements are sampled **without**
-replacement (all indices are distinct). Across rows, subsets are sampled
-independently (the same index may reappear in different rows).
+replacement (all indices are distinct). Across draws, subsets are
+sampled independently (the same index may reappear in different rows).
 
 ## Usage
 
@@ -27,12 +27,15 @@ cate_demo_subsets(n, K = 1000L, s = 8L, seed = NULL)
 
 - seed:
 
-  Optional integer seed for reproducibility.
+  Optional integer seed, used locally without changing the caller's RNG
+  state. `NULL` uses the current stream.
 
 ## Value
 
-An integer matrix of size \\K \times s\\. Each row contains \\s\\
-distinct integers in \\\\1,\ldots,n\\\\ representing one subset.
+For `s > 1`, an integer `K x s` matrix with one subset per row. For
+`s = 1`, the current helper returns a `1 x K` matrix; reshape it with
+`matrix(result, ncol = 1L)` before passing it to
+[`score_eval_batch()`](https://JakobJuergens.github.io/RdistNN/reference/score_eval_batch.md).
 
 ## Examples
 

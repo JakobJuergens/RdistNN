@@ -2,14 +2,12 @@
 
 ## Overview
 
-> **Experimental companion functionality.** The local IV-GMM layer
-> exists for ongoing companion-paper development; its API and theorem
-> alignment may change before the GMM paper is released. It is not at
-> the maturity level of
-> [`np_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_dnn.md),
-> [`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md),
-> or
-> [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md).
+> **Experimental.** The local IV-GMM interface may change. For the
+> supported regression, CATE and conditional-LATE workflows, start with
+> [Getting
+> started](https://JakobJuergens.github.io/RdistNN/articles/getting-started.md)
+> and [Conditional
+> LATE](https://JakobJuergens.github.io/RdistNN/articles/conditional-late.md).
 
 This vignette shows the local IV-GMM workflow built on
 [`gmm_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/gmm_dnn.md).
@@ -122,7 +120,9 @@ confint(fit_iv)
 expands a grid over designs, sample sizes, covariate dimensions,
 instrument counts, and Monte Carlo replications. The just-identified
 design `dgp1_iv_justid_linear` is always run only once with realized
-`q = 1`.
+`q = 1`. An explicit `master_seed` restores the caller’s saved RNG
+state; `NULL` uses the current stream. Each replicate keeps data and
+learner draws together.
 
 ``` r
 
@@ -139,24 +139,16 @@ raw_iv <- sim_iv_run(
   verbose = FALSE
 )
 
-head(raw_iv)
-#>                  design   n kx q  s  seed    method  theta_hat   theta0
-#> 1 dgp1_iv_justid_linear 120  2 1 10 61413 iv_oracle  0.2303256 0.000000
-#> 2 dgp1_iv_justid_linear 120  2 1 10 54425 iv_oracle -0.3883279 0.000000
-#> 3  dgp2_iv_homog_overid 120  2 2 10 61413 iv_oracle  2.3101378 1.211738
-#> 4  dgp2_iv_homog_overid 120  2 2 10 54425 iv_oracle  1.1725896 1.211738
-#>          bias     sq_err        se cover   ci_len     neff         J df
-#> 1  0.23032556 0.05304987 0.5357276     1 2.100013 21.94304        NA NA
-#> 2 -0.38832789 0.15079855 1.4282239     1 5.598535 21.94304        NA NA
-#> 3  1.09839935 1.20648114 0.6245025     1 2.448005 21.94304 6.0438458  1
-#> 4 -0.03914882 0.00153263 0.6264744     1 2.455734 21.94304 0.2041706  1
-#>       pval_J reject_J
-#> 1         NA       NA
-#> 2         NA       NA
-#> 3 0.01395485        1
-#> 4 0.65137533        0
+raw_iv[, c("method", "design", "theta_hat", "se")]
+#>      method                design  theta_hat        se
+#> 1 iv_oracle dgp1_iv_justid_linear  0.2303256 0.5357276
+#> 2 iv_oracle dgp1_iv_justid_linear -0.3883279 1.4282239
+#> 3 iv_oracle  dgp2_iv_homog_overid  2.3101378 0.6245025
+#> 4 iv_oracle  dgp2_iv_homog_overid  1.1725896 0.6264744
 ```
 
+These two-replicate cells demonstrate the output format; they are not
+coverage evidence.
 [`summarise_iv_results()`](https://JakobJuergens.github.io/RdistNN/reference/summarise_iv_results.md)
 aggregates to one row per `(method, design, n, kx, q)` cell and includes
 local overidentification diagnostics when `q > 1`.
@@ -175,17 +167,12 @@ print(tab_iv, digits = 3)
 
 ## Related Articles
 
-- [Notation and package
+- [Notation and
   conventions](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md):
-  [`vignette("notation-and-conventions", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md)
-  distinguishes solved GMM coefficients, local moments, Jacobians,
-  covariance fields, and the overidentification statistic.
-- [Conditional
-  Z-estimation](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md):
-  [`vignette("conditional-z-estimation", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md)
-  covers the stable NP, CATE, and supplied-theta PLQR interfaces.
+  GMM fields and uncertainty scales.
+- [Experimental
+  PLQR](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md):
+  supplied-coefficient moments.
 - [Diagnostics and
   reporting](https://JakobJuergens.github.io/RdistNN/articles/diagnostics-reporting.md):
-  [`vignette("diagnostics-reporting", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/diagnostics-reporting.md)
-  explains the common DNN localization diagnostics shared with the
-  experimental fit.
+  localization diagnostics.

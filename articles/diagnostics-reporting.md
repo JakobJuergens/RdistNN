@@ -3,17 +3,15 @@
 ## Overview
 
 [`diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/diagnostics.md)
-gives a compact table for fitted DNN-localized estimators. The method is
-intentionally fit-object based:
+reports localization and estimator-specific information from a fitted
+object. NP/TDNN, CATE and PLQR use retained weights and model state;
+paired-ratio/CLATE diagnostics reconstruct weights from cached ranks and
+can evaluate deletion-score concentration. No nuisance models are
+refitted. For NP/TDNN and CATE,
+[`nobs()`](https://rdrr.io/r/stats/nobs.html) reports training rows;
+`n_eff` below describes local weight concentration.
 
-- it uses retained weights rather than refitting;
-- it uses retained distances only when `dx` was requested;
-- it uses hidden estimator state for NP, CATE, and PLQR diagnostics;
-- it marks unavailable diagnostics explicitly instead of reconstructing
-  missing inputs from assumptions.
-
-The general fields are available for `np_result`, `cate_result`, and
-`plqr_result` objects when weights are retained:
+The shared fields include:
 
 - `n_eff`, `max_weight`, and top-weight shares;
 - realized rank radii and weighted distance summaries when `dx` is
@@ -28,10 +26,16 @@ Estimator-specific fields are added by the corresponding method:
   concentration summaries then describe signed weights rather than
   probability mass.
 - CATE: treated/control mass and propensity summaries;
+- CLATE/paired ratios: component uncertainty, first-stage statuses,
+  physical radii and squared deletion-score concentration; CLATE adds
+  instrument support;
 - PLQR: residual-regressor Gram eigenvalues and condition number.
 
-Diagnostics require `W`. The default `return = "W"` keeps it. If a fit
-was created without weights, refit with `return` including `"W"`.
+NP/TDNN, CATE and PLQR target diagnostics require `W`, retained by
+default. Use `return` including `"W"` for those fits. Paired-ratio/CLATE
+diagnostics also work without optional weight or distance extras; see
+[their
+guide](https://JakobJuergens.github.io/RdistNN/articles/conditional-late-inference.md).
 
 ## Nonparametric Regression
 
@@ -52,17 +56,15 @@ fit_np <- np_dnn(
 )
 
 d_np <- diagnostics(fit_np)
-d_np[, c(
+as.data.frame(d_np)[, c(
   "target_id",
   "n_eff",
   "weighted_mean_y",
   "weighted_sd_y",
   "weighted_y_q50"
 )]
-#> <dnn_diagnostics>
-#>   targets: 1
-#>   n_eff  : min=51.8421, median=51.8421, max=51.8421
-#>   dist   : available for 0/1 target(s)
+#>          target_id    n_eff weighted_mean_y weighted_sd_y weighted_y_q50
+#> target_1  target_1 51.84209         0.08698       0.54151      0.1091348
 ```
 
 For NP fits, `weighted_mean_y` equals the local mean estimate when the
@@ -90,7 +92,7 @@ fit_cate <- cate_dnn(
 )
 
 d_cate <- diagnostics(fit_cate)
-d_cate[, c(
+as.data.frame(d_cate)[, c(
   "target_id",
   "n_eff",
   "treated_mass",
@@ -100,16 +102,12 @@ d_cate[, c(
   "treated_ess", "control_ess", "weighted_propensity_q10",
   "weighted_propensity_q90", "top5_score_share"
 )]
-#> <dnn_diagnostics>
-#>   targets: 1
-#>   n_eff  : min=64.9674, median=64.9674, max=64.9674
-#>   dist   : available for 0/1 target(s)
-#>   treated share: 0.429 to 0.429
-#>   treated ESS: 28.4 to 28.4
-#>   control ESS: 36.6 to 36.6
-#>   propensity q10: 0.37 to 0.37
-#>   propensity q90: 0.607 to 0.607
-#>   top-five absolute score-contribution share: 0.217 to 0.217
+#>          target_id    n_eff treated_mass control_mass treated_share
+#> target_1  target_1 64.96742    0.4291109    0.5708891     0.4291109
+#>          weighted_mean_propensity treated_ess control_ess
+#> target_1                0.4935985    28.38508    36.59798
+#>          weighted_propensity_q10 weighted_propensity_q90 top5_score_share
+#> target_1               0.3696287               0.6065485        0.2167448
 ```
 
 Overlap diagnostics are available when the fit was constructed from
@@ -124,14 +122,12 @@ profile’s values. CLATE distinguishes instrument support, clipped
 propensity mass and squared jackknife-contribution concentration. These
 quantities have different definitions and should not be interpreted
 interchangeably. Clipping prevents undefined arithmetic but does not
-establish overlap. The reported order fraction is descriptive and
-triggers no new warning policy.
+establish overlap. The reported order fraction is descriptive, rather
+than a calibrated validity threshold.
 
 ## Experimental PLQR conditioning
 
-All PLQR functionality, including these diagnostics and its specialized
-plots, is experimental and outside the CATE and regression focus of this
-release.
+PLQR diagnostics and specialized plots remain experimental.
 
 ``` r
 
@@ -156,7 +152,7 @@ fit_plqr <- plqr_dnn(
 )
 
 d_plqr <- diagnostics(fit_plqr)
-d_plqr[, c(
+as.data.frame(d_plqr)[, c(
   "target_id",
   "n_eff",
   "gram_min_eig",
@@ -165,6 +161,12 @@ d_plqr[, c(
   "jacobian_condition_number",
   "theta_vcov_available"
 )]
+#>          target_id    n_eff gram_min_eig gram_condition_number
+#> target_1  target_1 69.34251     0.286607              1.333248
+#>          jacobian_min_singular_value jacobian_condition_number
+#> target_1                   0.5965432                  1.274692
+#>          theta_vcov_available
+#> target_1                 TRUE
 ```
 
 The PLQR Gram diagnostic is based on the localized residual-regressor
@@ -192,16 +194,17 @@ fit_tuned <- np_dnn(
 )
 
 d_tuned <- diagnostics(fit_tuned)
-d_tuned[, c(
+as.data.frame(d_tuned)[, c(
   "target_id",
   "tuning_name",
   "tuning_default_s",
   "tuning_grid_n_candidates",
   "tuning_lambda_default"
 )]
-#> <dnn_diagnostics>
-#>   targets: 1
-#>   dist   : available for 0/1 target(s)
+#>          target_id       tuning_name tuning_default_s tuning_grid_n_candidates
+#> target_1  target_1 paper_undersmooth               45                        5
+#>          tuning_lambda_default
+#> target_1                  1.25
 
 attr(d_tuned, "tuning_grid")
 #>   candidate_id computed_key is_default feasible reason status lambda  s
@@ -217,33 +220,31 @@ table.
 
 ## Availability Rules
 
-Diagnostics avoid hidden recomputation.
-
-- If `W` is missing,
-  [`diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/diagnostics.md)
-  errors and asks for a refit with weights.
-- If `dx` is missing, distance fields are returned as `NA` with
-  `distance_diagnostics_available = FALSE`.
+- Missing `W` prevents NP/TDNN, CATE and PLQR target diagnostics. Stored
+  grid summaries and paired-ratio/CLATE diagnostics have their own
+  retained state.
+- Rank radii and weighted metric distances require retained `dx`;
+  otherwise those fields are `NA` with
+  `distance_diagnostics_available = FALSE`. CATE/CLATE physical radii
+  can still use retained observations in original units.
 - If CATE treatment/propensity state is unavailable, overlap fields are
   present but marked unavailable.
 - If PLQR residual-regressor state is unavailable, Gram fields are
   present but marked unavailable.
 
-This behavior keeps diagnostics predictable and prevents the diagnostics
-layer from silently rerunning expensive estimator construction.
+The
+[paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
+states the conditions for inference. These diagnostics do not check all
+of them.
 
 ## Related Articles
 
-- [Notation and package
+- [Notation and
   conventions](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md):
-  [`vignette("notation-and-conventions", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md)
-  distinguishes similarly named fields and moment- from
-  coefficient-scale uncertainty.
+  field meanings and uncertainty scales.
 - [Visualising
   fits](https://JakobJuergens.github.io/RdistNN/articles/visualising-fits.md):
-  [`vignette("visualising-fits", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/visualising-fits.md)
-  turns diagnostic fields into reusable plot panels.
-- [Conditional
-  Z-estimation](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md):
-  [`vignette("conditional-z-estimation", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md)
-  supplies the estimator workflows that create these objects.
+  reusable plot panels.
+- [Experimental
+  PLQR](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md):
+  moment and coefficient uncertainty.

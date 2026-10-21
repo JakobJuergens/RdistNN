@@ -1,8 +1,10 @@
 # Score specification (S3) for U-stat kernels
 
 A score (kernel) is a symmetric function evaluated on s-sized subsets.
-Provide either `ptr` (compiled fast path), or an R `eval_batch`, or an R
-`eval`.
+Supply `eval` or `eval_batch` for
+[`score_eval()`](https://JakobJuergens.github.io/RdistNN/reference/score_eval.md)
+and
+[`score_eval_batch()`](https://JakobJuergens.github.io/RdistNN/reference/score_eval_batch.md).
 
 ## Usage
 
@@ -82,8 +84,9 @@ new_score(
 
 - ptr:
 
-  External pointer to compiled score (see vignette); if present, used by
-  engine.
+  Optional compiled-score pointer metadata. The public R evaluators do
+  not dispatch through this pointer; they require `eval` or
+  `eval_batch`.
 
 - randomized:
 

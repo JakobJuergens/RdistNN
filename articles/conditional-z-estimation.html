@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Conditional Z-Estimation with DNN weights • RdistNN</title>
+<title>Experimental PLQR: moments and coefficient uncertainty • RdistNN</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Conditional Z-Estimation with DNN weights">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Experimental PLQR: moments and coefficient uncertainty">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,7 +50,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Conditional Z-Estimation with DNN weights</h1>
+      <h1>Experimental PLQR: moments and coefficient uncertainty</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/master/vignettes/conditional-z-estimation.Rmd" class="external-link"><code>vignettes/conditional-z-estimation.Rmd</code></a></small>
@@ -59,275 +59,90 @@
 
     
     
+<p><code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code> evaluates localized quantile-score moments at
+a <strong>supplied coefficient vector</strong>. It does not solve for
+coefficients. This guide shows how moment uncertainty differs from
+density-backed coefficient uncertainty; the entire PLQR interface
+remains experimental.</p>
+<p>For statistical background, see the <a href="https://jakobjuergens.com/research/#orthogonal-inference-conditional-z" class="external-link">paper</a>.
+For the supported CATE, regression and CLATE workflows, use <a href="getting-started.html">Getting started</a> and <a href="conditional-late.html">Conditional LATE</a>.</p>
 <div class="section level2">
-<h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
+<h2 id="supply-the-predictions-and-coefficient">Supply the predictions and coefficient<a class="anchor" aria-label="anchor" href="#supply-the-predictions-and-coefficient"></a>
 </h2>
-<p>This article focuses on CATE and nonparametric regression. Start with
-<a href="getting-started.html">Getting started</a> for executable
-examples, or the <a href="conditional-late.html">CLATE guide</a> for
-supplied-prediction binary-IV and paired-signal workflows. This article
-gives additional moment details, including <strong>experimental
-PLQR</strong>:</p>
-<ul>
-<li>
-<code><a href="../reference/np_dnn.html">np_dnn()</a></code> for localized conditional means</li>
-<li>
-<code><a href="../reference/cate_dnn.html">cate_dnn()</a></code> for conditional average treatment
-effects</li>
-<li>
-<code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code> for experimental moment evaluation at
-supplied coefficients</li>
-</ul>
-<p>Each wrapper supports:</p>
-<ul>
-<li>matrix and data-frame interfaces</li>
-<li>DNN method choice (<code>"exact"</code> or
-<code>"asymp"</code>)</li>
-<li>delete-1 jackknife SEs (<code>"fast"</code>, <code>"loo"</code>,
-<code>"none"</code>)</li>
-<li>modular kernel-order tuning via
-<code>tuning = tuning_dnn_paper(...)</code>
-</li>
-<li>fitted-object diagnostics via <code><a href="../reference/diagnostics.html">diagnostics()</a></code>
-</li>
-</ul>
-<p>The wrappers implement fixed top-<code>k</code> DNN kernels for
-<code>1 &lt;= k &lt;= s</code>. The accompanying manuscript derivations
-are stated for <code>k = 1</code>; larger fixed <code>k</code> is an
-implementation-supported generalization.</p>
-</div>
-<div class="section level2">
-<h2 id="local-mean-np_dnn">Local Mean (<code>np_dnn</code>)<a class="anchor" aria-label="anchor" href="#local-mean-np_dnn"></a>
-</h2>
+<p>The demo provides oracle nuisance values. In an application, supply
+aligned external predictions: <code>g</code> is the model’s shape
+component, <code>mD</code> contains the regressor means, and
+<code>density</code> is the conditional outcome density at the threshold
+<code>D' theta_eval + g</code>. Nuisance fitting is external.</p>
+<p>This example requests both the full moment covariance and a
+density-backed coefficient sandwich with
+<code>theta_meat = "jackknife"</code>:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">demo_np</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/np_demo_data.html">np_demo_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">250</span>, p <span class="op">=</span> <span class="fl">2</span>, design <span class="op">=</span> <span class="st">"sinusoidal"</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">fit_np</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/np_dnn.html">np_dnn</a></span><span class="op">(</span></span>
-<span>  data <span class="op">=</span> <span class="va">demo_np</span><span class="op">$</span><span class="va">data</span>,</span>
-<span>  x_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X1"</span>, <span class="st">"X2"</span><span class="op">)</span>,</span>
-<span>  y_col <span class="op">=</span> <span class="st">"Y"</span>,</span>
-<span>  x0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>,</span>
-<span>  method <span class="op">=</span> <span class="st">"exact"</span>,</span>
-<span>  k <span class="op">=</span> <span class="fl">1L</span>,</span>
-<span>  tuning <span class="op">=</span> <span class="va">tuning_default</span>,</span>
-<span>  se <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  jackknife <span class="op">=</span> <span class="st">"fast"</span>,</span>
-<span>  return <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"W"</span>, <span class="st">"ess"</span>, <span class="st">"tuning"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">demo</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plqr_demo_data.html">plqr_demo_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">160</span>, p <span class="op">=</span> <span class="fl">2</span>, p_d <span class="op">=</span> <span class="fl">2</span>, tau <span class="op">=</span> <span class="fl">0.5</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plqr_dnn.html">plqr_dnn</a></span><span class="op">(</span></span>
+<span>  data <span class="op">=</span> <span class="va">demo</span><span class="op">$</span><span class="va">data</span>, x_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X1"</span>, <span class="st">"X2"</span><span class="op">)</span>,</span>
+<span>  D_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"D1"</span>, <span class="st">"D2"</span><span class="op">)</span>, g_col <span class="op">=</span> <span class="st">"g_oracle"</span>,</span>
+<span>  mD_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mD1"</span>, <span class="st">"mD2"</span><span class="op">)</span>, y_col <span class="op">=</span> <span class="st">"Y"</span>,</span>
+<span>  density_col <span class="op">=</span> <span class="st">"density_oracle"</span>, theta_eval <span class="op">=</span> <span class="va">demo</span><span class="op">$</span><span class="va">truth</span><span class="op">$</span><span class="va">theta_true</span>,</span>
+<span>  tau <span class="op">=</span> <span class="fl">0.5</span>, x0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, k <span class="op">=</span> <span class="fl">1L</span>, s <span class="op">=</span> <span class="fl">10L</span>,</span>
+<span>  theta_meat <span class="op">=</span> <span class="st">"jackknife"</span>, se <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">fit_np</span><span class="op">$</span><span class="va">mu</span></span>
-<span><span class="co">#&gt; [1] -0.02251305</span></span>
-<span><span class="va">fit_np</span><span class="op">$</span><span class="va">se</span></span>
-<span><span class="co">#&gt; [1] 0.1782743</span></span>
-<span><span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">fit_np</span><span class="op">)</span></span>
-<span><span class="co">#&gt; &lt;dnn_diagnostics&gt;</span></span>
-<span><span class="co">#&gt;   targets: 1</span></span>
-<span><span class="co">#&gt;   n_eff  : min=18.6582, median=18.6582, max=18.6582</span></span>
-<span><span class="co">#&gt;   weights: max(top5 share)=0.4122, max(weight)=0.1</span></span>
-<span><span class="co">#&gt;   dist   : available for 0/1 target(s)</span></span>
-<span><span class="co">#&gt;   outcome: available for 1/1 target(s)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="cate-cate_dnn">CATE (<code>cate_dnn</code>)<a class="anchor" aria-label="anchor" href="#cate-cate_dnn"></a>
-</h2>
-<p><code><a href="../reference/cate_dnn.html">cate_dnn()</a></code> supports either:</p>
-<ul>
-<li>Full AIPW nuisance inputs (<code>m0</code>, <code>m1</code>,
-<code>e</code>)</li>
-<li>Direct <code>pseudo_outcome</code>
-</li>
-</ul>
+<span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  supplied_coefficient <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  moment <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">moment</span><span class="op">)</span>,</span>
+<span>  moment_se <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">moment_se</span><span class="op">)</span>,</span>
+<span>  coefficient_se <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">theta_se</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt;   supplied_coefficient      moment  moment_se coefficient_se</span></span>
+<span><span class="co">#&gt; 1                  0.5 -0.12784942 0.05934042     0.06939776</span></span>
+<span><span class="co">#&gt; 2                  0.5 -0.03771978 0.05977131     0.07589505</span></span></code></pre></div>
+<p>The two SE columns have different units. <code>moment_se</code>
+describes variation in the localized score; <code>theta_se</code>
+additionally uses the density-backed Jacobian. A small moment is not an
+estimated coefficient. <code>coef(fit)</code> repeats
+<code>theta_eval</code>, and intervals are centered at that supplied
+value:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">demo_cate</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cate_demo_data.html">cate_demo_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">300</span>, p <span class="op">=</span> <span class="fl">2</span>, design <span class="op">=</span> <span class="st">"hetero"</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="va">demo_cate</span><span class="op">$</span><span class="va">data</span></span>
-<span><span class="va">df</span><span class="op">$</span><span class="va">m1_oracle</span> <span class="op">&lt;-</span> <span class="va">df</span><span class="op">$</span><span class="va">m0_oracle</span> <span class="op">+</span> <span class="va">df</span><span class="op">$</span><span class="va">tau_oracle</span></span>
-<span></span>
-<span><span class="va">fit_cate</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cate_dnn.html">cate_dnn</a></span><span class="op">(</span></span>
-<span>  data <span class="op">=</span> <span class="va">df</span>,</span>
-<span>  x_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X1"</span>, <span class="st">"X2"</span><span class="op">)</span>,</span>
-<span>  y_col <span class="op">=</span> <span class="st">"Y"</span>,</span>
-<span>  t_col <span class="op">=</span> <span class="st">"D"</span>,</span>
-<span>  m0_col <span class="op">=</span> <span class="st">"m0_oracle"</span>,</span>
-<span>  m1_col <span class="op">=</span> <span class="st">"m1_oracle"</span>,</span>
-<span>  e_col <span class="op">=</span> <span class="st">"e_oracle"</span>,</span>
-<span>  x0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>,</span>
-<span>  method <span class="op">=</span> <span class="st">"exact"</span>,</span>
-<span>  k <span class="op">=</span> <span class="fl">1L</span>,</span>
-<span>  tuning <span class="op">=</span> <span class="va">tuning_default</span>,</span>
-<span>  se <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  return <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"W"</span>, <span class="st">"psi"</span>, <span class="st">"nuisance"</span>, <span class="st">"tuning"</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit_cate</span><span class="op">)</span></span>
-<span><span class="co">#&gt; &lt;summary.cate_result&gt;</span></span>
-<span><span class="co">#&gt;   localization: s = 28, s/n = 0.0933</span></span>
-<span><span class="co">#&gt;   targets: 1</span></span>
-<span><span class="co">#&gt;          estimate std.error statistic p.value conf.low conf.high</span></span>
-<span><span class="co">#&gt; target_1   0.5512    0.3181     1.733 0.08313 -0.07227     1.175</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">fit_cate</span><span class="op">)</span></span>
-<span><span class="co">#&gt;             conf.low conf.high</span></span>
-<span><span class="co">#&gt; target_1 -0.07226519  1.174624</span></span>
-<span><span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">fit_cate</span><span class="op">)</span></span>
-<span><span class="co">#&gt; &lt;dnn_diagnostics&gt;</span></span>
-<span><span class="co">#&gt;   targets: 1</span></span>
-<span><span class="co">#&gt;   n_eff  : min=20.098, median=20.098, max=20.098</span></span>
-<span><span class="co">#&gt;   weights: max(top5 share)=0.3894, max(weight)=0.0933</span></span>
-<span><span class="co">#&gt;   dist   : available for 0/1 target(s)</span></span>
-<span><span class="co">#&gt;   overlap: available for 1/1 target(s)</span></span>
-<span><span class="co">#&gt;   treated share: 0.388 to 0.388</span></span>
-<span><span class="co">#&gt;   treated ESS: 8.73 to 8.73</span></span>
-<span><span class="co">#&gt;   control ESS: 11.5 to 11.5</span></span>
-<span><span class="co">#&gt;   propensity q10: 0.454 to 0.454</span></span>
-<span><span class="co">#&gt;   propensity q90: 0.549 to 0.549</span></span>
-<span><span class="co">#&gt;   top-five absolute score-contribution share: 0.586 to 0.586</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit_cate</span>, x0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.2</span>, <span class="op">-</span><span class="fl">0.1</span><span class="op">)</span>, interval <span class="op">=</span> <span class="st">"confidence"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;            fit       lwr      upr</span></span>
-<span><span class="co">#&gt; [1,] 0.8336633 0.3016249 1.365702</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt;     target term  conf.low conf.high</span></span>
+<span><span class="co">#&gt; 1 target_1   D1 0.3639829 0.6360171</span></span>
+<span><span class="co">#&gt; 2 target_1   D2 0.3512484 0.6487516</span></span></code></pre></div>
+<p>Without a density input, leave <code>theta_meat</code> at its default
+and use the fit for moment diagnostics only; coefficient intervals are
+unavailable. With a density input, the default
+<code>theta_meat = "analytic"</code> uses analytic score covariance. See
+<code><a href="../reference/plqr_dnn.html">?plqr_dnn</a></code> for the two sandwich routes and returned
+arrays.</p>
 </div>
 <div class="section level2">
-<h2 id="experimental-plqr-moments-and-coefficient-uncertainty-plqr_dnn">Experimental PLQR moments and coefficient uncertainty
-(<code>plqr_dnn</code>)<a class="anchor" aria-label="anchor" href="#experimental-plqr-moments-and-coefficient-uncertainty-plqr_dnn"></a>
+<h2 id="inspect-conditioning-and-new-profiles">Inspect conditioning and new profiles<a class="anchor" aria-label="anchor" href="#inspect-conditioning-and-new-profiles"></a>
 </h2>
-<p>All PLQR functions, including score and demo helpers, methods, and
-specialized plots, are experimental. Their APIs and inference interfaces
-may change. The current wrapper does not estimate a local coefficient
-root.</p>
+<p>A well-conditioned regressor Gram matrix does not guarantee a
+well-conditioned density-weighted Jacobian. Inspect both:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">demo_plqr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plqr_demo_data.html">plqr_demo_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">250</span>, p <span class="op">=</span> <span class="fl">2</span>, p_d <span class="op">=</span> <span class="fl">2</span>, tau <span class="op">=</span> <span class="fl">0.5</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="co"># demo_plqr$data$density_oracle holds the true threshold density of the</span></span>
-<span><span class="co"># demo DGP (constant, 4 * tau * (1 - tau) / sigma).</span></span>
-<span></span>
-<span><span class="va">fit_plqr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plqr_dnn.html">plqr_dnn</a></span><span class="op">(</span></span>
-<span>  data <span class="op">=</span> <span class="va">demo_plqr</span><span class="op">$</span><span class="va">data</span>,</span>
-<span>  x_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X1"</span>, <span class="st">"X2"</span><span class="op">)</span>,</span>
-<span>  D_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"D1"</span>, <span class="st">"D2"</span><span class="op">)</span>,</span>
-<span>  g_col <span class="op">=</span> <span class="st">"g_oracle"</span>,</span>
-<span>  mD_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mD1"</span>, <span class="st">"mD2"</span><span class="op">)</span>,</span>
-<span>  y_col <span class="op">=</span> <span class="st">"Y"</span>,</span>
-<span>  density_col <span class="op">=</span> <span class="st">"density_oracle"</span>,</span>
-<span>  theta_eval <span class="op">=</span> <span class="va">demo_plqr</span><span class="op">$</span><span class="va">truth</span><span class="op">$</span><span class="va">theta_true</span>,</span>
-<span>  tau <span class="op">=</span> <span class="fl">0.5</span>,</span>
-<span>  x0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>,</span>
-<span>  method <span class="op">=</span> <span class="st">"exact"</span>,</span>
-<span>  k <span class="op">=</span> <span class="fl">1L</span>,</span>
-<span>  tuning <span class="op">=</span> <span class="va">tuning_default</span>,</span>
-<span>  se <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  return <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"W"</span>, <span class="st">"score"</span>, <span class="st">"ess"</span>, <span class="st">"tuning"</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit_plqr</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">fit_plqr</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit_plqr</span>, x0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="op">-</span><span class="fl">0.25</span><span class="op">)</span>, interval <span class="op">=</span> <span class="st">"confidence"</span><span class="op">)</span></span>
-<span><span class="va">fit_plqr</span><span class="op">$</span><span class="va">moment</span></span>
-<span><span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">fit_plqr</span><span class="op">)</span></span></code></pre></div>
-<div class="section level3">
-<h3 id="plqr-nuisances-and-inference">PLQR nuisances and inference<a class="anchor" aria-label="anchor" href="#plqr-nuisances-and-inference"></a>
-</h3>
-<p><code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code> localizes the moment</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝔼</mi><mspace width="-0.167em"></mspace><mrow><mo stretchy="true" form="prefix">[</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>τ</mi><mo>−</mo><mn>𝟏</mn><mo stretchy="false" form="prefix">{</mo><mi>Y</mi><mo>≤</mo><msup><mi>D</mi><mi>⊤</mi></msup><mi>θ</mi><mo>+</mo><msub><mi>g</mi><mn>0</mn></msub><mo stretchy="false" form="prefix">(</mo><mi>U</mi><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="postfix">}</mo><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mi>D</mi><mo>−</mo><msub><mi>m</mi><mi>D</mi></msub><mo stretchy="false" form="prefix">(</mo><mi>U</mi><mo stretchy="false" form="postfix">)</mo><mo stretchy="true" form="postfix">)</mo></mrow><mspace width="0.278em"></mspace><mo stretchy="true" form="infix">|</mo><mspace width="0.278em"></mspace><mi>X</mi><mo>≈</mo><msub><mi>x</mi><mn>0</mn></msub><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">
-\mathbb{E}\!\left[
-  \left(\tau - \mathbf{1}\{Y \le D^\top \theta + g_0(U)\}\right)
-  \left(D - m_D(U)\right)
-  \;\middle|\; X \approx x_0
-\right]
-</annotation></semantics></math></p>
-<p>at the supplied coefficient value <code>theta_eval</code>. Here
-<code>g</code> is the partially-linear model’s nonparametric shape
-nuisance (paper notation
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>g</mi><mn>0</mn></msub><mo stretchy="false" form="prefix">(</mo><mi>U</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">g_0(U)</annotation></semantics></math>),
-not itself a quantile — the sum
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>D</mi><mo>′</mo></msup><msub><mi>θ</mi><mn>0</mn></msub><mo>+</mo><msub><mi>g</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">D'\theta_0 + g_0</annotation></semantics></math>
-is the conditional quantile. <code>mD</code> residualizes the design
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>m</mi><mn>0</mn></msub><mo stretchy="false" form="prefix">(</mo><mi>U</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>E</mi><mo stretchy="false" form="prefix">[</mo><mi>D</mi><mo>∣</mo><mi>U</mi><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">m_0(U) = E[D \mid U]</annotation></semantics></math>).
-Both are supplied by the user; no nuisance model is fit internally, and
-no root solving is performed: the result’s <code>theta</code> repeats
-the supplied <code>theta_eval</code>
-(<code>meta$theta_source = "supplied"</code>).</p>
-<p>Coefficient-level standard errors and confidence intervals require
-supplying <code>density</code>/<code>density_col</code> (an estimate of
-the local conditional density of <code>Y</code> at the fitted quantile).
-This is not an optional convenience: every valid coefficient route needs
-the density-backed sandwich bread. Two coefficient-meat routes are
-available through <code>theta_meat</code>: the analytic score covariance
-(default) and a full delete-1 jackknife covariance of the localized
-vector moment (<code>theta_meat = "jackknife"</code>, stored in
-<code>moment_vcov</code>). A fit without a density input can still
-report <code>moment_se</code> (a componentwise jackknife SE on the
-<em>moment</em>, useful as a diagnostic) but
-<code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code>/<code>predict(se.fit = TRUE)</code> will error,
-by design, until refit with a density input — a componentwise
-<code>moment_se</code> alone is never coefficient inference.
-Coefficient-level results live in <code>theta_se</code> /
-<code>theta_vcov</code>; the routes are never mixed in one field.</p>
-</div>
-</div>
-<div class="section level2">
-<h2 id="diagnostics-and-reporting">Diagnostics and Reporting<a class="anchor" aria-label="anchor" href="#diagnostics-and-reporting"></a>
-</h2>
-<p>The three wrappers return enough retained state for
-<code><a href="../reference/diagnostics.html">diagnostics()</a></code> to compute fit-level summaries without
-rerunning the estimator.</p>
+<code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">d</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"target_id"</span>, <span class="st">"gram_condition_number"</span>, <span class="st">"jacobian_condition_number"</span>,</span>
+<span>      <span class="st">"theta_vcov_available"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;          target_id gram_condition_number jacobian_condition_number</span></span>
+<span><span class="co">#&gt; target_1  target_1              1.228876                  1.263684</span></span>
+<span><span class="co">#&gt;          theta_vcov_available</span></span>
+<span><span class="co">#&gt; target_1                 TRUE</span></span></code></pre></div>
+<p>Prediction relocalizes the retained sample. It repeats the supplied
+coefficient and computes new uncertainty; it does not fit a new PLQR
+root. Prediction uncertainty uses the analytic sandwich even when the
+original fit used jackknife meat.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">d_np</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">fit_np</span><span class="op">)</span></span>
-<span><span class="va">d_cate</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">fit_cate</span><span class="op">)</span></span>
-<span><span class="va">d_plqr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">fit_plqr</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">d_np</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"target_id"</span>, <span class="st">"n_eff"</span>, <span class="st">"weighted_mean_y"</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="va">d_cate</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"target_id"</span>, <span class="st">"treated_mass"</span>, <span class="st">"control_mass"</span>, <span class="st">"treated_share"</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="va">d_plqr</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"target_id"</span>, <span class="st">"gram_min_eig"</span>, <span class="st">"gram_condition_number"</span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
-<p>General diagnostics summarize weight concentration, realized distance
-radii when <code>dx</code> was retained, and tuning metadata.
-Estimator-specific diagnostics add NP outcome summaries, CATE overlap
-summaries, and PLQR residual-regressor Gram conditioning.</p>
-</div>
-<div class="section level2">
-<h2 id="notes-on-standard-errors">Notes on Standard Errors<a class="anchor" aria-label="anchor" href="#notes-on-standard-errors"></a>
-</h2>
-<p><code><a href="../reference/np_dnn.html">np_dnn()</a></code> and <code><a href="../reference/cate_dnn.html">cate_dnn()</a></code> always use delete-1
-jackknife SEs when <code>se = TRUE</code>.</p>
-<ul>
-<li>
-<code>"fast"</code> reuses full-sample ranks and applies rank
-updates per deletion.</li>
-<li>
-<code>"loo"</code> recomputes leave-one-out weights directly. For
-NP/TDNN/CATE it refits sample-dependent geometry and can differ from
-frozen-metric <code>"fast"</code> inference. Paired-ratio inference
-keeps the training geometry fixed.</li>
-<li>
-<code>"none"</code> skips SE computation.</li>
-</ul>
-<p><code>s &lt; n</code> is required when jackknife SEs are
-requested.</p>
-<p>Experimental <code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code> differs: with
-<code>density</code>/<code>density_col</code>, <code>se = TRUE</code>
-reports a density-backed coefficient sandwich. Its meat uses either the
-analytic score covariance (default) or the vector-moment jackknife
-covariance with <code>theta_meat = "jackknife"</code>. Without density,
-<code>moment_se</code> is a moment jackknife diagnostic and does not
-support coefficient intervals. See “PLQR nuisances and inference”
-above.</p>
-</div>
-<div class="section level2">
-<h2 id="related-articles">Related Articles<a class="anchor" aria-label="anchor" href="#related-articles"></a>
-</h2>
-<ul>
-<li>
-<a href="notation-and-conventions.html">Notation and package
-conventions</a>:
-<code><a href="../articles/notation-and-conventions.html">vignette("notation-and-conventions", package = "RdistNN")</a></code>
-maps arguments, paper symbols, fitted-object fields, and uncertainty
-scales.</li>
-<li>
-<a href="diagnostics-reporting.html">Diagnostics and reporting</a>:
-<code><a href="../articles/diagnostics-reporting.html">vignette("diagnostics-reporting", package = "RdistNN")</a></code>
-documents the diagnostics available for each estimator.</li>
-<li>
-<a href="kernel-order-tuning.html">Kernel-order tuning</a>:
-<code><a href="../articles/kernel-order-tuning.html">vignette("kernel-order-tuning", package = "RdistNN")</a></code>
-explains how <code>s</code> is selected when it is not supplied
-directly.</li>
-</ul>
+<code class="sourceCode R"><span><span class="va">pred</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span>, X0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="op">-</span><span class="fl">0.25</span><span class="op">)</span><span class="op">)</span>, se.fit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">pred</span><span class="op">$</span><span class="va">se.fit</span></span>
+<span><span class="co">#&gt;      target_1   target_2</span></span>
+<span><span class="co">#&gt; D1 0.07219991 0.08500969</span></span>
+<span><span class="co">#&gt; D2 0.07391976 0.08562597</span></span></code></pre></div>
+<p>For array shapes and scales, see <a href="notation-and-conventions.html">Notation and conventions</a>. For
+the optional conditioning and calibration plots, see
+<code><a href="../reference/plot_conditioning.html">?plot_conditioning</a></code> and <code><a href="../reference/plot_calibration.html">?plot_calibration</a></code>.
+Intervals are pointwise; numerical conditioning does not verify nuisance
+accuracy, localization bias or the paper’s assumptions.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -57,7 +57,8 @@ sim_iv_one_rep(
 
 - seed:
 
-  Optional integer seed.
+  Optional integer seed for this replicate, used locally without
+  changing the caller's saved RNG state. `NULL` uses the current stream.
 
 - sigma:
 

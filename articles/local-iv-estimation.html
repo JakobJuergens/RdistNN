@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,11 +63,9 @@
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
 <blockquote>
-<p><strong>Experimental companion functionality.</strong> The local
-IV-GMM layer exists for ongoing companion-paper development; its API and
-theorem alignment may change before the GMM paper is released. It is not
-at the maturity level of <code><a href="../reference/np_dnn.html">np_dnn()</a></code>, <code><a href="../reference/cate_dnn.html">cate_dnn()</a></code>,
-or <code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code>.</p>
+<p><strong>Experimental.</strong> The local IV-GMM interface may change.
+For the supported regression, CATE and conditional-LATE workflows, start
+with <a href="getting-started.html">Getting started</a> and <a href="conditional-late.html">Conditional LATE</a>.</p>
 </blockquote>
 <p>This vignette shows the local IV-GMM workflow built on
 <code><a href="../reference/gmm_dnn.html">gmm_dnn()</a></code>. The example uses the doubly robust IV moment
@@ -167,7 +165,10 @@ fitted object in reporting form:</p>
 <p><code><a href="../reference/sim_iv_run.html">sim_iv_run()</a></code> expands a grid over designs, sample sizes,
 covariate dimensions, instrument counts, and Monte Carlo replications.
 The just-identified design <code>dgp1_iv_justid_linear</code> is always
-run only once with realized <code>q = 1</code>.</p>
+run only once with realized <code>q = 1</code>. An explicit
+<code>master_seed</code> restores the caller’s saved RNG state;
+<code>NULL</code> uses the current stream. Each replicate keeps data and
+learner draws together.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">raw_iv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sim_iv_run.html">sim_iv_run</a></span><span class="op">(</span></span>
 <span>  designs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"dgp1_iv_justid_linear"</span>, <span class="st">"dgp2_iv_homog_overid"</span><span class="op">)</span>,</span>
@@ -182,24 +183,15 @@ run only once with realized <code>q = 1</code>.</p>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">raw_iv</span><span class="op">)</span></span>
-<span><span class="co">#&gt;                  design   n kx q  s  seed    method  theta_hat   theta0</span></span>
-<span><span class="co">#&gt; 1 dgp1_iv_justid_linear 120  2 1 10 61413 iv_oracle  0.2303256 0.000000</span></span>
-<span><span class="co">#&gt; 2 dgp1_iv_justid_linear 120  2 1 10 54425 iv_oracle -0.3883279 0.000000</span></span>
-<span><span class="co">#&gt; 3  dgp2_iv_homog_overid 120  2 2 10 61413 iv_oracle  2.3101378 1.211738</span></span>
-<span><span class="co">#&gt; 4  dgp2_iv_homog_overid 120  2 2 10 54425 iv_oracle  1.1725896 1.211738</span></span>
-<span><span class="co">#&gt;          bias     sq_err        se cover   ci_len     neff         J df</span></span>
-<span><span class="co">#&gt; 1  0.23032556 0.05304987 0.5357276     1 2.100013 21.94304        NA NA</span></span>
-<span><span class="co">#&gt; 2 -0.38832789 0.15079855 1.4282239     1 5.598535 21.94304        NA NA</span></span>
-<span><span class="co">#&gt; 3  1.09839935 1.20648114 0.6245025     1 2.448005 21.94304 6.0438458  1</span></span>
-<span><span class="co">#&gt; 4 -0.03914882 0.00153263 0.6264744     1 2.455734 21.94304 0.2041706  1</span></span>
-<span><span class="co">#&gt;       pval_J reject_J</span></span>
-<span><span class="co">#&gt; 1         NA       NA</span></span>
-<span><span class="co">#&gt; 2         NA       NA</span></span>
-<span><span class="co">#&gt; 3 0.01395485        1</span></span>
-<span><span class="co">#&gt; 4 0.65137533        0</span></span></code></pre></div>
-<p><code><a href="../reference/summarise_iv_results.html">summarise_iv_results()</a></code> aggregates to one row per
-<code>(method, design, n, kx, q)</code> cell and includes local
+<span><span class="va">raw_iv</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"method"</span>, <span class="st">"design"</span>, <span class="st">"theta_hat"</span>, <span class="st">"se"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;      method                design  theta_hat        se</span></span>
+<span><span class="co">#&gt; 1 iv_oracle dgp1_iv_justid_linear  0.2303256 0.5357276</span></span>
+<span><span class="co">#&gt; 2 iv_oracle dgp1_iv_justid_linear -0.3883279 1.4282239</span></span>
+<span><span class="co">#&gt; 3 iv_oracle  dgp2_iv_homog_overid  2.3101378 0.6245025</span></span>
+<span><span class="co">#&gt; 4 iv_oracle  dgp2_iv_homog_overid  1.1725896 0.6264744</span></span></code></pre></div>
+<p>These two-replicate cells demonstrate the output format; they are not
+coverage evidence. <code><a href="../reference/summarise_iv_results.html">summarise_iv_results()</a></code> aggregates to one
+row per <code>(method, design, n, kx, q)</code> cell and includes local
 overidentification diagnostics when <code>q &gt; 1</code>.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tab_iv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/summarise_iv_results.html">summarise_iv_results</a></span><span class="op">(</span><span class="va">raw_iv</span><span class="op">)</span></span>
@@ -216,21 +208,14 @@ overidentification diagnostics when <code>q &gt; 1</code>.</p>
 </h2>
 <ul>
 <li>
-<a href="notation-and-conventions.html">Notation and package
-conventions</a>:
-<code><a href="../articles/notation-and-conventions.html">vignette("notation-and-conventions", package = "RdistNN")</a></code>
-distinguishes solved GMM coefficients, local moments, Jacobians,
-covariance fields, and the overidentification statistic.</li>
+<a href="notation-and-conventions.html">Notation and
+conventions</a>: GMM fields and uncertainty scales.</li>
 <li>
-<a href="conditional-z-estimation.html">Conditional
-Z-estimation</a>:
-<code><a href="../articles/conditional-z-estimation.html">vignette("conditional-z-estimation", package = "RdistNN")</a></code>
-covers the stable NP, CATE, and supplied-theta PLQR interfaces.</li>
+<a href="conditional-z-estimation.html">Experimental PLQR</a>:
+supplied-coefficient moments.</li>
 <li>
 <a href="diagnostics-reporting.html">Diagnostics and reporting</a>:
-<code><a href="../articles/diagnostics-reporting.html">vignette("diagnostics-reporting", package = "RdistNN")</a></code>
-explains the common DNN localization diagnostics shared with the
-experimental fit.</li>
+localization diagnostics.</li>
 </ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

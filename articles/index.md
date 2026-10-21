@@ -13,16 +13,14 @@
 - [Kernel Order
   Tuning](https://JakobJuergens.github.io/RdistNN/articles/kernel-order-tuning.md):
 
-### Theory & details
+### Weights and extension APIs
 
-- [Conditional Z-Estimation with DNN
-  weights](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md):
-- [DNN weights: exact and asymptotic
-  L-statistics](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.md):
+- [DNN weights and
+  ranks](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.md):
 - [Extending RdistNN: custom distances, rank weights, and
   scores](https://JakobJuergens.github.io/RdistNN/articles/extending.md):
-- [Jackknife for Hájek-dominated generalized U-statistics
-  (overview)](https://JakobJuergens.github.io/RdistNN/articles/jackknife-gen-ustats.md):
+- [Using the rank-jackknife
+  utilities](https://JakobJuergens.github.io/RdistNN/articles/jackknife-gen-ustats.md):
 
 ### Conditional LATE and paired inference
 
@@ -33,10 +31,12 @@
 
 ### Experimental companion workflows
 
+- [Experimental PLQR: moments and coefficient
+  uncertainty](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md):
 - [Local IV-GMM
   Estimation](https://JakobJuergens.github.io/RdistNN/articles/local-iv-estimation.md):
 
 ### Paper replication
 
-- [Conditional Z-Estimation Paper
-  Replication](https://JakobJuergens.github.io/RdistNN/articles/paper-affine-replication.md):
+- [Reproduce the affine paper
+  results](https://JakobJuergens.github.io/RdistNN/articles/paper-affine-replication.md):

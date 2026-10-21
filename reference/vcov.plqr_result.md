@@ -30,9 +30,7 @@ A covariance matrix or list of covariance matrices.
 
 ## Lifecycle
 
-**Experimental.** PLQR functionality is outside the CATE and regression
-workflow focus of the initial public release. Its API and inference
-interfaces may change in later releases.
+**Experimental.** The PLQR API and inference interfaces may change.
 
 ## See also
 

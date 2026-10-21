@@ -57,6 +57,10 @@ diagnostics and candidate views.
   [`predict(`*`<np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/np_result.md)
   : Reporting and prediction for nonparametric regression results
 
+- [`nobs(`*`<np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/nobs.np_result.md)
+  [`nobs(`*`<cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/nobs.np_result.md)
+  : Number of training observations
+
 - [`print(`*`<score_diff_path>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.score_diff_path.md)
   :
 
@@ -232,10 +236,9 @@ coverage.
 
 ## Experimental — PLQR
 
-All PLQR interfaces are experimental and outside the CATE and regression
-focus of this release. The wrapper evaluates moments at supplied
-coefficients; it does not solve for local coefficients. APIs and
-inference interfaces may change.
+Experimental moments and density-backed uncertainty at supplied
+coefficients. The wrapper does not solve for local coefficients; APIs
+and inference interfaces may change.
 
 - [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md)
   : PLQR local moment evaluation and direct coefficient inference via
@@ -394,7 +397,7 @@ registries, and built-in score topics.
   Is object a `ustat_score`?
 
 - [`is_compiled()`](https://JakobJuergens.github.io/RdistNN/reference/is_compiled.md)
-  : Does a score have a compiled implementation?
+  : Does a score carry compiled-score pointer metadata?
 
 - [`register_score()`](https://JakobJuergens.github.io/RdistNN/reference/register_score.md)
   : Register a score

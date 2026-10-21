@@ -3,9 +3,11 @@
 Two facets across targets: the smallest eigenvalue of the weighted
 residualized-design Gram matrix (linear scale, guide at zero) and its
 condition number (log10 scale, dashed guides at `cond_limits`, labelled
-caution and ill-conditioned). This is the software face of the local
-design-conditioning diagnostics: a well-conditioned local Gram is what
-makes the moment evaluation (and later inversion) trustworthy.
+caution and ill-conditioned). Use these to inspect local collinearity.
+Density-backed coefficient inference additionally depends on the
+Jacobian diagnostics returned by
+[`diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/diagnostics.md);
+the Gram panel does not assess nuisance accuracy or localization bias.
 
 ## Usage
 
@@ -35,9 +37,7 @@ A ggplot object.
 
 ## Lifecycle
 
-**Experimental.** PLQR functionality is outside the CATE and regression
-workflow focus of the initial public release. Its API and inference
-interfaces may change in later releases.
+**Experimental.** The PLQR API and inference interfaces may change.
 
 ## Examples
 

@@ -16,8 +16,11 @@ jackknife_slow_rank(ranks, a, phi, normalize = TRUE)
 
   Integer matrix (T x (s+1)): for each target `t`, `ranks[t, k]` gives
   the positive 1-based index of the k-th neighbor, for
-  `k = 1, ..., s+1`. (Must exclude `t` itself if targets are a subset of
-  reference.)
+  `k = 1, ..., s+1`. Use distinct indices within each row for
+  observation deletion. A target may coincide with a reference
+  observation; self-exclusion is not required. Repeated indices follow
+  the additive convention in
+  [`jackknife_fast_rank()`](https://JakobJuergens.github.io/RdistNN/reference/jackknife_fast_rank.md).
 
 - a:
 
@@ -40,7 +43,7 @@ A list with:
 
 - theta0:
 
-  numeric length-`q` baseline aggregate
+  numeric length-`q` baseline aggregate, averaged across targets
 
 - theta_loo:
 
@@ -64,29 +67,29 @@ Works with:
 - `phi` as a numeric **matrix** (n_ref x q): row `j` equals \\\phi(j)\\.
 
 - `phi` as a **function** `function(j, t)` that returns a length-`q`
-  numeric, allowing target-dependent contributions.
+  numeric, allowing target-dependent contributions. With matrix `phi`,
+  `n_ref = nrow(phi)`. With function-valued `phi`, it is inferred as
+  `max(ranks)`.
 
 ## Examples
 
 ``` r
 set.seed(1)
 n <- 20
-p <- 3
-s <- 4
-X <- matrix(rnorm(n * p), n, p)
-# toy ranks: nearest-neighbor indices precomputed elsewhere (T x (s+1))
-# here we fake something deterministic just for the example
-ranks <- cbind(matrix(rep(1:s, each = n), n, s), s + 1L)
+s <- 3L
+X <- matrix(rnorm(n * 2), n, 2)
+wt <- weights_dnn(X, X0 = rbind(c(0, 0), c(1, 0)), k = 1L, s = s, return = "ord")
+ranks <- t(wt$ord[seq_len(s + 1L), , drop = FALSE])
 y <- rnorm(n)
 a <- rep(1, s)
 out <- jackknife_slow_rank(ranks, a, cbind(y))
 str(out)
 #> List of 3
-#>  $ theta0   : num 0.77
-#>  $ theta_loo: num [1:20, 1] -0.0162 0.594 0.4118 0.5772 0.77 ...
+#>  $ theta0   : num -0.0484
+#>  $ theta_loo: num [1:20, 1] -0.0484 -0.0484 -0.0484 -0.0484 -0.0484 ...
 #>  $ info     :List of 4
-#>   ..$ s        : int 4
-#>   ..$ T        : int 20
+#>   ..$ s        : int 3
+#>   ..$ T        : int 2
 #>   ..$ q        : int 1
 #>   ..$ normalize: logi TRUE
 ```

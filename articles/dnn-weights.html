@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>DNN weights: exact and asymptotic L-statistics • RdistNN</title>
+<title>DNN weights and ranks • RdistNN</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="DNN weights: exact and asymptotic L-statistics">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="DNN weights and ranks">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,7 +50,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>DNN weights: exact and asymptotic L-statistics</h1>
+      <h1>DNN weights and ranks</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/master/vignettes/dnn-weights.Rmd" class="external-link"><code>vignettes/dnn-weights.Rmd</code></a></small>
@@ -72,7 +72,7 @@ coefficients</li>
 </ul>
 <p>Use <code><a href="../reference/weights_dnn.html">weights_dnn()</a></code> to switch between them with a common
 interface.</p>
-<p>Two support facts matter in practice:</p>
+<p>The following support conventions matter in practice:</p>
 <ul>
 <li>exact DNN weights are computed from the <strong>full rank
 permutation</strong> for each target, not by keeping only the first
@@ -83,11 +83,10 @@ permutation</strong> for each target, not by keeping only the first
 <li>the asymptotic Beta-increment approximation is typically treated as
 a full-support rank-weight sequence.</li>
 </ul>
-<p>Fixed top-<code>k</code> DNN kernels are fully implemented for
-<code>1 &lt;= k &lt;= s</code>. The fixed-<code>k</code> extension of
-the 1-NN theory is essentially direct, but the accompanying manuscript
-currently writes out the theoretical derivations only for
-<code>k = 1</code>.</p>
+<p>Fixed top-<code>k</code> DNN kernels are implemented for
+<code>1 &lt;= k &lt;= s</code>. The accompanying <a href="https://jakobjuergens.com/research/#orthogonal-inference-conditional-z" class="external-link">paper</a>
+gives the theory for <code>k = 1</code>; accepting another
+<code>k</code> does not establish its inferential justification.</p>
 </div>
 <div class="section level2">
 <h2 id="basic-usage">Basic Usage<a class="anchor" aria-label="anchor" href="#basic-usage"></a>
@@ -116,7 +115,9 @@ currently writes out the theoretical derivations only for
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colSums</a></span><span class="op">(</span><span class="va">wt_exact</span><span class="op">$</span><span class="va">W</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colSums</a></span><span class="op">(</span><span class="va">wt_asymp</span><span class="op">$</span><span class="va">W</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 1 1 1 1</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colSums</a></span><span class="op">(</span><span class="va">wt_asymp</span><span class="op">$</span><span class="va">W</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 1 1 1 1</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="single-target-convenience">Single-target Convenience<a class="anchor" aria-label="anchor" href="#single-target-convenience"></a>
@@ -132,7 +133,8 @@ currently writes out the theoretical derivations only for
 <span>  return <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"W"</span>, <span class="st">"ranks"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">wt_single</span><span class="op">$</span><span class="va">W</span><span class="op">)</span>  <span class="co"># n x 1</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">wt_single</span><span class="op">$</span><span class="va">W</span><span class="op">)</span>  <span class="co"># n x 1</span></span>
+<span><span class="co">#&gt; [1] 150   1</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="working-with-returned-diagnostics">Working with Returned Diagnostics<a class="anchor" aria-label="anchor" href="#working-with-returned-diagnostics"></a>
@@ -163,30 +165,29 @@ currently writes out the theoretical derivations only for
 <span><span class="va">mu_exact</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/crossprod.html" class="external-link">crossprod</a></span><span class="op">(</span><span class="va">mu_signal</span>, <span class="va">wt_exact</span><span class="op">$</span><span class="va">W</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">mu_asymp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/crossprod.html" class="external-link">crossprod</a></span><span class="op">(</span><span class="va">mu_signal</span>, <span class="va">wt_asymp</span><span class="op">$</span><span class="va">W</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">mu_exact</span>, <span class="va">mu_asymp</span><span class="op">)</span></span></code></pre></div>
-<p>For moderate samples and small <code>s</code>, exact weights are
-often preferred when you want finite-sample fidelity. Asymptotic weights
-can be cheaper and are often a practical default for larger-scale
-usage.</p>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">mu_exact</span>, <span class="va">mu_asymp</span><span class="op">)</span></span>
+<span><span class="co">#&gt;        mu_exact   mu_asymp</span></span>
+<span><span class="co">#&gt; [1,] 0.10286550 0.10246327</span></span>
+<span><span class="co">#&gt; [2,] 0.11298128 0.11244305</span></span>
+<span><span class="co">#&gt; [3,] 0.21969143 0.21866562</span></span>
+<span><span class="co">#&gt; [4,] 0.04561642 0.04615826</span></span></code></pre></div>
+<p>Exact weights are the package default. Setting
+<code>method = "asymp"</code> changes the weight construction; it is
+separate from choosing a compiled or R calculation engine.</p>
 </div>
 <div class="section level2">
 <h2 id="related-articles">Related Articles<a class="anchor" aria-label="anchor" href="#related-articles"></a>
 </h2>
 <ul>
 <li>
-<a href="notation-and-conventions.html">Notation and package
-conventions</a>:
-<code><a href="../articles/notation-and-conventions.html">vignette("notation-and-conventions", package = "RdistNN")</a></code>
-distinguishes kernel order, neighbor count, support, effective size, and
-radius notation.</li>
+<a href="notation-and-conventions.html">Notation and
+conventions</a>: orders, support and effective size.</li>
 <li>
 <a href="kernel-order-tuning.html">Kernel-order tuning</a>:
-<code><a href="../articles/kernel-order-tuning.html">vignette("kernel-order-tuning", package = "RdistNN")</a></code> covers
-selection of the kernel order <code>s</code>.</li>
+sensitivity comparisons for <code>s</code>.</li>
 <li>
-<a href="extending.html">Extending RdistNN</a>:
-<code><a href="../articles/extending.html">vignette("extending", package = "RdistNN")</a></code> shows how to
-define custom distances and rank-weight maps.</li>
+<a href="extending.html">Extending RdistNN</a>: custom distances and
+rank-weight maps.</li>
 </ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

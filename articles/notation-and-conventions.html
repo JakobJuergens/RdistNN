@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,399 +59,71 @@
 
     
     
-<div class="section level2">
-<h2 id="purpose">Purpose<a class="anchor" aria-label="anchor" href="#purpose"></a>
-</h2>
-<p><code>RdistNN</code> uses the notation of its companion papers where
-that notation has a direct computational meaning. This article collects
-the translation in one place. It is intended to answer three questions
-that otherwise recur across help pages:</p>
-<ol style="list-style-type: decimal">
-<li>Which mathematical object does a package argument represent?</li>
-<li>Is the object supplied by the user, computed by the package, or
-merely retained as a diagnostic?</li>
-<li>Does an uncertainty field describe a localized moment or an
-estimated target coefficient?</li>
-</ol>
-<p>The notation is shared across several estimators, but the estimators
-do not all perform the same operation. In particular,
-<code><a href="../reference/np_dnn.html">np_dnn()</a></code> and <code><a href="../reference/cate_dnn.html">cate_dnn()</a></code> localize scalar
-signals, the experimental <code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code> evaluates a vector
-moment at a supplied coefficient, and the experimental
-<code><a href="../reference/gmm_dnn.html">gmm_dnn()</a></code> front end solves a local moment problem.</p>
-<p>This is the collection’s crosswalk and navigation article. It
-explains notation and conventions that cut across estimators; the linked
-articles remain the authoritative source for complete workflows,
-diagnostics, extension patterns, and paper-specific replication.</p>
-</div>
-<div class="section level2">
-<h2 id="how-the-vignette-collection-fits-together">How the vignette collection fits together<a class="anchor" aria-label="anchor" href="#how-the-vignette-collection-fits-together"></a>
-</h2>
-<p>The vignette collection has four complementary layers:</p>
-<ol style="list-style-type: decimal">
-<li>Start with the package tour and the common DNN localization
-machinery.</li>
-<li>Move to an estimator article for the NP, CATE and CLATE workflows or
-experimental PLQR and local IV-GMM details.</li>
-<li>Consult the diagnostics and visualization articles when interpreting
-a fit.</li>
-<li>Use the extension and replication articles only when you need those
-more specialized interfaces.</li>
-</ol>
-<p>This article sits between those layers. Return here when a symbol or
-field has different meanings in two workflows, or when it is unclear
-whether an object is an input, an intermediate quantity, a diagnostic,
-or an inferential output.</p>
-</div>
-<div class="section level2">
-<h2 id="find-information-by-task">Find information by task<a class="anchor" aria-label="anchor" href="#find-information-by-task"></a>
-</h2>
-<table class="table">
-<colgroup>
-<col width="50%">
-<col width="50%">
-</colgroup>
-<thead><tr class="header">
-<th>If you want to …</th>
-<th>Continue with …</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td>Take a first tour of weights and the main estimators</td>
-<td>
-<a href="getting-started.html">Getting started</a>:
-<code><a href="../articles/getting-started.html">vignette("getting-started", package = "RdistNN")</a></code>
-</td>
-</tr>
-<tr class="even">
-<td>See NP, CATE, and experimental PLQR calls</td>
-<td>
-<a href="conditional-z-estimation.html">Conditional
-Z-estimation</a>:
-<code><a href="../articles/conditional-z-estimation.html">vignette("conditional-z-estimation", package = "RdistNN")</a></code>
-</td>
-</tr>
-<tr class="odd">
-<td>Estimate a binary-instrument complier effect from supplied
-predictions</td>
-<td>
-<a href="conditional-late.html">Conditional LATE</a> and <a href="conditional-late-inference.html">paired inference</a>
-</td>
-</tr>
-<tr class="even">
-<td>Understand exact and asymptotic DNN weights, support, and ranks</td>
-<td>
-<a href="dnn-weights.html">DNN weights</a>:
-<code><a href="../articles/dnn-weights.html">vignette("dnn-weights", package = "RdistNN")</a></code>
-</td>
-</tr>
-<tr class="odd">
-<td>Choose <code>s</code> with the paper rule, registry, or tuning
-grid</td>
-<td>
-<a href="kernel-order-tuning.html">Kernel-order tuning</a>:
-<code><a href="../articles/kernel-order-tuning.html">vignette("kernel-order-tuning", package = "RdistNN")</a></code>
-</td>
-</tr>
-<tr class="even">
-<td>Interpret diagnostic names and their availability</td>
-<td>
-<a href="diagnostics-reporting.html">Diagnostics and reporting</a>:
-<code><a href="../articles/diagnostics-reporting.html">vignette("diagnostics-reporting", package = "RdistNN")</a></code>
-</td>
-</tr>
-<tr class="odd">
-<td>Plot fitted targets, weight geometry, and overlap</td>
-<td>
-<a href="visualising-fits.html">Visualising fits</a>:
-<code><a href="../articles/visualising-fits.html">vignette("visualising-fits", package = "RdistNN")</a></code>
-</td>
-</tr>
-<tr class="even">
-<td>Define a custom distance, rank-weight map, or score</td>
-<td>
-<a href="extending.html">Extending RdistNN</a>:
-<code><a href="../articles/extending.html">vignette("extending", package = "RdistNN")</a></code>
-</td>
-</tr>
-<tr class="odd">
-<td>Work directly with generalized U-statistic jackknife tools</td>
-<td>
-<a href="jackknife-gen-ustats.html">Jackknife generalized
-U-statistics</a>:
-<code><a href="../articles/jackknife-gen-ustats.html">vignette("jackknife-gen-ustats", package = "RdistNN")</a></code>
-</td>
-</tr>
-<tr class="even">
-<td>Use the experimental local IV-GMM workflow</td>
-<td>
-<a href="local-iv-estimation.html">Local IV estimation</a>:
-<code><a href="../articles/local-iv-estimation.html">vignette("local-iv-estimation", package = "RdistNN")</a></code>
-</td>
-</tr>
-<tr class="odd">
-<td>Reproduce the paper simulations and SIPP application</td>
-<td>
-<a href="paper-affine-replication.html">Paper replication</a>:
-<code><a href="../articles/paper-affine-replication.html">vignette("paper-affine-replication", package = "RdistNN")</a></code>
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="section level2">
-<h2 id="quick-package-to-paper-map">Quick package-to-paper map<a class="anchor" aria-label="anchor" href="#quick-package-to-paper-map"></a>
-</h2>
-<table class="table">
-<colgroup>
-<col width="33%">
-<col width="33%">
-<col width="33%">
-</colgroup>
-<thead><tr class="header">
-<th>Package name</th>
-<th>Paper notation</th>
-<th>Role</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td><code>X</code></td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mi>i</mi></msub><annotation encoding="application/x-tex">X_i</annotation></semantics></math></td>
-<td>Localization covariates for observation
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>
-</td>
-</tr>
-<tr class="even">
-<td><code>x0</code></td>
-<td>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>x</mi><annotation encoding="application/x-tex">x</annotation></semantics></math>
-or
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>x</mi><mn>0</mn></msub><annotation encoding="application/x-tex">x_0</annotation></semantics></math>
-</td>
-<td>One target point</td>
-</tr>
-<tr class="odd">
-<td><code>X0</code></td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><msub><mi>x</mi><mn>1</mn></msub><mo>,</mo><mi>…</mi><mo>,</mo><msub><mi>x</mi><mi>M</mi></msub><msup><mo stretchy="false" form="postfix">)</mo><mi>⊤</mi></msup></mrow><annotation encoding="application/x-tex">(x_1,\ldots,x_M)^\top</annotation></semantics></math></td>
-<td>Matrix of target points, one per row</td>
-</tr>
-<tr class="even">
-<td><code>s</code></td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>s</mi><mi>n</mi></msub><annotation encoding="application/x-tex">s_n</annotation></semantics></math></td>
-<td>DNN kernel order, or subsample size in the complete-statistic
-representation</td>
-</tr>
-<tr class="odd">
-<td><code>k</code></td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math></td>
-<td>Fixed nearest-neighbor count inside each size-<code>s</code>
-subsample</td>
-</tr>
-<tr class="even">
-<td><code>W</code></td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">[</mo><msub><mi>w</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">(</mo><msub><mi>x</mi><mi>j</mi></msub><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">[w_i(x_j)]</annotation></semantics></math></td>
-<td>Observation-by-target DNN weight matrix</td>
-</tr>
-<tr class="odd">
-<td>
-<code>n_eff</code> / <code>neff</code> / <code>ess</code>
-</td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>n</mi><mrow><mi mathvariant="normal">e</mi><mi mathvariant="normal">f</mi><mi mathvariant="normal">f</mi></mrow></msub><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">n_{\mathrm{eff}}(x)</annotation></semantics></math></td>
-<td>Effective local sample size
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi>/</mi><msub><mo>∑</mo><mi>i</mi></msub><msub><mi>w</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">(</mo><mi>x</mi><msup><mo stretchy="false" form="postfix">)</mo><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">1/\sum_i w_i(x)^2</annotation></semantics></math>
-</td>
-</tr>
-<tr class="even">
-<td><code>lambda</code></td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>λ</mi><mi>s</mi></msub><annotation encoding="application/x-tex">\lambda_s</annotation></semantics></math></td>
-<td>Finite-sample multiplier in the paper tuning rule for
-<code>s</code>
-</td>
-</tr>
-<tr class="odd">
-<td><code>theta_eval</code></td>
-<td>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>θ</mi><annotation encoding="application/x-tex">\theta</annotation></semantics></math>
-at which
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo>;</mo><mi>θ</mi><mo>,</mo><mi>η</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">m(x;\theta,\eta)</annotation></semantics></math>
-is evaluated</td>
-<td>Supplied PLQR coefficient; not solved for by
-<code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code>
-</td>
-</tr>
-<tr class="even">
-<td><code>theta</code></td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>θ</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\theta(x)</annotation></semantics></math></td>
-<td>Target coefficient; supplied in PLQR and solved in experimental
-GMM</td>
-</tr>
-<tr class="odd">
-<td><code>g</code></td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>g</mi><mn>0</mn></msub><mo stretchy="false" form="prefix">(</mo><mi>U</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">g_0(U)</annotation></semantics></math></td>
-<td>PLQR nonparametric shape nuisance</td>
-</tr>
-<tr class="even">
-<td><code>mD</code></td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>m</mi><mi>D</mi></msub><mo stretchy="false" form="prefix">(</mo><mi>U</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>𝔼</mi><mo stretchy="false" form="prefix">[</mo><mi>D</mi><mo>∣</mo><mi>U</mi><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">m_D(U)=\mathbb E[D\mid U]</annotation></semantics></math></td>
-<td>PLQR residualizing nuisance</td>
-</tr>
-<tr class="odd">
-<td><code>density</code></td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>q</mi><mrow><mn>0</mn><mo>,</mo><mi>x</mi></mrow></msub><mo stretchy="false" form="prefix">(</mo><mi>D</mi><mo>,</mo><mi>Z</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">q_{0,x}(D,Z)</annotation></semantics></math></td>
-<td>Threshold-density input for the PLQR Jacobian</td>
-</tr>
-<tr class="even">
-<td><code>score</code></td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>ψ</mi><mi>i</mi></msub><annotation encoding="application/x-tex">\psi_i</annotation></semantics></math></td>
-<td>Observation-level contribution before localization</td>
-</tr>
-<tr class="odd">
-<td><code>moment</code></td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mo>∑</mo><mi>i</mi></msub><msub><mi>w</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><msub><mi>ψ</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">\sum_i w_i(x)\psi_i</annotation></semantics></math></td>
-<td>Localized empirical moment</td>
-</tr>
-</tbody>
-</table>
-<p>Names vary slightly when R object conventions require it. For
-example, <code>plqr_result</code> uses <code>neff</code>, whereas a
-requested common weight diagnostic is called <code>ess</code>. These
-fields represent the same inverse-Herfindahl effective sample size when
-the weight columns are normalized.</p>
-</div>
+<p>This is a guide to package arguments, array shapes and result fields.
+Start with <a href="getting-started.html">Getting started</a> for an
+analysis you can run. For the statistical setup, assumptions and
+derivations, see the accompanying <a href="https://jakobjuergens.com/research/#orthogonal-inference-conditional-z" class="external-link">paper</a>.</p>
 <div class="section level2">
 <h2 id="localization-and-dnn-conventions">Localization and DNN conventions<a class="anchor" aria-label="anchor" href="#localization-and-dnn-conventions"></a>
 </h2>
-<div class="section level3">
-<h3 id="training-covariates-and-targets">Training covariates and targets<a class="anchor" aria-label="anchor" href="#training-covariates-and-targets"></a>
-</h3>
-<p><code>X</code> is the
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>×</mo><mi>p</mi></mrow><annotation encoding="application/x-tex">n\times p</annotation></semantics></math>
-matrix used to rank observations around a target. The package uses
-<code>x0</code> for one
-length-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>
-target and <code>X0</code> for an
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi><mo>×</mo><mi>p</mi></mrow><annotation encoding="application/x-tex">M\times p</annotation></semantics></math>
-matrix of targets. Supply exactly one of <code>x0</code> and
-<code>X0</code>. Internally, both are resolved to a target matrix whose
-rows index evaluation points.</p>
-<p>In the data-frame interface, <code>x_cols</code> selects the columns
-that form <code>X</code>. The values in <code>x0</code> or rows of
-<code>X0</code> must follow that same column order. When column names
-are available, fitted objects retain them in the returned
-<code>x0</code> matrix.</p>
-<p>The localization state
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>X</mi><annotation encoding="application/x-tex">X</annotation></semantics></math>
-need not equal the full adjustment state used by a nuisance function.
-The conditional Z-estimation paper often writes
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>U</mi><mo>=</mo><mo stretchy="false" form="prefix">(</mo><mi>X</mi><mo>,</mo><mi>Z</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">U=(X,Z)</annotation></semantics></math>.
-The package localizes on <code>X</code>, while supplied nuisances such
-as PLQR <code>g</code> and <code>mD</code> may have been estimated using
-the larger state
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>U</mi><annotation encoding="application/x-tex">U</annotation></semantics></math>.</p>
-</div>
-<div class="section level3">
-<h3 id="numerical-geometry-and-covariance">Numerical geometry and covariance<a class="anchor" aria-label="anchor" href="#numerical-geometry-and-covariance"></a>
-</h3>
-<p>Mahalanobis distance fits a whitening factor by SVD of the
-binary-normalized, centered training design. It retains singular values
-greater than <code>max(n,p) * 2^-52 * largest_singular_value</code>,
-avoiding an explicit covariance inverse. Null directions contribute zero
-distance. Fitted geometry is reused for new targets and frozen-geometry
-deletion calculations; legacy saved inverse contexts keep their original
-metric. See <code><a href="../reference/distance_mahalanobis.html">?distance_mahalanobis</a></code>.</p>
-<p>Shared covariance helpers normalize exceptional columns before
-centering or squaring and restore cross-products in binary steps.
-Representable extreme variances remain available. An unrepresentable
-nonzero variance raises a rescaling error instead of reporting infinite
-or false-zero uncertainty; paired ratios retain per-target
-numerical-failure statuses. Genuine constants still have zero variance.
-These numeric safeguards do not change inference conditions or establish
-negligible localization bias.</p>
-<p>Weighted signal means and rank-weight normalization use compensated
-summation. The deletion engines retain corrections through the final
-prefix/suffix merge; rounding each cumulative result first would lose
-some of that protection. These are double-precision safeguards, shared
-by native and fallback paths, without changes to estimator scores or
-covariance definitions.</p>
-</div>
+<p><code>X</code> is an <code>n</code>-by-<code>p</code> matrix of
+localization covariates. Use <code>x0</code> for a length-<code>p</code>
+profile or <code>X0</code> for an <code>m</code>-by-<code>p</code>
+matrix with one profile per row. Supply exactly one target argument. In
+a data-frame call, <code>x_cols</code> selects and orders the
+coordinates; targets must follow that order.</p>
+<p>Reporting coordinates can be a subset of the covariates used by an
+external nuisance learner. Keep nuisance predictions aligned with the
+training rows, even if the learner used additional covariates.</p>
 <div class="section level3">
 <h3 id="kernel-order-s-and-neighbor-count-k">Kernel order <code>s</code> and neighbor count <code>k</code><a class="anchor" aria-label="anchor" href="#kernel-order-s-and-neighbor-count-k"></a>
 </h3>
-<p>The two integer controls have different jobs:</p>
 <ul>
 <li>
-<code>s</code> is the DNN kernel order. In the complete-statistic
-interpretation, it is the subsample size over which the nearest-neighbor
-kernel is averaged.</li>
+<code>s</code> is the subsample order. Larger <code>s</code> gives
+tighter localization.</li>
 <li>
-<code>k</code> is the number of nearest observations selected
-<em>inside each size-<code>s</code> subsample</em>. The companion
-paper’s stated theory uses the default <code>k = 1L</code>.</li>
+<code>k</code> counts neighbors inside each subsample; the default
+is <code>k = 1</code>.</li>
+<li>
+<code>s</code> does not count retained full-sample neighbors. Exact
+weight support reaches rank <code>n - s + k</code>
+(<code>n - s + 1</code> at the default <code>k = 1</code>).</li>
+<li>Jackknife uncertainty needs <code>s &lt; n</code>; estimate-only
+fits can use <code>s = n</code>.</li>
 </ul>
-<p>Consequently, <code>s</code> is not an ordinary request to keep the
-nearest <code>s</code> observations. Exact DNN weights can have support
-beyond rank <code>s</code>; for fixed <code>k</code>, their
-finite-sample support reaches rank <code>n - s + k</code>. The optional
-<code>neighbors</code> return records the first <code>k</code>
-observations used inside a subsample, not the complete support of the
-averaged DNN weight vector.</p>
-<p>When <code>s</code> is omitted, <code><a href="../reference/tuning_dnn_paper.html">tuning_dnn_paper()</a></code>
-supplies the paper rule</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">⌊</mo><msub><mi>λ</mi><mi>s</mi></msub><msup><mi>n</mi><mrow><mo stretchy="false" form="prefix">(</mo><msub><mi>k</mi><mi>x</mi></msub><mo>+</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo><mi>/</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>k</mi><mi>x</mi></msub><mo>+</mo><mn>2</mn><mo stretchy="false" form="postfix">)</mo></mrow></msup><mo stretchy="true" form="postfix">⌋</mo></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">
-s = \left\lfloor
-\lambda_s n^{(k_x+1)/(k_x+2)}
-\right\rfloor,
-</annotation></semantics></math></p>
-<p>with package argument <code>lambda</code>, default value
-<code>0.4</code>, and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>k</mi><mi>x</mi></msub><mo>=</mo><mrow><mi mathvariant="normal">dim</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><mi>X</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">k_x=\dim(X)</annotation></semantics></math>
-unless <code>kx_override</code> is set. The argument is called
-<code>lambda</code> rather than <code>kappa</code> so it does not
-collide with unrelated uses of
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>κ</mi><annotation encoding="application/x-tex">\kappa</annotation></semantics></math>
-in the theory.</p>
+<p>When omitted, <code>s</code> follows <code><a href="../reference/tuning_dnn_paper.html">tuning_dnn_paper()</a></code>
+with multiplier <code>lambda = 0.4</code>. <a href="kernel-order-tuning.html">Kernel-order tuning</a> explains
+explicit orders and candidate grids. <a href="dnn-weights.html">DNN
+weights</a> covers rank and weight output. The paper gives the
+theoretical scope of the default construction.</p>
 </div>
 <div class="section level3">
 <h3 id="weights-and-effective-sample-size">Weights and effective sample size<a class="anchor" aria-label="anchor" href="#weights-and-effective-sample-size"></a>
 </h3>
-<p>For one target, let
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>w</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">w_i(x)</annotation></semantics></math>
-denote the normalized DNN weight on observation
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>.
-For multiple targets, <code>W[i, j]</code> is
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>w</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">(</mo><msub><mi>x</mi><mi>j</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">w_i(x_j)</annotation></semantics></math>.
-With normalized weights,</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>n</mi><mrow><mi mathvariant="normal">e</mi><mi mathvariant="normal">f</mi><mi mathvariant="normal">f</mi></mrow></msub><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><msup><mrow><mo stretchy="true" form="prefix">{</mo><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>w</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">(</mo><mi>x</mi><msup><mo stretchy="false" form="postfix">)</mo><mn>2</mn></msup><mo stretchy="true" form="postfix">}</mo></mrow><mrow><mi>−</mi><mn>1</mn></mrow></msup><mi>.</mi></mrow><annotation encoding="application/x-tex">
-n_{\mathrm{eff}}(x)
-=
-\left\{\sum_{i=1}^n w_i(x)^2\right\}^{-1}.
-</annotation></semantics></math></p>
-<p>The same quantity appears under three public names:</p>
-<ul>
-<li>
-<code>ess</code> when requested as a common weight extra;</li>
-<li>
-<code>neff</code> in PLQR and GMM result objects;</li>
-<li>
-<code>n_eff</code> in tidy diagnostics and paper-facing
-reporting.</li>
-</ul>
-<p>It is a weight-concentration measure, not a count of nonzero weights.
-Physical radius diagnostics answer a different question: how far from
-<code>x0</code> one must move to collect a specified fraction of weight
-mass.</p>
-<p>Continue with <a href="dnn-weights.html">DNN weights</a> for the
-weight algorithms and returned rank diagnostics, or <a href="kernel-order-tuning.html">kernel-order tuning</a> for the tuning
-rule and candidate-grid workflow.</p>
+<p><code>W</code> has observations in rows and targets in columns. For
+normalized weights, <code>ess</code>, <code>neff</code> and diagnostic
+<code>n_eff</code> all mean <code>1 / sum(w^2)</code>. This measures
+weight concentration; it is not a count of nonzero weights or a distance
+radius. For NP/TDNN and CATE, <code>nobs(fit)</code> instead counts
+training observations. TDNN can have signed weights, so positive-weight
+overlap interpretations do not carry over to it.</p>
+</div>
+<div class="section level3">
+<h3 id="numerical-geometry-and-covariance">Numerical geometry and covariance<a class="anchor" aria-label="anchor" href="#numerical-geometry-and-covariance"></a>
+</h3>
+<p>Saved prediction reuses the fitted training geometry. Fast jackknife
+calculations also freeze it; legacy NP/TDNN/CATE
+<code>jackknife = "loo"</code> refits sample-dependent geometry for each
+deletion. The two calculations can differ. See
+<code><a href="../reference/distance_mahalanobis.html">?distance_mahalanobis</a></code> for the fitted metric and
+rank-deficient cases. Numerical engine details belong to the maintainer
+reference linked from <a href="https://github.com/JakobJuergens/RdistNN/blob/master/CONTRIBUTING.md" class="external-link">CONTRIBUTING</a>.</p>
 </div>
 </div>
 <div class="section level2">
 <h2 id="matrix-and-data-frame-interfaces">Matrix and data-frame interfaces<a class="anchor" aria-label="anchor" href="#matrix-and-data-frame-interfaces"></a>
 </h2>
-<p>High-level estimators support two outer interfaces. The data-frame
-interface is usually easier to read; the matrix interface is useful in
-programmatic code. After validation, both resolve to the same numeric
-matrices and vectors.</p>
 <table class="table">
 <colgroup>
 <col width="33%">
@@ -459,20 +131,20 @@ matrices and vectors.</p>
 <col width="33%">
 </colgroup>
 <thead><tr class="header">
-<th>Concept</th>
-<th>Data-frame interface</th>
-<th>Matrix interface</th>
+<th>Quantity</th>
+<th>Data-frame input</th>
+<th>Matrix/vector input</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
 <td>Localization covariates</td>
 <td>
-<code>data</code> plus <code>x_cols</code>
+<code>data</code>, <code>x_cols</code>
 </td>
 <td><code>X</code></td>
 </tr>
 <tr class="even">
-<td>One or many targets</td>
+<td>Reporting profiles</td>
 <td>
 <code>x0</code> or <code>X0</code>
 </td>
@@ -481,7 +153,7 @@ matrices and vectors.</p>
 </td>
 </tr>
 <tr class="odd">
-<td>NP outcome</td>
+<td>Regression outcome</td>
 <td>
 <code>y_col</code> or <code>y</code>
 </td>
@@ -510,782 +182,300 @@ matrices and vectors.</p>
 </tr>
 </tbody>
 </table>
-<p>Tibbles enter through the data-frame route; there is no separate
-tibble API. The package does not guess columns through nonstandard
-evaluation. Column names and their order are explicit parts of the
-call.</p>
+<p>Tibbles use the data-frame route. Column selection is explicit; the
+package does not guess variable names. These equivalent calls use a data
+frame with numeric <code>X1</code>, <code>X2</code> and <code>Y</code>
+columns:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Data-frame grammar</span></span>
-<span><span class="fu"><a href="../reference/np_dnn.html">np_dnn</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">df</span>, x_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X1"</span>, <span class="st">"X2"</span><span class="op">)</span>, y_col <span class="op">=</span> <span class="st">"Y"</span>, x0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Equivalent matrix grammar</span></span>
-<span><span class="fu"><a href="../reference/np_dnn.html">np_dnn</a></span><span class="op">(</span>X <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">df</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X1"</span>, <span class="st">"X2"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span>, Y <span class="op">=</span> <span class="va">df</span><span class="op">$</span><span class="va">Y</span>, x0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>Continue with <a href="getting-started.html">Getting started</a> for
-a compact tour of the preferred interface, and <a href="conditional-z-estimation.html">Conditional Z-estimation</a> for
-side-by-side estimator calls.</p>
+<code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/np_demo_data.html">np_demo_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">60</span>, p <span class="op">=</span> <span class="fl">2</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">$</span><span class="va">data</span></span>
+<span><span class="va">fit_table</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/np_dnn.html">np_dnn</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">df</span>, x_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X1"</span>, <span class="st">"X2"</span><span class="op">)</span>, y_col <span class="op">=</span> <span class="st">"Y"</span>, x0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">fit_matrix</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/np_dnn.html">np_dnn</a></span><span class="op">(</span>X <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">df</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X1"</span>, <span class="st">"X2"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span>, Y <span class="op">=</span> <span class="va">df</span><span class="op">$</span><span class="va">Y</span>, x0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">fit_table</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">fit_matrix</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="estimator-targets-and-signals">Estimator targets and signals<a class="anchor" aria-label="anchor" href="#estimator-targets-and-signals"></a>
 </h2>
-<p>The high-level wrappers localize with DNN weights, but they consume
-and return different statistical objects.</p>
 <table class="table">
 <colgroup>
-<col width="25%">
-<col width="25%">
-<col width="25%">
-<col width="25%">
+<col width="33%">
+<col width="33%">
+<col width="33%">
 </colgroup>
 <thead><tr class="header">
-<th>Wrapper</th>
-<th>Localized input</th>
-<th>Main returned target</th>
-<th>Interpretation</th>
+<th>Function</th>
+<th>Supplied input beyond covariates/targets</th>
+<th>Main result</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
 <td><code><a href="../reference/np_dnn.html">np_dnn()</a></code></td>
-<td>Outcome or scalar signal
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Y</mi><mi>i</mi></msub><annotation encoding="application/x-tex">Y_i</annotation></semantics></math>
-</td>
-<td><code>mu</code></td>
-<td>Local conditional mean</td>
+<td>Outcome or scalar signal</td>
+<td>
+<code>mu</code>: conditional mean</td>
 </tr>
 <tr class="even">
+<td><code><a href="../reference/np_tdnn.html">np_tdnn()</a></code></td>
+<td>Outcome and two orders <code>s1 &lt; s2</code>
+</td>
+<td>
+<code>mu</code>: signed two-scale regression estimate</td>
+</tr>
+<tr class="odd">
 <td><code><a href="../reference/cate_dnn.html">cate_dnn()</a></code></td>
-<td>CATE pseudo-outcome
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>ψ</mi><mi>i</mi></msub><annotation encoding="application/x-tex">\psi_i</annotation></semantics></math>
-</td>
-<td><code>tau</code></td>
-<td>Local conditional average treatment effect</td>
-</tr>
-<tr class="odd">
-<td><code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code></td>
-<td>Vector PLQR score
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ψ</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">(</mo><msub><mi>θ</mi><mrow><mi mathvariant="normal">e</mi><mi mathvariant="normal">v</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">l</mi></mrow></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\psi_i(\theta_{\mathrm{eval}})</annotation></semantics></math>
-</td>
+<td>AIPW nuisance predictions or supplied pseudo-outcome</td>
 <td>
-<code>moment</code>; supplied <code>theta</code>
-</td>
-<td>Moment evaluation at a user-supplied coefficient</td>
+<code>tau</code>: conditional treatment effect</td>
 </tr>
 <tr class="even">
-<td><code><a href="../reference/gmm_dnn.html">gmm_dnn()</a></code></td>
-<td>Model-defined vector moments
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>g</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">(</mo><mi>θ</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">g_i(\theta)</annotation></semantics></math>
-</td>
-<td>solved <code>theta</code>
-</td>
-<td>Experimental local GMM estimate</td>
-</tr>
-<tr class="odd">
 <td><code><a href="../reference/clate_dnn.html">clate_dnn()</a></code></td>
-<td>Paired augmented reduced-form and first-stage signals</td>
-<td>
-<code>theta</code>, <code>components</code>
-</td>
-<td>Conditional complier effect under the IV assumptions</td>
-</tr>
-<tr class="even">
-<td><code><a href="../reference/affine_ratio_dnn.html">affine_ratio_dnn()</a></code></td>
-<td>Two supplied scalar signals</td>
-<td>
-<code>theta</code>, <code>components</code>
-</td>
-<td>Ratio of common-weight local averages</td>
-</tr>
-</tbody>
-</table>
-<p>The word <strong>score</strong> means an observation-level
-contribution. The word <strong>moment</strong> means its DNN-weighted
-average at a target. For scalar NP and CATE workflows, the weighted
-score is already the target estimate. For vector conditional moments, a
-localized moment must additionally be connected to a coefficient through
-evaluation or root solving.</p>
-</div>
-<div class="section level2">
-<h2 id="where-package-objects-come-from">Where package objects come from<a class="anchor" aria-label="anchor" href="#where-package-objects-come-from"></a>
-</h2>
-<p>Separating supplied quantities from computed quantities prevents
-several common misreadings of a fitted object. The table describes the
-high-level wrappers; lower-level weight and score tools expose more of
-the intermediate machinery.</p>
-<table class="table">
-<colgroup>
-<col width="25%">
-<col width="25%">
-<col width="25%">
-<col width="25%">
-</colgroup>
-<thead><tr class="header">
-<th>Wrapper</th>
-<th>Supplied by the user</th>
-<th>Computed by <code>RdistNN</code>
-</th>
-<th>Main retained output</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td><code><a href="../reference/np_dnn.html">np_dnn()</a></code></td>
-<td>
-<code>X</code>, targets, and an outcome or signal</td>
-<td>DNN weights and their weighted mean</td>
-<td>
-<code>mu</code>, and <code>se</code> when requested</td>
-</tr>
-<tr class="even">
-<td><code><a href="../reference/cate_dnn.html">cate_dnn()</a></code></td>
-<td>
-<code>X</code>, targets, and either nuisance evaluations or a
-pseudo-outcome</td>
-<td>CATE signal when needed, then its DNN localization</td>
-<td>
-<code>tau</code>, and <code>se</code> when requested</td>
-</tr>
-<tr class="odd">
-<td><code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code></td>
-<td>
-<code>X</code>, targets, <code>D</code>, <code>theta_eval</code>,
-<code>g</code>, <code>mD</code>, and optionally
-<code>density</code>
-</td>
-<td>Scores and their local moment; Jacobian and sandwich pieces when
-inputs permit</td>
-<td>
-<code>moment</code>; supplied <code>theta</code>; separate moment-
-and coefficient-scale uncertainty fields</td>
-</tr>
-<tr class="even">
-<td><code><a href="../reference/gmm_dnn.html">gmm_dnn()</a></code></td>
-<td>
-<code>X</code>, targets, a <code>gmm_model</code>, observed data,
-and model-specific nuisances</td>
-<td>Local moments, two-step root solving, weighting matrix, and sandwich
-pieces</td>
-<td>solved <code>theta</code>, <code>se</code>, <code>vcov</code>, and
-overidentification diagnostics</td>
-</tr>
-<tr class="odd">
-<td><code><a href="../reference/clate_dnn.html">clate_dnn()</a></code></td>
-<td>
-<code>X</code>, targets, <code>Y,D,A</code> and five nuisance
+<td>Outcome, binary instrument/treatment and five nuisance
 predictions</td>
-<td>Both augmented signals, paired local averages and frozen
-covariance</td>
 <td>
-<code>components</code>, <code>theta</code>, <code>se</code>,
-per-target <code>status</code>
+<code>theta</code>: conditional complier effect; paired
+<code>components</code>
 </td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code><a href="../reference/affine_ratio_dnn.html">affine_ratio_dnn()</a></code></td>
+<td>Numerator and denominator signals</td>
 <td>
-<code>X</code>, targets, numerator and denominator signals</td>
-<td>Common-weight averages, ratio and paired frozen covariance</td>
-<td>
-<code>components</code>, <code>theta</code>, <code>se</code>,
-per-target <code>status</code>
+<code>theta</code>: ratio of local averages</td>
+</tr>
+<tr class="even">
+<td><code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code></td>
+<td>Regressors, nuisance predictions and <code>theta_eval</code>
 </td>
+<td>
+<code>moment</code> at the supplied coefficient</td>
+</tr>
+<tr class="odd">
+<td><code><a href="../reference/gmm_dnn.html">gmm_dnn()</a></code></td>
+<td>A moment model and its data/nuisances</td>
+<td>Solved <code>theta</code> and convergence diagnostics</td>
 </tr>
 </tbody>
 </table>
-<p>The wrappers do not fit CATE, CLATE, PLQR, or built-in IV-GMM
-nuisances. Those functions receive already evaluated nuisance vectors or
-matrices. Also note the asymmetry in <code>theta</code>:
-<code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code> repeats a supplied evaluation value, whereas
-<code><a href="../reference/gmm_dnn.html">gmm_dnn()</a></code> estimates a local root.</p>
-<p>Continue with <a href="conditional-z-estimation.html">Conditional
-Z-estimation</a> for the estimator workflows, or <a href="extending.html">Extending RdistNN</a> for the lower-level
-distance, rank-weight, and score layers.</p>
-</div>
-<div class="section level2">
-<h2 id="names-that-change-meaning-across-estimators">Names that change meaning across estimators<a class="anchor" aria-label="anchor" href="#names-that-change-meaning-across-estimators"></a>
-</h2>
-<p>Some short names are conventional within a model but are not
-package-wide synonyms. Interpret them together with the fitted-object
-class.</p>
-<table class="table">
-<colgroup>
-<col width="33%">
-<col width="33%">
-<col width="33%">
-</colgroup>
-<thead><tr class="header">
-<th>Name</th>
-<th>Meaning in one context</th>
-<th>Meaning elsewhere or important distinction</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td><code>theta</code></td>
-<td>Supplied PLQR evaluation coefficient, copied into a
-<code>plqr_result</code>
-</td>
-<td>A solved local GMM coefficient, or a paired local ratio in an
-affine-ratio/CLATE result</td>
-</tr>
-<tr class="even">
-<td><code>g</code></td>
-<td>The PLQR nonparametric shape nuisance
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>g</mi><mn>0</mn></msub><mo stretchy="false" form="prefix">(</mo><mi>U</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">g_0(U)</annotation></semantics></math>
-</td>
-<td>
-<code>g_obs</code> is the observation-by-moment contribution matrix
-in GMM, not a nuisance named <code>g</code>
-</td>
-</tr>
-<tr class="odd">
-<td>
-<code>J</code> / <code>jacobian</code>
-</td>
-<td>
-<code>jacobian</code> is the derivative or bread matrix used for
-coefficient inference</td>
-<td>
-<code>J</code> in <code>gmm_result</code> is the scalar local
-overidentification statistic</td>
-</tr>
-<tr class="even">
-<td><code>se</code></td>
-<td>Target-scale standard error for NP, CATE, and GMM results</td>
-<td>PLQR uses <code>moment_se</code> and <code>theta_se</code> so the
-inferential scale is explicit</td>
-</tr>
-<tr class="odd">
-<td>
-<code>ess</code> / <code>neff</code> / <code>n_eff</code>
-</td>
-<td>Three public spellings of inverse weight concentration</td>
-<td>None is a physical neighbor count or a radius diagnostic</td>
-</tr>
-<tr class="even">
-<td>
-<code>score</code> / <code>moment</code>
-</td>
-<td>An observation-level contribution versus its localized weighted
-average</td>
-<td>For scalar mean/CATE estimation the average is the target; for
-vector Z-estimation it may still require evaluation or solving</td>
-</tr>
-</tbody>
-</table>
+<p>A <strong>score</strong> is an observation-level contribution. A
+<strong>moment</strong> is its local weighted average. The experimental
+PLQR wrapper evaluates a moment; it does not solve for a coefficient.
+Experimental GMM does solve a moment problem.</p>
 </div>
 <div class="section level2">
 <h2 id="cate-nuisance-conventions">CATE nuisance conventions<a class="anchor" aria-label="anchor" href="#cate-nuisance-conventions"></a>
 </h2>
-<p><code><a href="../reference/cate_dnn.html">cate_dnn()</a></code> accepts one of two signal specifications.</p>
-<div class="section level3">
-<h3 id="full-aipw-signal">Full AIPW signal<a class="anchor" aria-label="anchor" href="#full-aipw-signal"></a>
-</h3>
-<p>With outcome nuisances
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>m</mi><mi>d</mi></msub><mo stretchy="false" form="prefix">(</mo><mi>u</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>𝔼</mi><mo stretchy="false" form="prefix">[</mo><mi>Y</mi><mo>∣</mo><mi>D</mi><mo>=</mo><mi>d</mi><mo>,</mo><mi>U</mi><mo>=</mo><mi>u</mi><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">m_d(u)=\mathbb E[Y\mid D=d,U=u]</annotation></semantics></math>
-and propensity
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>e</mi><mo stretchy="false" form="prefix">(</mo><mi>u</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mrow><mi mathvariant="normal">Pr</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><mi>D</mi><mo>=</mo><mn>1</mn><mo>∣</mo><mi>U</mi><mo>=</mo><mi>u</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">e(u)=\Pr(D=1\mid U=u)</annotation></semantics></math>,
-the package constructs</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ψ</mi><mi>i</mi></msub><mo>=</mo><msub><mi>m</mi><mn>1</mn></msub><mo stretchy="false" form="prefix">(</mo><msub><mi>U</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo><mo>−</mo><msub><mi>m</mi><mn>0</mn></msub><mo stretchy="false" form="prefix">(</mo><msub><mi>U</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo><mo>+</mo><mfrac><mrow><msub><mi>D</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">{</mo><msub><mi>Y</mi><mi>i</mi></msub><mo>−</mo><msub><mi>m</mi><mn>1</mn></msub><mo stretchy="false" form="prefix">(</mo><msub><mi>U</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="postfix">}</mo></mrow><mrow><mi>e</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>U</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow></mfrac><mo>−</mo><mfrac><mrow><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>D</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="prefix">{</mo><msub><mi>Y</mi><mi>i</mi></msub><mo>−</mo><msub><mi>m</mi><mn>0</mn></msub><mo stretchy="false" form="prefix">(</mo><msub><mi>U</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="postfix">}</mo></mrow><mrow><mn>1</mn><mo>−</mo><mi>e</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>U</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow></mfrac><mi>.</mi></mrow><annotation encoding="application/x-tex">
-\psi_i
-=
-m_1(U_i)-m_0(U_i)
-+\frac{D_i\{Y_i-m_1(U_i)\}}{e(U_i)}
--\frac{(1-D_i)\{Y_i-m_0(U_i)\}}{1-e(U_i)}.
-</annotation></semantics></math></p>
-<p>The data-frame arguments are <code>m0_col</code>,
-<code>m1_col</code>, and <code>e_col</code>, together with
-<code>y_col</code> and <code>t_col</code>.</p>
-<p>The normalized Robinson pseudo-outcome is not implemented because it
-falls outside the accompanying paper’s theoretical results.</p>
-</div>
-<div class="section level3">
-<h3 id="precomputed-pseudo-outcome">Precomputed pseudo-outcome<a class="anchor" aria-label="anchor" href="#precomputed-pseudo-outcome"></a>
-</h3>
-<p>Users may instead provide <code>pseudo_outcome</code> directly. This
-is the only CATE signal route in the matrix interface. It is also the
-cleanest route when first-stage estimation is managed by another package
-or a cross-fitting pipeline.</p>
-<p>The nuisance functions are supplied externally;
-<code><a href="../reference/cate_dnn.html">cate_dnn()</a></code> does not fit outcome or propensity models. It
-validates and clips supplied propensity values using <code>clip</code>,
-constructs the requested signal, and localizes that signal. AIPW
-orthogonality does not by itself certify the stability of an arbitrary
-same-sample nuisance learner.</p>
-<p>Continue with <a href="conditional-z-estimation.html">Conditional
-Z-estimation</a> for a worked CATE fit. For the paper-specific
-data-generating process and Monte Carlo harness, use <a href="paper-affine-replication.html">Paper replication</a>.</p>
-</div>
+<p>For AIPW, supply <code>y_col</code>, <code>t_col</code>,
+<code>m0_col</code>, <code>m1_col</code> and <code>e_col</code>:
+outcome, binary treatment, control mean, treated mean and treatment
+propensity. Alternatively supply <code>pseudo_outcome</code>, which is
+used unchanged and is the CATE route for matrix inputs. Nuisance models
+are fitted outside the package.</p>
+<p>Propensities must be finite and in <code>[0, 1]</code>. The AIPW
+route clips them to <code>[clip, 1 - clip]</code>, with default
+<code>clip = 1e-8</code>; clipping does not establish overlap. A
+supplied signal alone cannot supply treatment-overlap diagnostics.
+Earlier pooled-mean <code>m_col</code> inputs have been removed; both
+arm means are required for AIPW. See the <a href="getting-started.html#migrating-earlier-cate-inputs">migration
+guidance</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="clate-conventions">CLATE conventions<a class="anchor" aria-label="anchor" href="#clate-conventions"></a>
 </h2>
-<p>CLATE uses <code>A</code> for the binary instrument and
-<code>D</code> for binary treatment. Reporting uses <code>X</code>;
-nuisance predictions adjust for all pre-instrument variables in
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi><mo>=</mo><mo stretchy="false" form="prefix">(</mo><mi>X</mi><mo>,</mo><mi>Z</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">V=(X,Z)</annotation></semantics></math>.
-<code>Z</code> denotes additional adjustment covariates in this
-notation. The five predictions <code>e,m_y0,m_y1,m_d0,m_d1</code> are
-instrument propensity and outcome/treatment means indexed by
-<strong>instrument arm</strong>. <code>one_sided = TRUE</code>
-explicitly selects
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo stretchy="false" form="prefix">(</mo><mn>0</mn><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">D(0)=0</annotation></semantics></math>,
-permitting <code>m_d0 = NULL</code>. The observed check
-<code>D &lt;= A</code> does not establish that structural
-restriction.</p>
-<p><code><a href="../reference/iv_augmented_signals.html">iv_augmented_signals()</a></code> returns <code>phi_y</code> and
-<code>phi_d</code>. In the affine score
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi><mi>θ</mi><mo>+</mo><mi>b</mi></mrow><annotation encoding="application/x-tex">B\theta+b</annotation></semantics></math>,
-CLATE has
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi><mo>=</mo><msub><mi>ϕ</mi><mi>D</mi></msub></mrow><annotation encoding="application/x-tex">B=\phi_D</annotation></semantics></math>
-and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>b</mi><mo>=</mo><mi>−</mi><msub><mi>ϕ</mi><mi>Y</mi></msub></mrow><annotation encoding="application/x-tex">b=-\phi_Y</annotation></semantics></math>.
-The fitted solution is the ratio of their DNN-weighted averages.
-Individual augmented denominators may be negative; they are not
-compliance indicators and are not clipped. Ordinary residualized IV can
-introduce different stratum weights.</p>
-<table class="table">
-<colgroup>
-<col width="50%">
-<col width="50%">
-</colgroup>
-<thead><tr class="header">
-<th>Field</th>
-<th>Scale or convention</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td><code>components</code></td>
-<td>Target-by-two matrix with <code>numerator</code>,
-<code>denominator</code> columns</td>
-</tr>
-<tr class="even">
-<td><code>component_vcov[[j]]</code></td>
-<td>Paired 2-by-2 estimator covariance</td>
-</tr>
-<tr class="odd">
-<td><code>theta_vcov[[j]]</code></td>
-<td>1-by-1 ratio variance, already on the estimator scale</td>
-</tr>
-<tr class="even">
-<td><code>theta_omega[[j]]</code></td>
-<td><code>neff[j] * theta_vcov[[j]]</code></td>
-</tr>
-<tr class="odd">
-<td><code>se[j]</code></td>
-<td>Square root of the ratio variance</td>
-</tr>
-<tr class="even">
-<td><code>status</code></td>
-<td>One row per reporting target, retained even for undefined
-ratios</td>
-</tr>
-</tbody>
-</table>
-<p>Covariance is marginal across targets. <code>ratio_status</code>
-distinguishes <code>ok</code>, <code>zero_denominator</code>,
-<code>component_overflow</code> and <code>ratio_overflow</code>.
-<code>negative_denominator</code> and <code>near_zero_denominator</code>
-are flags, with no silent denominator replacement.
-<code>covariance_status</code> separately records missing, positive,
-zero-score or numerically failed covariance calculations.
-<code>wald_available</code> controls interval availability. An exact
-zero denominator gives <code>NA</code> ratio/interval while retaining
-component uncertainty; an exact zero score norm gives computational SE
-zero and unavailable Wald bounds.</p>
-<p><code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> relocalizes the same frozen signals at new
-reporting points. <code><a href="../reference/ratio_confidence_set.html">ratio_confidence_set()</a></code> instead accepts
-components and paired covariance and returns interval unions, including
-rays, all-real and empty sets; unresolved numerical geometry has a
-separate status. It does not replace <code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code> or establish
-uniform weak-instrument coverage. The <a href="conditional-late-inference.html">CLATE inference article</a> gives
-the exact four-row example, scale conventions and statistical
-conditions.</p>
-<p>CLATE supports exact/asymptotic single-scale DNN with the same
-<code>method</code>, <code>k</code>, <code>s</code>,
-<code>normalize</code> and <code>tuning_mode</code> controls as CATE and
-NP regression. Two-scale TDNN is available for NP regression only.
-Weighting choices do not by themselves verify the inference conditions
-for a particular estimator. <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> returns the common
-coefficient table plus CLATE-specific <code>components</code> and
-<code>status</code> tables. Its unavailable Wald bounds remain
-<code>NA</code>.</p>
+<p><code>A</code> is the binary instrument and <code>D</code> is
+treatment. The five predictions <code>e</code>, <code>m_y0</code>,
+<code>m_y1</code>, <code>m_d0</code>, <code>m_d1</code> are the
+instrument propensity and outcome/treatment means in each
+<strong>instrument arm</strong>. <code>one_sided = TRUE</code> selects
+the structural restriction that treatment is unavailable without
+assignment; it permits omitting <code>m_d0</code>. Observing
+<code>D &lt;= A</code> does not by itself justify that restriction.</p>
+<p><code><a href="../reference/iv_augmented_signals.html">iv_augmented_signals()</a></code> constructs paired outcome and
+treatment signals. The fit divides their common-weight local averages.
+Augmented treatment signals may be negative and are not compliance
+indicators. See the <a href="conditional-late.html">CLATE guide</a> for
+complete calls and <a href="conditional-late-inference.html">paired
+inference</a> for covariance and status outputs. Ordinary residualized
+IV need not have the same causal target.</p>
 </div>
 <div class="section level2">
 <h2 id="experimental-plqr-target-and-nuisance-conventions">Experimental PLQR target and nuisance conventions<a class="anchor" aria-label="anchor" href="#experimental-plqr-target-and-nuisance-conventions"></a>
 </h2>
-<p>All PLQR functionality is experimental, including its scores,
-helpers, post-estimation methods, and plots. The initial release focuses
-on CATE and nonparametric regression; the PLQR API and inference
-interfaces may change.</p>
-<p>For partially linear quantile regression, let
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>D</mi><mi>i</mi></msub><annotation encoding="application/x-tex">D_i</annotation></semantics></math>
-be the partially linear regressor and let
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>U</mi><mi>i</mi></msub><annotation encoding="application/x-tex">U_i</annotation></semantics></math>
-denote the full adjustment state. At a supplied coefficient
-<code>theta_eval</code>, <code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code> forms the
-observation-level score</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ψ</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">(</mo><msub><mi>θ</mi><mrow><mi mathvariant="normal">e</mi><mi mathvariant="normal">v</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">l</mi></mrow></msub><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mi>τ</mi><mo>−</mo><mn>𝟏</mn><mo stretchy="false" form="prefix">{</mo><msub><mi>Y</mi><mi>i</mi></msub><mo>≤</mo><msubsup><mi>D</mi><mi>i</mi><mi>⊤</mi></msubsup><msub><mi>θ</mi><mrow><mi mathvariant="normal">e</mi><mi mathvariant="normal">v</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">l</mi></mrow></msub><mo>+</mo><msub><mi>g</mi><mn>0</mn></msub><mo stretchy="false" form="prefix">(</mo><msub><mi>U</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="postfix">}</mo><mo stretchy="true" form="postfix">]</mo></mrow><mrow><mo stretchy="true" form="prefix">[</mo><msub><mi>D</mi><mi>i</mi></msub><mo>−</mo><msub><mi>m</mi><mi>D</mi></msub><mo stretchy="false" form="prefix">(</mo><msub><mi>U</mi><mi>i</mi></msub><mo stretchy="false" form="postfix">)</mo><mo stretchy="true" form="postfix">]</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex">
-\psi_i(\theta_{\mathrm{eval}})
-=
-\left[
-\tau-
-\mathbf 1\{Y_i\le D_i^\top\theta_{\mathrm{eval}}+g_0(U_i)\}
-\right]
-\left[D_i-m_D(U_i)\right].
-</annotation></semantics></math></p>
-<p>The key names are deliberately literal:</p>
-<ul>
-<li>
-<code>theta_eval</code> is the coefficient at which the moment is
-evaluated. <code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code> does not solve for a new coefficient.
-Its returned <code>theta</code> repeats <code>theta_eval</code> at each
-target and records <code>meta$theta_source = "supplied"</code>.</li>
-<li>
-<code>g</code> or <code>g_col</code> supplies
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>g</mi><mn>0</mn></msub><mo stretchy="false" form="prefix">(</mo><mi>U</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">g_0(U)</annotation></semantics></math>,
-the nonparametric shape component. It is not itself a conditional
-quantile; the threshold is
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>D</mi><mi>⊤</mi></msup><mi>θ</mi><mo>+</mo><msub><mi>g</mi><mn>0</mn></msub><mo stretchy="false" form="prefix">(</mo><mi>U</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">D^\top\theta+g_0(U)</annotation></semantics></math>.</li>
-<li>
-<code>mD</code> or <code>mD_cols</code> supplies
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>m</mi><mi>D</mi></msub><mo stretchy="false" form="prefix">(</mo><mi>U</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>𝔼</mi><mo stretchy="false" form="prefix">[</mo><mi>D</mi><mo>∣</mo><mi>U</mi><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">m_D(U)=\mathbb E[D\mid U]</annotation></semantics></math>,
-used to form the residualized regressor
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><mi>D</mi><mo accent="true">̃</mo></mover><mo>=</mo><mi>D</mi><mo>−</mo><msub><mi>m</mi><mi>D</mi></msub><mo stretchy="false" form="prefix">(</mo><mi>U</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\widetilde D=D-m_D(U)</annotation></semantics></math>.</li>
-<li>
-<code>density</code> or <code>density_col</code> supplies the
-positive conditional density of
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Y</mi><annotation encoding="application/x-tex">Y</annotation></semantics></math>
-at the threshold. It enters the coefficient Jacobian, not the moment or
-its score-covariance meat.</li>
-</ul>
-<p>These nuisances are supplied externally. They may depend on variables
-outside <code>x_cols</code>; <code>RdistNN</code> receives their
-evaluated values and does not fit or restrict their underlying
-models.</p>
+<p>All PLQR interfaces remain experimental. <code>theta_eval</code> is
+supplied by the user; <code>theta</code> repeats it. The principal
+inputs are:</p>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr class="header">
+<th>Input</th>
+<th>Meaning</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>D</code></td>
+<td>Partially linear regressors</td>
+</tr>
+<tr class="even">
+<td><code>g</code></td>
+<td>Nonparametric shape nuisance; not the entire conditional
+quantile</td>
+</tr>
+<tr class="odd">
+<td><code>mD</code></td>
+<td>Conditional means used to residualize the regressors</td>
+</tr>
+<tr class="even">
+<td><code>density</code></td>
+<td>Conditional outcome density at the model threshold</td>
+</tr>
+</tbody>
+</table>
+<p>The package does not fit those nuisances or solve a local coefficient
+root. See <a href="conditional-z-estimation.html">Experimental PLQR</a>
+for calls and <code><a href="../reference/plqr_dnn.html">?plqr_dnn</a></code> for the full contract.</p>
 </div>
 <div class="section level2">
 <h2 id="moment-diagnostics-versus-coefficient-inference">Moment diagnostics versus coefficient inference<a class="anchor" aria-label="anchor" href="#moment-diagnostics-versus-coefficient-inference"></a>
 </h2>
-<p>This distinction is the most important PLQR reporting convention.</p>
-<p>A localized vector moment can have a componentwise sampling
-diagnostic without supporting inference for a coefficient. In
-particular, <code>moment_se</code> describes the components of
-<code>moment</code>; by itself it does not estimate a coefficient
-standard error. Coefficient inference requires the full sandwich</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mover><mi>V</mi><mo accent="true">̂</mo></mover><mi>θ</mi></msub><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mover><mi>J</mi><mo accent="true">̂</mo></mover><mo stretchy="false" form="prefix">(</mo><mi>x</mi><msup><mo stretchy="false" form="postfix">)</mo><mrow><mi>−</mi><mn>1</mn></mrow></msup><mover><mi>S</mi><mo accent="true">̂</mo></mover><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><mover><mi>J</mi><mo accent="true">̂</mo></mover><mo stretchy="false" form="prefix">(</mo><mi>x</mi><msup><mo stretchy="false" form="postfix">)</mo><mrow><mi>−</mi><mi>⊤</mi></mrow></msup><mi>/</mi><msub><mi>n</mi><mrow><mi mathvariant="normal">e</mi><mi mathvariant="normal">f</mi><mi mathvariant="normal">f</mi></mrow></msub><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">
-\widehat V_\theta(x)
-=
-\widehat J(x)^{-1}
-\widehat S(x)
-\widehat J(x)^{-\top}
-/n_{\mathrm{eff}}(x).
-</annotation></semantics></math></p>
-<p>The PLQR routes are:</p>
+<p>PLQR uncertainty has two distinct scales:</p>
 <table class="table">
 <colgroup>
-<col width="25%">
-<col width="25%">
-<col width="25%">
-<col width="25%">
+<col width="50%">
+<col width="50%">
 </colgroup>
 <thead><tr class="header">
-<th>Requested route</th>
-<th>Bread</th>
-<th>Meat</th>
-<th>Coefficient inference fields</th>
+<th>Output</th>
+<th>Interpretation</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td>No <code>density</code>, jackknife enabled</td>
-<td>None</td>
-<td>Componentwise moment diagnostic</td>
 <td>
-<code>moment_se</code> only</td>
+<code>moment_se</code>, <code>moment_vcov</code>
+</td>
+<td>Uncertainty of the localized moment</td>
 </tr>
 <tr class="even">
 <td>
-<code>density</code>, <code>theta_meat = "analytic"</code>
+<code>theta_se</code>, <code>theta_vcov</code>
 </td>
-<td>Density-backed <code>jacobian</code>
-</td>
-<td>Analytic <code>score_covariance</code>
-</td>
-<td>
-<code>theta_se</code>, <code>theta_vcov</code>,
-<code>theta_omega</code>
-</td>
+<td>Density-backed coefficient sandwich output</td>
 </tr>
 <tr class="odd">
+<td><code>theta_omega</code></td>
 <td>
-<code>density</code>, <code>theta_meat = "jackknife"</code>
-</td>
-<td>Density-backed <code>jacobian</code>
-</td>
-<td>Full delete-1 <code>moment_vcov</code>
-</td>
-<td>
-<code>moment_se</code>, <code>moment_vcov</code>,
-<code>theta_se</code>, <code>theta_vcov</code>,
-<code>theta_omega</code>
+<code>theta_vcov</code> multiplied by <code>neff</code>
 </td>
 </tr>
 </tbody>
 </table>
-<p>For the analytic route,</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><mi>S</mi><mo accent="true">̂</mo></mover><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>τ</mi><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>τ</mi><mo stretchy="false" form="postfix">)</mo><munder><mo>∑</mo><mi>i</mi></munder><msub><mi>w</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><msub><mover><mi>D</mi><mo accent="true">̃</mo></mover><mi>i</mi></msub><msubsup><mover><mi>D</mi><mo accent="true">̃</mo></mover><mi>i</mi><mi>⊤</mi></msubsup><mo>,</mo><mspace width="2.0em"></mspace><mover><mi>J</mi><mo accent="true">̂</mo></mover><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><munder><mo>∑</mo><mi>i</mi></munder><msub><mi>w</mi><mi>i</mi></msub><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><msub><mi>q</mi><mi>i</mi></msub><msub><mover><mi>D</mi><mo accent="true">̃</mo></mover><mi>i</mi></msub><msubsup><mi>D</mi><mi>i</mi><mi>⊤</mi></msubsup><mi>.</mi></mrow><annotation encoding="application/x-tex">
-\widehat S(x)
-=
-\tau(1-\tau)
-\sum_i w_i(x)\widetilde D_i\widetilde D_i^\top,
-\qquad
-\widehat J(x)
-=
-\sum_i w_i(x)q_i\widetilde D_iD_i^\top.
-</annotation></semantics></math></p>
-<p>For the jackknife-meat route, the full covariance
-<code>moment_vcov</code> replaces the analytic meat while the same
-density-backed Jacobian remains. The package does not reconstruct a
-coefficient covariance from the diagonal entries in
-<code>moment_se</code>; doing so would discard cross-moment
-covariance.</p>
-<p>The coefficient fields have distinct scales:</p>
-<ul>
-<li>
-<code>theta_vcov</code> is the finite-sample covariance used by
-<code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code> and
-<code>predict(..., se.fit = TRUE)</code>;</li>
-<li>
-<code>theta_se</code> is <code>sqrt(diag(theta_vcov))</code> target
-by target;</li>
-<li>
-<code>theta_omega</code> is the effective-sample-size-scaled
-covariance, <code>theta_vcov * neff</code>.</li>
-</ul>
-<p>Direct coefficient inference requires normalized weights because the
-sandwich is defined for weight columns summing to one.</p>
-<p>Continue with <a href="conditional-z-estimation.html">Conditional
-Z-estimation</a> for the full PLQR call and with <a href="diagnostics-reporting.html">Diagnostics and reporting</a> for
-Jacobian, conditioning, and field-availability diagnostics.</p>
+<p>Coefficient intervals require
+<code>density</code>/<code>density_col</code>. Without it,
+<code>moment_se</code> is a diagnostic and does not support
+<code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code> or prediction intervals for coefficients. With
+density, <code>theta_meat = "analytic"</code> uses score covariance;
+<code>theta_meat = "jackknife"</code> uses joint moment covariance.
+These calculations do not turn a supplied coefficient into an estimated
+root.</p>
 </div>
 <div class="section level2">
 <h2 id="experimental-gmm-conventions">Experimental GMM conventions<a class="anchor" aria-label="anchor" href="#experimental-gmm-conventions"></a>
 </h2>
-<p><code><a href="../reference/gmm_dnn.html">gmm_dnn()</a></code> is a separate, experimental front end. A
-<code>gmm_model</code> supplies a vector moment function, coefficient
-names, starting logic, and—when available—an analytic Jacobian. Unlike
-<code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code>, <code><a href="../reference/gmm_dnn.html">gmm_dnn()</a></code> solves for
-<code>theta</code> at each target using a two-step local GMM
-procedure.</p>
-<p>Several names should not be transferred mechanically between the two
-APIs:</p>
-<ul>
-<li>
-<code>g</code> is the PLQR shape nuisance, while <code>g_obs</code>
-in a <code>gmm_result</code> is the model-defined observation-level
-moment matrix.</li>
-<li>
-<code>jacobian</code> is the derivative of the local moment map. The
-scalar <code>J</code> in a <code>gmm_result</code> is instead the local
-overidentification statistic.</li>
-<li>
-<code>omega</code> is the estimated moment covariance entering the
-GMM weighting and sandwich calculation; <code>vcov</code> is the
-resulting coefficient covariance.</li>
-<li>
-<code>neff</code> remains the DNN effective sample size.</li>
-</ul>
-<p>Nuisance values required by a supplied <code>gmm_model</code> are
-also supplied externally. The package’s built-in doubly robust IV model
-validates those columns but does not fit them.</p>
-<p>Continue with <a href="local-iv-estimation.html">Local IV
-estimation</a> for the experimental IV-GMM workflow. Use <a href="extending.html">Extending RdistNN</a> when the task is to define
-reusable score machinery rather than fit the built-in IV model.</p>
+<p><code><a href="../reference/gmm_dnn.html">gmm_dnn()</a></code> uses a <code>gmm_model</code> to solve local
+moments and returns its own coefficient covariance and convergence
+diagnostics. Its <code>J</code> is an overidentification statistic;
+PLQR’s <code>J</code>/<code>jacobian</code> is a derivative matrix. See
+<a href="local-iv-estimation.html">Local IV estimation</a> for the
+experimental GMM workflow.</p>
 </div>
 <div class="section level2">
 <h2 id="reading-fitted-objects">Reading fitted objects<a class="anchor" aria-label="anchor" href="#reading-fitted-objects"></a>
 </h2>
-<p>The core result fields are intentionally estimator-specific.</p>
+<p>Stored fields and available methods differ by estimator:</p>
 <table class="table">
 <colgroup>
-<col width="25%">
-<col width="25%">
-<col width="25%">
-<col width="25%">
+<col width="33%">
+<col width="33%">
+<col width="33%">
 </colgroup>
 <thead><tr class="header">
 <th>Class</th>
-<th>Point or moment fields</th>
-<th>Uncertainty fields</th>
-<th>Useful metadata</th>
+<th>Estimate fields</th>
+<th>Uncertainty</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td><code>np_result</code></td>
-<td><code>mu</code></td>
-<td><code>se</code></td>
 <td>
-<code>x0</code>, <code>meta$k</code>, <code>meta$s</code>,
-<code>meta$method</code>
+<code>np_result</code> / <code>tdnn_np_result</code>
+</td>
+<td><code>mu</code></td>
+<td>
+<code>se</code>; joint target covariance from
+<code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code>
 </td>
 </tr>
 <tr class="even">
 <td><code>cate_result</code></td>
 <td><code>tau</code></td>
-<td><code>se</code></td>
 <td>
-<code>x0</code>, optional <code>psi</code>, optional
-<code>nuisance</code>
-</td>
-</tr>
-<tr class="odd">
-<td><code>plqr_result</code></td>
-<td>
-<code>moment</code>, supplied <code>theta</code>,
-<code>theta_eval</code>
-</td>
-<td>
-<code>moment_se</code> or sandwich fields described above</td>
-<td>
-<code>meta$theta_source</code>, <code>meta$theta_meat_method</code>,
-<code>neff</code>
-</td>
-</tr>
-<tr class="even">
-<td><code>gmm_result</code></td>
-<td>solved <code>theta</code>, <code>theta_first</code>
-</td>
-<td>
-<code>se</code>, <code>vcov</code>; optional <code>omega</code>,
-<code>jacobian</code>
-</td>
-<td>
-<code>J</code>, <code>df</code>, <code>pval_J</code>,
-<code>neff</code>, <code>convergence</code>
+<code>se</code>; joint target covariance from
+<code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code>
 </td>
 </tr>
 <tr class="odd">
 <td>
 <code>affine_ratio_result</code> / <code>clate_result</code>
 </td>
-<td>solved <code>theta</code>, two-column <code>components</code>
+<td>
+<code>theta</code>, <code>components</code>
 </td>
 <td>
-<code>component_vcov</code>, <code>theta_vcov</code>,
-<code>theta_omega</code>, <code>se</code>
+<code>se</code>, <code>component_vcov</code>,
+<code>theta_vcov</code>
+</td>
+</tr>
+<tr class="even">
+<td><code>plqr_result</code></td>
+<td>
+<code>moment</code>, supplied <code>theta_eval</code>
+</td>
+<td>Moment- and coefficient-scale fields above</td>
+</tr>
+<tr class="odd">
+<td><code>gmm_result</code></td>
+<td>Solved <code>theta</code>
 </td>
 <td>
-<code>status</code>, <code>neff</code>, component roles and training
-declaration</td>
+<code>se</code>, <code>vcov</code>
+</td>
 </tr>
 </tbody>
 </table>
-<p>Optional fields requested through <code>return</code> are additive.
-For example, asking for <code>W</code>, <code>dx</code>,
-<code>ess</code>, or <code>tuning</code> does not change the meaning of
-the main estimate. Use <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>, <code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code>,
-<code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code>, and <code><a href="../reference/diagnostics.html">diagnostics()</a></code> where the
-fitted-object class documents those methods instead of inferring meaning
-from similarly named internal fields.</p>
-<p>Shared reporting functions dispatch on the estimation object. Use the
-same calls below for CATE and CLATE; their score and uncertainty
-calculations remain method-specific.</p>
-<table class="table">
-<colgroup>
-<col width="33%">
-<col width="33%">
-<col width="33%">
-</colgroup>
-<thead><tr class="header">
-<th>Interface</th>
-<th>CATE</th>
-<th>CLATE</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td><code>summary(fit)$coefficients</code></td>
-<td>Estimate, SE, statistic, p-value and confidence bounds</td>
-<td>Same columns; component/status tables additionally retained</td>
-</tr>
-<tr class="even">
-<td>
-<code><a href="../reference/plot_estimates.html">plot_estimates()</a></code>, <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>,
-<code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">ggplot2::autoplot()</a></code>
-</td>
-<td>Profile, forest or pointrange; zero reference</td>
-<td>Same styles and arguments; unavailable ratio bounds stay
-missing</td>
-</tr>
-<tr class="odd">
-<td><code><a href="../reference/plot_weights.html">plot_weights()</a></code></td>
-<td>Profile, cumulative or kernel</td>
-<td>Same views and retained-weight requirements</td>
-</tr>
-<tr class="even">
-<td><code><a href="../reference/plot_overlap.html">plot_overlap()</a></code></td>
-<td>Treatment mass and propensity</td>
-<td>Instrument mass and propensity</td>
-</tr>
-<tr class="odd">
-<td><code><a href="../reference/plot_influence.html">plot_influence()</a></code></td>
-<td>Weighted pseudo-outcome residual</td>
-<td>Weighted paired score residual</td>
-</tr>
-<tr class="even">
-<td>
-<code><a href="../reference/plot_tuning.html">plot_tuning()</a></code>, <code><a href="../reference/candidate_fit.html">candidate_fit()</a></code>,
-<code><a href="../reference/candidate_fit.html">candidate_fits()</a></code>
-</td>
-<td>Frozen-state sensitivity and candidate views</td>
-<td>Same workflow, retaining paired covariance</td>
-</tr>
-<tr class="odd">
-<td><code><a href="../reference/plot_dashboard.html">plot_dashboard()</a></code></td>
-<td>Common component panels</td>
-<td>Same layout and optional-dependency policy</td>
-</tr>
-</tbody>
-</table>
-<p>The tidy <code><a href="../reference/plot_data_estimates.html">plot_data_estimates()</a></code> and
-<code><a href="../reference/diagnostics.html">diagnostics()</a></code> tables allow custom presentations without
-accessing plotting internals. Distinct result classes retain their
-scientific meaning; CLATE is not a <code>cate_result</code>
-subclass.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit_cate</span><span class="op">$</span><span class="va">tau</span></span>
-<span><span class="va">fit_cate</span><span class="op">$</span><span class="va">se</span></span>
-<span><span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">fit_cate</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">fit_plqr</span><span class="op">$</span><span class="va">moment</span></span>
-<span><span class="va">fit_plqr</span><span class="op">$</span><span class="va">theta_eval</span></span>
-<span><span class="va">fit_plqr</span><span class="op">$</span><span class="va">theta_se</span>       <span class="co"># coefficient scale, when density was supplied</span></span>
-<span><span class="va">fit_plqr</span><span class="op">$</span><span class="va">moment_se</span>      <span class="co"># moment scale; not a coefficient SE by itself</span></span></code></pre></div>
-<p>Continue with <a href="diagnostics-reporting.html">Diagnostics and
-reporting</a> to see which diagnostics are structural, requested, or
-estimator-specific, and with <a href="visualising-fits.html">Visualising
-fits</a> to turn those fields into plots.</p>
-</div>
-<div class="section level2">
-<h2 id="practical-reading-checklist">Practical reading checklist<a class="anchor" aria-label="anchor" href="#practical-reading-checklist"></a>
-</h2>
-<p>When translating between a paper display and an <code>RdistNN</code>
-call, check the objects in this order:</p>
-<ol style="list-style-type: decimal">
-<li>Identify the localization covariates <code>X</code> and target
-<code>x0</code> or <code>X0</code>.</li>
-<li>Record <code>s</code>, <code>k</code>, the weight method, and
-whether weights are normalized.</li>
-<li>Identify the observation-level signal or vector score being
-localized.</li>
-<li>Mark every nuisance as supplied or package-computed. Current CATE,
-CLATE, PLQR, and built-in GMM workflows expect nuisance values rather
-than fitting them.</li>
-<li>Determine whether the returned uncertainty is on the moment scale or
-the target-coefficient scale.</li>
-<li>Use <code>n_eff</code>/<code>neff</code>/<code>ess</code> as a scale
-and concentration diagnostic, not as a substitute for checking physical
-localization and first-stage assumptions.</li>
-</ol>
-<p>The task table near the beginning of this article is the quickest
-route onward. For most analyses, the next stop is <a href="conditional-z-estimation.html">Conditional Z-estimation</a>;
-return here when cross-estimator names or inferential scales become
-ambiguous.</p>
+<p>CATE and NP/TDNN covariance uses common deleted observations across
+targets and requires an active fitted jackknife. It is calculated from
+retained state, including serialized fits without optional extras. Both
+axes follow <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code> order. Prespecified contrasts still need
+the corresponding joint inference assumptions.</p>
+<p>CLATE covariance lists are marginal across targets.
+<code>component_vcov[[j]]</code> is the paired two-by-two component
+covariance and <code>theta_vcov[[j]]</code> is the ratio variance. These
+are already on the estimator scale: do not divide by <code>neff</code>
+again. <code>theta_omega[[j]]</code> instead equals
+<code>neff[j] * theta_vcov[[j]]</code>.</p>
+<p><code>return</code> extras such as <code>W</code>, <code>dx</code>,
+<code>ess</code> and <code>tuning</code> add retained information
+without changing the main estimate. Use <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>,
+<code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code>, <code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code>, <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> and
+<code><a href="../reference/diagnostics.html">diagnostics()</a></code> as documented for the fitted class. Missing
+uncertainty remains missing. Finite ratio estimates can have unavailable
+Wald intervals; inspect <code>status</code> and
+<code>wald_available</code> before reporting them.</p>
+<p>Saved objects retain observation-level numeric inputs, outcomes or
+signals; apply the underlying data’s sharing restrictions. <a href="diagnostics-reporting.html">Diagnostics and reporting</a> and <a href="visualising-fits.html">visualisation</a> cover inspection and
+presentation. Intervals are pointwise; none of these output conventions
+establishes the paper’s assumptions or simultaneous confidence
+bands.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -1,10 +1,8 @@
 # Visualising fitted local estimators
 
-RdistNN ships ggplot2-based views of fitted local estimators. ggplot2
-(and, for dashboards, patchwork) are suggested dependencies: everything
-in this vignette degrades with an actionable message when they are
-missing, and every panel is a regular ggplot object that can be extended
-with `+`.
+RdistNN’s plotting functions return ggplot objects that can be extended
+with `+`. The examples below run when ggplot2 is installed; the composed
+dashboard also uses patchwork.
 
 The running example is a CATE fit with oracle nuisance columns,
 evaluated along a profile in the first covariate.
@@ -39,11 +37,11 @@ fit <- cate_dnn(
 [`ggplot2::autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html),
 or
 [`plot_estimates()`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
-with more options) draws the profile with jackknife confidence bounds, a
-zero reference line, and the honesty caption: the median effective
-sample size across targets and the kernel order `s` with its provenance
-— here the default paper rule, since neither `s` nor `tuning` was
-supplied.
+with more options) draws the profile with pointwise jackknife confidence
+bounds, a zero reference line, and a caption reporting the median
+effective sample size across targets and the kernel order `s` with its
+provenance — here the default paper rule, since neither `s` nor `tuning`
+was supplied.
 
 ``` r
 
@@ -59,8 +57,8 @@ automatic choices.
 ## Weight geometry
 
 The weight panels show what the estimator averaged over. The effective
-kernel view is the most instructive: DNN weights as a data-driven kernel
-in distance space, with the rank-`s` radius marked.
+kernel view plots weight against distance, with the rank-`s` radius
+marked as a scale diagnostic. That marker is not the DNN support radius.
 
 ``` r
 
@@ -83,7 +81,8 @@ For CATE fits,
 shows whether both treatment arms carry weight near each target. With
 simplex weights the treated and control masses partition one, so the
 treated mass is the local treated share; shaded bands mark shares
-outside `share_limits`.
+outside `share_limits`. These visual guides are not calibrated tests of
+overlap.
 
 ``` r
 
@@ -122,10 +121,9 @@ ggplot2::autoplot(diagnostics(fit))
 
 [`plot_dashboard()`](https://JakobJuergens.github.io/RdistNN/reference/plot_dashboard.md)
 composes the panels with a metadata annotation. It requires patchwork;
-without it the panels are returned as a named list. Panels whose inputs
-are unavailable are substituted rather than failing the dashboard — a
-matrix-interface fit without stored treatment gets the diagnostics
-facets in place of the overlap panel.
+without it the panels are returned as a named list. Unavailable panels
+are substituted or omitted. For example, a supplied-signal CATE fit
+without treatment inputs gets diagnostics in place of overlap.
 
 ``` r
 
@@ -157,16 +155,12 @@ and
 
 ## Related Articles
 
-- [Notation and package
+- [Notation and
   conventions](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md):
-  [`vignette("notation-and-conventions", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md)
-  explains the statistical scale and provenance of the fields being
-  plotted.
+  fields and uncertainty scales.
 - [Diagnostics and
   reporting](https://JakobJuergens.github.io/RdistNN/articles/diagnostics-reporting.md):
-  [`vignette("diagnostics-reporting", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/diagnostics-reporting.md)
-  documents the underlying diagnostic fields and availability rules.
+  diagnostic inputs and availability.
 - [Getting
   started](https://JakobJuergens.github.io/RdistNN/articles/getting-started.md):
-  [`vignette("getting-started", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/getting-started.md)
-  provides compact fitted objects for a first plotting workflow.
+  first CATE and regression fits.

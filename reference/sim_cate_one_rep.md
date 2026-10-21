@@ -3,8 +3,9 @@
 Draws one dataset from the named DGP (via
 [`sim_cate_data()`](https://JakobJuergens.github.io/RdistNN/reference/sim_cate_data.md)),
 then runs each requested method on the **same** dataset and returns
-per-replicate performance metrics aligned with the paper's evaluation
-criteria.
+per-replicate performance metrics. The paper's study-specific workflow
+is in the installed `paper-replication/affine` bundle; these are general
+simulation tools.
 
 ## Usage
 
@@ -68,11 +69,14 @@ sim_cate_one_rep(
 
 - alpha:
 
-  Nominal coverage level (default 0.05).
+  Nominal interval noncoverage probability (default `0.05`, giving
+  95-percent confidence intervals).
 
 - seed:
 
-  Optional integer seed for this replicate.
+  Optional integer seed for tuning, data and fitting, used locally
+  without changing the caller's saved RNG state. `NULL` uses the current
+  stream.
 
 - sigma:
 
@@ -93,12 +97,12 @@ A `data.frame` with one or more rows per method and columns `method`,
 `se`, `cover` (0/1), `ci_len`, `neff`, and `status`. Methods based on
 GRF also record `method_variant`, `forest_nuisance`, and whether `Y.hat`
 and `W.hat` were supplied. The maintained `causal_forest` route uses
-externally supplied oracle nuisance inputs. with explicit localization
-weights also report the realized DNN-weighted truth, realized
-localization drift, estimator remainder, studentized error, physical
-90-percent-mass radius, treatment-arm effective sample sizes, and the
-top-five score-contribution share. The `localized_truth` field is the
-finite-sample object \\\sum_i W\_{i,s}(x_0)\tau_0(X_i)\\, not the
+externally supplied oracle nuisance inputs. Methods with explicit
+localization weights also report the realized DNN-weighted truth,
+realized localization drift, estimator remainder, studentized error,
+physical 90-percent-mass radius, treatment-arm effective sample sizes,
+and the top-five score-contribution share. The `localized_truth` field
+is the finite-sample object \\\sum_i W\_{i,s}(x_0)\tau_0(X_i)\\, not the
 deterministic population branch. With \\x_0\\ and \\(n,s)\\ fixed,
 expectation over the i.i.d. covariate sample and complete-DNN
 exchangeability give \$\$E(\mathrm{localized\\truth})=\alpha_s(x_0).\$\$

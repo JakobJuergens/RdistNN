@@ -17,7 +17,7 @@ rank n - s + k."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,8 +78,10 @@ rank <code>n - s + k</code>.</p>
 
 
 <dl><dt id="arg-object">object<a class="anchor" aria-label="anchor" href="#arg-object"></a></dt>
-<dd><p>A fitted estimator object, currently an object returned by
-<code><a href="np_dnn.html">np_dnn()</a></code>, <code><a href="cate_dnn.html">cate_dnn()</a></code>, <code><a href="plqr_dnn.html">plqr_dnn()</a></code>, <code><a href="affine_ratio_dnn.html">affine_ratio_dnn()</a></code> or <code><a href="clate_dnn.html">clate_dnn()</a></code>.</p></dd>
+<dd><p>A fitted object from <code><a href="np_dnn.html">np_dnn()</a></code>, <code><a href="np_tdnn.html">np_tdnn()</a></code>, <code><a href="cate_dnn.html">cate_dnn()</a></code>,
+<code><a href="plqr_dnn.html">plqr_dnn()</a></code>, <code><a href="affine_ratio_dnn.html">affine_ratio_dnn()</a></code> or <code><a href="clate_dnn.html">clate_dnn()</a></code>. Target diagnostics for
+NP/TDNN, CATE and PLQR require retained <code>W</code>; paired-ratio/CLATE methods
+reconstruct weights from cached ranks without optional extras.</p></dd>
 
 
 <dt id="arg-candidates">candidates<a class="anchor" aria-label="anchor" href="#arg-candidates"></a></dt>

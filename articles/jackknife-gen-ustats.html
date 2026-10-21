@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Jackknife for Hájek-dominated generalized U-statistics (overview) • RdistNN</title>
+<title>Using the rank-jackknife utilities • RdistNN</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Jackknife for Hájek-dominated generalized U-statistics (overview)">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Using the rank-jackknife utilities">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,7 +50,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Jackknife for Hájek-dominated generalized U-statistics (overview)</h1>
+      <h1>Using the rank-jackknife utilities</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/master/vignettes/jackknife-gen-ustats.Rmd" class="external-link"><code>vignettes/jackknife-gen-ustats.Rmd</code></a></small>
@@ -59,126 +59,64 @@
 
     
     
+<p>This advanced guide uses <code><a href="../reference/jackknife_fast_rank.html">jackknife_fast_rank()</a></code> and its
+reference <code><a href="../reference/jackknife_slow_rank.html">jackknife_slow_rank()</a></code> for a compact-support
+rank-weighted rule. Applied users obtain local standard errors directly
+from their fitted estimators; see <a href="getting-started.html">Getting
+started</a>. Statistical conditions and theory belong to the <a href="https://jakobjuergens.com/research/#orthogonal-inference-conditional-z" class="external-link">paper</a>
+and its references.</p>
 <div class="section level2">
-<h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
+<h2 id="supply-neighbor-indices-and-a-signal">Supply neighbor indices and a signal<a class="anchor" aria-label="anchor" href="#supply-neighbor-indices-and-a-signal"></a>
 </h2>
-<p><code>RdistNN</code> includes two delete-1 jackknife utilities for
-rank-weighted functionals:</p>
-<ul>
-<li>
-<code><a href="../reference/jackknife_fast_rank.html">jackknife_fast_rank()</a></code>: optimized implementation
-(compiled when available)</li>
-<li>
-<code><a href="../reference/jackknife_slow_rank.html">jackknife_slow_rank()</a></code>: reference implementation for
-validation</li>
-</ul>
-<p>Both return:</p>
-<ul>
-<li>
-<code>theta0</code>: baseline aggregate</li>
-<li>
-<code>theta_loo</code>: all leave-one-out aggregates</li>
-<li>
-<code>info</code>: metadata (<code>s</code>, number of targets,
-output dimension, normalization)</li>
-</ul>
-<p>Important distinction:</p>
-<ul>
-<li>
-<code><a href="../reference/jackknife_fast_rank.html">jackknife_fast_rank()</a></code> and
-<code><a href="../reference/jackknife_slow_rank.html">jackknife_slow_rank()</a></code> are <strong>generic</strong>
-utilities for compact-support rank-weighted L-stat rules;</li>
-<li>the user-level exact DNN wrappers do <strong>not</strong> truncate
-to the first <code>s</code> observations. They keep the full rank matrix
-and reevaluate the DNN rank-weight rule after delete-one updates.</li>
-</ul>
-</div>
-<div class="section level2">
-<h2 id="example-setup">Example Setup<a class="anchor" aria-label="anchor" href="#example-setup"></a>
-</h2>
+<p>For each target, supply the nearest <code>support + 1</code>
+observation indices. The extra neighbor replaces a deleted member. Here
+the rule averages the first three neighbors at each of two targets:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">40</span></span>
-<span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fl">2</span></span>
-<span><span class="va">s</span> <span class="op">&lt;-</span> <span class="fl">3L</span></span>
-<span></span>
-<span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span> <span class="op">*</span> <span class="va">p</span><span class="op">)</span>, <span class="va">n</span>, <span class="va">p</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">4</span><span class="op">)</span></span>
+<span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">40L</span></span>
+<span><span class="va">support</span> <span class="op">&lt;-</span> <span class="fl">3L</span></span>
+<span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span> <span class="op">*</span> <span class="fl">2</span><span class="op">)</span>, <span class="va">n</span>, <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="va">X0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">Y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Toy compact-support example: build only the first s+1 ranked observations</span></span>
-<span><span class="co"># for each target point. This illustrates the generic L-stat utilities below;</span></span>
-<span><span class="co"># it is not the internal exact-DNN jackknife path used by np_dnn()/cate_dnn()/plqr_dnn().</span></span>
-<span><span class="va">wt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/weights_dnn.html">weights_dnn</a></span><span class="op">(</span></span>
-<span>  X <span class="op">=</span> <span class="va">X</span>, X0 <span class="op">=</span> <span class="va">X</span>,</span>
-<span>  method <span class="op">=</span> <span class="st">"exact"</span>,</span>
-<span>  distance <span class="op">=</span> <span class="st">"l2"</span>,</span>
-<span>  k <span class="op">=</span> <span class="va">s</span>, s <span class="op">=</span> <span class="va">s</span>,</span>
-<span>  return <span class="op">=</span> <span class="st">"ord"</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">ranks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">wt</span><span class="op">$</span><span class="va">ord</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">s</span> <span class="op">+</span> <span class="fl">1L</span><span class="op">)</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span><span class="op">)</span>  <span class="co"># T x (s+1)</span></span>
-<span></span>
-<span><span class="co"># L-stat coefficients</span></span>
-<span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="va">s</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Scalar signal represented as n x 1 matrix</span></span>
+<span><span class="va">dx</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/distance_eval_batch.html">distance_eval_batch</a></span><span class="op">(</span><span class="fu"><a href="../reference/distance_l2.html">distance_l2</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">X</span>, <span class="va">X0</span><span class="op">)</span></span>
+<span><span class="va">ord</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">dx</span>, <span class="fl">2L</span>, <span class="va">order</span><span class="op">)</span></span>
+<span><span class="va">neighbors</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">ord</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">support</span> <span class="op">+</span> <span class="fl">1L</span><span class="op">)</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="va">support</span><span class="op">)</span></span>
 <span><span class="va">phi</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">Y</span><span class="op">)</span></span></code></pre></div>
+<p>The argument named <code>ranks</code> below contains
+<strong>observation indices</strong>, with one row per target. This
+differs from the <code>n x m</code> rank permutations used by
+<code><a href="../reference/jackknife_rank_full.html">jackknife_rank_full()</a></code>. The compact-support rule is not the
+exact DNN weight rule: exact DNN support extends to <code>n-s+k</code>,
+rather than the first <code>s</code> observations.</p>
 </div>
 <div class="section level2">
-<h2 id="fast-vs-slow-jackknife">Fast vs Slow Jackknife<a class="anchor" aria-label="anchor" href="#fast-vs-slow-jackknife"></a>
+<h2 id="compare-fast-and-reference-calculations">Compare fast and reference calculations<a class="anchor" aria-label="anchor" href="#compare-fast-and-reference-calculations"></a>
 </h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">jk_fast</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jackknife_fast_rank.html">jackknife_fast_rank</a></span><span class="op">(</span>ranks <span class="op">=</span> <span class="va">ranks</span>, a <span class="op">=</span> <span class="va">a</span>, phi <span class="op">=</span> <span class="va">phi</span>, normalize <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="va">jk_slow</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jackknife_slow_rank.html">jackknife_slow_rank</a></span><span class="op">(</span>ranks <span class="op">=</span> <span class="va">ranks</span>, a <span class="op">=</span> <span class="va">a</span>, phi <span class="op">=</span> <span class="va">phi</span>, normalize <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">jk_fast</span><span class="op">$</span><span class="va">theta0</span>, <span class="va">jk_slow</span><span class="op">$</span><span class="va">theta0</span>, tolerance <span class="op">=</span> <span class="fl">1e-12</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">jk_fast</span><span class="op">$</span><span class="va">theta_loo</span>, <span class="va">jk_slow</span><span class="op">$</span><span class="va">theta_loo</span>, tolerance <span class="op">=</span> <span class="fl">1e-12</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="turning-loo-aggregates-into-standard-errors">Turning LOO Aggregates into Standard Errors<a class="anchor" aria-label="anchor" href="#turning-loo-aggregates-into-standard-errors"></a>
-</h2>
+<code class="sourceCode R"><span><span class="va">fast</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jackknife_fast_rank.html">jackknife_fast_rank</a></span><span class="op">(</span>ranks <span class="op">=</span> <span class="va">neighbors</span>, a <span class="op">=</span> <span class="va">a</span>, phi <span class="op">=</span> <span class="va">phi</span><span class="op">)</span></span>
+<span><span class="va">slow</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jackknife_slow_rank.html">jackknife_slow_rank</a></span><span class="op">(</span>ranks <span class="op">=</span> <span class="va">neighbors</span>, a <span class="op">=</span> <span class="va">a</span>, phi <span class="op">=</span> <span class="va">phi</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">fast</span><span class="op">$</span><span class="va">theta_loo</span>, <span class="va">slow</span><span class="op">$</span><span class="va">theta_loo</span>, tolerance <span class="op">=</span> <span class="fl">1e-12</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<p><code>theta0</code> averages the rule across the supplied target
+rows; it is not a vector of separate local fits. <code>theta_loo</code>
+has one row per deleted reference observation and one column per signal
+component.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">theta_loo</span> <span class="op">&lt;-</span> <span class="va">jk_fast</span><span class="op">$</span><span class="va">theta_loo</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span></span>
-<span><span class="va">theta_bar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">theta_loo</span><span class="op">)</span></span>
-<span><span class="va">n_ref</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">theta_loo</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">var_jk</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="op">(</span><span class="va">n_ref</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">/</span> <span class="va">n_ref</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">(</span><span class="va">theta_loo</span> <span class="op">-</span> <span class="va">theta_bar</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span></span>
-<span><span class="va">se_jk</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">var_jk</span><span class="op">)</span></span>
-<span><span class="va">se_jk</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="notes">Notes<a class="anchor" aria-label="anchor" href="#notes"></a>
-</h2>
-<ul>
-<li>
-<code><a href="../reference/jackknife_fast_rank.html">jackknife_fast_rank()</a></code> supports both matrix
-<code>phi</code> and function-valued <code>phi(j, t)</code>.</li>
-<li>The slow version is useful for debugging and parity checks in
-tests.</li>
-<li>For user-level wrappers (<code><a href="../reference/np_dnn.html">np_dnn()</a></code>,
-<code><a href="../reference/cate_dnn.html">cate_dnn()</a></code>, <code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code>), these steps are
-handled internally when <code>se = TRUE</code>.</li>
-</ul>
-</div>
-<div class="section level2">
-<h2 id="related-articles">Related Articles<a class="anchor" aria-label="anchor" href="#related-articles"></a>
-</h2>
-<ul>
-<li>
-<a href="notation-and-conventions.html">Notation and package
-conventions</a>:
-<code><a href="../articles/notation-and-conventions.html">vignette("notation-and-conventions", package = "RdistNN")</a></code>
-distinguishes DNN kernel order, localized moments, and the uncertainty
-fields returned by user-level estimators.</li>
-<li>
-<a href="dnn-weights.html">DNN weights</a>:
-<code><a href="../articles/dnn-weights.html">vignette("dnn-weights", package = "RdistNN")</a></code> describes the
-exact rank weights used by the jackknife path.</li>
-<li>
-<a href="conditional-z-estimation.html">Conditional
-Z-estimation</a>:
-<code><a href="../articles/conditional-z-estimation.html">vignette("conditional-z-estimation", package = "RdistNN")</a></code>
-shows the high-level wrappers that invoke these routines
-internally.</li>
-</ul>
+<code class="sourceCode R"><span><span class="va">deleted</span> <span class="op">&lt;-</span> <span class="va">fast</span><span class="op">$</span><span class="va">theta_loo</span><span class="op">[</span>, <span class="fl">1L</span><span class="op">]</span></span>
+<span><span class="va">n_ref</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">deleted</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>aggregate <span class="op">=</span> <span class="va">fast</span><span class="op">$</span><span class="va">theta0</span>,</span>
+<span>  standard_error <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="op">(</span><span class="va">n_ref</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">/</span> <span class="va">n_ref</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">(</span><span class="va">deleted</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">deleted</span><span class="op">)</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;      aggregate standard_error </span></span>
+<span><span class="co">#&gt;     0.07850962     0.73102688</span></span></code></pre></div>
+<p>Use a numeric <code>n x q</code> signal matrix to retain the full
+reference-sample size. Function-valued <code>phi(j, t)</code> supports
+target-specific contributions, but the reference size is then inferred
+as <code>max(ranks)</code>. See <code><a href="../reference/jackknife_fast_rank.html">?jackknife_fast_rank</a></code> for
+the full contract and <code><a href="../reference/jackknife_rank_full.html">?jackknife_rank_full</a></code> for full-rank
+weight tables. The <a href="notation-and-conventions.html">notation
+guide</a> maps the array conventions.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

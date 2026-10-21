@@ -71,21 +71,16 @@ The returned fit matrix repeats the supplied `theta_eval`
 only through the DNN weights and the resulting direct-sandwich standard
 errors; no target-specific PLQR root is solved.
 
-Coefficient-level standard errors and intervals require the direct PLQR
-sandwich (fit with `density` or `density_col`); a componentwise
-moment-level jackknife SE on a fit without a density input is not by
-itself a coefficient-level interval — see
-`markdown_notes/design/15_plqr_variance_estimation_rationale.md`.
-Prediction standard errors always use the analytic sandwich meat,
+Coefficient uncertainty requires a fit with `density` or `density_col`.
+`moment_se` describes score variation and is not a coefficient standard
+error. Prediction standard errors always use the analytic sandwich meat,
 regardless of the fit's `theta_meat` choice, because the fitted object
 does not retain the outcome data needed to re-run the jackknife at new
 targets.
 
 ## Lifecycle
 
-**Experimental.** PLQR functionality is outside the CATE and regression
-workflow focus of the initial public release. Its API and inference
-interfaces may change in later releases.
+**Experimental.** The PLQR API and inference interfaces may change.
 
 ## See also
 

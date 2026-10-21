@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,8 +34,30 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.1.0.9004" id="rdistnn-0109004-development-snapshot">RdistNN 0.1.0.9004 (development snapshot)<a class="anchor" aria-label="anchor" href="#rdistnn-0109004-development-snapshot"></a></h2>
-<p>The changes below are grouped in one reviewed, flattened (squash-merged) production update carrying version 0.1.0.9004. Publishing this source update does not create a tag or replace assets from the existing v0.1.0 release.</p>
+<h2 class="pkg-version" data-toc-text="0.1.0.9005" id="rdistnn-0109005-development-snapshot">RdistNN 0.1.0.9005 (development snapshot)<a class="anchor" aria-label="anchor" href="#rdistnn-0109005-development-snapshot"></a></h2>
+<p>The maintenance and documentation changes below ship together as one flattened (squash-merged) production commit. Version 0.1.0.9004 records the previous estimator update; tags and assets of the existing v0.1.0 release are unchanged.</p>
+<div class="section level3">
+<h3 id="maintenance-0-1-0-9005">Maintenance<a class="anchor" aria-label="anchor" href="#maintenance-0-1-0-9005"></a></h3>
+<ul><li>Limit native OpenMP teams to two threads by default, with package-specific opt-in controls that respect lower runtime limits.</li>
+<li>Restore caller saved RNG state after explicitly seeded demos and simulations, preserving seeded data and learner draws; <code>NULL</code> uses the current stream. Make stochastic CATE tuning callbacks reproducible under the replicate seed.</li>
+<li>Preserve the generated vignette index in source packages.</li>
+<li>Add <code><a href="https://rdrr.io/r/stats/nobs.html" class="external-link">nobs()</a></code> for NP, TDNN and CATE results, reporting the training sample size.</li>
+<li>Validate demo targets before touching RNG state; preserve valid-call draws.</li>
+<li>Guard plotting-only tests when ggplot2 is absent and assert requested CATE outputs instead of skipping their checks. Add an isolated dependency check to Linux CI. Keep CI-only lintr in the lint workflow rather than package suggestions.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="documentation-0-1-0-9005">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-1-0-9005"></a></h3>
+<ul><li>Shorten READMEs and introductory guides around runnable user workflows. Point to the paper for theory and keep detailed syntax and engine contracts in their reference documents.</li>
+<li>Refresh merged-source installation pins, website copy and the R/Stata documentation crosswalk.</li>
+<li>Reconcile function help with current prediction, diagnostics, score evaluation, PLQR uncertainty and simulation interfaces; correct outdated examples and labels.</li>
+<li>Focus vignette workflows, execute lightweight examples during rendering and seed random reference examples. Keep theory and full replication protocols in their primary references.</li>
+<li>Review all 13 indexed vignettes; update sample-count, seed and thread guidance, simplify extension examples and remove repeated navigation prose.</li>
+<li>Simplify replication and contributor/test documentation, consolidate repeated design guidance and retain implementation contracts in their owning references.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.1.0.9004" id="rdistnn-0109004-merged-development-snapshot">RdistNN 0.1.0.9004 (merged development snapshot)<a class="anchor" aria-label="anchor" href="#rdistnn-0109004-merged-development-snapshot"></a></h2>
+<p>The estimator update was published as one reviewed, flattened (squash-merged) production commit in <a href="https://github.com/JakobJuergens/RdistNN/pull/16" class="external-link">PR </a><a href="https://github.com/JakobJuergens/RdistNN/issues/16" class="external-link">#16</a>.</p>
 <ul><li><p>Add on-demand joint CATE covariance from common deletions, including retained geometry, candidate views and serialized fits without optional weights.</p></li>
 <li><p>Draw finite estimates independently of unavailable intervals and preserve profile gaps. Support ggplot2 &gt;= 3.4.1 with focused older-version checks.</p></li>
 <li><p>Report order fractions and available causal support/contribution summaries without new warning thresholds. Clarify CATE migration, sampling assumptions and row-order ties; remove six unused suggested dependencies.</p></li>

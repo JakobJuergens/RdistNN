@@ -32,13 +32,17 @@ diagnostics(object, candidates = "default", ...)
 
 - object:
 
-  A fitted estimator object, currently an object returned by
+  A fitted object from
   [`np_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_dnn.md),
+  [`np_tdnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_tdnn.md),
   [`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md),
   [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md),
   [`affine_ratio_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_dnn.md)
   or
   [`clate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/clate_dnn.md).
+  Target diagnostics for NP/TDNN, CATE and PLQR require retained `W`;
+  paired-ratio/CLATE methods reconstruct weights from cached ranks
+  without optional extras.
 
 - candidates:
 

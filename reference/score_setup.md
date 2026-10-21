@@ -16,7 +16,8 @@ score_setup(score, data, ...)
 
 - data:
 
-  data.frame/matrix
+  Data object understood by the score, such as a vector, matrix or data
+  frame.
 
 - ...:
 

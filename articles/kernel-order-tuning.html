@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,205 +59,94 @@
 
     
     
+<p>The order <code>s</code> controls localization: larger values
+concentrate weight closer to the reporting profile. A grid compares
+estimates across orders and retains its specified default; it does not
+select an optimal order. The <a href="https://jakobjuergens.com/research/#orthogonal-inference-conditional-z" class="external-link">paper</a>
+gives the statistical motivation and inference conditions.</p>
 <div class="section level2">
-<h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
+<h2 id="fit-and-compare-a-grid">Fit and compare a grid<a class="anchor" aria-label="anchor" href="#fit-and-compare-a-grid"></a>
 </h2>
-<p><code>RdistNN</code> exposes kernel-order selection through a modular
-tuning API:</p>
-<ul>
-<li>build specs with <code><a href="../reference/new_tuning.html">new_tuning()</a></code> or
-<code><a href="../reference/as_tuning.html">as_tuning()</a></code>,</li>
-<li>register/reuse with <code><a href="../reference/register_tuning.html">register_tuning()</a></code> and
-<code><a href="../reference/get_tuning.html">get_tuning()</a></code>,</li>
-<li>evaluate defaults and candidate grids via
-<code><a href="../reference/tuning_eval.html">tuning_eval()</a></code>;</li>
-<li>inspect resolved tuning metadata in fitted-object diagnostics.</li>
-</ul>
-</div>
-<div class="section level2">
-<h2 id="paper-default-undersmoothing-rule">Paper Default Undersmoothing Rule<a class="anchor" aria-label="anchor" href="#paper-default-undersmoothing-rule"></a>
-</h2>
-<p>The built-in rule is:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo stretchy="false" form="prefix">(</mo><mi>λ</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mrow><mo stretchy="true" form="prefix">⌊</mo><mi>λ</mi><mspace width="0.167em"></mspace><msup><mi>n</mi><mrow><mo stretchy="false" form="prefix">(</mo><msub><mi>k</mi><mi>x</mi></msub><mo>+</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo><mi>/</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>k</mi><mi>x</mi></msub><mo>+</mo><mn>2</mn><mo stretchy="false" form="postfix">)</mo></mrow></msup><mo stretchy="true" form="postfix">⌋</mo></mrow></mrow><annotation encoding="application/x-tex">
-s(\lambda) = \left\lfloor \lambda\, n^{(k_x+1)/(k_x+2)} \right\rfloor
-</annotation></semantics></math></p>
-<p>with finite-sample default <code>lambda = 0.4</code> and default
-sensitivity grid <code>lambda_grid = c(0.3, 0.4, 0.5, 0.75)</code>. The
-value <code>lambda = 1</code> remains available as a more aggressive
-localization benchmark.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tun</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tuning_dnn_paper.html">tuning_dnn_paper</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/tuning_eval.html">tuning_eval</a></span><span class="op">(</span><span class="va">tun</span>, n <span class="op">=</span> <span class="fl">1000</span>, kx <span class="op">=</span> <span class="fl">2</span>, k <span class="op">=</span> <span class="fl">1</span>, mode <span class="op">=</span> <span class="st">"default"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; $s</span></span>
-<span><span class="co">#&gt; [1] 71</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $meta</span></span>
-<span><span class="co">#&gt; $meta$lambda</span></span>
-<span><span class="co">#&gt; [1] 0.4</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $meta$formula</span></span>
-<span><span class="co">#&gt; [1] "lambda * n^((kx + 1)/(kx + 2))"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $meta$rounding</span></span>
-<span><span class="co">#&gt; [1] "floor"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $meta$name</span></span>
-<span><span class="co">#&gt; [1] "paper_undersmooth"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $meta$n</span></span>
-<span><span class="co">#&gt; [1] 1000</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $meta$kx</span></span>
-<span><span class="co">#&gt; [1] 2</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $feasibility</span></span>
-<span><span class="co">#&gt; $feasibility$k_le_s</span></span>
-<span><span class="co">#&gt; [1] TRUE</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $feasibility$s_lt_n</span></span>
-<span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/tuning_eval.html">tuning_eval</a></span><span class="op">(</span><span class="va">tun</span>, n <span class="op">=</span> <span class="fl">1000</span>, kx <span class="op">=</span> <span class="fl">2</span>, k <span class="op">=</span> <span class="fl">1</span>, mode <span class="op">=</span> <span class="st">"grid"</span><span class="op">)</span><span class="op">$</span><span class="va">candidates</span></span>
-<span><span class="co">#&gt;   lambda   s feasible reason</span></span>
-<span><span class="co">#&gt; 1   0.30  53     TRUE     ok</span></span>
-<span><span class="co">#&gt; 2   0.40  71     TRUE     ok</span></span>
-<span><span class="co">#&gt; 3   0.50  88     TRUE     ok</span></span>
-<span><span class="co">#&gt; 4   0.75 133     TRUE     ok</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="registry-usage">Registry Usage<a class="anchor" aria-label="anchor" href="#registry-usage"></a>
-</h2>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/tuning_names.html">tuning_names</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "paper_undersmooth"</span></span>
-<span><span class="fu"><a href="../reference/get_tuning.html">get_tuning</a></span><span class="op">(</span><span class="st">"paper_undersmooth"</span><span class="op">)</span><span class="op">$</span><span class="va">name</span></span>
-<span><span class="co">#&gt; [1] "paper_undersmooth"</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="custom-rule">Custom Rule<a class="anchor" aria-label="anchor" href="#custom-rule"></a>
-</h2>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fixed12</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/as_tuning.html">as_tuning</a></span><span class="op">(</span><span class="kw">function</span><span class="op">(</span><span class="va">...</span><span class="op">)</span> <span class="fl">12L</span>, name <span class="op">=</span> <span class="st">"fixed_12"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/tuning_eval.html">tuning_eval</a></span><span class="op">(</span><span class="va">fixed12</span>, n <span class="op">=</span> <span class="fl">300</span>, kx <span class="op">=</span> <span class="fl">2</span>, k <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="co">#&gt; $s</span></span>
-<span><span class="co">#&gt; [1] 12</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $meta</span></span>
-<span><span class="co">#&gt; $meta$name</span></span>
-<span><span class="co">#&gt; [1] "fixed_12"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $meta$n</span></span>
-<span><span class="co">#&gt; [1] 300</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $meta$kx</span></span>
-<span><span class="co">#&gt; [1] 2</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $feasibility</span></span>
-<span><span class="co">#&gt; $feasibility$k_le_s</span></span>
-<span><span class="co">#&gt; [1] TRUE</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $feasibility$s_lt_n</span></span>
-<span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
-<p>A custom rule can also return richer metadata:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">meta_rule</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/new_tuning.html">new_tuning</a></span><span class="op">(</span></span>
-<span>  name <span class="op">=</span> <span class="st">"meta_rule"</span>,</span>
-<span>  eval <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span>, <span class="va">kx</span>, <span class="va">k</span>, <span class="va">se</span>, <span class="va">jackknife</span>, <span class="va">ctx</span> <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>      s <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="fl">0.9</span> <span class="op">*</span> <span class="va">n</span> <span class="op">^</span> <span class="op">(</span><span class="op">(</span><span class="va">kx</span> <span class="op">+</span> <span class="fl">1</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="va">kx</span> <span class="op">+</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>      meta <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>        lambda <span class="op">=</span> <span class="fl">0.9</span>,</span>
-<span>        formula <span class="op">=</span> <span class="st">"0.9 * n^((kx + 1)/(kx + 2))"</span>,</span>
-<span>        rounding <span class="op">=</span> <span class="st">"floor"</span></span>
-<span>      <span class="op">)</span></span>
-<span>    <span class="op">)</span></span>
-<span>  <span class="op">}</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="../reference/tuning_eval.html">tuning_eval</a></span><span class="op">(</span><span class="va">meta_rule</span>, n <span class="op">=</span> <span class="fl">500</span>, kx <span class="op">=</span> <span class="fl">2</span>, k <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="co">#&gt; $s</span></span>
-<span><span class="co">#&gt; [1] 95</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $meta</span></span>
-<span><span class="co">#&gt; $meta$lambda</span></span>
-<span><span class="co">#&gt; [1] 0.9</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $meta$formula</span></span>
-<span><span class="co">#&gt; [1] "0.9 * n^((kx + 1)/(kx + 2))"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $meta$rounding</span></span>
-<span><span class="co">#&gt; [1] "floor"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $meta$name</span></span>
-<span><span class="co">#&gt; [1] "meta_rule"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $meta$n</span></span>
-<span><span class="co">#&gt; [1] 500</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $meta$kx</span></span>
-<span><span class="co">#&gt; [1] 2</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $feasibility</span></span>
-<span><span class="co">#&gt; $feasibility$k_le_s</span></span>
-<span><span class="co">#&gt; [1] TRUE</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $feasibility$s_lt_n</span></span>
-<span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="wrapper-integration">Wrapper Integration<a class="anchor" aria-label="anchor" href="#wrapper-integration"></a>
-</h2>
-<p>High-level wrappers accept <code>tuning = ...</code> and resolve
-<code>s</code> internally:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">demo</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/np_demo_data.html">np_demo_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">200</span>, p <span class="op">=</span> <span class="fl">2</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/np_dnn.html">np_dnn</a></span><span class="op">(</span></span>
-<span>  data <span class="op">=</span> <span class="va">demo</span><span class="op">$</span><span class="va">data</span>,</span>
-<span>  x_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X1"</span>, <span class="st">"X2"</span><span class="op">)</span>,</span>
-<span>  y_col <span class="op">=</span> <span class="st">"Y"</span>,</span>
-<span>  x0 <span class="op">=</span> <span class="va">demo</span><span class="op">$</span><span class="va">x0</span>,</span>
-<span>  k <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  tuning <span class="op">=</span> <span class="fu"><a href="../reference/tuning_dnn_paper.html">tuning_dnn_paper</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  se <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  return <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"W"</span>, <span class="st">"ess"</span>, <span class="st">"tuning"</span><span class="op">)</span></span>
+<span>  data <span class="op">=</span> <span class="va">demo</span><span class="op">$</span><span class="va">data</span>, x_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X1"</span>, <span class="st">"X2"</span><span class="op">)</span>, y_col <span class="op">=</span> <span class="st">"Y"</span>,</span>
+<span>  x0 <span class="op">=</span> <span class="va">demo</span><span class="op">$</span><span class="va">x0</span>, tuning_mode <span class="op">=</span> <span class="st">"grid"</span></span>
 <span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">fit</span><span class="op">$</span><span class="va">meta</span><span class="op">$</span><span class="va">s</span></span>
-<span><span class="co">#&gt; [1] 21</span></span>
-<span><span class="va">fit</span><span class="op">$</span><span class="va">tuning</span><span class="op">$</span><span class="va">grid</span><span class="op">$</span><span class="va">candidates</span></span>
+<span><span class="va">fit</span><span class="op">$</span><span class="va">tuning_grid</span><span class="op">$</span><span class="va">candidates</span></span>
 <span><span class="co">#&gt;   candidate_id computed_key is_default feasible reason status lambda  s</span></span>
 <span><span class="co">#&gt; 1   lambda_0p3         s_15      FALSE     TRUE     ok     ok   0.30 15</span></span>
 <span><span class="co">#&gt; 2   lambda_0p4         s_21       TRUE     TRUE     ok     ok   0.40 21</span></span>
 <span><span class="co">#&gt; 3   lambda_0p5         s_26      FALSE     TRUE     ok     ok   0.50 26</span></span>
 <span><span class="co">#&gt; 4  lambda_0p75         s_39      FALSE     TRUE     ok     ok   0.75 39</span></span>
-<span><span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"target_id"</span>, <span class="st">"tuning_name"</span>, <span class="st">"tuning_default_s"</span>, <span class="st">"tuning_grid_n_candidates"</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="co">#&gt; &lt;dnn_diagnostics&gt;</span></span>
-<span><span class="co">#&gt;   targets: 1</span></span>
-<span><span class="co">#&gt;   dist   : available for 0/1 target(s)</span></span></code></pre></div>
+<span><span class="va">fit</span><span class="op">$</span><span class="va">tuning_grid</span><span class="op">$</span><span class="va">estimates</span></span>
+<span><span class="co">#&gt;   candidate_id computed_key lambda  s target_id component  estimate         se</span></span>
+<span><span class="co">#&gt; 1   lambda_0p3         s_15   0.30 15         1      &lt;NA&gt; 0.1311178 0.08214191</span></span>
+<span><span class="co">#&gt; 2   lambda_0p4         s_21   0.40 21         1      &lt;NA&gt; 0.1650251 0.08880114</span></span>
+<span><span class="co">#&gt; 3   lambda_0p5         s_26   0.50 26         1      &lt;NA&gt; 0.1835091 0.09559482</span></span>
+<span><span class="co">#&gt; 4  lambda_0p75         s_39   0.75 39         1      &lt;NA&gt; 0.2118122 0.11896597</span></span>
+<span><span class="co">#&gt;   status reason</span></span>
+<span><span class="co">#&gt; 1     ok     ok</span></span>
+<span><span class="co">#&gt; 2     ok     ok</span></span>
+<span><span class="co">#&gt; 3     ok     ok</span></span>
+<span><span class="co">#&gt; 4     ok     ok</span></span></code></pre></div>
+<p>The main estimate remains the default candidate. Use a candidate view
+to inspect another order without fitting the nuisance functions
+again:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">view</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/candidate_fit.html">candidate_fit</a></span><span class="op">(</span><span class="va">fit</span>, <span class="fl">1L</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">view</span><span class="op">)</span></span>
+<span><span class="co">#&gt;  target_1 </span></span>
+<span><span class="co">#&gt; 0.1311178</span></span></code></pre></div>
+<p>CATE and CLATE use the same <code>tuning_mode</code> convention. See
+<a href="getting-started.html">Getting started</a> and <a href="conditional-late.html">Conditional LATE</a> for their signal
+inputs. <code>plot_tuning(fit)</code> draws the sensitivity comparison
+when ggplot2 is installed.</p>
 </div>
 <div class="section level2">
-<h2 id="related-articles">Related Articles<a class="anchor" aria-label="anchor" href="#related-articles"></a>
+<h2 id="inspect-the-default-rule">Inspect the default rule<a class="anchor" aria-label="anchor" href="#inspect-the-default-rule"></a>
 </h2>
-<ul>
-<li>
-<a href="notation-and-conventions.html">Notation and package
-conventions</a>:
-<code><a href="../articles/notation-and-conventions.html">vignette("notation-and-conventions", package = "RdistNN")</a></code>
-relates <code>s</code>, <code>k</code>, <code>lambda</code>, support,
-and effective sample size to the paper notation.</li>
-<li>
-<a href="dnn-weights.html">DNN weights</a>:
-<code><a href="../articles/dnn-weights.html">vignette("dnn-weights", package = "RdistNN")</a></code> explains how
-the selected order enters exact and asymptotic weights.</li>
-<li>
-<a href="diagnostics-reporting.html">Diagnostics and reporting</a>:
-<code><a href="../articles/diagnostics-reporting.html">vignette("diagnostics-reporting", package = "RdistNN")</a></code>
-shows how resolved tuning metadata appears in fitted-object
-diagnostics.</li>
-</ul>
+<p>The built-in rule is
+<code>floor(lambda * n^((kx + 1)/(kx + 2)))</code>, with
+<code>lambda = 0.4</code> and sensitivity multipliers
+<code>c(0.3, 0.4, 0.5, 0.75)</code>. Here <code>kx</code> is the number
+of reporting covariates. <code>lambda = 1</code> remains an available,
+more concentrated localization setting. Delete-one uncertainty requires
+<code>s &lt; n</code>.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">tun</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tuning_dnn_paper.html">tuning_dnn_paper</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/tuning_eval.html">tuning_eval</a></span><span class="op">(</span><span class="va">tun</span>, n <span class="op">=</span> <span class="fl">1000</span>, kx <span class="op">=</span> <span class="fl">2</span>, k <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">$</span><span class="va">s</span></span>
+<span><span class="co">#&gt; [1] 71</span></span>
+<span><span class="fu"><a href="../reference/tuning_eval.html">tuning_eval</a></span><span class="op">(</span><span class="va">tun</span>, n <span class="op">=</span> <span class="fl">1000</span>, kx <span class="op">=</span> <span class="fl">2</span>, k <span class="op">=</span> <span class="fl">1</span>, mode <span class="op">=</span> <span class="st">"grid"</span><span class="op">)</span><span class="op">$</span><span class="va">candidates</span></span>
+<span><span class="co">#&gt;   lambda   s feasible reason</span></span>
+<span><span class="co">#&gt; 1   0.30  53     TRUE     ok</span></span>
+<span><span class="co">#&gt; 2   0.40  71     TRUE     ok</span></span>
+<span><span class="co">#&gt; 3   0.50  88     TRUE     ok</span></span>
+<span><span class="co">#&gt; 4   0.75 133     TRUE     ok</span></span></code></pre></div>
+<p>Explicit <code>s</code> and a tuning specification are alternative
+inputs; grid mode cannot be combined with explicit <code>s</code>.
+Diagnostics record the resolved order and its provenance:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"target_id"</span>, <span class="st">"tuning_name"</span>, <span class="st">"tuning_default_s"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;          target_id       tuning_name tuning_default_s</span></span>
+<span><span class="co">#&gt; target_1  target_1 paper_undersmooth               21</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="define-and-register-a-custom-rule">Define and register a custom rule<a class="anchor" aria-label="anchor" href="#define-and-register-a-custom-rule"></a>
+</h2>
+<p>For a fixed order, a small function is enough:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fixed12</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/as_tuning.html">as_tuning</a></span><span class="op">(</span><span class="kw">function</span><span class="op">(</span><span class="va">...</span><span class="op">)</span> <span class="fl">12L</span>, name <span class="op">=</span> <span class="st">"fixed_12"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/tuning_eval.html">tuning_eval</a></span><span class="op">(</span><span class="va">fixed12</span>, n <span class="op">=</span> <span class="fl">300</span>, kx <span class="op">=</span> <span class="fl">2</span>, k <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">$</span><span class="va">s</span></span>
+<span><span class="co">#&gt; [1] 12</span></span>
+<span><span class="fu"><a href="../reference/register_tuning.html">register_tuning</a></span><span class="op">(</span><span class="st">"fixed_12"</span>, <span class="va">fixed12</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/get_tuning.html">get_tuning</a></span><span class="op">(</span><span class="st">"fixed_12"</span><span class="op">)</span><span class="op">$</span><span class="va">name</span></span>
+<span><span class="co">#&gt; [1] "fixed_12"</span></span></code></pre></div>
+<p><code><a href="../reference/new_tuning.html">new_tuning()</a></code> also accepts explicit candidate generation
+and metadata; see its help for the full interface. A custom rule must
+respect the estimator’s order constraints. <a href="dnn-weights.html">DNN weights</a> explains the resulting rank
+weights, and <a href="notation-and-conventions.html">Notation and
+conventions</a> lists the argument and result shapes.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

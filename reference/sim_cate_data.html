@@ -11,7 +11,7 @@ by the general DNN CATE benchmarks."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,7 +85,8 @@ by the general DNN CATE benchmarks.</p>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Optional integer seed for reproducibility.</p></dd>
+<dd><p>Optional integer seed, used locally without changing the caller's
+RNG state. <code>NULL</code> uses the current stream.</p></dd>
 
 
 <dt id="arg-x-">x0<a class="anchor" aria-label="anchor" href="#arg-x-"></a></dt>
@@ -119,15 +120,14 @@ propensity. Correctly specified for the OLS-interaction benchmark.</p></dd>
 <dt><code>dgp2_nonlinear</code></dt>
 <dd><p>Sharpened nonlinear CATE
 \(\tau(x) = 0.5 + 0.75\sin(1.5 x_1)\);
-same propensity. Misspecified for OLS; primary horse-race DGP. Default
+same propensity. Default
 target is the interior point \(x_0 = (1,0,\ldots)\) so the local CATE
 is visibly nonlinear around the evaluation point.</p></dd>
 
 <dt><code>dgp3_sparse_overlap</code></dt>
 <dd><p>Same \(\tau\) as DGP 2; propensity
 interpolates between 0.5 at <code>x0</code> and a much sharper near-boundary
-logistic far from <code>x0</code>, using a tighter Gaussian overlap pocket. Tests
-estimators that do not adapt to local effective sample size. Default
+logistic far from <code>x0</code>, using a tighter Gaussian overlap pocket. Default
 target is the same interior point \(x_0 = (1,0,\ldots)\).</p></dd>
 
 <dt><code>dgp4_clustered</code></dt>
@@ -135,18 +135,15 @@ target is the same interior point \(x_0 = (1,0,\ldots)\).</p></dd>
 from a three-component mixture: 80\<!-- % \eqn{N(x_0, 0.2^2 I)} (dense spike at -->
 <code>x0</code>) plus two diffuse 10\<!-- % remote clusters centered at -->
 \((4.5,2,0,\ldots)\) and \((-2.5,-2,0,\ldots)\) with covariance
-\(1.25^2 I\). Tests density adaptivity: the DNN s-NN bandwidth
-automatically shrinks at the dense <code>x0</code>, while a fixed-bandwidth kernel
-over-smooths. Default target is the interior point
+\(1.25^2 I\). Observations are independent draws from this mixture;
+the name does not indicate clustered sampling. Default target is
 \(x_0 = (1,0,\ldots)\) and the inner cluster is recentered there.</p></dd>
 
 <dt><code>dgp5_correlated</code></dt>
 <dd><p>Covariates \(X \sim N(0,\Sigma)\) with
 \(\Sigma_{12} = \rho = 0.85\); \(\tau(x) = \sin(2x_1) + 0.5x_1^2\);
-evaluation point at \(x_0 = (0.75, 0)\). Tests shape adaptivity: L2
-and diagonal-scaled neighbourhoods are misaligned with the elliptical
-covariate isocontours; the <code>dnn_oracle_mahal</code> benchmark (Mahalanobis
-distance) corrects for the off-diagonal covariance.</p></dd>
+evaluation point at \(x_0 = (0.75, 0)\). The <code>dnn_oracle_mahal</code>
+benchmark uses Mahalanobis distance to account for off-diagonal covariance.</p></dd>
 
 <dt><code>dgp6_nuisance_efficiency</code></dt>
 <dd><p>Propensity
@@ -154,7 +151,7 @@ distance) corrects for the off-diagonal covariance.</p></dd>
 marginal regression \(m(x) = 1 + 1.5(x_1 - 1) - x_2\) are aligned with
 simple benchmark nuisance models, while
 \(\tau(x) = 0.5 + 0.60\sin(1.5 x_1)\) remains nonlinear. Tests the
-precision gap between <code>dnn_fullsample</code> and <code>dnn_crossfit</code>. Default target
+full-sample and cross-fitted nuisance workflows. Default target
 is \(x_0 = (1,0,\ldots)\).</p></dd>
 
 

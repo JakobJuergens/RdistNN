@@ -31,7 +31,7 @@ score objects (ustat_score) for flexible kernel-based moment evaluation.
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,11 +81,13 @@ target;</p></li>
 <li><p>Resolve paper-default kernel orders with <code><a href="tuning_dnn_paper.html">tuning_dnn_paper()</a></code> and
 <code><a href="tuning_eval.html">tuning_eval()</a></code>.</p></li>
 <li><p>Estimate local CATE targets with <code><a href="cate_dnn.html">cate_dnn()</a></code>.</p></li>
-<li><p>Summarize/predict CATE fits with <code><a href="summary.cate_result.html">summary.cate_result()</a></code>,
-<code><a href="confint.cate_result.html">confint.cate_result()</a></code>, and <code><a href="predict.cate_result.html">predict.cate_result()</a></code>.</p></li>
+<li><p>Report and reuse CATE fits with <code><a href="summary.cate_result.html">summary.cate_result()</a></code>,
+<code><a href="confint.cate_result.html">confint.cate_result()</a></code>, <code><a href="vcov.cate_result.html">vcov.cate_result()</a></code> and <code><a href="predict.cate_result.html">predict.cate_result()</a></code>.</p></li>
 <li><p>Estimate local nonparametric means with <code><a href="np_dnn.html">np_dnn()</a></code>.</p></li>
 <li><p>Use two-scale signed-weight regression with <code><a href="np_tdnn.html">np_tdnn()</a></code>; see its help for
-order constraints and additional smoothness requirements.</p></li>
+order constraints and additional smoothness requirements.
+Both regression classes share reporting, joint covariance and prediction
+methods documented in <a href="np_result.html">np_result</a>.</p></li>
 <li><p>Estimate conditional LATE from supplied nuisance predictions with
 <code><a href="clate_dnn.html">clate_dnn()</a></code>, or localize two supplied signals with <code><a href="affine_ratio_dnn.html">affine_ratio_dnn()</a></code>.
 <code><a href="iv_augmented_signals.html">iv_augmented_signals()</a></code> constructs the augmented binary-IV signals.
@@ -111,6 +113,25 @@ remains experimental and provides separate set-valued moment inversion.</p><ul><
 <code><a href="jackknife_slow_rank.html">jackknife_slow_rank()</a></code>.</p></li>
 </ul></div>
     <div class="section level2">
+    <h2 id="random-numbers">Random numbers<a class="anchor" aria-label="anchor" href="#random-numbers"></a></h2>
+
+
+<p>Explicit demo and simulation seeds restore <code>.Random.seed</code> and <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">RNGkind()</a></code>;
+<code>NULL</code> uses the current stream. R's saved state does not include the hidden
+Box-Muller normal cache; use the default normal generator for saved-state
+reproducibility.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="native-threads">Native threads<a class="anchor" aria-label="anchor" href="#native-threads"></a></h2>
+
+
+<p>Compiled routines use at most two OpenMP threads by default. Set
+<code>options(RdistNN.num_threads = 1L)</code> for one native thread, or supply a larger
+positive integer to opt into more threads. Lower OpenMP runtime limits are
+respected; builds without OpenMP run serially. This option does not change
+other packages' thread settings.</p>
+    </div>
+    <div class="section level2">
     <h2 id="documentation-map">Documentation Map<a class="anchor" aria-label="anchor" href="#documentation-map"></a></h2>
 
 
@@ -123,14 +144,15 @@ and scores, see <code><a href="../articles/extending.html">vignette("extending",
 <code><a href="../articles/diagnostics-reporting.html">vignette("diagnostics-reporting", package = "RdistNN")</a></code>.</p></li>
 <li><p>For distance/rank weighting details see
 <code><a href="../articles/dnn-weights.html">vignette("dnn-weights", package = "RdistNN")</a></code>.</p></li>
-<li><p>For estimator workflows see
-<code><a href="../articles/conditional-z-estimation.html">vignette("conditional-z-estimation", package = "RdistNN")</a></code>, including
-experimental PLQR details.</p></li>
+<li><p>For experimental PLQR moments and coefficient uncertainty, see
+<code><a href="../articles/conditional-z-estimation.html">vignette("conditional-z-estimation", package = "RdistNN")</a></code>.</p></li>
 <li><p>For supplied-prediction conditional LATE and paired inference, see
 <code><a href="../articles/conditional-late.html">vignette("conditional-late", package = "RdistNN")</a></code> and
 <code><a href="../articles/conditional-late-inference.html">vignette("conditional-late-inference", package = "RdistNN")</a></code>.</p></li>
 <li><p>For jackknife details see
 <code><a href="../articles/jackknife-gen-ustats.html">vignette("jackknife-gen-ustats", package = "RdistNN")</a></code>.</p></li>
+<li><p>For statistical background, assumptions and theoretical results, see
+the accompanying <a href="https://jakobjuergens.com/research/#orthogonal-inference-conditional-z" class="external-link">paper</a>.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

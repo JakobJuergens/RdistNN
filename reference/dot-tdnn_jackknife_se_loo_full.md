@@ -1,13 +1,10 @@
 # Delete-one jackknife SE for TDNN via prefix/suffix rank-order engine
 
 Computes the jackknife standard error for a TDNN rank-weighted estimator
-using the generic \\O(n \cdot m \cdot q)\\ prefix/suffix engine
-([`jackknife_rank_full()`](https://JakobJuergens.github.io/RdistNN/reference/jackknife_rank_full.md)).
-Unlike
-[`.tdnn_jackknife_se_loo_matrix()`](https://JakobJuergens.github.io/RdistNN/reference/dot-tdnn_jackknife_se_loo_matrix.md),
-this path does **not** re-evaluate the rank-weight spec for each
-deletion; it precomputes the TDNN rank tables at sizes \\n\\ and \\n-1\\
-once and passes them directly to the engine.
+using the shared centered prefix/suffix engine. It precomputes the TDNN
+rank tables at sizes \\n\\ and \\n-1\\ and passes them to
+`.dnn_loo_centered()`, as does the `fast` route of
+[`.tdnn_jackknife_se_loo_matrix()`](https://JakobJuergens.github.io/RdistNN/reference/dot-tdnn_jackknife_se_loo_matrix.md).
 
 ## Usage
 
@@ -87,6 +84,4 @@ Numeric matrix (q x m) of jackknife standard errors.
 ## Details
 
 The C++ engine is used automatically when the package has been compiled;
-otherwise
-[`jackknife_rank_full()`](https://JakobJuergens.github.io/RdistNN/reference/jackknife_rank_full.md)
-falls back to its pure-R implementation.
+otherwise the same centered calculation uses its R fallback.

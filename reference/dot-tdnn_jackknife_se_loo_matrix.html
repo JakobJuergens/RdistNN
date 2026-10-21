@@ -9,7 +9,7 @@ replaced by the TDNN rank-weight spec."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -124,10 +124,9 @@ replaced by the TDNN rank-weight spec.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><strong>Fast path</strong> (<code>jackknife = "fast"</code>): computes full-sample ranks once, then
-for each deleted observation <code>i</code> adjusts ranks by decrementing entries that
-were ranked below <code>i</code> and re-evaluates the TDNN rank-weight spec on the
-resulting <code>(n-1) x m</code> rank matrix.  No distances are recomputed.</p>
+    <p><strong>Fast path</strong> (<code>jackknife = "fast"</code>): computes full-sample ranks and the
+deletion weight table once, then uses the shared centered prefix/suffix
+engine. No distances are recomputed.</p>
 <p><strong>LOO fallback</strong> (<code>jackknife = "loo"</code>): for each <code>i</code>, recomputes weights
 from scratch on the <code>(n-1)</code> reduced dataset.  Strictly slower; useful for
 validation.</p>

@@ -1,11 +1,56 @@
 # Changelog
 
-## RdistNN 0.1.0.9004 (development snapshot)
+## RdistNN 0.1.0.9005 (development snapshot)
 
-The changes below are grouped in one reviewed, flattened (squash-merged)
-production update carrying version 0.1.0.9004. Publishing this source
-update does not create a tag or replace assets from the existing v0.1.0
-release.
+The maintenance and documentation changes below ship together as one
+flattened (squash-merged) production commit. Version 0.1.0.9004 records
+the previous estimator update; tags and assets of the existing v0.1.0
+release are unchanged.
+
+### Maintenance
+
+- Limit native OpenMP teams to two threads by default, with
+  package-specific opt-in controls that respect lower runtime limits.
+- Restore caller saved RNG state after explicitly seeded demos and
+  simulations, preserving seeded data and learner draws; `NULL` uses the
+  current stream. Make stochastic CATE tuning callbacks reproducible
+  under the replicate seed.
+- Preserve the generated vignette index in source packages.
+- Add [`nobs()`](https://rdrr.io/r/stats/nobs.html) for NP, TDNN and
+  CATE results, reporting the training sample size.
+- Validate demo targets before touching RNG state; preserve valid-call
+  draws.
+- Guard plotting-only tests when ggplot2 is absent and assert requested
+  CATE outputs instead of skipping their checks. Add an isolated
+  dependency check to Linux CI. Keep CI-only lintr in the lint workflow
+  rather than package suggestions.
+
+### Documentation
+
+- Shorten READMEs and introductory guides around runnable user
+  workflows. Point to the paper for theory and keep detailed syntax and
+  engine contracts in their reference documents.
+- Refresh merged-source installation pins, website copy and the R/Stata
+  documentation crosswalk.
+- Reconcile function help with current prediction, diagnostics, score
+  evaluation, PLQR uncertainty and simulation interfaces; correct
+  outdated examples and labels.
+- Focus vignette workflows, execute lightweight examples during
+  rendering and seed random reference examples. Keep theory and full
+  replication protocols in their primary references.
+- Review all 13 indexed vignettes; update sample-count, seed and thread
+  guidance, simplify extension examples and remove repeated navigation
+  prose.
+- Simplify replication and contributor/test documentation, consolidate
+  repeated design guidance and retain implementation contracts in their
+  owning references.
+
+## RdistNN 0.1.0.9004 (merged development snapshot)
+
+The estimator update was published as one reviewed, flattened
+(squash-merged) production commit in
+[PR](https://github.com/JakobJuergens/RdistNN/pull/16)
+[\#16](https://github.com/JakobJuergens/RdistNN/issues/16).
 
 - Add on-demand joint CATE covariance from common deletions, including
   retained geometry, candidate views and serialized fits without

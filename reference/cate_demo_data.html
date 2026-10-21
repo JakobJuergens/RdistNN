@@ -23,7 +23,7 @@ treatment effect. It also returns the oracle AIPW pseudo-outcome."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -87,7 +87,7 @@ treatment effect. It also returns the oracle AIPW pseudo-outcome.</p>
 
 
 <dt id="arg-p">p<a class="anchor" aria-label="anchor" href="#arg-p"></a></dt>
-<dd><p>Integer feature dimension (recommend \(p \ge 2\)).</p></dd>
+<dd><p>Integer feature dimension, at least 2.</p></dd>
 
 
 <dt id="arg-design">design<a class="anchor" aria-label="anchor" href="#arg-design"></a></dt>
@@ -103,7 +103,8 @@ treatment effect. It also returns the oracle AIPW pseudo-outcome.</p>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Optional integer seed for reproducibility.</p></dd>
+<dd><p>Optional integer seed, used locally without changing the caller's
+RNG state. <code>NULL</code> uses the current stream.</p></dd>
 
 
 <dt id="arg-x-">x0<a class="anchor" aria-label="anchor" href="#arg-x-"></a></dt>

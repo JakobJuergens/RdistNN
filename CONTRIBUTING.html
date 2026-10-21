@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,54 +35,56 @@
 
 <div id="contributing-to-rdistnn" class="section level1">
 
-<p>Supported workflows include CATE, nonparametric regression, supplied-prediction CLATE and ordinary paired-signal ratios, with shared weights, tuning, diagnostics, reporting and plots. Optional ratio confidence-set inversion, all PLQR functionality and local IV-GMM remain experimental. Please open an issue before proposing a new estimator or a change to an exported interface.</p>
+<p>Read <a href="AGENTS.html">AGENTS.md</a> before editing. The <a href="https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/README.md" class="external-link">design index</a> routes interface, validation and numerical contracts; the <a href="https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/rdistnn_roadmap.md" class="external-link">package scope</a> distinguishes supported and experimental workflows. Open an issue before proposing a new estimator or exported-interface change.</p>
 <div class="section level2">
 <h2 id="development-and-production-workflow">Development and production workflow<a class="anchor" aria-label="anchor" href="#development-and-production-workflow"></a></h2>
-<p>Use the local <code>development</code> branch for ongoing work. It has no upstream until publication is authorized. GitHub cannot make an individual branch private in a public repository; keeping development local preserves its unpublished state. Commit development changes there, with focused tests and documentation.</p>
-<p>When the maintainer authorizes a production update, publish a review branch and open a pull request targeting <code>master</code>. Include the problem, final behavior and verification in the description. Complete the required CI checks and review, then squash-merge the PR so production history records the reviewed change rather than each intermediate development commit. Do not push directly to <code>master</code> without an explicit override. Keep local development current with the reviewed production state before starting the next change.</p>
-</div>
-<div class="section level2">
-<h2 id="r-and-stata-parity">R and Stata parity<a class="anchor" aria-label="anchor" href="#r-and-stata-parity"></a></h2>
-<p>Use R as the numerical reference for shared estimator behavior. The companion Stata package retains its own command grammar, while reporting, candidate reuse and saved-fit prediction should agree on frozen observations/signals, fixed training geometry, weight normalization, covariance scale and undefined CLATE targets. PLQR parity currently concerns moments at supplied coefficients; Stata does not provide R’s density-backed coefficient inference.</p>
-<p>Cross-language regression fixtures and their R generators live in the sibling <code>RdistNN_stata/tests/fixtures/</code> and <code>RdistNN_stata/tools/</code> directories. In particular, <code>generate_r_reporting_fixtures.R</code> and <code>generate_r_reuse_fixtures.R</code> record reporting and reusable-fit reference values. Run their matching Stata regressions after an intentional shared-contract change, and retain independent delete-one references rather than accepting agreement between two fast paths alone. Do not regenerate golden values merely to make a failure pass.</p>
-<p>The same parity requirement applies within each package: compiled C++, R and Mata paths implement the same selected method. Require exact discrete decisions and justified tolerances for continuous quantities; verify forced engines and automatic fallback separately. The <a href="https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/10_rcpp_and_compiled_code_policy.md" class="external-link">compiled-code policy</a> defines arithmetic and cross-system reproducibility requirements, with coverage specified by the linked testing policy.</p>
+<p>Work on local <code>development</code> and keep it unpublished until publication is authorized. Branches in a public GitHub repository are public when pushed. For an authorized production update, publish a review branch, open a PR to <code>master</code>, complete review and required checks, then squash-merge. Direct pushes to <code>master</code> require an explicit override. Keep development current with the reviewed production state.</p>
 </div>
 <div class="section level2">
 <h2 id="local-setup">Local setup<a class="anchor" aria-label="anchor" href="#local-setup"></a></h2>
-<p>Use R 4.1.0 or newer and a C++17 toolchain. OpenMP is optional. Install the development tools and package dependencies from the repository root:</p>
+<p>Use R 4.1.0 or newer and a C++17 toolchain; OpenMP is optional. From the root:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"devtools"</span>, <span class="st">"pkgdown"</span>, <span class="st">"rcmdcheck"</span>, <span class="st">"yaml"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_deps</span><span class="op">(</span>dependencies <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p>Documentation is generated with <strong>roxygen2 8.0.0</strong>, as declared in <code>DESCRIPTION</code>; use that version to avoid namespace drift. If needed:</p>
+<p>Use <strong>roxygen2 8.0.0</strong>, as declared in <code>DESCRIPTION</code>, to avoid generated-file drift. Install the declared version if needed:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span>  <span class="co"># if not already installed</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_version</span><span class="op">(</span><span class="st">"roxygen2"</span>, version <span class="op">=</span> <span class="st">"8.0.0"</span>, upgrade <span class="op">=</span> <span class="st">"never"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="editing-and-checking">Editing and checking<a class="anchor" aria-label="anchor" href="#editing-and-checking"></a></h2>
-<ul><li>Document exported functions in their R source. Regenerate help with <code>devtools::document()</code>; do not hand-edit <code>NAMESPACE</code>, <code>man/*.Rd</code>, or <code>RcppExports.*</code>.</li>
-<li>Edit <code>README.Rmd</code>, then run <code>devtools::build_readme()</code>.</li>
-<li>Write small, deterministic examples. Mark oracle quantities explicitly and keep simulation illustrations distinct from manuscript evidence.</li>
-<li>Preserve matrix and data-frame interfaces, returned fields, and defaults during documentation or packaging changes.</li>
-<li>Add focused testthat coverage for changes to behavior or validation. Read <code>AGENTS.md</code> and the linked design policies for the detailed contracts.</li>
-</ul><p>For package behavior changes, run <code>devtools::test()</code> and relevant focused checks. <a href="https://github.com/JakobJuergens/RdistNN/blob/master/tests/README.md" class="external-link">The test-suite map</a> lists the behavior-based files, shared helpers, focused filters, and optional visual tests. Before a release, run the full package and site builds described in <a href="RELEASING.html">RELEASING.md</a>. Documentation changes should at least execute their changed examples and verify their links and generated output.</p>
-<p>The existing alignment checks can be run from the repository root:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="ex">Rscript</span> tools/ci/check_tests_declared_deps.R</span>
+<table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>Changed surface</th>
+<th>Edit and verify</th>
+</tr></thead><tbody><tr><td>Function help or exports</td>
+<td>Edit roxygen in <code>R/</code>; run <code>devtools::document()</code>. Never hand-edit <code>NAMESPACE</code>, <code>man/*.Rd</code> or <code>RcppExports.*</code>.</td>
+</tr><tr><td>README</td>
+<td>Edit <code>README.Rmd</code>; run <code>devtools::build_readme()</code>.</td>
+</tr><tr><td>Examples or articles</td>
+<td>Use small seeded examples, guard optional packages, execute changed code and check links/generated output. Refer to the paper for theory.</td>
+</tr><tr><td>Behavior or validation</td>
+<td>Add focused testthat regressions. Select suites using the <a href="https://github.com/JakobJuergens/RdistNN/blob/master/tests/README.md" class="external-link">test map</a>; use the full suite for shared or broad changes.</td>
+</tr><tr><td>Release candidate</td>
+<td>Run the full package/site and cross-platform gates in <a href="RELEASING.html">RELEASING.md</a>.</td>
+</tr></tbody></table><p>Preserve public inputs, defaults and result schemas during editorial changes. Identify oracle quantities and distinguish demonstrations from manuscript evidence. Update <code>NEWS.md</code> for user-visible changes.</p>
+<p>Run the alignment checks relevant to the changed surface:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="ex">Rscript</span> tools/ci/check_tests_declared_deps.R</span>
 <span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="ex">Rscript</span> tools/ci/check_repository_hygiene.R</span>
 <span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="ex">Rscript</span> tools/ci/check_pkgdown_reference_coverage.R</span>
 <span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="ex">Rscript</span> tools/ci/check_generated_file_drift.R</span>
 <span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest discover <span class="at">-s</span> tests/ci <span class="at">-v</span></span></code></pre></div>
-<p>The generated-file check includes all roxygen Rd topics and rejects missing or obsolete generated files. It runs in isolation and uses the roxygen2 version in DESCRIPTION. Repository hygiene covers staged and new candidate files; keep verification output under ignored <code>build/</code> or <code>archives/</code> directories. The same hygiene gate rejects duplicate top-level function definitions across R modules; function-local closures may reuse names. Give each shared function one implementation owner so source-loading order cannot choose its behavior. With both checkouts present, verify shared native headers explicitly with <code>python3 ../RdistNN_stata/tools/ci/package_hygiene.py --r-root .</code>.</p>
+<p>The generated-file gate regenerates namespace, Rd topics and Rcpp glue in an isolated tree using the declared roxygen2 version. Hygiene checks staged/new candidate files and duplicate top-level R function ownership; local closures may reuse names. Keep check output, archives and private session records under ignored <code>archives/</code>, excluded from source packages. Reuse successful checks while the verified content is unchanged. Reserve <code>build/</code> for R-generated package metadata, including the vignette index.</p>
 </div>
 <div class="section level2">
-<h2 id="maintainer-reference">Maintainer reference<a class="anchor" aria-label="anchor" href="#maintainer-reference"></a></h2>
-<p>The <a href="https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/README.md" class="external-link">design index</a> routes interface, validation, numerical and engineering contracts. The <a href="https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/13_estimator_and_result_architecture.md" class="external-link">result architecture</a> explains shared generic dispatch and method-specific adapters; the <a href="https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/17_clate_ratio_inference.md" class="external-link">paired-ratio contract</a> records CLATE signal, covariance and numerical-status requirements. <a href="https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/rdistnn_roadmap.md" class="external-link">Package scope</a> distinguishes implemented capabilities from extensions requiring further justification.</p>
-<p>Public maintainer documentation should explain current decisions, scientific limits and reproducible development procedures. Keep personal source-library configuration, session instructions, completed task lists and local execution receipts in private working records. Local <code>archives/</code> is ignored and excluded from R source packages; check that private records are untracked before committing.</p>
+<h2 id="r-and-stata-parity">R and Stata parity<a class="anchor" aria-label="anchor" href="#r-and-stata-parity"></a></h2>
+<p>R is the numerical reference for shared methods. Compare identical inputs, row order, targets, fitted geometry, signals, weight controls and covariance definitions. Require exact discrete decisions and justified numeric tolerances; force and establish each engine, then test automatic fallback separately. Keep independent analytic/deletion references. Do not regenerate golden values merely to make a failure pass. The <a href="https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/10_rcpp_and_compiled_code_policy.md" class="external-link">compiled-code policy</a> owns the arithmetic contract.</p>
+<p>The Stata checkout’s <code>tests/R_TEST_CROSSWALK.md</code> maps shared and R-only contracts. Its <code>tools/generate_r_*.R</code> scripts own cross-language fixtures, including reporting and saved-fit references. Run matching Stata regressions after an intentional shared-contract change. PLQR parity concerns supplied-coefficient moments; Stata has no density-backed coefficient inference.</p>
+<p>With both checkouts present, verify mirrored native headers from the R root:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="ex">python3</span> ../RdistNN_stata/tools/ci/package_hygiene.py <span class="at">--r-root</span> .</span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="reporting-problems">Reporting problems<a class="anchor" aria-label="anchor" href="#reporting-problems"></a></h2>
-<p>Open an <a href="https://github.com/JakobJuergens/RdistNN/issues" class="external-link">issue</a> with a minimal reproducible example, the expected and actual results, and <code><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo()</a></code>. For numerical discrepancies, also report whether they persist with <code>options(RdistNN.use_compiled = FALSE)</code>. That selects supported R algorithms; it does not remove the compiler requirement for source installation.</p>
-<p>For a pull request, describe the concrete change, its scope, and the checks run. Update <code>NEWS.md</code> for user-visible changes. Exclude generated check directories, source archives, rendered site files, and harvested CI logs from commits.</p>
+<p>Open a <a href="https://github.com/JakobJuergens/RdistNN/issues" class="external-link">GitHub issue</a> with a minimal example, expected/actual results and <code><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo()</a></code>. For numerical discrepancies, report whether they persist with <code>options(RdistNN.use_compiled = FALSE)</code>. This selects R algorithms; source installation still requires compilation.</p>
+<p>PRs should describe the final behavior, scope and verification. Maintainer documentation records current contracts and procedures; keep personal paths, session instructions, completed task lists, generated logs and execution receipts in private working records.</p>
 </div>
 </div>
 

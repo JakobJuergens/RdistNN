@@ -1,110 +1,76 @@
-# Jackknife for Hájek-dominated generalized U-statistics (overview)
+# Using the rank-jackknife utilities
 
-## Overview
+This advanced guide uses
+[`jackknife_fast_rank()`](https://JakobJuergens.github.io/RdistNN/reference/jackknife_fast_rank.md)
+and its reference
+[`jackknife_slow_rank()`](https://JakobJuergens.github.io/RdistNN/reference/jackknife_slow_rank.md)
+for a compact-support rank-weighted rule. Applied users obtain local
+standard errors directly from their fitted estimators; see [Getting
+started](https://JakobJuergens.github.io/RdistNN/articles/getting-started.md).
+Statistical conditions and theory belong to the
+[paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
+and its references.
 
-`RdistNN` includes two delete-1 jackknife utilities for rank-weighted
-functionals:
+## Supply neighbor indices and a signal
 
-- [`jackknife_fast_rank()`](https://JakobJuergens.github.io/RdistNN/reference/jackknife_fast_rank.md):
-  optimized implementation (compiled when available)
-- [`jackknife_slow_rank()`](https://JakobJuergens.github.io/RdistNN/reference/jackknife_slow_rank.md):
-  reference implementation for validation
-
-Both return:
-
-- `theta0`: baseline aggregate
-- `theta_loo`: all leave-one-out aggregates
-- `info`: metadata (`s`, number of targets, output dimension,
-  normalization)
-
-Important distinction:
-
-- [`jackknife_fast_rank()`](https://JakobJuergens.github.io/RdistNN/reference/jackknife_fast_rank.md)
-  and
-  [`jackknife_slow_rank()`](https://JakobJuergens.github.io/RdistNN/reference/jackknife_slow_rank.md)
-  are **generic** utilities for compact-support rank-weighted L-stat
-  rules;
-- the user-level exact DNN wrappers do **not** truncate to the first `s`
-  observations. They keep the full rank matrix and reevaluate the DNN
-  rank-weight rule after delete-one updates.
-
-## Example Setup
+For each target, supply the nearest `support + 1` observation indices.
+The extra neighbor replaces a deleted member. Here the rule averages the
+first three neighbors at each of two targets:
 
 ``` r
 
-n <- 40
-p <- 2
-s <- 3L
-
-X <- matrix(rnorm(n * p), n, p)
+set.seed(4)
+n <- 40L
+support <- 3L
+X <- matrix(rnorm(n * 2), n, 2)
+X0 <- rbind(c(0, 0), c(1, 0))
 Y <- rnorm(n)
 
-# Toy compact-support example: build only the first s+1 ranked observations
-# for each target point. This illustrates the generic L-stat utilities below;
-# it is not the internal exact-DNN jackknife path used by np_dnn()/cate_dnn()/plqr_dnn().
-wt <- weights_dnn(
-  X = X, X0 = X,
-  method = "exact",
-  distance = "l2",
-  k = s, s = s,
-  return = "ord"
-)
-ranks <- t(wt$ord[seq_len(s + 1L), , drop = FALSE])  # T x (s+1)
-
-# L-stat coefficients
-a <- rep(1, s)
-
-# Scalar signal represented as n x 1 matrix
+dx <- distance_eval_batch(distance_l2(), X, X0)
+ord <- apply(dx, 2L, order)
+neighbors <- t(ord[seq_len(support + 1L), , drop = FALSE])
+a <- rep(1, support)
 phi <- cbind(Y)
 ```
 
-## Fast vs Slow Jackknife
+The argument named `ranks` below contains **observation indices**, with
+one row per target. This differs from the `n x m` rank permutations used
+by
+[`jackknife_rank_full()`](https://JakobJuergens.github.io/RdistNN/reference/jackknife_rank_full.md).
+The compact-support rule is not the exact DNN weight rule: exact DNN
+support extends to `n-s+k`, rather than the first `s` observations.
+
+## Compare fast and reference calculations
 
 ``` r
 
-jk_fast <- jackknife_fast_rank(ranks = ranks, a = a, phi = phi, normalize = TRUE)
-jk_slow <- jackknife_slow_rank(ranks = ranks, a = a, phi = phi, normalize = TRUE)
-
-all.equal(jk_fast$theta0, jk_slow$theta0, tolerance = 1e-12)
-all.equal(jk_fast$theta_loo, jk_slow$theta_loo, tolerance = 1e-12)
+fast <- jackknife_fast_rank(ranks = neighbors, a = a, phi = phi)
+slow <- jackknife_slow_rank(ranks = neighbors, a = a, phi = phi)
+all.equal(fast$theta_loo, slow$theta_loo, tolerance = 1e-12)
+#> [1] TRUE
 ```
 
-## Turning LOO Aggregates into Standard Errors
+`theta0` averages the rule across the supplied target rows; it is not a
+vector of separate local fits. `theta_loo` has one row per deleted
+reference observation and one column per signal component.
 
 ``` r
 
-theta_loo <- jk_fast$theta_loo[, 1]
-theta_bar <- mean(theta_loo)
-n_ref <- length(theta_loo)
-
-var_jk <- ((n_ref - 1) / n_ref) * sum((theta_loo - theta_bar)^2)
-se_jk <- sqrt(var_jk)
-se_jk
+deleted <- fast$theta_loo[, 1L]
+n_ref <- length(deleted)
+c(aggregate = fast$theta0,
+  standard_error = sqrt((n_ref - 1) / n_ref * sum((deleted - mean(deleted))^2)))
+#>      aggregate standard_error 
+#>     0.07850962     0.73102688
 ```
 
-## Notes
-
-- [`jackknife_fast_rank()`](https://JakobJuergens.github.io/RdistNN/reference/jackknife_fast_rank.md)
-  supports both matrix `phi` and function-valued `phi(j, t)`.
-- The slow version is useful for debugging and parity checks in tests.
-- For user-level wrappers
-  ([`np_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_dnn.md),
-  [`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md),
-  [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md)),
-  these steps are handled internally when `se = TRUE`.
-
-## Related Articles
-
-- [Notation and package
-  conventions](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md):
-  [`vignette("notation-and-conventions", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md)
-  distinguishes DNN kernel order, localized moments, and the uncertainty
-  fields returned by user-level estimators.
-- [DNN
-  weights](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.md):
-  [`vignette("dnn-weights", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.md)
-  describes the exact rank weights used by the jackknife path.
-- [Conditional
-  Z-estimation](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md):
-  [`vignette("conditional-z-estimation", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md)
-  shows the high-level wrappers that invoke these routines internally.
+Use a numeric `n x q` signal matrix to retain the full reference-sample
+size. Function-valued `phi(j, t)` supports target-specific
+contributions, but the reference size is then inferred as `max(ranks)`.
+See
+[`?jackknife_fast_rank`](https://JakobJuergens.github.io/RdistNN/reference/jackknife_fast_rank.md)
+for the full contract and
+[`?jackknife_rank_full`](https://JakobJuergens.github.io/RdistNN/reference/jackknife_rank_full.md)
+for full-rank weight tables. The [notation
+guide](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md)
+maps the array conventions.

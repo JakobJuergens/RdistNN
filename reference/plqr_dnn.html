@@ -33,7 +33,7 @@ supplied evaluation value (meta$theta_source = "supplied").'></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -239,13 +239,15 @@ in <code>tuning_grid</code>. Grid mode cannot be combined with explicit <code>s<
 
 
 <dt id="arg-se">se<a class="anchor" aria-label="anchor" href="#arg-se"></a></dt>
-<dd><p>Logical; compute delete-1 jackknife standard errors.</p></dd>
+<dd><p>Logical; compute moment or density-backed coefficient uncertainty.</p></dd>
 
 
 <dt id="arg-jackknife">jackknife<a class="anchor" aria-label="anchor" href="#arg-jackknife"></a></dt>
 <dd><p>One of <code>"fast"</code>, <code>"loo"</code>, or <code>"none"</code>. <code>"fast"</code> (default)
 uses cached full-sample ranks with delete-1 rank updates, <code>"loo"</code>
-recomputes leave-one-out weights directly, and <code>"none"</code> skips SEs.</p></dd>
+recomputes leave-one-out weights directly, and <code>"none"</code> skips moment
+jackknifing. Analytic coefficient uncertainty is controlled by <code>se</code> and
+the density input, independently of this selector.</p></dd>
 
 
 <dt id="arg-theta-meat">theta_meat<a class="anchor" aria-label="anchor" href="#arg-theta-meat"></a></dt>
@@ -268,15 +270,15 @@ density-backed in both routes. <code>"jackknife"</code> requires
 <dd><p>Optional extras in addition to the always-returned <code>moment</code>,
 <code>theta</code>, <code>theta_eval</code>, <code>tau</code>, and <code>meta</code>. Allowed values:
 <code>c("W", "ranks", "ord", "dx", "score", "ess", "neighbors", "tuning")</code>.
-The <code>neighbors</code> extra returns the first <code>k</code> nearest observations used
-inside each size-<code>s</code> subsample, not the full DNN weight support.</p></dd>
+<code>neighbors</code> is a <code>k x m</code> matrix of nearest training-observation indices,
+one column per target. It is a rank summary, not the full DNN weight support.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An object of class <code>plqr_result</code> with components:</p><ul><li><p><code>moment</code>: matrix (<code>p_d x m</code>) of localized PLQR moments;</p></li>
 <li><p><code>theta</code>: matrix (<code>p_d x m</code>) of the supplied coefficient values, repeated
-across targets until a root-solving path is requested in future versions;</p></li>
+across targets; no root solving is performed;</p></li>
 <li><p><code>theta_eval</code>: the supplied coefficient vector used in the moment map;</p></li>
 <li><p><code>theta_se</code>: coefficient standard errors (<code>p_d x m</code>), present only when
 <code>density</code> or <code>density_col</code> supplies the direct PLQR sandwich route;</p></li>
@@ -312,29 +314,15 @@ distance ties, so permuting tied observations can change estimates.</p>
 <p>Two interfaces are supported.</p><ol><li><p>Data-frame interface (recommended): pass <code>data</code> with <code>x_cols</code>, <code>D_cols</code>,
 <code>g_col</code>, <code>mD_cols</code>, and <code>y_col</code>.</p></li>
 <li><p>Matrix interface: pass <code>X</code>, <code>D</code>, <code>g</code>, <code>mD</code>, and <code>Y</code>.</p></li>
-</ol><p>No nuisance models are fit internally; this wrapper assumes the
-partially-linear shape nuisance \(g_0(U)\) and the residualizing nuisance
-\(m_D(U) = E[D \mid U]\) are supplied. The threshold is
-\(D'\theta + g_0(U)\); \(g_0\) alone is not itself a quantile function.
-Both <code>g</code> and <code>mD</code> may depend on covariates beyond <code>x_cols</code> (the paper's
-\(U = (X, Z)\)); the package does not restrict their domain, since they
-are supplied pre-computed. Density values for direct coefficient inference
-are also supplied by the user rather than estimated internally; they play
-the role of the paper's local conditional density at the threshold,
-entering only the coefficient Jacobian. See
-<code>markdown_notes/design/15_plqr_variance_estimation_rationale.md</code> for the
-full nuisance-notation mapping and for why coefficient-level inference
-requires this direct-sandwich route rather than the jackknife SE used by
-<code><a href="cate_dnn.html">cate_dnn()</a></code>/<code><a href="np_dnn.html">np_dnn()</a></code>. Direct coefficient inference requires
-<code>normalize = TRUE</code>, matching the theorem convention of weights summing to
-one per target.</p>
-<p>With a density input, the coefficient sandwich supports two meat
-estimators (<code>theta_meat</code>): the analytic score covariance (default) and
-the full delete-1 jackknife covariance of the localized vector moment.
-The bread is density-backed in both routes; only the meat changes. A
-componentwise <code>moment_se</code> alone is never coefficient inference — see
-<code>markdown_notes/design/15_plqr_variance_estimation_rationale.md</code> for the
-route table.</p>
+</ol><p>Supply the shape component <code>g</code>, residualized-regressor means <code>mD</code> and,
+for coefficient uncertainty, positive threshold densities. These can use
+adjustment variables beyond the reporting covariates. The threshold is
+<code>D' theta_eval + g</code>; <code>g</code> alone is not a conditional quantile.</p>
+<p>Coefficient uncertainty requires <code>normalize = TRUE</code> and a density-backed
+Jacobian. <code>theta_meat</code> chooses analytic score covariance or the full
+jackknife covariance of the localized moment. <code>moment_se</code> alone is not a
+coefficient standard error. For statistical background and conditions,
+see the <a href="https://jakobjuergens.com/research/#orthogonal-inference-conditional-z" class="external-link">paper</a>.</p>
 <p>As in <code><a href="weights_dnn.html">weights_dnn()</a></code>, exact DNN localization uses the full rank permutation
 at each target rather than an <code>s</code>-nearest-neighbor truncation. The <code>"fast"</code>
 jackknife option reuses the full-sample rank matrix and updates ranks under
@@ -355,9 +343,7 @@ is independent of the estimator's <code>k</code>. Direct PLQR sandwich inference
     <h2 id="lifecycle">Lifecycle<a class="anchor" aria-label="anchor" href="#lifecycle"></a></h2>
 
 
-<p><strong>Experimental.</strong> PLQR functionality is outside the CATE and regression
-workflow focus of the initial public release. Its API and inference
-interfaces may change in later releases.</p>
+<p><strong>Experimental.</strong> The PLQR API and inference interfaces may change.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -22,7 +22,8 @@ score_eval(score, idxs, data, ctx = NULL, rng = NULL)
 
 - data:
 
-  data.frame/matrix
+  Data object understood by the score, such as a vector, matrix or data
+  frame.
 
 - ctx:
 
@@ -30,7 +31,8 @@ score_eval(score, idxs, data, ctx = NULL, rng = NULL)
 
 - rng:
 
-  optional RNG key/seed
+  Optional object passed unchanged to the evaluator. The caller or
+  evaluator manages random-number seeding.
 
 ## Value
 

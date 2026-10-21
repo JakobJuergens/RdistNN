@@ -54,17 +54,17 @@ sim_cate_run(
 
 - master_seed:
 
-  Integer seed used to draw the per-replicate seeds. Every cell uses the
-  same seed vector so noise realisations are comparable across DGPs,
-  sample sizes, and methods (fair comparison).
+  Integer seed used locally to draw the per-replicate seeds; the
+  caller's saved RNG state is restored. `NULL` uses the current stream.
+  Every cell uses the same seed vector so noise realisations are
+  comparable across DGPs, sample sizes, and methods (fair comparison).
 
 - k:
 
   Integer DNN neighbour count. The paper-facing DNN default is `k = 1L`,
   meaning one nearest neighbor is selected inside each size-`s`
   subsample; larger values use the package's generalized top-`k`
-  weights. The fixed-`k` extension is essentially direct, but the
-  current paper derivations are written for `k = 1`.
+  weights. The accompanying paper gives the theory for `k = 1`.
 
 - s_fn:
 
@@ -95,7 +95,8 @@ sim_cate_run(
 
 - alpha:
 
-  Nominal coverage level.
+  Nominal interval noncoverage probability; intervals use level
+  `1 - alpha`.
 
 - sigma:
 

@@ -41,7 +41,8 @@ np_demo_data(
 
 - seed:
 
-  Optional integer seed for reproducibility.
+  Optional integer seed, used locally without changing the caller's RNG
+  state. `NULL` uses the current stream.
 
 - x0:
 

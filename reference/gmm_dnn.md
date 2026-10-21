@@ -3,7 +3,8 @@
 Estimates a local parameter by solving a two-step GMM problem after
 localizing observations with DNN rank weights. The first step uses an
 identity moment weighting matrix; the second step uses the local moment
-covariance estimated at the first-step solution.
+covariance estimated at the first-step solution. This local IV-GMM
+interface is experimental and may change.
 
 ## Usage
 
@@ -132,8 +133,8 @@ gmm_dnn(
 
   Optional extras:
   `c("W", "ranks", "ord", "dx", "g_obs", "omega", "jacobian", "ess", "neighbors", "tuning")`.
-  The `neighbors` extra returns the first `k` nearest observations used
-  inside each size-`s` subsample, not the full DNN weight support.
+  `neighbors` is a `k x m` matrix of nearest training-observation
+  indices, not the full DNN weight support.
 
 ## Value
 

@@ -11,7 +11,7 @@ after deletion (useful as a correctness oracle and for testing)."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,7 +56,9 @@ after deletion (useful as a correctness oracle and for testing).</p>
 <dl><dt id="arg-ranks">ranks<a class="anchor" aria-label="anchor" href="#arg-ranks"></a></dt>
 <dd><p>Integer matrix (T x (s+1)): for each target <code>t</code>, <code>ranks[t, k]</code>
 gives the positive 1-based index of the k-th neighbor, for <code>k = 1, ..., s+1</code>.
-(Must exclude <code>t</code> itself if targets are a subset of reference.)</p></dd>
+Use distinct indices within each row for observation deletion. A target
+may coincide with a reference observation; self-exclusion is not required.
+Repeated indices follow the additive convention in <code><a href="jackknife_fast_rank.html">jackknife_fast_rank()</a></code>.</p></dd>
 
 
 <dt id="arg-a">a<a class="anchor" aria-label="anchor" href="#arg-a"></a></dt>
@@ -76,7 +78,7 @@ numeric vector.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with:</p><dl><dt>theta0</dt>
-<dd><p>numeric length-<code>q</code> baseline aggregate</p></dd>
+<dd><p>numeric length-<code>q</code> baseline aggregate, averaged across targets</p></dd>
 
 <dt>theta_loo</dt>
 <dd><p>numeric matrix (n_ref x q) of delete-one aggregates</p></dd>
@@ -94,29 +96,29 @@ user-level exact DNN wrappers, which instead update the full rank matrix
 under deletion and reevaluate the DNN rank-weight rule.</p>
 <p>Works with:</p><ul><li><p><code>phi</code> as a numeric <strong>matrix</strong> (n_ref x q): row <code>j</code> equals \(\phi(j)\).</p></li>
 <li><p><code>phi</code> as a <strong>function</strong> <code>function(j, t)</code> that returns a length-<code>q</code> numeric,
-allowing target-dependent contributions.</p></li>
+allowing target-dependent contributions.
+With matrix <code>phi</code>, <code>n_ref = nrow(phi)</code>. With function-valued <code>phi</code>, it is
+inferred as <code>max(ranks)</code>.</p></li>
 </ul></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">20</span></span></span>
-<span class="r-in"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fl">3</span></span></span>
-<span class="r-in"><span><span class="va">s</span> <span class="op">&lt;-</span> <span class="fl">4</span></span></span>
-<span class="r-in"><span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span> <span class="op">*</span> <span class="va">p</span><span class="op">)</span>, <span class="va">n</span>, <span class="va">p</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co"># toy ranks: nearest-neighbor indices precomputed elsewhere (T x (s+1))</span></span></span>
-<span class="r-in"><span><span class="co"># here we fake something deterministic just for the example</span></span></span>
-<span class="r-in"><span><span class="va">ranks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">s</span>, each <span class="op">=</span> <span class="va">n</span><span class="op">)</span>, <span class="va">n</span>, <span class="va">s</span><span class="op">)</span>, <span class="va">s</span> <span class="op">+</span> <span class="fl">1L</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">s</span> <span class="op">&lt;-</span> <span class="fl">3L</span></span></span>
+<span class="r-in"><span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span> <span class="op">*</span> <span class="fl">2</span><span class="op">)</span>, <span class="va">n</span>, <span class="fl">2</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">wt</span> <span class="op">&lt;-</span> <span class="fu"><a href="weights_dnn.html">weights_dnn</a></span><span class="op">(</span><span class="va">X</span>, X0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span>, k <span class="op">=</span> <span class="fl">1L</span>, s <span class="op">=</span> <span class="va">s</span>, return <span class="op">=</span> <span class="st">"ord"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ranks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">wt</span><span class="op">$</span><span class="va">ord</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">s</span> <span class="op">+</span> <span class="fl">1L</span><span class="op">)</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="va">s</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">out</span> <span class="op">&lt;-</span> <span class="fu">jackknife_slow_rank</span><span class="op">(</span><span class="va">ranks</span>, <span class="va">a</span>, <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">out</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> List of 3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ theta0   : num 0.77</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ theta_loo: num [1:20, 1] -0.0162 0.594 0.4118 0.5772 0.77 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ theta0   : num -0.0484</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ theta_loo: num [1:20, 1] -0.0484 -0.0484 -0.0484 -0.0484 -0.0484 ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ info     :List of 4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ s        : int 4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ T        : int 20</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ s        : int 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ T        : int 2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ q        : int 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ normalize: logi TRUE</span>
 </code></pre></div>

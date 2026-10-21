@@ -4,14 +4,14 @@ the doubly-robust IV moment
 $$
   (Z_k - \pi_k(X))\{Y - \mu_Y(X) - (D - \mu_D(X))\theta\}.
 $$
-The returned data are estimator-free and are intended for simulation
-benchmarks, examples, and future gmm_dnn() integration."><meta property="og:description" content="Generates a synthetic local IV-GMM dataset with oracle nuisance quantities for
+Use the returned data with gmm_dnn(), gmm_model_dr_iv() or the
+simulation methods listed by sim_iv_methods(). No model is fit here."><meta property="og:description" content="Generates a synthetic local IV-GMM dataset with oracle nuisance quantities for
 the doubly-robust IV moment
 $$
   (Z_k - \pi_k(X))\{Y - \mu_Y(X) - (D - \mu_D(X))\theta\}.
 $$
-The returned data are estimator-free and are intended for simulation
-benchmarks, examples, and future gmm_dnn() integration."></head><body>
+Use the returned data with gmm_dnn(), gmm_model_dr_iv() or the
+simulation methods listed by sim_iv_methods(). No model is fit here."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -19,7 +19,7 @@ benchmarks, examples, and future gmm_dnn() integration."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,8 +52,8 @@ the doubly-robust IV moment
 $$
   (Z_k - \pi_k(X))\{Y - \mu_Y(X) - (D - \mu_D(X))\theta\}.
 $$
-The returned data are estimator-free and are intended for simulation
-benchmarks, examples, and future <code><a href="gmm_dnn.html">gmm_dnn()</a></code> integration.</p>
+Use the returned data with <code><a href="gmm_dnn.html">gmm_dnn()</a></code>, <code><a href="gmm_model_dr_iv.html">gmm_model_dr_iv()</a></code> or the
+simulation methods listed by <code><a href="sim_iv_methods.html">sim_iv_methods()</a></code>. No model is fit here.</p>
     </div>
 
     <div class="section level2">
@@ -91,7 +91,7 @@ benchmarks, examples, and future <code><a href="gmm_dnn.html">gmm_dnn()</a></cod
 
 
 <dt id="arg-q">q<a class="anchor" aria-label="anchor" href="#arg-q"></a></dt>
-<dd><p>Integer number of instruments. Phase-A simulation DGPs support
+<dd><p>Integer number of instruments. The simulation DGPs support
 <code>1 &lt;= q &lt;= 3</code>. The just-identified design always returns <code>q = 1</code>.</p></dd>
 
 
@@ -104,7 +104,8 @@ benchmarks, examples, and future <code><a href="gmm_dnn.html">gmm_dnn()</a></cod
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Optional integer seed for reproducibility.</p></dd>
+<dd><p>Optional integer seed, used locally without changing the caller's
+RNG state. <code>NULL</code> uses the current stream.</p></dd>
 
 
 <dt id="arg-x-">x0<a class="anchor" aria-label="anchor" href="#arg-x-"></a></dt>

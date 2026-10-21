@@ -24,8 +24,8 @@ clate_demo_data(
 
 - seed:
 
-  Optional nonnegative integer seed. Like the other package demos,
-  supplying a seed resets the R random-number stream.
+  Optional nonnegative integer seed, used locally without changing the
+  caller's saved RNG state. `NULL` uses the current stream.
 
 - heterogeneous:
 

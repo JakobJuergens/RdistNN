@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -150,6 +150,13 @@
 
         </dt>
         <dd>Reporting and prediction for nonparametric regression results</dd>
+
+        <dt>
+
+          <code><a href="nobs.np_result.html">nobs(<i>&lt;np_result&gt;</i>)</a></code> <code><a href="nobs.np_result.html">nobs(<i>&lt;cate_result&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Number of training observations</dd>
 
         <dt>
 
@@ -515,7 +522,7 @@
       </dl></div><div class="section level2">
       <h2 id="experimental-plqr">Experimental — PLQR<a class="anchor" aria-label="anchor" href="#experimental-plqr"></a></h2>
 
-      <div class="section-desc"><p>All PLQR interfaces are experimental and outside the CATE and regression focus of this release. The wrapper evaluates moments at supplied coefficients; it does not solve for local coefficients. APIs and inference interfaces may change.</p></div>
+      <div class="section-desc"><p>Experimental moments and density-backed uncertainty at supplied coefficients. The wrapper does not solve for local coefficients; APIs and inference interfaces may change.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -804,7 +811,7 @@
           <code><a href="is_compiled.html">is_compiled()</a></code>
 
         </dt>
-        <dd>Does a score have a compiled implementation?</dd>
+        <dd>Does a score carry compiled-score pointer metadata?</dd>
 
         <dt>
 

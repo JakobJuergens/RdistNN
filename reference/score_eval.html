@@ -9,7 +9,7 @@ and otherwise falls back to eval_batch() for a single-row batch."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,7 +59,8 @@ and otherwise falls back to <code>eval_batch()</code> for a single-row batch.</p
 
 
 <dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
-<dd><p>data.frame/matrix</p></dd>
+<dd><p>Data object understood by the score, such as a vector, matrix
+or data frame.</p></dd>
 
 
 <dt id="arg-ctx">ctx<a class="anchor" aria-label="anchor" href="#arg-ctx"></a></dt>
@@ -67,7 +68,8 @@ and otherwise falls back to <code>eval_batch()</code> for a single-row batch.</p
 
 
 <dt id="arg-rng">rng<a class="anchor" aria-label="anchor" href="#arg-rng"></a></dt>
-<dd><p>optional RNG key/seed</p></dd>
+<dd><p>Optional object passed unchanged to the evaluator. The caller or
+evaluator manages random-number seeding.</p></dd>
 
 </dl></div>
     <div class="section level2">

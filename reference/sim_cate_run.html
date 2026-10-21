@@ -19,7 +19,7 @@ summarise_sim_results() to aggregate to one row per
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -99,7 +99,8 @@ Returns a tidy data.frame of raw per-replicate, per-method results.  Use
 
 
 <dt id="arg-master-seed">master_seed<a class="anchor" aria-label="anchor" href="#arg-master-seed"></a></dt>
-<dd><p>Integer seed used to draw the per-replicate seeds.
+<dd><p>Integer seed used locally to draw the per-replicate seeds;
+the caller's saved RNG state is restored. <code>NULL</code> uses the current stream.
 Every cell uses the same seed vector so noise realisations are comparable
 across DGPs, sample sizes, and methods (fair comparison).</p></dd>
 
@@ -108,8 +109,7 @@ across DGPs, sample sizes, and methods (fair comparison).</p></dd>
 <dd><p>Integer DNN neighbour count. The paper-facing DNN default is
 <code>k = 1L</code>, meaning one nearest neighbor is selected inside each size-<code>s</code>
 subsample; larger values use the package's generalized top-<code>k</code> weights.
-The fixed-<code>k</code> extension is essentially direct, but the current paper
-derivations are written for <code>k = 1</code>.</p></dd>
+The accompanying paper gives the theory for <code>k = 1</code>.</p></dd>
 
 
 <dt id="arg-s-fn">s_fn<a class="anchor" aria-label="anchor" href="#arg-s-fn"></a></dt>
@@ -137,7 +137,8 @@ Default: <code>"dnn_oracle"</code>.</p></dd>
 
 
 <dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
-<dd><p>Nominal coverage level.</p></dd>
+<dd><p>Nominal interval noncoverage probability; intervals use level
+<code>1 - alpha</code>.</p></dd>
 
 
 <dt id="arg-sigma">sigma<a class="anchor" aria-label="anchor" href="#arg-sigma"></a></dt>

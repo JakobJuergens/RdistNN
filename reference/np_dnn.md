@@ -126,9 +126,10 @@ np_dnn(
 
   Optional extras in addition to the always-returned `mu`, `se`, and
   `meta`. Allowed values:
-  `c("W", "ranks", "ord", "dx", "y", "ess", "neighbors", "tuning")`. The
-  `neighbors` extra returns the first `k` nearest observations used
-  inside each size-`s` subsample, not the full DNN weight support.
+  `c("W", "ranks", "ord", "dx", "y", "ess", "neighbors", "tuning")`.
+  `neighbors` is a `k x m` matrix of nearest training-observation
+  indices, one column per target. It is a rank summary, not the full DNN
+  weight support.
 
 ## Value
 

@@ -54,15 +54,15 @@ cate_dnn(
 
 - m0_col:
 
-  Name or index for \\E\[Y(0)\mid X\]\\ (full AIPW interface).
+  Name or index of the supplied control-arm conditional outcome mean.
 
 - m1_col:
 
-  Name or index for \\E\[Y(1)\mid X\]\\ (full AIPW interface).
+  Name or index of the supplied treated-arm conditional outcome mean.
 
 - e_col:
 
-  Name or index for propensity \\P(T=1\mid X)\\.
+  Name or index of the supplied treatment propensity predictions.
 
 - pseudo_outcome:
 
@@ -151,8 +151,9 @@ cate_dnn(
   Optional extras in addition to the always-returned `tau`, `se`, and
   `meta`. Allowed values:
   `c("W", "ranks", "ord", "dx", "psi", "nuisance", "ess", "neighbors", "tuning")`.
-  The `neighbors` extra returns the first `k` nearest observations used
-  inside each size-`s` subsample, not the full DNN weight support.
+  `neighbors` is a `k x m` matrix of nearest training-observation
+  indices, one column per target. It is a rank summary, not the full DNN
+  weight support.
 
 ## Value
 
@@ -170,6 +171,10 @@ An object of class `cate_result` with components:
 - `tuning_grid`: in grid mode, a list with `candidates`, `estimates`,
   `diagnostics`, and `meta` tables. Candidate diagnostics report top-5
   weight concentration separately from the estimator's `k`;
+
+- `.model`: retained observations, supplied signals and fitted geometry
+  used by prediction and joint covariance, independently of optional
+  extras;
 
 - optional extras requested via `return`.
 
@@ -209,18 +214,13 @@ are not stored. Candidate diagnostics include `ess`, `max_weight`,
 `top_n`, `top5_weight_share`, and `degenerate`; `top_n` is fixed at 5
 and is independent of the estimator's `k`.
 
-The AIPW signal is Neyman orthogonal at the true nuisance functions. The
-normalized Robinson pseudo-outcome is not implemented because it is
-outside the accompanying paper's theoretical results. Orthogonality
-alone does not validate arbitrary nuisance predictions fitted on the
-same observations used for localization and inference. Valid full-sample
-reuse additionally requires the nuisance-rate and full-state stability
-conditions in the accompanying paper. This function computes the
-estimator and its requested jackknife procedure; it cannot diagnose
-whether an arbitrary learner satisfies those conditions. Supply oracle
-quantities, cross-fitted or out-of-fold predictions, or full-sample
-predictions from a learner for which the paper's rate and stability
-conditions are credible.
+For causal identification and pointwise inference, including conditions
+on nuisance accuracy and deletion stability, see the accompanying
+[paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
+This function accepts supplied oracle, out-of-fold or full-sample
+predictions; it does not verify those conditions for a learner. The
+normalized Robinson construction is not implemented; use AIPW inputs or
+a justified supplied signal.
 
 With `data`, omit `X`; a direct `pseudo_outcome` vector remains
 supported. Column selectors require `data`. Prediction retains the
@@ -232,7 +232,9 @@ subsequently replaced.
 [`weights_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/weights_dnn.md),
 [`weights_matrix()`](https://JakobJuergens.github.io/RdistNN/reference/weights_matrix.md),
 [`score_cate_rho()`](https://JakobJuergens.github.io/RdistNN/reference/score_cate_rho.md),
-[`cate_demo_data()`](https://JakobJuergens.github.io/RdistNN/reference/cate_demo_data.md).
+[`cate_demo_data()`](https://JakobJuergens.github.io/RdistNN/reference/cate_demo_data.md),
+[`vcov.cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/vcov.cate_result.md),
+[`predict.cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/predict.cate_result.md).
 
 ## Examples
 

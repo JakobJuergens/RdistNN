@@ -21,7 +21,7 @@ conditional \(\tau\)-quantile equals the right-hand side."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,7 +85,7 @@ conditional \(\tau\)-quantile equals the right-hand side.</p>
 
 
 <dt id="arg-p">p<a class="anchor" aria-label="anchor" href="#arg-p"></a></dt>
-<dd><p>Integer; number of features in \(X\) (recommend \(p \ge 2\)).</p></dd>
+<dd><p>Positive integer number of features in \(X\).</p></dd>
 
 
 <dt id="arg-p-d">p_d<a class="anchor" aria-label="anchor" href="#arg-p-d"></a></dt>
@@ -105,7 +105,8 @@ conditional \(\tau\)-quantile equals the right-hand side.</p>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Optional integer seed.</p></dd>
+<dd><p>Optional integer seed, used locally without changing the caller's
+RNG state. <code>NULL</code> uses the current stream.</p></dd>
 
 
 <dt id="arg-x-">x0<a class="anchor" aria-label="anchor" href="#arg-x-"></a></dt>
@@ -120,7 +121,7 @@ Useful for testing runtime guards.</p></dd>
 
 <dt id="arg-inject-col">inject_col<a class="anchor" aria-label="anchor" href="#arg-inject-col"></a></dt>
 <dd><p>Character; which column to corrupt when <code>inject</code> is not <code>NULL</code>.
-One of <code>"Y"</code>, <code>"g_oracle"</code>, <code>"D1"</code>, <code>"mD1"</code>, <code>"rD1"</code> (extend as needed).</p></dd>
+One of <code>"Y"</code>, <code>"g_oracle"</code>, <code>"D1"</code>, <code>"mD1"</code>, <code>"rD1"</code>.</p></dd>
 
 
 <dt id="arg-idx-inject">idx_inject<a class="anchor" aria-label="anchor" href="#arg-idx-inject"></a></dt>
@@ -160,9 +161,7 @@ $$</p>
     <h2 id="lifecycle">Lifecycle<a class="anchor" aria-label="anchor" href="#lifecycle"></a></h2>
 
 
-<p><strong>Experimental.</strong> PLQR functionality is outside the CATE and regression
-workflow focus of the initial public release. Its API and inference
-interfaces may change in later releases.</p>
+<p><strong>Experimental.</strong> The PLQR API and inference interfaces may change.</p>
     </div>
 
     <div class="section level2">

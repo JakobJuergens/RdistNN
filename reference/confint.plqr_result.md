@@ -38,12 +38,9 @@ A data frame with confidence intervals and a `theta_source` attribute.
 
 ## Details
 
-Coefficient-level standard errors and intervals require the direct PLQR
-sandwich (fit with `density` or `density_col`); the moment-level
-jackknife SE available on fits without a density input has no proven
-translation into a coefficient-level interval in this package's source
-theory — see
-`markdown_notes/design/15_plqr_variance_estimation_rationale.md`.
+Coefficient uncertainty requires a fit with `density` or `density_col`.
+`moment_se` describes score variation and is not a coefficient standard
+error.
 
 Intervals are centered at the coefficient value the object represents:
 for current fits the supplied `theta_eval`
@@ -52,9 +49,7 @@ source is attached as `attr(., "theta_source")`.
 
 ## Lifecycle
 
-**Experimental.** PLQR functionality is outside the CATE and regression
-workflow focus of the initial public release. Its API and inference
-interfaces may change in later releases.
+**Experimental.** The PLQR API and inference interfaces may change.
 
 ## See also
 

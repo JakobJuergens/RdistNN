@@ -84,11 +84,9 @@ Numeric matrix (q x m) of jackknife standard errors.
 
 ## Details
 
-**Fast path** (`jackknife = "fast"`): computes full-sample ranks once,
-then for each deleted observation `i` adjusts ranks by decrementing
-entries that were ranked below `i` and re-evaluates the TDNN rank-weight
-spec on the resulting `(n-1) x m` rank matrix. No distances are
-recomputed.
+**Fast path** (`jackknife = "fast"`): computes full-sample ranks and the
+deletion weight table once, then uses the shared centered prefix/suffix
+engine. No distances are recomputed.
 
 **LOO fallback** (`jackknife = "loo"`): for each `i`, recomputes weights
 from scratch on the `(n-1)` reduced dataset. Strictly slower; useful for

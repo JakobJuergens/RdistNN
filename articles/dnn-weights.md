@@ -1,4 +1,4 @@
-# DNN weights: exact and asymptotic L-statistics
+# DNN weights and ranks
 
 ## Overview
 
@@ -11,7 +11,7 @@ Use
 [`weights_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/weights_dnn.md)
 to switch between them with a common interface.
 
-Two support facts matter in practice:
+The following support conventions matter in practice:
 
 - exact DNN weights are computed from the **full rank permutation** for
   each target, not by keeping only the first `s` observations;
@@ -20,10 +20,11 @@ Two support facts matter in practice:
 - the asymptotic Beta-increment approximation is typically treated as a
   full-support rank-weight sequence.
 
-Fixed top-`k` DNN kernels are fully implemented for `1 <= k <= s`. The
-fixed-`k` extension of the 1-NN theory is essentially direct, but the
-accompanying manuscript currently writes out the theoretical derivations
-only for `k = 1`.
+Fixed top-`k` DNN kernels are implemented for `1 <= k <= s`. The
+accompanying
+[paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
+gives the theory for `k = 1`; accepting another `k` does not establish
+its inferential justification.
 
 ## Basic Usage
 
@@ -52,7 +53,9 @@ wt_asymp <- weights_dnn(
 )
 
 colSums(wt_exact$W)
+#> [1] 1 1 1 1
 colSums(wt_asymp$W)
+#> [1] 1 1 1 1
 ```
 
 ## Single-target Convenience
@@ -70,6 +73,7 @@ wt_single <- weights_dnn(
 )
 
 dim(wt_single$W)  # n x 1
+#> [1] 150   1
 ```
 
 ## Working with Returned Diagnostics
@@ -96,24 +100,25 @@ mu_exact <- as.numeric(crossprod(mu_signal, wt_exact$W))
 mu_asymp <- as.numeric(crossprod(mu_signal, wt_asymp$W))
 
 cbind(mu_exact, mu_asymp)
+#>        mu_exact   mu_asymp
+#> [1,] 0.10286550 0.10246327
+#> [2,] 0.11298128 0.11244305
+#> [3,] 0.21969143 0.21866562
+#> [4,] 0.04561642 0.04615826
 ```
 
-For moderate samples and small `s`, exact weights are often preferred
-when you want finite-sample fidelity. Asymptotic weights can be cheaper
-and are often a practical default for larger-scale usage.
+Exact weights are the package default. Setting `method = "asymp"`
+changes the weight construction; it is separate from choosing a compiled
+or R calculation engine.
 
 ## Related Articles
 
-- [Notation and package
+- [Notation and
   conventions](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md):
-  [`vignette("notation-and-conventions", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md)
-  distinguishes kernel order, neighbor count, support, effective size,
-  and radius notation.
+  orders, support and effective size.
 - [Kernel-order
   tuning](https://JakobJuergens.github.io/RdistNN/articles/kernel-order-tuning.md):
-  [`vignette("kernel-order-tuning", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/kernel-order-tuning.md)
-  covers selection of the kernel order `s`.
+  sensitivity comparisons for `s`.
 - [Extending
   RdistNN](https://JakobJuergens.github.io/RdistNN/articles/extending.md):
-  [`vignette("extending", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/extending.md)
-  shows how to define custom distances and rank-weight maps.
+  custom distances and rank-weight maps.

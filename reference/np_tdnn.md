@@ -157,10 +157,10 @@ selectors require `data`. Conflicting routes are rejected.
 individual entries can be negative. This is expected and reflects the
 bias-correction structure; it does not indicate numerical problems.
 
-**Localization dimension.** `dim` governs the rate at which TDNN order
-weights decay with rank. It defaults to `ncol(X)` (the covariate
-dimension) and should be overridden only when a custom distance has a
-different effective dimension.
+**Localization dimension.** `dim` governs the coefficients combining the
+two DNN scales. It defaults to `ncol(X)` (the covariate dimension) and
+should be overridden only when a custom distance has a different
+effective dimension.
 
 **Jackknife.** `"fast"` (default) uses the prefix/suffix rank-order
 engine

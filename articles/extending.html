@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,102 +60,59 @@
     
     
 <div class="section level2">
-<h2 id="why-the-package-is-modular">Why The Package Is Modular<a class="anchor" aria-label="anchor" href="#why-the-package-is-modular"></a>
+<h2 id="choose-an-extension-point">Choose an extension point<a class="anchor" aria-label="anchor" href="#choose-an-extension-point"></a>
 </h2>
-<p><code>RdistNN</code> is built in layers:</p>
-<ul>
-<li>ranking: turn <code>X</code> and <code>x0</code> / <code>X0</code>
-into distances, orders, and ranks;</li>
-<li>weighting: turn ranks into localization weights;</li>
-<li>tuning: resolve kernel order <code>s</code> from
-<code>(n, kx, k)</code> using a pluggable rule;</li>
-<li>scoring: evaluate a kernel or estimating function on subsets of the
-data;</li>
-<li>wrappers: combine the pieces into user-facing workflows such as
-<code><a href="../reference/np_dnn.html">np_dnn()</a></code>, <code><a href="../reference/cate_dnn.html">cate_dnn()</a></code>, or
-<code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code>.</li>
-</ul>
-<p>That separation is deliberate. Most new methods only need to replace
-one layer.</p>
-<p>As a rule of thumb:</p>
-<ul>
-<li>use <code><a href="../reference/as_distance.html">as_distance()</a></code>, <code><a href="../reference/as_rank_weight.html">as_rank_weight()</a></code>, or
-<code><a href="../reference/as_score.html">as_score()</a></code> for quick scalar prototypes;</li>
-<li>use <code><a href="../reference/new_distance.html">new_distance()</a></code>, <code><a href="../reference/new_rank_weight.html">new_rank_weight()</a></code>, or
-<code><a href="../reference/new_score.html">new_score()</a></code> when you need explicit batch evaluation,
-reusable setup context, registration, or parameter-aware score
-derivatives.</li>
-</ul>
+<p>Most extensions replace one part of the estimation pipeline:</p>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr class="header">
+<th>Goal</th>
+<th>Extension</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Change closeness or observation ordering</td>
+<td>Distance or ranking provider</td>
+</tr>
+<tr class="even">
+<td>Change the weight profile for given ranks</td>
+<td>Rank-weight rule</td>
+</tr>
+<tr class="odd">
+<td>Change the order <code>s</code> for a given
+<code>(n, kx, k)</code>
+</td>
+<td>Tuning specification</td>
+</tr>
+<tr class="even">
+<td>Evaluate another kernel on data subsets</td>
+<td>Score</td>
+</tr>
+<tr class="odd">
+<td>Reuse external distances, orders or ranks</td>
+<td><code>weights_matrix(ranking = ...)</code></td>
+</tr>
+</tbody>
+</table>
+<p>Use <code><a href="../reference/as_distance.html">as_distance()</a></code>, <code><a href="../reference/as_rank_weight.html">as_rank_weight()</a></code> or
+<code><a href="../reference/as_score.html">as_score()</a></code> for a simple function. Their
+<code>new_*()</code> counterparts support batch evaluation, setup
+context and parameter-aware score derivatives.</p>
+<p>For kernel-order specifications, use <a href="kernel-order-tuning.html">Kernel-order tuning</a>. For result
+classes and reporting conventions, use <a href="notation-and-conventions.html">Notation and conventions</a>.</p>
 </div>
 <div class="section level2">
-<h2 id="choose-the-right-extension-point">Choose The Right Extension Point<a class="anchor" aria-label="anchor" href="#choose-the-right-extension-point"></a>
-</h2>
-<ul>
-<li>If you want a different notion of closeness, implement a custom
-distance or a custom ranking provider.</li>
-<li>If you like the ranks but want a different localization profile,
-implement a custom rank-weight rule.</li>
-<li>If you want a different kernel-order rule, implement a custom tuning
-spec.</li>
-<li>If the localization stays fixed but the target moment changes,
-implement a custom score.</li>
-<li>If you already have distances, orders, or ranks from another engine,
-pass them directly into <code><a href="../reference/weights_matrix.html">weights_matrix()</a></code> instead of
-rebuilding that layer inside <code>RdistNN</code>.</li>
-</ul>
-</div>
-<div class="section level2">
-<h2 id="fitted-object-interfaces">Fitted-object interfaces<a class="anchor" aria-label="anchor" href="#fitted-object-interfaces"></a>
-</h2>
-<p>Presentation is another shared layer. Result classes retain their
-scientific meaning, while S3 methods connect them to
-<code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>, <code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code>, <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code>,
-<code><a href="../reference/diagnostics.html">diagnostics()</a></code>, <code><a href="../reference/plot_data_estimates.html">plot_data_estimates()</a></code>,
-<code><a href="../reference/candidate_fit.html">candidate_fit()</a></code> and <code><a href="../reference/candidate_fit.html">candidate_fits()</a></code>. Plot
-builders consume these common tables. CATE and CLATE, for example, use
-the same estimate, weight, overlap, influence, tuning and dashboard
-calls; their overlap arms and score contributions differ. See <a href="notation-and-conventions.html#reading-fitted-objects">Reading
-fitted objects</a> for the capability table and <a href="conditional-late.html">the CLATE guide</a> for executed
-examples.</p>
-<p>When adding a result class, first document its estimate and
-covariance scales. Provide a tidy estimate extractor and the existing
-generic methods that are scientifically meaningful. Reuse shared frame
-and panel builders, retaining method-specific score, covariance and
-labels in adapters. An estimator that reports evaluated moments should
-not label them solved coefficients, and a CLATE object should not
-inherit from CATE merely to reuse a plot.</p>
-<p>Grid adapters must preserve frozen model state, distinguish
-infeasible candidates from undefined target estimates, and rebuild every
-dependent field when extracting a candidate view. Tests should compare
-candidates with direct scalar fits, check analytic special cases and
-missing uncertainty, exercise serialization and optional dependencies,
-and build actual plots. Matching interfaces never establishes a new
-theorem for an additional weighting rule.</p>
-</div>
-<div class="section level2">
-<h2 id="kernel-order-tuning-specs">0) Kernel-Order Tuning Specs<a class="anchor" aria-label="anchor" href="#kernel-order-tuning-specs"></a>
-</h2>
-<p>Tuning specs mirror the same constructor/registry style as distances
-and rank weights. The built-in paper default is:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tun</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tuning_dnn_paper.html">tuning_dnn_paper</a></span><span class="op">(</span>lambda <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/tuning_eval.html">tuning_eval</a></span><span class="op">(</span><span class="va">tun</span>, n <span class="op">=</span> <span class="fl">500</span>, kx <span class="op">=</span> <span class="fl">2</span>, k <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/tuning_eval.html">tuning_eval</a></span><span class="op">(</span><span class="va">tun</span>, n <span class="op">=</span> <span class="fl">500</span>, kx <span class="op">=</span> <span class="fl">2</span>, k <span class="op">=</span> <span class="fl">1</span>, mode <span class="op">=</span> <span class="st">"grid"</span><span class="op">)</span></span></code></pre></div>
-<p>You can add custom rules:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tun_fast</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/as_tuning.html">as_tuning</a></span><span class="op">(</span><span class="kw">function</span><span class="op">(</span><span class="va">n</span>, <span class="va">kx</span>, <span class="va">...</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="fl">0.8</span> <span class="op">*</span> <span class="va">n</span> <span class="op">^</span> <span class="op">(</span><span class="op">(</span><span class="va">kx</span> <span class="op">+</span> <span class="fl">1</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="va">kx</span> <span class="op">+</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, name <span class="op">=</span> <span class="st">"fast_rule"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/register_tuning.html">register_tuning</a></span><span class="op">(</span><span class="st">"fast_rule"</span>, <span class="va">tun_fast</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/tuning_names.html">tuning_names</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="custom-distances">1) Custom Distances<a class="anchor" aria-label="anchor" href="#custom-distances"></a>
+<h2 id="custom-distances">Custom distances<a class="anchor" aria-label="anchor" href="#custom-distances"></a>
 </h2>
 <div class="section level3">
 <h3 id="quick-prototype-with-as_distance">Quick Prototype With <code>as_distance()</code><a class="anchor" aria-label="anchor" href="#quick-prototype-with-as_distance"></a>
 </h3>
 <p>Use <code><a href="../reference/as_distance.html">as_distance()</a></code> when a simple function
 <code>(X, x0, ctx) -&gt; numeric(n)</code> is enough.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># L-infinity distance</span></span>
 <span><span class="va">linf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/as_distance.html">as_distance</a></span><span class="op">(</span></span>
 <span>  <span class="kw">function</span><span class="op">(</span><span class="va">X</span>, <span class="va">x0</span>, <span class="va">ctx</span> <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">{</span></span>
@@ -165,13 +122,18 @@ and rank weights. The built-in paper default is:</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/register_distance.html">register_distance</a></span><span class="op">(</span><span class="st">"linf"</span>, <span class="va">linf</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/distance_names.html">distance_names</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/distance_names.html">distance_names</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "l1"           "l1_scaled_sd" "l2"           "l2_scaled_sd" "l2_sq"       </span></span>
+<span><span class="co">#&gt; [6] "linf"         "mahalanobis"</span></span></code></pre></div>
 <p>You can test the distance directly before registering it:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">40</span><span class="op">)</span>, <span class="fl">20</span>, <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="va">x0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="../reference/distance_eval.html">distance_eval</a></span><span class="op">(</span><span class="va">linf</span>, <span class="va">X</span>, <span class="va">x0</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/distance_eval.html">distance_eval</a></span><span class="op">(</span><span class="va">linf</span>, <span class="va">X</span>, <span class="va">x0</span><span class="op">)</span></span>
+<span><span class="co">#&gt;  [1] 0.9619334 0.9423007 0.2587882 1.6664748 0.4844551 0.7410727 1.1606158</span></span>
+<span><span class="co">#&gt;  [8] 1.1166102 1.2188574 1.2673687 0.9006247 1.1312186 0.7277152 0.7365021</span></span>
+<span><span class="co">#&gt; [15] 0.3521296 0.7055155 1.3003580 0.6482428 1.2243136 0.7937612</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="reusable-distance-with-new_distance-setup-and-eval_batch">Reusable Distance With <code>new_distance()</code>,
@@ -179,7 +141,7 @@ and rank weights. The built-in paper default is:</p>
 </h3>
 <p>Use <code><a href="../reference/new_distance.html">new_distance()</a></code> when you want to precompute context
 once on <code>X</code> and reuse it across many targets.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">scaled_l2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/new_distance.html">new_distance</a></span><span class="op">(</span></span>
 <span>  name <span class="op">=</span> <span class="st">"scaled_l2_demo"</span>,</span>
 <span>  setup <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">X</span><span class="op">)</span> <span class="op">{</span></span>
@@ -188,12 +150,10 @@ once on <code>X</code> and reuse it across many targets.</p>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>scale <span class="op">=</span> <span class="va">scale</span><span class="op">)</span></span>
 <span>  <span class="op">}</span>,</span>
 <span>  eval_batch <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">X</span>, <span class="va">X0</span>, <span class="va">ctx</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="va">Xs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sweep.html" class="external-link">sweep</a></span><span class="op">(</span><span class="va">X</span>, <span class="fl">2L</span>, <span class="va">ctx</span><span class="op">$</span><span class="va">scale</span>, <span class="st">"/"</span><span class="op">)</span></span>
-<span>    <span class="va">X0s</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sweep.html" class="external-link">sweep</a></span><span class="op">(</span><span class="va">X0</span>, <span class="fl">2L</span>, <span class="va">ctx</span><span class="op">$</span><span class="va">scale</span>, <span class="st">"/"</span><span class="op">)</span></span>
-<span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">X0s</span><span class="op">)</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">j</span><span class="op">)</span> <span class="op">{</span></span>
-<span>      <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowSums</a></span><span class="op">(</span><span class="op">(</span><span class="va">Xs</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="va">X0s</span><span class="op">[</span><span class="va">j</span>, <span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">Xs</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">Xs</span><span class="op">)</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span></span>
-<span>    <span class="op">}</span>, <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">Xs</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">X0</span><span class="op">)</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">j</span><span class="op">)</span> <span class="op">{</span></span>
+<span>      <span class="va">delta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sweep.html" class="external-link">sweep</a></span><span class="op">(</span><span class="va">X</span>, <span class="fl">2L</span>, <span class="va">X0</span><span class="op">[</span><span class="va">j</span>, <span class="op">]</span>, <span class="st">"-"</span><span class="op">)</span></span>
+<span>      <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowSums</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sweep.html" class="external-link">sweep</a></span><span class="op">(</span><span class="va">delta</span>, <span class="fl">2L</span>, <span class="va">ctx</span><span class="op">$</span><span class="va">scale</span>, <span class="st">"/"</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="op">}</span>, <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="op">}</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -202,14 +162,15 @@ once on <code>X</code> and reuse it across many targets.</p>
 <span></span>
 <span><span class="va">ctx_dist</span> <span class="op">&lt;-</span> <span class="va">scaled_l2</span><span class="op">$</span><span class="fu">setup</span><span class="op">(</span><span class="va">X</span><span class="op">)</span></span>
 <span><span class="va">D</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/distance_eval_batch.html">distance_eval_batch</a></span><span class="op">(</span><span class="va">scaled_l2</span>, <span class="va">X</span>, <span class="va">X0</span>, ctx <span class="op">=</span> <span class="va">ctx_dist</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">D</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">D</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 40  6</span></span></code></pre></div>
 <p>When you call <code><a href="../reference/weights_matrix.html">weights_matrix()</a></code> with a distance spec and
 <code>ctx = NULL</code>, <code>RdistNN</code> automatically uses the
 distance-side <code>setup(X)</code> if it exists.</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="custom-rank-weight-rules">2) Custom Rank-Weight Rules<a class="anchor" aria-label="anchor" href="#custom-rank-weight-rules"></a>
+<h2 id="custom-rank-weights">Custom rank weights<a class="anchor" aria-label="anchor" href="#custom-rank-weights"></a>
 </h2>
 <p>Rank weights only see integer ranks, not raw distances. Rank
 <code>1</code> means “closest observation,” rank <code>2</code> means
@@ -219,7 +180,7 @@ profile without changing the ranking logic.</p>
 <div class="section level3">
 <h3 id="quick-prototype-with-as_rank_weight">Quick Prototype With <code>as_rank_weight()</code><a class="anchor" aria-label="anchor" href="#quick-prototype-with-as_rank_weight"></a>
 </h3>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rw_inv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/as_rank_weight.html">as_rank_weight</a></span><span class="op">(</span></span>
 <span>  <span class="kw">function</span><span class="op">(</span><span class="va">ranks</span>, <span class="va">ctx</span> <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="va">w</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">ranks</span><span class="op">)</span></span>
@@ -229,7 +190,8 @@ profile without changing the ranking logic.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/register_rank_weight.html">register_rank_weight</a></span><span class="op">(</span><span class="st">"inv_rank"</span>, <span class="va">rw_inv</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/rank_weight_names.html">rank_weight_names</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/rank_weight_names.html">rank_weight_names</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "inv_rank"</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="a-compact-support-rule">A Compact-Support Rule<a class="anchor" aria-label="anchor" href="#a-compact-support-rule"></a>
@@ -237,9 +199,11 @@ profile without changing the ranking logic.</p>
 <p>This example keeps only the first <code>m</code> closest observations
 in rank order. That is a generic finite-support rule. It is not the same
 thing as exact DNN.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">make_top_m</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">m</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">m</span><span class="op">)</span> <span class="op">==</span> <span class="fl">1L</span>, <span class="va">m</span> <span class="op">&gt;=</span> <span class="fl">1L</span><span class="op">)</span></span>
+<span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">m</span><span class="op">)</span> <span class="op">!=</span> <span class="fl">1L</span> <span class="op">||</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">is.numeric</a></span><span class="op">(</span><span class="va">m</span><span class="op">)</span> <span class="op">||</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/is.finite.html" class="external-link">is.finite</a></span><span class="op">(</span><span class="va">m</span><span class="op">)</span> <span class="op">||</span> <span class="va">m</span> <span class="op">&lt;</span> <span class="fl">1</span> <span class="op">||</span> <span class="va">m</span> <span class="op">!=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="va">m</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="kw"><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop</a></span><span class="op">(</span><span class="st">"`m` must be a positive integer."</span>, call. <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span>  <span class="op">}</span></span>
 <span></span>
 <span>  <span class="fu"><a href="../reference/as_rank_weight.html">as_rank_weight</a></span><span class="op">(</span></span>
 <span>    <span class="kw">function</span><span class="op">(</span><span class="va">ranks</span><span class="op">)</span> <span class="op">{</span></span>
@@ -257,7 +221,7 @@ thing as exact DNN.</p>
 </h3>
 <p>For performance, prefer <code>eval_batch()</code> once the prototype
 is stable.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rw_exp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/new_rank_weight.html">new_rank_weight</a></span><span class="op">(</span></span>
 <span>  name <span class="op">=</span> <span class="st">"exp_decay"</span>,</span>
 <span>  eval_batch <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">R</span>, <span class="va">ctx</span> <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">{</span></span>
@@ -268,25 +232,24 @@ is stable.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">R</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">1L</span>, <span class="fl">3L</span>, <span class="fl">4L</span>, <span class="fl">5L</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/rank_weight_eval_batch.html">rank_weight_eval_batch</a></span><span class="op">(</span><span class="va">rw_exp</span>, <span class="va">R</span>, ctx <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>lambda <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/rank_weight_eval_batch.html">rank_weight_eval_batch</a></span><span class="op">(</span><span class="va">rw_exp</span>, <span class="va">R</span>, ctx <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>lambda <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;            [,1]       [,2]</span></span>
+<span><span class="co">#&gt; [1,] 0.42865553 0.25999272</span></span>
+<span><span class="co">#&gt; [2,] 0.25999272 0.42865553</span></span>
+<span><span class="co">#&gt; [3,] 0.15769356 0.15769356</span></span>
+<span><span class="co">#&gt; [4,] 0.09564598 0.09564598</span></span>
+<span><span class="co">#&gt; [5,] 0.05801222 0.05801222</span></span></code></pre></div>
 <p>At the top level, <code><a href="../reference/weights_matrix.html">weights_matrix()</a></code> passes any supplied
 <code>ctx</code> through to both the ranking and weight evaluators. If
 both sides need context, build one shared list.</p>
-<p>Also note one current API detail:
-<code>new_rank_weight(..., setup = ...)</code> is a low-level hook, but
-<code><a href="../reference/weights_matrix.html">weights_matrix()</a></code> does not automatically call
-rank-weight-side <code>setup()</code> for you. In practice, the cleanest
-high-level patterns are:</p>
-<ul>
-<li>close over fixed tuning parameters inside the constructor; or</li>
-<li>build a shared <code>ctx</code> object yourself and pass it into
-<code><a href="../reference/weights_matrix.html">weights_matrix()</a></code>.</li>
-</ul>
+<p><code><a href="../reference/weights_matrix.html">weights_matrix()</a></code> does not call rank-weight-side
+<code>setup()</code> automatically. Close over fixed parameters in the
+constructor, or build and pass a shared <code>ctx</code> when both the
+ranking and weights need context.</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="put-ranking-and-weighting-together-with-weights_matrix">3) Put Ranking And Weighting Together With
-<code>weights_matrix()</code><a class="anchor" aria-label="anchor" href="#put-ranking-and-weighting-together-with-weights_matrix"></a>
+<h2 id="combine-ranking-and-weights">Combine ranking and weights<a class="anchor" aria-label="anchor" href="#combine-ranking-and-weights"></a>
 </h2>
 <p><code><a href="../reference/weights_matrix.html">weights_matrix()</a></code> is the main modular entry point. The
 <code>ranking</code> argument can be:</p>
@@ -300,7 +263,7 @@ high-level patterns are:</p>
 </ul>
 <p>That makes it the right place to integrate custom ranking code,
 precomputed distances, or external nearest-neighbor engines.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">80</span></span>
 <span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fl">2</span></span>
 <span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span> <span class="op">*</span> <span class="va">p</span><span class="op">)</span>, <span class="va">n</span>, <span class="va">p</span><span class="op">)</span></span>
@@ -327,26 +290,27 @@ precomputed distances, or external nearest-neighbor engines.</p>
 <span>  return <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"W"</span>, <span class="st">"dx"</span>, <span class="st">"ord"</span>, <span class="st">"ranks"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">out2</span><span class="op">$</span><span class="va">W</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">out2</span><span class="op">$</span><span class="va">W</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 80  4</span></span></code></pre></div>
 <p>For debugging custom ranking behavior, request the intermediate
 objects:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">out_dbg</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/weights_matrix.html">weights_matrix</a></span><span class="op">(</span></span>
-<span>  X <span class="op">=</span> <span class="va">X</span>,</span>
-<span>  X0 <span class="op">=</span> <span class="va">X0</span>,</span>
-<span>  ranking <span class="op">=</span> <span class="va">scaled_l2</span>,</span>
-<span>  weight <span class="op">=</span> <span class="va">rw_exp</span>,</span>
-<span>  ctx <span class="op">=</span> <span class="va">ctx_both</span>,</span>
-<span>  return <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"dx"</span>, <span class="st">"ord"</span>, <span class="st">"ranks"</span>, <span class="st">"W"</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">out_dbg</span><span class="op">$</span><span class="va">dx</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">out_dbg</span><span class="op">$</span><span class="va">ord</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">out_dbg</span><span class="op">$</span><span class="va">ranks</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">out_dbg</span><span class="op">$</span><span class="va">W</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">out2</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"dx"</span>, <span class="st">"ord"</span>, <span class="st">"ranks"</span>, <span class="st">"W"</span><span class="op">)</span><span class="op">]</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">x</span><span class="op">[</span>, <span class="fl">1L</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; $dx</span></span>
+<span><span class="co">#&gt; [1] 2.2488708 0.7809354 1.4038669 1.4214305 1.9483745 2.3285028</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $ord</span></span>
+<span><span class="co">#&gt; [1] 80 29 42 60 68 16</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $ranks</span></span>
+<span><span class="co">#&gt; [1] 64 16 42 44 57 67</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $W</span></span>
+<span><span class="co">#&gt; [1] 7.835877e-11 1.549655e-03 1.730434e-07 8.593083e-08 9.080487e-10</span></span>
+<span><span class="co">#&gt; [6] 2.742069e-11</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="custom-scores">4) Custom Scores<a class="anchor" aria-label="anchor" href="#custom-scores"></a>
+<h2 id="custom-scores">Custom scores<a class="anchor" aria-label="anchor" href="#custom-scores"></a>
 </h2>
 <p>The score layer is separate from localization. A score describes what
 happens once a subset of observations has been selected.</p>
@@ -355,7 +319,7 @@ happens once a subset of observations has been selected.</p>
 </h3>
 <p>Use <code><a href="../reference/as_score.html">as_score()</a></code> for a simple kernel with fixed order
 <code>s</code>.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_avg2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/as_score.html">as_score</a></span><span class="op">(</span></span>
 <span>  <span class="kw">function</span><span class="op">(</span><span class="va">idxs</span>, <span class="va">data</span>, <span class="va">ctx</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">rng</span> <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">data</span><span class="op">$</span><span class="va">Y</span><span class="op">[</span><span class="va">idxs</span><span class="op">]</span><span class="op">)</span></span>
@@ -366,10 +330,12 @@ happens once a subset of observations has been selected.</p>
 <span></span>
 <span><span class="fu"><a href="../reference/register_score.html">register_score</a></span><span class="op">(</span><span class="st">"avg2"</span>, <span class="va">sc_avg2</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/list_scores.html">list_scores</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "avg2"</span></span>
 <span></span>
 <span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>Y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">subs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fl">2L</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4L</span>, <span class="fl">8L</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3L</span>, <span class="fl">9L</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/score_eval_batch.html">score_eval_batch</a></span><span class="op">(</span><span class="va">sc_avg2</span>, subs <span class="op">=</span> <span class="va">subs</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/score_eval_batch.html">score_eval_batch</a></span><span class="op">(</span><span class="va">sc_avg2</span>, subs <span class="op">=</span> <span class="va">subs</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] -0.2481958 -0.0925133 -0.3545440</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="reusable-score-with-new_score-and-setup">Reusable Score With <code>new_score()</code> and
@@ -377,7 +343,7 @@ happens once a subset of observations has been selected.</p>
 </h3>
 <p>Use <code>setup()</code> when the score repeatedly accesses the same
 data columns or transformed objects.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_pair_gap</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/new_score.html">new_score</a></span><span class="op">(</span></span>
 <span>  name <span class="op">=</span> <span class="st">"pair_gap_sq"</span>,</span>
 <span>  order <span class="op">=</span> <span class="fl">2L</span>,</span>
@@ -391,7 +357,8 @@ data columns or transformed objects.</p>
 <span><span class="va">ctx_score</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/score_setup.html">score_setup</a></span><span class="op">(</span><span class="va">sc_pair_gap</span>, <span class="va">df</span><span class="op">)</span></span>
 <span><span class="va">subs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fl">2L</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">5L</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3L</span>, <span class="fl">4L</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="../reference/score_eval_batch.html">score_eval_batch</a></span><span class="op">(</span><span class="va">sc_pair_gap</span>, <span class="va">subs</span>, data <span class="op">=</span> <span class="va">df</span>, ctx <span class="op">=</span> <span class="va">ctx_score</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/score_eval_batch.html">score_eval_batch</a></span><span class="op">(</span><span class="va">sc_pair_gap</span>, <span class="va">subs</span>, data <span class="op">=</span> <span class="va">df</span>, ctx <span class="op">=</span> <span class="va">ctx_score</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 0.1578244 2.4352638 9.0069443</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="parameter-aware-scores-and-derivatives-with-score_diff_path">Parameter-Aware Scores And Derivatives With
@@ -401,7 +368,7 @@ data columns or transformed objects.</p>
 <code>eval_param</code> or an <code>eval</code> that accepts
 <code>theta</code>, then use <code><a href="../reference/score_diff_path.html">score_diff_path()</a></code> to get
 reusable value and gradient closures.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_affine</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/new_score.html">new_score</a></span><span class="op">(</span></span>
 <span>  name <span class="op">=</span> <span class="st">"affine_order1"</span>,</span>
 <span>  order <span class="op">=</span> <span class="fl">1L</span>,</span>
@@ -417,19 +384,21 @@ reusable value and gradient closures.</p>
 <span><span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/score_diff_path.html">score_diff_path</a></span><span class="op">(</span><span class="va">sc_affine</span>, data <span class="op">=</span> <span class="va">df</span>, method <span class="op">=</span> <span class="st">"auto"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">path</span><span class="op">$</span><span class="fu">value</span><span class="op">(</span><span class="fl">2L</span>, theta <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">path</span><span class="op">$</span><span class="fu">grad</span><span class="op">(</span><span class="fl">2L</span>, theta <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 2</span></span>
+<span><span class="va">path</span><span class="op">$</span><span class="fu">grad</span><span class="op">(</span><span class="fl">2L</span>, theta <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 2 1</span></span></code></pre></div>
 <p>If you do not provide an analytic gradient,
 <code>score_diff_path(..., method = "fd")</code> uses finite differences
 based on <code>eval_param</code> / <code>eval_param_batch</code>.</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="a-minimal-custom-estimator-pattern">5) A Minimal Custom Estimator Pattern<a class="anchor" aria-label="anchor" href="#a-minimal-custom-estimator-pattern"></a>
+<h2 id="a-minimal-estimator">A minimal estimator<a class="anchor" aria-label="anchor" href="#a-minimal-estimator"></a>
 </h2>
 <p>The modular API is meant to let you assemble your own localized
 estimators without rewriting the whole package. A minimal pattern
 is:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">my_local_mean</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">X</span>, <span class="va">x0</span>, <span class="va">y</span>, <span class="va">ranking</span> <span class="op">=</span> <span class="st">"l2"</span>, <span class="va">weight</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">W</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/weights_matrix.html">weights_matrix</a></span><span class="op">(</span></span>
 <span>    X <span class="op">=</span> <span class="va">X</span>,</span>
@@ -440,58 +409,39 @@ is:</p>
 <span>  <span class="op">)</span><span class="op">$</span><span class="va">W</span><span class="op">[</span>, <span class="fl">1L</span><span class="op">]</span></span>
 <span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">W</span> <span class="op">*</span> <span class="va">y</span><span class="op">)</span></span>
-<span><span class="op">}</span></span></code></pre></div>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="fu">my_local_mean</span><span class="op">(</span><span class="va">X</span>, x0 <span class="op">=</span> <span class="va">X0</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span>, y <span class="op">=</span> <span class="va">X</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>, weight <span class="op">=</span> <span class="va">rw_top10</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] -0.7872897</span></span></code></pre></div>
 <p>For more complicated estimators, replace the scalar <code>y</code>
 contribution with your own score or estimating equation.</p>
 </div>
 <div class="section level2">
-<h2 id="validation-and-debugging-checklist">6) Validation And Debugging Checklist<a class="anchor" aria-label="anchor" href="#validation-and-debugging-checklist"></a>
+<h2 id="check-an-extension">Check an extension<a class="anchor" aria-label="anchor" href="#check-an-extension"></a>
 </h2>
-<ul>
-<li>Start by testing the low-level evaluator directly:
-<code><a href="../reference/distance_eval.html">distance_eval()</a></code>, <code><a href="../reference/distance_eval_batch.html">distance_eval_batch()</a></code>,
-<code><a href="../reference/rank_weight_eval.html">rank_weight_eval()</a></code>, <code><a href="../reference/rank_weight_eval_batch.html">rank_weight_eval_batch()</a></code>,
-<code><a href="../reference/score_eval.html">score_eval()</a></code>, or <code><a href="../reference/score_eval_batch.html">score_eval_batch()</a></code>.</li>
-<li>Remember that rank weights receive ranks, not distances. Smaller
-rank means closer observation.</li>
-<li>Prototype with <code>as_*()</code> first. Once the logic is stable,
-move to <code>new_*()</code> with <code>eval_batch()</code> for
-speed.</li>
-<li>Use
-<code>weights_matrix(return = c("dx", "ord", "ranks", "W"))</code> to
-debug ranking and tie handling before worrying about the downstream
-estimator.</li>
-<li>If both ranking and weighting need context, create it explicitly and
-pass it through <code>ctx</code>.</li>
-<li>For scores, check <code><a href="../reference/score_order.html">score_order()</a></code> and
-<code><a href="../reference/score_setup.html">score_setup()</a></code> before wiring the score into root finding,
-optimization, or jackknife code.</li>
-<li>For parameter-aware scores, test <code><a href="../reference/score_diff_path.html">score_diff_path()</a></code> in
-isolation before embedding it in a solver.</li>
-<li>Register names only after the underlying object works directly. The
-registry is a convenience layer, not a debugging tool.</li>
-</ul>
+<p>Test the evaluator on a small dataset before registering its name.
+Check its output shape and finite values, and request <code>W</code>,
+<code>dx</code>, <code>ord</code> and <code>ranks</code> to inspect the
+weighting pipeline. Specs receive ranks rather than raw distances; when
+both ranking and weighting need setup, pass an explicit shared
+<code>ctx</code>.</p>
+<p>Custom estimators need their own statistical justification. The
+examples here show software composition; the <a href="https://jakobjuergens.com/research/#orthogonal-inference-conditional-z" class="external-link">paper</a>
+and its references give the background for the package’s estimators.</p>
 </div>
 <div class="section level2">
 <h2 id="related-articles">Related Articles<a class="anchor" aria-label="anchor" href="#related-articles"></a>
 </h2>
 <ul>
 <li>
-<a href="notation-and-conventions.html">Notation and package
-conventions</a>:
-<code><a href="../articles/notation-and-conventions.html">vignette("notation-and-conventions", package = "RdistNN")</a></code>
-locates custom distances, rank weights, and scores within the full
-estimator pipeline.</li>
+<a href="notation-and-conventions.html">Notation and
+conventions</a>: inputs and fitted objects.</li>
 <li>
-<a href="dnn-weights.html">DNN weights</a>:
-<code><a href="../articles/dnn-weights.html">vignette("dnn-weights", package = "RdistNN")</a></code> documents the
-built-in weight machinery that extensions should match.</li>
+<a href="dnn-weights.html">DNN weights</a>: built-in rank-weight
+rules.</li>
 <li>
-<a href="jackknife-gen-ustats.html">Jackknife generalized
-U-statistics</a>:
-<code><a href="../articles/jackknife-gen-ustats.html">vignette("jackknife-gen-ustats", package = "RdistNN")</a></code>
-covers the low-level delete-one aggregation tools used by user-level
-inference.</li>
+<a href="jackknife-gen-ustats.html">Rank-jackknife utilities</a>:
+compact-support deletion calculations.</li>
 </ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

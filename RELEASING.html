@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,11 +36,15 @@
 <div id="releasing-rdistnn" class="section level1">
 
 <p>Supported workflows include CATE, nonparametric regression, supplied-prediction CLATE and ordinary paired-signal ratios, with DNN weights, pointwise jackknife uncertainty, tuning, diagnostics and plots. Ratio confidence-set inversion, PLQR and local IV-GMM remain experimental.</p>
-<p>Version <code>0.1.0.9004</code> identifies the current development snapshot, aligned with the Stata companion. Publish its changes together in a reviewed squash merge carrying version <code>0.1.0.9004</code>. Version <code>0.1.0.9003</code> identifies the previous production snapshot. The exact-table recurrence, compensated reductions, numerical origins, shared covariance and fitted whitening policy first shipped in the merged 0.1.0.9003 snapshot, not 0.1.0.9002. See <a href="NEWS.html">NEWS.md</a>. A verified candidate requires the final-source checks below. Public tags and assets require separate authorization. Retain the development version during candidate preparation. Matching R/Stata versions do not imply identical feature coverage.</p>
+<p>Version <code>0.1.0.9005</code> packages the documentation and maintenance improvements as one flattened production update, aligned with the Stata companion. The previous version <code>0.1.0.9004</code> entered production <code>master</code> through the reviewed squash merge of <a href="https://github.com/JakobJuergens/RdistNN/pull/16" class="external-link">PR #16</a> at <a href="https://github.com/JakobJuergens/RdistNN/commit/3394ae55383ffa4cb6bfad909730378dd8c7d4cb" class="external-link"><code>3394ae55383ffa4cb6bfad909730378dd8c7d4cb</code></a>, aligned with the Stata companion. Version <code>0.1.0.9003</code> identifies the previous production snapshot. The exact-table recurrence, compensated reductions, numerical origins, shared covariance and fitted whitening policy first shipped in the merged 0.1.0.9003 snapshot, not 0.1.0.9002. See <a href="NEWS.html">NEWS.md</a>. A verified candidate requires the final-source checks below. Public tags and assets require separate authorization. Retain the development version during candidate preparation. Matching R/Stata versions do not imply identical feature coverage.</p>
 <div class="section level2">
 <h2 id="candidate-identity-and-scientific-reproduction">Candidate identity and scientific reproduction<a class="anchor" aria-label="anchor" href="#candidate-identity-and-scientific-reproduction"></a></h2>
 <p>Commit candidates locally. Publish review branches/PRs, tags, downloadable assets and websites only when authorized; do not push directly to <code>master</code>. After both package commits are final, bind them in one external release-set manifest under ignored outputs. Include tested trees, artifact filenames, sizes and SHA-256, commands, runtime/compiler information, hosted run IDs/tested SHAs and explicit PASS/FAIL/BLOCKED/NOT_RUN gates. Do not create circular committed HEAD references or embed an archive’s own hash inside it.</p>
-<p><code>pak::pak("JakobJuergens/RdistNN@f2c7bc36e8da040831b668281e50e18b2f1a4b3c")</code> installs immutable previous 0.1.0.9003 source. The unpinned README command follows <code>master</code>; <code>@v0.1.0</code> selects the existing older public tag. An unpublished local candidate is not remotely installable. Check out its full recorded commit in a separate local checkout and use <code>pak::local_install(".")</code>, or install its checked tarball. Put exact candidate commands in the external handoff once both final identities are known.</p>
+<p>For a historical reference, install the previous immutable <code>0.1.0.9004</code> source with:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"JakobJuergens/RdistNN@3394ae55383ffa4cb6bfad909730378dd8c7d4cb"</span><span class="op">)</span></span></code></pre></div>
+<p>The unpinned README command follows production <code>master</code>; <code>@v0.1.0</code> selects the existing older public tag. The <code>0.1.0.9004</code> source update and pkgdown deployment did not create a new tag or replace the <code>v0.1.0</code> release assets. Different source snapshots can share a development version, so retain the full commit or checked archive identity.</p>
+<p>For an unpublished future candidate, check out its full recorded commit in a separate local checkout and use <code>pak::local_install(".")</code>, or install its checked tarball. Put exact candidate commands in the external handoff once both final identities are known.</p>
 <p>The paper-evidence renderer verifies accepted stored bytes and reconstructs 21 tables and six figures. It does not run the candidate estimator. Simulation freezes bind source commit <code>40060f155cc4d84d59ee5af119f6a2534c569bab</code>, a source override and a native-library hash. SIPP binds installed files and its DLL; its recorded sibling checkout alone does not identify the loaded package. Preserve both historical records. Historical recomputation requires the matching dependency. Fresh launchers use and record actual installed software; outputs require review before promotion. Candidate agreement does not change the historical reproduction reference. See the installed bundle README.</p>
 <p>Use <code>Rscript --vanilla tools/replication/compare_paper_dependency.R --help</code> for bounded validation with explicit installations, file-hashed identities and a frozen case manifest declaring quantity-specific budgets. Fresh processes compare fixed-table arithmetic, exact-table construction and geometry separately. Retained SIPP arrays stay private; dependency comparison requires neither forest refitting nor production simulation.</p>
 </div>
@@ -49,13 +53,13 @@
 <p>Run from the repository root with package dependencies and development tools installed as described in <a href="CONTRIBUTING.html">CONTRIBUTING.md</a>.</p>
 <ol style="list-style-type: decimal"><li>
 <p>Confirm that <code>DESCRIPTION</code> and the current <code>NEWS.md</code> entry agree. Check the chosen tag only for a separately authorized public release. Synchronize README and website draft references, while preserving historical release notes. Regenerate help and README from their sources:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">document</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">build_readme</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </li>
 <li>
 <p>Run the alignment checks in <code>CONTRIBUTING.md</code>, then build the installable source package with all vignettes and check that exact archive:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="st">"archives"</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="va">src</span> <span class="op">&lt;-</span> <span class="fu">devtools</span><span class="fu">::</span><span class="fu">build</span><span class="op">(</span>path <span class="op">=</span> <span class="st">"archives"</span>, vignettes <span class="op">=</span> <span class="cn">TRUE</span>, manual <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="fu">rcmdcheck</span><span class="fu">::</span><span class="fu"><a href="http://r-lib.github.io/rcmdcheck/reference/rcmdcheck.html" class="external-link">rcmdcheck</a></span><span class="op">(</span></span>
@@ -67,7 +71,7 @@
 </li>
 <li>
 <p>Build the documentation site, including examples and articles:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">pkgdown</span><span class="fu">::</span><span class="fu"><a href="https://pkgdown.r-lib.org/reference/build_site.html" class="external-link">build_site</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>Review <code>docs/index.html</code>, <code>docs/articles/getting-started.html</code>, and <code>docs/reference/index.html</code>. Verify that CATE and regression lead the onboarding, supported CLATE is described under its inference conditions, and confidence-set inversion, PLQR and IV-GMM retain experimental labels. The generated <code>docs/</code> directory is ignored. The canonical site URL is <a href="https://JakobJuergens.github.io/RdistNN/" class="uri">https://JakobJuergens.github.io/RdistNN/</a>.</p>
 </li>
@@ -77,12 +81,12 @@
 <h2 id="publish-on-github">Publish on GitHub<a class="anchor" aria-label="anchor" href="#publish-on-github"></a></h2>
 <p>Create the chosen <code>v&lt;version&gt;</code> tag and GitHub release from the verified commit. Use the release-scope section of <code>NEWS.md</code> for the introduction, followed by a link to the getting-started guide and the explicit PLQR experimental status.</p>
 <p>Attach <strong><code>RdistNN_&lt;version&gt;.tar.gz</code></strong>, built above, as the installable R source asset. GitHub’s automatically generated repository ZIP/tarball and the CI source-snapshot ZIP are repository snapshots; the R source package includes built vignettes and applies <code>.Rbuildignore</code> exclusions. Include a checksum:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="bu">cd</span> archives</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="va">rdistnn_release_version</span><span class="op">=</span><span class="va">$(</span><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'cat(read.dcf("../DESCRIPTION")[1L, "Version"])'</span><span class="va">)</span></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="fu">sha256sum</span> <span class="st">"RdistNN_</span><span class="va">${rdistnn_release_version}</span><span class="st">.tar.gz"</span> <span class="op">&gt;</span> SHA256SUMS</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="bu">cd</span> archives</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="va">rdistnn_release_version</span><span class="op">=</span><span class="va">$(</span><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'cat(read.dcf("../DESCRIPTION")[1L, "Version"])'</span><span class="va">)</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="fu">sha256sum</span> <span class="st">"RdistNN_</span><span class="va">${rdistnn_release_version}</span><span class="st">.tar.gz"</span> <span class="op">&gt;</span> SHA256SUMS</span></code></pre></div>
 <p>After publication, download both assets without credentials and run <code>sha256sum --check SHA256SUMS</code> from their download directory. Install the downloaded tarball in a fresh library and execute the getting-started examples. For version-pinned GitHub installation, use <code>pak::pak("JakobJuergens/RdistNN@v&lt;version&gt;")</code>, replacing <code>&lt;version&gt;</code> with the published version; the default branch remains available for development installations.</p>
 <p>Users can install a downloaded source asset with the actual version in its filename:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"Rcpp"</span><span class="op">)</span>  <span class="co"># required dependency, if not already installed</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"RdistNN_&lt;version&gt;.tar.gz"</span>, repos <span class="op">=</span> <span class="cn">NULL</span>, type <span class="op">=</span> <span class="st">"source"</span><span class="op">)</span></span></code></pre></div>
 <p>Source installation needs C++17. Optional visualization requires ggplot2 (and patchwork for dashboards); other suggested dependencies support development, replication, or experimental workflows.</p>

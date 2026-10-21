@@ -9,7 +9,7 @@ with DNN-based local weights."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -92,15 +92,15 @@ names must be non-missing, non-empty, and unique.</p></dd>
 
 
 <dt id="arg-m-col">m0_col<a class="anchor" aria-label="anchor" href="#arg-m-col"></a></dt>
-<dd><p>Name or index for \(E[Y(0)\mid X]\) (full AIPW interface).</p></dd>
+<dd><p>Name or index of the supplied control-arm conditional outcome mean.</p></dd>
 
 
 <dt id="arg-m-col">m1_col<a class="anchor" aria-label="anchor" href="#arg-m-col"></a></dt>
-<dd><p>Name or index for \(E[Y(1)\mid X]\) (full AIPW interface).</p></dd>
+<dd><p>Name or index of the supplied treated-arm conditional outcome mean.</p></dd>
 
 
 <dt id="arg-e-col">e_col<a class="anchor" aria-label="anchor" href="#arg-e-col"></a></dt>
-<dd><p>Name or index for propensity \(P(T=1\mid X)\).</p></dd>
+<dd><p>Name or index of the supplied treatment propensity predictions.</p></dd>
 
 
 <dt id="arg-pseudo-outcome">pseudo_outcome<a class="anchor" aria-label="anchor" href="#arg-pseudo-outcome"></a></dt>
@@ -187,8 +187,8 @@ recomputes leave-one-out weights directly, and <code>"none"</code> skips SEs.</p
 <dd><p>Optional extras in addition to the always-returned <code>tau</code>, <code>se</code>,
 and <code>meta</code>. Allowed values:
 <code>c("W", "ranks", "ord", "dx", "psi", "nuisance", "ess", "neighbors", "tuning")</code>.
-The <code>neighbors</code> extra returns the first <code>k</code> nearest observations used
-inside each size-<code>s</code> subsample, not the full DNN weight support.</p></dd>
+<code>neighbors</code> is a <code>k x m</code> matrix of nearest training-observation indices,
+one column per target. It is a rank summary, not the full DNN weight support.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -201,6 +201,8 @@ column names propagated from the training data when available;</p></li>
 <li><p><code>tuning_grid</code>: in grid mode, a list with <code>candidates</code>, <code>estimates</code>,
 <code>diagnostics</code>, and <code>meta</code> tables. Candidate diagnostics report
 top-5 weight concentration separately from the estimator's <code>k</code>;</p></li>
+<li><p><code>.model</code>: retained observations, supplied signals and fitted geometry
+used by prediction and joint covariance, independently of optional extras;</p></li>
 <li><p>optional extras requested via <code>return</code>.</p></li>
 </ul></div>
     <div class="section level2">
@@ -230,17 +232,12 @@ candidate. Full per-candidate weight matrices are not stored. Candidate
 diagnostics include <code>ess</code>, <code>max_weight</code>, <code>top_n</code>, <code>top5_weight_share</code>, and
 <code>degenerate</code>; <code>top_n</code> is fixed at 5 and is independent of the estimator's
 <code>k</code>.</p>
-<p>The AIPW signal is Neyman orthogonal at the true nuisance functions. The
-normalized Robinson pseudo-outcome is not implemented because it is outside
-the accompanying paper's theoretical results. Orthogonality alone
-does not validate arbitrary nuisance predictions fitted on the
-same observations used for localization and inference. Valid full-sample
-reuse additionally requires the nuisance-rate and full-state stability
-conditions in the accompanying paper. This function computes the estimator
-and its requested jackknife procedure; it cannot diagnose whether an
-arbitrary learner satisfies those conditions. Supply oracle quantities,
-cross-fitted or out-of-fold predictions, or full-sample predictions from a
-learner for which the paper's rate and stability conditions are credible.</p>
+<p>For causal identification and pointwise inference, including conditions on
+nuisance accuracy and deletion stability, see the accompanying
+<a href="https://jakobjuergens.com/research/#orthogonal-inference-conditional-z" class="external-link">paper</a>.
+This function accepts supplied oracle, out-of-fold or full-sample predictions;
+it does not verify those conditions for a learner. The normalized Robinson
+construction is not implemented; use AIPW inputs or a justified supplied signal.</p>
 <p>With <code>data</code>, omit <code>X</code>; a direct <code>pseudo_outcome</code> vector remains supported.
 Column selectors require <code>data</code>. Prediction retains the fitted metric and
 context even if a registered distance name is subsequently replaced.</p>
@@ -248,7 +245,7 @@ context even if a registered distance name is subsequently replaced.</p>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="weights_dnn.html">weights_dnn()</a></code>, <code><a href="weights_matrix.html">weights_matrix()</a></code>, <code><a href="score_cate_rho.html">score_cate_rho()</a></code>,
-<code><a href="cate_demo_data.html">cate_demo_data()</a></code>.</p></div>
+<code><a href="cate_demo_data.html">cate_demo_data()</a></code>, <code><a href="vcov.cate_result.html">vcov.cate_result()</a></code>, <code><a href="predict.cate_result.html">predict.cate_result()</a></code>.</p></div>
     </div>
 
     <div class="section level2">

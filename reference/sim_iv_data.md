@@ -2,11 +2,12 @@
 
 Generates a synthetic local IV-GMM dataset with oracle nuisance
 quantities for the doubly-robust IV moment \$\$ (Z_k - \pi_k(X))\\Y -
-\mu_Y(X) - (D - \mu_D(X))\theta\\. \$\$ The returned data are
-estimator-free and are intended for simulation benchmarks, examples, and
-future
-[`gmm_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/gmm_dnn.md)
-integration.
+\mu_Y(X) - (D - \mu_D(X))\theta\\. \$\$ Use the returned data with
+[`gmm_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/gmm_dnn.md),
+[`gmm_model_dr_iv()`](https://JakobJuergens.github.io/RdistNN/reference/gmm_model_dr_iv.md)
+or the simulation methods listed by
+[`sim_iv_methods()`](https://JakobJuergens.github.io/RdistNN/reference/sim_iv_methods.md).
+No model is fit here.
 
 ## Usage
 
@@ -43,7 +44,7 @@ sim_iv_data(
 
 - q:
 
-  Integer number of instruments. Phase-A simulation DGPs support
+  Integer number of instruments. The simulation DGPs support
   `1 <= q <= 3`. The just-identified design always returns `q = 1`.
 
 - sigma:
@@ -56,7 +57,8 @@ sim_iv_data(
 
 - seed:
 
-  Optional integer seed for reproducibility.
+  Optional integer seed, used locally without changing the caller's RNG
+  state. `NULL` uses the current stream.
 
 - x0:
 

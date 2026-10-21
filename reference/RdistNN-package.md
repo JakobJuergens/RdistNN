@@ -38,9 +38,10 @@ estimator-specific. The underlying toolkit combines:
 - Estimate local CATE targets with
   [`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md).
 
-- Summarize/predict CATE fits with
+- Report and reuse CATE fits with
   [`summary.cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/summary.cate_result.md),
   [`confint.cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/confint.cate_result.md),
+  [`vcov.cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/vcov.cate_result.md)
   and
   [`predict.cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/predict.cate_result.md).
 
@@ -50,7 +51,9 @@ estimator-specific. The underlying toolkit combines:
 - Use two-scale signed-weight regression with
   [`np_tdnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_tdnn.md);
   see its help for order constraints and additional smoothness
-  requirements.
+  requirements. Both regression classes share reporting, joint
+  covariance and prediction methods documented in
+  [np_result](https://JakobJuergens.github.io/RdistNN/reference/np_result.md).
 
 - Estimate conditional LATE from supplied nuisance predictions with
   [`clate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/clate_dnn.md),
@@ -95,6 +98,22 @@ inversion.
   and
   [`jackknife_slow_rank()`](https://JakobJuergens.github.io/RdistNN/reference/jackknife_slow_rank.md).
 
+## Random numbers
+
+Explicit demo and simulation seeds restore `.Random.seed` and
+[`RNGkind()`](https://rdrr.io/r/base/Random.html); `NULL` uses the
+current stream. R's saved state does not include the hidden Box-Muller
+normal cache; use the default normal generator for saved-state
+reproducibility.
+
+## Native threads
+
+Compiled routines use at most two OpenMP threads by default. Set
+`options(RdistNN.num_threads = 1L)` for one native thread, or supply a
+larger positive integer to opt into more threads. Lower OpenMP runtime
+limits are respected; builds without OpenMP run serially. This option
+does not change other packages' thread settings.
+
 ## Documentation Map
 
 - Start with
@@ -113,9 +132,8 @@ inversion.
 - For distance/rank weighting details see
   [`vignette("dnn-weights", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.md).
 
-- For estimator workflows see
-  [`vignette("conditional-z-estimation", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md),
-  including experimental PLQR details.
+- For experimental PLQR moments and coefficient uncertainty, see
+  [`vignette("conditional-z-estimation", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/conditional-z-estimation.md).
 
 - For supplied-prediction conditional LATE and paired inference, see
   [`vignette("conditional-late", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/conditional-late.md)
@@ -124,6 +142,10 @@ inversion.
 
 - For jackknife details see
   [`vignette("jackknife-gen-ustats", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/jackknife-gen-ustats.md).
+
+- For statistical background, assumptions and theoretical results, see
+  the accompanying
+  [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
 
 ## See also
 
