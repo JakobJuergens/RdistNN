@@ -1,3 +1,5 @@
+# Pin large decimal fixtures to binary64 bits: R builds can parse decimals
+# with different intermediate precision. Exact score assertions stay exact.
 test_that("PLQR subset sums retain signed cancellation in scalar and batch engines", {
   old <- options(RdistNN.use_compiled = TRUE)
   on.exit(options(old), add = TRUE)
@@ -46,19 +48,19 @@ test_that("PLQR score component validation identifies invalid j without coercion
 test_that("exact PLQR threshold cancellation retains inclusive equality", {
   old <- options(RdistNN.use_compiled = TRUE)
   on.exit(options(old), add = TRUE)
-  dat <- data.frame(X = 0, D1 = 1e308, D2 = 1e308,
+  dat <- data.frame(X = 0, D1 = 0x1.1ccf385ebc8a0p+1023, D2 = 0x1.1ccf385ebc8a0p+1023,
     mD1 = 0, mD2 = 0, g = 0, Y = 0)
   score <- score_plqr_component(0, "X", c("D1", "D2"), "g",
     c("mD1", "mD2"), "Y", theta = c(2, -2), s = 1L)
   for (native in c(TRUE, FALSE)) {
     options(RdistNN.use_compiled = native)
     if (native) expect_false(is.null(.rdistnn_compiled_fun("rustat_plqr_g_all")))
-    expect_identical(score_setup(score, dat)$score, -5e307)
+    expect_identical(score_setup(score, dat)$score, -0x1.1ccf385ebc8a0p+1022)
   }
   options(RdistNN.use_compiled = TRUE)
   create <- .rdistnn_compiled_fun("rustat_plqr_ctx_create")
   ctx <- create(dat$Y, as.matrix(dat[c("D1", "D2")]), dat$g,
     as.matrix(dat[c("mD1", "mD2")]), c(2, -2), .5, 1L)
-  expect_identical(.rdistnn_compiled_fun("rustat_plqr_g_all")(ctx), -5e307)
-  expect_identical(.rdistnn_compiled_fun("rustat_plqr_g_indexed")(1L, ctx), -5e307)
+  expect_identical(.rdistnn_compiled_fun("rustat_plqr_g_all")(ctx), -0x1.1ccf385ebc8a0p+1022)
+  expect_identical(.rdistnn_compiled_fun("rustat_plqr_g_indexed")(1L, ctx), -0x1.1ccf385ebc8a0p+1022)
 })

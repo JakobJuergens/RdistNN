@@ -49,11 +49,12 @@ test_that("simulation fallback repeats for a fixed RNG configuration", {
     previous <- NULL
     for (kind in c("Mersenne-Twister", "L'Ecuyer-CMRG")) {
       RNGkind(kind, normal.kind = "Inversion", sample.kind = "Rejection")
+      configured_kind <- RNGkind()
       set.seed(271L)
       before <- .Random.seed
       first <- .simulation_rng_runs(fallback = TRUE, stochastic = TRUE)
       expect_identical(.Random.seed, before)
-      expect_identical(RNGkind(), c(kind, "Inversion", "Rejection"))
+      expect_identical(RNGkind(), configured_kind)
       expect_identical(.simulation_rng_runs(fallback = TRUE, stochastic = TRUE), first)
       rm(".Random.seed", envir = .GlobalEnv)
       expect_identical(.simulation_rng_runs(fallback = TRUE, stochastic = TRUE), first)
@@ -75,12 +76,13 @@ test_that("future mapping and fallback have distinct documented RNG contracts", 
   .simulation_execution_scope({
     for (kind in c("Mersenne-Twister", "L'Ecuyer-CMRG")) {
       RNGkind(kind, normal.kind = "Inversion", sample.kind = "Rejection")
+      configured_kind <- RNGkind()
       set.seed(271L)
       before <- .Random.seed
       fixed <- .simulation_rng_runs()
       expect_identical(.simulation_rng_runs(), fixed)
       expect_identical(.Random.seed, before)
-      expect_identical(RNGkind(), c(kind, "Inversion", "Rejection"))
+      expect_identical(RNGkind(), configured_kind)
       fallback <- .simulation_rng_runs(fallback = TRUE)
       for (study in names(fixed)) {
         expect_identical(fixed[[study]]$seed, fallback[[study]]$seed)
@@ -137,6 +139,7 @@ test_that("oracle simulations agree across future sequential and multisession pl
     expect_identical(worker_signature, local_signature)
     for (kind in names(sequential)) {
       RNGkind(kind, normal.kind = "Inversion", sample.kind = "Rejection")
+      configured_kind <- RNGkind()
       set.seed(271L)
       before <- .Random.seed
       for (i in seq_along(sequential[[kind]])) {
@@ -145,7 +148,7 @@ test_that("oracle simulations agree across future sequential and multisession pl
         expect_identical(actual, sequential[[kind]][[i]])
         expect_identical(.simulation_rng_runs(stochastic = stochastic), actual)
         expect_identical(.Random.seed, before)
-        expect_identical(RNGkind(), c(kind, "Inversion", "Rejection"))
+        expect_identical(RNGkind(), configured_kind)
       }
     }
   }, with_future = TRUE)

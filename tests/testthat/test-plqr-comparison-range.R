@@ -1,12 +1,14 @@
+# Pin large decimal fixtures to binary64 bits: R builds can parse decimals
+# with different intermediate precision. Exact score assertions stay exact.
 .plqr_comparison_case <- function(kind) {
-  x <- c(1, 2, 3, 5, 7, 11) * 1e100
+  x <- c(1, 2, 3, 5, 7, 11) * 0x1.249ad2594c37dp+332
   switch(kind,
-    positive = list(D = matrix(x), theta = 1e220, below = TRUE),
-    negative = list(D = matrix(-x), theta = 1e220, below = FALSE),
-    mixed_positive = list(D = cbind(x, x), theta = c(1e240, -.5e240), below = TRUE),
-    mixed_negative = list(D = cbind(x, x), theta = c(.5e240, -1e240), below = FALSE),
-    partial_overflow = list(D = matrix(1e100, 6L, 5L),
-      theta = c(1e208, 1e208, -1e208, -1e208, -1e208), below = FALSE))
+    positive = list(D = matrix(x), theta = 0x1.c5416bb92e3e6p+730, below = TRUE),
+    negative = list(D = matrix(-x), theta = 0x1.c5416bb92e3e6p+730, below = FALSE),
+    mixed_positive = list(D = cbind(x, x), theta = c(0x1.33234de7ad7e3p+797, -0x1.33234de7ad7e3p+796), below = TRUE),
+    mixed_negative = list(D = cbind(x, x), theta = c(0x1.33234de7ad7e3p+796, -0x1.33234de7ad7e3p+797), below = FALSE),
+    partial_overflow = list(D = matrix(0x1.249ad2594c37dp+332, 6L, 5L),
+      theta = c(0x1.f25c186a6f04cp+690, 0x1.f25c186a6f04cp+690, -0x1.f25c186a6f04cp+690, -0x1.f25c186a6f04cp+690, -0x1.f25c186a6f04cp+690), below = FALSE))
 }
 
 .plqr_comparison_data <- function(D, g = 0) {
@@ -74,7 +76,7 @@ test_that("PLQR comparison risk decisions agree across ordinary matrix engines",
   on.exit(options(old), add = TRUE)
   a <- .plqr_comparison_case("partial_overflow")
   d <- .plqr_comparison_data(a$D)
-  expected <- rep(5e99, nrow(a$D))
+  expected <- rep(0x1.249ad2594c37dp+331, nrow(a$D))
   for (product in c("default", "blas", "internal")) {
     options(matprod = product)
     expect_equal(.plqr_comparison_score(d, a$theta)[, 1L], expected, tolerance = 0)
@@ -88,9 +90,9 @@ test_that("PLQR comparisons retain exact residual signs after huge cancellation"
   for (native in c(FALSE, TRUE)) {
     options(RdistNN.use_compiled = native)
     for (g in c(-1, -2^-1074, 0, 2^-1074)) {
-      d <- .plqr_comparison_data(matrix(1e100, 6L, 2L), g = g)
-      theta <- c(1e240, -1e240)
-      expected <- rep(if (g >= 0) -5e99 else 5e99, 6L)
+      d <- .plqr_comparison_data(matrix(0x1.249ad2594c37dp+332, 6L, 2L), g = g)
+      theta <- c(0x1.33234de7ad7e3p+797, -0x1.33234de7ad7e3p+797)
+      expected <- rep(if (g >= 0) -0x1.249ad2594c37dp+331 else 0x1.249ad2594c37dp+331, 6L)
       expect_equal(.plqr_comparison_score(d, theta)[, 1L], expected, tolerance = 0)
       expect_identical(.plqr_comparison_fit(d, theta)$.model$below_threshold,
         rep(as.numeric(g >= 0), 6L))
@@ -167,7 +169,7 @@ test_that("saved PLQR plot reconstruction uses the certified retained indicator"
   tuning <- new_tuning("certified_comparison_grid", eval = function(...) list(s = 2L),
     eval_grid = function(...) data.frame(s = c(2L, 3L)))
   p <- plot_tuning(fit, tuning = tuning, se = FALSE)
-  expect_equal(p$data$estimate, rep(5e99, nrow(p$data)), tolerance = 0)
+  expect_equal(p$data$estimate, rep(0x1.249ad2594c37dp+331, nrow(p$data)), tolerance = 0)
   calibration <- plot_calibration(fit)
   expect_identical(calibration$data$share, 0)
 })

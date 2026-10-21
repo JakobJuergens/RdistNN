@@ -1,3 +1,5 @@
+# Pin large decimal fixtures to binary64 bits: R builds can parse decimals
+# with different intermediate precision. Exact score assertions stay exact.
 test_that("native PLQR comparisons recover exact overflow signs", {
   old <- options(RdistNN.use_compiled = TRUE)
   on.exit(options(old), add = TRUE)
@@ -10,12 +12,12 @@ test_that("native PLQR comparisons recover exact overflow signs", {
   # Exact Fraction.from_float references, recorded independently in the audit,
   # give respectively negative, positive, negative and positive thresholds.
   cases <- list(
-    list(D = rep(1e100, 5), theta = c(1, 1, -1, -1, -1) * 1e208, below = 0),
-    list(D = rep(1e100, 5), theta = c(-1, -1, 1, 1, 1) * 1e208, below = 1),
-    list(D = rep(1e308, 3), theta = c(2, -2, -1), below = 0),
-    list(D = rep(1e308, 3), theta = c(2, -2, 1), below = 1),
-    list(D = 1e100, theta = 1e208, below = 1),
-    list(D = -1e100, theta = 1e208, below = 0)
+    list(D = rep(0x1.249ad2594c37dp+332, 5), theta = c(1, 1, -1, -1, -1) * 0x1.f25c186a6f04cp+690, below = 0),
+    list(D = rep(0x1.249ad2594c37dp+332, 5), theta = c(-1, -1, 1, 1, 1) * 0x1.f25c186a6f04cp+690, below = 1),
+    list(D = rep(0x1.1ccf385ebc8a0p+1023, 3), theta = c(2, -2, -1), below = 0),
+    list(D = rep(0x1.1ccf385ebc8a0p+1023, 3), theta = c(2, -2, 1), below = 1),
+    list(D = 0x1.249ad2594c37dp+332, theta = 0x1.f25c186a6f04cp+690, below = 1),
+    list(D = -0x1.249ad2594c37dp+332, theta = 0x1.f25c186a6f04cp+690, below = 0)
   )
   for (case in cases) {
     D <- matrix(case$D, 1L)
@@ -34,12 +36,12 @@ test_that("native PLQR comparisons retain exact cancellation across the binary r
   indexed <- .rdistnn_compiled_fun("rustat_plqr_g_indexed")
   tiny <- .Machine$double.xmin * .Machine$double.eps
   cases <- list(
-    list(D = c(1e100, 1e100), theta = c(1e208, -1e208), g = 1, y = 0, below = 1),
-    list(D = c(1e308, 1e308), theta = c(2, -2), g = 0, y = 0, below = 1),
+    list(D = c(0x1.249ad2594c37dp+332, 0x1.249ad2594c37dp+332), theta = c(0x1.f25c186a6f04cp+690, -0x1.f25c186a6f04cp+690), g = 1, y = 0, below = 1),
+    list(D = c(0x1.1ccf385ebc8a0p+1023, 0x1.1ccf385ebc8a0p+1023), theta = c(2, -2), g = 0, y = 0, below = 1),
     list(D = 1, theta = 1, g = 2^1022, y = 2^1022, below = 1),
     list(D = 1, theta = 0, g = 2^1021, y = 2^1021, below = 1),
-    list(D = c(1e100, 1e100), theta = c(1e240, -1e240), g = tiny, y = 0, below = 1),
-    list(D = c(1e100, 1e100), theta = c(1e240, -1e240), g = -tiny, y = 0, below = 0),
+    list(D = c(0x1.249ad2594c37dp+332, 0x1.249ad2594c37dp+332), theta = c(0x1.33234de7ad7e3p+797, -0x1.33234de7ad7e3p+797), g = tiny, y = 0, below = 1),
+    list(D = c(0x1.249ad2594c37dp+332, 0x1.249ad2594c37dp+332), theta = c(0x1.33234de7ad7e3p+797, -0x1.33234de7ad7e3p+797), g = -tiny, y = 0, below = 0),
     # The last exact product is smaller than the smallest representable double.
     list(D = c(2^1022, 2^1022, tiny), theta = c(2^1022, -2^1022, tiny), g = 0, y = 0, below = 1),
     list(D = c(2^1022, 2^1022, tiny), theta = c(2^1022, -2^1022, -tiny), g = 0, y = 0, below = 0),
@@ -76,12 +78,12 @@ test_that("native ordinary cancellation uses an exact adaptive comparison", {
 test_that("native exceptional PLQR comparisons are safe across parallel row shapes", {
   old <- options(RdistNN.use_compiled = TRUE, RdistNN.num_threads = 2L)
   on.exit(options(old), add = TRUE)
-  D <- matrix(1e100, 1024L, 5L)
-  theta <- c(1, 1, -1, -1, -1) * 1e208
+  D <- matrix(0x1.249ad2594c37dp+332, 1024L, 5L)
+  theta <- c(1, 1, -1, -1, -1) * 0x1.f25c186a6f04cp+690
   create <- .rdistnn_compiled_fun("rustat_plqr_ctx_create")
   ctx <- create(rep(0, nrow(D)), D, rep(0, nrow(D)), matrix(0, nrow(D), ncol(D)),
     theta, .5, 1L)
-  expect_identical(.rdistnn_compiled_fun("rustat_plqr_g_all")(ctx), rep(5e99, 1024L))
+  expect_identical(.rdistnn_compiled_fun("rustat_plqr_g_all")(ctx), rep(0x1.249ad2594c37dp+331, 1024L))
   ids <- rep(c(1024L, 1L), 512L)
-  expect_identical(.rdistnn_compiled_fun("rustat_plqr_g_indexed")(ids, ctx), rep(5e99, 1024L))
+  expect_identical(.rdistnn_compiled_fun("rustat_plqr_g_indexed")(ids, ctx), rep(0x1.249ad2594c37dp+331, 1024L))
 })

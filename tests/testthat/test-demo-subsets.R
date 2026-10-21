@@ -25,6 +25,7 @@ test_that("demo subset helpers preserve row draws and caller RNG consumption", {
   .test_rng_scope({
     for (kind in c("Mersenne-Twister", "L'Ecuyer-CMRG")) {
       RNGkind(kind, normal.kind = "Inversion", sample.kind = "Rejection")
+      configured_kind <- RNGkind()
       for (helper in .subset_demo_helpers()) {
         for (s in c(1L, 3L)) {
           set.seed(74L)
@@ -37,7 +38,7 @@ test_that("demo subset helpers preserve row draws and caller RNG consumption", {
           expect_identical(as.vector(helper(12L, K = 4L, s = s, seed = 74L)),
             as.vector(expected))
           expect_identical(.Random.seed, before)
-          expect_identical(RNGkind(), c(kind, "Inversion", "Rejection"))
+          expect_identical(RNGkind(), configured_kind)
           rm(".Random.seed", envir = .GlobalEnv)
           expect_identical(as.vector(helper(12L, K = 4L, s = s, seed = 74L)),
             as.vector(expected))
