@@ -13,7 +13,7 @@ paper-replication/affine bundle; these are general simulation tools."></head><bo
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -145,8 +145,8 @@ deterministic population branch. With \(x_0\) and \((n,s)\) fixed,
 expectation over the i.i.d. covariate sample and complete-DNN
 exchangeability give
 $$E(\mathrm{localized\_truth})=\alpha_s(x_0).$$
-The historical <code>branch_drift</code> field name is retained for compatibility;
-it stores realized localization drift. The estimator remainder combines
+The <code>localization_drift</code> field stores realized localization drift.
+The estimator remainder combines
 centered score variation with fitted-state effects.
 Failed methods have <code>NA</code> for all metric columns and <code>status = "failed"</code>;
 registered route metadata is retained when it is known from the selected
@@ -165,18 +165,21 @@ method.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>           method candidate_id lambda  s   tau_hat     tau0       bias</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 dnn_fullsample         &lt;NA&gt;     NA 12 1.0398647 1.248121 -0.2082565</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2   ols_interact         &lt;NA&gt;     NA NA 0.7781338 1.248121 -0.4699874</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       sq_err        se cover    ci_len     neff localized_truth branch_drift</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.04337079 0.1810111     1 0.7095503 31.06479        1.115052   -0.1330695</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.22088815 0.1239821     0 0.4860010       NA              NA           NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   estimator_remainder studentized_error score_sd0 standardized_branch_drift</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1         -0.07518702         -1.150518  1.031413                -0.7190849</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2                  NA                NA        NA                        NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   physical_radius_90 treated_ess control_ess top5_score_share method_variant</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1          0.7648358    20.04691    11.14627        0.3774768           &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2                 NA          NA          NA               NA           &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   forest_nuisance y_hat_supplied w_hat_supplied status</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1            &lt;NA&gt;             NA             NA     ok</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2            &lt;NA&gt;             NA             NA     ok</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       sq_err        se cover    ci_len     neff localized_truth</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.04337079 0.1810111     1 0.7095503 31.06479        1.115052</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.22088815 0.1239821     0 0.4860010       NA              NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   localization_drift estimator_remainder studentized_error score_sd0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1         -0.1330695         -0.07518702         -1.150518  1.031413</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2                 NA                  NA                NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   standardized_localization_drift physical_radius_90 treated_ess control_ess</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1                      -0.7190849          0.7648358    20.04691    11.14627</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2                              NA                 NA          NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   top5_score_share method_variant forest_nuisance y_hat_supplied w_hat_supplied</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1        0.3774768           &lt;NA&gt;            &lt;NA&gt;             NA             NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2               NA           &lt;NA&gt;            &lt;NA&gt;             NA             NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   status</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1     ok</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2     ok</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

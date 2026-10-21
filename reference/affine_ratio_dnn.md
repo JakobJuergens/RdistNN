@@ -67,7 +67,9 @@ affine_ratio_dnn(
 - distance:
 
   Existing distance specification, registered name or function. Geometry
-  is frozen across deletions; input position resolves distance ties.
+  is frozen across deletions. Exact distance ties use original
+  covariates lexicographically; identical covariate rows use input
+  position.
 
 - method:
 

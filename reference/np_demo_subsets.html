@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,15 +66,14 @@ RNG state. <code>NULL</code> uses the current stream.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>For <code>s &gt; 1</code>, an integer <code>K x s</code> matrix with one subset per row.
-For <code>s = 1</code>, the current helper returns a <code>1 x K</code> matrix; reshape it
-with <code>matrix(result, ncol = 1L)</code> before passing it to <code><a href="score_eval_batch.html">score_eval_batch()</a></code>.</p>
+    <p>An integer <code>K x s</code> matrix with one sorted subset per row, including
+when <code>K = 1</code> or <code>s = 1</code>. The result can be passed to <code><a href="score_eval_batch.html">score_eval_batch()</a></code>.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">draws</span> <span class="op">&lt;-</span> <span class="fu">np_demo_subsets</span><span class="op">(</span>n <span class="op">=</span> <span class="fl">10</span>, K <span class="op">=</span> <span class="fl">4</span>, s <span class="op">=</span> <span class="fl">1</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="va">draws</span>, ncol <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span>  <span class="co"># one singleton subset per row</span></span></span>
+<span class="r-in"><span><span class="va">draws</span>  <span class="co"># one singleton subset per row</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      [,1]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1,]    9</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [2,]    4</span>

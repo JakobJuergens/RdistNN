@@ -4,7 +4,8 @@ Uses retained observations, supplied signals and fitted geometry,
 including after serialization and without optional `return` extras.
 Prediction uncertainty uses frozen-geometry rank deletions, even if the
 fit used `jackknife = "loo"`. It can be requested from a fit with
-`se = FALSE` when `s < n`.
+`se = FALSE` when `s < n`. Prediction localizes the retained signal
+without establishing new inferential guarantees.
 
 ## Usage
 

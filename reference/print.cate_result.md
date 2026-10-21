@@ -38,6 +38,7 @@ out <- cate_dnn(
 )
 print(out)
 #> <cate_result>
+#>   signal: supplied
 #>   localization: s = 3, s/n = 0.15
 #>   data  : n=20, p=2, m=1
 #>   DNN   : method=exact, k=1, distance=l2

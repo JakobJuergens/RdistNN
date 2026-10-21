@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,7 +59,7 @@
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"pak"</span><span class="op">)</span>  <span class="co"># once</span></span>
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"JakobJuergens/RdistNN"</span><span class="op">)</span></span></code></pre></div>
-<p>This installs production <code>master</code>, currently <strong>0.1.0.9005</strong>. R 4.1.0 or newer, Rcpp and a C++17 compiler are required: Rtools on Windows, Xcode command line tools on macOS, or an R-compatible compiler on Linux. For plots, also install <code>ggplot2</code>; dashboards can use <code>patchwork</code>.</p>
+<p>This installs production <code>master</code>. R 4.1.0 or newer, Rcpp and a C++17 compiler are required: Rtools on Windows, Xcode command line tools on macOS, or an R-compatible compiler on Linux. For plots, also install <code>ggplot2</code>; dashboards can use <code>patchwork</code>.</p>
 <p>For reproducible installation, retain the full source commit or checked archive identity; <a href="https://github.com/JakobJuergens/RdistNN/blob/master/RELEASING.md" class="external-link">RELEASING.md</a> explains candidate installation and historical pins. The historical <code>v0.1.0</code> tag predates CLATE and the current shared reporting interface. Retain the source commit or archive identity alongside your results.</p>
 </div>
 <div class="section level2">
@@ -148,7 +148,7 @@
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit_cate</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-cate-profile-1.png" alt="CATE estimates at five X1 profiles with X2 fixed at zero, with pointwise confidence intervals." width="100%"></p>
-<p>The <a href="https://JakobJuergens.github.io/RdistNN/articles/getting-started.html">getting-started guide</a> shows matrix inputs, supplied signals and covariance between prespecified profiles. Earlier <code>m_col</code> calls should use both arm means for AIPW or a supplied <code>pseudo_outcome</code>; a pooled outcome mean is not a substitute.</p>
+<p>The <a href="https://JakobJuergens.github.io/RdistNN/articles/getting-started.html">getting-started guide</a> shows matrix inputs, supplied signals and covariance between prespecified profiles. Earlier <code>m_col</code> calls should use both arm means for AIPW or a supplied <code>pseudo_outcome</code>; a pooled outcome mean is not a substitute. The <a href="https://JakobJuergens.github.io/RdistNN/articles/getting-started.html#migrating-earlier-cate-inputs">migration guide</a> describes the current signal inputs and refitting older development objects. Fits report <code>meta$signal_source</code> and retain their original <code>meta$created_with_version</code>; these describe the fit rather than certify its inference assumptions.</p>
 </div>
 <div class="section level2">
 <h2 id="regression-and-conditional-late">Regression and conditional LATE<a class="anchor" aria-label="anchor" href="#regression-and-conditional-late"></a>
@@ -175,7 +175,7 @@
 <div class="section level2">
 <h2 id="interpreting-inference">Interpreting inference<a class="anchor" aria-label="anchor" href="#interpreting-inference"></a>
 </h2>
-<p>Intervals are <strong>pointwise</strong>. The framework assumes independent observations; cluster and survey-design inference are not supplied. Input row order breaks equal-distance ties, so reordering tied observations can change a result.</p>
+<p>Intervals are <strong>pointwise</strong>. The framework assumes independent observations; cluster and survey-design inference are not supplied. Exact distance ties use the original covariates in lexicographic column order, without outcomes or nuisances. Identical covariate rows retain input-order ties, so reordering those duplicates can change a result.</p>
 <p>Nuisance predictions must be aligned with the estimation observations. Propensity clipping is numerical protection, not a remedy for poor overlap. Diagnostics describe local support; they do not establish validity. For the identification, nuisance-learning and localization conditions and theoretical results, see the accompanying <a href="https://jakobjuergens.com/research/#orthogonal-inference-conditional-z" class="external-link">paper</a>. The package guides explain the corresponding inputs and outputs.</p>
 </div>
 <div class="section level2">
@@ -191,6 +191,11 @@
 <li>PLQR, local IV-GMM and ratio confidence-set inversion remain <strong>experimental</strong>; use their dedicated reference pages.</li>
 </ul>
 <p>Use <code>citation("RdistNN")</code> for references. Report problems through the <a href="https://github.com/JakobJuergens/RdistNN/issues" class="external-link">issue tracker</a> with a minimal example and <code><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo()</a></code>. <a href="https://github.com/JakobJuergens/RdistNN/blob/master/CONTRIBUTING.md" class="external-link">CONTRIBUTING.md</a> covers development and numerical-engine contracts. RdistNN is licensed under GPL version 3 or later.</p>
+</div>
+<div class="section level2">
+<h2 id="contributors">Contributors<a class="anchor" aria-label="anchor" href="#contributors"></a>
+</h2>
+<p>Quality assurance, testing and validation: <a href="https://github.com/Zakareya-Chehime" class="external-link">Zakareya Chehime</a>.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
@@ -227,6 +232,7 @@
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
 <li>Jakob Juergens <br><small class="roles"> Author, maintainer </small>   </li>
+<li><a href="authors.html">More about authors...</a></li>
 </ul>
 </div>
 

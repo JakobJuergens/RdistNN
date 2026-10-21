@@ -37,8 +37,7 @@ change the retained numerical rank. The factor is reused through `ctx`,
 including for subsets and new targets, following
 [`distance_l2_scaled()`](https://JakobJuergens.github.io/RdistNN/reference/distance_l2_scaled.md).
 Euclidean norms after projection use the selected C++ or R distance
-engine. Legacy contexts containing `Si` retain their original inverse
-metric. The explicit rank policy can change neighbors relative to older
+engine. The explicit rank policy can change neighbors relative to older
 fits that truncated covariance singular values after an inverse failed.
 Different linear-algebra libraries can still differ at a numerical rank
 boundary.

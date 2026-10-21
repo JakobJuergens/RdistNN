@@ -9,7 +9,7 @@ with DNN-based local weights."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -105,7 +105,8 @@ names must be non-missing, non-empty, and unique.</p></dd>
 
 <dt id="arg-pseudo-outcome">pseudo_outcome<a class="anchor" aria-label="anchor" href="#arg-pseudo-outcome"></a></dt>
 <dd><p>Numeric vector of length <code>n</code>. If supplied, nuisance
-columns are not required.</p></dd>
+columns are not required and are ignored. The signal is localized unchanged;
+its construction and inferential justification are the caller's responsibility.</p></dd>
 
 
 <dt id="arg-x">X<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
@@ -197,7 +198,8 @@ one column per target. It is a rank summary, not the full DNN weight support.</p
 <li><p><code>se</code>: optional jackknife standard errors;</p></li>
 <li><p><code>x0</code>: the <code>m x p</code> matrix of evaluation points, with covariate
 column names propagated from the training data when available;</p></li>
-<li><p><code>meta</code>: metadata (<code>n</code>, <code>m</code>, <code>p</code>, <code>k</code>, <code>s</code>, <code>method</code>, <code>distance</code>);</p></li>
+<li><p><code>meta</code>: metadata (<code>n</code>, <code>m</code>, <code>p</code>, <code>k</code>, <code>s</code>, <code>method</code>, <code>distance</code>,
+<code>signal_source</code>, <code>created_with_version</code>); see Signal provenance;</p></li>
 <li><p><code>tuning_grid</code>: in grid mode, a list with <code>candidates</code>, <code>estimates</code>,
 <code>diagnostics</code>, and <code>meta</code> tables. Candidate diagnostics report
 top-5 weight concentration separately from the estimator's <code>k</code>;</p></li>
@@ -208,8 +210,10 @@ used by prediction and joint covariance, independently of optional extras;</p></
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The documented sampling framework uses independent observations; cluster
-and survey-design inference are not supplied. Input row order breaks
-distance ties, so permuting tied observations can change estimates.</p>
+and survey-design inference are not supplied. Exact distance ties use
+lexicographic order of the original covariates, in their supplied column
+order. Identical covariate rows retain input-order ties; permuting those
+duplicates can change estimates. Ordering uses no outcomes or nuisances.</p>
 <p>Two interfaces are supported.</p><ol><li><p>Data-frame interface (recommended): pass <code>data</code> and <code>x_cols</code>, then provide
 either <code>pseudo_outcome</code> directly or nuisance columns used to construct it.
 For AIPW nuisance construction, use <code>y_col</code>, <code>t_col</code>, <code>e_col</code>,
@@ -237,10 +241,24 @@ nuisance accuracy and deletion stability, see the accompanying
 <a href="https://jakobjuergens.com/research/#orthogonal-inference-conditional-z" class="external-link">paper</a>.
 This function accepts supplied oracle, out-of-fold or full-sample predictions;
 it does not verify those conditions for a learner. The normalized Robinson
-construction is not implemented; use AIPW inputs or a justified supplied signal.</p>
+construction is not implemented; use AIPW inputs or a justified supplied signal.
+A pooled outcome mean cannot replace the two arm-specific means.</p>
 <p>With <code>data</code>, omit <code>X</code>; a direct <code>pseudo_outcome</code> vector remains supported.
 Column selectors require <code>data</code>. Prediction retains the fitted metric and
 context even if a registered distance name is subsequently replaced.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="signal-provenance">Signal provenance<a class="anchor" aria-label="anchor" href="#signal-provenance"></a></h2>
+
+
+<p><code>meta$signal_source</code> records the actual input branch: <code>"aipw"</code> for built-in
+nuisance construction, <code>"supplied"</code> for <code>pseudo_outcome</code> (which takes
+precedence over nuisance selectors). Neither signal values nor column names
+establish provenance.
+<code>meta$created_with_version</code> records the package version loaded when the
+original fit was created. Summaries and candidate views preserve these fields.
+Provenance does not certify causal identification, nuisance accuracy/stability,
+localization bias, or pointwise inference.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

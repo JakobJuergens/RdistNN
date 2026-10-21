@@ -26,7 +26,9 @@ summary(object, level = 0.95, ...)
 
 ## Value
 
-An object of class `summary.cate_result` with a coefficient table.
+An object of class `summary.cate_result` with a coefficient table and
+`meta`, including the original fit's signal provenance and creation
+version.
 
 ## Examples
 
@@ -37,6 +39,7 @@ x_mat <- matrix(rnorm(n * 2), n, 2)
 out <- cate_dnn(X = x_mat, x0 = c(0, 0), pseudo_outcome = rnorm(n))
 summary(out)
 #> <summary.cate_result>
+#>   signal: supplied
 #>   localization: s = 5, s/n = 0.167
 #>   targets: 1
 #>          estimate std.error statistic p.value conf.low conf.high

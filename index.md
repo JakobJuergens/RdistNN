@@ -21,10 +21,10 @@ install.packages("pak")  # once
 pak::pak("JakobJuergens/RdistNN")
 ```
 
-This installs production `master`, currently **0.1.0.9005**. R 4.1.0 or
-newer, Rcpp and a C++17 compiler are required: Rtools on Windows, Xcode
-command line tools on macOS, or an R-compatible compiler on Linux. For
-plots, also install `ggplot2`; dashboards can use `patchwork`.
+This installs production `master`. R 4.1.0 or newer, Rcpp and a C++17
+compiler are required: Rtools on Windows, Xcode command line tools on
+macOS, or an R-compatible compiler on Linux. For plots, also install
+`ggplot2`; dashboards can use `patchwork`.
 
 For reproducible installation, retain the full source commit or checked
 archive identity;
@@ -109,7 +109,12 @@ guide](https://JakobJuergens.github.io/RdistNN/articles/getting-started.html)
 shows matrix inputs, supplied signals and covariance between
 prespecified profiles. Earlier `m_col` calls should use both arm means
 for AIPW or a supplied `pseudo_outcome`; a pooled outcome mean is not a
-substitute.
+substitute. The [migration
+guide](https://JakobJuergens.github.io/RdistNN/articles/getting-started.html#migrating-earlier-cate-inputs)
+describes the current signal inputs and refitting older development
+objects. Fits report `meta$signal_source` and retain their original
+`meta$created_with_version`; these describe the fit rather than certify
+its inference assumptions.
 
 ## Regression and conditional LATE
 
@@ -175,8 +180,9 @@ explains the default rule and candidate fits.
 
 Intervals are **pointwise**. The framework assumes independent
 observations; cluster and survey-design inference are not supplied.
-Input row order breaks equal-distance ties, so reordering tied
-observations can change a result.
+Exact distance ties use the original covariates in lexicographic column
+order, without outcomes or nuisances. Identical covariate rows retain
+input-order ties, so reordering those duplicates can change a result.
 
 Nuisance predictions must be aligned with the estimation observations.
 Propensity clipping is numerical protection, not a remedy for poor
@@ -207,3 +213,8 @@ minimal example and
 [CONTRIBUTING.md](https://github.com/JakobJuergens/RdistNN/blob/master/CONTRIBUTING.md)
 covers development and numerical-engine contracts. RdistNN is licensed
 under GPL version 3 or later.
+
+## Contributors
+
+Quality assurance, testing and validation: [Zakareya
+Chehime](https://github.com/Zakareya-Chehime).

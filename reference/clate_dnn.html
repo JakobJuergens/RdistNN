@@ -11,7 +11,7 @@ predictions; the estimator fits no learners."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -163,7 +163,8 @@ under instrument 0. Requires D &lt;= A and zero m_d0 if supplied.</p></dd>
 
 <dt id="arg-distance">distance<a class="anchor" aria-label="anchor" href="#arg-distance"></a></dt>
 <dd><p>Existing distance specification, registered name or function.
-Geometry is frozen across deletions; input position resolves distance ties.</p></dd>
+Geometry is frozen across deletions. Exact distance ties use original
+covariates lexicographically; identical covariate rows use input position.</p></dd>
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
@@ -234,8 +235,10 @@ iv_signals construction record, including raw/used propensity.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The documented sampling framework uses independent observations; cluster
-and survey-design inference are not supplied. Input row order breaks
-distance ties, so permuting tied observations can change estimates.</p>
+and survey-design inference are not supplied. Exact distance ties use
+lexicographic order of the original covariates, in their supplied column
+order. Identical covariate rows retain input-order ties; permuting those
+duplicates can change estimates. Ordering uses no outcomes or nuisances.</p>
 <p>Nuisance predictions use all pre-instrument adjustment variables, while
 weights use the reporting coordinates X. The estimate is the ratio of the
 adjusted local reduced form and first stage, using common weights.</p>

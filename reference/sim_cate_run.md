@@ -148,6 +148,30 @@ Without `future.apply` the function falls back silently to sequential
 workflow under
 `system.file("paper-replication/affine", package = "RdistNN")`.
 
+## Reproducibility
+
+An explicit `master_seed` restores the caller's saved RNG state
+(including seed absence) and RNG kind on success or error. `NULL`
+consumes the current stream. The hidden Box-Muller normal cache is not
+part of R's saved state. Repeating a run requires the same seed, RNG
+kind, dependency route, methods, tuning callbacks and execution
+configuration.
+
+With `future.apply` installed, `future.seed = TRUE` supplies
+L'Ecuyer-CMRG streams to the replicate bodies. Package-controlled draws
+agree between sequential and multisession future plans for the same RNG
+configuration; external learners and callbacks must also be
+reproducible. Replicate-level
+[`set.seed()`](https://rdrr.io/r/base/Random.html) inherits the RNG kind
+in effect there. Without `future.apply`, replicates instead inherit the
+caller's RNG kind, so equal integer seeds need not give equal data draws
+across dependency routes. Even with a caller L'Ecuyer-CMRG kind,
+stochastic cell-level tuning can differ in later cells because future
+mapping and `lapply` advance the caller stream differently. Record
+[`RNGkind()`](https://rdrr.io/r/base/Random.html), package versions, the
+future plan and optional-dependency availability alongside seeds when
+saving a simulation configuration.
+
 ## Fault tolerance
 
 Each replicate is wrapped in `tryCatch`. A total rep failure (e.g. DGP

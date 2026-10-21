@@ -9,7 +9,7 @@ by np_tdnn(). Estimates are conditional means, not CATE coefficients."></head><b
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -135,7 +135,7 @@ Custom distance functions must respect their retained context to freeze
 fitted preprocessing. A named distance is resolved at fitting time.</p>
 <p><code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code> returns the full joint covariance across targets from common
 delete-one observations. Its diagonal agrees with the fit's squared SEs.
-The legacy <code>jackknife = "loo"</code> fit and covariance recompute each deletion's
+The <code>jackknife = "loo"</code> fit and covariance recompute each deletion's
 geometry using the original context. Prediction uncertainty always uses
 frozen training geometry and rank deletions, as does <code>jackknife = "fast"</code>.
 Shared scaled covariance arithmetic recovers representable results after

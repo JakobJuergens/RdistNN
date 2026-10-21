@@ -47,10 +47,18 @@ overlap interpretations do not carry over to it.
 
 ### Numerical geometry and covariance
 
+Fresh fits break exact represented distance ties lexicographically by
+the original covariates in their supplied column order. Outcomes,
+treatments and nuisance values do not enter ordering. Identical
+covariate rows still use input position; this remaining ambiguity is not
+resolved by averaging ties. The rank-weight vector and ESS are
+unchanged. Refit objects created by older development versions before
+reusing them with the current package.
+
 Saved prediction reuses the fitted training geometry. Fast jackknife
-calculations also freeze it; legacy NP/TDNN/CATE `jackknife = "loo"`
-refits sample-dependent geometry for each deletion. The two calculations
-can differ. See
+calculations also freeze it; NP/TDNN/CATE `jackknife = "loo"` refits
+sample-dependent geometry for each deletion. The two calculations can
+differ. See
 [`?distance_mahalanobis`](https://JakobJuergens.github.io/RdistNN/reference/distance_mahalanobis.md)
 for the fitted metric and rank-deficient cases. Numerical engine details
 belong to the maintainer reference linked from

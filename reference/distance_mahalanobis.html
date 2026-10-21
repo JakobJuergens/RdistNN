@@ -17,7 +17,7 @@ the centered design is numerically rank deficient."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,7 +76,6 @@ original covariate units; changing individual column units can therefore
 change the retained numerical rank. The factor is reused through <code>ctx</code>,
 including for subsets and new targets, following <code><a href="distance_l2_scaled.html">distance_l2_scaled()</a></code>.
 Euclidean norms after projection use the selected C++ or R distance engine.
-Legacy contexts containing <code>Si</code> retain their original inverse metric.
 The explicit rank policy can change neighbors relative to older fits that
 truncated covariance singular values after an inverse failed. Different
 linear-algebra libraries can still differ at a numerical rank boundary.</p>

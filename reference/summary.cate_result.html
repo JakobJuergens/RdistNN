@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,7 +62,9 @@
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An object of class <code>summary.cate_result</code> with a coefficient table.</p>
+    <p>An object of class <code>summary.cate_result</code> with a coefficient table
+and <code>meta</code>, including the original fit's signal provenance and creation
+version.</p>
     </div>
 
     <div class="section level2">
@@ -73,6 +75,7 @@
 <span class="r-in"><span><span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="cate_dnn.html">cate_dnn</a></span><span class="op">(</span>X <span class="op">=</span> <span class="va">x_mat</span>, x0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, pseudo_outcome <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">out</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;summary.cate_result&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   signal: supplied</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   localization: s = 5, s/n = 0.167</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   targets: 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          estimate std.error statistic p.value conf.low conf.high</span>

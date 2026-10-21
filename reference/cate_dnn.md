@@ -67,7 +67,9 @@ cate_dnn(
 - pseudo_outcome:
 
   Numeric vector of length `n`. If supplied, nuisance columns are not
-  required.
+  required and are ignored. The signal is localized unchanged; its
+  construction and inferential justification are the caller's
+  responsibility.
 
 - X:
 
@@ -166,7 +168,8 @@ An object of class `cate_result` with components:
 - `x0`: the `m x p` matrix of evaluation points, with covariate column
   names propagated from the training data when available;
 
-- `meta`: metadata (`n`, `m`, `p`, `k`, `s`, `method`, `distance`);
+- `meta`: metadata (`n`, `m`, `p`, `k`, `s`, `method`, `distance`,
+  `signal_source`, `created_with_version`); see Signal provenance;
 
 - `tuning_grid`: in grid mode, a list with `candidates`, `estimates`,
   `diagnostics`, and `meta` tables. Candidate diagnostics report top-5
@@ -181,8 +184,10 @@ An object of class `cate_result` with components:
 ## Details
 
 The documented sampling framework uses independent observations; cluster
-and survey-design inference are not supplied. Input row order breaks
-distance ties, so permuting tied observations can change estimates.
+and survey-design inference are not supplied. Exact distance ties use
+lexicographic order of the original covariates, in their supplied column
+order. Identical covariate rows retain input-order ties; permuting those
+duplicates can change estimates. Ordering uses no outcomes or nuisances.
 
 Two interfaces are supported.
 
@@ -220,12 +225,24 @@ on nuisance accuracy and deletion stability, see the accompanying
 This function accepts supplied oracle, out-of-fold or full-sample
 predictions; it does not verify those conditions for a learner. The
 normalized Robinson construction is not implemented; use AIPW inputs or
-a justified supplied signal.
+a justified supplied signal. A pooled outcome mean cannot replace the
+two arm-specific means.
 
 With `data`, omit `X`; a direct `pseudo_outcome` vector remains
 supported. Column selectors require `data`. Prediction retains the
 fitted metric and context even if a registered distance name is
 subsequently replaced.
+
+## Signal provenance
+
+`meta$signal_source` records the actual input branch: `"aipw"` for
+built-in nuisance construction, `"supplied"` for `pseudo_outcome` (which
+takes precedence over nuisance selectors). Neither signal values nor
+column names establish provenance. `meta$created_with_version` records
+the package version loaded when the original fit was created. Summaries
+and candidate views preserve these fields. Provenance does not certify
+causal identification, nuisance accuracy/stability, localization bias,
+or pointwise inference.
 
 ## See also
 

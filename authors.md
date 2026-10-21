@@ -4,20 +4,24 @@
 
 - **Jakob Juergens**. Author, maintainer.
 
+- **[Zakareya Chehime](https://github.com/Zakareya-Chehime)**.
+  Contributor.  
+  Quality assurance, testing and validation
+
 ## Citation
 
 Source:
 [`inst/CITATION`](https://github.com/JakobJuergens/RdistNN/blob/master/inst/CITATION)
 
 Juergens J (2026). *Distributional Nearest-Neighbor Inference for Local
-Conditional Moment Models*. R package version 0.1.0.9005,
+Conditional Moment Models*. R package version 0.1.1,
 <https://jakobjuergens.github.io/RdistNN/>.
 
     @Manual{,
       title = {Distributional Nearest-Neighbor Inference for Local Conditional Moment Models},
       author = {Jakob Juergens},
       year = {2026},
-      note = {R package version 0.1.0.9005},
+      note = {R package version 0.1.1},
       url = {https://jakobjuergens.github.io/RdistNN/},
     }
 

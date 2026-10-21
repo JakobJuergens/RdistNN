@@ -37,11 +37,10 @@ summarise_sim_results(raw)
   [`sim_cate_run()`](https://JakobJuergens.github.io/RdistNN/reference/sim_cate_run.md))
   are handled gracefully: `neff` is averaged into the summary; `tau_hat`
   is summarized through its empirical standard deviation; `tau0` remains
-  a per-rep quantity and is not aggregated. When present,
-  `method_variant`, `forest_nuisance`, `y_hat_supplied`, and
-  `w_hat_supplied` extend the grouping key. Older raw objects without
-  these fields receive typed missing metadata; no nuisance route is
-  inferred.
+  a per-rep quantity and is not aggregated. `method_variant`,
+  `forest_nuisance`, `y_hat_supplied`, and `w_hat_supplied` extend the
+  grouping key. These route columns are required; methods without GRF
+  nuisances record typed missing values.
 
 ## Value
 
@@ -51,7 +50,7 @@ A `data.frame` with one row per unique group and columns `method`,
 `se_to_sd`, `bias_to_se`, localization, support, and studentized-shape
 diagnostics (and `neff` when present in `raw`). The output always
 includes the four GRF route fields, with typed missing values when they
-were absent from `raw` or do not apply.
+do not apply.
 
 ## See also
 

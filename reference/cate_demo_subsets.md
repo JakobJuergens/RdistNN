@@ -32,9 +32,8 @@ cate_demo_subsets(n, K = 1000L, s = 8L, seed = NULL)
 
 ## Value
 
-For `s > 1`, an integer `K x s` matrix with one subset per row. For
-`s = 1`, the current helper returns a `1 x K` matrix; reshape it with
-`matrix(result, ncol = 1L)` before passing it to
+An integer `K x s` matrix with one sorted subset per row, including when
+`K = 1` or `s = 1`. The result can be passed to
 [`score_eval_batch()`](https://JakobJuergens.github.io/RdistNN/reference/score_eval_batch.md).
 
 ## Examples

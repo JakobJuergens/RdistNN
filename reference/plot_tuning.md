@@ -127,7 +127,7 @@ A ggplot object.
 ## Details
 
 Scalar grid evaluation uses the training data stored on the fit; fits
-from package versions predating that storage must be re-estimated first.
+without the required fitted training state must be refitted first.
 
 ## Experimental methods
 

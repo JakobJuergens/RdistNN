@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -92,6 +92,7 @@ choosing a nuisance learner.</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit_cate</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;summary.cate_result&gt;</span></span>
+<span><span class="co">#&gt;   signal: aipw</span></span>
 <span><span class="co">#&gt;   localization: s = 19, s/n = 0.106</span></span>
 <span><span class="co">#&gt;   targets: 1</span></span>
 <span><span class="co">#&gt;          estimate std.error statistic p.value conf.low conf.high</span></span>
@@ -134,6 +135,31 @@ for the two arm means. Demo data now include <code>m1_oracle</code> and
 <code>aipw_oracle</code>; the former <code>rho_oracle</code> used a
 different signal, so this is not a numerically equivalent column
 rename.</p>
+<p>Fresh nuisance-based fitting constructs
+<code>mu1 - mu0 + D*(Y-mu1)/e - (1-D)*(Y-mu0)/(1-e)</code>, with
+validated and clipped propensities. The retired <code>m_col</code>
+argument remains rejected. A directly supplied
+<code>pseudo_outcome</code> takes precedence over accompanying nuisance
+selectors and is localized unchanged; its construction, causal
+interpretation and inferential justification remain the caller’s
+responsibility. The paper’s residualized-slope estimating equation is
+distinct from the removed normalized pseudo-outcome.</p>
+<p>Each new fit records <code>meta$signal_source</code>:
+<code>"aipw"</code> means the package constructed the signal through its
+nuisance-input branch, and <code>"supplied"</code> means the caller
+provided it. A supplied vector remains <code>"supplied"</code> even when
+it equals AIPW or comes from a column named <code>aipw_oracle</code>.
+<code>meta$created_with_version</code> records the version of the
+package actually loaded when the original fit was created. Candidate
+views and summaries preserve that version. Neither field certifies
+identification, same-sample nuisance accuracy or stability, localization
+bias, or the conditions for pointwise inference.</p>
+<p>Refit objects created by older development versions. Both packages
+reuse current fitted state for prediction, covariance, candidates and
+diagnostics; they do not reconstruct retired object schemas or score
+methods. Prediction returns ordinary numeric vectors, matrices or
+<code>list(fit, se.fit)</code>. See the companion’s <a href="https://github.com/JakobJuergens/RdistNN_stata/blob/master/docs/reusing-fits.md" class="external-link">saved-fit
+guide</a>.</p>
 </div>
 <div class="section level3">
 <h3 id="covariance-between-prespecified-profiles">Covariance between prespecified profiles<a class="anchor" aria-label="anchor" href="#covariance-between-prespecified-profiles"></a>
@@ -153,10 +179,13 @@ observations retain dependence between profiles. Valid contrast
 inference requires the relevant joint assumptions; pointwise intervals
 alone do not establish it.</p>
 <p>The documented sampling framework uses independent observations and
-supplies neither cluster nor survey-design inference. Input row order
-breaks equal distance ties, so reordering tied observations can change a
-fit. The reported <code>s/n</code> is descriptive; it is not a
-calibrated inference threshold.</p>
+supplies neither cluster nor survey-design inference. Exact distance
+ties use the original covariates lexicographically in their supplied
+column order. Only identical covariate rows retain input-order ties.
+Outcomes, treatments and nuisance values do not enter this ordering, and
+the rank-weight vector and ESS are preserved. The reported
+<code>s/n</code> is descriptive; it is not a calibrated inference
+threshold.</p>
 </div>
 <div class="section level3">
 <h3 id="check-local-support">Check local support<a class="anchor" aria-label="anchor" href="#check-local-support"></a>
@@ -268,7 +297,12 @@ weights. Delete-1 inference requires <code>s &lt; n</code>. Set
 <p>The demo helpers’ explicit <code>seed</code> arguments restore the
 caller’s saved RNG state. <code>seed = NULL</code> draws from the
 current stream. Simulation grids use <code>master_seed</code> to
-generate their replicate seeds.</p>
+generate their replicate seeds. To reproduce a grid, also retain the RNG
+kind, dependency versions and availability, future plan and tuning
+configuration; equal integer seeds alone do not guarantee agreement
+between the <code>future.apply</code> route and its fallback. See
+<code><a href="../reference/sim_cate_run.html">?sim_cate_run</a></code> for the reproducibility contract shared with
+<code><a href="../reference/sim_iv_run.html">sim_iv_run()</a></code>.</p>
 <p>Native routines default to at most two OpenMP threads. Set
 <code>options(RdistNN.num_threads = 4L)</code> to request four, or
 <code>1L</code> for one native thread. Lower OpenMP runtime limits still

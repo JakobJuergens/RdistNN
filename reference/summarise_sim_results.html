@@ -39,7 +39,7 @@ fitted-state effects."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -101,10 +101,10 @@ fitted-state effects.</p>
 <code>ci_len</code>, and <code>status</code>. Optional columns <code>neff</code>, <code>tau_hat</code>, and <code>tau0</code>
 (returned by <code><a href="sim_cate_run.html">sim_cate_run()</a></code>) are handled gracefully: <code>neff</code> is averaged
 into the summary; <code>tau_hat</code> is summarized through its empirical standard
-deviation; <code>tau0</code> remains a per-rep quantity and is not aggregated. When
-present, <code>method_variant</code>, <code>forest_nuisance</code>, <code>y_hat_supplied</code>, and
-<code>w_hat_supplied</code> extend the grouping key. Older raw objects without these
-fields receive typed missing metadata; no nuisance route is inferred.</p></dd>
+deviation; <code>tau0</code> remains a per-rep quantity and is not aggregated.
+<code>method_variant</code>, <code>forest_nuisance</code>, <code>y_hat_supplied</code>, and
+<code>w_hat_supplied</code> extend the grouping key. These route columns are required;
+methods without GRF nuisances record typed missing values.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -114,8 +114,7 @@ fields receive typed missing metadata; no nuisance route is inferred.</p></dd>
 <code>n_failed</code>, <code>bias</code>, <code>rmse</code>, <code>se_mean</code>, <code>cover</code>, <code>ci_len</code>, <code>emp_sd</code>,
 <code>se_to_sd</code>, <code>bias_to_se</code>, localization, support, and studentized-shape
 diagnostics (and <code>neff</code> when present in <code>raw</code>). The output always includes
-the four GRF route fields, with typed missing values when they were absent
-from <code>raw</code> or do not apply.</p>
+the four GRF route fields, with typed missing values when they do not apply.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

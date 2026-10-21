@@ -166,3 +166,8 @@ does not change other packages' thread settings.
 Authors:
 
 - Jakob Juergens <info@jakobjuergens.com>
+
+Other contributors:
+
+- Zakareya Chehime (Quality assurance, testing and validation)
+  \[contributor\]

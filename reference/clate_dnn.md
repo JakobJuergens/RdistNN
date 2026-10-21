@@ -123,7 +123,9 @@ clate_dnn(
 - distance:
 
   Existing distance specification, registered name or function. Geometry
-  is frozen across deletions; input position resolves distance ties.
+  is frozen across deletions. Exact distance ties use original
+  covariates lexicographically; identical covariate rows use input
+  position.
 
 - method:
 
@@ -200,8 +202,10 @@ iv_signals construction record, including raw/used propensity.
 ## Details
 
 The documented sampling framework uses independent observations; cluster
-and survey-design inference are not supplied. Input row order breaks
-distance ties, so permuting tied observations can change estimates.
+and survey-design inference are not supplied. Exact distance ties use
+lexicographic order of the original covariates, in their supplied column
+order. Identical covariate rows retain input-order ties; permuting those
+duplicates can change estimates. Ordering uses no outcomes or nuisances.
 
 Nuisance predictions use all pre-instrument adjustment variables, while
 weights use the reporting coordinates X. The estimate is the ratio of

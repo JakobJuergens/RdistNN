@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,23 @@
       <small>Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.1.1" id="rdistnn-011-unreleased">RdistNN 0.1.1 (unreleased)<a class="anchor" aria-label="anchor" href="#rdistnn-011-unreleased"></a></h2>
+<ul><li>Resolve exact distance ties lexicographically by the original covariates across R and native implementations. Identical covariate rows retain input order. Rank weights and effective sample size are preserved.</li>
+<li>Preserve PLQR fitted distance specifications and resolved covariate names during saved prediction; align scalar tuning-plot uncertainty with the requested policy. Permit full-order analytic PLQR inference when no deletion calculation is needed.</li>
+<li>Correct compensated PLQR score reduction and invalid coefficient/subset validation, signed rank-table mass validation, and range-sensitive weighted SD and Mahalanobis origin selection. Cover one-covariate bump demos.</li>
+<li>Share adaptive PLQR comparisons across score constructors, native kernels and retained diagnostics. Exact accumulation resolves ordinary cancellation, intermediate overflow, tiny residuals and inclusive threshold equality.</li>
+<li>Share finite-operand weighted-contribution recovery between CATE diagnostics and CATE/CLATE influence plots; preserve representable dominant observations and concentration when intermediate residuals or totals exceed the range.</li>
+<li>Detect undeclared ordinary namespace references in the test dependency check.</li>
+<li>Refresh pinned paper-replication displays with embedded PDF fonts and isolate nested renderer dependencies from caller bindings, including on errors.</li>
+<li>Remove obsolete development-fit compatibility readers and their dedicated fixtures. Refit objects created by older development versions.</li>
+<li>Name simulation outputs <code>localization_drift</code> and <code>standardized_localization_drift</code> and validate the current simulation-row schema rather than filling missing fields as successful results.</li>
+<li>Separate estimator fitting, grid adapters, retained-state support and public methods; share identical grid warning/metadata policy. Reorganize test ownership, locally scope fixture RNG state and complete the documented focused-suite selections.</li>
+<li>Record CATE signal provenance (<code>aipw</code> or <code>supplied</code>) and the original fit’s loaded package version. Summaries and candidates preserve that original provenance and version; current retained state is required for reuse.</li>
+<li>Correct demo subset helpers to return integer <code>K</code> by <code>s</code> matrices even for singleton subsets, preserving draws and caller RNG behavior.</li>
+<li>Clarify current CATE inputs and simulation reproducibility: reproduce simulations under the same RNG kind and backend configuration.</li>
+<li>Credit Zakareya Chehime for quality assurance, testing and validation in contributor metadata and documentation.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.0.9005" id="rdistnn-0109005-development-snapshot">RdistNN 0.1.0.9005 (development snapshot)<a class="anchor" aria-label="anchor" href="#rdistnn-0109005-development-snapshot"></a></h2>
 <p>The maintenance and documentation changes below ship together as one flattened (squash-merged) production commit. Version 0.1.0.9004 records the previous estimator update; tags and assets of the existing v0.1.0 release are unchanged.</p>

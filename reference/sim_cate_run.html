@@ -19,7 +19,7 @@ summarise_sim_results() to aggregate to one row per
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9005</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -185,6 +185,27 @@ by calling <code><a href="https://future.futureverse.org/reference/plan.html" cl
 <p>Without <code>future.apply</code> the function falls back silently to sequential
 <code>lapply</code>. The current affine paper uses a separate study-specific workflow
 under <code>system.file("paper-replication/affine", package = "RdistNN")</code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="reproducibility">Reproducibility<a class="anchor" aria-label="anchor" href="#reproducibility"></a></h2>
+
+
+<p>An explicit <code>master_seed</code> restores the caller's saved RNG state (including
+seed absence) and RNG kind on success or error. <code>NULL</code> consumes the current
+stream. The hidden Box-Muller normal cache is not part of R's saved state.
+Repeating a run requires the same seed, RNG kind, dependency route, methods,
+tuning callbacks and execution configuration.</p>
+<p>With <code>future.apply</code> installed, <code>future.seed = TRUE</code> supplies L'Ecuyer-CMRG
+streams to the replicate bodies. Package-controlled draws agree between
+sequential and multisession future plans for the same RNG configuration;
+external learners and callbacks must also be reproducible. Replicate-level
+<code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> inherits the RNG kind in effect there. Without <code>future.apply</code>,
+replicates instead inherit the caller's RNG kind, so equal integer seeds
+need not give equal data draws across dependency routes. Even with a caller
+L'Ecuyer-CMRG kind, stochastic cell-level tuning can differ in later cells
+because future mapping and <code>lapply</code> advance the caller stream differently.
+Record <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">RNGkind()</a></code>, package versions, the future plan and optional-dependency
+availability alongside seeds when saving a simulation configuration.</p>
     </div>
     <div class="section level2">
     <h2 id="fault-tolerance">Fault tolerance<a class="anchor" aria-label="anchor" href="#fault-tolerance"></a></h2>
