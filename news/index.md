@@ -1,6 +1,6 @@
 # Changelog
 
-## RdistNN 0.1.1 (unreleased)
+## RdistNN 0.1.1 (2026-10-21)
 
 - Resolve exact distance ties lexicographically by the original
   covariates across R and native implementations. Identical covariate
