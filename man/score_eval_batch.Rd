@@ -11,11 +11,13 @@ score_eval_batch(score, subs, data, ctx = NULL, rng = NULL)
 
 \item{subs}{integer matrix with nrow=K, ncol=s}
 
-\item{data}{data.frame/matrix}
+\item{data}{Data object understood by the score, such as a vector, matrix
+or data frame.}
 
 \item{ctx}{optional context}
 
-\item{rng}{optional RNG key/seed}
+\item{rng}{Optional object passed unchanged to the evaluator. The caller or
+evaluator manages random-number seeding.}
 }
 \value{
 numeric vector of length \code{K}

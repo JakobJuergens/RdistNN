@@ -77,7 +77,7 @@ A ggplot object.
 }
 \description{
 The estimate panel of the plotting layer: point estimates with normal
-confidence bounds from the stored jackknife standard errors, drawn as a
+confidence bounds from the stored estimator-specific standard errors, drawn as a
 profile band when the targets vary along a single stored coordinate, as
 a forest layout for small non-profile target sets, and as pointranges
 otherwise. \code{autoplot()} and \code{plot()} on \code{np_result}, \code{cate_result} and \code{affine_ratio_result}

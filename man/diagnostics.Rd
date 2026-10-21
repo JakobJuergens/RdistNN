@@ -24,8 +24,10 @@ diagnostics(object, candidates = "default", ...)
 \method{diagnostics}{plqr_result}(object, candidates = "default", ...)
 }
 \arguments{
-\item{object}{A fitted estimator object, currently an object returned by
-\code{\link[=np_dnn]{np_dnn()}}, \code{\link[=cate_dnn]{cate_dnn()}}, \code{\link[=plqr_dnn]{plqr_dnn()}}, \code{\link[=affine_ratio_dnn]{affine_ratio_dnn()}} or \code{\link[=clate_dnn]{clate_dnn()}}.}
+\item{object}{A fitted object from \code{\link[=np_dnn]{np_dnn()}}, \code{\link[=np_tdnn]{np_tdnn()}}, \code{\link[=cate_dnn]{cate_dnn()}},
+\code{\link[=plqr_dnn]{plqr_dnn()}}, \code{\link[=affine_ratio_dnn]{affine_ratio_dnn()}} or \code{\link[=clate_dnn]{clate_dnn()}}. Target diagnostics for
+NP/TDNN, CATE and PLQR require retained \code{W}; paired-ratio/CLATE methods
+reconstruct weights from cached ranks without optional extras.}
 
 \item{candidates}{Candidate rows to report for grid fits. The default
 \code{"default"} preserves the per-target diagnostics table for the selected

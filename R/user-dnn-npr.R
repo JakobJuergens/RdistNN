@@ -72,8 +72,8 @@
 #' @param return Optional extras in addition to the always-returned `mu`, `se`,
 #'   and `meta`. Allowed values:
 #'   `c("W", "ranks", "ord", "dx", "y", "ess", "neighbors", "tuning")`.
-#'   The `neighbors` extra returns the first `k` nearest observations used
-#'   inside each size-`s` subsample, not the full DNN weight support.
+#'   `neighbors` is a `k x m` matrix of nearest training-observation indices,
+#'   one column per target. It is a rank summary, not the full DNN weight support.
 #'
 #' @return An object of class `np_result` with components:
 #'   - `mu`: estimated local mean values at target points;

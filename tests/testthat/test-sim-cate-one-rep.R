@@ -162,7 +162,9 @@ test_that("sim_cate_one_rep: dnn_crossfit matches direct cross-fitted AIPW fit",
   clip <- 1e-3
   n_folds <- 5L
 
-  dgp <- sim_cate_data("dgp2_nonlinear", n = n, kx = kx, seed = seed, clip = clip)
+  # Match the replicate's continuous data-then-fold stream explicitly.
+  set.seed(seed)
+  dgp <- sim_cate_data("dgp2_nonlinear", n = n, kx = kx, seed = NULL, clip = clip)
   x_cols <- paste0("X", seq_len(kx))
   dat <- dgp$data
 

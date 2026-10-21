@@ -2,9 +2,7 @@
 // [[Rcpp::plugins(cpp17)]]
 // [[Rcpp::depends(Rcpp)]]
 #include <Rcpp.h>
-#ifdef _OPENMP
-#include <omp.h>
-#endif
+#include "parallel_threads.h"
 using namespace Rcpp;
 
 // Context for CATE: per-row contribution g_i = rho_i
@@ -43,7 +41,7 @@ NumericVector rustat_cate_g_indexed(IntegerVector idxs, SEXP ctx_) {
   int first_bad_index = -1;
 
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (m >= 1024)
+#pragma omp parallel for num_threads(rustat::thread_limit()) schedule(static) if (m >= 1024)
 #endif
   for (int t = 0; t < m; ++t) {
     const int i = idxs[t] - 1; // 1-based -> 0-based

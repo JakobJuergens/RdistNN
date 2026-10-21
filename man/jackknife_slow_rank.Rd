@@ -9,7 +9,9 @@ jackknife_slow_rank(ranks, a, phi, normalize = TRUE)
 \arguments{
 \item{ranks}{Integer matrix (T x (s+1)): for each target \code{t}, \code{ranks[t, k]}
 gives the positive 1-based index of the k-th neighbor, for \verb{k = 1, ..., s+1}.
-(Must exclude \code{t} itself if targets are a subset of reference.)}
+Use distinct indices within each row for observation deletion. A target
+may coincide with a reference observation; self-exclusion is not required.
+Repeated indices follow the additive convention in \code{\link[=jackknife_fast_rank]{jackknife_fast_rank()}}.}
 
 \item{a}{Finite numeric length-\code{s} vector of L-stat coefficients \eqn{(a_1,\dots,a_s)}.}
 
@@ -22,7 +24,7 @@ numeric vector.}
 \value{
 A list with:
 \describe{
-\item{theta0}{numeric length-\code{q} baseline aggregate}
+\item{theta0}{numeric length-\code{q} baseline aggregate, averaged across targets}
 \item{theta_loo}{numeric matrix (n_ref x q) of delete-one aggregates}
 \item{info}{list with fields \code{s}, \code{T}, \code{q}, \code{normalize}}
 }
@@ -43,17 +45,17 @@ Works with:
 \item \code{phi} as a numeric \strong{matrix} (n_ref x q): row \code{j} equals \eqn{\phi(j)}.
 \item \code{phi} as a \strong{function} \verb{function(j, t)} that returns a length-\code{q} numeric,
 allowing target-dependent contributions.
+With matrix \code{phi}, \code{n_ref = nrow(phi)}. With function-valued \code{phi}, it is
+inferred as \code{max(ranks)}.
 }
 }
 \examples{
 set.seed(1)
 n <- 20
-p <- 3
-s <- 4
-X <- matrix(rnorm(n * p), n, p)
-# toy ranks: nearest-neighbor indices precomputed elsewhere (T x (s+1))
-# here we fake something deterministic just for the example
-ranks <- cbind(matrix(rep(1:s, each = n), n, s), s + 1L)
+s <- 3L
+X <- matrix(rnorm(n * 2), n, 2)
+wt <- weights_dnn(X, X0 = rbind(c(0, 0), c(1, 0)), k = 1L, s = s, return = "ord")
+ranks <- t(wt$ord[seq_len(s + 1L), , drop = FALSE])
 y <- rnorm(n)
 a <- rep(1, s)
 out <- jackknife_slow_rank(ranks, a, cbind(y))

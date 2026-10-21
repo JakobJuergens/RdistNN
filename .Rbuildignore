@@ -41,7 +41,6 @@
 ^CLAUDE\.md$
 ^OPENAI\.md$
 ^\.superpowers$
-^build$
 (^|/)__pycache__($|/)
 \.py[co]$
 ^\.claude$

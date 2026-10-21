@@ -232,6 +232,12 @@ confint.cate_result <- function(object, parm = NULL, level = 0.95, ...) {
 
 #' Predict from a `cate_result` object at new targets
 #'
+#' Uses retained observations, supplied signals and fitted geometry, including
+#' after serialization and without optional `return` extras. Prediction
+#' uncertainty uses frozen-geometry rank deletions, even if the fit used
+#' `jackknife = "loo"`. It can be requested from a fit with `se = FALSE`
+#' when `s < n`.
+#'
 #' @param object A `cate_result` object from [cate_dnn()].
 #' @param newdata Optional matrix/data frame of target covariates.
 #' @param X0 Optional numeric matrix of targets (rows).
@@ -241,8 +247,10 @@ confint.cate_result <- function(object, parm = NULL, level = 0.95, ...) {
 #' @param level Confidence level for interval output.
 #' @param ... Not used.
 #'
-#' @return If `interval = "none"` and `se.fit = FALSE`, a numeric vector of
-#'   predictions. Otherwise a matrix/list analogous to `predict.lm()`.
+#' @return A numeric vector when no uncertainty is requested; a list with
+#'   `fit` and `se.fit` when `se.fit = TRUE`. With `interval = "confidence"`,
+#'   `fit` is a matrix with columns `fit`, `lwr`, `upr`, returned directly
+#'   unless `se.fit = TRUE`.
 #' @examples
 #' set.seed(3)
 #' n <- 40

@@ -98,6 +98,13 @@ jobs:
           extra-packages: any::rcmdcheck
           needs: check
 
+      - name: Test installed package without optional feature dependencies
+        if: runner.os == 'Linux' && matrix.config.r == 'release'
+        shell: bash
+        run: |
+          R CMD build --no-build-vignettes --no-manual .
+          Rscript tools/ci/check_minimal_dependencies.R RdistNN_*.tar.gz
+
       - uses: r-lib/actions/check-r-package@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2.14.0
         with:
           upload-snapshots: true

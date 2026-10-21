@@ -14,17 +14,14 @@ library(RdistNN)
 
 ## Overview
 
-`diagnostics()` gives a compact table for fitted DNN-localized estimators. The
-method is intentionally fit-object based:
+`diagnostics()` reports localization and estimator-specific information from
+a fitted object. NP/TDNN, CATE and PLQR use retained weights and model state;
+paired-ratio/CLATE diagnostics reconstruct weights from cached ranks and
+can evaluate deletion-score concentration. No nuisance models are refitted.
+For NP/TDNN and CATE, `nobs()` reports training rows; `n_eff` below describes
+local weight concentration.
 
-- it uses retained weights rather than refitting;
-- it uses retained distances only when `dx` was requested;
-- it uses hidden estimator state for NP, CATE, and PLQR diagnostics;
-- it marks unavailable diagnostics explicitly instead of reconstructing missing
-  inputs from assumptions.
-
-The general fields are available for `np_result`, `cate_result`, and
-`plqr_result` objects when weights are retained:
+The shared fields include:
 
 - `n_eff`, `max_weight`, and top-weight shares;
 - realized rank radii and weighted distance summaries when `dx` is retained;
@@ -37,10 +34,13 @@ Estimator-specific fields are added by the corresponding method:
   SD and quantiles are `NA` when weights are negative. Weight concentration
   summaries then describe signed weights rather than probability mass.
 - CATE: treated/control mass and propensity summaries;
+- CLATE/paired ratios: component uncertainty, first-stage statuses, physical
+  radii and squared deletion-score concentration; CLATE adds instrument support;
 - PLQR: residual-regressor Gram eigenvalues and condition number.
 
-Diagnostics require `W`. The default `return = "W"` keeps it. If a fit was
-created without weights, refit with `return` including `"W"`.
+NP/TDNN, CATE and PLQR target diagnostics require `W`, retained by default.
+Use `return` including `"W"` for those fits. Paired-ratio/CLATE diagnostics
+also work without optional weight or distance extras; see [their guide](conditional-late-inference.html).
 
 ## Nonparametric Regression
 
@@ -60,7 +60,7 @@ fit_np <- np_dnn(
 )
 
 d_np <- diagnostics(fit_np)
-d_np[, c(
+as.data.frame(d_np)[, c(
   "target_id",
   "n_eff",
   "weighted_mean_y",
@@ -93,7 +93,7 @@ fit_cate <- cate_dnn(
 )
 
 d_cate <- diagnostics(fit_cate)
-d_cate[, c(
+as.data.frame(d_cate)[, c(
   "target_id",
   "n_eff",
   "treated_mass",
@@ -115,14 +115,13 @@ profile's values. CLATE distinguishes instrument support, clipped propensity
 mass and squared jackknife-contribution concentration. These quantities have
 different definitions and should not be interpreted interchangeably.
 Clipping prevents undefined arithmetic but does not establish overlap. The
-reported order fraction is descriptive and triggers no new warning policy.
+reported order fraction is descriptive, rather than a calibrated validity threshold.
 
 ## Experimental PLQR conditioning
 
-All PLQR functionality, including these diagnostics and its specialized plots,
-is experimental and outside the CATE and regression focus of this release.
+PLQR diagnostics and specialized plots remain experimental.
 
-```{r plqr, eval=FALSE}
+```{r plqr}
 demo_plqr <- plqr_demo_data(n = 160, p = 2, p_d = 2, tau = 0.5, seed = 3)
 
 fit_plqr <- plqr_dnn(
@@ -144,7 +143,7 @@ fit_plqr <- plqr_dnn(
 )
 
 d_plqr <- diagnostics(fit_plqr)
-d_plqr[, c(
+as.data.frame(d_plqr)[, c(
   "target_id",
   "n_eff",
   "gram_min_eig",
@@ -178,7 +177,7 @@ fit_tuned <- np_dnn(
 )
 
 d_tuned <- diagnostics(fit_tuned)
-d_tuned[, c(
+as.data.frame(d_tuned)[, c(
   "target_id",
   "tuning_name",
   "tuning_default_s",
@@ -193,27 +192,21 @@ Use `attr(d_tuned, "tuning_grid")` when you need the full candidate table.
 
 ## Availability Rules
 
-Diagnostics avoid hidden recomputation.
-
-- If `W` is missing, `diagnostics()` errors and asks for a refit with weights.
-- If `dx` is missing, distance fields are returned as `NA` with
-  `distance_diagnostics_available = FALSE`.
+- Missing `W` prevents NP/TDNN, CATE and PLQR target diagnostics. Stored grid
+  summaries and paired-ratio/CLATE diagnostics have their own retained state.
+- Rank radii and weighted metric distances require retained `dx`; otherwise
+  those fields are `NA` with `distance_diagnostics_available = FALSE`.
+  CATE/CLATE physical radii can still use retained observations in original units.
 - If CATE treatment/propensity state is unavailable, overlap fields are present
   but marked unavailable.
 - If PLQR residual-regressor state is unavailable, Gram fields are present but
   marked unavailable.
 
-This behavior keeps diagnostics predictable and prevents the diagnostics layer
-from silently rerunning expensive estimator construction.
+The [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
+states the conditions for inference. These diagnostics do not check all of them.
 
 ## Related Articles
 
-- [Notation and package conventions](notation-and-conventions.html):
-  `vignette("notation-and-conventions", package = "RdistNN")` distinguishes
-  similarly named fields and moment- from coefficient-scale uncertainty.
-- [Visualising fits](visualising-fits.html):
-  `vignette("visualising-fits", package = "RdistNN")` turns diagnostic fields
-  into reusable plot panels.
-- [Conditional Z-estimation](conditional-z-estimation.html):
-  `vignette("conditional-z-estimation", package = "RdistNN")` supplies the
-  estimator workflows that create these objects.
+- [Notation and conventions](notation-and-conventions.html): field meanings and uncertainty scales.
+- [Visualising fits](visualising-fits.html): reusable plot panels.
+- [Experimental PLQR](conditional-z-estimation.html): moment and coefficient uncertainty.

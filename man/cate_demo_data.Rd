@@ -20,7 +20,7 @@ cate_demo_data(
 \arguments{
 \item{n}{Integer sample size.}
 
-\item{p}{Integer feature dimension (recommend \eqn{p \ge 2}).}
+\item{p}{Integer feature dimension, at least 2.}
 
 \item{design}{Character; one of \code{"simple"}, \code{"hetero"}, \code{"bump"} for \eqn{\tau(x)}.}
 
@@ -28,7 +28,8 @@ cate_demo_data(
 
 \item{clip}{Propensity clipping in \eqn{(0,\,0.5)}; applied to \eqn{e(x)}.}
 
-\item{seed}{Optional integer seed for reproducibility.}
+\item{seed}{Optional integer seed, used locally without changing the caller's
+RNG state. \code{NULL} uses the current stream.}
 
 \item{x0}{Optional numeric length-\eqn{p} target point (defaults to the zero vector).}
 

@@ -2,6 +2,7 @@
 // [[Rcpp::depends(Rcpp)]]
 #include <Rcpp.h>
 #include "compensated_arithmetic.hpp"
+#include "parallel_threads.h"
 using namespace Rcpp;
 
 // Helpers ---------------------------------------------------------------
@@ -64,7 +65,7 @@ Rcpp::List rustat_jackknife_fast_rank(const IntegerMatrix &ranks, const NumericV
   for (int component = 0; component < q; ++component)
     theta0[component] = totals[component].value() / T;
 #ifdef _OPENMP
-#pragma omp parallel for
+#pragma omp parallel for num_threads(rustat::thread_limit())
 #endif
   for (int i = 0; i < n_ref; ++i) {
     for (int component = 0; component < q; ++component) {

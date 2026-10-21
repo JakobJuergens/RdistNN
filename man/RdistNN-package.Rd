@@ -28,11 +28,13 @@ target;
 \item Resolve paper-default kernel orders with \code{\link[=tuning_dnn_paper]{tuning_dnn_paper()}} and
 \code{\link[=tuning_eval]{tuning_eval()}}.
 \item Estimate local CATE targets with \code{\link[=cate_dnn]{cate_dnn()}}.
-\item Summarize/predict CATE fits with \code{\link[=summary.cate_result]{summary.cate_result()}},
-\code{\link[=confint.cate_result]{confint.cate_result()}}, and \code{\link[=predict.cate_result]{predict.cate_result()}}.
+\item Report and reuse CATE fits with \code{\link[=summary.cate_result]{summary.cate_result()}},
+\code{\link[=confint.cate_result]{confint.cate_result()}}, \code{\link[=vcov.cate_result]{vcov.cate_result()}} and \code{\link[=predict.cate_result]{predict.cate_result()}}.
 \item Estimate local nonparametric means with \code{\link[=np_dnn]{np_dnn()}}.
 \item Use two-scale signed-weight regression with \code{\link[=np_tdnn]{np_tdnn()}}; see its help for
 order constraints and additional smoothness requirements.
+Both regression classes share reporting, joint covariance and prediction
+methods documented in \link{np_result}.
 \item Estimate conditional LATE from supplied nuisance predictions with
 \code{\link[=clate_dnn]{clate_dnn()}}, or localize two supplied signals with \code{\link[=affine_ratio_dnn]{affine_ratio_dnn()}}.
 \code{\link[=iv_augmented_signals]{iv_augmented_signals()}} constructs the augmented binary-IV signals.
@@ -61,6 +63,23 @@ remains experimental and provides separate set-valued moment inversion.
 }
 }
 
+\section{Random numbers}{
+
+Explicit demo and simulation seeds restore \code{.Random.seed} and \code{\link[=RNGkind]{RNGkind()}};
+\code{NULL} uses the current stream. R's saved state does not include the hidden
+Box-Muller normal cache; use the default normal generator for saved-state
+reproducibility.
+}
+
+\section{Native threads}{
+
+Compiled routines use at most two OpenMP threads by default. Set
+\code{options(RdistNN.num_threads = 1L)} for one native thread, or supply a larger
+positive integer to opt into more threads. Lower OpenMP runtime limits are
+respected; builds without OpenMP run serially. This option does not change
+other packages' thread settings.
+}
+
 \section{Documentation Map}{
 
 \itemize{
@@ -73,14 +92,15 @@ and scores, see \code{vignette("extending", package = "RdistNN")}.
 \code{vignette("diagnostics-reporting", package = "RdistNN")}.
 \item For distance/rank weighting details see
 \code{vignette("dnn-weights", package = "RdistNN")}.
-\item For estimator workflows see
-\code{vignette("conditional-z-estimation", package = "RdistNN")}, including
-experimental PLQR details.
+\item For experimental PLQR moments and coefficient uncertainty, see
+\code{vignette("conditional-z-estimation", package = "RdistNN")}.
 \item For supplied-prediction conditional LATE and paired inference, see
 \code{vignette("conditional-late", package = "RdistNN")} and
 \code{vignette("conditional-late-inference", package = "RdistNN")}.
 \item For jackknife details see
 \code{vignette("jackknife-gen-ustats", package = "RdistNN")}.
+\item For statistical background, assumptions and theoretical results, see
+the accompanying \href{https://jakobjuergens.com/research/#orthogonal-inference-conditional-z}{paper}.
 }
 }
 

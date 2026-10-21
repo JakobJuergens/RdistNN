@@ -24,9 +24,9 @@ A ggplot object.
 For each target, the weighted share of observations below the quantile
 threshold, \verb{sum_i w_ij 1\{Y_i <= D_i' theta + g_i\}}, is plotted against
 the nominal level \code{tau} with a reference band
-\verb{tau +/- z * sqrt(tau (1 - tau) / n_eff)}. Shares outside the band flag
-local miscalibration of the supplied \code{theta_eval} or first stages — the
-applied reading of the quantile moment condition.
+\verb{tau +/- z * sqrt(tau (1 - tau) / n_eff)}. This is a descriptive calibration
+diagnostic for the supplied threshold; the band does not test the full
+coefficient moment condition or account for fitted-nuisance uncertainty.
 }
 \details{
 The below-threshold indicator is stored on the fit; alternatively,
@@ -35,9 +35,7 @@ entries define the indicator.
 }
 \section{Lifecycle}{
 
-\strong{Experimental.} PLQR functionality is outside the CATE and regression
-workflow focus of the initial public release. Its API and inference
-interfaces may change in later releases.
+\strong{Experimental.} The PLQR API and inference interfaces may change.
 }
 
 \examples{

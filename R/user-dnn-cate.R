@@ -37,17 +37,12 @@
 #' `degenerate`; `top_n` is fixed at 5 and is independent of the estimator's
 #' `k`.
 #'
-#' The AIPW signal is Neyman orthogonal at the true nuisance functions. The
-#' normalized Robinson pseudo-outcome is not implemented because it is outside
-#' the accompanying paper's theoretical results. Orthogonality alone
-#' does not validate arbitrary nuisance predictions fitted on the
-#' same observations used for localization and inference. Valid full-sample
-#' reuse additionally requires the nuisance-rate and full-state stability
-#' conditions in the accompanying paper. This function computes the estimator
-#' and its requested jackknife procedure; it cannot diagnose whether an
-#' arbitrary learner satisfies those conditions. Supply oracle quantities,
-#' cross-fitted or out-of-fold predictions, or full-sample predictions from a
-#' learner for which the paper's rate and stability conditions are credible.
+#' For causal identification and pointwise inference, including conditions on
+#' nuisance accuracy and deletion stability, see the accompanying
+#' [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
+#' This function accepts supplied oracle, out-of-fold or full-sample predictions;
+#' it does not verify those conditions for a learner. The normalized Robinson
+#' construction is not implemented; use AIPW inputs or a justified supplied signal.
 #'
 #' With `data`, omit `X`; a direct `pseudo_outcome` vector remains supported.
 #' Column selectors require `data`. Prediction retains the fitted metric and
@@ -58,9 +53,9 @@
 #' @param x_cols Names or indices of covariate columns in `data`.
 #' @param y_col Name or index of the outcome column in `data`.
 #' @param t_col Name or index of the treatment column in `data` (must be 0/1).
-#' @param m0_col Name or index for \eqn{E[Y(0)\mid X]} (full AIPW interface).
-#' @param m1_col Name or index for \eqn{E[Y(1)\mid X]} (full AIPW interface).
-#' @param e_col Name or index for propensity \eqn{P(T=1\mid X)}.
+#' @param m0_col Name or index of the supplied control-arm conditional outcome mean.
+#' @param m1_col Name or index of the supplied treated-arm conditional outcome mean.
+#' @param e_col Name or index of the supplied treatment propensity predictions.
 #' @param clip Finite propensity clipping constant in `(0, 0.5)` with
 #'   `1 - clip < 1` in double precision, default
 #'   `1e-8`. Raw nuisance propensities must be finite and lie in `[0, 1]`;
@@ -99,8 +94,8 @@
 #' @param return Optional extras in addition to the always-returned `tau`, `se`,
 #'   and `meta`. Allowed values:
 #'   `c("W", "ranks", "ord", "dx", "psi", "nuisance", "ess", "neighbors", "tuning")`.
-#'   The `neighbors` extra returns the first `k` nearest observations used
-#'   inside each size-`s` subsample, not the full DNN weight support.
+#'   `neighbors` is a `k x m` matrix of nearest training-observation indices,
+#'   one column per target. It is a rank summary, not the full DNN weight support.
 #'
 #' @return An object of class `cate_result` with components:
 #'   - `tau`: estimated CATE values at target points;
@@ -111,10 +106,12 @@
 #'   - `tuning_grid`: in grid mode, a list with `candidates`, `estimates`,
 #'     `diagnostics`, and `meta` tables. Candidate diagnostics report
 #'     top-5 weight concentration separately from the estimator's `k`;
+#'   - `.model`: retained observations, supplied signals and fitted geometry
+#'     used by prediction and joint covariance, independently of optional extras;
 #'   - optional extras requested via `return`.
 #'
 #' @seealso [weights_dnn()], [weights_matrix()], [score_cate_rho()],
-#'   [cate_demo_data()].
+#'   [cate_demo_data()], [vcov.cate_result()], [predict.cate_result()].
 #'
 #' @examples
 #' set.seed(1)

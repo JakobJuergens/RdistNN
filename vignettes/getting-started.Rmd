@@ -12,18 +12,17 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 library(RdistNN)
 ```
 
-RdistNN supports conditional average treatment effects, nonparametric
-regression, supplied-prediction conditional LATE and ordinary paired-signal
-ratios with distributional nearest-neighbor (DNN) weights. The estimators
-accept numeric matrices or data frames, including
-tibbles through the data-frame interface. Inputs must be finite and complete;
-choose covariate columns explicitly and supply one of `x0` (one target) or
-`X0` (one target per row).
+This walkthrough fits conditional average treatment effects (CATE) and
+conditional means at selected covariate profiles. Install the package using
+the [README](https://github.com/JakobJuergens/RdistNN#installation).
+Use `browseVignettes("RdistNN")` to open the installed guide collection.
+The [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
+gives the statistical assumptions and results; this guide covers the calls
+and how to read their outputs.
 
-Optional ratio confidence-set inversion, PLQR and local IV-GMM remain
-experimental. Their reference material is available for research use.
-PLQR evaluates moments at supplied coefficients; it does not solve for
-target-specific coefficients.
+Use `x0` for one profile or `X0` for a matrix with one profile per row.
+Covariates and supplied predictions must be finite, complete and aligned in
+the same observation order. Data-frame targets follow the `x_cols` order.
 
 ## Conditional average treatment effects
 
@@ -40,7 +39,7 @@ fit_cate <- cate_dnn(
   data = df, x_cols = c("X1", "X2"), y_col = "Y", t_col = "D",
   m0_col = "m0_oracle", m1_col = "m1_oracle", e_col = "e_oracle",
   x0 = c(0, 0), k = 1L, se = TRUE,
-  return = c("W", "psi", "nuisance", "dx")
+  return = c("W", "dx")
 )
 
 summary(fit_cate)
@@ -49,16 +48,17 @@ predict(fit_cate, x0 = c(0.2, -0.1), interval = "confidence")
 ```
 
 `fit_cate$tau` contains the estimates and `fit_cate$se` contains their
-jackknife standard errors. `confint()` returns pointwise normal intervals;
-it does not provide a simultaneous confidence band for a profile.
+jackknife standard errors. `nobs(fit_cate)` counts training observations;
+local effective sample size describes weight concentration. `confint()`
+returns pointwise normal intervals, not simultaneous confidence bands.
 
 If you already have an observation-level pseudo-outcome, pass it directly.
-Here we reuse the oracle AIPW scores retained by the preceding fit:
+Here we use the aligned oracle AIPW column from the same demo data:
 
 ```{r cate-matrix}
 X <- as.matrix(df[c("X1", "X2")])
 fit_cate_matrix <- cate_dnn(
-  X = X, x0 = c(0, 0), pseudo_outcome = fit_cate$psi, k = 1L
+  X = X, x0 = c(0, 0), pseudo_outcome = df$aipw_oracle, k = 1L
 )
 
 c(data_frame = fit_cate$tau, matrix = fit_cate_matrix$tau)
@@ -81,7 +81,7 @@ not a numerically equivalent column rename.
 
 ```{r cate-covariance}
 profiles <- rbind(c(0, 0), c(0.2, -0.1))
-joint <- cate_dnn(X = X, X0 = profiles, pseudo_outcome = fit_cate$psi,
+joint <- cate_dnn(X = X, X0 = profiles, pseudo_outcome = df$aipw_oracle,
                  s = fit_cate$meta$s, return = character())
 V <- vcov(joint)
 a <- c(1, -1)
@@ -98,39 +98,29 @@ neither cluster nor survey-design inference. Input row order breaks equal
 distance ties, so reordering tied observations can change a fit. The reported
 `s/n` is descriptive; it is not a calibrated inference threshold.
 
-### Interpreting CATE inference
+### Check local support
 
-AIPW orthogonality controls first-order population nuisance drift. Valid nuisance
-reuse on the full estimation sample additionally requires the nuisance-rate
-and full-state stability conditions in the accompanying paper. The package
-cannot establish those conditions for an arbitrary learner. Out-of-fold
-predictions are also accepted, but using them does not by itself establish
-all conditions needed for local inference. Overlap and localization bias
-control remain necessary.
-
-Raw supplied propensities must lie in `[0, 1]` and are clipped to
-`[clip, 1 - clip]` with `clip = 1e-8` by default. Diagnostics use the clipped
-values. Clipping does not create local treatment support, and a supplied
-pseudo-outcome is used unchanged.
+Supplied propensities must lie in `[0, 1]`; AIPW uses clipped values with
+`clip = 1e-8` by default. Clipping prevents undefined denominators but cannot
+create local treatment support. Supplied pseudo-outcomes are used unchanged.
 
 Inspect local weight concentration and treated/control mass:
 
 ```{r cate-diagnostics}
-d_cate <- diagnostics(fit_cate)
+d_cate <- as.data.frame(diagnostics(fit_cate))
 d_cate[, c("target_id", "n_eff", "treated_mass", "control_mass")]
 ```
 
 Diagnostics describe the realized sample near a target; they are not a test
 of the paper's assumptions. Keep `"W"` in `return` for weight diagnostics,
-`"dx"` for distance-radius summaries, and `"nuisance"` for explicit nuisance
-inspection. For CATE overlap, the hidden fitted state retains treatment and
-propensity inputs when these were supplied.
+`"dx"` for metric-distance summaries. Overlap remains available from the
+supplied treatment/propensity inputs without requesting a `"nuisance"` extra.
 
 ## Nonparametric regression
 
-`np_dnn()` estimates a conditional mean by averaging outcomes with DNN
-weights. Its result exposes `mu` and `se` directly. The explicit CATE
-`summary()`, `confint()`, and `predict()` methods do not apply to `np_result`.
+`np_dnn()` estimates a conditional mean. Regression fits support the same
+`summary()`, `coef()`, `confint()`, `vcov()`, `nobs()` and `predict()` calls as CATE;
+their direct estimate and standard-error fields are `mu` and `se`.
 
 ```{r regression}
 demo_np <- np_demo_data(n = 160, p = 2, design = "sinusoidal", seed = 2)
@@ -140,9 +130,9 @@ fit_np <- np_dnn(
   return = c("W", "dx", "ess")
 )
 
-# Normal pointwise intervals from the stored jackknife standard errors.
-plot_data_estimates(fit_np)[, c("target_id", "estimate", "se", "ci_lower", "ci_upper")]
-diagnostics(fit_np)[, c("target_id", "n_eff", "weighted_mean_y")]
+summary(fit_np)$coefficients
+confint(fit_np)
+predict(fit_np, x0 = c(0.2, -0.1), interval = "confidence")
 ```
 
 Use uppercase `Y` for the matrix interface:
@@ -155,30 +145,10 @@ fit_np_matrix <- np_dnn(
 fit_np_matrix$mu
 ```
 
-To estimate at new regression targets, call `np_dnn()` with those targets.
-The intervals above need the regression assumptions and localization bias
-control; the jackknife alone does not remove smoothing bias.
-
-### Two-scale nonparametric regression
-
-`np_tdnn()` provides the existing two-scale DNN regression alternative. Supply
-orders `s1 < s2`; delete-1 standard errors additionally require `s2 < n`.
-Its weights sum to one but can be negative, so positive-weight CATE overlap
-interpretations do not carry over. Its bias-correction interpretation needs
-the additional smoothness conditions described in `?np_tdnn`.
-
-```{r regression-tdnn}
-fit_tdnn <- np_tdnn(
-  data = demo_np$data, x_cols = c("X1", "X2"), y_col = "Y",
-  x0 = c(0, 0), s1 = 8L, s2 = 16L, se = TRUE
-)
-c(estimate = fit_tdnn$mu, standard_error = fit_tdnn$se)
-```
-
-The matrix interface uses `X`, `Y`, and `x0`/`X0`, as for `np_dnn()`.
-Use `plot_tdnn_scales()` to compare the two scales when ggplot2 is available.
-The single-scale paper tuning rule discussed below applies to `np_dnn()`
-and `cate_dnn()`; choose the two TDNN orders explicitly.
+`predict()` evaluates new profiles using the retained training outcomes and
+geometry. Two-scale regression uses `np_tdnn()` with orders `s1 < s2` and
+`s2 < n` for jackknife uncertainty. See `?np_tdnn` for its signed weights and
+additional requirements.
 
 ## Choosing localization and uncertainty settings
 
@@ -214,47 +184,16 @@ For uncertainty, `jackknife = "fast"` reuses full-sample ranks;
 `jackknife = "loo"` directly recomputes leave-one-out weights. Delete-1
 inference requires `s < n`. Set `se = FALSE` to omit standard errors.
 
-### Numerical centering of jackknife signals
+## Seeds and native threads
 
-Large common signal levels can create rounding differences between
-mathematically identical deletion estimates. Before accumulating deletions,
-the estimator subtracts a fixed numerical reference from each signal at each
-target. The reference is the same for every deletion, so its contribution
-cancels when deletion estimates are centered for the jackknife covariance.
-Point estimates and requested raw deletion estimates remain on their original
-scale; this operation does not refit or statistically recenter the scores.
+The demo helpers' explicit `seed` arguments restore the caller's saved RNG
+state. `seed = NULL` draws from the current stream. Simulation grids use
+`master_seed` to generate their replicate seeds.
 
-Only observations with nonzero weight in at least one deletion determine the
-reference. An entry at rank `r` in the `n - 1` weight table can use original
-ranks `r` and `r + 1`, because deleting an earlier observation shifts ranks.
-For exact DNN this union ends at `n - s + k`, or `n - s + 1` when `k = 1`.
-Unused rows are excluded before subtraction, including values whose
-subtraction would overflow. All `n` deletions and the original jackknife
-scaling factor are retained.
-
-The reference is the first active observation in localization-rank order when
-its subtractions stay in range and preserve the represented differences exactly.
-A range safeguard uses the same-sign endpoint or zero; an inexact subtraction
-falls back to zero to retain small separately represented signals. C++, R,
-fast and explicit deletion paths use this rule for NP, CATE, CLATE/affine
-ratios and PLQR; R's TDNN paths include every nonzero signed weight.
-Asymptotic weights retain every represented nonzero entry. Their support is
-generally full, so the exact DNN cutoff is not imposed and no additional
-normalization is applied.
-
-For example, the last observation below has zero weight in every deletion.
-After subtracting the active reference, the deletion means are `(4, 0, 0, 0)`,
-giving jackknife variance `(3/4) * (9 + 1 + 1 + 1) = 9`:
-
-```{r jackknife-centering}
-signal <- c(1e16 + c(4, 8, 12), -1)
-vapply(c("fast", "loo"), function(engine) {
-  fit <- np_dnn(
-    X = matrix(1:4), x0 = 0, Y = signal, s = 3L, jackknife = engine
-  )
-  as.numeric(fit$se)^2
-}, numeric(1))
-```
+Native routines default to at most two OpenMP threads. Set
+`options(RdistNN.num_threads = 4L)` to request four, or `1L` for one native
+thread. Lower OpenMP runtime limits still apply. See `?RdistNN` for the
+controls and saved-RNG-state limitations.
 
 ## Plots and reusable weights
 
@@ -280,21 +219,14 @@ as.vector(crossprod(wt$W, fit_cate$psi))
 
 ## Further reading
 
-- [Conditional LATE](conditional-late.html): binary-instrument estimation from
-  supplied nuisance predictions, components and diagnostics. The companion
-  [inference article](conditional-late-inference.html) explains paired frozen
-  covariance and ratio confidence sets.
-- [Notation and conventions](notation-and-conventions.html): arguments,
-  paper symbols, and uncertainty scales. Open locally with
-  `vignette("notation-and-conventions", package = "RdistNN")`.
-- [Diagnostics and reporting](diagnostics-reporting.html): available fields
-  and retained-state requirements.
-- [Kernel-order tuning](kernel-order-tuning.html) and
-  [DNN weights](dnn-weights.html): localization rules and sensitivity choices.
-- [Visualizing fitted estimators](visualising-fits.html): CATE profiles,
-  overlap, influence, and dashboards.
-- [Paper replication](paper-affine-replication.html): the current
-  simulation and SIPP workflows, plus regeneration of accepted manuscript evidence.
-- [Conditional Z-estimation](conditional-z-estimation.html): additional
-  moment details, including experimental PLQR.
-- [Extending RdistNN](extending.html): custom distances, rank weights, and scores.
+- [Conditional LATE](conditional-late.html): a complete binary-IV example.
+- [Notation and conventions](notation-and-conventions.html): input shapes,
+  result fields and uncertainty scales.
+- [Diagnostics and reporting](diagnostics-reporting.html) and
+  [visualisation](visualising-fits.html): support, plots and saved outputs.
+- [DNN weights](dnn-weights.html) and [tuning](kernel-order-tuning.html):
+  localization controls and candidate comparisons.
+- [Paper replication](paper-affine-replication.html): study-specific code and
+  accepted manuscript evidence.
+
+Experimental PLQR and local IV-GMM have separate reference articles.

@@ -32,15 +32,15 @@ sim_cate_run(
 
 \item{n_reps}{Number of Monte Carlo replications per cell.}
 
-\item{master_seed}{Integer seed used to draw the per-replicate seeds.
+\item{master_seed}{Integer seed used locally to draw the per-replicate seeds;
+the caller's saved RNG state is restored. \code{NULL} uses the current stream.
 Every cell uses the same seed vector so noise realisations are comparable
 across DGPs, sample sizes, and methods (fair comparison).}
 
 \item{k}{Integer DNN neighbour count. The paper-facing DNN default is
 \code{k = 1L}, meaning one nearest neighbor is selected inside each size-\code{s}
 subsample; larger values use the package's generalized top-\code{k} weights.
-The fixed-\code{k} extension is essentially direct, but the current paper
-derivations are written for \code{k = 1}.}
+The accompanying paper gives the theory for \code{k = 1}.}
 
 \item{s_fn}{Function \code{f(n, kx)} returning the integer kernel order.
 The finite-sample default is
@@ -58,7 +58,8 @@ while non-DNN benchmarks emit one row with \code{candidate_id = NA} and \code{s 
 \item{methods}{Character vector of method names; see \code{\link[=sim_cate_methods]{sim_cate_methods()}}.
 Default: \code{"dnn_oracle"}.}
 
-\item{alpha}{Nominal coverage level.}
+\item{alpha}{Nominal interval noncoverage probability; intervals use level
+\code{1 - alpha}.}
 
 \item{sigma}{Noise SD forwarded to the DGP.}
 

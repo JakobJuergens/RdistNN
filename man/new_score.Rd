@@ -51,7 +51,8 @@ function(subs, data, theta, ctx, rng) -> matrix(nrow(subs), length(theta)).}
 \code{method = "fd"} and no explicit scheme is supplied. One of
 \code{c("central", "forward")}.}
 
-\item{ptr}{External pointer to compiled score (see vignette); if present, used by engine.}
+\item{ptr}{Optional compiled-score pointer metadata. The public R evaluators
+do not dispatch through this pointer; they require \code{eval} or \code{eval_batch}.}
 
 \item{randomized}{Logical: does the kernel draw randomness?}
 
@@ -62,7 +63,7 @@ An object of class \code{ustat_score}.
 }
 \description{
 A score (kernel) is a symmetric function evaluated on s-sized subsets.
-Provide either \code{ptr} (compiled fast path), or an R \code{eval_batch}, or an R \code{eval}.
+Supply \code{eval} or \code{eval_batch} for \code{\link[=score_eval]{score_eval()}} and \code{\link[=score_eval_batch]{score_eval_batch()}}.
 }
 \details{
 If your score depends on a parameter vector (for example Z-estimation), use

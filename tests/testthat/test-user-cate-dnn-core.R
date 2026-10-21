@@ -19,10 +19,9 @@ test_that("basic run: returns tau (and se if requested) with expected shapes", {
   expect_true(is.list(out))
   expect_true(is.numeric(out$tau))
   expect_length(out$tau, nrow(dat$X0))
-  expect_true(is.null(out$se) || (is.numeric(out$se) && length(out$se) == nrow(dat$X0)))
-  if (!is.null(out$se)) {
-    expect_true(all(is.finite(out$se)))
-  }
+  expect_true(is.numeric(out$se))
+  expect_length(out$se, nrow(dat$X0))
+  expect_true(all(is.finite(out$se)))
 
   expect_true(is.list(out$meta))
   expect_identical(out$meta$n, nrow(dat$X))
@@ -31,7 +30,7 @@ test_that("basic run: returns tau (and se if requested) with expected shapes", {
   expect_true(out$meta$k == 3L && out$meta$s == 5L)
   expect_true(out$meta$method %in% c("exact", "asymp"))
 
-  skip_if_not("W" %in% names(out), "W not returned to verify tau")
+  expect_true("W" %in% names(out))
   expect_equal(
     as.numeric(colSums(out$W * matrix(psi, nrow(out$W), ncol(out$W)))),
     as.numeric(out$tau),
@@ -284,9 +283,9 @@ test_that("return= extras: ranks/ord/dx, psi, ess, neighbors are populated corre
   )
 
   expect_equal(dim(out$W), c(nrow(dat$X), nrow(dat$X0)))
-  if (!is.null(out$ranks)) expect_equal(dim(out$ranks), c(nrow(dat$X), nrow(dat$X0)))
-  if (!is.null(out$ord)) expect_equal(dim(out$ord), c(nrow(dat$X), nrow(dat$X0)))
-  if (!is.null(out$dx)) expect_equal(dim(out$dx), c(nrow(dat$X), nrow(dat$X0)))
+  expect_equal(dim(out$ranks), c(nrow(dat$X), nrow(dat$X0)))
+  expect_equal(dim(out$ord), c(nrow(dat$X), nrow(dat$X0)))
+  expect_equal(dim(out$dx), c(nrow(dat$X), nrow(dat$X0)))
   expect_true(is.numeric(out$psi))
   expect_equal(out$psi, psi)
   expect_true(is.numeric(out$ess))
@@ -294,7 +293,7 @@ test_that("return= extras: ranks/ord/dx, psi, ess, neighbors are populated corre
   expect_true(all(is.finite(out$ess)))
   expect_true(all(out$ess > 0))
 
-  skip_if_not("neighbors" %in% names(out), "neighbors not returned")
+  expect_true("neighbors" %in% names(out))
   expect_equal(dim(out$neighbors), c(out$meta$k, nrow(dat$X0)))
   expect_true(all(out$neighbors >= 1 & out$neighbors <= nrow(dat$X)))
   support_edge <- nrow(dat$X) - out$meta$s + out$meta$k

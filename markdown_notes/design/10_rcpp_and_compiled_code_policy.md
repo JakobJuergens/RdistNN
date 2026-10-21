@@ -1,61 +1,18 @@
-# Rcpp and Compiled Code Policy
+# Rcpp and compiled code policy
 
-This note standardizes how compiled code should be designed, integrated, and
-tested in `RdistNN`.
+Compiled code accelerates the documented R contract. R wrappers own public
+validation, interface/argument resolution, diagnostics, fallback selection and
+object assembly; native routines own explicit numeric inner computations.
+Keep wrappers thin and pass validated numeric matrices/vectors and integer
+controls. Native boundaries still protect their own invariants and reject
+malformed inputs consistently rather than crashing.
 
-## 1. General rule
+Document indexing, matrix axes, shapes, parameter ranges, sizes and memory
+layout. Avoid silent narrowing. Edit source/attributes and regenerate
+`RcppExports.cpp`/`RcppExports.R`; never hand-edit them, and commit required
+generated changes together. See [CONTRIBUTING.md](../../CONTRIBUTING.md) for tools.
 
-Compiled code exists to improve performance, not to create a second package
-semantics.
-
-The authoritative behavior of the package is the documented R-level contract.
-Compiled paths must implement that contract, not redefine it.
-
-## 2. Thin-wrapper principle
-
-Rcpp entry points should be as thin as reasonably possible.
-
-Prefer this division of labor:
-
-### R layer
-- user-facing validation;
-- interface resolution;
-- argument normalization;
-- friendly errors and warnings;
-- fallback dispatch;
-- object assembly.
-
-### C++ layer
-- performance-critical inner computation;
-- simple, explicit numeric contracts;
-- no hidden API policy.
-
-## 3. Canonical input contract
-
-Compiled code should receive already validated canonical inputs whenever possible.
-
-Preferred inputs to compiled code:
-- numeric matrices;
-- numeric vectors;
-- validated integer scalars;
-- explicit shape assumptions.
-
-Do not push user-facing ambiguity into C++ if it can be resolved cleanly in R.
-
-## 4. Generated files
-
-Generated files are not hand-edited.
-
-This includes:
-- `RcppExports.cpp`
-- `RcppExports.R`
-
-Rules:
-- modify source code or attributes;
-- regenerate exports through tooling;
-- commit generated updates in the same change that requires them.
-
-## 5. Semantics parity with R fallbacks
+## Semantics and arithmetic parity
 
 When an R fallback and a compiled path both exist, they must agree on:
 
@@ -132,81 +89,20 @@ respect that switch and use the corresponding R implementation. This is an
 algorithm-selection control, not a no-compiler installation mode: source
 installation still compiles the package's registered C++ code.
 
-## 6. Error-surface policy
+## Verification and performance
 
-User-facing errors should usually be raised from R, not only from C++.
+Every OpenMP parallel region uses `rustat::thread_limit()` in its `num_threads`
+clause. The default cap is two; `RdistNN.num_threads` accepts a positive integer
+and remains bounded by runtime limits. Resolve the option on the calling R
+thread. Do not change the global OpenMP runtime defaults. Serial builds retain
+the same calculations. Tests establish actual native teams and unchanged results.
 
-Prefer:
-- validating early in R;
-- entering C++ only after the contract is already clear.
+Every new native path needs reference comparisons covering ordinary/edge
+inputs, shapes, exact discrete decisions, justified continuous tolerances and
+unavailable-fast-path behavior. Native/fallback suites run on Linux x86-64,
+Windows x86-64, macOS arm64 and macOS x86-64. Force and establish actual engines
+as required by the [testing policy](09_testing_and_regression_policy.md).
 
-If C++ must detect an internal impossible state, surface it clearly and avoid
-cryptic crashes or undefined behavior.
-
-## 7. Indexing and shape discipline
-
-Any nontrivial compiled code should document:
-
-- indexing convention;
-- row/column interpretation;
-- shape assumptions;
-- scalar parameter constraints.
-
-Comments near the wrapper boundary should make the data contract easy to audit.
-
-## 8. Type discipline
-
-Be explicit about type assumptions.
-
-Rules:
-- do not rely on silent narrowing where it can matter;
-- use validated integer scalars at the R boundary;
-- document any assumptions about sizes, ordering, or memory layout that affect
-  correctness.
-
-## 9. Missingness and finiteness
-
-Compiled code should not be the first place where basic user-input pathologies
-are discovered.
-
-Rules:
-- NA / non-finite checks should usually happen in R;
-- if compiled code still checks them, it should do so consistently with the R
-  contract;
-- fallback and compiled paths should not diverge on malformed-input handling.
-
-## 10. Testing requirement
-
-Any new compiled path must come with tests that compare it to the reference path.
-
-The supported CI matrix must execute the compiled/fallback parity suite on
-Linux x86-64, Windows x86-64, macOS arm64, and macOS x86-64.
-
-At minimum, test:
-- one ordinary valid case;
-- one edge case;
-- shape agreement;
-- exact discrete decisions and numerical agreement at justified tolerances;
-- behavior when the fast path is unavailable, if applicable.
-
-## 11. Performance changes
-
-A performance-motivated change is not justified if it makes semantics murkier.
-
-Prefer:
-- clarity first;
-- then speed;
-- then micro-optimization.
-
-Benchmarking is useful, but not at the expense of maintainability.
-
-## 12. Review checklist
-
-Before merging compiled-code changes, ask:
-
-- Does the compiled path implement the same contract as the R path?
-- Is the R wrapper still the main validation boundary?
-- Were generated files updated correctly?
-- Are indexing and shape assumptions documented?
-- Is there a fallback-equivalence test?
-- Does this improve speed without making maintenance harder?
+Benchmark representative runtime/allocation costs. A faster implementation must
+preserve the statistical method and readable ownership; performance does not
+justify hidden API policy or weaker validation.

@@ -1,102 +1,27 @@
-# Testing and Regression Policy
+# Testing and regression policy
 
-This note standardizes how testing should evolve with the package.
+Nontrivial public behavior changes need deterministic regression tests. Cover
+valid, edge and invalid inputs and the intended class/shape. Exercise new
+validation branches directly, including missing columns, unknown extras,
+infeasible deletion orders, malformed metric/weight outputs and invalid ranks.
+A bug regression must fail for the original defect at the most stable public
+boundary available; use internals only when necessary.
 
-## 1. General rule
+Set seeds explicitly and locally. Reuse domain helpers rather than duplicate
+random setup. Test shape, invariants, interface equivalence and known identities,
+not incidental execution order. Match consequential errors/warnings on meaningful
+substrings unless exact wording is part of the contract.
 
-Every nontrivial user-visible behavior change should come with tests.
+## Numerical assertions
 
-That includes:
+Use explicit absolute/relative tolerances appropriate to quantity and scale.
+Ranks, stable tie order, support, target identities, statuses and missingness
+require exact equality after documented representation mappings. Where operation
+order/rounding is controlled, require exact numeric equality, as in near-tie
+distance tests. A small distance error cannot excuse a changed neighbor or
+status. Investigate discrepancies before changing tolerances or fixtures.
 
-- new features;
-- bug fixes;
-- new validation rules;
-- improved error handling;
-- changed defaults.
-
-## 2. Minimum test set for new exported behavior
-
-For a new user-facing code path, add tests for:
-
-1. a valid baseline case;
-2. at least one edge case;
-3. at least one invalid-input case;
-4. the intended class / return shape.
-
-## 3. Validation-path testing
-
-When validation is added or improved, tests should exercise the exact branch.
-
-Examples:
-
-- missing required columns;
-- unknown `return` entries;
-- `s >= n` with jackknife enabled;
-- malformed distance outputs;
-- malformed batch weight outputs;
-- invalid permutations for ranks;
-- `k > s`.
-
-Improved messages without tests are easy to regress.
-
-## 4. Regression tests for bugs
-
-Whenever a bug is fixed, add a test that would have failed before the fix.
-
-The test should capture the bug at the most stable level available:
-
-- public API if possible;
-- internal helper only if necessary.
-
-## 5. Determinism policy
-
-Tests involving random draws must be deterministic.
-
-Set seeds explicitly and locally.
-Do not rely on ambient RNG state.
-
-If helper generators are reused across test files, centralize them.
-
-## 6. Numerical tests
-
-For floating-point results:
-
-- use explicit absolute/relative tolerances appropriate to the quantity and scale;
-- test the property that matters;
-- require exact equality for discrete outputs such as ranks, stable tie order,
-  support, target identities, statuses and missing-value masks after documented
-  representation mappings;
-- use exact numeric equality where the numerical contract specifies identical
-  operations and rounding, as in the distance near-tie regressions.
-
-A small distance difference is consequential if it changes a neighbor or its
-weight. Check ranks and downstream decisions separately from numeric distance
-agreement. A tolerance must never conceal a changed ordering, support or status.
-Investigate an unexpected discrepancy before changing a tolerance or fixture.
-
-## 7. Error and warning tests
-
-Use:
-
-- `expect_error()` for hard failures;
-- `expect_warning()` for soft diagnostics.
-
-Match on meaningful substrings, not on full messages unless wording stability is
-itself important.
-
-## 8. Test the contract, not the implementation accident
-
-Prefer tests that verify:
-
-- output shape;
-- invariants;
-- equivalence across interfaces;
-- known theoretical identities;
-- stable semantics.
-
-Avoid tests that only assert incidental internal sequencing.
-
-## 9. Fast path vs fallback
+## Engine and cross-package parity
 
 Verify both within-package engine parity (C++ versus R, C++ versus Mata in the
 companion) and cross-package parity for shared methods. Compare the same numeric
@@ -129,29 +54,24 @@ Record compiler, architecture, math-library and thread settings when they help
 explain a discrepancy. The arithmetic contract is in
 [the compiled-code policy](10_rcpp_and_compiled_code_policy.md).
 
-## 10. Simulation / replication code
+## Simulation and replication
 
-Paper-facing simulation helpers should still be tested for:
+Public demo/data, subset and simulation entry points scope explicit `seed` or
+`master_seed` values: restore the caller's RNG kind and saved state (or seed
+absence) on success and error. `NULL` consumes the current stream. A simulation
+replicate seeds before data generation and learner fitting; nested data
+calls receive `seed = NULL` so learner/fold draws follow data draws unchanged.
+Low-level DGPs implement that stream and do not own a separate restoration scope.
+Capture before user callbacks as well. CATE seeds tuning callbacks separately,
+then restarts the data/learner stream to preserve its established draws.
+R's saved state excludes the Box-Muller
+normal cache; the scope does not promise to restore that hidden state.
 
-- deterministic output given a seed;
-- correct default resolution;
-- valid return schema;
-- stable summarizer behavior.
-
-## 11. Review checklist
-
-Before merging, ask:
-
-- does this test fail for the bug or misuse we care about?
-- is the test deterministic?
-- is the assertion specific enough to catch regression?
-- is it narrow enough not to fail for unrelated refactors?
-
-## 12. Standard
-
-Code without tests may be exploratory.
-Code merged into the package should not remain exploratory.
-
+Check seeded determinism, default resolution, return schemas and summarizers.
+Small simulation tests establish computation rather than general coverage or
+manuscript evidence. Test selection and commands belong in the
+[test map](../../tests/README.md), with release gates in
+[RELEASING.md](../../RELEASING.md).
 
 ## Installed-package and independent-reference coverage
 

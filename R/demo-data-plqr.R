@@ -67,22 +67,21 @@
 #' }
 #'
 #' @section Lifecycle:
-#' **Experimental.** PLQR functionality is outside the CATE and regression
-#' workflow focus of the initial public release. Its API and inference
-#' interfaces may change in later releases.
+#' **Experimental.** The PLQR API and inference interfaces may change.
 #' @param n Integer; sample size.
-#' @param p Integer; number of features in \eqn{X} (recommend \eqn{p \ge 2}).
+#' @param p Positive integer number of features in \eqn{X}.
 #' @param p_d Integer; dimension of \eqn{D} (number of partially linear regressors).
 #' @param tau Quantile level in \eqn{(0,1)}.
 #' @param sigma Positive ALD scale for the regression error (larger means noisier \eqn{Y}).
 #' @param design Character; one of \code{"linear"}, \code{"sinusoidal"}, \code{"bump"} for \eqn{g_{0}}.
-#' @param seed Optional integer seed.
+#' @param seed Optional integer seed, used locally without changing the caller's
+#'   RNG state. `NULL` uses the current stream.
 #' @param x0 Optional target point in \eqn{\mathbb{R}^{p}} for localization (defaults to the zero vector).
 #' @param inject Optional, one of \code{NULL}, \code{"na"}, \code{"inf"}; if provided,
 #'   inject a single non-finite into \code{inject_col} at row \code{idx_inject}.
 #'   Useful for testing runtime guards.
 #' @param inject_col Character; which column to corrupt when \code{inject} is not \code{NULL}.
-#'   One of \code{"Y"}, \code{"g_oracle"}, \code{"D1"}, \code{"mD1"}, \code{"rD1"} (extend as needed).
+#'   One of \code{"Y"}, \code{"g_oracle"}, \code{"D1"}, \code{"mD1"}, \code{"rD1"}.
 #' @param idx_inject Integer row index to corrupt (default 3).
 #'
 #' @return A list with:
@@ -134,11 +133,15 @@ plqr_demo_data <- function(n = 300,
   }
   sigma <- as.numeric(sigma)
   design <- match.arg(design)
-  if (!is.null(seed)) set.seed(seed)
   if (is.null(x0)) {
     x0 <- rep(0, p)
   } else {
     x0 <- .validate_target_vector(x0, p = p, x0_arg = "x0", x_arg = "X", finite = TRUE)
+  }
+  if (!is.null(seed)) {
+    restore_rng <- .rdistnn_rng_restore()
+    on.exit(restore_rng(), add = TRUE)
+    set.seed(seed)
   }
 
   # Covariates
@@ -242,11 +245,10 @@ plqr_demo_data <- function(n = 300,
 
 #' Quick helper: sample a batch of subsets (for U-stat / localization experiments) (experimental)
 #' @section Lifecycle:
-#' **Experimental.** PLQR functionality is outside the CATE and regression
-#' workflow focus of the initial public release. Its API and inference
-#' interfaces may change in later releases.
+#' **Experimental.** The PLQR API and inference interfaces may change.
 #'
 #' @inheritParams cate_demo_subsets
+#' @inherit cate_demo_subsets return
 #' @examples
 #' plqr_demo_subsets(n = 10, K = 4, s = 3, seed = 1)
 #' @export
@@ -257,7 +259,11 @@ plqr_demo_subsets <- function(n, K = 1000L, s = 8L, seed = NULL) {
   if (s > n) {
     .abort_bad_arg("s", sprintf("must satisfy s <= n (got s=%d, n=%d)", s, n))
   }
-  if (!is.null(seed)) set.seed(seed)
+  if (!is.null(seed)) {
+    restore_rng <- .rdistnn_rng_restore()
+    on.exit(restore_rng(), add = TRUE)
+    set.seed(seed)
+  }
   t(replicate(K, sort(sample.int(n, s))))
 }
 

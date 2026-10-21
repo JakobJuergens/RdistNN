@@ -18,11 +18,13 @@
 #' - Resolve paper-default kernel orders with [tuning_dnn_paper()] and
 #'   [tuning_eval()].
 #' - Estimate local CATE targets with [cate_dnn()].
-#' - Summarize/predict CATE fits with [summary.cate_result()],
-#'   [confint.cate_result()], and [predict.cate_result()].
+#' - Report and reuse CATE fits with [summary.cate_result()],
+#'   [confint.cate_result()], [vcov.cate_result()] and [predict.cate_result()].
 #' - Estimate local nonparametric means with [np_dnn()].
 #' - Use two-scale signed-weight regression with [np_tdnn()]; see its help for
 #'   order constraints and additional smoothness requirements.
+#'   Both regression classes share reporting, joint covariance and prediction
+#'   methods documented in [np_result].
 #' - Estimate conditional LATE from supplied nuisance predictions with
 #'   [clate_dnn()], or localize two supplied signals with [affine_ratio_dnn()].
 #'   [iv_augmented_signals()] constructs the augmented binary-IV signals.
@@ -45,6 +47,19 @@
 #' - Estimate uncertainty with [jackknife_fast_rank()] and
 #'   [jackknife_slow_rank()].
 #'
+#' @section Random numbers:
+#' Explicit demo and simulation seeds restore `.Random.seed` and [RNGkind()];
+#' `NULL` uses the current stream. R's saved state does not include the hidden
+#' Box-Muller normal cache; use the default normal generator for saved-state
+#' reproducibility.
+#'
+#' @section Native threads:
+#' Compiled routines use at most two OpenMP threads by default. Set
+#' `options(RdistNN.num_threads = 1L)` for one native thread, or supply a larger
+#' positive integer to opt into more threads. Lower OpenMP runtime limits are
+#' respected; builds without OpenMP run serially. This option does not change
+#' other packages' thread settings.
+#'
 #' @section Documentation Map:
 #' - Start with `vignette("getting-started", package = "RdistNN")`.
 #' - For step-by-step extension patterns for custom distances, rank weights,
@@ -55,14 +70,15 @@
 #'   `vignette("diagnostics-reporting", package = "RdistNN")`.
 #' - For distance/rank weighting details see
 #'   `vignette("dnn-weights", package = "RdistNN")`.
-#' - For estimator workflows see
-#'   `vignette("conditional-z-estimation", package = "RdistNN")`, including
-#'   experimental PLQR details.
+#' - For experimental PLQR moments and coefficient uncertainty, see
+#'   `vignette("conditional-z-estimation", package = "RdistNN")`.
 #' - For supplied-prediction conditional LATE and paired inference, see
 #'   `vignette("conditional-late", package = "RdistNN")` and
 #'   `vignette("conditional-late-inference", package = "RdistNN")`.
 #' - For jackknife details see
 #'   `vignette("jackknife-gen-ustats", package = "RdistNN")`.
+#' - For statistical background, assumptions and theoretical results, see
+#'   the accompanying [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
 #'
 #' @docType package
 #' @name RdistNN-package

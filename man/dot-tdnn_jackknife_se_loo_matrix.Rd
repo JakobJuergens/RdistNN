@@ -57,10 +57,9 @@ Mirrors \code{.dnn_jackknife_se_loo_matrix()} with the DNN rank-weight spec
 replaced by the TDNN rank-weight spec.
 }
 \details{
-\strong{Fast path} (\code{jackknife = "fast"}): computes full-sample ranks once, then
-for each deleted observation \code{i} adjusts ranks by decrementing entries that
-were ranked below \code{i} and re-evaluates the TDNN rank-weight spec on the
-resulting \verb{(n-1) x m} rank matrix.  No distances are recomputed.
+\strong{Fast path} (\code{jackknife = "fast"}): computes full-sample ranks and the
+deletion weight table once, then uses the shared centered prefix/suffix
+engine. No distances are recomputed.
 
 \strong{LOO fallback} (\code{jackknife = "loo"}): for each \code{i}, recomputes weights
 from scratch on the \code{(n-1)} reduced dataset.  Strictly slower; useful for

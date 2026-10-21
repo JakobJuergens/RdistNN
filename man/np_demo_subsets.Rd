@@ -13,11 +13,18 @@ np_demo_subsets(n, K = 1000L, s = 1L, seed = NULL)
 
 \item{s}{Integer; subset size (order of the kernel).}
 
-\item{seed}{Optional integer seed for reproducibility.}
+\item{seed}{Optional integer seed, used locally without changing the caller's
+RNG state. \code{NULL} uses the current stream.}
+}
+\value{
+For \code{s > 1}, an integer \verb{K x s} matrix with one subset per row.
+For \code{s = 1}, the current helper returns a \verb{1 x K} matrix; reshape it
+with \code{matrix(result, ncol = 1L)} before passing it to \code{\link[=score_eval_batch]{score_eval_batch()}}.
 }
 \description{
 Quick helper: sample a batch of subsets (singleton by default)
 }
 \examples{
-np_demo_subsets(n = 10, K = 4, s = 1, seed = 1)
+draws <- np_demo_subsets(n = 10, K = 4, s = 1, seed = 1)
+matrix(draws, ncol = 1L)  # one singleton subset per row
 }

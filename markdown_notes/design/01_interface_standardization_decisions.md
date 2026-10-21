@@ -1,144 +1,38 @@
-# Interface Standardization Decisions
+# Interface standardization decisions
 
-This note records the package-wide interface decisions that should be treated as
-the default going forward.
+This note owns package-wide interface decisions. See the
+[shape contract](04_api_shapes_and_input_formats.md) for dimensions and input
+routes, and [validation](03_input_validation_contract.md) for boundary checks.
 
-## 1. Official input policy
+## Public and internal boundaries
 
-### Public user-facing estimators
-User-facing estimators may accept either:
+High-level estimators support documented matrix/vector and `data.frame`
+interfaces. Tibbles use the ordinary data-frame route; there is no separate
+tibble API. Document both routes for each high-level export.
 
-- explicit matrices and vectors; or
-- `data.frame`-style inputs, including tibbles.
+Validate and resolve inputs once at the public boundary, then compute with
+canonical numeric matrices/vectors. Lower-level primitives prefer explicit
+numeric inputs and should not repeatedly branch on container type. Use shared
+column extractors and target resolvers rather than wrapper-specific versions.
+When `X0` and `x0` are supported, require exactly one and resolve it to a target
+matrix. Preserve any explicitly documented default target behavior.
 
-This applies to functions such as:
+## Internal names
 
-- `np_dnn()`
-- `cate_dnn()`
-- `plqr_dnn()`
-- future high-level estimation wrappers
+| Role | Names |
+| --- | --- |
+| Training and targets | `x_mat`, `x0_mat` |
+| Weights and ranks | `W`, `R` or `rank_matrix` |
+| Outcomes, treatments and signals | `y_vec`, `t_vec`, `psi`, `signal` |
+| Nuisance vectors | `e`, `m`, `m0`, `m1` |
+| Controls | `k`, `s`, `method`, `jackknife`, `distance` |
 
-### Internal computation
-After validation and interface resolution, all internal computation should
-proceed on canonical numeric matrices and vectors.
+Follow these conventions in new wrappers/helpers rather than inventing synonyms.
 
-This is the main standardization decision for the code base.
+## Results and optional returns
 
-## 2. Tibbles
-
-Tibbles are allowed only through the `data.frame` pathway.
-There is no separate tibble-specific API.
-
-Rule:
-if an object satisfies the `data.frame` interface and column extraction works
-correctly, it is admissible as a user-facing tabular input.
-
-Internally, tabular inputs should be converted to numeric matrices and vectors.
-
-## 3. Public boundary vs internal boundary
-
-### Public boundary
-Flexible and user-friendly.
-
-### Internal boundary
-Strict and canonical.
-
-This means:
-
-- the outer API may accept multiple formats;
-- deeper helpers should not keep branching on container type.
-
-Once inputs are validated, convert them to canonical matrix/vector forms and
-stay there.
-
-## 4. Canonical internal naming
-
-Standardize the following names across wrappers and helpers.
-
-### Matrices
-- `x_mat` for the training/design matrix
-- `x0_mat` for resolved target matrix
-- `W` for weight matrix when returned or constructed explicitly
-- `R` or `rank_matrix` for batch rank matrices when relevant
-
-### Vectors
-- `y_vec`
-- `t_vec`
-- `psi`
-- `e`
-- `m`
-- `m0`
-- `m1`
-- `signal`
-
-### Scalars / control arguments
-- `k`
-- `s`
-- `method`
-- `jackknife`
-- `distance`
-
-Do not invent one-off naming conventions inside new wrappers.
-
-## 5. Target resolution
-
-Whenever a function supports both `X0` and `x0`:
-
-- exactly one should be allowed;
-- target resolution should happen through a shared helper;
-- the result should be a canonical target matrix form.
-
-Do not reimplement target resolution ad hoc in multiple wrappers.
-
-## 6. Data-frame column extraction
-
-All column-name-based extraction should pass through shared internal helpers.
-
-Recommended helper family:
-
-- single-column numeric vector extractor and validator
-- multi-column matrix extractor and validator
-
-This avoids divergent missing-column behavior across estimators.
-
-## 7. Lower-level function preference
-
-Lower-level functions should prefer matrix/vector inputs, not `data`.
-That keeps the lower-level API explicit and reduces branching.
-
-As a default rule:
-
-- high-level estimators may accept `data=...`;
-- lower-level computation helpers should not.
-
-## 8. Return-value standardization
-
-High-level wrappers should follow the same `return=` policy.
-
-Recommended default while the package remains experimental:
-
-- unknown `return` values produce a warning and are ignored;
-- valid `return` values add optional fields without changing the main result.
-
-This behavior should be consistent across all wrappers that expose `return=`.
-
-## 9. Result object policy
-
-User-facing estimators should return classed objects with:
-
-- a stable main estimate payload;
-- optional extra fields added predictably;
-- stable method support where appropriate.
-
-Avoid returning raw unclassed lists from exported estimation workflows.
-
-## 10. Documentation rule
-
-Every exported high-level estimator should document both:
-
-- the matrix/vector interface; and
-- the `data.frame` interface.
-
-The docs should explicitly state that tibbles are accepted via the
-`data.frame` path if they behave like ordinary data frames for the required
-columns.
+Return classed estimator objects with a stable main payload and documented
+methods. Requested `return` fields add extras without changing the estimate.
+Warn about unknown entries, list valid choices and ignore the unknown values
+consistently across wrappers. Result classes and retained-state ownership are
+specified in [the architecture](13_estimator_and_result_architecture.md).

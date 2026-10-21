@@ -45,8 +45,8 @@
 #' Computes the rank-order weight sequence for the two-scale DNN (TDNN)
 #' estimator using the Beta order-statistic approximation for the underlying
 #' single-scale tables.  Structurally identical to `tdnn_rank_table_exact()`
-#' but uses the asymptotic approximation, which gives full rank support
-#' (all `n` entries are non-zero).
+#' but evaluates the asymptotic approximation across all `n` ranks.
+#' Combined entries can be zero through signed cancellation or underflow.
 #'
 #' \deqn{w^{\text{TDNN,asymp}}_j = w_1^* \, \Delta_j\text{Beta}(1, s_1)
 #'   + w_2^* \, \Delta_j\text{Beta}(1, s_2)}

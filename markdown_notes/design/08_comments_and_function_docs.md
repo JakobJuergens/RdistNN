@@ -1,113 +1,22 @@
-# Comments and Function Documentation
+# Comments and function documentation
 
-This note standardizes how code should be documented.
+Comments explain purpose, invariants, non-obvious validation and design choices.
+Use short conceptual blocks and descriptive names rather than narrating trivial
+assignments. Internal helpers need a clear purpose; nontrivial behavior warrants
+a brief contract comment even without full roxygen.
 
-## 1. General rule
+Map mathematical code to the relevant score, weighting rule or deletion path
+with a short explanation and source reference. Link to the paper for derivations;
+keep formulas needed to understand the implementation beside that code. Explain
+non-obvious guards such as the delete-one requirement `s < n`.
 
-Comments should explain:
+Exported roxygen should cover purpose, supported input formats, constraints,
+method choices and returned quantities. Prioritize user tasks and precise units
+rather than exhaustive implementation detail. Examples are small, seeded,
+representative and current; follow
+[the examples policy](11_examples_vignettes_and_pkgdown_policy.md).
 
-- why the code exists;
-- what invariant it is enforcing;
-- why a design choice was made;
-- what subtlety would otherwise be easy to miss.
-
-Comments should not restate obvious syntax.
-
-## 2. Prefer structure over noise
-
-Use comments to mark conceptual blocks, not every line.
-
-Good pattern:
-
-- short block header;
-- 3–10 lines of focused code;
-- next block header.
-
-Bad pattern:
-
-- line-by-line commentary of trivial assignments.
-
-## 3. Comment the boundary between theory and code
-
-This package is theory-linked.
-Whenever code implements a mathematically meaningful construction, comments should
-make the mapping legible.
-
-Examples:
-
-- what score is being computed;
-- what jackknife path is being approximated;
-- what weighting rule corresponds to the paper notation.
-
-Do not assume future readers will remember the paper by heart.
-
-## 4. Explain why a validation rule exists
-
-When a constraint is not obvious from generic programming logic, explain it.
-
-Example:
-why delete-1 jackknife requires `s < n`.
-
-Short rationale comments are valuable when they connect an implementation guardrail
-to the underlying method.
-
-## 5. Roxygen standard
-
-Exported functions should have roxygen that covers:
-
-- what the function does;
-- the main input formats;
-- the most important constraints;
-- what is returned;
-- key method choices when relevant.
-
-Roxygen should prioritize usability over exhaustiveness.
-
-## 6. Examples
-
-Examples should be:
-
-- small;
-- deterministic;
-- representative of the main usage;
-- aligned with the current API.
-
-Examples are part of the interface contract and should be maintained when APIs
-change.
-
-## 7. Internal helpers
-
-Internal helpers do not always need full roxygen, but they should usually have:
-
-- a one-line purpose comment;
-- enough naming clarity that their contract is obvious.
-
-If a helper has nontrivial behavior, add a short block comment above it.
-
-## 8. Keep comments current
-
-Outdated comments are worse than missing comments.
-
-When behavior changes, update the nearby comment in the same commit.
-
-## 9. Avoid speculative comments
-
-Do not leave vague notes like:
-
-- "maybe optimize later"
-- "not sure if needed"
-- "temporary fix"
-
-If something is unresolved, put it in a design note or issue, not in production
-code comments.
-
-## 10. Style
-
-Prefer comments that are:
-
-- calm;
-- direct;
-- concrete;
-- short enough to scan.
-
-A good comment should make the next read faster, not slower.
+Update comments/help with behavior. Move unresolved design questions to an
+issue or design note rather than leaving speculative "maybe optimize later"
+comments in production code. Use direct, concrete prose that makes the next
+read easier.

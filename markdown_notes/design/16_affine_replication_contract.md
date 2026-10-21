@@ -39,9 +39,55 @@ validate packaging of unchanged scientific code.
 
 ## Maintenance checks
 
+### Accepted executable identities
+
+The accepted simulation freezes identify source commit
+`40060f155cc4d84d59ee5af119f6a2534c569bab`, all 87 executable source/metadata
+hashes, an explicit `SIM_RDISTNN_SOURCE_DIR` override, and native-library SHA-256
+`757e97ce54b39ce0f3f42133be7125acfe3ec6178ea11c904b0e25d06d198c94`.
+The study builds its own k=1 full/deletion weight tables and calls the public
+full-rank deletion engine. Its four profiles contain 2,516,400 main/control
+rows, including 480,000 DNN rows copied across profiles; 10,000 independent
+draw families are shared across them.
+
+The accepted SIPP fit instead records installed RdistNN 0.1.0 files, including
+native-library SHA-256
+`ed485a99bef23ebcaaed1ac1211a9b7a33f79fe3088a682074a4b7558fd724e3`
+and R lazy-load database hashes in `fit_manifest.json`. Its clean sibling
+source checkout at `40060f1` does not certify the installed binary's origin.
+Preserve this installed-file identity rather than substituting the simulation
+pin or a current package. Historical-source rebuilds must be labeled as such
+unless the executable identity also matches. Rendering accepted evidence does
+not require either historical estimator binary; recomputing it does.
+
+Production resumes require matching source, dependency, seed and configuration
+identities. R-version serialization differences are reconciled only after exact
+equality of settings. Audit/analysis stages require their bound completion
+receipts and hashes; interrupted stages are retained and rerun. The proposal's
+`not_started` field is historical; completed run manifests determine status.
+Use verified retained SIPP arrays locally for dependency comparisons rather
+than refitting forests solely for comparison. Those arrays inherit the data's
+sharing restrictions.
+
+### Verify and refresh
+
 Use `inst/paper-replication/affine/manifest.json` for the exact pinned paper
 commit, source identities, accepted evidence and reference-display hashes.
 Run `Rscript inst/paper-replication/affine/verify.R` to verify that snapshot.
+For an editorial-only installed README change, update only its entry in the
+manifest `files` map and verify that every scientific/configuration/evidence
+identity is unchanged. The sync tool also hashes that package-owned README.
+
+Refresh scientific snapshots from the package checkout with:
+
+```sh
+python3 tools/replication/sync_affine.py --paper PAPER_CHECKOUT --campaign ACCEPTED_CAMPAIGN_ROOT
+```
+
+The sync adapter replaces the unused older CATE bootstrap with an explicit-path
+shim; all nine frozen scientific files retain their accepted hashes. Rendering
+supplies the pinned source identity and uses forward slashes and literal path
+prefixes for portable output directories.
 Integrity corruption, interrupted-stage reuse, serialization differences,
 stale audit binding, dirty-source identity and portable output paths have
 regression coverage in `tests/testthat/test-paper-replication-affine.R`.

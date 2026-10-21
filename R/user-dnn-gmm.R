@@ -330,6 +330,7 @@
 #' localizing observations with DNN rank weights.  The first step uses an
 #' identity moment weighting matrix; the second step uses the local moment
 #' covariance estimated at the first-step solution.
+#' This local IV-GMM interface is experimental and may change.
 #'
 #' @details
 #' The documented sampling framework uses independent observations; cluster
@@ -380,9 +381,8 @@
 #' @param ctx Optional context passed to distance and ranking components.
 #' @param return Optional extras:
 #'   `c("W", "ranks", "ord", "dx", "g_obs", "omega", "jacobian", "ess",
-#'   "neighbors", "tuning")`. The `neighbors` extra returns the first `k`
-#'   nearest observations used inside each size-`s` subsample, not the full DNN
-#'   weight support.
+#'   "neighbors", "tuning")`. `neighbors` is a `k x m` matrix of nearest
+#'   training-observation indices, not the full DNN weight support.
 #'
 #' @return A `gmm_result` object with estimates, diagnostics, metadata, the
 #'   `m x p` evaluation-point matrix `x0` (with covariate column names

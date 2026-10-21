@@ -79,9 +79,8 @@ matrix, used as optimizer starts.}
 \item{ctx}{Optional context passed to distance and ranking components.}
 
 \item{return}{Optional extras:
-\code{c("W", "ranks", "ord", "dx", "g_obs", "omega", "jacobian", "ess", "neighbors", "tuning")}. The \code{neighbors} extra returns the first \code{k}
-nearest observations used inside each size-\code{s} subsample, not the full DNN
-weight support.}
+\code{c("W", "ranks", "ord", "dx", "g_obs", "omega", "jacobian", "ess", "neighbors", "tuning")}. \code{neighbors} is a \verb{k x m} matrix of nearest
+training-observation indices, not the full DNN weight support.}
 }
 \value{
 A \code{gmm_result} object with estimates, diagnostics, metadata, the
@@ -93,6 +92,7 @@ Estimates a local parameter by solving a two-step GMM problem after
 localizing observations with DNN rank weights.  The first step uses an
 identity moment weighting matrix; the second step uses the local moment
 covariance estimated at the first-step solution.
+This local IV-GMM interface is experimental and may change.
 }
 \details{
 The documented sampling framework uses independent observations; cluster

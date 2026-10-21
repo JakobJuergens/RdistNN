@@ -5,7 +5,7 @@
 #' Plot estimates with confidence bounds across target points
 #'
 #' The estimate panel of the plotting layer: point estimates with normal
-#' confidence bounds from the stored jackknife standard errors, drawn as a
+#' confidence bounds from the stored estimator-specific standard errors, drawn as a
 #' profile band when the targets vary along a single stored coordinate, as
 #' a forest layout for small non-profile target sets, and as pointranges
 #' otherwise. `autoplot()` and `plot()` on `np_result`, `cate_result` and `affine_ratio_result`

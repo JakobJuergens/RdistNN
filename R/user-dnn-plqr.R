@@ -41,9 +41,7 @@
 #' is performed; [plqr_dnn()] aggregates these scores with DNN rank weights.
 #'
 #' @section Lifecycle:
-#' **Experimental.** PLQR functionality is outside the CATE and regression
-#' workflow focus of the initial public release. Its API and inference
-#' interfaces may change in later releases.
+#' **Experimental.** The PLQR API and inference interfaces may change.
 #' @param data A \code{data.frame} containing the outcome, regressor, and
 #'   nuisance columns.
 #' @param y_col Name or index of the outcome column in `data`.
@@ -355,30 +353,16 @@ plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
 #'    `g_col`, `mD_cols`, and `y_col`.
 #' 2. Matrix interface: pass `X`, `D`, `g`, `mD`, and `Y`.
 #'
-#' No nuisance models are fit internally; this wrapper assumes the
-#' partially-linear shape nuisance \eqn{g_0(U)} and the residualizing nuisance
-#' \eqn{m_D(U) = E[D \mid U]} are supplied. The threshold is
-#' \eqn{D'\theta + g_0(U)}; \eqn{g_0} alone is not itself a quantile function.
-#' Both `g` and `mD` may depend on covariates beyond `x_cols` (the paper's
-#' \eqn{U = (X, Z)}); the package does not restrict their domain, since they
-#' are supplied pre-computed. Density values for direct coefficient inference
-#' are also supplied by the user rather than estimated internally; they play
-#' the role of the paper's local conditional density at the threshold,
-#' entering only the coefficient Jacobian. See
-#' `markdown_notes/design/15_plqr_variance_estimation_rationale.md` for the
-#' full nuisance-notation mapping and for why coefficient-level inference
-#' requires this direct-sandwich route rather than the jackknife SE used by
-#' [cate_dnn()]/[np_dnn()]. Direct coefficient inference requires
-#' `normalize = TRUE`, matching the theorem convention of weights summing to
-#' one per target.
+#' Supply the shape component `g`, residualized-regressor means `mD` and,
+#' for coefficient uncertainty, positive threshold densities. These can use
+#' adjustment variables beyond the reporting covariates. The threshold is
+#' `D' theta_eval + g`; `g` alone is not a conditional quantile.
 #'
-#' With a density input, the coefficient sandwich supports two meat
-#' estimators (`theta_meat`): the analytic score covariance (default) and
-#' the full delete-1 jackknife covariance of the localized vector moment.
-#' The bread is density-backed in both routes; only the meat changes. A
-#' componentwise `moment_se` alone is never coefficient inference — see
-#' `markdown_notes/design/15_plqr_variance_estimation_rationale.md` for the
-#' route table.
+#' Coefficient uncertainty requires `normalize = TRUE` and a density-backed
+#' Jacobian. `theta_meat` chooses analytic score covariance or the full
+#' jackknife covariance of the localized moment. `moment_se` alone is not a
+#' coefficient standard error. For statistical background and conditions,
+#' see the [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
 #'
 #' As in [weights_dnn()], exact DNN localization uses the full rank permutation
 #' at each target rather than an `s`-nearest-neighbor truncation. The `"fast"`
@@ -398,9 +382,7 @@ plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
 #' `density` or `density_col` currently uses `tuning_mode = "default"` only.
 #'
 #' @section Lifecycle:
-#' **Experimental.** PLQR functionality is outside the CATE and regression
-#' workflow focus of the initial public release. Its API and inference
-#' interfaces may change in later releases.
+#' **Experimental.** The PLQR API and inference interfaces may change.
 #' @param data Optional data frame containing covariates, regressors, outcome,
 #'   and nuisance columns. Column names must be non-missing, non-empty, and
 #'   unique.
@@ -451,10 +433,12 @@ plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
 #'   stores candidate-level moments, standard errors, diagnostics, and metadata
 #'   in `tuning_grid`. Grid mode cannot be combined with explicit `s`.
 #' @param normalize Logical; renormalize columns of `W` to sum to 1.
-#' @param se Logical; compute delete-1 jackknife standard errors.
+#' @param se Logical; compute moment or density-backed coefficient uncertainty.
 #' @param jackknife One of `"fast"`, `"loo"`, or `"none"`. `"fast"` (default)
 #'   uses cached full-sample ranks with delete-1 rank updates, `"loo"`
-#'   recomputes leave-one-out weights directly, and `"none"` skips SEs.
+#'   recomputes leave-one-out weights directly, and `"none"` skips moment
+#'   jackknifing. Analytic coefficient uncertainty is controlled by `se` and
+#'   the density input, independently of this selector.
 #' @param theta_meat Meat estimator for the coefficient sandwich when
 #'   `density`/`density_col` is supplied. `"analytic"` (default) uses the
 #'   analytic score covariance
@@ -468,13 +452,13 @@ plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
 #' @param return Optional extras in addition to the always-returned `moment`,
 #'   `theta`, `theta_eval`, `tau`, and `meta`. Allowed values:
 #'   `c("W", "ranks", "ord", "dx", "score", "ess", "neighbors", "tuning")`.
-#'   The `neighbors` extra returns the first `k` nearest observations used
-#'   inside each size-`s` subsample, not the full DNN weight support.
+#'   `neighbors` is a `k x m` matrix of nearest training-observation indices,
+#'   one column per target. It is a rank summary, not the full DNN weight support.
 #'
 #' @return An object of class `plqr_result` with components:
 #'   - `moment`: matrix (`p_d x m`) of localized PLQR moments;
 #'   - `theta`: matrix (`p_d x m`) of the supplied coefficient values, repeated
-#'     across targets until a root-solving path is requested in future versions;
+#'     across targets; no root solving is performed;
 #'   - `theta_eval`: the supplied coefficient vector used in the moment map;
 #'   - `theta_se`: coefficient standard errors (`p_d x m`), present only when
 #'     `density` or `density_col` supplies the direct PLQR sandwich route;

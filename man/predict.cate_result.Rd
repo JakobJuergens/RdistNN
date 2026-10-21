@@ -33,11 +33,17 @@
 \item{...}{Not used.}
 }
 \value{
-If \code{interval = "none"} and \code{se.fit = FALSE}, a numeric vector of
-predictions. Otherwise a matrix/list analogous to \code{predict.lm()}.
+A numeric vector when no uncertainty is requested; a list with
+\code{fit} and \code{se.fit} when \code{se.fit = TRUE}. With \code{interval = "confidence"},
+\code{fit} is a matrix with columns \code{fit}, \code{lwr}, \code{upr}, returned directly
+unless \code{se.fit = TRUE}.
 }
 \description{
-Predict from a \code{cate_result} object at new targets
+Uses retained observations, supplied signals and fitted geometry, including
+after serialization and without optional \code{return} extras. Prediction
+uncertainty uses frozen-geometry rank deletions, even if the fit used
+\code{jackknife = "loo"}. It can be requested from a fit with \code{se = FALSE}
+when \code{s < n}.
 }
 \examples{
 set.seed(3)

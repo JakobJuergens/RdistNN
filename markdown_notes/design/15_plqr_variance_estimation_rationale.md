@@ -2,7 +2,9 @@
 
 PLQR coefficient-level inference through `confint()`, `predict(se.fit = TRUE)`
 and `summary()` requires a density-backed coefficient sandwich. This document
-specifies its variance scales and supplied nuisance notation.
+specifies its variance scales and supplied nuisance notation. For statistical
+assumptions and derivations, see the
+[conditional Z-estimation paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
 
 ## 1. Moment and coefficient uncertainty
 

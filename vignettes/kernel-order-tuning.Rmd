@@ -12,100 +12,72 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 library(RdistNN)
 ```
 
-## Overview
+The order `s` controls localization: larger values concentrate weight closer
+to the reporting profile. A grid compares estimates across orders and retains
+its specified default; it does not select an optimal order. The
+[paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
+gives the statistical motivation and inference conditions.
 
-`RdistNN` exposes kernel-order selection through a modular tuning API:
-
-- build specs with `new_tuning()` or `as_tuning()`,
-- register/reuse with `register_tuning()` and `get_tuning()`,
-- evaluate defaults and candidate grids via `tuning_eval()`;
-- inspect resolved tuning metadata in fitted-object diagnostics.
-
-## Paper Default Undersmoothing Rule
-
-The built-in rule is:
-
-\[
-s(\lambda) = \left\lfloor \lambda\, n^{(k_x+1)/(k_x+2)} \right\rfloor
-\]
-
-with finite-sample default `lambda = 0.4` and default sensitivity grid
-`lambda_grid = c(0.3, 0.4, 0.5, 0.75)`. The value `lambda = 1` remains
-available as a more aggressive localization benchmark.
-
-```{r paper-default}
-tun <- tuning_dnn_paper()
-tuning_eval(tun, n = 1000, kx = 2, k = 1, mode = "default")
-```
-
-```{r paper-grid}
-tuning_eval(tun, n = 1000, kx = 2, k = 1, mode = "grid")$candidates
-```
-
-## Registry Usage
-
-```{r registry}
-tuning_names()
-get_tuning("paper_undersmooth")$name
-```
-
-## Custom Rule
-
-```{r custom}
-fixed12 <- as_tuning(function(...) 12L, name = "fixed_12")
-tuning_eval(fixed12, n = 300, kx = 2, k = 1)
-```
-
-A custom rule can also return richer metadata:
-
-```{r custom-meta}
-meta_rule <- new_tuning(
-  name = "meta_rule",
-  eval = function(n, kx, k, se, jackknife, ctx = NULL) {
-    list(
-      s = floor(0.9 * n ^ ((kx + 1) / (kx + 2))),
-      meta = list(
-        lambda = 0.9,
-        formula = "0.9 * n^((kx + 1)/(kx + 2))",
-        rounding = "floor"
-      )
-    )
-  }
-)
-
-tuning_eval(meta_rule, n = 500, kx = 2, k = 1)
-```
-
-## Wrapper Integration
-
-High-level wrappers accept `tuning = ...` and resolve `s` internally:
+## Fit and compare a grid
 
 ```{r wrapper-integration}
 demo <- np_demo_data(n = 200, p = 2, seed = 1)
 fit <- np_dnn(
-  data = demo$data,
-  x_cols = c("X1", "X2"),
-  y_col = "Y",
-  x0 = demo$x0,
-  k = 1,
-  tuning = tuning_dnn_paper(),
-  se = TRUE,
-  return = c("W", "ess", "tuning")
+  data = demo$data, x_cols = c("X1", "X2"), y_col = "Y",
+  x0 = demo$x0, tuning_mode = "grid"
 )
-
-fit$meta$s
-fit$tuning$grid$candidates
-diagnostics(fit)[, c("target_id", "tuning_name", "tuning_default_s", "tuning_grid_n_candidates")]
+fit$tuning_grid$candidates
+fit$tuning_grid$estimates
 ```
 
-## Related Articles
+The main estimate remains the default candidate. Use a candidate view to
+inspect another order without fitting the nuisance functions again:
 
-- [Notation and package conventions](notation-and-conventions.html):
-  `vignette("notation-and-conventions", package = "RdistNN")` relates `s`,
-  `k`, `lambda`, support, and effective sample size to the paper notation.
-- [DNN weights](dnn-weights.html):
-  `vignette("dnn-weights", package = "RdistNN")` explains how the selected
-  order enters exact and asymptotic weights.
-- [Diagnostics and reporting](diagnostics-reporting.html):
-  `vignette("diagnostics-reporting", package = "RdistNN")` shows how resolved
-  tuning metadata appears in fitted-object diagnostics.
+```{r candidate}
+view <- candidate_fit(fit, 1L)
+coef(view)
+```
+
+CATE and CLATE use the same `tuning_mode` convention. See
+[Getting started](getting-started.html) and [Conditional LATE](conditional-late.html)
+for their signal inputs. `plot_tuning(fit)` draws the sensitivity comparison
+when ggplot2 is installed.
+
+## Inspect the default rule
+
+The built-in rule is `floor(lambda * n^((kx + 1)/(kx + 2)))`, with
+`lambda = 0.4` and sensitivity multipliers `c(0.3, 0.4, 0.5, 0.75)`.
+Here `kx` is the number of reporting covariates. `lambda = 1` remains an
+available, more concentrated localization setting. Delete-one uncertainty
+requires `s < n`.
+
+```{r paper-default}
+tun <- tuning_dnn_paper()
+tuning_eval(tun, n = 1000, kx = 2, k = 1)$s
+tuning_eval(tun, n = 1000, kx = 2, k = 1, mode = "grid")$candidates
+```
+
+Explicit `s` and a tuning specification are alternative inputs; grid mode
+cannot be combined with explicit `s`. Diagnostics record the resolved order
+and its provenance:
+
+```{r metadata}
+as.data.frame(diagnostics(fit))[, c("target_id", "tuning_name", "tuning_default_s")]
+```
+
+## Define and register a custom rule
+
+For a fixed order, a small function is enough:
+
+```{r custom}
+fixed12 <- as_tuning(function(...) 12L, name = "fixed_12")
+tuning_eval(fixed12, n = 300, kx = 2, k = 1)$s
+register_tuning("fixed_12", fixed12)
+get_tuning("fixed_12")$name
+```
+
+`new_tuning()` also accepts explicit candidate generation and metadata; see
+its help for the full interface. A custom rule must respect the estimator's
+order constraints. [DNN weights](dnn-weights.html) explains the resulting
+rank weights, and [Notation and conventions](notation-and-conventions.html)
+lists the argument and result shapes.

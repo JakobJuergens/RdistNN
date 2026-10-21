@@ -5,9 +5,7 @@
 #include "fast_order.hpp"
 #include "distance_arithmetic.hpp"
 
-#ifdef _OPENMP
-#include <omp.h>
-#endif
+#include "parallel_threads.h"
 
 #include <vector>
 #include <cmath>   // std::fabs
@@ -26,7 +24,7 @@ static inline void dist_l1_core_ptr(const double *Xp, int n, int p, const double
   const std::size_t stride_n = static_cast<std::size_t>(n);
 
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (n >= 1024)
+#pragma omp parallel for num_threads(rustat::thread_limit()) schedule(static) if (n >= 1024)
 #endif
   for (int i = 0; i < n; ++i) {
     double acc = 0.0;
@@ -50,7 +48,7 @@ static inline void dist_l1_batch_impl(const double *Xp, int n, int p, const doub
   const std::size_t stride_m = static_cast<std::size_t>(m);
 
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (m >= 8)
+#pragma omp parallel for num_threads(rustat::thread_limit()) schedule(static) if (m >= 8)
 #endif
   for (int q = 0; q < m; ++q) {
     for (int i = 0; i < n; ++i) {

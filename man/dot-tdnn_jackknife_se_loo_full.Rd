@@ -50,14 +50,13 @@ Numeric matrix (q x m) of jackknife standard errors.
 }
 \description{
 Computes the jackknife standard error for a TDNN rank-weighted estimator
-using the generic \eqn{O(n \cdot m \cdot q)} prefix/suffix engine
-(\code{\link[=jackknife_rank_full]{jackknife_rank_full()}}).  Unlike \code{.tdnn_jackknife_se_loo_matrix()}, this
-path does \strong{not} re-evaluate the rank-weight spec for each deletion; it
-precomputes the TDNN rank tables at sizes \eqn{n} and \eqn{n-1} once and
-passes them directly to the engine.
+using the shared centered prefix/suffix engine. It precomputes the TDNN
+rank tables at sizes \eqn{n} and \eqn{n-1} and passes them to
+\code{.dnn_loo_centered()}, as does the \code{fast} route of
+\code{.tdnn_jackknife_se_loo_matrix()}.
 }
 \details{
 The C++ engine is used automatically when the package has been compiled;
-otherwise \code{\link[=jackknife_rank_full]{jackknife_rank_full()}} falls back to its pure-R implementation.
+otherwise the same centered calculation uses its R fallback.
 }
 \keyword{internal}

@@ -29,6 +29,7 @@ Builder that computes per-column scales once (\code{setup(X)}) and reuses them i
 \code{eval()} / \code{eval_batch()}. Uses a compiled fast path when available.
 }
 \examples{
+set.seed(1)
 X <- matrix(rnorm(12), 4, 3)
 X0 <- matrix(rnorm(6), 2, 3)
 dspec <- distance_l2_scaled(rule = "sd")

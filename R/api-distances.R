@@ -227,6 +227,7 @@ distance_names <- function() {
 #'   called as `spec$setup(X)` to create a context.
 #' @return Numeric vector length `n`.
 #' @examples
+#' set.seed(1)
 #' x_mat <- matrix(rnorm(12), 4, 3)
 #' x0_vec <- c(0, 0, 0)
 #' distance_eval(distance_l2(), x_mat, x0_vec)
@@ -270,6 +271,7 @@ distance_eval <- function(spec, X, x0, ctx = NULL) {
 #'   called as `spec$setup(X)` to create a context.
 #' @return Numeric matrix \(n  x  m\).
 #' @examples
+#' set.seed(1)
 #' x_mat <- matrix(rnorm(12), 4, 3)
 #' x0_mat <- matrix(rnorm(6), 2, 3)
 #' distance_eval_batch(distance_l2(), x_mat, x0_mat)

@@ -203,7 +203,8 @@
 #'
 #' Draws one dataset from the named DGP (via [sim_cate_data()]), then runs each
 #' requested method on the **same** dataset and returns per-replicate performance
-#' metrics aligned with the paper's evaluation criteria.
+#' metrics. The paper's study-specific workflow is in the installed
+#' `paper-replication/affine` bundle; these are general simulation tools.
 #'
 #' @param n Integer sample size.
 #' @param kx Integer covariate dimension (\eqn{\ge 2}).
@@ -217,8 +218,10 @@
 #' @param tuning_mode One of `"default"` or `"grid"`. `"default"` evaluates
 #'   one scalar kernel order. `"grid"` requires `tuning` and emits one row per
 #'   DNN candidate while non-DNN benchmarks remain one row per replicate.
-#' @param alpha Nominal coverage level (default 0.05).
-#' @param seed Optional integer seed for this replicate.
+#' @param alpha Nominal interval noncoverage probability (default `0.05`,
+#'   giving 95-percent confidence intervals).
+#' @param seed Optional integer seed for tuning, data and fitting, used locally
+#'   without changing the caller's saved RNG state. `NULL` uses the current stream.
 #' @param sigma Noise SD forwarded to the DGP.
 #' @param clip Propensity clipping bound forwarded to the DGP and cross-fitting.
 #' @param n_folds Number of cross-fitting folds for the `dnn_crossfit` method.
@@ -229,7 +232,7 @@
 #'   based on GRF also record `method_variant`, `forest_nuisance`, and whether
 #'   `Y.hat` and `W.hat` were supplied. The maintained `causal_forest` route
 #'   uses externally supplied oracle nuisance inputs.
-#'   with explicit localization weights also report the realized DNN-weighted
+#'   Methods with explicit localization weights also report the realized DNN-weighted
 #'   truth, realized localization drift, estimator remainder, studentized error, physical
 #'   90-percent-mass radius, treatment-arm effective sample sizes, and the
 #'   top-five score-contribution share. The `localized_truth` field is the
@@ -264,6 +267,11 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
                               sigma     = 0.5,
                               clip      = 1e-3,
                               n_folds   = 5L) {
+  if (!is.null(seed)) {
+    restore_rng <- .rdistnn_rng_restore()
+    on.exit(restore_rng(), add = TRUE)
+    set.seed(seed)
+  }
   s_missing <- missing(s)
   if (s_missing) {
     s <- NULL
@@ -288,8 +296,12 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
   }
 
   fns <- lapply(methods, .get_sim_method)
+  # Restart after tuning so data and learner draws retain their established stream.
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
   dgp    <- sim_cate_data(design, n = n, kx = kx,
-                          sigma = sigma, clip = clip, seed = seed)
+                          sigma = sigma, clip = clip, seed = NULL)
   x_cols <- paste0("X", seq_len(kx))
 
   rows <- lapply(seq_along(methods), function(i) {
@@ -365,14 +377,14 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
 #' @param n_vals Integer vector of sample sizes.
 #' @param kx_vals Integer vector of covariate dimensions.
 #' @param n_reps Number of Monte Carlo replications per cell.
-#' @param master_seed Integer seed used to draw the per-replicate seeds.
+#' @param master_seed Integer seed used locally to draw the per-replicate seeds;
+#'   the caller's saved RNG state is restored. `NULL` uses the current stream.
 #'   Every cell uses the same seed vector so noise realisations are comparable
 #'   across DGPs, sample sizes, and methods (fair comparison).
 #' @param k Integer DNN neighbour count. The paper-facing DNN default is
 #'   `k = 1L`, meaning one nearest neighbor is selected inside each size-`s`
 #'   subsample; larger values use the package's generalized top-`k` weights.
-#'   The fixed-`k` extension is essentially direct, but the current paper
-#'   derivations are written for `k = 1`.
+#'   The accompanying paper gives the theory for `k = 1`.
 #' @param s_fn Function `f(n, kx)` returning the integer kernel order.
 #'   The finite-sample default is
 #'   \eqn{s = \lfloor 0.4 n^{(k_x+1)/(k_x+2)} \rfloor}.
@@ -385,7 +397,8 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
 #'   while non-DNN benchmarks emit one row with `candidate_id = NA` and `s = NA`.
 #' @param methods Character vector of method names; see [sim_cate_methods()].
 #'   Default: `"dnn_oracle"`.
-#' @param alpha Nominal coverage level.
+#' @param alpha Nominal interval noncoverage probability; intervals use level
+#'   `1 - alpha`.
 #' @param sigma Noise SD forwarded to the DGP.
 #' @param clip Propensity clipping bound forwarded to the DGP and cross-fitting.
 #' @param n_folds Number of cross-fitting folds for the `dnn_crossfit` method.
@@ -476,7 +489,11 @@ sim_cate_run <- function(
 
   # All cells use the same seed vector so noise realisations are aligned
   # across DGPs, sample sizes, and methods (fair comparison).
-  set.seed(master_seed)
+  if (!is.null(master_seed)) {
+    restore_rng <- .rdistnn_rng_restore()
+    on.exit(restore_rng(), add = TRUE)
+    set.seed(master_seed)
+  }
   seeds <- sample.int(1e6L, n_reps)
 
   cells <- expand.grid(

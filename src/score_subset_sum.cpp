@@ -3,9 +3,7 @@
 // [[Rcpp::depends(Rcpp)]]
 #include <Rcpp.h>
 #include "compensated_arithmetic.hpp"
-#ifdef _OPENMP
-#include <omp.h>
-#endif
+#include "parallel_threads.h"
 using namespace Rcpp;
 
 // Sum g[subs[r, ]] for each row r (subs is 1-based from R).
@@ -18,7 +16,7 @@ NumericVector rustat_subset_row_sums_g(IntegerMatrix subs, NumericVector g) {
   int has_bad_index = 0;
 
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (K >= 256)
+#pragma omp parallel for num_threads(rustat::thread_limit()) schedule(static) if (K >= 256)
 #endif
   for (int r = 0; r < K; ++r) {
     rdistnn_arithmetic::accumulator acc;

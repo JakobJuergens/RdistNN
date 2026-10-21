@@ -7,18 +7,16 @@
 #' For each target, the weighted share of observations below the quantile
 #' threshold, `sum_i w_ij 1{Y_i <= D_i' theta + g_i}`, is plotted against
 #' the nominal level `tau` with a reference band
-#' `tau +/- z * sqrt(tau (1 - tau) / n_eff)`. Shares outside the band flag
-#' local miscalibration of the supplied `theta_eval` or first stages — the
-#' applied reading of the quantile moment condition.
+#' `tau +/- z * sqrt(tau (1 - tau) / n_eff)`. This is a descriptive calibration
+#' diagnostic for the supplied threshold; the band does not test the full
+#' coefficient moment condition or account for fitted-nuisance uncertainty.
 #'
 #' The below-threshold indicator is stored on the fit; alternatively,
 #' supply `residuals` (`Y - D' theta - g`, length `n`), whose non-positive
 #' entries define the indicator.
 #'
 #' @section Lifecycle:
-#' **Experimental.** PLQR functionality is outside the CATE and regression
-#' workflow focus of the initial public release. Its API and inference
-#' interfaces may change in later releases.
+#' **Experimental.** The PLQR API and inference interfaces may change.
 #' @param object A `plqr_result` with the weight matrix `W` stored (the
 #'   default).
 #' @param residuals Optional numeric vector of length `n` of quantile

@@ -31,7 +31,8 @@ iv_demo_data(
 
 \item{clip}{Clipping bound in \verb{(0, 0.5)} for binary instrument probabilities.}
 
-\item{seed}{Optional integer seed for reproducibility.}
+\item{seed}{Optional integer seed, used locally without changing the caller's
+RNG state. \code{NULL} uses the current stream.}
 
 \item{x0}{Optional numeric length-\code{p} target point.}
 

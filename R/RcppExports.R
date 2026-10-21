@@ -81,6 +81,10 @@ rustat_jackknife_rank_full <- function(ranks, PHI, wn, wnm1) {
     .Call(`_RdistNN_rustat_jackknife_rank_full`, ranks, PHI, wn, wnm1)
 }
 
+rustat_thread_info <- function() {
+    .Call(`_RdistNN_rustat_thread_info`)
+}
+
 rustat_exact_rank_table <- function(n, k, s) {
     .Call(`_RdistNN_rustat_exact_rank_table`, n, k, s)
 }
