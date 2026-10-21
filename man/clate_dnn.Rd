@@ -84,7 +84,8 @@ in \eqn{[0,1]}. m_d0 may be omitted only with one_sided = TRUE.}
 under instrument 0. Requires D <= A and zero m_d0 if supplied.}
 
 \item{distance}{Existing distance specification, registered name or function.
-Geometry is frozen across deletions; input position resolves distance ties.}
+Geometry is frozen across deletions. Exact distance ties use original
+covariates lexicographically; identical covariate rows use input position.}
 
 \item{method}{One of "exact" or "asymp", as in \code{\link[=cate_dnn]{cate_dnn()}} and \code{\link[=np_dnn]{np_dnn()}}.}
 
@@ -131,8 +132,10 @@ predictions; the estimator fits no learners.
 }
 \details{
 The documented sampling framework uses independent observations; cluster
-and survey-design inference are not supplied. Input row order breaks
-distance ties, so permuting tied observations can change estimates.
+and survey-design inference are not supplied. Exact distance ties use
+lexicographic order of the original covariates, in their supplied column
+order. Identical covariate rows retain input-order ties; permuting those
+duplicates can change estimates. Ordering uses no outcomes or nuisances.
 
 Nuisance predictions use all pre-instrument adjustment variables, while
 weights use the reporting coordinates X. The estimate is the ratio of the

@@ -16,8 +16,8 @@
   "method", "design", "n", "kx", "k", "tuning_source",
   "candidate_id", "lambda", "s", "seed",
   "tau_hat", "tau0", "bias", "sq_err", "se", "cover", "ci_len", "neff",
-  "localized_truth", "branch_drift", "estimator_remainder",
-  "studentized_error", "score_sd0", "standardized_branch_drift",
+  "localized_truth", "localization_drift", "estimator_remainder",
+  "studentized_error", "score_sd0", "standardized_localization_drift",
   "physical_radius_90", "treated_ess", "control_ess", "top5_score_share",
   "method_variant", "forest_nuisance", "y_hat_supplied", "w_hat_supplied",
   "status"
@@ -62,7 +62,7 @@ test_that("sim_cate_one_rep grid mode emits DNN candidate rows matching scalar r
     # precision accumulation (ARM64 macOS).
     expect_equal(grid$neff[[i]], scalar$neff[[1L]], tolerance = 1e-12)
     expect_equal(grid$localized_truth[[i]], scalar$localized_truth[[1L]], tolerance = 1e-12)
-    expect_equal(grid$branch_drift[[i]], scalar$branch_drift[[1L]], tolerance = 1e-12)
+    expect_equal(grid$localization_drift[[i]], scalar$localization_drift[[1L]], tolerance = 1e-12)
     expect_equal(grid$physical_radius_90[[i]], scalar$physical_radius_90[[1L]], tolerance = 1e-12)
   }
 })
@@ -100,7 +100,7 @@ test_that("sim_cate_one_rep grid mode reuses one cross-fit score across candidat
     # See the note above on cross-path neff summation order.
     expect_equal(grid$neff[[i]], scalar$neff[[1L]], tolerance = 1e-12)
     expect_equal(grid$localized_truth[[i]], scalar$localized_truth[[1L]], tolerance = 1e-12)
-    expect_equal(grid$branch_drift[[i]], scalar$branch_drift[[1L]], tolerance = 1e-12)
+    expect_equal(grid$localization_drift[[i]], scalar$localization_drift[[1L]], tolerance = 1e-12)
     expect_equal(grid$physical_radius_90[[i]], scalar$physical_radius_90[[1L]], tolerance = 1e-12)
   }
 })
@@ -218,6 +218,8 @@ test_that("summarise_sim_results groups by candidate fields with NA-safe benchma
     cover = c(1, NA, 1, 0, 0),
     ci_len = c(0.4, NA, 0.8, 0.6, 0.8),
     neff = c(10, NA, 14, 12, NA),
+    method_variant = NA_character_, forest_nuisance = NA_character_,
+    y_hat_supplied = NA, w_hat_supplied = NA,
     status = c("ok", "failed", "ok", "ok", "ok"),
     stringsAsFactors = FALSE
   )
@@ -262,6 +264,8 @@ test_that("summarise_sim_results returns NA rather than NaN for all-failed group
     cover = NA_real_,
     ci_len = NA_real_,
     neff = NA_real_,
+    method_variant = NA_character_, forest_nuisance = NA_character_,
+    y_hat_supplied = NA, w_hat_supplied = NA,
     status = c("failed", "infeasible", "failed"),
     stringsAsFactors = FALSE
   )
@@ -297,6 +301,8 @@ test_that("summarise_sim_results excludes non-ok rows even if metrics are presen
     cover = c(1, 0),
     ci_len = c(0.4, 198),
     neff = c(10, 1),
+    method_variant = NA_character_, forest_nuisance = NA_character_,
+    y_hat_supplied = NA, w_hat_supplied = NA,
     status = c("ok", "failed"),
     stringsAsFactors = FALSE
   )

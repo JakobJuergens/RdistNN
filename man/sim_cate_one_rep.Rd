@@ -69,8 +69,8 @@ deterministic population branch. With \eqn{x_0} and \eqn{(n,s)} fixed,
 expectation over the i.i.d. covariate sample and complete-DNN
 exchangeability give
 \deqn{E(\mathrm{localized\_truth})=\alpha_s(x_0).}
-The historical \code{branch_drift} field name is retained for compatibility;
-it stores realized localization drift. The estimator remainder combines
+The \code{localization_drift} field stores realized localization drift.
+The estimator remainder combines
 centered score variation with fitted-state effects.
 Failed methods have \code{NA} for all metric columns and \code{status = "failed"};
 registered route metadata is retained when it is known from the selected

@@ -17,7 +17,7 @@ test_that("NP marginal prediction uncertainty agrees with explicit deletions", {
         d <- rowSums(sweep(x_mat, 2, scaled_X0[j, ], "-")^2)
         for (a in seq_len(ncol(subsets))) {
           ids <- subsets[, a]
-          take <- ids[order(d[ids], ids)][seq_len(k)]
+          take <- ids[.tie_reference_order(d[ids], x_mat[ids, , drop = FALSE], ids)][seq_len(k)]
           W[take, j] <- W[take, j] + 1 / (k * ncol(subsets))
         }
       }
@@ -27,7 +27,7 @@ test_that("NP marginal prediction uncertainty agrees with explicit deletions", {
       }, numeric(n)))
       for (j in seq_len(nrow(X0))) {
         d <- rowSums(sweep(x_mat, 2, scaled_X0[j, ], "-")^2)
-        W[, j] <- table[rank(d, ties.method = "first")]
+        W[, j] <- table[order(.tie_reference_order(d, x_mat))]
       }
     }
     W

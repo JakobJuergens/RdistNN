@@ -17,11 +17,11 @@ test_that("helpers: deterministic ordering + ranks conversion round-trip", {
   DX[, 2] <- c(1, 1, 2, 2, 3, 3) # create ties
 
   # What api_weights.R would compute from DX
-  ORD <- apply(DX, 2L, .order_with_ties)
+  ORD <- apply(DX, 2L, function(dx) .tie_reference_order(dx, X))
   RKS <- apply(ORD, 2L, ord_to_ranks)
 
-  # Ties: equal distances order by row index
-  expect_equal(ORD[, 2], order(DX[, 2], seq_along(DX[, 2])))
+  # Exact ties use original covariates, then index for identical rows.
+  expect_equal(ORD[, 2], .tie_reference_order(DX[, 2], X))
 
   # Each column is a permutation 1..n
   for (j in seq_len(m)) {
@@ -41,7 +41,7 @@ test_that(".resolve_ranking works for dx, ord, ranks, and function outputs", {
   DX <- vapply(seq_len(m), function(j) {
     rowSums((X - matrix(X0[j, ], n, p, byrow = TRUE))^2)
   }, numeric(n))
-  ORD <- apply(DX, 2L, .order_with_ties)
+  ORD <- apply(DX, 2L, function(dx) .tie_reference_order(dx, X))
   RKS <- apply(ORD, 2L, ord_to_ranks)
 
   # 1) list(dx=...)
@@ -190,7 +190,7 @@ test_that("weights_matrix works with distance-based ranking + rank_weight", {
     weight = rw,
     return = "ord"
   )
-  expect_equal(res2$ord[, 1], order(DX_tie[, 1], seq_along(DX_tie[, 1])))
+  expect_equal(res2$ord[, 1], .tie_reference_order(DX_tie[, 1], X))
 })
 
 test_that("weights_matrix passes ctx through to rank_weight evaluators", {
@@ -320,7 +320,7 @@ test_that("end-to-end parity: dx vs ord vs ranks produce identical W", {
   DX <- vapply(seq_len(m), function(j) {
     rowSums((X - matrix(X0[j, ], n, p, byrow = TRUE))^2)
   }, numeric(n))
-  ORD <- apply(DX, 2L, .order_with_ties)
+  ORD <- apply(DX, 2L, function(dx) .tie_reference_order(dx, X))
   RKS <- apply(ORD, 2L, ord_to_ranks)
 
   # Simple rank weight

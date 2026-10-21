@@ -43,8 +43,15 @@ multiply by twice the inverse scale. Recover the norm with scaled sum of
 squares and constant accumulator state; rescan only exceptional rows. Squared
 R APIs still return squared results, including genuine squared overflow.
 Keep native and fallback implementations aligned;
-retain stable original-row tie breaking. Scale fitting and saved prediction
+break exact distance ties lexicographically by original raw covariates, in
+their supplied column order, then by row position for identical covariate rows.
+Distance-only sorting primitives without covariates retain stable index ties;
+explicit supplied ranks/orders remain authoritative. Outcomes, treatment,
+nuisances and row identifiers never define covariate-aware tie order. No tie
+averaging or tolerance grouping changes rank weights or ESS. Scale fitting and saved prediction
 must reuse the same fitted geometry contract.
+Current saved fits reuse their retained geometry and cached ranks. Older
+development fit schemas do not require compatibility readers.
 
 Fitted scale helpers reject nonfinite raw scales before epsilon clamping.
 SD calculations use common conservative range gates before intermediate

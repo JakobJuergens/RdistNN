@@ -37,3 +37,23 @@ test_that("plqr_demo_data ships a true oracle threshold density", {
   expect_true(all(is.finite(fit$theta_se)))
   expect_identical(fit$meta$theta_se_method, "direct_sandwich")
 })
+
+test_that("one-coordinate PLQR bumps match scalar truth and restore seeded RNG", {
+  .test_rng_scope({
+    for (seeded in c(TRUE, FALSE)) {
+      set.seed(276L)
+      before <- .Random.seed
+      if (!seeded) rm(".Random.seed", envir = .GlobalEnv)
+      demo <- plqr_demo_data(n = 8L, p = 1L, design = "bump", x0 = .2,
+        seed = 72L)
+      expect_equal(demo$data$g_oracle,
+        .2 + .8 * exp(-.5 * (demo$data$X1 - .5)^2), tolerance = 1e-15)
+      expect_equal(demo$truth$g_fn(matrix(c(-.1, .2, .5))),
+        .2 + .8 * exp(-.5 * (c(-.1, .2, .5) - .5)^2), tolerance = 1e-15)
+      expect_equal(demo$g_x0, .2 + .8 * exp(-.5 * (.2 - .5)^2),
+        tolerance = 1e-15)
+      if (seeded) expect_identical(.Random.seed, before) else
+        expect_false(exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE))
+    }
+  })
+})

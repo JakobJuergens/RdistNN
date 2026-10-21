@@ -37,23 +37,21 @@
     }, numeric(1L))
   }
 
-  top5_score_share <- if (score_available) {
-    vapply(seq_len(m), function(j) {
-      contribution <- abs(w_mat[, j] * (signal - tau_hat[[j]]))
-      total <- sum(contribution)
-      if (!is.finite(total) || total <= 0) return(NA_real_)
-      sum(sort(contribution, decreasing = TRUE)[seq_len(min(5L, n))]) / total
-    }, numeric(1L))
+  score_shares <- if (score_available) {
+    lapply(seq_len(m), function(j) {
+      .dnn_score_contributions(w_mat[, j], signal, rep(tau_hat[[j]], n))
+    })
   } else {
-    rep(NA_real_, m)
+    rep(list(list(available = FALSE, share = NA_real_)), m)
   }
+  top5_score_share <- vapply(score_shares, `[[`, numeric(1L), "share")
 
   data.frame(
     physical_radius_90 = physical_radius_90,
     arm_ess_available = rep(!is.null(t_vec), m),
     treated_ess = arm_ess(1L),
     control_ess = arm_ess(0L),
-    score_contribution_available = rep(score_available, m),
+    score_contribution_available = vapply(score_shares, `[[`, logical(1L), "available"),
     top5_score_share = top5_score_share,
     stringsAsFactors = FALSE
   )

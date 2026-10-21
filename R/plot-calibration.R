@@ -84,8 +84,8 @@ plot_calibration <- function(object, residuals = NULL, level = 0.95, ...) {
     .abort_bad_arg(
       "residuals",
       paste0(
-        "is required: this fit predates stored calibration indicators; ",
-        "refit, or supply `residuals` (Y - D'theta - g, length n)"
+        "is required when fitted calibration indicators are unavailable; ",
+        "refit or supply `residuals` (Y - D'theta - g, length n)"
       ),
       quoted = FALSE
     )

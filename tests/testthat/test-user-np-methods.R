@@ -7,7 +7,7 @@
     d <- rowSums(sweep(X, 2, X0[j, ], "-")^2)
     for (a in seq_len(ncol(subsets))) {
       ids <- subsets[, a]
-      take <- ids[order(d[ids], ids)][seq_len(k)]
+      take <- ids[.tie_reference_order(d[ids], X[ids, , drop = FALSE], ids)][seq_len(k)]
       W[take, j] <- W[take, j] + 1 / (k * ncol(subsets))
     }
   }
@@ -139,7 +139,7 @@ test_that("TDNN inherits NP methods with actual signed covariance", {
   }
 })
 
-test_that("legacy loo covariance preserves deletion-specific fitted geometry", {
+test_that("loo covariance preserves deletion-specific fitted geometry", {
   d <- .np_method_data()
   loo <- t(vapply(seq_len(nrow(d$X)), function(i) {
     Xi <- d$X[-i, , drop = FALSE]
@@ -190,7 +190,7 @@ test_that("asymptotic NP and TDNN covariance matches explicit beta-grid deletion
     }, numeric(n)))
     vapply(seq_len(nrow(X0)), function(j) {
       distance <- rowSums(sweep(X, 2, X0[j, ], "-")^2)
-      table[rank(distance, ties.method = "first")]
+      table[order(.tie_reference_order(distance, X))]
     }, numeric(n))
   }
   for (tdnn in c(FALSE, TRUE)) for (normalize in c(FALSE, TRUE)) {
@@ -281,4 +281,28 @@ test_that("NP rejects corrupted saved model state before prediction", {
   td <- np_tdnn(X = d$X, X0 = d$X0, Y = d$y, s1 = 2, s2 = 4)
   td$.model$s2 <- td$.model$s1
   expect_error(predict(td, X0 = d$X0), "s1 < s2")
+})
+
+test_that("print.np_result runs without error", {
+  .test_rng_scope({
+    d <- .make_np_data(n = 16L, p = 2L, m = 2L)
+    out <- np_dnn(
+      X = d$X, X0 = d$X0, Y = d$y,
+      k = 1L, s = 2L, se = FALSE
+    )
+    txt <- capture.output(print(out))
+    expect_true(any(grepl("<np_result>", txt, fixed = TRUE)))
+  }, seed = 123L)
+})
+
+test_that("print.tdnn_np_result runs and shows key fields", {
+  .test_rng_scope({
+    d   <- .make_tdnn_data(n = 20L, m = 2L)
+    out <- np_tdnn(X = d$X, X0 = d$X0, Y = d$y, s1 = 1L, s2 = 2L, se = FALSE)
+    txt <- capture.output(print(out))
+    expect_true(any(grepl("<tdnn_np_result>", txt, fixed = TRUE)))
+    expect_true(any(grepl("TDNN", txt)))
+    expect_true(any(grepl("s1=", txt)))
+    expect_true(any(grepl("s2=", txt)))
+  }, seed = 123L)
 })

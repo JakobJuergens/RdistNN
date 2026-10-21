@@ -16,12 +16,17 @@ that label. [Package scope](../rdistnn_roadmap.md) records extension boundaries.
 
 ## Public changes
 
+Version 0.1.1 is the first intended shared release. Earlier development versions
+have no external users, so their retired interfaces and fit schemas are removed
+without deprecation shims. Current fits must still survive serialization and
+support the documented prediction, candidate and reporting paths.
+
 Names, arguments and their meanings/defaults, result fields/classes, methods
 and consequential warning/error behavior are public contracts. Evolve them
 deliberately with documentation and regression tests; experimental status does
 not excuse undocumented breakage.
 
-Prefer adding the improved interface, preserving compatibility where feasible,
+After the first shared release, prefer adding the improved interface, preserving compatibility where feasible,
 warning on deprecated use, updating examples, then removing the old interface
 once the transition is visible and tested. Warnings name the deprecated use,
 replacement and removal timing/condition. Use a hard error when the old behavior

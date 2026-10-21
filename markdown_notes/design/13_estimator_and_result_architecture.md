@@ -17,6 +17,13 @@ Reuse the distance/ranking, rank-weight, tuning, validation and jackknife layers
 Compiled routines implement the same numerical contract as their R fallbacks;
 they do not define another API. Keep user-facing validation at the R boundary.
 
+Estimator files own public input resolution and fit assembly. NP, CATE and
+PLQR tuning callbacks live in their respective `user-dnn-*-grid.R` modules,
+alongside the existing affine-ratio grid adapter. Retained-state and numerical
+support live in `*-core.R`; public reporting and prediction methods live in
+`*-methods.R`. Keep inference differences in the estimator adapters when
+sharing structural grid policy.
+
 Jackknife covariance paths subtract a common numerical reference per target
 and signal before summing deletions. Choose that reference only from the union
 of observations with nonzero weight in any deletion. A nonzero entry at rank
@@ -77,16 +84,45 @@ candidate adapters update the retained order; estimator adapters own the
 resulting means, effects or paired covariance/status quantities. Sharing the
 target boundary does not change these inference contracts.
 
-`R/user-dnn-geometry.R` owns `.dnn_fitted_geometry()` for NP/TDNN, CATE and
+`R/user-dnn-geometry.R` owns `.dnn_fitted_geometry()` for NP/TDNN, CATE, PLQR and
 paired-ratio/CLATE fits. It resolves the specification and training context once,
 retains a setup-free specification for prediction, and separately retains the
-original resolved specification/context for legacy deletion refitting. Registry
+original resolved specification/context for explicit deletion refitting. Registry
 replacement therefore cannot change a saved fit. NP/TDNN and CATE `loo` keep
 their established deletion-specific geometry; paired-ratio `loo` remains the
 frozen-rank reference. Custom closures with mutable external state retain their
 own reproducibility obligations.
 
+Tie policy is retained with the fitted state. New covariate-aware rankings use
+exact represented distance, lexicographic original raw covariates in supplied
+column order, then input position for identical covariate rows. No signal or
+nuisance value enters ordering; rank-weight values and ESS do not change.
+Shared retained-state adapters reuse current cached ranks for prediction,
+covariance and plot reconstruction. Older development fit schemas are not a
+compatibility target. Distance-only and caller-supplied rank/order APIs retain
+their documented semantics.
+
 ## CATE joint covariance
+
+CATE descriptive metadata are `meta$signal_source` (`"aipw"` or `"supplied"`)
+and `meta$created_with_version` (the original fit's loaded package version).
+The constructor classifies its
+actual input branch: a supplied vector takes precedence over nuisance selectors
+and remains supplied regardless of its values or column name. Resolve the
+creation version from the executing namespace, without an installed-copy lookup,
+Git or network. Candidate views preserve the original creation version.
+`.cate_result_meta()` in `R/user-dnn-cate-core.R` validates current metadata for
+summaries, candidate views and printed descriptions. Objects from older
+development schemas require refitting. Prediction outputs retain their ordinary vector, matrix
+or `list(fit, se.fit)` types and attributes.
+
+Fresh built-in CATE uses AIPW with propensity and both arm-specific outcome means;
+the pooled-mean normalized Robinson constructor remains removed. Supported
+retained-state operations reuse the current fitted signal. Source labels describe entry routes;
+neither provenance nor numerical reuse establishes identification, nuisance
+accuracy/stability, localization bias or pointwise inference. The detailed
+[migration guide](https://JakobJuergens.github.io/RdistNN/articles/getting-started.html#migrating-earlier-cate-inputs)
+owns user guidance.
 
 CATE also exposes `vcov()` from retained frozen signals, without requiring
 optional weights. Common deletion rows supply cross-target covariance;
@@ -117,7 +153,7 @@ common deletion rows, preserving off-diagonal dependence. It calculates this
 on request instead of retaining an additional quadratic target-size matrix in
 every fit. Candidate views update the retained order, so covariance and
 prediction reconstruct the selected candidate. The fitted covariance matches
-the stored SE calculation: `fast` uses frozen ranks, while the legacy `loo`
+the stored SE calculation: `fast` uses frozen ranks, while the explicit `loo`
 reference recomputes deletion geometry using the original context. Prediction
 uncertainty always uses frozen training geometry and fast rank deletions.
 
@@ -145,9 +181,11 @@ unrequested extras.
 | Mahalanobis geometry | `R/dist_mahal.R` | Retained fitted context; existing L2 engines evaluate projected norms |
 | Prediction target interface | `.dnn_resolve_prediction_targets()` in `R/user-dnn-prediction.R` | Fitted-state validation and method-specific signal/uncertainty |
 | NP retained state and joint covariance | `R/user-dnn-np-core.R` | Local means and DNN/TDNN controls; public methods in `R/user-dnn-np-methods.R` |
+| CATE retained-state and deletion adapter | `R/user-dnn-cate-core.R` | Frozen signal meaning, geometry requirements and descriptive provenance; public methods in `R/user-dnn-cate-methods.R` |
+| PLQR score arithmetic, coefficient sandwich and retained prediction state | `R/user-dnn-plqr-core.R` | Density-backed bread, distinct moment/coefficient uncertainty and supported prediction inputs |
 | DNN rank weights | `.dnn_rank_weight_spec()` in `R/user-dnn-core.R` | Exact/asymptotic rule, `k`, `s`, normalization |
 | Order and candidate identities | `.dnn_resolve_s()` in `R/user-dnn-tuning.R` | Statistical feasibility and tuning specification |
-| Grid evaluation and cache reuse | `.dnn_grid_eval()` in `R/user-dnn-grid.R` | Estimate/SE callbacks and target-specific statuses |
+| Grid evaluation, cache reuse and common descriptive policy | `R/user-dnn-grid.R` | Estimate/SE callbacks and target-specific statuses in `user-dnn-np-grid.R`, `user-dnn-cate-grid.R`, `user-dnn-plqr-grid.R` and `user-dnn-affine-ratio-grid.R` |
 | Shared deletion orchestration | `R/user-dnn-jackknife.R` | Signal meaning, geometry refitting and statistical normalization |
 | Paired ratios | `.affine_ratio_evaluate()` | CLATE signal construction and IV metadata |
 | Candidate views | `R/candidate-fit.R` | Every candidate-dependent estimate, covariance and optional extra |

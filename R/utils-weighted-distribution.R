@@ -33,11 +33,13 @@
   w <- w[active]
   mass <- .compensated_sum(w)
   if (!is.finite(mass) || mass <= 0) return(NA_real_)
-  amplitude <- max(abs(x))
+  # Translate before normalization, using the shared exact-subtraction guard.
+  # A tiny-weight extreme must not erase variation among the other outcomes.
+  z <- x - .numeric_signal_level(matrix(x, ncol = 1L))
+  amplitude <- max(abs(z))
   if (amplitude == 0) return(0)
   scale <- 2^max(-1074, min(1022, floor(log(amplitude) / log(2))))
-  z <- x / scale
-  z <- z - z[1L]
+  z <- z / scale
   weights <- w / mass
   center <- .compensated_sum(z * weights)
   d <- sqrt(weights) * (z - center)

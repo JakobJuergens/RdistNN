@@ -79,18 +79,17 @@
 #'   `ci_len`, and `status`. Optional columns `neff`, `tau_hat`, and `tau0`
 #'   (returned by [sim_cate_run()]) are handled gracefully: `neff` is averaged
 #'   into the summary; `tau_hat` is summarized through its empirical standard
-#'   deviation; `tau0` remains a per-rep quantity and is not aggregated. When
-#'   present, `method_variant`, `forest_nuisance`, `y_hat_supplied`, and
-#'   `w_hat_supplied` extend the grouping key. Older raw objects without these
-#'   fields receive typed missing metadata; no nuisance route is inferred.
+#'   deviation; `tau0` remains a per-rep quantity and is not aggregated.
+#'   `method_variant`, `forest_nuisance`, `y_hat_supplied`, and
+#'   `w_hat_supplied` extend the grouping key. These route columns are required;
+#'   methods without GRF nuisances record typed missing values.
 #'
 #' @return A `data.frame` with one row per unique group and columns
 #'   `method`, `design`, `n`, `kx`, `candidate_id`, `lambda`, `s`, `n_reps`,
 #'   `n_failed`, `bias`, `rmse`, `se_mean`, `cover`, `ci_len`, `emp_sd`,
 #'   `se_to_sd`, `bias_to_se`, localization, support, and studentized-shape
 #'   diagnostics (and `neff` when present in `raw`). The output always includes
-#'   the four GRF route fields, with typed missing values when they were absent
-#'   from `raw` or do not apply.
+#'   the four GRF route fields, with typed missing values when they do not apply.
 #'
 #' @seealso [sim_cate_run()]
 #'
@@ -105,7 +104,8 @@
 summarise_sim_results <- function(raw) {
   required <- c(
     "method", "design", "n", "kx", "candidate_id", "lambda", "s",
-    "bias", "sq_err", "se", "cover", "ci_len", "status"
+    "bias", "sq_err", "se", "cover", "ci_len", "status",
+    "method_variant", "forest_nuisance", "y_hat_supplied", "w_hat_supplied"
   )
   missing  <- setdiff(required, names(raw))
   if (length(missing) > 0L)
@@ -114,13 +114,6 @@ summarise_sim_results <- function(raw) {
   route_cols <- c(
     "method_variant", "forest_nuisance", "y_hat_supplied", "w_hat_supplied"
   )
-  route_defaults <- list(NA_character_, NA_character_, NA, NA)
-  for (j in seq_along(route_cols)) {
-    col <- route_cols[[j]]
-    if (!col %in% names(raw)) {
-      raw[[col]] <- rep(route_defaults[[j]], nrow(raw))
-    }
-  }
   raw$method_variant <- as.character(raw$method_variant)
   raw$forest_nuisance <- as.character(raw$forest_nuisance)
   raw$y_hat_supplied <- as.logical(raw$y_hat_supplied)
@@ -190,10 +183,10 @@ summarise_sim_results <- function(raw) {
       NA_real_
     }
     row$localized_truth_mean <- diagnostic_mean("localized_truth")
-    row$branch_drift <- diagnostic_mean("branch_drift")
+    row$localization_drift <- diagnostic_mean("localization_drift")
     row$estimator_remainder <- diagnostic_mean("estimator_remainder")
     row$score_sd0 <- diagnostic_mean("score_sd0")
-    row$standardized_branch_drift <- diagnostic_mean("standardized_branch_drift")
+    row$standardized_localization_drift <- diagnostic_mean("standardized_localization_drift")
     row$physical_radius_90_mean <- diagnostic_mean("physical_radius_90")
     row$physical_radius_90_p25 <- diagnostic_quantile("physical_radius_90", 0.25)
     row$physical_radius_90_p50 <- diagnostic_quantile("physical_radius_90", 0.50)

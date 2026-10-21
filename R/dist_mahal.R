@@ -1,21 +1,4 @@
 # Mahalanobis geometry is fitted once from the centered training design.
-# Legacy inverse contexts remain readable for serialized fits.
-
-# Safe pseudoinverse via SVD; avoids dependency on MASS.
-.mahal_solve_safe <- function(S, eps = 1e-10) {
-  result <- tryCatch(solve(S), error = function(e) NULL)
-  if (!is.null(result)) return(result)
-  sv    <- svd(S)
-  d_inv <- ifelse(sv$d > eps * max(sv$d, 1e-300), 1 / sv$d, 0)
-  sv$v %*% diag(d_inv, nrow = length(d_inv)) %*% t(sv$u)
-}
-
-# Mahalanobis distances from a single target x0 given pre-computed Si.
-.mahal_dist_one <- function(X, x0, Si) {
-  Z  <- X - matrix(x0, nrow(X), ncol(X), byrow = TRUE)
-  d2 <- rowSums((Z %*% Si) * Z)
-  sqrt(pmax(d2, 0))
-}
 
 # The SVD acts on the design rather than its Gram matrix, whose condition
 # number is squared. A binary scale prevents covariance-range failures.
@@ -24,7 +7,9 @@
     stop("distance_mahalanobis() requires at least one covariate.", call. = FALSE)
   if (nrow(X) < 2L)
     stop("distance_mahalanobis() requires at least two training observations.", call. = FALSE)
-  origin <- X[1L, ]
+  # Preserve small represented coordinates beside a distant first row. This
+  # origin is retained for prediction; the centered SVD arithmetic stays fixed.
+  origin <- .numeric_signal_level(X)
   Z <- matrix(0, nrow(X), ncol(X))
   column_power <- numeric(ncol(X))
   spread_power <- rep(-Inf, ncol(X))
@@ -102,11 +87,22 @@
 }
 
 .mahal_eval_batch <- function(X, X0, ctx) {
-  if (is.null(ctx) || (is.null(ctx$Si) && is.null(ctx$factor))) ctx <- .mahal_fit(X)
-  if (!is.null(ctx$Si)) {
-    out <- matrix(NA_real_, nrow(X), nrow(X0))
-    for (j in seq_len(nrow(X0))) out[, j] <- .mahal_dist_one(X, X0[j, ], ctx$Si)
-    return(out)
+  if (is.null(ctx)) ctx <- .mahal_fit(X)
+  p <- ncol(X)
+  if (!is.list(ctx) || !is.null(ctx$Si) ||
+      !is.numeric(ctx$version) || length(ctx$version) != 1L ||
+      !is.finite(ctx$version) || ctx$version != 2 ||
+      !is.numeric(ctx$scale) || length(ctx$scale) != 1L ||
+      !is.finite(ctx$scale) || ctx$scale <= 0 ||
+      !is.numeric(ctx$origin) || length(ctx$origin) != p || any(!is.finite(ctx$origin)) ||
+      !is.matrix(ctx$factor) || !is.numeric(ctx$factor) ||
+      !identical(dim(ctx$factor), c(p, p)) || any(!is.finite(ctx$factor)) ||
+      !is.numeric(ctx$rank) || length(ctx$rank) != 1L || !is.finite(ctx$rank) ||
+      ctx$rank < 0 || ctx$rank > p || ctx$rank != floor(ctx$rank)) {
+    stop(
+      "`ctx` must be a current fitted Mahalanobis whitening context; refit with distance_mahalanobis()$setup(X).",
+      call. = FALSE
+    )
   }
   distance_l2()$eval_batch(.mahal_project(X, ctx), .mahal_project(X0, ctx))
 }
@@ -132,7 +128,6 @@
 #' change the retained numerical rank. The factor is reused through `ctx`,
 #' including for subsets and new targets, following [distance_l2_scaled()].
 #' Euclidean norms after projection use the selected C++ or R distance engine.
-#' Legacy contexts containing `Si` retain their original inverse metric.
 #' The explicit rank policy can change neighbors relative to older fits that
 #' truncated covariance singular values after an inverse failed. Different
 #' linear-algebra libraries can still differ at a numerical rank boundary.

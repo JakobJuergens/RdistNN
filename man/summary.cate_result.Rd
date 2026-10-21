@@ -14,7 +14,9 @@
 \item{...}{Not used.}
 }
 \value{
-An object of class \code{summary.cate_result} with a coefficient table.
+An object of class \code{summary.cate_result} with a coefficient table
+and \code{meta}, including the original fit's signal provenance and creation
+version.
 }
 \description{
 Summarize a \code{cate_result} object

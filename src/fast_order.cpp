@@ -1,6 +1,7 @@
 // src/fast_order.cpp
 // [[Rcpp::plugins(cpp17)]]
 #include "fast_order.hpp"
+#include "covariate_ties.hpp"
 #include <Rcpp.h>
 #include <vector>
 #include <algorithm>
@@ -128,6 +129,12 @@ void argsort_indices(const double *x, int n, int *out_idx) {
       out_idx[i] = i;
     std::stable_sort(out_idx, out_idx + n, StableCmp(x));
   }
+}
+
+void argsort_indices_covariates(const double *distance, const double *X, int n, int p,
+                                int *out_idx) {
+  argsort_indices(distance, n, out_idx);
+  rdistnn_ordering::refine_distance_ties(distance, X, n, p, out_idx);
 }
 
 void ranks_from_values(const double *x, int n, int *ranks_out) {

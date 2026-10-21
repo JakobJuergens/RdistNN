@@ -36,10 +36,12 @@ the resulting ranks and estimates against independent latent-coordinate
 formulas. The cutoff is shared across packages; SVD libraries can still differ
 at its rounding boundary. Do not claim universal bitwise SVD equivalence.
 
-Contexts retain scale, raw observed origin, factor, version and rank. Evaluation
+Contexts retain scale, a subtraction-safe raw origin, factor, version and rank.
+The origin may be zero when an observed-value shift would erase represented
+differences. Evaluation
 must respect this state for subsets, duplicate/reordered targets and restored
-fits. Legacy R `Si` contexts and Stata square inverse snapshots continue to
-use their original metric. Stata packs scale metadata and origin above a
+fits. Supplied contexts must use the current whitening format; older inverse
+contexts require refitting. Stata packs scale metadata and origin above a
 zero-padded square factor, distinguished from an inverse by its row count;
 this needs no change to the outer saved-model version. Projection skips exact
 null coordinates before normalization and recovers overflowing raw differences
@@ -74,6 +76,48 @@ Paired-ratio adapters request failure masks and retain their existing
 fit the host's representation: Stata's nonmissing finite range is smaller
 than R's IEEE range. Scaling cannot recover a mathematically unrepresentable
 answer. These guards change numerical computation, not inference assumptions.
+
+## Score comparisons and contribution ranges
+
+`R/utils-binary.R` owns exact operand decomposition into a mantissa and a
+power of two. PLQR comparisons and contribution-range recovery reuse it;
+geometry and covariance retain their separately documented scaling policies.
+
+`R/utils-plqr-comparison.R`, the native `linear_threshold_comparison.hpp` and
+Stata's `_rdistnn_plqr_mata.ado` implement the same adaptive comparison for
+`Y <= D*theta + g`. A finite threshold alone does not ensure a correct sign:
+ordinary cancellation can depend on the BLAS reduction, and finite products
+can overflow a partial sum. Let `L = ncol(D)+2`, `eps = 2^-52`,
+`eta = 2^-1074`, and let `A` add `abs(g)`, `abs(Y)` and the absolute rounded
+products in column order. Retain the ordinary comparison only when the
+threshold and margin are finite, `A < 2^1022`, and the absolute rounded margin
+strictly exceeds `8*(L+1)*eps*A + 32*L*eta`. The conservative error envelope
+includes product, sum, margin and gradual-underflow rounding. The range gate
+supplies the no-overflow condition needed for ordinary dot-product error
+analysis; see [Ogita, Rump and Oishi (2005)](https://ogilab.w.waseda.jp/ogita/math/doc/2005_OgRuOi.pdf).
+
+Uncertain comparisons use an exact fixed-point sum of products, following the
+[exact-accumulation approach of Kulisch and Snyder](https://publikationen.bibliothek.kit.edu/1000018822/1375602)
+and the [adaptive-predicate principle of Shewchuk](https://people.eecs.berkeley.edu/~jrs/papers/robustr.pdf).
+Separate positive and negative accumulators each use 170 base-`2^26` limbs
+with bit origin `-2252`. Split significands and their products before shifting;
+every integer operation remains exactly representable in binary64. Immediate
+carry normalization bounds intermediates independently of the number of terms.
+The storage extends below every finite binary64 product and above the sum of
+`INT_MAX+2` maximal products. Comparing the highest differing limbs gives the
+exact sign; equality satisfies the inclusive comparison. This needs no runtime
+multiprecision dependency. The contract assumes round-to-nearest binary64,
+gradual underflow and builds without unsafe floating-point reassociation.
+
+`R/utils-score-concentration.R` shares finite-operand contribution recovery
+between CATE concentration and CATE/CLATE influence plots. Zero-weight rows
+are inactive before risky arithmetic. Ordinary finite weighted residuals keep
+their represented values. Recover a range failure only when both residual
+operands, including the already rounded paired product, are finite; retain
+mantissa/exponent descriptors until the weighted contribution or dimensionless
+share is formed. A finite concentration can remain available when dimensional
+contributions exceed the host range. This does not infer the magnitude of an
+overflowing paired product or change paired jackknife concentration formulas.
 
 ## Verification
 

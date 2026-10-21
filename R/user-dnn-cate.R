@@ -7,8 +7,10 @@
 #'
 #' @details
 #' The documented sampling framework uses independent observations; cluster
-#' and survey-design inference are not supplied. Input row order breaks
-#' distance ties, so permuting tied observations can change estimates.
+#' and survey-design inference are not supplied. Exact distance ties use
+#' lexicographic order of the original covariates, in their supplied column
+#' order. Identical covariate rows retain input-order ties; permuting those
+#' duplicates can change estimates. Ordering uses no outcomes or nuisances.
 #'
 #' Two interfaces are supported.
 #'
@@ -43,10 +45,21 @@
 #' This function accepts supplied oracle, out-of-fold or full-sample predictions;
 #' it does not verify those conditions for a learner. The normalized Robinson
 #' construction is not implemented; use AIPW inputs or a justified supplied signal.
+#' A pooled outcome mean cannot replace the two arm-specific means.
 #'
 #' With `data`, omit `X`; a direct `pseudo_outcome` vector remains supported.
 #' Column selectors require `data`. Prediction retains the fitted metric and
 #' context even if a registered distance name is subsequently replaced.
+#'
+#' @section Signal provenance:
+#' `meta$signal_source` records the actual input branch: `"aipw"` for built-in
+#' nuisance construction, `"supplied"` for `pseudo_outcome` (which takes
+#' precedence over nuisance selectors). Neither signal values nor column names
+#' establish provenance.
+#' `meta$created_with_version` records the package version loaded when the
+#' original fit was created. Summaries and candidate views preserve these fields.
+#' Provenance does not certify causal identification, nuisance accuracy/stability,
+#' localization bias, or pointwise inference.
 #'
 #' @param data Data frame with covariates and optional nuisance columns. Column
 #'   names must be non-missing, non-empty, and unique.
@@ -63,7 +76,8 @@
 #'   `pmin(pmax(e, clip), 1 - clip)`. This argument does not alter a supplied
 #'   `pseudo_outcome`.
 #' @param pseudo_outcome Numeric vector of length `n`. If supplied, nuisance
-#'   columns are not required.
+#'   columns are not required and are ignored. The signal is localized unchanged;
+#'   its construction and inferential justification are the caller's responsibility.
 #' @param X Numeric matrix (`n x p`) for the matrix interface.
 #' @param X0 Numeric matrix (`m x p`) of target points; mutually exclusive with
 #'   `x0`.
@@ -102,7 +116,8 @@
 #'   - `se`: optional jackknife standard errors;
 #'   - `x0`: the `m x p` matrix of evaluation points, with covariate
 #'     column names propagated from the training data when available;
-#'   - `meta`: metadata (`n`, `m`, `p`, `k`, `s`, `method`, `distance`);
+#'   - `meta`: metadata (`n`, `m`, `p`, `k`, `s`, `method`, `distance`,
+#'     `signal_source`, `created_with_version`); see Signal provenance;
 #'   - `tuning_grid`: in grid mode, a list with `candidates`, `estimates`,
 #'     `diagnostics`, and `meta` tables. Candidate diagnostics report
 #'     top-5 weight concentration separately from the estimator's `k`;
@@ -166,6 +181,7 @@ cate_dnn <- function(
     )
   }
   t_vec <- e_used <- m0 <- m1 <- NULL
+  signal_source <- "supplied"
 
   .dnn_validate_input_route(data, list(X = X),
     list(x_cols = x_cols, y_col = y_col, t_col = t_col,
@@ -230,6 +246,7 @@ cate_dnn <- function(
         ehat = e_used,
         clip = clip
       )
+      signal_source <- "aipw"
     }
   } else {
     # matrix API
@@ -267,7 +284,7 @@ cate_dnn <- function(
   x0_mat <- .dnn_resolve_targets(x_mat, X0 = X0, x0 = x0)
 
   geometry <- .dnn_fitted_geometry(distance, x_mat, ctx)
-  # Retain the resolved unfitted specification for legacy geometry-refitting LOO.
+  # Retain the resolved unfitted specification for geometry-refitting LOO.
   distance <- geometry$inference_distance
 
   # Weights (rank-only DNN).
@@ -319,7 +336,10 @@ cate_dnn <- function(
       n = n, m = m_out, p = p,
       k = as.integer(k), s = as.integer(s),
       method = method, distance = .dnn_distance_name(distance),
-      jackknife = if (isTRUE(se)) jackknife else "none"
+      jackknife = if (isTRUE(se)) jackknife else "none",
+      tie_rule = "distance_then_covariates_then_input_position",
+      signal_source = signal_source,
+      created_with_version = as.character(getNamespaceVersion(environment(cate_dnn)))
     )
   )
   if (!is.null(e_used)) {
@@ -379,287 +399,4 @@ cate_dnn <- function(
 
   class(out) <- "cate_result"
   out
-}
-
-.cate_dnn_rank_weight_spec <- function(method, k, s, normalize) {
-  .dnn_rank_weight_spec(method, k, s, normalize)
-}
-
-.cate_dnn_grid_estimates <- function(tau, se) {
-  out <- data.frame(
-    target_id = seq_along(tau),
-    component = NA_character_,
-    estimate = as.numeric(tau),
-    stringsAsFactors = FALSE
-  )
-  out$se <- if (is.null(se)) rep(NA_real_, length(tau)) else as.numeric(se)
-  out
-}
-
-.cate_dnn_grid_default_precomputed <- function(
-  candidates, tau_hat, se_hat, n, k, method, normalize
-) {
-  default_row <- candidates[candidates$is_default, , drop = FALSE]
-  spec <- .cate_dnn_rank_weight_spec(
-    method = method,
-    k = k,
-    s = default_row$s[[1L]],
-    normalize = normalize
-  )
-  tab <- .rank_weight_table(spec, n)
-  result <- list(
-    estimates = .cate_dnn_grid_estimates(tau = tau_hat, se = se_hat),
-    diagnostics = .dnn_grid_diagnostics_from_table(tab, n = n, ctx = list(k = k))
-  )
-  stats::setNames(list(result), as.character(default_row$computed_key[[1L]]))
-}
-
-.cate_dnn_grid_se_fn <- function(
-  ranks, psi, x_mat, x0_mat, distance, method, k, normalize, ctx, jackknife
-) {
-  force(ranks)
-  force(psi)
-  force(x_mat)
-  force(x0_mat)
-  force(distance)
-  force(method)
-  force(k)
-  force(normalize)
-  force(ctx)
-  force(jackknife)
-
-  function(candidate_row, tab_jk) {
-    s <- as.integer(candidate_row$s[[1L]])
-    se <- if (identical(jackknife, "fast")) {
-      spec <- .cate_dnn_rank_weight_spec(method = method, k = k, s = s, normalize = normalize)
-      loo <- if (is.null(tab_jk)) {
-        .dnn_loo_loop(psi, ranks, spec, center = TRUE)
-      } else {
-        .dnn_loo_centered(
-          psi,
-          ranks,
-          tab_jk,
-          tab_full = attr(tab_jk, "tab_full", exact = TRUE)
-        )$loo
-      }
-      as.numeric(.dnn_jackknife_se_from_loo(
-        loo = loo,
-        q = 1L,
-        n = nrow(ranks),
-        m = ncol(ranks)
-      )[1L, ])
-    } else {
-      .cate_dnn_jackknife_se_loo(
-        x_mat = x_mat,
-        x0_mat = x0_mat,
-        psi = psi,
-        distance = distance,
-        method = method,
-        k = k,
-        s = s,
-        normalize = normalize,
-        ctx = ctx,
-        jackknife = "loo",
-        precomputed_ranks = NULL
-      )
-    }
-
-    data.frame(
-      target_id = seq_along(se),
-      component = NA_character_,
-      se = as.numeric(se),
-      stringsAsFactors = FALSE
-    )
-  }
-}
-
-.cate_dnn_warn_infeasible_grid <- function(candidates) {
-  skipped <- candidates[!candidates$feasible, c("candidate_id", "reason"), drop = FALSE]
-  if (nrow(skipped) < 1L) {
-    return(invisible(NULL))
-  }
-  details <- paste(
-    sprintf("%s (%s)", skipped$candidate_id, skipped$reason),
-    collapse = ", "
-  )
-  warning(
-    sprintf("Skipped infeasible tuning candidate(s): %s.", details),
-    call. = FALSE
-  )
-  invisible(NULL)
-}
-
-.cate_dnn_grid_meta <- function(tuning_payload, engine_meta, n, p, k, method, distance, se, jackknife) {
-  grid_meta <- tuning_payload$grid$meta
-  name <- if (!is.null(grid_meta$name)) {
-    as.character(grid_meta$name)
-  } else if (!is.null(tuning_payload$default$meta$name)) {
-    as.character(tuning_payload$default$meta$name)
-  } else {
-    as.character(tuning_payload$source)
-  }
-  list(
-    name = name,
-    n = as.integer(n),
-    kx = as.integer(p),
-    k = as.integer(k),
-    method = method,
-    distance = .dnn_distance_name(distance),
-    jackknife = if (isTRUE(se)) jackknife else "none",
-    n_candidates = engine_meta$n_candidates,
-    n_feasible = engine_meta$n_feasible,
-    n_skipped = engine_meta$n_skipped,
-    n_failed = engine_meta$n_failed,
-    n_unique = engine_meta$n_unique
-  )
-}
-
-.cate_dnn_tuning_grid <- function(
-  candidates,
-  ranks,
-  tau_hat,
-  se_hat,
-  x_mat,
-  x0_mat,
-  psi,
-  distance,
-  method,
-  k,
-  normalize,
-  ctx,
-  se,
-  jackknife,
-  tuning_payload,
-  reuse_default = TRUE
-) {
-  .cate_dnn_warn_infeasible_grid(candidates)
-  se_fn <- if (isTRUE(se) && !identical(jackknife, "none")) {
-    .cate_dnn_grid_se_fn(
-      ranks = ranks,
-      psi = psi,
-      x_mat = x_mat,
-      x0_mat = x0_mat,
-      distance = distance,
-      method = method,
-      k = k,
-      normalize = normalize,
-      ctx = ctx,
-      jackknife = jackknife
-    )
-  } else {
-    NULL
-  }
-
-  grid <- .dnn_grid_eval(
-    candidates = candidates,
-    ranks = ranks,
-    weight_spec_fn = function(candidate_row) {
-      .cate_dnn_rank_weight_spec(
-        method = method,
-        k = k,
-        s = candidate_row$s[[1L]],
-        normalize = normalize
-      )
-    },
-    estimate_fn = function(W, candidate_row) {
-      tau <- as.numeric(.dnn_estimate_from_signal(psi, W, n = nrow(x_mat), arg = "pseudo_outcome")[1L, ])
-      data.frame(
-        target_id = seq_along(tau),
-        component = NA_character_,
-        estimate = tau,
-        stringsAsFactors = FALSE
-      )
-    },
-    se_fn = se_fn,
-    ctx = list(k = k),
-    precomputed = if (reuse_default) .cate_dnn_grid_default_precomputed(
-      candidates = candidates,
-      tau_hat = tau_hat,
-      se_hat = se_hat,
-      n = nrow(x_mat),
-      k = k,
-      method = method,
-      normalize = normalize
-    ) else NULL
-  )
-  grid$meta <- .cate_dnn_grid_meta(
-    tuning_payload = tuning_payload,
-    engine_meta = grid$meta,
-    n = nrow(x_mat),
-    p = ncol(x_mat),
-    k = k,
-    method = method,
-    distance = distance,
-    se = se,
-    jackknife = jackknife
-  )
-  grid
-}
-
-# Internal: paper-consistent delete-1 jackknife for cate_dnn().
-# Implements the delete-1 recomputation in Eq. (3.30)-(3.32) of
-# Local_Z_Est_JJuergens.pdf for the scalar (p_alpha = 1) CATE target.
-.cate_dnn_jackknife_se_loo <- function(
-  x_mat, x0_mat, psi, distance, method, k, s, normalize, ctx,
-  jackknife = c("fast", "loo"),
-  precomputed_ranks = NULL
-) {
-  jackknife <- match.arg(jackknife)
-  as.numeric(
-    .dnn_jackknife_se_loo_matrix(
-      x_mat = x_mat,
-      x0_mat = x0_mat,
-      signal = psi,
-      distance = distance,
-      method = method,
-      k = k,
-      s = s,
-      normalize = normalize,
-      ctx = ctx,
-      signal_arg = "pseudo_outcome",
-      jackknife = jackknife,
-      precomputed_ranks = precomputed_ranks
-    )[1L, ]
-  )
-}
-
-#' Print a `cate_result` object
-#'
-#' @param x An object returned by [cate_dnn()].
-#' @param ... Not used.
-#' @return `x`, invisibly.
-#' @examples
-#' set.seed(1)
-#' n <- 20
-#' x_mat <- matrix(rnorm(n * 2), n, 2)
-#' out <- cate_dnn(
-#'   X = x_mat,
-#'   x0 = c(0, 0),
-#'   pseudo_outcome = rnorm(n),
-#'   se = FALSE
-#' )
-#' print(out)
-#' @export
-print.cate_result <- function(x, ...) {
-  cat("<cate_result>\n", sep = "")
-  .dnn_print_localization(x$meta)
-  cat("  data  : n=", x$meta$n, ", p=", x$meta$p, ", m=", x$meta$m, "\n", sep = "")
-  cat("  DNN   : method=", x$meta$method, ", k=", x$meta$k,
-    ", distance=", x$meta$distance, "\n",
-    sep = ""
-  )
-  if (!is.null(x$se)) {
-    cat("  est   : tau[1:min(5,m)] = ",
-      paste0(round(utils::head(x$tau, 5), 4), collapse = ", "),
-      "  (SEs available)\n",
-      sep = ""
-    )
-  } else {
-    cat("  est   : tau[1:min(5,m)] = ",
-      paste0(round(utils::head(x$tau, 5), 4), collapse = ", "),
-      "  (SEs not requested)\n",
-      sep = ""
-    )
-  }
-  invisible(x)
 }

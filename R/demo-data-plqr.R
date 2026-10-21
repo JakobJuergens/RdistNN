@@ -162,7 +162,7 @@ plqr_demo_data <- function(n = 300,
       0.5 * sin(xx[, 1]) + if (ncol(xx) >= 2) 0.25 * xx[, 2]^2 else 0
     },
     bump = {
-      center <- c(0.5, -0.5, rep(0, max(0, p - 2L)))
+      center <- c(0.5, -0.5, rep(0, max(0, p - 2L)))[seq_len(p)]
       function(xx) {
         xx <- as.matrix(xx)
         d2 <- rowSums((xx - rep(center, each = nrow(xx)))^2)
@@ -264,7 +264,7 @@ plqr_demo_subsets <- function(n, K = 1000L, s = 8L, seed = NULL) {
     on.exit(restore_rng(), add = TRUE)
     set.seed(seed)
   }
-  t(replicate(K, sort(sample.int(n, s))))
+  t(matrix(replicate(K, sort(sample.int(n, s))), nrow = s, ncol = K))
 }
 
 #' Ready-made multi-scenario generator for PLQR tests

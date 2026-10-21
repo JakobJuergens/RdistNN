@@ -1,10 +1,10 @@
 # Helpers for jackknife tests
-set.seed(123)
 
 # Generate a random m×p query matrix (used across multiple test files)
 .make_X0 <- function(m, p, seed = 99L) {
-  set.seed(seed)
-  matrix(rnorm(m * p), m, p)
+  .test_rng_scope({
+    matrix(rnorm(m * p), m, p)
+  }, seed = seed)
 }
 
 # Squared Euclidean distances (no external deps)

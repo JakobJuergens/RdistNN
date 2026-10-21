@@ -158,6 +158,13 @@ sim_iv_one_rep <- function(n, kx, q, k, s, design,
 #' cell uses the same replicate seed vector so methods are compared on aligned
 #' draws.
 #'
+#' @section Parallelism:
+#' With `future.apply` installed, replicate execution follows `future::plan()`
+#' through `future.apply::future_lapply(..., future.seed = TRUE)`. Otherwise it
+#' uses sequential `lapply`.
+#'
+#' @inheritSection sim_cate_run Reproducibility
+#'
 #' @param designs Character vector of IV DGP names.
 #' @param n_vals Integer vector of sample sizes.
 #' @param kx_vals Integer vector of covariate dimensions.

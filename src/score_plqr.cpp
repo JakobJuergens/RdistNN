@@ -3,6 +3,8 @@
 // [[Rcpp::depends(Rcpp)]]
 #include <Rcpp.h>
 #include "parallel_threads.h"
+#include "linear_threshold_comparison.hpp"
+#include <cmath>
 using namespace Rcpp;
 
 // Scores-only context for PLQR (no geometry, no localizer, no weights)
@@ -64,6 +66,7 @@ NumericVector rustat_plqr_g_all(SEXP ctx_) {
   const int p_d = ctx->p_d;
   const int j0 = ctx->j - 1;
   NumericVector g(n);
+  const double *design = REAL(ctx->D), *coefficients = REAL(ctx->beta);
 
 #ifdef _OPENMP
 #pragma omp parallel for num_threads(rustat::thread_limit()) schedule(static) if (n >= 1024)
@@ -73,7 +76,12 @@ NumericVector rustat_plqr_g_all(SEXP ctx_) {
     for (int pd = 0; pd < p_d; ++pd)
       db += ctx->D(i, pd) * ctx->beta[pd];
     const double thr = db + ctx->qx[i];
-    const int ind = (ctx->Y[i] <= thr) ? 1 : 0;
+    const int ind = rdistnn_arithmetic::linear_threshold_indicator(design + i, n, coefficients, p_d,
+                                                                   ctx->qx[i], ctx->Y[i], thr);
+    if (ind < 0) {
+      g[i] = NA_REAL;
+      continue;
+    }
     const double resid = ctx->tau - ind;
     const double rDj = ctx->D(i, j0) - ctx->mD(i, j0);
     g[i] = resid * rDj;
@@ -89,6 +97,7 @@ NumericVector rustat_plqr_g_indexed(IntegerVector idxs, SEXP ctx_) {
   const int p_d = ctx->p_d;
   const int j0 = ctx->j - 1;
   NumericVector g(m);
+  const double *design = REAL(ctx->D), *coefficients = REAL(ctx->beta);
   int first_bad_index = -1;
 
 #ifdef _OPENMP
@@ -111,7 +120,12 @@ NumericVector rustat_plqr_g_indexed(IntegerVector idxs, SEXP ctx_) {
     for (int pd = 0; pd < p_d; ++pd)
       db += ctx->D(i, pd) * ctx->beta[pd];
     const double thr = db + ctx->qx[i];
-    const int ind = (ctx->Y[i] <= thr) ? 1 : 0;
+    const int ind = rdistnn_arithmetic::linear_threshold_indicator(design + i, ctx->n, coefficients,
+                                                                   p_d, ctx->qx[i], ctx->Y[i], thr);
+    if (ind < 0) {
+      g[t] = NA_REAL;
+      continue;
+    }
     const double resid = ctx->tau - ind;
     const double rDj = ctx->D(i, j0) - ctx->mD(i, j0);
     g[t] = resid * rDj;

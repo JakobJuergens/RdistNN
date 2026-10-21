@@ -59,8 +59,7 @@ dist_l1 <- function(X, x0) {
 #' Order rows by L1 distance to a point (stable ties)
 #'
 #' Returns distances and a stable ordering. A compiled fast path is used when
-#' available; otherwise `order(dx, seq_along(dx))` provides a deterministic
-#' tie-break.
+#' available; otherwise the R helper applies the same raw-covariate tie order.
 #'
 #' @inheritParams dist_l1
 #' @return A list with:
@@ -87,7 +86,7 @@ order_by_l1 <- function(X, x0) {
   }
 
   dx <- dist_l1(X, x0)
-  ord <- order(dx, seq_along(dx))
+  ord <- .order_with_ties(dx, X)
   list(dx = dx, ord = as.integer(ord))
 }
 
@@ -307,6 +306,6 @@ order_by_l1_scaled <- function(X, x0,
   }
 
   dx <- dist_l1_scaled(X, x0, inv_s)
-  ord <- order(dx, seq_along(dx))
+  ord <- .order_with_ties(dx, X)
   list(dx = dx, ord = as.integer(ord))
 }

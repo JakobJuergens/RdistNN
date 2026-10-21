@@ -171,10 +171,10 @@ NumericMatrix rustat_dist_l2_scaled_batch(NumericMatrix X, NumericMatrix X0, Num
 }
 
 // Shared ordering helper
-static inline IntegerVector order_by_dx(const std::vector<double> &dx) {
+static inline IntegerVector order_by_dx(const std::vector<double> &dx, const NumericMatrix &X) {
   const int n = static_cast<int>(dx.size());
   std::vector<int> ord0(n);
-  rustat::argsort_indices(dx.data(), n, ord0.data()); // stable / radix
+  rustat::argsort_indices_covariates(dx.data(), REAL(X), n, X.ncol(), ord0.data());
   IntegerVector ord(n);
   for (int i = 0; i < n; ++i)
     ord[i] = ord0[i] + 1; // 1-based for R
@@ -189,7 +189,7 @@ Rcpp::List rustat_order_by_l2(NumericMatrix X, NumericVector x0, bool squared = 
 
   std::vector<double> dx(n);
   dist_l2_core_ptr(REAL(X), n, p, REAL(x0), /*invsp=*/nullptr, dx.data(), squared);
-  return List::create(_["dx"] = NumericVector(dx.begin(), dx.end()), _["ord"] = order_by_dx(dx));
+  return List::create(_["dx"] = NumericVector(dx.begin(), dx.end()), _["ord"] = order_by_dx(dx, X));
 }
 
 // [[Rcpp::export]]
@@ -203,5 +203,5 @@ Rcpp::List rustat_order_by_l2_scaled(NumericMatrix X, NumericVector x0, NumericV
 
   std::vector<double> dx(n);
   dist_l2_core_ptr(REAL(X), n, p, REAL(x0), REAL(inv_s), dx.data(), squared);
-  return List::create(_["dx"] = NumericVector(dx.begin(), dx.end()), _["ord"] = order_by_dx(dx));
+  return List::create(_["dx"] = NumericVector(dx.begin(), dx.end()), _["ord"] = order_by_dx(dx, X));
 }

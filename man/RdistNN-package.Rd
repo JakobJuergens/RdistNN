@@ -117,4 +117,9 @@ Authors:
   \item Jakob Juergens \email{info@jakobjuergens.com}
 }
 
+Other contributors:
+\itemize{
+  \item Zakareya Chehime (Quality assurance, testing and validation) [contributor]
+}
+
 }

@@ -134,22 +134,12 @@
 
 .sim_cate_normalize_method_rows <- function(res) {
   if (!is.data.frame(res)) {
-    res <- as.list(res)
-    res <- as.data.frame(res, check.names = FALSE, stringsAsFactors = FALSE)
+    .abort_bad_state("Simulation method output must be a data.frame with the current row schema.")
   }
   missing <- setdiff(.sim_cate_row_names(), names(res))
   if (length(missing) > 0L) {
-    for (col in missing) {
-      res[[col]] <- if (identical(col, "status")) {
-        "ok"
-      } else if (col %in% c("method_variant", "forest_nuisance")) {
-        NA_character_
-      } else if (col %in% c("y_hat_supplied", "w_hat_supplied")) {
-        NA
-      } else {
-        NA_real_
-      }
-    }
+    .abort_bad_state(paste0("Simulation method output is missing required column(s): ",
+      paste(missing, collapse = ", "), "."))
   }
   res$method_variant <- as.character(res$method_variant)
   res$forest_nuisance <- as.character(res$forest_nuisance)
@@ -241,8 +231,8 @@
 #'   expectation over the i.i.d. covariate sample and complete-DNN
 #'   exchangeability give
 #'   \deqn{E(\mathrm{localized\_truth})=\alpha_s(x_0).}
-#'   The historical `branch_drift` field name is retained for compatibility;
-#'   it stores realized localization drift. The estimator remainder combines
+#'   The `localization_drift` field stores realized localization drift.
+#'   The estimator remainder combines
 #'   centered score variation with fitted-state effects.
 #'   Failed methods have `NA` for all metric columns and `status = "failed"`;
 #'   registered route metadata is retained when it is known from the selected
@@ -366,6 +356,25 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
 #' `lapply`. The current affine paper uses a separate study-specific workflow
 #' under `system.file("paper-replication/affine", package = "RdistNN")`.
 #'
+#' @section Reproducibility:
+#' An explicit `master_seed` restores the caller's saved RNG state (including
+#' seed absence) and RNG kind on success or error. `NULL` consumes the current
+#' stream. The hidden Box-Muller normal cache is not part of R's saved state.
+#' Repeating a run requires the same seed, RNG kind, dependency route, methods,
+#' tuning callbacks and execution configuration.
+#'
+#' With `future.apply` installed, `future.seed = TRUE` supplies L'Ecuyer-CMRG
+#' streams to the replicate bodies. Package-controlled draws agree between
+#' sequential and multisession future plans for the same RNG configuration;
+#' external learners and callbacks must also be reproducible. Replicate-level
+#' `set.seed()` inherits the RNG kind in effect there. Without `future.apply`,
+#' replicates instead inherit the caller's RNG kind, so equal integer seeds
+#' need not give equal data draws across dependency routes. Even with a caller
+#' L'Ecuyer-CMRG kind, stochastic cell-level tuning can differ in later cells
+#' because future mapping and `lapply` advance the caller stream differently.
+#' Record `RNGkind()`, package versions, the future plan and optional-dependency
+#' availability alongside seeds when saving a simulation configuration.
+#'
 #' @section Fault tolerance:
 #' Each replicate is wrapped in `tryCatch`.  A total rep failure (e.g. DGP
 #' draw error) records `NA` for all metrics and all methods and emits a warning;
@@ -478,9 +487,9 @@ sim_cate_run <- function(
   invisible(lapply(methods, .get_sim_method))
 
   # Rep-level parallel map: future_lapply when available, lapply otherwise.
-  # Use future.seed = TRUE for parallel-safe reproducible RNG streams in the
-  # workers. Replicate-specific randomness remains anchored by explicit unique
-  # per-rep seeds passed as `seed = sd` into sim_cate_one_rep().
+  # future.seed supplies L'Ecuyer streams under sequential and parallel plans.
+  # The explicit per-rep set.seed() inherits that kind; the lapply fallback
+  # instead inherits the caller's kind. Preserve these established streams.
   .lapply <- if (requireNamespace("future.apply", quietly = TRUE)) {
     function(X, FUN) future.apply::future_lapply(X, FUN, future.seed = TRUE)
   } else {

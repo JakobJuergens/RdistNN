@@ -1,25 +1,9 @@
 # Nonparametric-regression-specific diagnostics for np_result objects.
 
-.np_outcome_diagnostics <- function(W, y_vec = NULL) {
+.np_outcome_diagnostics <- function(W, y_vec) {
   w_mat <- as.matrix(W)
   n <- nrow(w_mat)
   m <- ncol(w_mat)
-
-  unavailable <- function() {
-    data.frame(
-      outcome_available = rep(FALSE, m),
-      weighted_mean_y = rep(NA_real_, m),
-      weighted_sd_y = rep(NA_real_, m),
-      weighted_y_q10 = rep(NA_real_, m),
-      weighted_y_q50 = rep(NA_real_, m),
-      weighted_y_q90 = rep(NA_real_, m),
-      stringsAsFactors = FALSE
-    )
-  }
-
-  if (is.null(y_vec)) {
-    return(unavailable())
-  }
 
   y_num <- as.numeric(y_vec)
   if (length(y_num) != n) {
@@ -76,13 +60,15 @@ diagnostics.np_result <- function(object, candidates = "default", ...) {
   if (!.plot_candidates_is_default(candidates)) {
     return(.dnn_candidate_diagnostics(object, candidates = candidates))
   }
+  model <- object$.model
+  if (!is.list(model) || is.null(model$y_vec)) {
+    .abort_bad_state("This object lacks fitted outcome state. Refit with np_dnn() or np_tdnn().")
+  }
   out <- .dnn_weight_diagnostics(
     W = .dnn_diag_require_W(object),
     meta = object$meta,
     dx = object$dx,
     tuning_payload = .dnn_diag_tuning_payload(object)
   )
-  model <- object$.model
-  y_vec <- if (is.list(model)) model$y_vec else object$y
-  .dnn_diag_append(out, .np_outcome_diagnostics(object$W, y_vec = y_vec))
+  .dnn_diag_append(out, .np_outcome_diagnostics(object$W, y_vec = model$y_vec))
 }

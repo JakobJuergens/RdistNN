@@ -15,3 +15,20 @@ test_that("core input routes reject ignored direct inputs and selectors", {
   expect_s3_class(cate_dnn(data = d, x_cols = "x", pseudo_outcome = 1:8,
     x0 = 0, s = 3, se = FALSE), "cate_result")
 })
+
+test_that("GMM selectors require data while separate matrix model data stays supported", {
+  model <- new_gmm_model("input_route_mean",
+    setup = function(sample, n, ...) list(g = sample$g),
+    moment_obs = function(sample, theta, ctx) matrix(ctx$g - theta[1L], ncol = 1L),
+    jacobian_obs = function(sample, theta, ctx) matrix(-1, length(ctx$g), 1L),
+    start = function(sample, ctx, w, x0) sum(w * ctx$g),
+    coef_names = "theta")
+  d <- data.frame(x = 1:8, g = c(4, 1, 3, 7, 2, 5, 8, 6))
+  args <- list(X = matrix(d$x), model_data = d["g"], model = model,
+    x0 = 0, s = 3L, se = FALSE)
+  expect_error(do.call(gmm_dnn, c(args, list(x_cols = "not_a_column"))),
+    "data.*column selectors")
+  matrix_fit <- do.call(gmm_dnn, args)
+  frame_fit <- gmm_dnn(data = d, x_cols = "x", model = model, x0 = 0, s = 3L, se = FALSE)
+  expect_equal(matrix_fit$theta, frame_fit$theta, tolerance = 1e-12)
+})

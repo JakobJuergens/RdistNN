@@ -88,6 +88,11 @@ The sync adapter replaces the unused older CATE bootstrap with an explicit-path
 shim; all nine frozen scientific files retain their accepted hashes. Rendering
 supplies the pinned source identity and uses forward slashes and literal path
 prefixes for portable output directories.
+Standalone renderers and their default nested `source()` calls share a private
+environment for each invocation. The package-owned launcher supplies that
+environment while preserving explicit `local` environments; pinned upstream
+renderer bytes remain unchanged. Argument or drawing errors must not replace
+caller helpers or leave a graphics device open.
 Integrity corruption, interrupted-stage reuse, serialization differences,
 stale audit binding, dirty-source identity and portable output paths have
 regression coverage in `tests/testthat/test-paper-replication-affine.R`.

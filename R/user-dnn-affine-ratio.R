@@ -13,7 +13,8 @@
 #' @param x0 Numeric vector for a single target. Supply exactly one of X0,x0.
 #' @param numerator,denominator Finite numeric signal vectors for the matrix route.
 #' @param distance Existing distance specification, registered name or function.
-#'   Geometry is frozen across deletions; input position resolves distance ties.
+#'   Geometry is frozen across deletions. Exact distance ties use original
+#'   covariates lexicographically; identical covariate rows use input position.
 #' @param method One of "exact" or "asymp", as in [cate_dnn()] and [np_dnn()].
 #' @param k Number of neighbors averaged within each size-s subsample, 1 <= k <= s.
 #' @param s Deterministic integer order. Covariance requires s < n.
@@ -155,7 +156,7 @@ affine_ratio_dnn <- function(
     distance = .dnn_distance_name(distance), jackknife = if (active_covariance) jackknife else "none",
     covariance = if (active_covariance) "paired_frozen_score" else "none",
     component_roles = c(numerator = "numerator", denominator = "denominator"),
-    tie_rule = "distance_then_input_position", tuning = resolved$tuning, tuning_mode = tuning_mode
+    tie_rule = "distance_then_covariates_then_input_position", tuning = resolved$tuning, tuning_mode = tuning_mode
   )
   out <- .dnn_attach_common_extras(out, return, wt, W, k, resolved$tuning)
   if ("signals" %in% return) out$signals <- signal

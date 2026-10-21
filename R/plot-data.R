@@ -236,14 +236,18 @@ plot_data_weights <- function(object) {
   dx <- object$dx
   if (!is.null(dx)) dx <- as.matrix(dx)
 
+  ord <- .dnn_retained_ranking(object)$ord
+
   frames <- vector("list", m)
   for (j in seq_len(m)) {
-    ord <- if (!is.null(dx)) {
-      order(dx[, j], -W[, j])
+    order_j <- if (!is.null(ord)) {
+      ord[, j]
+    } else if (!is.null(dx)) {
+      order(dx[, j], seq_len(n))
     } else {
       order(W[, j], decreasing = TRUE)
     }
-    w_j <- W[ord, j]
+    w_j <- W[order_j, j]
     total <- sum(w_j)
     cum_share <- if (is.finite(total) && abs(total) > 0) {
       cumsum(w_j) / total
@@ -253,10 +257,10 @@ plot_data_weights <- function(object) {
     frames[[j]] <- data.frame(
       target_id = rep(j, n),
       rank = seq_len(n),
-      obs_id = as.integer(ord),
+      obs_id = as.integer(order_j),
       weight = as.numeric(w_j),
       cum_share = as.numeric(cum_share),
-      distance = if (is.null(dx)) rep(NA_real_, n) else as.numeric(dx[ord, j]),
+      distance = if (is.null(dx)) rep(NA_real_, n) else as.numeric(dx[order_j, j]),
       stringsAsFactors = FALSE
     )
   }

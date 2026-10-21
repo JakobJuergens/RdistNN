@@ -34,7 +34,7 @@ test_that("deterministic ties in distances lead to deterministic ordering and st
 
   l2 <- get_distance("l2")
   DX <- distance_eval_batch(l2, X, X0)
-  exp_ord1 <- order(DX[, 1], seq_along(DX[, 1]))
+  exp_ord1 <- .tie_reference_order(DX[, 1], X)
   expect_equal(out$ord[, 1], exp_ord1)
 
   out2 <- suppressWarnings(cate_dnn(
@@ -46,7 +46,7 @@ test_that("deterministic ties in distances lead to deterministic ordering and st
   expect_equal(out$tau, out2$tau, tolerance = 1e-12)
 })
 
-test_that("nonuniform tied-distance weights agree with subsets and expose row order", {
+test_that("identical covariate rows retain index allocation in nonuniform weights", {
   X <- matrix(c(0, 0, 1, 1), ncol = 1L)
   y <- c(1, 3, 10, 20)
   reference <- function(X, y) {

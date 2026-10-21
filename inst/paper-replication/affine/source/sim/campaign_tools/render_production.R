@@ -228,7 +228,7 @@ receipt <- list(status="rendered_saved_production_analysis",simulation_performed
   accepted_audit_sha256=manifest$source_audit_sha256,figures=receipts,
   output_hashes=lapply(files,function(f) list(file=basename(f),sha256=digest::digest(file=f,algo="sha256"))))
 jsonlite::write_json(receipt,file.path(out,"manifest.json"),pretty=TRUE,auto_unbox=TRUE,digits=17)
-index <- c("# Affine production simulation atlas","", "Generated from saved, audited 10,000-repetition production. No estimation was rerun.","",
+index <- c("# Production simulation atlas","", "Generated from saved, audited 10,000-repetition production. No estimation was rerun.","",
   "The atlas is an analysis artifact for manuscript selection. It is not a replacement manuscript or a claim of theorem verification.","",
   "[Combined PDF atlas](production_atlas.pdf)","", "| Figure | Interpretation |","| --- | --- |")
 for(id in names(receipts)) index <- c(index,paste0("| [",id,"](",id,".pdf) / [PNG](",id,".png) | ",receipts[[id]]$caption," |"))

@@ -50,32 +50,17 @@
 }
 
 .plot_tuning_ranks <- function(object) {
-  if (is.list(object$.model) && !is.null(object$.model$ranks)) {
-    return(.rank_check_mat(object$.model$ranks))
-  }
-  if (!is.null(object$ranks)) {
-    return(.rank_check_mat(object$ranks))
-  }
+  ranking <- .dnn_retained_ranking(object)
+  if (!is.null(ranking)) return(ranking$ranks)
   model <- object$.model
   if (!is.list(model) || is.null(model$x_mat)) {
     .abort_bad_arg(
       "object",
-      "does not store its training data (fit predates this feature); re-estimate before calling plot_tuning()",
+      "does not contain the required fitted training data; refit before calling plot_tuning()",
       quoted = FALSE
     )
   }
-  wt <- .dnn_weights_with_extras(
-    x_mat = model$x_mat,
-    x0_mat = as.matrix(object$x0),
-    distance = model$distance,
-    method = model$method,
-    k = object$meta$k,
-    s = object$meta$s,
-    normalize = model$normalize,
-    ctx = model$ctx,
-    return = "ranks"
-  )
-  .rank_check_mat(wt$wt$ranks)
+  .abort_bad_state("This fit does not retain the geometry needed to reconstruct ranks.")
 }
 
 .plot_tuning_grid_np <- function(object, tuning, se) {
@@ -86,7 +71,7 @@
   if (!is.list(model) || is.null(model$x_mat) || is.null(model$y_vec)) {
     .abort_bad_arg(
       "object",
-      "does not store its training data (fit predates this feature); re-estimate before calling plot_tuning()",
+      "does not contain the required fitted training data; refit before calling plot_tuning()",
       quoted = FALSE
     )
   }
@@ -119,7 +104,7 @@
   if (!is.list(model) || is.null(model$x_mat) || is.null(model$psi)) {
     .abort_bad_arg(
       "object",
-      "does not store its training data (fit predates this feature); re-estimate before calling plot_tuning()",
+      "does not contain the required fitted training data; refit before calling plot_tuning()",
       quoted = FALSE
     )
   }
@@ -169,7 +154,7 @@
   if (!is.list(model) || is.null(model$x_mat)) {
     .abort_bad_arg(
       "object",
-      "does not store its training data (fit predates this feature); re-estimate before calling plot_tuning()",
+      "does not contain the required fitted training data; refit before calling plot_tuning()",
       quoted = FALSE
     )
   }
@@ -190,7 +175,8 @@
     ctx = model$ctx,
     se = se,
     jackknife = .plot_tuning_jackknife(se),
-    tuning_payload = payload
+    tuning_payload = payload,
+    reuse_default = FALSE
   ))
 }
 
@@ -300,7 +286,7 @@
 #' the stored model state; public estimators are not refit.
 #'
 #' Scalar grid evaluation uses the training data stored on the fit; fits
-#' from package versions predating that storage must be re-estimated first.
+#' without the required fitted training state must be refitted first.
 #'
 #' @section Experimental methods:
 #' Methods for `plqr_result` objects are experimental, as is all PLQR

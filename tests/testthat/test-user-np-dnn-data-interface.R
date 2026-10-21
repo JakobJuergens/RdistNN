@@ -1,36 +1,4 @@
-# tests/testthat/test-user-np-dnn-data-interface.R
-#
-# Interface-equivalence tests for np_dnn().
-#
-# These tests verify three things:
-#
-#   1. The data-frame interface and the matrix interface produce numerically
-#      identical estimates (mu) and standard errors (se) for the same problem.
-#
-#   2. All sub-variants of the data-frame interface (column names, integer
-#      indices, external y vector) agree with each other and with the matrix
-#      interface.
-#
-#   3. Input pathologies that are caught at the data-frame boundary produce
-#      precise, distinguishable diagnostics.
-#
-# Design note ref: note 13 §10.2 ("Add interface-equivalence tests").
-
-# ---- shared helper -----------------------------------------------------------
-
-# Produces a deterministic dataset with a named data.frame suitable for both
-# the matrix interface (X, X0, Y) and the data-frame interface (df, x_cols).
-.make_np_iface_data <- function(n = 50L, p = 2L, m = 4L, seed = 42L) {
-  set.seed(seed)
-  X  <- matrix(rnorm(n * p), n, p)
-  X0 <- matrix(rnorm(m * p), m, p)
-  y  <- X[, 1L] - 0.5 * X[, min(2L, p)] + rnorm(n, sd = 0.25)
-  x_cols <- paste0("X", seq_len(p))
-  df <- as.data.frame(X)
-  names(df) <- x_cols
-  df$Y <- y
-  list(X = X, X0 = X0, y = y, df = df, x_cols = x_cols)
-}
+# Matrix/data-frame input equivalence and boundary diagnostics.
 
 # ============================================================================
 # 1. Mean and metadata equivalence: exact method, no SE
@@ -463,4 +431,27 @@ test_that("p=1,m=1 edge case remains equivalent across interfaces", {
 
   expect_equal(out_df$mu, out_mat$mu, tolerance = 1e-12)
   expect_equal(out_df$se, out_mat$se, tolerance = 1e-12)
+})
+
+test_that("data-frame API supports y_col and external y paths", {
+  .test_rng_scope({
+    d <- .make_np_data(n = 30L, p = 2L, m = 3L)
+    df <- data.frame(X1 = d$X[, 1], X2 = d$X[, 2], Y = d$y)
+
+    out_col <- np_dnn(
+      data = df, x_cols = c("X1", "X2"), y_col = "Y",
+      X0 = d$X0, k = 2L, s = 3L, se = FALSE
+    )
+    out_vec <- np_dnn(
+      data = df, x_cols = 1:2, y = d$y,
+      X0 = d$X0, k = 2L, s = 3L, se = FALSE
+    )
+    out_col_idx <- np_dnn(
+      data = df, x_cols = c("X1", "X2"), y_col = 3L,
+      X0 = d$X0, k = 2L, s = 3L, se = FALSE
+    )
+
+    expect_equal(out_col$mu, out_vec$mu, tolerance = 1e-12)
+    expect_equal(out_col$mu, out_col_idx$mu, tolerance = 1e-12)
+  }, seed = 123L)
 })

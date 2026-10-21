@@ -28,13 +28,13 @@ parse_desc_packages <- function(desc_path = "DESCRIPTION") {
 }
 
 extract_pkg_refs <- function(line) {
-  pattern <- "\\b([A-Za-z][A-Za-z0-9.]*):::{1,2}"
+  pattern <- "\\b([A-Za-z][A-Za-z0-9.]*)::{1,2}"
   hits <- gregexpr(pattern, line, perl = TRUE)[[1L]]
   if (length(hits) == 1L && hits[1L] == -1L) {
     return(character(0))
   }
   tokens <- regmatches(line, gregexpr(pattern, line, perl = TRUE))[[1L]]
-  unique(sub(":::+$", "", tokens, perl = TRUE))
+  unique(sub(":+$", "", tokens, perl = TRUE))
 }
 
 scan_test_refs <- function(tests_dir = "tests") {

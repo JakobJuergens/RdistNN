@@ -238,9 +238,9 @@ test_that("plot_tuning evaluates candidate grids and marks the fit", {
   p_plqr <- plot_tuning(.plot_special_plqr_fit(), se = FALSE)
   expect_s3_class(p_plqr, "ggplot")
   expect_identical(class(p_plqr$facet)[1L], "FacetWrap")
-  fit_old <- fit
-  fit_old$.model$x_mat <- NULL
-  expect_error(plot_tuning(fit_old), "re-estimate")
+  bad_state <- fit
+  bad_state$.model$x_mat <- NULL
+  expect_error(plot_tuning(bad_state), "required fitted training data.*refit")
 })
 
 test_that("PLQR plot quantity controls zero lines and plotted values", {

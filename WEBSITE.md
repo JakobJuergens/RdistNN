@@ -2,7 +2,7 @@
 
 Prepared for a software entry or research-page addition on
 [jakobjuergens.com](https://jakobjuergens.com/). The text below describes the
-`0.1.0.9005` documentation and maintenance update for production `master`. The package
+`0.1.1` update. The package
 documentation is live at its canonical pkgdown URL. The latest tagged release
 remains `v0.1.0`; a tagged-release announcement should link to its verified
 source archive and release assets.
@@ -28,11 +28,11 @@ remain experimental.
 
 ## Source-update announcement draft
 
-RdistNN 0.1.0.9005 makes conditional-effect and regression workflows easier to
-learn, with shorter guides, runnable vignettes and focused function help.
-It adds training-sample counts through `nobs()`, preserves the caller's saved
-RNG state for seeded demos and simulations, and caps native calculations at
-two threads by default with a configurable opt-in. Existing pointwise
+RdistNN 0.1.1 improves numerical reliability, uses covariates to resolve exact
+distance ties, and presents a streamlined interface for new users. Shorter
+guides, runnable vignettes and focused function help support conditional-effect
+and regression workflows. Seeded demos and simulations preserve caller RNG state;
+native calculations use two threads by default with a configurable opt-in. Pointwise
 uncertainty, diagnostics, tuning comparisons and saved-fit reuse retain their
 documented inference scope. The accompanying paper supplies the theory.
 

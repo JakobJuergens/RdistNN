@@ -1,26 +1,4 @@
-# tests/testthat/test-user-tdnn-np-data-interface.R
-#
-# Interface-equivalence tests for np_tdnn().
-#
-# Mirrors test-user-np-dnn-data-interface.R with TDNN parameters.
-# These tests verify that the data-frame interface and the matrix
-# interface produce numerically identical estimates and standard errors,
-# and that the index-level diagnostics (NA, non-finite, out-of-range)
-# are precise and distinguishable.
-
-# ---- shared helper -----------------------------------------------------------
-
-.make_tdnn_iface_data <- function(n = 55L, p = 2L, m = 4L, seed = 42L) {
-  set.seed(seed)
-  X  <- matrix(rnorm(n * p), n, p)
-  X0 <- matrix(rnorm(m * p), m, p)
-  y  <- X[, 1L] - 0.5 * X[, min(2L, p)] + rnorm(n, sd = 0.25)
-  x_cols <- paste0("X", seq_len(p))
-  df <- as.data.frame(X)
-  names(df) <- x_cols
-  df$Y <- y
-  list(X = X, X0 = X0, y = y, df = df, x_cols = x_cols)
-}
+# Matrix/data-frame input equivalence and boundary diagnostics.
 
 # ============================================================================
 # 1. Mean and metadata equivalence: exact method, no SE

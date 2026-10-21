@@ -1,3 +1,42 @@
+# RdistNN 0.1.1 (unreleased)
+
+- Resolve exact distance ties lexicographically by the original covariates
+  across R and native implementations. Identical covariate rows retain input
+  order. Rank weights and effective sample size are preserved.
+- Preserve PLQR fitted distance specifications and resolved covariate names
+  during saved prediction; align scalar tuning-plot uncertainty with the
+  requested policy. Permit full-order analytic PLQR inference when no
+  deletion calculation is needed.
+- Correct compensated PLQR score reduction and invalid coefficient/subset
+  validation, signed rank-table mass validation, and range-sensitive weighted
+  SD and Mahalanobis origin selection. Cover one-covariate bump demos.
+- Share adaptive PLQR comparisons across score constructors, native kernels
+  and retained diagnostics. Exact accumulation resolves ordinary cancellation,
+  intermediate overflow, tiny residuals and inclusive threshold equality.
+- Share finite-operand weighted-contribution recovery between CATE diagnostics
+  and CATE/CLATE influence plots; preserve representable dominant observations
+  and concentration when intermediate residuals or totals exceed the range.
+- Detect undeclared ordinary namespace references in the test dependency check.
+- Refresh pinned paper-replication displays with embedded PDF fonts and isolate
+  nested renderer dependencies from caller bindings, including on errors.
+- Remove obsolete development-fit compatibility readers and their dedicated
+  fixtures. Refit objects created by older development versions.
+- Name simulation outputs `localization_drift` and
+  `standardized_localization_drift` and validate the current simulation-row
+  schema rather than filling missing fields as successful results.
+- Separate estimator fitting, grid adapters, retained-state support and public
+  methods; share identical grid warning/metadata policy. Reorganize test ownership, locally scope
+  fixture RNG state and complete the documented focused-suite selections.
+- Record CATE signal provenance (`aipw` or `supplied`) and the original fit's
+  loaded package version. Summaries and candidates preserve that original
+  provenance and version; current retained state is required for reuse.
+- Correct demo subset helpers to return integer `K` by `s` matrices even for
+  singleton subsets, preserving draws and caller RNG behavior.
+- Clarify current CATE inputs and simulation reproducibility: reproduce simulations
+  under the same RNG kind and backend configuration.
+- Credit Zakareya Chehime for quality assurance, testing and validation in
+  contributor metadata and documentation.
+
 # RdistNN 0.1.0.9005 (development snapshot)
 
 The maintenance and documentation changes below ship together as one flattened

@@ -34,7 +34,7 @@ test_that("saved core fits retain the resolved metric and fitted context", {
   expect_identical(calls, 5L)
 })
 
-test_that("CATE legacy LOO refits geometry and explicit contexts bypass setup", {
+test_that("CATE LOO refits geometry and explicit contexts bypass setup", {
   X <- cbind(c(0, 2, 3, 8, 4, 7, 1), c(0, 7, 1, 2, 9, 3, 5))
   targets <- rbind(c(0, 0), c(3, 4))
   signal <- c(1, -2, 3, 4, -1, 6, 2)

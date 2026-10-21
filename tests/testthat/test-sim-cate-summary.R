@@ -84,7 +84,7 @@ test_that("summarise_sim_results separates and retains GRF nuisance routes", {
   expect_false(internal$w_hat_supplied)
 })
 
-test_that("summarise_sim_results preserves non-GRF and legacy raw behavior", {
+test_that("summarise_sim_results preserves current non-GRF route metadata", {
   raw <- data.frame(
     method = rep("dnn_oracle", 2L),
     design = "dgp1_linear",
@@ -123,18 +123,10 @@ test_that("summarise_sim_results preserves non-GRF and legacy raw behavior", {
   route_cols <- c(
     "method_variant", "forest_nuisance", "y_hat_supplied", "w_hat_supplied"
   )
-  legacy <- raw[, setdiff(names(raw), route_cols), drop = FALSE]
-  legacy$method <- "causal_forest"
-  legacy_tab <- NULL
-  expect_no_warning(legacy_tab <- summarise_sim_results(legacy))
-
-  expect_equal(nrow(legacy_tab), 1L)
-  expect_identical(legacy_tab$method, "causal_forest")
-  expect_true(all(is.na(legacy_tab[, route_cols, drop = FALSE])))
-  expect_type(legacy_tab$method_variant, "character")
-  expect_type(legacy_tab$forest_nuisance, "character")
-  expect_type(legacy_tab$y_hat_supplied, "logical")
-  expect_type(legacy_tab$w_hat_supplied, "logical")
+  for (col in route_cols) {
+    bad <- raw[, setdiff(names(raw), col), drop = FALSE]
+    expect_error(summarise_sim_results(bad), paste0("missing required columns: ", col))
+  }
 })
 
 test_that("summarise_sim_results: error on missing columns", {
@@ -156,16 +148,19 @@ test_that("summarise_sim_results reports branch, radius, and studentized shape",
   )
   tab <- summarise_sim_results(raw)
   required <- c(
-    "bias_to_se", "localized_truth_mean", "branch_drift",
-    "estimator_remainder", "standardized_branch_drift",
+    "bias_to_se", "localized_truth_mean", "localization_drift",
+    "estimator_remainder", "standardized_localization_drift",
     "physical_radius_90_mean", "physical_radius_90_p25",
     "physical_radius_90_p50", "physical_radius_90_p75",
     "studentized_mean", "studentized_sd", "studentized_skewness",
     "studentized_excess_kurtosis", "studentized_q025", "studentized_q975"
   )
+  obsolete <- c("branch_drift", "standardized_branch_drift")
+  expect_false(any(obsolete %in% names(raw)))
+  expect_false(any(obsolete %in% names(tab)))
   expect_true(all(required %in% names(tab)))
   expect_true(all(is.finite(as.matrix(tab[, required]))))
-  expect_equal(tab$bias, tab$branch_drift + tab$estimator_remainder, tolerance = 1e-12)
+  expect_equal(tab$bias, tab$localization_drift + tab$estimator_remainder, tolerance = 1e-12)
 })
 
 # ── summarise_sim_results: n_failed counting ──────────────────────────────────

@@ -42,72 +42,13 @@ vcov.cate_result <- function(object, ...) {
     distance = model[[required[[1L]]]], ctx = model[[required[[2L]]]],
     method = model$method, k = model$k, s = model$s,
     normalize = model$normalize, signal_arg = "pseudo_outcome",
-    jackknife = jackknife, precomputed_ranks = model$ranks
+    jackknife = jackknife,
+    precomputed_ranks = if (identical(jackknife, "fast")) .dnn_retained_ranking(object)$ranks else NULL
   )
   n <- nrow(model$x_mat)
   V <- .covariance_matrix(matrix(loo, nrow = n), (n - 1) / n)
   dimnames(V) <- rep(list(names(stats::coef(object))), 2L)
   V
-}
-
-.cate_validate_prediction_model <- function(model) {
-  if (!is.list(model) || is.null(model$x_mat) || is.null(model$psi)) {
-    .abort_bad_state(paste0(
-      "This object does not contain fitted model state for prediction. ",
-      "Refit with the current cate_dnn() implementation."
-    ))
-  }
-
-  x_mat <- .validate_matrix(
-    model$x_mat,
-    arg = "object$.model$x_mat",
-    min_rows = 1L,
-    min_cols = 1L,
-    numeric = TRUE,
-    finite = TRUE
-  )
-  n <- nrow(x_mat)
-  psi <- .validate_vector_nrow(
-    model$psi,
-    n,
-    arg = "object$.model$psi",
-    ref = "object$.model$x_mat",
-    strict = TRUE,
-    finite = TRUE
-  )
-  k <- .validate_scalar_int(model$k, arg = "object$.model$k", min = 1L)
-  s <- .validate_scalar_int(model$s, arg = "object$.model$s", min = 1L)
-  if (k > s) {
-    .abort_bad_arg(
-      "object$.model$k",
-      sprintf("must satisfy k <= s (got k=%d, s=%d)", k, s),
-      quoted = FALSE
-    )
-  }
-  if (s > n) {
-    .abort_bad_arg(
-      "object$.model$s",
-      "must satisfy s <= n",
-      expected = sprintf("s <= n=%d", n),
-      actual = sprintf("s=%d", s),
-      quoted = FALSE
-    )
-  }
-  if (!is.character(model$method) || length(model$method) != 1L ||
-      is.na(model$method) || !(model$method %in% c("exact", "asymp"))) {
-    .abort_bad_arg("object$.model$method", "must be one of 'exact' or 'asymp'", quoted = FALSE)
-  }
-  if (!is.logical(model$normalize) || length(model$normalize) != 1L || is.na(model$normalize)) {
-    .abort_bad_arg("object$.model$normalize", "must be TRUE or FALSE", quoted = FALSE)
-  }
-
-  model$x_mat <- x_mat
-  model$psi <- psi
-  model$k <- k
-  model$s <- s
-  model$method <- model$method[[1L]]
-  model$normalize <- model$normalize[[1L]]
-  model
 }
 
 #' Summarize a `cate_result` object
@@ -116,7 +57,9 @@ vcov.cate_result <- function(object, ...) {
 #' @param level Confidence level used for interval columns.
 #' @param ... Not used.
 #'
-#' @return An object of class `summary.cate_result` with a coefficient table.
+#' @return An object of class `summary.cate_result` with a coefficient table
+#'   and `meta`, including the original fit's signal provenance and creation
+#'   version.
 #' @examples
 #' set.seed(1)
 #' n <- 30
@@ -159,7 +102,7 @@ summary.cate_result <- function(object, level = 0.95, ...) {
     coefficients = coef_tab,
     level = as.numeric(level),
     has_se = has_se,
-    meta = object$meta
+    meta = .cate_result_meta(object$meta)
   )
   class(out) <- "summary.cate_result"
   out
@@ -174,7 +117,9 @@ summary.cate_result <- function(object, level = 0.95, ...) {
 #' @return `x`, invisibly.
 #' @export
 print.summary.cate_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
+  meta <- .cate_result_meta(x$meta)
   cat("<summary.cate_result>\n", sep = "")
+  cat("  signal: ", meta$signal_source, "\n", sep = "")
   .dnn_print_localization(x$meta)
   cat("  targets: ", nrow(x$coefficients), "\n", sep = "")
   if (!isTRUE(x$has_se)) {
@@ -237,6 +182,8 @@ confint.cate_result <- function(object, parm = NULL, level = 0.95, ...) {
 #' uncertainty uses frozen-geometry rank deletions, even if the fit used
 #' `jackknife = "loo"`. It can be requested from a fit with `se = FALSE`
 #' when `s < n`.
+#' Prediction localizes the retained signal without establishing new
+#' inferential guarantees.
 #'
 #' @param object A `cate_result` object from [cate_dnn()].
 #' @param newdata Optional matrix/data frame of target covariates.
@@ -349,4 +296,47 @@ predict.cate_result <- function(
 #' @export
 coef.cate_result <- function(object, ...) {
   stats::setNames(as.numeric(object$tau), paste0("target_", seq_along(object$tau)))
+}
+
+#' Print a `cate_result` object
+#'
+#' @param x An object returned by [cate_dnn()].
+#' @param ... Not used.
+#' @return `x`, invisibly.
+#' @examples
+#' set.seed(1)
+#' n <- 20
+#' x_mat <- matrix(rnorm(n * 2), n, 2)
+#' out <- cate_dnn(
+#'   X = x_mat,
+#'   x0 = c(0, 0),
+#'   pseudo_outcome = rnorm(n),
+#'   se = FALSE
+#' )
+#' print(out)
+#' @export
+print.cate_result <- function(x, ...) {
+  meta <- .cate_result_meta(x$meta)
+  cat("<cate_result>\n", sep = "")
+  cat("  signal: ", meta$signal_source, "\n", sep = "")
+  .dnn_print_localization(x$meta)
+  cat("  data  : n=", x$meta$n, ", p=", x$meta$p, ", m=", x$meta$m, "\n", sep = "")
+  cat("  DNN   : method=", x$meta$method, ", k=", x$meta$k,
+    ", distance=", x$meta$distance, "\n",
+    sep = ""
+  )
+  if (!is.null(x$se)) {
+    cat("  est   : tau[1:min(5,m)] = ",
+      paste0(round(utils::head(x$tau, 5), 4), collapse = ", "),
+      "  (SEs available)\n",
+      sep = ""
+    )
+  } else {
+    cat("  est   : tau[1:min(5,m)] = ",
+      paste0(round(utils::head(x$tau, 5), 4), collapse = ", "),
+      "  (SEs not requested)\n",
+      sep = ""
+    )
+  }
+  invisible(x)
 }
