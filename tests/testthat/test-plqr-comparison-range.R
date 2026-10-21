@@ -44,10 +44,12 @@ test_that("every PLQR constructor certifies decisive overflowing comparisons", {
       score <- (.5 - a$below) * a$D
       expected_w <- (6 - seq_len(6L)) / choose(6, 2)
       # Independent complete-subset deletion means, with ascending x selecting
-      # the smaller retained observation index in each pair.
+      # the smaller retained observation index in each pair. Variance is
+      # translation invariant; center before averaging huge constant scores.
+      reference_score <- sweep(score, 2L, score[1L, ], "-")
       loo <- t(matrix(vapply(seq_len(6L), function(i) {
         sets <- utils::combn(setdiff(seq_len(6L), i), 2L, simplify = FALSE)
-        rowMeans(matrix(vapply(sets, function(ids) score[min(ids), ], numeric(ncol(score))),
+        rowMeans(matrix(vapply(sets, function(ids) reference_score[min(ids), ], numeric(ncol(score))),
           nrow = ncol(score)))
       }, numeric(ncol(score))), nrow = ncol(score), ncol = 6L))
       expected_se <- sqrt(5 / 6 * colSums(sweep(loo, 2L, colMeans(loo), "-")^2))
