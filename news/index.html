@@ -30,11 +30,11 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.1.1" id="rdistnn-011-unreleased">RdistNN 0.1.1 (unreleased)<a class="anchor" aria-label="anchor" href="#rdistnn-011-unreleased"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.1.1" id="rdistnn-011-2026-10-21">RdistNN 0.1.1 (2026-10-21)<a class="anchor" aria-label="anchor" href="#rdistnn-011-2026-10-21"></a></h2>
 <ul><li>Resolve exact distance ties lexicographically by the original covariates across R and native implementations. Identical covariate rows retain input order. Rank weights and effective sample size are preserved.</li>
 <li>Preserve PLQR fitted distance specifications and resolved covariate names during saved prediction; align scalar tuning-plot uncertainty with the requested policy. Permit full-order analytic PLQR inference when no deletion calculation is needed.</li>
 <li>Correct compensated PLQR score reduction and invalid coefficient/subset validation, signed rank-table mass validation, and range-sensitive weighted SD and Mahalanobis origin selection. Cover one-covariate bump demos.</li>
@@ -222,7 +222,7 @@
 <code>autoplot()</code>/<code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> on <code><a href="../reference/diagnostics.html">diagnostics()</a></code> frames: effective sample size (with the degenerate-weights guide at <code>0.9 n</code>), maximum weight, and top-5 weight share faceted across targets.</li>
 <li>
 <code><a href="../reference/plot_dashboard.html">plot_dashboard()</a></code> for <code>cate_result</code> and <code>np_result</code>: patchwork composition with a metadata annotation (<code>n</code>, <code>m</code>, <code>k</code>, <code>s</code> with provenance, distance, jackknife type); unavailable panels are substituted (diagnostics facets replace a missing overlap panel) or dropped, and without patchwork the panels are returned as a named list with a message. patchwork joins Suggests.</li>
-<li>Fitted <code><a href="../reference/np_dnn.html">np_dnn()</a></code>, <code><a href="../reference/cate_dnn.html">cate_dnn()</a></code>, <code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code>, and <code><a href="../reference/np_tdnn.html">np_tdnn()</a></code> objects record the jackknife type in <code>meta$jackknife</code> (<code>"none"</code> when <code>se = FALSE</code>).</li>
+<li>Fitted <code><a href="../reference/np_dnn.html">np_dnn()</a></code>, <code><a href="../reference/cate_dnn.html">cate_dnn()</a></code>, <code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code>, and <code><a href="../reference/np_tdnn.html">np_tdnn()</a></code> objects record the jackknife type in <code>meta$jackknife</code> (<code>"none"</code> when <code>se =   FALSE</code>).</li>
 <li>New vignette <code>visualising-fits</code> walks from a CATE fit through the estimate, weight, overlap, and diagnostics panels to the dashboard and panel customisation.</li>
 <li>The agent instruction files are excluded from the build, removing the long-standing top-level-files NOTE in R CMD check.</li>
 </ul></div>
