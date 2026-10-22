@@ -11,7 +11,7 @@
       W[take, j] <- W[take, j] + 1 / (k * ncol(subsets))
     }
   }
-  W
+  .block_oracle_average_weights(W, X)
 }
 
 .np_ref_cov <- function(X, X0, y, s, k = 1L, s2 = NULL, dim = ncol(X)) {
@@ -35,6 +35,7 @@
 )
 
 test_that("NP methods expose means and joint common-deletion covariance", {
+  .with_duplicate_policy_warnings({
   d <- .np_method_data()
   for (jk in c("fast", "loo")) {
     f <- np_dnn(X = d$X, X0 = d$X0, Y = d$y, k = 2, s = 3, jackknife = jk, return = character())
@@ -57,9 +58,11 @@ test_that("NP methods expose means and joint common-deletion covariance", {
     expect_equal(pr$se.fit, sqrt(diag(V)))
     expect_equal(unname(pr$fit[, 2:3]), unname(confint(f, level = .9)))
   }
+  })
 })
 
 test_that("NP prediction retains tabular inputs and fitted geometry through serialization", {
+  .with_duplicate_policy_warnings({
   d <- .np_method_data()
   dat <- data.frame(a = d$X[, 1], b = d$X[, 2], y = d$y)
   metric <- distance_l2_scaled("sd")
@@ -75,9 +78,11 @@ test_that("NP prediction retains tabular inputs and fitted geometry through seri
   expect_equal(predict(restored, x0 = d$X0[1, ]), f$mu[1])
   expect_error(predict(restored, newdata = nd["a"]), "b.*x_cols")
   expect_null(f$W)
+  })
 })
 
 test_that("NP zero variance and absent uncertainty remain distinguishable", {
+  .with_duplicate_policy_warnings({
   d <- .np_method_data()
   f <- np_dnn(X = d$X, X0 = d$X0, Y = rep(5, 7), s = 3)
   expect_equal(unname(vcov(f)), matrix(0, 3, 3))
@@ -97,9 +102,11 @@ test_that("NP zero variance and absent uncertainty remain distinguishable", {
   expect_error(confint(f0), "se = TRUE")
   expect_equal(predict(f0, X0 = d$X0, se.fit = TRUE)$se.fit,
     sqrt(diag(.np_ref_cov(d$X, d$X0, d$y, 3))))
+  })
 })
 
 test_that("NP candidate views update covariance and prediction controls", {
+  .with_duplicate_policy_warnings({
   d <- .np_method_data()
   tun <- new_tuning("np_methods", eval = function(...) list(s = 3L),
     eval_grid = function(...) data.frame(s = c(2L, 3L, 4L)))
@@ -112,9 +119,11 @@ test_that("NP candidate views update covariance and prediction controls", {
     expect_equal(unname(vcov(v)), .np_ref_cov(d$X, d$X0, d$y, s), tolerance = 1e-12)
   }
   expect_equal(f$.model$s, 3L)
+  })
 })
 
 test_that("NP methods validate public targets and inference controls", {
+  .with_duplicate_policy_warnings({
   d <- .np_method_data()
   f <- np_dnn(X = d$X, X0 = d$X0, Y = d$y, s = 3)
   expect_error(summary(f, level = 0), "level")
@@ -125,9 +134,11 @@ test_that("NP methods validate public targets and inference controls", {
   expect_error(predict(f, x0 = c(NA, 0)), "NA")
   f$.model <- NULL
   expect_error(predict(f, X0 = d$X0), "fitted model state")
+  })
 })
 
 test_that("TDNN inherits NP methods with actual signed covariance", {
+  .with_duplicate_policy_warnings({
   d <- .np_method_data()
   for (jk in c("fast", "loo")) {
     f <- np_tdnn(X = d$X, X0 = d$X0, Y = d$y, s1 = 2, s2 = 4, dim = 2,
@@ -137,9 +148,11 @@ test_that("TDNN inherits NP methods with actual signed covariance", {
     expect_equal(predict(f, X0 = d$X0, se.fit = TRUE)$se.fit, f$se)
     expect_equal(unname(coef(f)), f$mu)
   }
+  })
 })
 
 test_that("loo covariance preserves deletion-specific fitted geometry", {
+  .with_duplicate_policy_warnings({
   d <- .np_method_data()
   loo <- t(vapply(seq_len(nrow(d$X)), function(i) {
     Xi <- d$X[-i, , drop = FALSE]
@@ -156,9 +169,11 @@ test_that("loo covariance preserves deletion-specific fitted geometry", {
   scales <- apply(d$X, 2, sd)
   frozen <- .np_ref_cov(sweep(d$X, 2, scales, "/"), sweep(d$X0, 2, scales, "/"), d$y, 3)
   expect_equal(predict(f, X0 = d$X0, se.fit = TRUE)$se.fit^2, diag(frozen), tolerance = 1e-12)
+  })
 })
 
 test_that("NP resolves registered custom geometry once for saved predictions", {
+  .with_duplicate_policy_warnings({
   d <- .np_method_data()
   metric <- new_distance("np_saved_custom",
     setup = function(X) list(scale = apply(X, 2, sd)),
@@ -179,19 +194,22 @@ test_that("NP resolves registered custom geometry once for saved predictions", {
   fc <- np_dnn(X = d$X, X0 = d$X0, Y = d$y, s = 3,
     distance = metric, ctx = list(scale = c(1, 5)), return = character())
   expect_equal(predict(fc, X0 = d$X0), fc$mu)
+  })
 })
 
 test_that("asymptotic NP and TDNN covariance matches explicit beta-grid deletions", {
+  .with_duplicate_policy_warnings({
   d <- .np_method_data()
   weights <- function(X, X0, s, k) {
     n <- nrow(X)
     table <- rowMeans(vapply(seq_len(k), function(a) {
       diff(pbeta((0:n) / n, a, s - a + 1))
     }, numeric(n)))
-    vapply(seq_len(nrow(X0)), function(j) {
+    W <- vapply(seq_len(nrow(X0)), function(j) {
       distance <- rowSums(sweep(X, 2, X0[j, ], "-")^2)
       table[order(.tie_reference_order(distance, X))]
     }, numeric(n))
+    .block_oracle_average_weights(W, X)
   }
   for (tdnn in c(FALSE, TRUE)) for (normalize in c(FALSE, TRUE)) {
     n <- nrow(d$X)
@@ -214,6 +232,7 @@ test_that("asymptotic NP and TDNN covariance matches explicit beta-grid deletion
     expect_equal(unname(vcov(f)), V, tolerance = 1e-12)
     expect_equal(predict(f, X0 = d$X0, se.fit = TRUE)$se.fit^2, diag(V), tolerance = 1e-12)
   }
+  })
 })
 
 test_that("NP covariance keeps support-local variation with extreme unused outcomes", {
@@ -241,6 +260,7 @@ test_that("NP singular geometry and scalar/batch prediction are coherent", {
 })
 
 test_that("TDNN tabular saved state works without optional outputs or fitted SE", {
+  .with_duplicate_policy_warnings({
   d <- .np_method_data()
   dat <- data.frame(a = d$X[, 1], b = d$X[, 2], y = d$y)
   f <- np_tdnn(data = dat, x_cols = 1:2, y_col = "y", X0 = d$X0,
@@ -255,9 +275,11 @@ test_that("TDNN tabular saved state works without optional outputs or fitted SE"
   expect_null(f$W)
   expect_null(f$y)
   expect_error(confint(f), "se = TRUE")
+  })
 })
 
 test_that("NP rejects corrupted saved model state before prediction", {
+  .with_duplicate_policy_warnings({
   d <- .np_method_data()
   f <- np_dnn(X = d$X, X0 = d$X0, Y = d$y, s = 3, return = character())
   bad <- f
@@ -281,6 +303,7 @@ test_that("NP rejects corrupted saved model state before prediction", {
   td <- np_tdnn(X = d$X, X0 = d$X0, Y = d$y, s1 = 2, s2 = 4)
   td$.model$s2 <- td$.model$s1
   expect_error(predict(td, X0 = d$X0), "s1 < s2")
+  })
 })
 
 test_that("print.np_result runs without error", {

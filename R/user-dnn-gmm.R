@@ -59,6 +59,9 @@
 }
 
 .gmm_safe_solve <- function(A, b = NULL) {
+  if (any(!is.finite(A)) || (!is.null(b) && any(!is.finite(b)))) {
+    return(NULL)
+  }
   tryCatch(
     if (is.null(b)) solve(A) else solve(A, b),
     error = function(e) NULL
@@ -254,7 +257,14 @@
     info <- t(D_hat) %*% Omega_inv %*% D_hat
     rownames(info) <- colnames(info) <- coef_names
     info_inv <- .gmm_safe_solve(info)
-    if (!is.null(info_inv) && all(is.finite(info_inv))) {
+    outside_range <- any(!is.finite(info)) ||
+      (!is.null(info_inv) && any(!is.finite(info_inv)))
+    if (outside_range) {
+      warning(paste0(
+        "gmm_dnn: local GMM information matrix or its inverse is outside the numeric range; ",
+        "coefficient SEs set to NA. Rescale model moments or the parameterization."
+      ), call. = FALSE)
+    } else if (!is.null(info_inv)) {
       vc <- info_inv / neff
       rownames(vc) <- colnames(vc) <- coef_names
       se_hat <- sqrt(pmax(diag(vc), 0))
@@ -319,9 +329,8 @@
   start_mat
 }
 
-.gmm_probe_moments <- function(model, sample, ctx, n, p) {
-  theta0 <- rep(0, p)
-  .gmm_eval_moment(model, sample, theta0, ctx, n)
+.gmm_probe_moments <- function(model, sample, ctx, n, theta) {
+  .gmm_eval_moment(model, sample, theta, ctx, n)
 }
 
 #' Local GMM estimation via DNN rank weights
@@ -336,8 +345,13 @@
 #' The documented sampling framework uses independent observations; cluster
 #' and survey-design inference are not supplied. Exact distance ties use
 #' lexicographic order of the original covariates, in their supplied column
-#' order. Identical covariate rows retain input-order ties; permuting those
-#' duplicates can change estimates. Ordering uses no outcomes or nuisances.
+#' order. Rows identical on every raw localization covariate share the average
+#' of their rank weights. Each jackknife deletion recomputes this average over
+#' the surviving block at sample size n-1. This permutation-invariant
+#' modification is not covered by the paper's theory and emits a warning.
+#' Distinct covariate vectors at equal distance are not averaged. Ordering uses
+#' no outcomes or nuisances. Retained tied fits from the earlier policy require
+#' refitting before reporting or reuse.
 #'
 #' Two interfaces are supported.
 #'
@@ -348,9 +362,18 @@
 #' Nuisance quantities are not fit internally.  They must be supplied to the
 #' model through `data` or `model_data`.
 #'
+#' The resolved distance specification and its fitted training context are
+#' retained for weight reconstruction. Replacing a registered metric after
+#' fitting does not change the fit's geometry. Custom callbacks with mutable
+#' external state retain their own reproducibility obligations.
+#'
 #' Exact DNN localization uses the full rank permutation at each target rather
 #' than an `s`-nearest-neighbor truncation. For exact DNN fits, the
-#' finite-population support edge is rank `n - s + k`, not rank `s`.
+#' unaveraged rank-table support edge is rank `n - s + k`, not rank `s`.
+#'
+#' Averaging can extend nonzero observation weights through the end of a
+#' duplicate block that straddles the nominal rank-table edge. Effective sample
+#' sizes and weight diagnostics use the resulting observation weights.
 #'
 #' @param data Optional data frame containing covariates and model variables.
 #'   Column names must be non-missing, non-empty, and unique.
@@ -374,7 +397,12 @@
 #'   `s` must be omitted.
 #' @param normalize Logical; normalize weight columns to sum to one.
 #' @param start Optional numeric vector of length `p_theta`, or `p_theta x m`
-#'   matrix, used as optimizer starts.
+#'   matrix, used as optimizer starts. When omitted, the model's `start()`
+#'   callback is evaluated separately at every target, or zero is used when
+#'   the model has no callback. Targets do not inherit previous targets' starts
+#'   or solutions. An explicit vector is reused at all targets; matrix column
+#'   `j` supplies target `j`. Either explicit form takes precedence over the
+#'   model callback.
 #' @param optimizer Optimizer method passed to [stats::optim()].
 #' @param jacobian One of `"auto"`, `"analytic"`, or `"fd"`.
 #' @param omega_ridge Non-negative ridge multiplier for local moment covariance.
@@ -517,7 +545,53 @@ gmm_dnn <- function(
   start_mat <- .gmm_validate_start(start, p = p_theta, m = m_out)
 
   model_ctx <- model$setup(sample = sample, n = n)
-  probe <- .gmm_probe_moments(model, sample, model_ctx, n = n, p = p_theta)
+  weight_return <- return
+  if ("neighbors" %in% return && !any(c("ranks", "ord") %in% return)) {
+    weight_return <- unique(c(weight_return, "ranks"))
+  }
+  .dnn_duplicate_scope(x_mat)
+  geometry <- .dnn_fitted_geometry(distance, x_mat, ctx)
+  weight_fit <- .dnn_weights_with_extras(
+    x_mat = x_mat,
+    x0_mat = x0_mat,
+    distance = geometry$distance,
+    method = method,
+    k = k,
+    s = s,
+    normalize = normalize,
+    ctx = geometry$ctx,
+    return = weight_return
+  )
+  wt <- weight_fit$wt
+  W <- weight_fit$W
+
+  # Find moment dimensions at an actual target start, including models whose
+  # moments are not defined at zero. Cache every attempted start or failure;
+  # an earlier target must not prevent a later valid target from supplying q.
+  cached_starts <- vector("list", m_out)
+  attempted_start <- rep(FALSE, m_out)
+  probe <- NULL
+  for (j in seq_len(m_out)) {
+    attempted_start[j] <- TRUE
+    start_j <- tryCatch(.gmm_start_for_target(
+      model, sample, model_ctx, as.numeric(W[, j]), x0_mat[j, ], p_theta,
+      if (is.null(start_mat)) NULL else start_mat[, j]), error = function(e) e)
+    cached_starts[j] <- list(start_j)
+    if (inherits(start_j, "error")) next
+    candidate_probe <- tryCatch(.gmm_probe_moments(
+      model, sample, model_ctx, n = n, theta = start_j), error = function(e) e)
+    if (inherits(candidate_probe, "error")) {
+      cached_starts[j] <- list(candidate_probe)
+    } else {
+      probe <- candidate_probe
+      break
+    }
+  }
+  # Preserve all-target warning/NA results when every start fails but the
+  # former zero probe can still establish the model's moment dimensions.
+  if (is.null(probe)) {
+    probe <- .gmm_probe_moments(model, sample, model_ctx, n = n, theta = rep(0, p_theta))
+  }
   q <- ncol(probe)
   moment_names <- model$moment_names
   if (is.null(moment_names)) {
@@ -532,24 +606,6 @@ gmm_dnn <- function(
     )
   }
 
-  weight_return <- return
-  if ("neighbors" %in% return && !any(c("ranks", "ord") %in% return)) {
-    weight_return <- unique(c(weight_return, "ranks"))
-  }
-  weight_fit <- .dnn_weights_with_extras(
-    x_mat = x_mat,
-    x0_mat = x0_mat,
-    distance = distance,
-    method = method,
-    k = k,
-    s = s,
-    normalize = normalize,
-    ctx = ctx,
-    return = weight_return
-  )
-  wt <- weight_fit$wt
-  W <- weight_fit$W
-
   theta <- matrix(NA_real_, nrow = p_theta, ncol = m_out)
   theta_first <- matrix(NA_real_, nrow = p_theta, ncol = m_out)
   se_mat <- if (isTRUE(se)) matrix(NA_real_, nrow = p_theta, ncol = m_out) else NULL
@@ -561,18 +617,12 @@ gmm_dnn <- function(
   g_list <- vector("list", m_out)
   conv <- vector("list", m_out)
 
-  previous_theta <- NULL
   for (j in seq_len(m_out)) {
     w <- as.numeric(W[, j])
-    start_j <- if (!is.null(start_mat)) {
-      start_mat[, j]
-    } else if (!is.null(previous_theta) && all(is.finite(previous_theta))) {
-      previous_theta
-    } else {
-      NULL
-    }
+    start_j <- if (attempted_start[j]) cached_starts[[j]] else if (!is.null(start_mat)) start_mat[, j] else NULL
 
-    fit_j <- tryCatch(
+    fit_j <- tryCatch({
+      if (inherits(start_j, "error")) stop(start_j)
       .gmm_fit_one_target(
         model = model,
         sample = sample,
@@ -591,7 +641,8 @@ gmm_dnn <- function(
         need_jacobian = isTRUE(se) || "jacobian" %in% return,
         moment_names = moment_names,
         coef_names = model$coef_names
-      ),
+      )
+    },
       error = function(e) {
         warning(sprintf(
           "gmm_dnn: target %d failed: %s",
@@ -626,7 +677,6 @@ gmm_dnn <- function(
     jac_list[j] <- list(fit_j$jacobian)
     g_list[j] <- list(fit_j$g_obs)
     conv[[j]] <- fit_j$convergence
-    previous_theta <- fit_j$theta
   }
 
   target_names <- paste0("target_", seq_len(m_out))
@@ -675,6 +725,7 @@ gmm_dnn <- function(
       n = n, m = m_out, p = p_x, p_theta = p_theta, q = q,
       k = as.integer(k), s = as.integer(s),
       method = method, distance = .dnn_distance_name(distance),
+      tie_rule = .dnn_tie_policy(),
       model = model$name,
       jacobian = jacobian,
       optimizer = optimizer,
@@ -696,16 +747,14 @@ gmm_dnn <- function(
     k = k,
     tuning_payload = tuning_payload
   )
-  out$.model <- list(
+  out$.model <- c(list(
     x_mat = x_mat,
     x_cols = if (!is.null(data)) x_cols else NULL,
-    distance = distance,
     method = method,
     k = k,
     s = s,
-    normalize = normalize,
-    ctx = ctx
-  )
+    normalize = normalize
+  ), geometry)
 
   class(out) <- "gmm_result"
   out

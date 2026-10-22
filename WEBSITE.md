@@ -2,7 +2,7 @@
 
 Prepared for a software entry or research-page addition on
 [jakobjuergens.com](https://jakobjuergens.com/). The text below describes the
-`0.1.1` update. The package
+planned release version `0.1.2`. This revision is unpublished. The package
 documentation is live at its canonical pkgdown URL. The latest tagged release
 remains `v0.1.0`; a tagged-release announcement should link to its verified
 source archive and release assets.
@@ -26,15 +26,27 @@ remain experimental.
 [Getting started](https://JakobJuergens.github.io/RdistNN/articles/getting-started.html) ·
 [Accompanying paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
 
-## Source-update announcement draft
+## 0.1.2 release announcement draft
 
-RdistNN 0.1.1 improves numerical reliability, uses covariates to resolve exact
-distance ties, and presents a streamlined interface for new users. Shorter
-guides, runnable vignettes and focused function help support conditional-effect
-and regression workflows. Seeded demos and simulations preserve caller RNG state;
-native calculations use two threads by default with a configurable opt-in. Pointwise
-uncertainty, diagnostics, tuning comparisons and saved-fit reuse retain their
-documented inference scope. The accompanying paper supplies the theory.
+RdistNN 0.1.2 averages weights across exactly identical
+reporting-covariate rows and redistributes their block mass after every jackknife
+deletion. Estimates and covariance are invariant to aligned row permutations up
+to numerical precision. Shared R/C++ helpers apply the rule to fitting,
+prediction, candidates, diagnostics and weight plots. Individual weights,
+support and effective sample size can change; old tied saved fits require
+refitting. The package warns that this practical modification is not covered
+by the accompanying paper's theory. The paper supplies the underlying inference
+conditions; numerical invariance does not establish those conditions.
+
+The guides and function help describe the updated callback shape, saved-state
+and independent GMM-start contracts.
+The [weight guide](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.html#numerical-limits)
+also describes the remaining asymptotic-tail rounding limitation.
+
+Task-oriented guides, runnable vignettes and focused function help support
+conditional-effect and regression workflows. Seeded demos and simulations
+preserve caller RNG state; native calculations use two threads by default with
+a configurable opt-in. This release candidate has not been published.
 
 [Source updates](https://github.com/JakobJuergens/RdistNN/blob/master/NEWS.md) ·
 [Tagged releases](https://github.com/JakobJuergens/RdistNN/releases) ·

@@ -201,7 +201,9 @@
   } else if (is.null(targets)) {
     targets <- all_targets
   } else {
-    targets <- unique(as.integer(targets))
+    targets <- unique(.validate_index_vector(
+      targets, max(all_targets), "targets", label = "target ids"
+    ))
     if (!all(targets %in% all_targets)) {
       .abort_bad_arg(
         "targets",
@@ -327,6 +329,7 @@
 plot_tuning <- function(object, tuning = tuning_dnn_paper(),
                         targets = NULL, level = 0.95, se = TRUE,
                         candidates = "all", ...) {
+  .dnn_reuse_scope(object)
   UseMethod("plot_tuning")
 }
 
@@ -352,6 +355,7 @@ plot_tuning.np_result <- function(object, tuning = tuning_dnn_paper(),
                                   targets = NULL, level = 0.95, se = TRUE,
                                   candidates = "all",
                                   ...) {
+  .dnn_check_tie_model(object$.model)
   .plot_require_ggplot2("plot_tuning")
   se <- .validate_scalar_logical(se, "se")
   if (missing(tuning)) tuning <- NULL
@@ -365,6 +369,7 @@ plot_tuning.np_result <- function(object, tuning = tuning_dnn_paper(),
 plot_tuning.cate_result <- function(object, tuning = tuning_dnn_paper(),
                                     targets = NULL, level = 0.95,
                                     se = TRUE, candidates = "all", ...) {
+  .dnn_check_tie_model(object$.model)
   .plot_require_ggplot2("plot_tuning")
   se <- .validate_scalar_logical(se, "se")
   if (missing(tuning)) tuning <- NULL
@@ -377,6 +382,7 @@ plot_tuning.cate_result <- function(object, tuning = tuning_dnn_paper(),
 #' @export
 plot_tuning.affine_ratio_result <- function(object, tuning = tuning_dnn_paper(),
     targets = NULL, level = .95, se = TRUE, candidates = "all", ...) {
+  .dnn_check_tie_model(object$.model)
   .plot_require_ggplot2("plot_tuning")
   if (missing(tuning)) tuning <- NULL
   se <- .validate_scalar_logical(se, "se")
@@ -399,6 +405,7 @@ plot_tuning.affine_ratio_result <- function(object, tuning = tuning_dnn_paper(),
 plot_tuning.plqr_result <- function(object, tuning = tuning_dnn_paper(),
                                     targets = NULL, level = 0.95,
                                     se = TRUE, candidates = "all", ...) {
+  .dnn_check_tie_model(object$.model)
   .plot_require_ggplot2("plot_tuning")
   if (missing(tuning)) tuning <- NULL
   grid <- .plot_tuning_grid_plqr(object, tuning = tuning, se = se)

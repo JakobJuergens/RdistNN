@@ -7,29 +7,37 @@
 # Prepare one target at a time, retaining O(n*q) working storage. The same
 # prepared inputs enter C++, R prefix sums or explicit frozen-rank deletions.
 # Offsets are retained only to reconstruct requested raw deletion estimates.
-.dnn_loo_centered <- function(sig, ranks, tab_jk, tab_full = NULL, rw = NULL) {
+.dnn_loo_centered <- function(sig, ranks, tab_jk, tab_full = NULL, rw = NULL,
+                              groups = NULL) {
   ranks <- .rank_check_mat(ranks)
   n <- nrow(ranks)
   sig <- .dnn_signal_matrix(sig, n = n, arg = "sig")
   q <- ncol(sig)
   m <- ncol(ranks)
   active <- .jackknife_active_ranks(tab_jk)
+  table_mass <- .compensated_sum(tab_jk)
+  weight_amplitude <- if (length(tab_jk)) max(abs(tab_jk)) else 0
   loo <- array(0, c(n, q, m))
   offset <- matrix(0, q, m)
   for (j in seq_len(m)) {
     used <- active[ranks[, j]]
-    local_order <- order(ranks[, j])[active]
-    level <- .numeric_signal_level(sig[local_order, , drop = FALSE])
+    if (!is.null(groups)) used <- groups %in% unique(groups[used])
+    local_order <- order(ranks[, j])[used[order(ranks[, j])]]
+    level <- .numeric_signal_level(sig[local_order, , drop = FALSE],
+      weights = weight_amplitude, weight_mass = table_mass)
     z <- matrix(0, n, q)
     z[used, ] <- sweep(sig[used, , drop = FALSE], 2L, level, "-")
     r <- ranks[, j, drop = FALSE]
-    value <- if (is.null(rw)) {
+    value <- if (!is.null(groups) && anyDuplicated(groups)) {
+      .dnn_block_loo(z, r[, 1L], tab_jk, groups, direct = !is.null(rw))
+    } else if (is.null(rw)) {
       .dnn_loo_prefix(z, r, tab_jk, tab_full)
     } else {
       .dnn_loo_loop(z, r, rw)
     }
+    value <- matrix(value, nrow = n, ncol = q)
     loo[, , j] <- value
-    offset[, j] <- level * .compensated_sum(tab_jk)
+    offset[, j] <- level * table_mass
   }
   if (q == 1L) loo <- matrix(loo, n, m)
   list(loo = loo, offset = offset)
@@ -55,17 +63,24 @@
   used <- matrix(FALSE, n, ncol(first))
   leverage <- matrix(0, n, ncol(first))
   m <- ncol(used)
+  weight_amplitude <- weight_mass <- numeric(m)
   for (i in seq_len(n)) {
     keep <- seq_len(n) != i
     W <- if (i == 1L) first else weight_fun(i)
     used[keep, ] <- used[keep, ] | (W != 0)
-    leverage[keep, ] <- leverage[keep, ] + abs(W)
+    absolute <- abs(W)
+    leverage[keep, ] <- leverage[keep, ] + absolute
+    weight_amplitude <- pmax(weight_amplitude, apply(absolute, 2L, max))
+    mass <- abs(vapply(seq_len(m), function(j) .compensated_sum(W[, j]), numeric(1L)))
+    smaller <- mass != 0 & (weight_mass == 0 | mass < weight_mass)
+    weight_mass[smaller] <- mass[smaller]
   }
   levels <- vapply(seq_len(m), function(j) {
     local_order <- which(used[, j])
     anchor <- which.max(leverage[, j])
     local_order <- c(anchor, setdiff(local_order, anchor))
-    .numeric_signal_level(sig[local_order, , drop = FALSE])
+    .numeric_signal_level(sig[local_order, , drop = FALSE],
+      weights = weight_amplitude[j], weight_mass = weight_mass[j])
   }, numeric(q))
   levels <- matrix(levels, q, m)
   loo <- array(0, c(n, q, m))

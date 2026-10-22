@@ -40,6 +40,7 @@ A list with closures:
 \description{
 Returns closures for value and gradient evaluation of a score at any
 parameter vector \code{theta}, using analytic or finite-difference derivatives.
+The \code{data} argument is evaluated when the path is constructed.
 }
 \examples{
 sc <- new_score(

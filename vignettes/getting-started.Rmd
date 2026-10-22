@@ -119,10 +119,13 @@ joint assumptions; pointwise intervals alone do not establish it.
 
 The documented sampling framework uses independent observations and supplies
 neither cluster nor survey-design inference. Exact distance ties use the
-original covariates lexicographically in their supplied column order.
-Only identical covariate rows retain input-order ties. Outcomes, treatments
-and nuisance values do not enter this ordering, and the rank-weight vector
-and ESS are preserved. The reported
+original covariates lexicographically in their supplied column order. Identical
+localization covariate rows receive their block's average weight, with the same
+rule applied to every deletion's remaining block. Outcomes, treatments and
+nuisance values do not define the groups. Aligned row permutations then preserve
+estimates and covariance up to numerical precision. A warning identifies this
+practical modification, which is not covered by the paper's theory. Individual
+weights, support and ESS can change. The reported
 `s/n` is descriptive; it is not a calibrated inference threshold.
 
 ### Check local support
@@ -186,8 +189,10 @@ Larger `s` concentrates more weight near the target. The written manuscript
 derivations use `k = 1`; larger fixed `k` is supported in the implementation.
 
 The order `s` is not a count of observations retained in a nearest-neighbor
-truncation. Exact weights use the full rank permutation and have support
-through rank `n - s + k` (`n - s + 1` for `k = 1`). The optional `neighbors`
+truncation. The unaveraged exact rank table has support through rank
+`n - s + k` (`n - s + 1` for `k = 1`). Block averaging can extend nonzero
+observation weights to the end of an identical-covariate block crossing that
+edge. The optional `neighbors`
 extra reports the first `k` neighbors, rather than the full weight support.
 
 For sensitivity analysis, compare the paper's candidate orders without

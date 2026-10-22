@@ -20,6 +20,7 @@ test_that("hand fixture returns paired ratio covariance and exact array identiti
 })
 
 test_that("subset enumeration matches full and retained arrays including ties", {
+  .with_duplicate_policy_warnings({
   for (n in 2:8) for (s in seq_len(n - 1L)) {
     X <- matrix(seq_len(n) %% 3L, ncol = 1L)
     signal <- cbind(seq_len(n)^2 / n, 1 + seq_len(n) / n)
@@ -33,6 +34,7 @@ test_that("subset enumeration matches full and retained arrays including ties", 
     expect_equal(unname(fit$deletions[, , 1L]), unname(ref$loo), tolerance = 1e-12)
     expect_equal(unname(fit$component_vcov[[1L]]), unname(ref$vcov), tolerance = 1e-12)
   }
+  })
 })
 
 test_that("signed and zero denominators retain every target and component covariance", {

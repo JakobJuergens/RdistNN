@@ -38,27 +38,25 @@ NumericVector rustat_cate_g_indexed(IntegerVector idxs, SEXP ctx_) {
   XPtr<CateCtx> ctx(ctx_);
   const int m = idxs.size();
   NumericVector out(m);
-  int first_bad_index = -1;
+  int has_bad_index = 0;
 
 #ifdef _OPENMP
 #pragma omp parallel for num_threads(rustat::thread_limit()) schedule(static) if (m >= 1024)
 #endif
   for (int t = 0; t < m; ++t) {
-    const int i = idxs[t] - 1; // 1-based -> 0-based
-    if (i < 0 || i >= ctx->n) {
+    const int index = idxs[t];
+    if (index == NA_INTEGER || index < 1 || index > ctx->n) {
 #ifdef _OPENMP
 #pragma omp critical(rustat_cate_g_indexed_error)
 #endif
-      {
-        if (first_bad_index < 0)
-          first_bad_index = i + 1;
-      }
+      { has_bad_index = 1; }
       out[t] = NA_REAL;
       continue;
     }
+    const int i = index - 1; // 1-based -> 0-based
     out[t] = ctx->rho[i];
   }
-  if (first_bad_index >= 0) {
+  if (has_bad_index) {
     Rcpp::stop("Index out of bounds in cate_g_indexed.");
   }
   return out;

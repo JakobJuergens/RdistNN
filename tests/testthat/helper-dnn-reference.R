@@ -106,6 +106,7 @@
     storage.mode(rank_matrix_i) <- "integer"
 
     W_i <- .dnn_reference_eval_rank_weight_columns(rw, rank_matrix_i)
+    W_i <- .block_oracle_average_weights(W_i, x_mat[keep, , drop = FALSE])
     est_i <- crossprod(sig[keep, , drop = FALSE], W_i)
     if (q == 1L) {
       loo[i, ] <- as.numeric(est_i[1L, ])

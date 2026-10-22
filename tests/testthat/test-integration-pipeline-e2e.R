@@ -305,6 +305,7 @@ test_that("single-target pipeline retains matrix dimensions and normalized weigh
 })
 
 test_that("duplicate-row pipeline retains stable cosine ranks", {
+  .with_duplicate_policy_warnings({
   with(.pipeline_single_target_fixture(), {
     X_dup <- rbind(X, matrix(X[1, ], 2, p, byrow = TRUE)) # add two exact duplicates
     X0_dup <- matrix(x0, nrow = 1L)
@@ -323,6 +324,7 @@ test_that("duplicate-row pipeline retains stable cosine ranks", {
     ord_tie <- .tie_reference_order(as.vector(DX_dup_cos[, 1]), X_dup)
 
     expect_equal(ord_dup[, 1], ord_tie)
+  })
   })
 })
 

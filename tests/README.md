@@ -1,8 +1,19 @@
 # Test-suite map
 
+Tiny-Beta and close-order fixtures cover bounded cases. They do not certify
+all subnormal tail support, order-statistic mixtures or signed TDNN blending;
+the unresolved limitation is recorded in the
+[numerical reference](../markdown_notes/design/19_weighted_accumulation.md).
+Fixed-table engine agreement does not establish correct table construction.
+
 Run tests from the repository root with `devtools::test()`. The R package
 suite lives directly in `tests/testthat/`; `tests/ci/` contains separate
 Python checks for repository and workflow policy.
+
+Replication subprocesses and multisession workers need a matching installed
+RdistNN on their library path. For a full candidate run, install the checked
+archive into a private library and expose it through `R_LIBS` before running
+the source suite; source loading alone is confined to the current R process.
 
 ## Finding a test
 
@@ -16,28 +27,36 @@ the first place to look, then the relevant integration or numerical suite.
 | Shared grid callbacks, failure rows, duplicate keys and cached target/inference reuse | `test-tuning-grid-engine.R` |
 | Local origins, offsets, translated SD and covariance | `test-centering-translation.R` |
 | Neighbor extras and CATE nuisance contracts | `test-result-neighbors.R`, `test-cate-nuisance-contract.R`, `test-score-cate-accumulation.R` |
+| Marginal prediction allocation limits, explicit-deletion accuracy and filtered-profiler positive/negative controls | `test-np-prediction-memory.R` |
 | CATE signal provenance, original creation version and legacy numerical reuse | `test-cate-provenance.R` |
 | Demo subset matrix dimensions, batch scores and preserved RNG draws | `test-demo-subsets.R` |
 | Test fixture state, public seed scopes and bounded oracle simulation backend/dependency contract | `test-fixture-rng-state.R`, `test-seeded-rng-scope.R`, `test-simulation-rng-backends.R`, `test-demo-target-rng.R` |
 | Exact-table represented parity and near-full support | `test-exact-table-portability.R` |
 | Weighted CDF boundary indices, physical radius and outcome SD ranges | `test-weighted-distribution-range.R`, `fixtures/weighted-cdf.csv` |
 | Component contracts | `test-api-*`, `test-distance-*`, `test-order-*`, `test-score-*`, `test-utils-validate.R` |
+| Singleton rank-weight batches and scalar score callback validation/data binding | `test-api-ranks-singleton-batch.R`, `test-api-scores-scalar-batch-validation.R` |
+| Scalar-only distance batches, singleton weight/estimator consumers and shared setup/context | `test-distance-scalar-batch-consumers.R` |
 | Compensated weighted sums, native/R parity, retained deletion corrections and buffer boundaries | `test-compensated-accumulation.R` |
+| Native rank/score index bounds, missing indices and serial/parallel error reporting | `test-native-index-boundaries.R` |
 | Numerical references and optimized paths | `test-rank-weight-*`, `test-jackknife-rank-*`, `test-dnn-scalar-reference.R`, `test-dnn-jackknife-prefix.R`, `test-tdnn-*`, `test-compiled-fallback-parity.R`, `test-errors-fastpaths.R` |
+| Exact comparison semantics, bounded failure messages and closure-safe diagnostics | `helper-comparisons.R`, `test-comparison-assertions.R` |
 | Native/R distance arithmetic, large-offset and accumulation-sensitive ranks, scalar/batch agreement and FMA-sensitive ties | `test-distance-scaled-arithmetic.R` |
 | Huge/tiny finite L2 norms, shared exceptional boundaries, exact ranks and serialized prediction | `test-distance-range-stability.R` |
 | Close-order TDNN coefficients and tiny Beta interval masses against independent references | `test-weight-numerical-stability.R` |
 | Support-aware jackknife centering across estimators, compiled/R and fast/naive paths | `test-jackknife-support-centering.R` |
-| Shared prediction targets, stored selectors and candidate views | `test-prediction-targets-common.R`, `test-prediction-selectors.R`, `test-candidate-fit.R` |
+| Exact-X block averaging, survivor-weight redistribution, actual R/C++ deletions, paired covariance, permutation invariance, reuse and target-specific diagnostics/plots | `test-duplicate-block-averaging.R`, `helper-duplicate-blocks.R`, `test-candidate-weight-targets.R` |
+| Original-signal block prefix/suffix states, finite survivors after cancellation, signed zero-mass covariance, genuine subnormals and interleaved rank masses | `test-block-numerical-regression.R` |
+| Weighted origins with subnormal coefficients or nonzero mass, raw normalization and ordinary tiny-tail stability | `test-weighted-underflow-origin.R` |
+| Shared prediction targets, stored selectors and candidate views | `test-prediction-targets-common.R`, `test-prediction-selectors.R`, `test-candidate-fit.R`, `test-candidate-retained-state-validation.R` |
 | CATE public, nuisance, provenance and supported numerical routes | `test-user-cate-*`, `test-cate-*`, `test-score-cate-*` |
 | NP/TDNN identities, data interfaces, public validation, methods and diagnostics | `test-user-np-*`, `test-user-tdnn-np*`, `test-demo-data-npr.R` |
 | Conditional LATE and paired ratios | `test-clate-*`, `test-user-clate-*`, `test-user-affine-ratio-*`, `test-weights-single-row.R` |
-| Tuning and stored candidate views | `test-api-tuning.R`, `test-user-dnn-tuning.R`, `test-tuning-*`, `test-candidate-fit.R`, `test-user-*-tuning-grid.R` |
+| Tuning and stored candidate views | `test-api-tuning.R`, `test-user-dnn-tuning.R`, `test-tuning-*`, `test-candidate-fit.R`, `test-user-*-tuning-grid.R`, `test-candidate-retained-state-validation.R` |
 | Shared diagnostics validation and printing | `test-user-dnn-diagnostics.R` |
 | Estimator diagnostics: NP outcomes, CATE overlap, PLQR Gram/Jacobian | `test-user-np-diagnostics.R`, `test-user-cate-diagnostics.R`, `test-user-plqr-diagnostics.R` |
 | Candidate diagnostics, metadata and plot integration | `test-tuning-grid-diagnostics.R`, `test-tuning-grid-diagnostics-plots.R`, `test-plot-*` |
 | CATE simulations | `test-sim-cate-data.R`, `test-sim-cate-one-rep.R`, `test-sim-cate-run.R`, `test-sim-cate-summary.R`, `test-sim-cate-tuning*.R` |
-| Experimental PLQR and GMM/IV | `test-user-plqr-*`, `test-user-dnn-gmm*`, `test-user-gmm-methods.R`, `test-gmm-models.R`, `test-score-plqr.R`, `test-demo-data-plqr.R`, `test-demo-data-iv.R`, `test-sim-iv-*` |
+| Experimental PLQR and GMM/IV | `test-user-plqr-*`, `test-user-dnn-gmm*`, `test-user-gmm-methods.R`, `test-gmm-*.R`, `test-score-plqr.R`, `test-demo-data-plqr.R`, `test-demo-data-iv.R`, `test-sim-iv-*` |
 | Integration, replication, and documentation | `test-integration-*`, `test-paper-*`, `test-result-*`, `test-*-documentation-*`, `test-notation-*`, `test-readme-*`, `test-citation-*`, `test-cate-paper-diagnostics.R`, `test-s-default-paper-rule.R` |
 
 The larger wrapper families separate estimator identities, data interfaces,
@@ -69,14 +88,14 @@ PLQR families include the shared demo-subset and target-validation RNG suites;
 simulation families also include the shared backend tests:
 
 ```r
-devtools::test(filter = "^(user-cate|cate-|score-cate|prediction-(targets-common|selectors)$|candidate-fit$|demo-(subsets|target-rng)$|seeded-rng-scope$|fixture-rng-state$)")
-devtools::test(filter = "^(user-(np-|tdnn-np)|demo-data-npr$|prediction-(targets-common|selectors)$|candidate-fit$|demo-(subsets|target-rng)$|seeded-rng-scope$|fixture-rng-state$)")
-devtools::test(filter = "^(prediction-(targets-common|selectors)|candidate-fit)$")
-devtools::test(filter = "^(api-tuning|tuning-|candidate-fit|user-dnn-tuning|user-.*-tuning-grid|sim-cate-tuning|demo-(subsets|target-rng)$|seeded-rng-scope$|simulation-rng-backends$|fixture-rng-state$)")
+devtools::test(filter = "^(user-cate|cate-|score-cate|prediction-(targets-common|selectors)$|candidate-(fit|retained-state-validation|weight-targets)$|demo-(subsets|target-rng)$|seeded-rng-scope$|fixture-rng-state$)")
+devtools::test(filter = "^(user-(np-|tdnn-np)|demo-data-npr$|prediction-(targets-common|selectors)$|candidate-(fit|retained-state-validation|weight-targets)$|demo-(subsets|target-rng)$|seeded-rng-scope$|fixture-rng-state$)")
+devtools::test(filter = "^(prediction-(targets-common|selectors)|candidate-(fit|retained-state-validation|weight-targets))$")
+devtools::test(filter = "^(api-tuning|tuning-|candidate-|user-dnn-tuning|user-.*-tuning-grid|sim-cate-tuning|demo-(subsets|target-rng)$|seeded-rng-scope$|simulation-rng-backends$|fixture-rng-state$)")
 devtools::test(filter = "^(plot-|user-(dnn|np|cate|plqr)-diagnostics$|tuning-grid-diagnostics)")
 devtools::test(filter = "^(sim-cate|demo-(subsets|target-rng)$|seeded-rng-scope$|simulation-rng-backends$|fixture-rng-state$)")
 devtools::test(filter = "^(clate-|user-clate|user-affine-ratio|weights-single-row|seeded-rng-scope$|fixture-rng-state$)")
-devtools::test(filter = "^(user-plqr|user-dnn-gmm|user-gmm|gmm-models|score-plqr|demo-data-(plqr|iv)|sim-iv|demo-(subsets|target-rng)$|seeded-rng-scope$|simulation-rng-backends$|fixture-rng-state$)")
+devtools::test(filter = "^(user-plqr|user-dnn-gmm|user-gmm|gmm-|score-plqr|demo-data-(plqr|iv)|sim-iv|demo-(subsets|target-rng)$|seeded-rng-scope$|simulation-rng-backends$|fixture-rng-state$)")
 ```
 
 Use the full suite for changes shared across families. The release check
@@ -107,6 +126,14 @@ accompany quantity-specific numeric tolerances. The
 and [compiled-code policy](../markdown_notes/design/10_rcpp_and_compiled_code_policy.md)
 own these acceptance rules. Shared primitive changes also require their
 estimator, candidate, covariance and saved-prediction consumers.
+
+Use `.expect_identical_fast()` for whole fitted-state snapshots, byte vectors,
+simulation tables and extreme numeric identity fixtures where recursive
+failure diffs are costly. It preserves base `identical()` checks and gives a
+bounded message without traversing retained callback environments. Detailed
+testthat differences remain useful for small ordinary values. Reporting
+immutability compares object/data state directly; serialization round trips
+and frozen-file byte identity keep their dedicated coverage.
 
 Tests must run independently through public interfaces. Exercise S3 methods
 through their generics on fitted objects; missing unexported aliases must not

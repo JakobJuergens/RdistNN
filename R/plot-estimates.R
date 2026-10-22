@@ -59,6 +59,7 @@ plot_estimates <- function(object, level = 0.95,
                            shade_significant = FALSE,
                            candidates = "default",
                            ...) {
+  .dnn_reuse_scope(object)
   .plot_require_ggplot2("plot_estimates")
   style <- match.arg(style)
   if (!.plot_candidates_is_default(candidates)) {
@@ -335,24 +336,28 @@ plot_estimates <- function(object, level = 0.95,
 #' @rdname plot_estimates
 #' @exportS3Method ggplot2::autoplot np_result
 autoplot.np_result <- function(object, ...) {
+  .dnn_reuse_scope(object)
   plot_estimates(object, ...)
 }
 
 #' @rdname plot_estimates
 #' @exportS3Method ggplot2::autoplot cate_result
 autoplot.cate_result <- function(object, ...) {
+  .dnn_reuse_scope(object)
   plot_estimates(object, ...)
 }
 
 #' @rdname plot_estimates
 #' @exportS3Method ggplot2::autoplot affine_ratio_result
 autoplot.affine_ratio_result <- function(object, ...) {
+  .dnn_reuse_scope(object)
   plot_estimates(object, ...)
 }
 
 #' @rdname plot_estimates
 #' @exportS3Method ggplot2::autoplot plqr_result
 autoplot.plqr_result <- function(object, ...) {
+  .dnn_reuse_scope(object)
   p <- plot_estimates(object, ...)
   theta_txt <- paste(format(as.numeric(object$theta_eval), digits = 3),
                      collapse = ", ")
@@ -365,6 +370,7 @@ autoplot.plqr_result <- function(object, ...) {
 #' @rdname plot_estimates
 #' @exportS3Method ggplot2::autoplot gmm_result
 autoplot.gmm_result <- function(object, ...) {
+  .dnn_reuse_scope(object)
   p <- plot_estimates(object, ...)
   if (!is.null(object$meta$model)) {
     p <- p + ggplot2::labs(
@@ -378,6 +384,7 @@ autoplot.gmm_result <- function(object, ...) {
 #' @param x A fitted result object (for the `plot()` methods).
 #' @export
 plot.np_result <- function(x, ...) {
+  .dnn_reuse_scope(x)
   p <- plot_estimates(x, ...)
   print(p)
   invisible(p)
@@ -386,6 +393,7 @@ plot.np_result <- function(x, ...) {
 #' @rdname plot_estimates
 #' @export
 plot.cate_result <- function(x, ...) {
+  .dnn_reuse_scope(x)
   p <- plot_estimates(x, ...)
   print(p)
   invisible(p)
@@ -394,6 +402,7 @@ plot.cate_result <- function(x, ...) {
 #' @rdname plot_estimates
 #' @export
 plot.affine_ratio_result <- function(x, ...) {
+  .dnn_reuse_scope(x)
   p <- plot_estimates(x, ...)
   print(p)
   invisible(p)
@@ -402,6 +411,7 @@ plot.affine_ratio_result <- function(x, ...) {
 #' @rdname plot_estimates
 #' @export
 plot.plqr_result <- function(x, ...) {
+  .dnn_reuse_scope(x)
   p <- autoplot.plqr_result(x, ...)
   print(p)
   invisible(p)
@@ -410,6 +420,7 @@ plot.plqr_result <- function(x, ...) {
 #' @rdname plot_estimates
 #' @export
 plot.gmm_result <- function(x, ...) {
+  .dnn_reuse_scope(x)
   p <- autoplot.gmm_result(x, ...)
   print(p)
   invisible(p)

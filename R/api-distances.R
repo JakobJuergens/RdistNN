@@ -104,6 +104,11 @@ is_distance <- function(x) {
 #' @param eval Optional function `(X, x0, ctx) -> numeric(n)`.
 #' @param eval_batch Optional function `(X, X0, ctx) -> numeric(n x m)`.
 #' @param setup Optional function `(X) -> ctx`.
+#' @details A batch evaluator must return an actual `n x m` numeric matrix,
+#' including when either dimension is one. With only `eval`, the shared batch
+#' evaluator assembles those dimensions for you and validates each result.
+#' When `ctx` is `NULL`, `setup(X)` runs once per evaluation call, not once
+#' per target in a batch. [weights_matrix()] uses this same evaluator.
 #' @return A validated `dnn_distance` spec.
 #' @examples
 #' spec <- new_distance(
@@ -264,6 +269,9 @@ distance_eval <- function(spec, X, x0, ctx = NULL) {
 
 #' Evaluate a distance spec for many targets (batch)
 #'
+#' Scalar-only specifications are supported through the shared fallback.
+#' The result retains both matrix dimensions for singleton samples/targets.
+#'
 #' @param spec Distance spec (see [is_distance()]).
 #' @param X Numeric matrix \(n  x  p\).
 #' @param X0 Numeric matrix \(m  x  p\) (targets as rows).
@@ -275,6 +283,10 @@ distance_eval <- function(spec, X, x0, ctx = NULL) {
 #' x_mat <- matrix(rnorm(12), 4, 3)
 #' x0_mat <- matrix(rnorm(6), 2, 3)
 #' distance_eval_batch(distance_l2(), x_mat, x0_mat)
+#' scalar_l1 <- as_distance(function(X, x0) {
+#'   rowSums(abs(sweep(X, 2L, x0, "-")))
+#' })
+#' dim(distance_eval_batch(scalar_l1, x_mat[1L, , drop = FALSE], x0_mat))
 #' @export
 distance_eval_batch <- function(spec, X, X0, ctx = NULL) {
   if (!is_distance(spec)) .abort_bad_arg("spec", "must be a distance")

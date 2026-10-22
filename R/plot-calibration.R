@@ -43,6 +43,7 @@
 #' }
 #' @export
 plot_calibration <- function(object, residuals = NULL, level = 0.95, ...) {
+  .dnn_reuse_scope(object)
   .plot_require_ggplot2("plot_calibration")
   if (!inherits(object, "plqr_result")) {
     .abort_bad_arg(

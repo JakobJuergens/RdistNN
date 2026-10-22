@@ -290,6 +290,10 @@ rank_weight_eval <- function(spec, ranks, ctx = NULL) {
 
 #' Evaluate rank-weight for many targets (batch)
 #'
+#' A scalar-only rule is evaluated and validated separately for each target.
+#' The assembled result remains an `n x m` matrix when `n = 1` or `m = 1`.
+#' A supplied `eval_batch` must itself return that matrix shape.
+#'
 #' @param spec Rank-weight spec (see [is_rank_weight()]).
 #' @param R Integer matrix (n x m), each column a permutation of `1..n`.
 #' @param ctx Optional context (if the spec uses it).
@@ -298,6 +302,7 @@ rank_weight_eval <- function(spec, ranks, ctx = NULL) {
 #' rw <- as_rank_weight(function(r) rep(1 / length(r), length(r)))
 #' rank_matrix <- cbind(c(1L, 2L, 3L), c(2L, 1L, 3L))
 #' rank_weight_eval_batch(rw, rank_matrix)
+#' dim(rank_weight_eval_batch(rw, matrix(1L, nrow = 1L, ncol = 2L)))
 #' @export
 rank_weight_eval_batch <- function(spec, R, ctx = NULL) {
   if (!is_rank_weight(spec)) .abort_bad_arg("spec", "must be a rank_weight")
@@ -309,10 +314,12 @@ rank_weight_eval_batch <- function(spec, R, ctx = NULL) {
   } else if (is.function(spec$eval_batch)) {
     weight_matrix <- spec$eval_batch(rank_matrix, ctx)
   } else if (is.function(spec$eval)) {
-    # Fallback: apply eval to each column; coerce to matrix if m == 1
-    weight_matrix <- apply(rank_matrix, 2L, function(r) spec$eval(r, ctx))
+    # Validate each scalar-target result before assembling the batch.
+    weight_matrix <- apply(rank_matrix, 2L, function(r) {
+      .rank_validate_output_vec(spec$eval(r, ctx), length(r))
+    })
     if (!is.matrix(weight_matrix)) {
-      weight_matrix <- matrix(weight_matrix, nrow = nrow(rank_matrix), ncol = 1L)
+      weight_matrix <- matrix(weight_matrix, nrow = nrow(rank_matrix), ncol = ncol(rank_matrix))
     }
   } else {
     .abort_bad_arg("spec", "rank_weight spec has neither eval nor eval_batch nor table")

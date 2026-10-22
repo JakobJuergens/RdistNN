@@ -35,6 +35,15 @@
 #' - Plot CATE and regression estimates with [plot_estimates()] and inspect
 #'   local weights with [plot_weights()] (requires ggplot2).
 #'
+#' @section Identical localization covariates:
+#' Covariate-aware estimators average weights within exactly identical raw
+#' covariate blocks, including every jackknife deletion's surviving members.
+#' The package warns because this permutation-invariant modification is not
+#' covered by the paper's theory. It can change observation weights, support
+#' and effective sample size. See [weights_matrix()] for the rule; rank-only
+#' utilities without covariates cannot infer duplicate groups. Refit tied saved
+#' objects created before this policy before reporting or reusing them.
+#'
 #' @section Experimental and Advanced Workflows:
 #' All PLQR functionality is **experimental**, including [plqr_dnn()], its
 #' scores, demo helpers, methods, and plots. The current wrapper evaluates

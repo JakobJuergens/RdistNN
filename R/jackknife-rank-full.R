@@ -26,6 +26,8 @@
   n   <- nrow(ranks)
   m   <- ncol(ranks)
   q   <- ncol(PHI)
+  table_mass <- .compensated_sum_R(wnm1)
+  weight_amplitude <- if (length(wnm1)) max(abs(wnm1)) else 0
 
   theta0  <- matrix(NA_real_, q, m)
   loo_arr <- array(NA_real_, dim = c(n, q, m))
@@ -41,12 +43,13 @@
     for (qq in seq_len(q)) {
       z <- PHI[ord, qq]          # signal in rank order (length n)
       active <- .jackknife_active_ranks(wnm1)
-      level <- .numeric_signal_level(matrix(z[active], ncol = 1L))
+      level <- .numeric_signal_level(matrix(z[active], ncol = 1L),
+        weights = weight_amplitude, weight_mass = table_mass)
       z[!active] <- 0
       z[active] <- z[active] - level
 
       value <- .compensated_deletions_R(z, wnm1,
-        level * .compensated_sum_R(wnm1))
+        level * table_mass)
       loo_arr[, qq, t] <- value[r_col]
     }
   }

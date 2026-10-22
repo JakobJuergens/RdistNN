@@ -57,6 +57,7 @@
 #' @name diagnostics
 #' @export
 diagnostics.np_result <- function(object, candidates = "default", ...) {
+  .dnn_reuse_scope(object)
   if (!.plot_candidates_is_default(candidates)) {
     return(.dnn_candidate_diagnostics(object, candidates = candidates))
   }

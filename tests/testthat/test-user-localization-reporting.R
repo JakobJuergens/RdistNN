@@ -11,7 +11,7 @@ test_that("fit and summary printing report localization fractions without changi
     before <- f
     expect_match(paste(capture.output(print(f)), collapse = " "), "s[12]?/n")
     expect_match(paste(capture.output(print(summary(f))), collapse = " "), "s[12]?/n")
-    expect_identical(f, before)
+    .expect_identical_fast(f, before)
   }
   expect_match(paste(capture.output(print(fits[[1L]])), collapse = " "), "0.375")
 })
@@ -22,13 +22,13 @@ test_that("causal diagnostics expose available arm and contribution summaries", 
     y_col = "Y", t_col = "D", e_col = "e_oracle",
     m0_col = "m0_oracle", m1_col = "m1_oracle", s = 5)
   diag <- diagnostics(f)
-  before <- serialize(diag, NULL)
+  before <- diag
   output <- paste(capture.output(print(diag)), collapse = " ")
   expect_match(output, "treated ESS")
   expect_match(output, "control ESS")
   expect_match(output, "propensity")
   expect_match(output, "absolute score")
-  expect_identical(serialize(diag, NULL), before)
+  .expect_identical_fast(diag, before)
   f <- cate_dnn(X = matrix(1:8, ncol = 1L), x0 = 2, pseudo_outcome = 1:8, s = 3)
   expect_match(paste(capture.output(print(diagnostics(f))), collapse = " "), "unavailable")
 })

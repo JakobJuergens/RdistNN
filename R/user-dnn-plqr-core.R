@@ -106,12 +106,17 @@
   theta_se <- matrix(NA_real_, nrow = p_d, ncol = m)
 
   for (j in seq_len(m)) {
-    J_inv <- .plqr_safe_solve(jacobian[[j]])
-    if (is.null(J_inv) || any(!is.finite(J_inv))) {
-      warning(sprintf(
-        "plqr_dnn: direct PLQR Jacobian is singular at target %d; coefficient SEs set to NA.",
-        j
-      ), call. = FALSE)
+    outside_range <- any(!is.finite(jacobian[[j]]))
+    J_inv <- if (outside_range) NULL else .plqr_safe_solve(jacobian[[j]])
+    outside_range <- outside_range || (!is.null(J_inv) && any(!is.finite(J_inv)))
+    if (outside_range || is.null(J_inv)) {
+      message <- if (outside_range) {
+        paste0("plqr_dnn: direct PLQR Jacobian or its inverse is outside the numeric range ",
+          "at target %d; coefficient SEs set to NA. Rescale regressor and density inputs.")
+      } else {
+        "plqr_dnn: direct PLQR Jacobian is singular at target %d; coefficient SEs set to NA."
+      }
+      warning(sprintf(message, j), call. = FALSE)
       omega_j <- matrix(NA_real_, nrow = p_d, ncol = p_d)
       vcov_j <- matrix(NA_real_, nrow = p_d, ncol = p_d)
     } else {
@@ -259,6 +264,7 @@
 }
 
 .plqr_validate_prediction_model <- function(model) {
+  .dnn_check_tie_model(model)
   if (!is.list(model) || is.null(model$x_mat) || is.null(model$d_mat) ||
       is.null(model$mD_mat) || is.null(model$theta_eval) || is.null(model$tau)) {
     .abort_bad_state(paste0(

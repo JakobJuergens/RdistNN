@@ -3,6 +3,7 @@
 
 .np_prediction_state <- function(object) {
   model <- object$.model
+  .dnn_check_tie_model(model)
   if (!is.list(model) || is.null(model$x_mat) || is.null(model$y_vec) ||
       is.null(model$k) || is.null(model$kind)) {
     .abort_bad_state(paste0(
@@ -84,7 +85,7 @@
     if (is.null(ranks)) ranks <- .np_prediction_weights(model, x0_mat, "ranks")$ranks
     rw <- .np_rank_weight(model)
     loo <- .dnn_loo_centered(model$y_vec, ranks, .rank_weight_table(rw, n - 1L),
-      tab_full = .rank_weight_table(rw, n))$loo
+      tab_full = .rank_weight_table(rw, n), groups = .dnn_duplicate_groups(model$x_mat))$loo
   }
   loo
 }

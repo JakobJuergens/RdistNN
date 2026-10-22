@@ -71,6 +71,22 @@ The weight panels show what the estimator averaged over. The effective
 kernel view plots weight against distance, with the rank-`s` radius marked
 as a scale diagnostic. That marker is not the DNN support radius.
 
+Profiles and cumulative views use the final block-averaged observation weights,
+so profiles can differ across targets when covariates repeat. The profile guide
+marks the nominal unaveraged exact rank-table edge; a duplicate block can carry
+nonzero weights beyond it. `targets` also selects target panels in candidate
+comparisons such as `plot_weights(grid_fit, candidates = "all", targets = 2L)`.
+For these comparisons, plot data include `target_id` when profiles vary by
+target or `targets` is supplied. With untied covariates the default candidate
+profile is shared and shown once. The
+[weight guide](dnn-weights.html#identical-covariate-rows) explains the averaging
+rule and its warning about the paper's theory.
+
+Target selectors are integer-valued numeric positions. Fractional, logical,
+complex and character selectors are rejected; repeated positions are removed
+in first-occurrence order. A public plot or dashboard call emits the
+duplicate-policy warning once, even when it reconstructs several panels.
+
 ```{r weights-kernel}
 plot_weights(fit, type = "kernel", targets = 6L)
 ```

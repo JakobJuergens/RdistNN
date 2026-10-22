@@ -47,13 +47,33 @@ Computes Demirkaya two-scale DNN (TDNN) weights using the exact rank-weight
 table (\code{tdnn_rank_table_exact()}).  TDNN is a signed linear combination of
 two single-scale exact DNN tables at orders \code{s1} and \code{s2}; the combination
 coefficients are chosen to cancel the leading bias term in the DNN MSE
-expansion.
+expansion. The unaveraged table's nominal support ends at
+\code{n - s1 + 1}; averaging can extend observation weights through a duplicate
+block that straddles this edge.
 }
 \details{
 \strong{Signed weights.} The returned weight matrix \code{W} can contain negative
 entries; columns still sum to 1.  This is by design and reflects the
 bias-correction structure of TDNN.
 }
+\section{Duplicate-covariate blocks}{
+
+Rows identical on every supplied raw covariate receive the average
+of their assigned rank weights, preserving each block's total mass. This
+includes caller-supplied ranks and signed or unnormalized rank rules.
+Distinct covariate vectors at equal distance remain separate. A warning
+identifies this permutation-invariant modification as outside the paper's
+theory, including for \code{k = 1}. Estimator jackknife deletions repeat the
+average over each remaining duplicate block using the selected rule's
+sample-size-n-1 table. For a block at consecutive ranks \code{a:b}, the full
+weight is \code{sum(w_n[a:b]) / (b-a+1)} per member; after deleting a member,
+each survivor receives \code{sum(w_(n-1)[a:(b-1)]) / (b-a)}. A deleted singleton
+contributes zero. The smaller block size must be used in the deletion.
+An exact support edge describes the unaveraged rank
+table; a straddling duplicate block can extend nonzero observation weights
+beyond it. Lower-level rank-only APIs retain their rank-primitive semantics.
+}
+
 \examples{
 set.seed(1)
 X  <- matrix(rnorm(30), 15, 2)

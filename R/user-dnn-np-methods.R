@@ -7,6 +7,7 @@
 #' @return `x`, invisibly.
 #' @export
 print.np_result <- function(x, ...) {
+  .dnn_check_tie_model(x$.model)
   cat("<np_result>\n", sep = "")
   .dnn_print_localization(x$meta)
   cat("  data  : n=", x$meta$n, ", p=", x$meta$p, ", m=", x$meta$m, "\n", sep = "")
@@ -102,12 +103,14 @@ NULL
 #' @rdname np_result
 #' @export
 coef.np_result <- function(object, ...) {
+  .dnn_check_tie_model(object$.model)
   stats::setNames(as.numeric(object$mu), paste0("target_", seq_along(object$mu)))
 }
 
 #' @rdname np_result
 #' @export
 vcov.np_result <- function(object, ...) {
+  .dnn_reuse_scope(object)
   if (is.null(object$se)) {
     .abort_bad_state("Covariance is not available. Refit with `se = TRUE` and an active jackknife.")
   }
@@ -119,6 +122,7 @@ vcov.np_result <- function(object, ...) {
 #' @rdname np_result
 #' @export
 summary.np_result <- function(object, level = .95, ...) {
+  .dnn_check_tie_model(object$.model)
   level <- .validate_scalar_prob(level, "level")
   mu <- as.numeric(object$mu)
   se <- object$se
@@ -140,6 +144,7 @@ summary.np_result <- function(object, level = .95, ...) {
 #' @rdname np_result
 #' @export
 print.summary.np_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
+  .dnn_check_tie_model(x$.model)
   cat("<summary.np_result>\n")
   .dnn_print_localization(x$meta)
   if (!isTRUE(x$has_se)) cat("  Standard errors are not available.\n")
@@ -150,6 +155,7 @@ print.summary.np_result <- function(x, digits = max(3L, getOption("digits") - 3L
 #' @rdname np_result
 #' @export
 confint.np_result <- function(object, parm = NULL, level = .95, ...) {
+  .dnn_check_tie_model(object$.model)
   level <- .validate_scalar_prob(level, "level")
   if (is.null(object$se)) {
     .abort_bad_state("Standard errors are not available. Refit with `se = TRUE` and an active jackknife.")
@@ -166,6 +172,7 @@ confint.np_result <- function(object, parm = NULL, level = .95, ...) {
 #' @export
 predict.np_result <- function(object, newdata = NULL, X0 = NULL, x0 = NULL,
     se.fit = FALSE, interval = c("none", "confidence"), level = .95, ...) {
+  .dnn_reuse_scope(object)
   interval <- match.arg(interval)
   se.fit <- .validate_scalar_logical(se.fit, "se.fit")
   level <- .validate_scalar_prob(level, "level")

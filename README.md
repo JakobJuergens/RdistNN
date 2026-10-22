@@ -11,6 +11,9 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 [![test-coverage](https://github.com/JakobJuergens/RdistNN/actions/workflows/test-coverage.yaml/badge.svg)](https://github.com/JakobJuergens/RdistNN/actions/workflows/test-coverage.yaml)
 <!-- badges: end -->
 
+Release candidate **0.1.2** (unreleased). See [NEWS](NEWS.md) for
+changes.
+
 **RdistNN** estimates conditional treatment effects and regression
 functions using distributional nearest-neighbor (DNN) weights. Choose
 covariate profiles, fit local estimates, and inspect jackknife standard
@@ -173,9 +176,20 @@ explains the default rule and candidate fits.
 
 Intervals are **pointwise**. The framework assumes independent
 observations; cluster and survey-design inference are not supplied.
-Exact distance ties use the original covariates in lexicographic column
-order, without outcomes or nuisances. Identical covariate rows retain
-input-order ties, so reordering those duplicates can change a result.
+Exact distance ties between different covariate rows use lexicographic
+covariate order. For identical localization covariate rows, weights are
+averaged within each duplicate block, including the remaining block in
+each jackknife deletion. Estimates and covariance are then invariant to
+aligned row permutations up to numerical precision. The package warns
+because this modification is not covered by the paper’s theory. It can
+change individual weights, support and effective sample size. Refit
+saved objects created before this policy.
+
+Asymptotic Beta tables retain a known rounding limitation at extremely
+small tail masses, including possible R/Stata support differences. See
+the [weight
+guide](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.html#numerical-limits)
+before interpreting calculations at those scales.
 
 Nuisance predictions must be aligned with the estimation observations.
 Propensity clipping is numerical protection, not a remedy for poor
@@ -208,5 +222,7 @@ under GPL version 3 or later.
 
 ## Contributors
 
-Quality assurance, testing and validation: [Zakareya
-Chehime](https://github.com/Zakareya-Chehime).
+- [Jakob R. Juergens](https://jakobjuergens.com/): main package author
+  and maintainer.
+- [Zakareya Chehime](https://github.com/Zakareya-Chehime): quality
+  assurance, testing and validation.

@@ -34,7 +34,10 @@ reconstruct weights from cached ranks without optional extras.}
 fit. Use \code{"all"} or a character vector of candidate ids to report
 candidate-level grid diagnostics from \code{object$tuning_grid}. Candidate
 grid diagnostics include \code{top5_weight_share}; the cutoff is recorded as
-\code{top_n = 5} and is independent of the estimator's \code{k}.}
+\code{top_n = 5} and is independent of the estimator's \code{k}. A candidate row
+reports minimum ESS, maximum absolute weight and maximum top-five share
+across targets; \code{degenerate} is true if any target reaches
+\code{0.9 * n} ESS. Use target diagnostics for individual profiles.}
 
 \item{...}{Not used.}
 
@@ -50,8 +53,11 @@ Returns a compact diagnostics table for supported fit objects. Per-target
 DNN diagnostics report fixed top-1, top-5, and top-10 weight concentration
 shares. Distance diagnostics such as \code{radius_rank_k} and \code{radius_rank_s}
 are ordinary nearest-rank scale summaries; \code{radius_rank_s} is not the DNN
-support radius. For exact DNN fits the finite-population support edge is
-rank \code{n - s + k}.
+support radius. For exact DNN fits the unaveraged rank-table support edge is
+rank \code{n - s + k}; duplicate-block averaging can extend nonzero observation
+weights through the end of a block crossing that edge. ESS, support counts
+and concentration use the final averaged weights and can vary by target.
+See \code{\link[=weights_matrix]{weights_matrix()}} for the averaging rule and its theory warning.
 }
 \details{
 PLQR fits additionally report residualized-design Gram conditioning

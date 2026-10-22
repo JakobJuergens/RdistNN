@@ -44,6 +44,7 @@
 #' @return `x`, invisibly.
 #' @export
 print.gmm_result <- function(x, ...) {
+  .dnn_check_tie_model(x$.model)
   cat("<gmm_result>\n", sep = "")
   cat("  data  : n=", x$meta$n, ", p=", x$meta$p, ", m=", x$meta$m,
       "\n", sep = "")
@@ -66,6 +67,7 @@ print.gmm_result <- function(x, ...) {
 #' @return Matrix of estimated `theta` values.
 #' @export
 coef.gmm_result <- function(object, ...) {
+  .dnn_check_tie_model(object$.model)
   object$theta
 }
 
@@ -78,6 +80,7 @@ coef.gmm_result <- function(object, ...) {
 #' @return A covariance matrix or list of covariance matrices.
 #' @export
 vcov.gmm_result <- function(object, target = NULL, ...) {
+  .dnn_reuse_scope(object)
   if (is.null(object$vcov)) {
     .abort_bad_state("Variance-covariance matrices are not available. Refit with `se = TRUE`.")
   }
@@ -110,6 +113,7 @@ vcov.gmm_result <- function(object, target = NULL, ...) {
 #' @export
 confint.gmm_result <- function(object, parm = NULL, level = 0.95,
                                target = NULL, ...) {
+  .dnn_check_tie_model(object$.model)
   tab <- .gmm_result_coef_table(object, level = level)
   if (is.null(object$se)) {
     .abort_bad_state("Standard errors are not available. Refit with `se = TRUE`.")
@@ -160,6 +164,7 @@ confint.gmm_result <- function(object, parm = NULL, level = 0.95,
 #' @return An object of class `summary.gmm_result`.
 #' @export
 summary.gmm_result <- function(object, level = 0.95, ...) {
+  .dnn_check_tie_model(object$.model)
   out <- list(
     coefficients = .gmm_result_coef_table(object, level = level),
     overid = data.frame(
@@ -186,6 +191,7 @@ summary.gmm_result <- function(object, level = 0.95, ...) {
 #' @return `x`, invisibly.
 #' @export
 print.summary.gmm_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
+  .dnn_check_tie_model(x$.model)
   cat("<summary.gmm_result>\n", sep = "")
   cat("  model  : ", x$meta$model, "\n", sep = "")
   cat("  targets: ", length(unique(x$coefficients$target)), "\n", sep = "")

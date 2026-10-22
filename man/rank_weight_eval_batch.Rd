@@ -17,10 +17,13 @@ rank_weight_eval_batch(spec, R, ctx = NULL)
 Numeric matrix (n x m).
 }
 \description{
-Evaluate rank-weight for many targets (batch)
+A scalar-only rule is evaluated and validated separately for each target.
+The assembled result remains an \verb{n x m} matrix when \code{n = 1} or \code{m = 1}.
+A supplied \code{eval_batch} must itself return that matrix shape.
 }
 \examples{
 rw <- as_rank_weight(function(r) rep(1 / length(r), length(r)))
 rank_matrix <- cbind(c(1L, 2L, 3L), c(2L, 1L, 3L))
 rank_weight_eval_batch(rw, rank_matrix)
+dim(rank_weight_eval_batch(rw, matrix(1L, nrow = 1L, ncol = 2L)))
 }

@@ -37,6 +37,26 @@ order/rounding is controlled, require exact numeric equality, as in near-tie
 distance tests. A small distance error cannot excuse a changed neighbor or
 status. Investigate discrepancies before changing tolerances or fixtures.
 
+For retained-state snapshots, long byte/numeric vectors and bit-sensitive
+extreme fixtures, use `.expect_identical_fast()` from
+`tests/testthat/helper-comparisons.R`. It uses base `identical()` and reports a
+bounded failure without recursively diffing closure environments or formatting
+every element. Exact values, types, dimensions and attributes remain checked;
+this changes diagnostics rather than accepting a numeric tolerance. Ordinary
+small assertions can retain testthat's detailed differences.
+
+Allocation-size regressions may filter `Rprofmem()` below the failure limit
+to avoid writing a stack trace for every small allocation. Keep the original
+input dimensions and rejection limit, require a nonempty trace, and retain
+positive/negative allocation controls showing that both permitted work buffers
+and forbidden quadratic buffers remain observable. Do not substitute timing
+thresholds for the memory contract.
+
+Test reporting immutability on the fitted object or diagnostic data directly,
+not serialized closure/source-cache bytes. Keep genuine save/restore behavior
+tests and frozen-file byte checks separate. Never replace exact rank, support,
+status or RNG-state checks with approximate comparisons merely to quiet CI.
+
 ## Engine and cross-package parity
 
 Verify both within-package engine parity (C++ versus R, C++ versus Mata in the

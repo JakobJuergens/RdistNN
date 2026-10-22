@@ -17,6 +17,7 @@
 }
 
 test_that("prediction adapters share canonical reporting-target identities", {
+  .with_duplicate_policy_warnings({
   fits <- .common_prediction_fits()
   for (f in fits) {
     at <- f$x0
@@ -27,9 +28,11 @@ test_that("prediction adapters share canonical reporting-target identities", {
     expect_equal(predict(f, x0 = at[1, ]), estimate[1])
     expect_equal(predict(unserialize(serialize(f, NULL)), newdata = nd), estimate)
   }
+  })
 })
 
 test_that("prediction adapters validate the selected target interface consistently", {
+  .with_duplicate_policy_warnings({
   fits <- .common_prediction_fits()
   for (f in fits) {
     at <- f$x0
@@ -43,4 +46,5 @@ test_that("prediction adapters validate the selected target interface consistent
     expect_error(predict(f, x0 = c(NA_real_, 0)), "x0.*NA")
     expect_error(predict(f, newdata = data.frame(a = 0)), "b.*x_cols")
   }
+  })
 })

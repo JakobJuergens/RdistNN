@@ -21,6 +21,13 @@ A validated \code{dnn_distance} spec.
 \description{
 Construct a distance spec
 }
+\details{
+A batch evaluator must return an actual \verb{n x m} numeric matrix,
+including when either dimension is one. With only \code{eval}, the shared batch
+evaluator assembles those dimensions for you and validates each result.
+When \code{ctx} is \code{NULL}, \code{setup(X)} runs once per evaluation call, not once
+per target in a batch. \code{\link[=weights_matrix]{weights_matrix()}} uses this same evaluator.
+}
 \examples{
 spec <- new_distance(
   name = "sq_l2",

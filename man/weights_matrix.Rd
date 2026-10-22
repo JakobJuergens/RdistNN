@@ -32,7 +32,9 @@ weights_matrix(
 
 \item{ctx}{optional shared context passed to ranking and weight evaluators.
 On the ranking side, if \code{ctx} is \code{NULL} and a distance spec defines
-\code{setup(X)}, that setup path is used automatically.}
+\code{setup(X)}, that setup path is used automatically.
+It is evaluated once for the target batch, including scalar-only distance
+specifications; singleton samples retain an \verb{n x m} distance matrix.}
 
 \item{return}{which extras to include besides \code{W}: any of c("ord","ranks","dx").}
 }
@@ -49,6 +51,24 @@ This is the general, ranker-agnostic top-layer. It consumes a \emph{ranking prov
 (distance, custom function, or precomputed ranks/orders/distances) and a weighting
 rule (\code{rank_weight}), then returns the weight matrix \code{W} (n x m).
 }
+\section{Duplicate-covariate blocks}{
+
+Rows identical on every supplied raw covariate receive the average
+of their assigned rank weights, preserving each block's total mass. This
+includes caller-supplied ranks and signed or unnormalized rank rules.
+Distinct covariate vectors at equal distance remain separate. A warning
+identifies this permutation-invariant modification as outside the paper's
+theory, including for \code{k = 1}. Estimator jackknife deletions repeat the
+average over each remaining duplicate block using the selected rule's
+sample-size-n-1 table. For a block at consecutive ranks \code{a:b}, the full
+weight is \code{sum(w_n[a:b]) / (b-a+1)} per member; after deleting a member,
+each survivor receives \code{sum(w_(n-1)[a:(b-1)]) / (b-a)}. A deleted singleton
+contributes zero. The smaller block size must be used in the deletion.
+An exact support edge describes the unaveraged rank
+table; a straddling duplicate block can extend nonzero observation weights
+beyond it. Lower-level rank-only APIs retain their rank-primitive semantics.
+}
+
 \examples{
 set.seed(1)
 x_mat <- matrix(rnorm(20), 10, 2)

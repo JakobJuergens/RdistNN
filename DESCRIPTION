@@ -1,6 +1,6 @@
 Package: RdistNN
 Title: Distributional Nearest-Neighbor Inference for Local Conditional Moment Models
-Version: 0.1.1
+Version: 0.1.2
 Authors@R: 
     c(person(given = "Jakob", family = "Juergens", email = "info@jakobjuergens.com", role = c("aut", "cre")),
       person(given = "Zakareya", family = "Chehime", role = "ctb",

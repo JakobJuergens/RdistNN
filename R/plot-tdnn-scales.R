@@ -31,6 +31,7 @@
 #' }
 #' @export
 plot_tdnn_scales <- function(object, X = NULL, Y = NULL, ...) {
+  .dnn_reuse_scope(object)
   .plot_require_ggplot2("plot_tdnn_scales")
   if (!inherits(object, "tdnn_np_result")) {
     .abort_bad_arg(

@@ -72,8 +72,8 @@ test_that("gmm_result summaries expose inference and overidentification state", 
 
   fit_text <- capture.output(fit_returned <- print(fit_overid))
   summary_text <- capture.output(summary_returned <- print(summary_overid))
-  expect_identical(fit_returned, fit_overid)
-  expect_identical(summary_returned, summary_overid)
+  .expect_identical_fast(fit_returned, fit_overid)
+  .expect_identical_fast(summary_returned, summary_overid)
   expect_true(any(grepl("<gmm_result>", fit_text, fixed = TRUE)))
   expect_true(any(grepl("<summary.gmm_result>", summary_text, fixed = TRUE)))
   expect_true(any(grepl(
@@ -99,7 +99,7 @@ test_that("gmm_result summaries expose inference and overidentification state", 
     "std.error", "statistic", "p.value", "conf.low", "conf.high"
   )
 
-  expect_identical(justid_returned, fit_justid)
+  .expect_identical_fast(justid_returned, fit_justid)
   expect_true(any(grepl("SEs not requested", justid_fit_text, fixed = TRUE)))
   expect_true(all(is.na(summary_justid$coefficients[inferential])))
   expect_true(all(is.na(summary_justid$overid$J)))

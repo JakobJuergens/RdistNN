@@ -38,12 +38,31 @@ a \code{weights_result} with \code{W} and metadata
 \description{
 Exact DNN weights are derived from the full rank permutation for each target.
 They are not constructed by keeping only the first \code{s} observations. For the
-exact finite-population rule, the support in rank order is \code{j <= n - s + k};
-in particular, for the paper-faithful \code{k = 1} DNN this becomes \code{j <= n - s + 1}.
+exact finite-population rule, the unaveraged rank table has nominal support
+\code{j <= n - s + k}; for \code{k = 1} this becomes \code{j <= n - s + 1}. Duplicate-block
+averaging can extend nonzero observation weights beyond this nominal edge.
 Fixed top-\code{k} kernels are implemented for \verb{1 <= k <= s}. The accompanying
 \href{https://jakobjuergens.com/research/#orthogonal-inference-conditional-z}{paper}
-gives the theory for \code{k = 1}.
+gives the theory for the unmodified \code{k = 1} rule.
 }
+\section{Duplicate-covariate blocks}{
+
+Rows identical on every supplied raw covariate receive the average
+of their assigned rank weights, preserving each block's total mass. This
+includes caller-supplied ranks and signed or unnormalized rank rules.
+Distinct covariate vectors at equal distance remain separate. A warning
+identifies this permutation-invariant modification as outside the paper's
+theory, including for \code{k = 1}. Estimator jackknife deletions repeat the
+average over each remaining duplicate block using the selected rule's
+sample-size-n-1 table. For a block at consecutive ranks \code{a:b}, the full
+weight is \code{sum(w_n[a:b]) / (b-a+1)} per member; after deleting a member,
+each survivor receives \code{sum(w_(n-1)[a:(b-1)]) / (b-a)}. A deleted singleton
+contributes zero. The smaller block size must be used in the deletion.
+An exact support edge describes the unaveraged rank
+table; a straddling duplicate block can extend nonzero observation weights
+beyond it. Lower-level rank-only APIs retain their rank-primitive semantics.
+}
+
 \examples{
 set.seed(1)
 x_mat <- matrix(rnorm(20), 10, 2)

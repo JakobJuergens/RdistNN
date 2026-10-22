@@ -20,6 +20,11 @@ extras. Issue ignored-input warnings before expensive work. Use
 `call. = FALSE` in user-facing `stop()`/`warning()` unless the call adds useful
 context.
 
+Exactly identical localization covariates trigger the shared warning that block
+averaging is not covered by the paper's theory. Scope it to one warning per
+public call, including multi-panel plots and dashboards; nested reconstruction
+helpers reuse that scope rather than emitting one warning per panel.
+
 Reserve internal-inconsistency wording for genuine invariant failures, through
 a distinct internal error path. Explain that the state is inconsistent and may
 indicate a bug. Avoid frustrated or speculative messages such as "this should

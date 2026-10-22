@@ -9,8 +9,13 @@
 #' The documented sampling framework uses independent observations; cluster
 #' and survey-design inference are not supplied. Exact distance ties use
 #' lexicographic order of the original covariates, in their supplied column
-#' order. Identical covariate rows retain input-order ties; permuting those
-#' duplicates can change estimates. Ordering uses no outcomes or nuisances.
+#' order. Rows identical on every raw localization covariate share the average
+#' of their rank weights. Each jackknife deletion recomputes this average over
+#' the surviving block at sample size n-1. This permutation-invariant
+#' modification is not covered by the paper's theory and emits a warning.
+#' Distinct covariate vectors at equal distance are not averaged. Ordering uses
+#' no outcomes or nuisances. Retained tied fits from the earlier policy require
+#' refitting before reporting or reuse.
 #'
 #' Two interfaces are supported.
 #'
@@ -22,10 +27,14 @@
 #' Column selectors require `data`. Conflicting routes are rejected.
 #'
 #' For `method = "exact"`, DNN weights are computed from the full rank
-#' permutation at each target. The exact support extends through rank
+#' permutation at each target. The unaveraged rank-table support extends through rank
 #' `n - s + k` (`n - s + 1` in the paper-faithful `k = 1` case); this is not
 #' an `s`-nearest-neighbor truncation. The `"fast"` jackknife option reuses
 #' the full-sample rank matrix and updates ranks under deletion.
+#'
+#' Averaging can extend nonzero observation weights through the end of a
+#' duplicate block that straddles the nominal rank-table edge. Effective sample
+#' sizes and weight diagnostics use the resulting observation weights.
 #'
 #' `tuning_mode = "default"` evaluates only the default kernel order and
 #' preserves the ordinary scalar-fit return shape. `tuning_mode = "grid"`
@@ -200,6 +209,7 @@ np_dnn <- function(
 
   x0_mat <- .dnn_resolve_targets(x_mat, X0 = X0, x0 = x0)
 
+  .dnn_duplicate_scope(x_mat)
   geometry <- .dnn_fitted_geometry(distance, x_mat, ctx)
   weight_return <- return
   if (identical(tuning_mode, "grid") || (isTRUE(se) && identical(jackknife, "fast"))) {
@@ -248,7 +258,7 @@ np_dnn <- function(
       k = k, s = s,
       method = method, distance = .dnn_distance_name(distance),
       jackknife = if (isTRUE(se)) jackknife else "none",
-      tie_rule = "distance_then_covariates_then_input_position"
+      tie_rule = .dnn_tie_policy()
     )
   )
   if (tuning_used) out$meta$tuning <- tuning_payload

@@ -69,6 +69,13 @@ Supply \code{eval} or \code{eval_batch} for \code{\link[=score_eval]{score_eval(
 If your score depends on a parameter vector (for example Z-estimation), use
 \code{eval_param}/\code{eval_param_batch} and optionally \code{grad}/\code{grad_batch} to enable
 derivative-aware workflows via \code{\link[=score_diff_path]{score_diff_path()}}.
+
+Scalar evaluators return one finite numeric value. The scalar-to-batch
+fallback checks each value before assembly; logical values and multiple
+values are rejected rather than coerced or truncated. Analytic batch
+gradients must have exactly two dimensions: subsets by parameter components.
+For a scalar parameter, a numeric vector with one entry per subset is also
+accepted and converted to a one-column matrix.
 }
 \examples{
 sc <- new_score(

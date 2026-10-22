@@ -169,6 +169,8 @@
     matrix(tab[ranks], nrow = n, ncol = ncol(ranks))
   }
 
+  groups <- if (is.list(ctx)) ctx$groups else NULL
+  W <- .dnn_average_duplicate_weights(W, groups)
   estimates <- .dnn_grid_check_estimates(estimate_fn(W, candidate_row))
   se <- NULL
   if (!is.null(se_fn)) {
@@ -181,7 +183,11 @@
 
   list(
     estimates = .dnn_grid_merge_estimate_se(estimates, se),
-    diagnostics = .dnn_grid_diagnostics_from_table(tab, n = n, ctx = ctx)
+    diagnostics = if (is.null(groups) || !anyDuplicated(groups)) {
+      .dnn_grid_diagnostics_from_table(tab, n = n, ctx = ctx)
+    } else {
+      .dnn_grid_diagnostics_from_weights(W)
+    }
   )
 }
 
@@ -412,5 +418,19 @@
   if (!is.null(p_d)) {
     out <- append(out, list(p_d = as.integer(p_d)), after = match("kx", names(out)))
   }
+  out
+}
+
+# Candidate-level summaries use actual target weights after block averaging.
+.dnn_grid_diagnostics_from_weights <- function(W) {
+  rows <- lapply(seq_len(ncol(W)), function(j) {
+    .dnn_grid_diagnostics_from_table(sort(abs(W[, j]), decreasing = TRUE), nrow(W), NULL)
+  })
+  out <- rows[[1L]]
+  out$ess <- min(vapply(rows, function(row) row$ess, numeric(1L)))
+  for (nm in c("max_weight", "top5_weight_share")) {
+    out[[nm]] <- max(vapply(rows, function(row) row[[nm]], numeric(1L)))
+  }
+  out$degenerate <- any(vapply(rows, function(row) row$degenerate, logical(1L)))
   out
 }

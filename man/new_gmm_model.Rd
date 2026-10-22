@@ -25,7 +25,9 @@ new_gmm_model(
 For scalar \code{theta}, an \verb{n x q} matrix is accepted; otherwise use an
 \verb{n x q x p} array.}
 
-\item{start}{Optional function returning a numeric starting vector.}
+\item{start}{Optional function \verb{(sample, ctx, w, x0)} returning a finite
+numeric starting vector, evaluated independently for each target.
+An explicit \code{start} passed to \code{\link[=gmm_dnn]{gmm_dnn()}} takes precedence.}
 
 \item{coef_names}{Non-empty character vector naming the parameter entries.}
 

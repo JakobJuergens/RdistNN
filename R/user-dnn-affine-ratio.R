@@ -14,7 +14,10 @@
 #' @param numerator,denominator Finite numeric signal vectors for the matrix route.
 #' @param distance Existing distance specification, registered name or function.
 #'   Geometry is frozen across deletions. Exact distance ties use original
-#'   covariates lexicographically; identical covariate rows use input position.
+#'   covariates lexicographically. Identical raw covariate rows share averaged
+#'   rank-weight mass, including each deletion's surviving block. This
+#'   permutation-invariant modification is outside the paper's theory and
+#'   warns. Distinct vectors at equal distance are not averaged.
 #' @param method One of "exact" or "asymp", as in [cate_dnn()] and [np_dnn()].
 #' @param k Number of neighbors averaged within each size-s subsample, 1 <= k <= s.
 #' @param s Deterministic integer order. Covariance requires s < n.
@@ -133,6 +136,7 @@ affine_ratio_dnn <- function(
   if (active_covariance && (n < 2L || s >= n)) {
     .abort_bad_arg("s", sprintf("must satisfy s < n=%d for delete-1 covariance", n))
   }
+  .dnn_duplicate_scope(x_mat)
   geometry <- .dnn_fitted_geometry(distance, x_mat, ctx)
   # Resolve the geometry once, including for the explicit deletion reference.
   weights <- .dnn_weights_with_extras(
@@ -143,9 +147,10 @@ affine_ratio_dnn <- function(
   wt <- weights$wt
   m <- ncol(W)
   signal <- cbind(numerator = num, denominator = den)
-  model_weights <- list(k = k, s = s, method = method, normalize = normalize)
+  model_weights <- list(k = k, s = s, method = method, normalize = normalize,
+                        groups = .dnn_duplicate_groups(x_mat))
   out <- .affine_ratio_evaluate(signal, W, wt$ranks, .affine_rank_weight(model_weights),
-                                active_covariance, jackknife, denominator_tol)
+                                active_covariance, jackknife, denominator_tol, groups = model_weights$groups)
   loo <- out$deletions
   out$deletions <- NULL
   components <- out$components
@@ -156,7 +161,7 @@ affine_ratio_dnn <- function(
     distance = .dnn_distance_name(distance), jackknife = if (active_covariance) jackknife else "none",
     covariance = if (active_covariance) "paired_frozen_score" else "none",
     component_roles = c(numerator = "numerator", denominator = "denominator"),
-    tie_rule = "distance_then_covariates_then_input_position", tuning = resolved$tuning, tuning_mode = tuning_mode
+    tie_rule = .dnn_tie_policy(), tuning = resolved$tuning, tuning_mode = tuning_mode
   )
   out <- .dnn_attach_common_extras(out, return, wt, W, k, resolved$tuning)
   if ("signals" %in% return) out$signals <- signal
@@ -184,7 +189,7 @@ affine_ratio_dnn <- function(
 }
 
 # Common paired calculation for the default order and cached grid candidates.
-.affine_ratio_evaluate <- function(signal, W, ranks, rw, active, jackknife, tol) {
+.affine_ratio_evaluate <- function(signal, W, ranks, rw, active, jackknife, tol, groups = NULL) {
   n <- nrow(signal)
   components <- t(.compensated_crossprod(signal, W))
   colnames(components) <- c("numerator", "denominator")
@@ -197,7 +202,7 @@ affine_ratio_dnn <- function(
   covariance <- list(se = NULL, component_vcov = NULL, theta_vcov = NULL, theta_omega = NULL)
   if (active) {
     jk <- .dnn_loo_centered(signal, ranks, .rank_weight_table(rw, n - 1L),
-      tab_full = .rank_weight_table(rw, n), rw = if (jackknife == "fast") NULL else rw)
+      tab_full = .rank_weight_table(rw, n), rw = if (jackknife == "fast") NULL else rw, groups = groups)
     loo <- jk$loo
     covariance <- .affine_ratio_covariance(loo, components, theta, neff)
     status$covariance_status <- covariance$status

@@ -35,6 +35,15 @@ stage or discarding the component cross-covariance gives a different
 calculation. Deletions hold supplied signals and geometry fixed; nuisance
 models are not refitted.
 
+With identical reporting covariates, both signals use the same averaged block
+weights. A deletion reduces that block's size and redistributes the `n-1`
+table's mass among its remaining members before forming paired covariance.
+This preserves numerator/denominator dependence and row-permutation invariance
+up to numerical precision. The accompanying warning marks a practical change
+outside the paper's theory; it does not establish valid inference for discrete
+covariate designs. [The weight guide](dnn-weights.html#identical-covariate-rows)
+gives a worked deletion example. Old tied saved fits require refitting.
+
 ## Keep the variance scales distinct
 
 | Returned field | Meaning |
@@ -58,7 +67,8 @@ confint(fit)
 diagnostics(fit)
 ```
 
-Effective sample size describes rank-weight concentration. It is not a
+Effective sample size describes the final averaged observation-weight
+concentration. It is not a
 count of compliers. Physical radius, instrument-arm support, score
 dispersion and first-stage strength can vary even when `neff` is the same.
 The largest centered pseudo-value-square shares attribute fitted variance
@@ -111,6 +121,10 @@ vapply(sets, function(x) x$type, character(1))
 Finite endpoints are included. An `unresolved` result reports a numerical
 status without asserting a set geometry; it differs from a mathematically
 empty set. Materially indefinite or unavailable covariance is rejected.
+At `tol = 0`, any negative determinant of the represented covariance is
+rejected, while an exactly singular positive-semidefinite matrix remains
+admissible. With a positive tolerance, a small negative determinant can instead
+produce the unresolved `near_psd_boundary` status.
 See `?ratio_confidence_set` for input validation and returned fields.
 
 Neither a finite Wald interval nor this experimental inversion establishes

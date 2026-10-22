@@ -5,6 +5,7 @@
   s <- length(a)
   q <- dim(values)[3L]
   mass <- .compensated_sum_R(a)
+  weight_amplitude <- max(abs(a))
   denominator <- if (normalize) mass else 1
   baseline <- matrix(0, targets, q)
   deletions <- array(0, c(targets, s + 1L, q))
@@ -13,7 +14,8 @@
     for (component in seq_len(q)) {
       original <- values[t, , component]
       baseline[t, component] <- .compensated_sum_R(a * original[seq_len(s)]) / denominator
-      level <- .numeric_signal_level(matrix(original[active], ncol = 1L))
+      level <- .numeric_signal_level(matrix(original[active], ncol = 1L),
+        weights = weight_amplitude, weight_mass = mass)
       z <- numeric(s + 1L)
       z[active] <- original[active] - level
       deletions[t, , component] <- .compensated_deletions_R(z, a, level * mass) / denominator

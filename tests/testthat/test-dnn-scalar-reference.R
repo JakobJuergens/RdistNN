@@ -39,6 +39,7 @@
 }
 
 test_that("layer 0 reference locks np_dnn scalar estimates, SEs, and extras", {
+  .with_duplicate_policy_warnings({
   d <- .make_dnn_scalar_boundary_data(n = 20L, m = 3L)
 
   out <- NULL
@@ -82,9 +83,11 @@ test_that("layer 0 reference locks np_dnn scalar estimates, SEs, and extras", {
   expect_equal(out$ess, 1 / colSums(out$W^2), tolerance = 1e-12)
   expect_equal(dim(out$neighbors), c(1L, nrow(d$X0)))
   .expect_dnn_scalar_ties_and_rank_boundaries(out$ranks, out$dx)
+  })
 })
 
 test_that("layer 0 reference locks cate_dnn scalar estimates, SEs, and extras", {
+  .with_duplicate_policy_warnings({
   d <- .make_dnn_scalar_boundary_data(n = 22L, m = 3L)
   psi <- d$y - mean(d$y)
 
@@ -124,9 +127,11 @@ test_that("layer 0 reference locks cate_dnn scalar estimates, SEs, and extras", 
   expect_equal(out$ess, 1 / colSums(out$W^2), tolerance = 1e-12)
   expect_equal(dim(out$neighbors), c(2L, nrow(d$X0)))
   .expect_dnn_scalar_ties_and_rank_boundaries(out$ranks, out$dx)
+  })
 })
 
 test_that("layer 0 reference locks plqr_dnn scalar moment, SE matrix, and extras", {
+  .with_duplicate_policy_warnings({
   set.seed(2105)
   n <- 28L
   p <- 2L
@@ -183,6 +188,7 @@ test_that("layer 0 reference locks plqr_dnn scalar moment, SE matrix, and extras
   expect_equal(out$ess, 1 / colSums(out$W^2), tolerance = 1e-12)
   expect_equal(dim(out$neighbors), c(2L, nrow(d$X0)))
   .expect_dnn_scalar_ties_and_rank_boundaries(out$ranks, out$dx)
+  })
 })
 
 test_that("layer 0 important scalar error paths remain stable across wrappers", {

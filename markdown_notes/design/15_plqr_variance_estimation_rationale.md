@@ -58,6 +58,14 @@ aligned so that under `theta_meat = "jackknife"`,
 `theta_vcov[[j]] = J^{-1} moment_vcov[[j]] J^{-T}` with
 `theta_omega[[j]] = theta_vcov[[j]] * neff[[j]]`.
 
+The coefficient sandwich requires a finite represented Jacobian and inverse.
+If either is outside the numeric range, retain the moment calculation but
+return unavailable coefficient uncertainty with an actionable rescaling
+warning. A nonfinite Jacobian must never yield zero uncertainty through an
+apparently finite inverse. This check does not recover every mathematically
+representable coefficient covariance whose unscaled Jacobian overflows;
+that would require a separate scaled bread-and-meat implementation.
+
 ## 2. Nuisance notation mapping
 
 The following table maps the current PLQR arguments to the coupled-score

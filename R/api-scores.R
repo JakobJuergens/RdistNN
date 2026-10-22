@@ -37,6 +37,13 @@
 #' `eval_param`/`eval_param_batch` and optionally `grad`/`grad_batch` to enable
 #' derivative-aware workflows via [score_diff_path()].
 #'
+#' Scalar evaluators return one finite numeric value. The scalar-to-batch
+#' fallback checks each value before assembly; logical values and multiple
+#' values are rejected rather than coerced or truncated. Analytic batch
+#' gradients must have exactly two dimensions: subsets by parameter components.
+#' For a scalar parameter, a numeric vector with one entry per subset is also
+#' accepted and converted to a one-column matrix.
+#'
 #' @param name Character scalar.
 #' @param order Integer order s, or function(n, data, ctx) -> s.
 #' @param setup Optional function(data, ...) -> ctx object (list or externalptr).

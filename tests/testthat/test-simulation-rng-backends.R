@@ -53,18 +53,18 @@ test_that("simulation fallback repeats for a fixed RNG configuration", {
       set.seed(271L)
       before <- .Random.seed
       first <- .simulation_rng_runs(fallback = TRUE, stochastic = TRUE)
-      expect_identical(.Random.seed, before)
+      .expect_identical_fast(.Random.seed, before)
       expect_identical(RNGkind(), configured_kind)
-      expect_identical(.simulation_rng_runs(fallback = TRUE, stochastic = TRUE), first)
+      .expect_identical_fast(.simulation_rng_runs(fallback = TRUE, stochastic = TRUE), first)
       rm(".Random.seed", envir = .GlobalEnv)
-      expect_identical(.simulation_rng_runs(fallback = TRUE, stochastic = TRUE), first)
+      .expect_identical_fast(.simulation_rng_runs(fallback = TRUE, stochastic = TRUE), first)
       expect_false(exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE))
       expect_true(all(is.finite(first$cate$tau_hat)))
       expect_true(all(is.finite(first$iv$theta_hat)))
       if (!is.null(previous)) expect_false(identical(first, previous))
       previous <- first
       if (!has_future_apply) {
-        expect_identical(.simulation_rng_runs(stochastic = TRUE), first)
+        .expect_identical_fast(.simulation_rng_runs(stochastic = TRUE), first)
       }
     }
   })
@@ -80,21 +80,21 @@ test_that("future mapping and fallback have distinct documented RNG contracts", 
       set.seed(271L)
       before <- .Random.seed
       fixed <- .simulation_rng_runs()
-      expect_identical(.simulation_rng_runs(), fixed)
-      expect_identical(.Random.seed, before)
+      .expect_identical_fast(.simulation_rng_runs(), fixed)
+      .expect_identical_fast(.Random.seed, before)
       expect_identical(RNGkind(), configured_kind)
       fallback <- .simulation_rng_runs(fallback = TRUE)
       for (study in names(fixed)) {
         expect_identical(fixed[[study]]$seed, fallback[[study]]$seed)
         if (identical(kind, "L'Ecuyer-CMRG")) {
-          expect_identical(fixed[[study]], fallback[[study]])
+          .expect_identical_fast(fixed[[study]], fallback[[study]])
         } else {
           estimate <- if (identical(study, "cate")) "tau_hat" else "theta_hat"
           expect_false(identical(fixed[[study]][[estimate]], fallback[[study]][[estimate]]))
         }
       }
       stochastic <- .simulation_rng_runs(stochastic = TRUE)
-      expect_identical(.simulation_rng_runs(stochastic = TRUE), stochastic)
+      .expect_identical_fast(.simulation_rng_runs(stochastic = TRUE), stochastic)
       fallback_stochastic <- .simulation_rng_runs(fallback = TRUE, stochastic = TRUE)
       for (study in names(stochastic)) {
         expect_identical(stochastic[[study]]$s[1:2], fallback_stochastic[[study]]$s[1:2])
@@ -145,9 +145,9 @@ test_that("oracle simulations agree across future sequential and multisession pl
       for (i in seq_along(sequential[[kind]])) {
         stochastic <- c(FALSE, TRUE)[[i]]
         actual <- .simulation_rng_runs(stochastic = stochastic)
-        expect_identical(actual, sequential[[kind]][[i]])
-        expect_identical(.simulation_rng_runs(stochastic = stochastic), actual)
-        expect_identical(.Random.seed, before)
+        .expect_identical_fast(actual, sequential[[kind]][[i]])
+        .expect_identical_fast(.simulation_rng_runs(stochastic = stochastic), actual)
+        .expect_identical_fast(.Random.seed, before)
         expect_identical(RNGkind(), configured_kind)
       }
     }
@@ -173,9 +173,9 @@ test_that("simulation test scopes restore execution state after errors", {
         expect_identical(getOption("RdistNN.test_scope_existing"), "before")
         expect_null(getOption("RdistNN.test_scope_added"))
         expect_identical(RNGkind(), kind)
-        if (seeded) expect_identical(.Random.seed, before)
+        if (seeded) .expect_identical_fast(.Random.seed, before)
         else expect_false(exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE))
-        if (with_future) expect_identical(future::plan("list"), old_plan)
+        if (with_future) .expect_identical_fast(future::plan("list"), old_plan)
       }
     }
   })

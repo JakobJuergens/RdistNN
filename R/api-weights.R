@@ -110,11 +110,7 @@
   # 1) Distance spec / name -> compute distances
   if (is_distance(ranking) || is.character(ranking)) {
     dist_spec <- .resolve_distance(ranking)
-    dist_matrix <- if (!is.null(dist_spec$eval_batch)) {
-      distance_eval_batch(dist_spec, x_mat, x0_mat, ctx) # n x m
-    } else {
-      vapply(seq_len(m), function(j) distance_eval(dist_spec, x_mat, x0_mat[j, ], ctx), numeric(n))
-    }
+    dist_matrix <- distance_eval_batch(dist_spec, x_mat, x0_mat, ctx) # n x m
     return(make_from_dx(dist_matrix))
   }
 
@@ -196,6 +192,22 @@
 #' (distance, custom function, or precomputed ranks/orders/distances) and a weighting
 #' rule (`rank_weight`), then returns the weight matrix `W` (n x m).
 #'
+#' @section Duplicate-covariate blocks:
+#' Rows identical on every supplied raw covariate receive the average
+#' of their assigned rank weights, preserving each block's total mass. This
+#' includes caller-supplied ranks and signed or unnormalized rank rules.
+#' Distinct covariate vectors at equal distance remain separate. A warning
+#' identifies this permutation-invariant modification as outside the paper's
+#' theory, including for `k = 1`. Estimator jackknife deletions repeat the
+#' average over each remaining duplicate block using the selected rule's
+#' sample-size-n-1 table. For a block at consecutive ranks `a:b`, the full
+#' weight is `sum(w_n[a:b]) / (b-a+1)` per member; after deleting a member,
+#' each survivor receives `sum(w_(n-1)[a:(b-1)]) / (b-a)`. A deleted singleton
+#' contributes zero. The smaller block size must be used in the deletion.
+#' An exact support edge describes the unaveraged rank
+#' table; a straddling duplicate block can extend nonzero observation weights
+#' beyond it. Lower-level rank-only APIs retain their rank-primitive semantics.
+#'
 #' @param X  numeric matrix (n x p), reference data.
 #' @param X0 numeric matrix (m x p), target points (rows). If missing, use `x0`.
 #' @param x0 optional numeric length-p single target (convenience for m=1).
@@ -207,6 +219,8 @@
 #' @param ctx optional shared context passed to ranking and weight evaluators.
 #'   On the ranking side, if `ctx` is `NULL` and a distance spec defines
 #'   `setup(X)`, that setup path is used automatically.
+#'   It is evaluated once for the target batch, including scalar-only distance
+#'   specifications; singleton samples retain an `n x m` distance matrix.
 #' @param return which extras to include besides `W`: any of c("ord","ranks","dx").
 #' @return An object of class `weights_result` with components:
 #'   - `W`   : numeric matrix n x m (columns typically sum to 1),
@@ -265,13 +279,17 @@ weights_matrix <- function(
     }
     rank_weight_eval_batch(wt_res$spec, ranking_result$ranks, ctx = ctx)
   }
+  groups <- .dnn_duplicate_groups(x_mat)
+  .dnn_duplicate_scope(x_mat, groups)
+  weight_matrix <- .dnn_average_duplicate_weights(weight_matrix, groups)
 
   out <- list(
     W = weight_matrix,
     meta = list(
       n = n, m = m, p = p,
       weight_kind = wt_res$kind,
-      weight_name = wt_res$spec$name
+      weight_name = wt_res$spec$name,
+      tie_rule = .dnn_tie_policy()
     )
   )
   if ("ord" %in% return && !is.null(ranking_result$ord)) out$ord <- ranking_result$ord
@@ -310,12 +328,14 @@ print.weights_result <- function(x, ...) {
 #'
 #' Exact DNN weights are derived from the full rank permutation for each target.
 #' They are not constructed by keeping only the first `s` observations. For the
-#' exact finite-population rule, the support in rank order is `j <= n - s + k`;
-#' in particular, for the paper-faithful `k = 1` DNN this becomes `j <= n - s + 1`.
+#' exact finite-population rule, the unaveraged rank table has nominal support
+#' `j <= n - s + k`; for `k = 1` this becomes `j <= n - s + 1`. Duplicate-block
+#' averaging can extend nonzero observation weights beyond this nominal edge.
 #' Fixed top-`k` kernels are implemented for `1 <= k <= s`. The accompanying
 #' [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
-#' gives the theory for `k = 1`.
+#' gives the theory for the unmodified `k = 1` rule.
 #'
+#' @inheritSection weights_matrix Duplicate-covariate blocks
 #' @param X numeric matrix (n x p)
 #' @param X0 numeric matrix (m x p); mutually exclusive with \code{x0}
 #' @param x0 numeric length-p single target (convenience for m=1)
@@ -349,8 +369,19 @@ weights_dnn_exact <- function(
 #'
 #' The asymptotic DNN rule is evaluated on the full rank grid and is therefore
 #' typically treated as a full-support approximation rather than as a hard
-#' finite-support cutoff.
+#' finite-support cutoff. Numerical underflow can still produce zero entries.
 #'
+#' @section Numerical limits:
+#' Asymptotic intervals use host Beta probabilities. At subnormal scales,
+#' endpoint rounding can erase an interval or change its zero/nonzero support;
+#' R and the Stata companion can disagree. Signed TDNN combinations can amplify
+#' component rounding. These extreme-tail limitations remain unresolved.
+#' Normalization or switching the R/compiled deletion engine does not recover
+#' probability mass already lost during table construction. Exact and
+#' asymptotic weights are different constructions; changing the method changes
+#' the localization rule.
+#'
+#' @inheritSection weights_matrix Duplicate-covariate blocks
 #' @inheritParams weights_dnn_exact
 #' @param normalize logical; renormalize columns to sum 1
 #' @return A `weights_result` object (same structure as [weights_dnn_exact()]).
@@ -378,10 +409,13 @@ weights_dnn_asymp <- function(
 #'
 #' Use `method = "exact"` for the exact finite-population rank-weight rule and
 #' `method = "asymp"` for the asymptotic full-rank approximation.
+#'
 #' Fixed top-`k` kernels are available in both cases. The package treats them as
 #' implementation-supported generalizations; the accompanying manuscript's
 #' current derivations are written for `k = 1`.
 #'
+#' @inheritSection weights_dnn_asymp Numerical limits
+#' @inheritSection weights_matrix Duplicate-covariate blocks
 #' @inheritParams weights_dnn_asymp
 #' @param method one of \code{"exact"} or \code{"asymp"}
 #' @return A `weights_result` object.
@@ -428,12 +462,15 @@ weights_dnn <- function(
 #' table (`tdnn_rank_table_exact()`).  TDNN is a signed linear combination of
 #' two single-scale exact DNN tables at orders `s1` and `s2`; the combination
 #' coefficients are chosen to cancel the leading bias term in the DNN MSE
-#' expansion.
+#' expansion. The unaveraged table's nominal support ends at
+#' `n - s1 + 1`; averaging can extend observation weights through a duplicate
+#' block that straddles this edge.
 #'
 #' **Signed weights.** The returned weight matrix `W` can contain negative
 #' entries; columns still sum to 1.  This is by design and reflects the
 #' bias-correction structure of TDNN.
 #'
+#' @inheritSection weights_matrix Duplicate-covariate blocks
 #' @param X Numeric matrix (n x p).
 #' @param X0 Numeric matrix (m x p); mutually exclusive with \code{x0}.
 #' @param x0 Numeric length-p single target (convenience for m = 1).
@@ -485,6 +522,8 @@ weights_tdnn_exact <- function(
 #' rank-weight table (`tdnn_rank_table_asymp()`) over all `n` ranks. Weights
 #' may be negative or exactly zero through signed cancellation or underflow.
 #'
+#' @inheritSection weights_dnn_asymp Numerical limits
+#' @inheritSection weights_matrix Duplicate-covariate blocks
 #' @inheritParams weights_tdnn_exact
 #' @param normalize Logical; renormalize rank table columns to sum 1
 #'   (default \code{TRUE}).
@@ -528,6 +567,8 @@ weights_tdnn_asymp <- function(
 #' \code{method = "asymp"} for the asymptotic full-rank approximation
 #' ([weights_tdnn_asymp()]).
 #'
+#' @inheritSection weights_dnn_asymp Numerical limits
+#' @inheritSection weights_matrix Duplicate-covariate blocks
 #' @inheritParams weights_tdnn_asymp
 #' @param method One of \code{"exact"} or \code{"asymp"}.
 #'

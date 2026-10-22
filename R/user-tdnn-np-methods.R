@@ -7,6 +7,7 @@
 #' @return `x`, invisibly.
 #' @export
 print.tdnn_np_result <- function(x, ...) {
+  .dnn_check_tie_model(x$.model)
   cat("<tdnn_np_result>\n", sep = "")
   .dnn_print_localization(x$meta)
   cat("  data  : n=", x$meta$n, ", p=", x$meta$p, ", m=", x$meta$m, "\n", sep = "")

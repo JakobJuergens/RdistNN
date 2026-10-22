@@ -14,6 +14,12 @@ The [design reference](design/README.md) specifies maintained contracts.
 
 ## Current capabilities
 
+- X-aware localization averages rank weights within exactly identical raw
+  covariate groups, including every deletion's remaining block. Shared helpers
+  apply the policy to fitting and reuse across numerical engines. The user is
+  warned that this permutation-invariant modification is outside the paper's
+  theory; it does not establish inference for discrete covariate designs.
+
 - Matrix/vector and data-frame interfaces resolve to common numeric inputs.
 - Exact/asymptotic DNN supports shared tuning sensitivity, diagnostics and
   presentation. CATE/CLATE use single-scale DNN; TDNN remains NP-regression
@@ -37,6 +43,8 @@ The [design reference](design/README.md) specifies maintained contracts.
   not supply coefficient inference.
 - Local IV-GMM solves a distinct moment system with its own covariance and
   convergence diagnostics. It is not an alias for the augmented CLATE ratio.
+  Targets use independent optimizer starts and retain their fitted geometry
+  for later weight reconstruction.
 - The installed affine replication bundle pins scientific source, production
   configurations and accepted evidence independently of the general package
   estimators. Its manifest identifies the exact scientific snapshot.
@@ -57,6 +65,13 @@ Maintain a shared usage and presentation grammar where quantities agree in
 meaning; preserve method-specific scores, covariance and scientific limits.
 
 ## Compensated accumulation
+
+Asymptotic Beta-tail construction has a known numerical limitation at
+subnormal scales, including R/Mata support differences and lost masses after
+averaging or signed TDNN blending. Normalization and native deletion engines
+do not resolve it. See the [weight guide](../vignettes/dnn-weights.Rmd#numerical-limits)
+and [numerical reference](design/19_weighted_accumulation.md); this remains an
+open numerical boundary rather than a relaxed parity requirement.
 
 Rank-weight normalization, weighted signal means and frozen-rank deletions
 use shared compensated arithmetic across native and R engines and the Stata

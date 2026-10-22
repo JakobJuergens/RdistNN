@@ -1,3 +1,58 @@
+# RdistNN 0.1.2 (unreleased)
+
+- Average localization weights within blocks of exactly identical raw covariate
+  rows. Recompute the average on each deletion's remaining block so estimates,
+  standard errors and covariance are invariant to aligned row permutations up
+  to floating-point error,
+  including signed TDNN and paired-ratio calculations. Warn that this practical
+  modification is not covered by the paper's theory.
+- Apply the shared policy to fitting, retained prediction, tuning candidates,
+  diagnostics and weight plots across R and compiled engines. Individual weights,
+  support and effective sample size can change; distinct covariate vectors at
+  equal distance retain lexicographic ordering. Refit old tied saved objects.
+- Accumulate original signals in shared block prefix/suffix deletions, retaining
+  correction terms until the final merge. Preserve small surviving observations
+  after deletion of a dominant duplicate, signed-table variation and genuine
+  subnormal signals across R and native engines.
+- Reduce direct regrouping block masses in original observation order across
+  engines, including explicitly supplied ranks that interleave duplicate groups
+  or reorder their members.
+- Give each GMM target its own default optimizer start and retain fitted GMM
+  geometry for later weight reconstruction. Explicit caller starts still take
+  precedence over model callbacks. Probe moment dimensions at an available
+  target start so positive-domain models need not be defined at zero.
+- Reject mixed PLQR input routes and malformed retained candidate controls,
+  identifiers and cached ranks before reconstruction.
+- Report unavailable PLQR coefficient uncertainty with an actionable rescaling
+  warning when the density-backed Jacobian or its inverse is outside the
+  numeric range, rather than accepting a spurious zero standard error.
+- Retain fitted GMM coefficients but report unavailable uncertainty with a
+  rescaling warning when the local information matrix exceeds the numeric
+  range. Reject nonfinite linear-solve operands before calling LAPACK.
+- Disambiguate repeated-order candidate plot labels, validate integer target
+  selectors and issue the duplicate-policy warning once per public plot call.
+- Preserve singleton batch dimensions for scalar rank-weight callbacks and
+  validate scalar score callbacks and analytic-gradient matrix dimensions
+  before assembling batch output. Evaluate
+  supplied data when creating a differentiable score path so later caller
+  rebinding cannot change that path's data.
+- Distinguish negative paired-covariance determinants from exact singular PSD
+  matrices near the ratio confidence-set boundary, including strict checks and
+  extreme coordinate scales.
+- Validate native rank and score indices before offset arithmetic and array
+  access, including missing and negative indices. Exclude generated plot-device
+  output from source packages.
+- Route scalar-only custom distances through the shared batch evaluator,
+  preserving singleton matrix dimensions and setting up one context per batch.
+- Select shared deletion origins using actual coefficient and mass summaries.
+  Preserve raw rounded products before normalization when supported weighted
+  amplitudes or nonzero masses are subnormal; exact zero signed mass alone
+  retains centering.
+- Document the unresolved asymptotic Beta-tail limitation: early rounding can
+  change zero versus nonzero support across R and Stata, and averaging or
+  signed TDNN blending can lose tiny masses. Normalization and deletion-engine
+  selection do not repair probability already lost in table construction.
+
 # RdistNN 0.1.1 (2026-10-21)
 
 - Resolve exact distance ties lexicographically by the original covariates

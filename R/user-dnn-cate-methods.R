@@ -22,6 +22,7 @@
 #' vcov(fit)
 #' @export
 vcov.cate_result <- function(object, ...) {
+  .dnn_reuse_scope(object)
   jackknife <- object$meta$jackknife
   if (is.null(object$se) || is.null(jackknife) ||
       !(jackknife %in% c("fast", "loo"))) {
@@ -68,6 +69,7 @@ vcov.cate_result <- function(object, ...) {
 #' summary(out)
 #' @export
 summary.cate_result <- function(object, level = 0.95, ...) {
+  .dnn_check_tie_model(object$.model)
   if (!is.numeric(level) || length(level) != 1L || !is.finite(level) || level <= 0 || level >= 1) {
     .abort_bad_arg("level", "must be a numeric scalar in (0,1)")
   }
@@ -117,6 +119,7 @@ summary.cate_result <- function(object, level = 0.95, ...) {
 #' @return `x`, invisibly.
 #' @export
 print.summary.cate_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
+  .dnn_check_tie_model(x$.model)
   meta <- .cate_result_meta(x$meta)
   cat("<summary.cate_result>\n", sep = "")
   cat("  signal: ", meta$signal_source, "\n", sep = "")
@@ -145,6 +148,7 @@ print.summary.cate_result <- function(x, digits = max(3L, getOption("digits") - 
 #' confint(out)
 #' @export
 confint.cate_result <- function(object, parm = NULL, level = 0.95, ...) {
+  .dnn_check_tie_model(object$.model)
   if (!is.numeric(level) || length(level) != 1L || !is.finite(level) || level <= 0 || level >= 1) {
     .abort_bad_arg("level", "must be a numeric scalar in (0,1)")
   }
@@ -214,6 +218,7 @@ predict.cate_result <- function(
     interval = c("none", "confidence"),
     level = 0.95,
     ...) {
+  .dnn_reuse_scope(object)
   interval <- match.arg(interval)
   if (!is.numeric(level) || length(level) != 1L || !is.finite(level) || level <= 0 || level >= 1) {
     .abort_bad_arg("level", "must be a numeric scalar in (0,1)")
@@ -295,6 +300,7 @@ predict.cate_result <- function(
 #'   per target point.
 #' @export
 coef.cate_result <- function(object, ...) {
+  .dnn_check_tie_model(object$.model)
   stats::setNames(as.numeric(object$tau), paste0("target_", seq_along(object$tau)))
 }
 
@@ -316,6 +322,7 @@ coef.cate_result <- function(object, ...) {
 #' print(out)
 #' @export
 print.cate_result <- function(x, ...) {
+  .dnn_check_tie_model(x$.model)
   meta <- .cate_result_meta(x$meta)
   cat("<cate_result>\n", sep = "")
   cat("  signal: ", meta$signal_source, "\n", sep = "")

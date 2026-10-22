@@ -45,7 +45,7 @@ test_that("SD recovery preserves the independently checked near-tie neighbor", {
   target <- c(0x1.ca3d8e6d80cbbp+509, 0x1.7adea375ab194p+0)
   spec <- distance_l2_scaled("sd")
   ctx <- spec$setup(X)
-  expect_identical(ctx$inv_s[1], 1 / 0x1.e3040a1e6c41ap+511)
+  .expect_identical_fast(ctx$inv_s[1], 1 / 0x1.e3040a1e6c41ap+511)
   old <- options(RdistNN.use_compiled = TRUE)
   on.exit(options(old), add = TRUE)
   for (compiled in c(TRUE, FALSE)) {

@@ -12,6 +12,7 @@
 }
 
 .cate_validate_prediction_model <- function(model) {
+  .dnn_check_tie_model(model)
   if (!is.list(model) || is.null(model$x_mat) || is.null(model$psi)) {
     .abort_bad_state(paste0(
       "This object does not contain fitted model state for prediction. ",

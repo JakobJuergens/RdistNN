@@ -7,10 +7,10 @@ using namespace Rcpp;
 
 // Helpers ---------------------------------------------------------------
 
-inline int idx3(int t, int k, int q, int T, int S, int Q) {
+inline std::size_t idx3(int t, int k, int q, int T, int S, int Q) {
   // Flatten (t,k,q) with 0-based indices into [0, T*S*Q)
   // Layout: (((t)*S + k)*Q + q)
-  return (((t)*S) + k) * Q + q;
+  return ((static_cast<std::size_t>(t) * S) + k) * Q + q;
 }
 
 // Fast delete-one jackknife for rank-weighted functionals (matrix phi)
@@ -39,9 +39,10 @@ Rcpp::List rustat_jackknife_fast_rank(const IntegerMatrix &ranks, const NumericV
   std::vector<double> z(s + 1), values(s + 1);
   for (int t = 0; t < T; ++t) {
     for (int k = 0; k <= s; ++k) {
-      const int i = ranks(t, k) - 1;
-      if (i < 0 || i >= n_ref)
+      const int index = ranks(t, k);
+      if (index == NA_INTEGER || index < 1 || index > n_ref)
         stop("ranks indices out of range.");
+      const int i = index - 1;
       if (k < s)
         affected[i].emplace_back(t, k);
     }

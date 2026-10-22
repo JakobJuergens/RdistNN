@@ -9,6 +9,7 @@
 ^\.RData$
 ^\.Ruserdata$
 ^\.\.Rcheck$
+(^|/)Rplots\.pdf$
 ^RdistNN\.Rcheck$
 ^RdistNN_[0-9.]+\.tar\.gz$
 ^docs_local_ci_check$

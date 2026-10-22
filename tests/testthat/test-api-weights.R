@@ -236,6 +236,7 @@ test_that("weights_matrix passes ctx through to rank_weight evaluators", {
 })
 
 test_that("weights_matrix handles x0 vs X0 and basic shape errors", {
+  .with_duplicate_policy_warnings({
 
   n <- 4
   p <- 2
@@ -271,6 +272,7 @@ test_that("weights_matrix handles x0 vs X0 and basic shape errors", {
     ),
     "ncol\\(X0\\) must equal ncol\\(X\\)"
   )
+  })
 })
 
 test_that("print.weights_result is informative", {

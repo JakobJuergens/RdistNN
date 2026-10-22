@@ -45,6 +45,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rustat_block_rank_loo
+Rcpp::NumericVector rustat_block_rank_loo(const Rcpp::IntegerMatrix& ranks, const Rcpp::NumericMatrix& signal, const Rcpp::NumericVector& table, const Rcpp::IntegerVector& groups, bool direct);
+RcppExport SEXP _RdistNN_rustat_block_rank_loo(SEXP ranksSEXP, SEXP signalSEXP, SEXP tableSEXP, SEXP groupsSEXP, SEXP directSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::IntegerMatrix& >::type ranks(ranksSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericMatrix& >::type signal(signalSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type table(tableSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::IntegerVector& >::type groups(groupsSEXP);
+    Rcpp::traits::input_parameter< bool >::type direct(directSEXP);
+    rcpp_result_gen = Rcpp::wrap(rustat_block_rank_loo(ranks, signal, table, groups, direct));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rustat_dist_l1
 NumericVector rustat_dist_l1(NumericMatrix X, NumericVector x0);
 RcppExport SEXP _RdistNN_rustat_dist_l1(SEXP XSEXP, SEXP x0SEXP) {
@@ -388,6 +403,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_RdistNN_rustat_compensated_sum", (DL_FUNC) &_RdistNN_rustat_compensated_sum, 1},
     {"_RdistNN_rustat_weighted_cdf_index", (DL_FUNC) &_RdistNN_rustat_weighted_cdf_index, 2},
     {"_RdistNN_rustat_compensated_crossprod", (DL_FUNC) &_RdistNN_rustat_compensated_crossprod, 2},
+    {"_RdistNN_rustat_block_rank_loo", (DL_FUNC) &_RdistNN_rustat_block_rank_loo, 5},
     {"_RdistNN_rustat_dist_l1", (DL_FUNC) &_RdistNN_rustat_dist_l1, 2},
     {"_RdistNN_rustat_dist_l1_scaled", (DL_FUNC) &_RdistNN_rustat_dist_l1_scaled, 3},
     {"_RdistNN_rustat_dist_l1_batch", (DL_FUNC) &_RdistNN_rustat_dist_l1_batch, 2},

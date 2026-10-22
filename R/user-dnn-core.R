@@ -22,9 +22,11 @@
         paste0(
           "DNN weights are (near-)uniform at one or more target points ",
           "(max effective sample size %.1f of n = %d), so the fit provides ",
-          "little or no localization. This typically means `s` is too small ",
-          "relative to `k` (for example s = 1, or k = s). Increase `s`, or ",
-          "omit both `s` and `tuning` to use the default paper tuning rule."
+          "little or no localization. This can occur when `s` is too small ",
+          "relative to `k` (for example s = 1, or k = s), or when weights are ",
+          "averaged within duplicate-covariate blocks. Increase `s` when it is too small, or ",
+          "omit both `s` and `tuning` to use the default paper tuning rule. ",
+          "A larger `s` cannot distinguish observations with identical covariates."
         ),
         ess_max, n
       ),

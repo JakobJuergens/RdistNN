@@ -20,11 +20,16 @@ called as \code{spec$setup(X)} to create a context.}
 Numeric matrix \(n  x  m\).
 }
 \description{
-Evaluate a distance spec for many targets (batch)
+Scalar-only specifications are supported through the shared fallback.
+The result retains both matrix dimensions for singleton samples/targets.
 }
 \examples{
 set.seed(1)
 x_mat <- matrix(rnorm(12), 4, 3)
 x0_mat <- matrix(rnorm(6), 2, 3)
 distance_eval_batch(distance_l2(), x_mat, x0_mat)
+scalar_l1 <- as_distance(function(X, x0) {
+  rowSums(abs(sweep(X, 2L, x0, "-")))
+})
+dim(distance_eval_batch(scalar_l1, x_mat[1L, , drop = FALSE], x0_mat))
 }

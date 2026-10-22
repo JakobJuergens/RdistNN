@@ -59,6 +59,7 @@ X <- matrix(rnorm(40), 20, 2)
 x0 <- c(0, 0)
 
 distance_eval(linf, X, x0)
+dim(distance_eval_batch(linf, X[1L, , drop = FALSE], rbind(x0, x0)))
 ```
 
 ### Reusable Distance With `new_distance()`, `setup()`, and `eval_batch()`
@@ -75,10 +76,11 @@ scaled_l2 <- new_distance(
     list(scale = scale)
   },
   eval_batch = function(X, X0, ctx) {
-    vapply(seq_len(nrow(X0)), function(j) {
+    D <- vapply(seq_len(nrow(X0)), function(j) {
       delta <- sweep(X, 2L, X0[j, ], "-")
       sqrt(rowSums(sweep(delta, 2L, ctx$scale, "/")^2))
     }, numeric(nrow(X)))
+    matrix(D, nrow = nrow(X), ncol = nrow(X0))
   }
 )
 
@@ -90,8 +92,12 @@ D <- distance_eval_batch(scaled_l2, X, X0, ctx = ctx_dist)
 dim(D)
 ```
 
-When you call `weights_matrix()` with a distance spec and `ctx = NULL`,
-`RdistNN` automatically uses the distance-side `setup(X)` if it exists.
+Batch distances have shape `n x m`, including a single observation or target.
+A custom `eval_batch()` must return an actual matrix with those dimensions.
+Scalar-only specs use the shared batch evaluator, which assembles the matrix
+without dropping singleton dimensions. With `ctx = NULL`, distance-side
+`setup(X)` runs once per batch, including calls through `weights_matrix()`.
+Pass a fitted context explicitly to reuse it across calls.
 
 ## Custom rank weights
 
@@ -114,6 +120,7 @@ rw_inv <- as_rank_weight(
 
 register_rank_weight("inv_rank", rw_inv)
 rank_weight_names()
+dim(rank_weight_eval_batch(rw_inv, matrix(1L, nrow = 1L, ncol = 2L)))
 ```
 
 ### A Compact-Support Rule
@@ -139,9 +146,21 @@ make_top_m <- function(m) {
 rw_top10 <- make_top_m(10L)
 ```
 
+`rank_weight_eval()` evaluates the supplied rank rule without covariate groups.
+When that rule is passed to `weights_matrix()`, the covariate-aware layer
+averages its assigned weights within exactly identical raw-X groups, including
+signed or unnormalized rules. A support boundary inside a group can therefore
+give nonzero observation weights beyond the original cutoff. Custom rankers
+remain responsible for their own ordering policy. See
+[DNN weights and ranks](dnn-weights.html#identical-covariate-rows) for the
+grouping rule, deletion redistribution and theory warning.
+
 ### Batched Rank Weights and Shared `ctx`
 
 For performance, prefer `eval_batch()` once the prototype is stable.
+Scalar-only rules are evaluated and validated one target at a time; their
+batch output stays `n x m` even when either dimension is one. A custom batch
+callback must itself return an `n x m` matrix.
 
 ```{r rank-batch}
 rw_exp <- new_rank_weight(
@@ -222,6 +241,8 @@ once a subset of observations has been selected.
 ### Quick Prototype With `as_score()`
 
 Use `as_score()` for a simple kernel with fixed order `s`.
+Each scalar callback must return one finite numeric value per subset. Logical
+values and multiple values are rejected before the batch output is assembled.
 
 ```{r score-simple}
 sc_avg2 <- as_score(
@@ -267,6 +288,10 @@ score_eval_batch(sc_pair_gap, subs, data = df, ctx = ctx_score)
 If your score depends on a parameter vector, implement `eval_param` or an
 `eval` that accepts `theta`, then use `score_diff_path()` to get reusable value
 and gradient closures.
+An analytic batch gradient must be a two-dimensional `K x p` matrix for `K`
+subsets and `p` parameters. When `p = 1`, a numeric vector of length `K` is
+also accepted and converted to that matrix; higher-dimensional arrays are
+rejected.
 
 ```{r score-diff}
 sc_affine <- new_score(
@@ -286,6 +311,11 @@ path <- score_diff_path(sc_affine, data = df, method = "auto")
 path$value(2L, theta = c(0.5, 1))
 path$grad(2L, theta = c(0.5, 1))
 ```
+
+`score_diff_path()` evaluates its `data` argument when the path is created.
+Rebinding `df` later does not change the data used by this path. Custom
+closures, environments and external pointers can still contain mutable state;
+their authors remain responsible for reproducible evaluations.
 
 If you do not provide an analytic gradient, `score_diff_path(..., method = "fd")`
 uses finite differences based on `eval_param` / `eval_param_batch`.

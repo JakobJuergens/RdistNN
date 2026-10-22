@@ -55,7 +55,7 @@
   loo
 }
 
-.dnn_loo_loop <- function(sig, ranks, rw, center = FALSE) {
+.dnn_loo_loop <- function(sig, ranks, rw, center = FALSE, groups = NULL) {
   if (!is_rank_weight(rw)) {
     .abort_bad_arg("rw", "must be a rank_weight", quoted = FALSE)
   }
@@ -78,7 +78,8 @@
     rank_matrix_i <- rank_matrix_i - (rank_matrix_i > r_i)
     if (!is.integer(rank_matrix_i)) storage.mode(rank_matrix_i) <- "integer"
 
-    rank_weight_eval_batch(rw, rank_matrix_i)
+    .dnn_average_duplicate_weights(rank_weight_eval_batch(rw, rank_matrix_i),
+                                   if (is.null(groups)) NULL else groups[keep])
   }
   .jackknife_recomputed_centered(sig, weight_fun, restore = !center)
 }
@@ -152,10 +153,11 @@
 
     tab_jk <- .rank_weight_table(rw, n - 1L)
     loo <- if (is.null(tab_jk)) {
-      .dnn_loo_loop(sig, ranks_full, rw, center = TRUE)
+      .dnn_loo_loop(sig, ranks_full, rw, center = TRUE, groups = .dnn_duplicate_groups(x_mat))
     } else {
       tab_full <- .rank_weight_table(rw, n)
-      .dnn_loo_centered(sig, ranks_full, tab_jk, tab_full = tab_full)$loo
+      .dnn_loo_centered(sig, ranks_full, tab_jk, tab_full = tab_full,
+                        groups = .dnn_duplicate_groups(x_mat))$loo
     }
     return(loo)
   }

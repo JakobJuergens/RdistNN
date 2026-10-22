@@ -98,24 +98,22 @@ NumericVector rustat_plqr_g_indexed(IntegerVector idxs, SEXP ctx_) {
   const int j0 = ctx->j - 1;
   NumericVector g(m);
   const double *design = REAL(ctx->D), *coefficients = REAL(ctx->beta);
-  int first_bad_index = -1;
+  int has_bad_index = 0;
 
 #ifdef _OPENMP
 #pragma omp parallel for num_threads(rustat::thread_limit()) schedule(static) if (m >= 1024)
 #endif
   for (int t = 0; t < m; ++t) {
-    const int i = idxs[t] - 1;
-    if (i < 0 || i >= ctx->n) {
+    const int index = idxs[t];
+    if (index == NA_INTEGER || index < 1 || index > ctx->n) {
 #ifdef _OPENMP
 #pragma omp critical(rustat_plqr_g_indexed_error)
 #endif
-      {
-        if (first_bad_index < 0)
-          first_bad_index = i + 1;
-      }
+      { has_bad_index = 1; }
       g[t] = NA_REAL;
       continue;
     }
+    const int i = index - 1;
     double db = 0.0;
     for (int pd = 0; pd < p_d; ++pd)
       db += ctx->D(i, pd) * ctx->beta[pd];
@@ -130,7 +128,7 @@ NumericVector rustat_plqr_g_indexed(IntegerVector idxs, SEXP ctx_) {
     const double rDj = ctx->D(i, j0) - ctx->mD(i, j0);
     g[t] = resid * rDj;
   }
-  if (first_bad_index >= 0) {
+  if (has_bad_index) {
     Rcpp::stop("Index out of bounds in plqr_g_indexed.");
   }
   return g;
