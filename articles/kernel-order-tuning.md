@@ -46,6 +46,14 @@ coef(view)
 #> 0.1311178
 ```
 
+Candidate identifiers refer to rows of the tuning grid, not just the
+resolved order. If two tuning settings resolve to the same `s`, they
+remain distinct candidates even when their computation is shared. Plot
+labels include their identifiers when needed to distinguish them.
+Candidate reconstruction validates the retained controls, target
+identities and cached ranks; refit an incomplete or inconsistent saved
+object.
+
 CATE and CLATE use the same `tuning_mode` convention. See [Getting
 started](https://JakobJuergens.github.io/RdistNN/articles/getting-started.md)
 and [Conditional

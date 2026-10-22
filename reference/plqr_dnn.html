@@ -33,7 +33,7 @@ supplied evaluation value (meta$theta_source = "supplied").'></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,7 +56,7 @@ supplied evaluation value (meta$theta_source = "supplied").'></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>PLQR local moment evaluation and direct coefficient inference via DNN rank weights (experimental)</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.1/R/user-dnn-plqr.R" class="external-link"><code>R/user-dnn-plqr.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/master/R/user-dnn-plqr.R" class="external-link"><code>R/user-dnn-plqr.R</code></a></small>
       <div class="d-none name"><code>plqr_dnn.Rd</code></div>
     </div>
 
@@ -182,7 +182,9 @@ interface.</p></dd>
 <dd><p>Optional positive numeric vector (<code>n</code>) estimating the
 conditional density of <code>Y</code> at the threshold <code>D' theta_eval + g</code>. When
 supplied with <code>se = TRUE</code>, PLQR uses the direct coefficient sandwich
-route and returns coefficient standard errors in <code>theta_se</code>.</p></dd>
+route and returns coefficient standard errors in <code>theta_se</code>. A direct
+vector is allowed with either input interface; do not also supply
+<code>density_col</code>.</p></dd>
 
 
 <dt id="arg-density-col">density_col<a class="anchor" aria-label="anchor" href="#arg-density-col"></a></dt>
@@ -311,12 +313,20 @@ top-5 weight concentration separately from the estimator's <code>k</code>;</p></
     <p>The documented sampling framework uses independent observations; cluster
 and survey-design inference are not supplied. Exact distance ties use
 lexicographic order of the original covariates, in their supplied column
-order. Identical covariate rows retain input-order ties; permuting those
-duplicates can change estimates. Ordering uses no outcomes or nuisances.</p>
+order. Rows identical on every raw localization covariate share the average
+of their rank weights. Each jackknife deletion recomputes this average over
+the surviving block at sample size n-1. This permutation-invariant
+modification is not covered by the paper's theory and emits a warning.
+Distinct covariate vectors at equal distance are not averaged. Ordering uses
+no outcomes or nuisances. Retained tied fits from the earlier policy require
+refitting before reporting or reuse.</p>
 <p>Two interfaces are supported.</p><ol><li><p>Data-frame interface (recommended): pass <code>data</code> with <code>x_cols</code>, <code>D_cols</code>,
 <code>g_col</code>, <code>mD_cols</code>, and <code>y_col</code>.</p></li>
 <li><p>Matrix interface: pass <code>X</code>, <code>D</code>, <code>g</code>, <code>mD</code>, and <code>Y</code>.</p></li>
-</ol><p>Supply the shape component <code>g</code>, residualized-regressor means <code>mD</code> and,
+</ol><p>With <code>data</code>, omit <code>X</code>, <code>D</code>, <code>g</code>, <code>mD</code>, and <code>Y</code>; these direct inputs are
+reserved for the matrix interface. Column selectors require <code>data</code>.
+A direct <code>density</code> vector is supported with either interface.</p>
+<p>Supply the shape component <code>g</code>, residualized-regressor means <code>mD</code> and,
 for coefficient uncertainty, positive threshold densities. These can use
 adjustment variables beyond the reporting covariates. The threshold is
 <code>D' theta_eval + g</code>; <code>g</code> alone is not a conditional quantile.</p>
@@ -328,8 +338,11 @@ see the <a href="https://jakobjuergens.com/research/#orthogonal-inference-condit
 <p>As in <code><a href="weights_dnn.html">weights_dnn()</a></code>, exact DNN localization uses the full rank permutation
 at each target rather than an <code>s</code>-nearest-neighbor truncation. The <code>"fast"</code>
 jackknife option reuses the full-sample rank matrix and updates ranks under
-deletion. For exact DNN fits, the finite-population support edge is rank
+deletion. For exact DNN fits, the unaveraged rank-table support edge is rank
 <code>n - s + k</code>, not rank <code>s</code>.</p>
+<p>Averaging can extend nonzero observation weights through the end of a
+duplicate block that straddles the nominal rank-table edge. Effective sample
+sizes and weight diagnostics use the resulting observation weights.</p>
 <p><code>tuning_mode = "default"</code> evaluates only the default kernel order and
 preserves the ordinary scalar-fit return shape. <code>tuning_mode = "grid"</code>
 evaluates the feasible candidates in <code>tuning</code>, or the paper default tuning

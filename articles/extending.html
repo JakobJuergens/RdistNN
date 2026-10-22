@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,7 @@
       <h1>Extending RdistNN: custom distances, rank weights, and scores</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.1/vignettes/extending.Rmd" class="external-link"><code>vignettes/extending.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/master/vignettes/extending.Rmd" class="external-link"><code>vignettes/extending.Rmd</code></a></small>
       <div class="d-none name"><code>extending.Rmd</code></div>
     </div>
 
@@ -133,7 +133,9 @@ classes and reporting conventions, use <a href="notation-and-conventions.html">N
 <span><span class="fu"><a href="../reference/distance_eval.html">distance_eval</a></span><span class="op">(</span><span class="va">linf</span>, <span class="va">X</span>, <span class="va">x0</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  [1] 0.9619334 0.9423007 0.2587882 1.6664748 0.4844551 0.7410727 1.1606158</span></span>
 <span><span class="co">#&gt;  [8] 1.1166102 1.2188574 1.2673687 0.9006247 1.1312186 0.7277152 0.7365021</span></span>
-<span><span class="co">#&gt; [15] 0.3521296 0.7055155 1.3003580 0.6482428 1.2243136 0.7937612</span></span></code></pre></div>
+<span><span class="co">#&gt; [15] 0.3521296 0.7055155 1.3003580 0.6482428 1.2243136 0.7937612</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="fu"><a href="../reference/distance_eval_batch.html">distance_eval_batch</a></span><span class="op">(</span><span class="va">linf</span>, <span class="va">X</span><span class="op">[</span><span class="fl">1L</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="va">x0</span>, <span class="va">x0</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 1 2</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="reusable-distance-with-new_distance-setup-and-eval_batch">Reusable Distance With <code>new_distance()</code>,
@@ -150,10 +152,11 @@ once on <code>X</code> and reuse it across many targets.</p>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>scale <span class="op">=</span> <span class="va">scale</span><span class="op">)</span></span>
 <span>  <span class="op">}</span>,</span>
 <span>  eval_batch <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">X</span>, <span class="va">X0</span>, <span class="va">ctx</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">X0</span><span class="op">)</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">j</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">D</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">X0</span><span class="op">)</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">j</span><span class="op">)</span> <span class="op">{</span></span>
 <span>      <span class="va">delta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sweep.html" class="external-link">sweep</a></span><span class="op">(</span><span class="va">X</span>, <span class="fl">2L</span>, <span class="va">X0</span><span class="op">[</span><span class="va">j</span>, <span class="op">]</span>, <span class="st">"-"</span><span class="op">)</span></span>
 <span>      <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowSums</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sweep.html" class="external-link">sweep</a></span><span class="op">(</span><span class="va">delta</span>, <span class="fl">2L</span>, <span class="va">ctx</span><span class="op">$</span><span class="va">scale</span>, <span class="st">"/"</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span>    <span class="op">}</span>, <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="va">D</span>, nrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">X0</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="op">}</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -164,9 +167,14 @@ once on <code>X</code> and reuse it across many targets.</p>
 <span><span class="va">D</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/distance_eval_batch.html">distance_eval_batch</a></span><span class="op">(</span><span class="va">scaled_l2</span>, <span class="va">X</span>, <span class="va">X0</span>, ctx <span class="op">=</span> <span class="va">ctx_dist</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">D</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 40  6</span></span></code></pre></div>
-<p>When you call <code><a href="../reference/weights_matrix.html">weights_matrix()</a></code> with a distance spec and
-<code>ctx = NULL</code>, <code>RdistNN</code> automatically uses the
-distance-side <code>setup(X)</code> if it exists.</p>
+<p>Batch distances have shape <code>n x m</code>, including a single
+observation or target. A custom <code>eval_batch()</code> must return an
+actual matrix with those dimensions. Scalar-only specs use the shared
+batch evaluator, which assembles the matrix without dropping singleton
+dimensions. With <code>ctx = NULL</code>, distance-side
+<code>setup(X)</code> runs once per batch, including calls through
+<code><a href="../reference/weights_matrix.html">weights_matrix()</a></code>. Pass a fitted context explicitly to reuse
+it across calls.</p>
 </div>
 </div>
 <div class="section level2">
@@ -191,7 +199,9 @@ profile without changing the ranking logic.</p>
 <span></span>
 <span><span class="fu"><a href="../reference/register_rank_weight.html">register_rank_weight</a></span><span class="op">(</span><span class="st">"inv_rank"</span>, <span class="va">rw_inv</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/rank_weight_names.html">rank_weight_names</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "inv_rank"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "inv_rank"</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="fu"><a href="../reference/rank_weight_eval_batch.html">rank_weight_eval_batch</a></span><span class="op">(</span><span class="va">rw_inv</span>, <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">1L</span>, nrow <span class="op">=</span> <span class="fl">1L</span>, ncol <span class="op">=</span> <span class="fl">2L</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 1 2</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="a-compact-support-rule">A Compact-Support Rule<a class="anchor" aria-label="anchor" href="#a-compact-support-rule"></a>
@@ -215,12 +225,24 @@ thing as exact DNN.</p>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="va">rw_top10</span> <span class="op">&lt;-</span> <span class="fu">make_top_m</span><span class="op">(</span><span class="fl">10L</span><span class="op">)</span></span></code></pre></div>
+<p><code><a href="../reference/rank_weight_eval.html">rank_weight_eval()</a></code> evaluates the supplied rank rule
+without covariate groups. When that rule is passed to
+<code><a href="../reference/weights_matrix.html">weights_matrix()</a></code>, the covariate-aware layer averages its
+assigned weights within exactly identical raw-X groups, including signed
+or unnormalized rules. A support boundary inside a group can therefore
+give nonzero observation weights beyond the original cutoff. Custom
+rankers remain responsible for their own ordering policy. See <a href="dnn-weights.html#identical-covariate-rows">DNN weights and
+ranks</a> for the grouping rule, deletion redistribution and theory
+warning.</p>
 </div>
 <div class="section level3">
 <h3 id="batched-rank-weights-and-shared-ctx">Batched Rank Weights and Shared <code>ctx</code><a class="anchor" aria-label="anchor" href="#batched-rank-weights-and-shared-ctx"></a>
 </h3>
 <p>For performance, prefer <code>eval_batch()</code> once the prototype
-is stable.</p>
+is stable. Scalar-only rules are evaluated and validated one target at a
+time; their batch output stays <code>n x m</code> even when either
+dimension is one. A custom batch callback must itself return an
+<code>n x m</code> matrix.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rw_exp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/new_rank_weight.html">new_rank_weight</a></span><span class="op">(</span></span>
 <span>  name <span class="op">=</span> <span class="st">"exp_decay"</span>,</span>
@@ -318,7 +340,9 @@ happens once a subset of observations has been selected.</p>
 <h3 id="quick-prototype-with-as_score">Quick Prototype With <code>as_score()</code><a class="anchor" aria-label="anchor" href="#quick-prototype-with-as_score"></a>
 </h3>
 <p>Use <code><a href="../reference/as_score.html">as_score()</a></code> for a simple kernel with fixed order
-<code>s</code>.</p>
+<code>s</code>. Each scalar callback must return one finite numeric
+value per subset. Logical values and multiple values are rejected before
+the batch output is assembled.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_avg2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/as_score.html">as_score</a></span><span class="op">(</span></span>
 <span>  <span class="kw">function</span><span class="op">(</span><span class="va">idxs</span>, <span class="va">data</span>, <span class="va">ctx</span> <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">rng</span> <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">{</span></span>
@@ -367,7 +391,11 @@ data columns or transformed objects.</p>
 <p>If your score depends on a parameter vector, implement
 <code>eval_param</code> or an <code>eval</code> that accepts
 <code>theta</code>, then use <code><a href="../reference/score_diff_path.html">score_diff_path()</a></code> to get
-reusable value and gradient closures.</p>
+reusable value and gradient closures. An analytic batch gradient must be
+a two-dimensional <code>K x p</code> matrix for <code>K</code> subsets
+and <code>p</code> parameters. When <code>p = 1</code>, a numeric vector
+of length <code>K</code> is also accepted and converted to that matrix;
+higher-dimensional arrays are rejected.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_affine</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/new_score.html">new_score</a></span><span class="op">(</span></span>
 <span>  name <span class="op">=</span> <span class="st">"affine_order1"</span>,</span>
@@ -387,6 +415,11 @@ reusable value and gradient closures.</p>
 <span><span class="co">#&gt; [1] 2</span></span>
 <span><span class="va">path</span><span class="op">$</span><span class="fu">grad</span><span class="op">(</span><span class="fl">2L</span>, theta <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 2 1</span></span></code></pre></div>
+<p><code><a href="../reference/score_diff_path.html">score_diff_path()</a></code> evaluates its <code>data</code>
+argument when the path is created. Rebinding <code>df</code> later does
+not change the data used by this path. Custom closures, environments and
+external pointers can still contain mutable state; their authors remain
+responsible for reproducible evaluations.</p>
 <p>If you do not provide an analytic gradient,
 <code>score_diff_path(..., method = "fd")</code> uses finite differences
 based on <code>eval_param</code> / <code>eval_param_batch</code>.</p>

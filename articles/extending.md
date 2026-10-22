@@ -60,6 +60,8 @@ distance_eval(linf, X, x0)
 #>  [1] 0.9619334 0.9423007 0.2587882 1.6664748 0.4844551 0.7410727 1.1606158
 #>  [8] 1.1166102 1.2188574 1.2673687 0.9006247 1.1312186 0.7277152 0.7365021
 #> [15] 0.3521296 0.7055155 1.3003580 0.6482428 1.2243136 0.7937612
+dim(distance_eval_batch(linf, X[1L, , drop = FALSE], rbind(x0, x0)))
+#> [1] 1 2
 ```
 
 ### Reusable Distance With `new_distance()`, `setup()`, and `eval_batch()`
@@ -79,10 +81,11 @@ scaled_l2 <- new_distance(
     list(scale = scale)
   },
   eval_batch = function(X, X0, ctx) {
-    vapply(seq_len(nrow(X0)), function(j) {
+    D <- vapply(seq_len(nrow(X0)), function(j) {
       delta <- sweep(X, 2L, X0[j, ], "-")
       sqrt(rowSums(sweep(delta, 2L, ctx$scale, "/")^2))
     }, numeric(nrow(X)))
+    matrix(D, nrow = nrow(X), ncol = nrow(X0))
   }
 )
 
@@ -95,10 +98,14 @@ dim(D)
 #> [1] 40  6
 ```
 
-When you call
-[`weights_matrix()`](https://JakobJuergens.github.io/RdistNN/reference/weights_matrix.md)
-with a distance spec and `ctx = NULL`, `RdistNN` automatically uses the
-distance-side `setup(X)` if it exists.
+Batch distances have shape `n x m`, including a single observation or
+target. A custom `eval_batch()` must return an actual matrix with those
+dimensions. Scalar-only specs use the shared batch evaluator, which
+assembles the matrix without dropping singleton dimensions. With
+`ctx = NULL`, distance-side `setup(X)` runs once per batch, including
+calls through
+[`weights_matrix()`](https://JakobJuergens.github.io/RdistNN/reference/weights_matrix.md).
+Pass a fitted context explicitly to reuse it across calls.
 
 ## Custom rank weights
 
@@ -123,6 +130,8 @@ rw_inv <- as_rank_weight(
 register_rank_weight("inv_rank", rw_inv)
 rank_weight_names()
 #> [1] "inv_rank"
+dim(rank_weight_eval_batch(rw_inv, matrix(1L, nrow = 1L, ncol = 2L)))
+#> [1] 1 2
 ```
 
 ### A Compact-Support Rule
@@ -150,9 +159,24 @@ make_top_m <- function(m) {
 rw_top10 <- make_top_m(10L)
 ```
 
+[`rank_weight_eval()`](https://JakobJuergens.github.io/RdistNN/reference/rank_weight_eval.md)
+evaluates the supplied rank rule without covariate groups. When that
+rule is passed to
+[`weights_matrix()`](https://JakobJuergens.github.io/RdistNN/reference/weights_matrix.md),
+the covariate-aware layer averages its assigned weights within exactly
+identical raw-X groups, including signed or unnormalized rules. A
+support boundary inside a group can therefore give nonzero observation
+weights beyond the original cutoff. Custom rankers remain responsible
+for their own ordering policy. See [DNN weights and
+ranks](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.html#identical-covariate-rows)
+for the grouping rule, deletion redistribution and theory warning.
+
 ### Batched Rank Weights and Shared `ctx`
 
 For performance, prefer `eval_batch()` once the prototype is stable.
+Scalar-only rules are evaluated and validated one target at a time;
+their batch output stays `n x m` even when either dimension is one. A
+custom batch callback must itself return an `n x m` matrix.
 
 ``` r
 
@@ -258,7 +282,9 @@ happens once a subset of observations has been selected.
 
 Use
 [`as_score()`](https://JakobJuergens.github.io/RdistNN/reference/as_score.md)
-for a simple kernel with fixed order `s`.
+for a simple kernel with fixed order `s`. Each scalar callback must
+return one finite numeric value per subset. Logical values and multiple
+values are rejected before the batch output is assembled.
 
 ``` r
 
@@ -309,7 +335,11 @@ score_eval_batch(sc_pair_gap, subs, data = df, ctx = ctx_score)
 If your score depends on a parameter vector, implement `eval_param` or
 an `eval` that accepts `theta`, then use
 [`score_diff_path()`](https://JakobJuergens.github.io/RdistNN/reference/score_diff_path.md)
-to get reusable value and gradient closures.
+to get reusable value and gradient closures. An analytic batch gradient
+must be a two-dimensional `K x p` matrix for `K` subsets and `p`
+parameters. When `p = 1`, a numeric vector of length `K` is also
+accepted and converted to that matrix; higher-dimensional arrays are
+rejected.
 
 ``` r
 
@@ -332,6 +362,12 @@ path$value(2L, theta = c(0.5, 1))
 path$grad(2L, theta = c(0.5, 1))
 #> [1] 2 1
 ```
+
+[`score_diff_path()`](https://JakobJuergens.github.io/RdistNN/reference/score_diff_path.md)
+evaluates its `data` argument when the path is created. Rebinding `df`
+later does not change the data used by this path. Custom closures,
+environments and external pointers can still contain mutable state;
+their authors remain responsible for reproducible evaluations.
 
 If you do not provide an analytic gradient,
 `score_diff_path(..., method = "fd")` uses finite differences based on

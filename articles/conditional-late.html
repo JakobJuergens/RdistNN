@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,7 @@
       <h1>Conditional LATE from supplied nuisance predictions</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.1/vignettes/conditional-late.Rmd" class="external-link"><code>vignettes/conditional-late.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/master/vignettes/conditional-late.Rmd" class="external-link"><code>vignettes/conditional-late.Rmd</code></a></small>
       <div class="d-none name"><code>conditional-late.Rmd</code></div>
     </div>
 
@@ -65,6 +65,15 @@ compliers using a binary instrument <code>A</code>, binary treatment
 defines the causal target and identifying assumptions. Reporting
 covariates can be a subset of the controls used to obtain the nuisance
 predictions.</p>
+<p>Exactly identical reporting-covariate rows share their block’s
+average weight in both the reduced form and first stage, even when their
+outcomes or nuisance predictions differ. Each deletion removes the
+actual row and redistributes its remaining block’s <code>n-1</code>
+weight-table mass over the survivors. This is a ratio of two weighted
+signal averages, not an average of individual ratios. The package warns
+that the block-averaging modification is outside the paper’s theory. See
+the <a href="dnn-weights.html#identical-covariate-rows">weight
+guide</a>.</p>
 <div class="section level2">
 <h2 id="fit-from-a-data-frame">Fit from a data frame<a class="anchor" aria-label="anchor" href="#fit-from-a-data-frame"></a>
 </h2>

@@ -11,7 +11,7 @@ rule (rank_weight), then returns the weight matrix W (n x m)."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,7 +34,7 @@ rule (rank_weight), then returns the weight matrix W (n x m)."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Compute weight matrix W via an arbitrary ranking + weight mapping</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.1/R/api-weights.R" class="external-link"><code>R/api-weights.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/master/R/api-weights.R" class="external-link"><code>R/api-weights.R</code></a></small>
       <div class="d-none name"><code>weights_matrix.Rd</code></div>
     </div>
 
@@ -87,7 +87,9 @@ rule (<code>rank_weight</code>), then returns the weight matrix <code>W</code> (
 <dt id="arg-ctx">ctx<a class="anchor" aria-label="anchor" href="#arg-ctx"></a></dt>
 <dd><p>optional shared context passed to ranking and weight evaluators.
 On the ranking side, if <code>ctx</code> is <code>NULL</code> and a distance spec defines
-<code>setup(X)</code>, that setup path is used automatically.</p></dd>
+<code>setup(X)</code>, that setup path is used automatically.
+It is evaluated once for the target batch, including scalar-only distance
+specifications; singleton samples retain an <code>n x m</code> distance matrix.</p></dd>
 
 
 <dt id="arg-return">return<a class="anchor" aria-label="anchor" href="#arg-return"></a></dt>
@@ -100,6 +102,25 @@ On the ranking side, if <code>ctx</code> is <code>NULL</code> and a distance spe
 <li><p>optional: <code>ord</code>, <code>ranks</code>, <code>dx</code>,</p></li>
 <li><p><code>meta</code>: list with <code>n, m, p, weight_kind, weight_name</code>.</p></li>
 </ul></div>
+    <div class="section level2">
+    <h2 id="duplicate-covariate-blocks">Duplicate-covariate blocks<a class="anchor" aria-label="anchor" href="#duplicate-covariate-blocks"></a></h2>
+
+
+<p>Rows identical on every supplied raw covariate receive the average
+of their assigned rank weights, preserving each block's total mass. This
+includes caller-supplied ranks and signed or unnormalized rank rules.
+Distinct covariate vectors at equal distance remain separate. A warning
+identifies this permutation-invariant modification as outside the paper's
+theory, including for <code>k = 1</code>. Estimator jackknife deletions repeat the
+average over each remaining duplicate block using the selected rule's
+sample-size-n-1 table. For a block at consecutive ranks <code>a:b</code>, the full
+weight is <code>sum(w_n[a:b]) / (b-a+1)</code> per member; after deleting a member,
+each survivor receives <code>sum(w_(n-1)[a:(b-1)]) / (b-a)</code>. A deleted singleton
+contributes zero. The smaller block size must be used in the deletion.
+An exact support edge describes the unaveraged rank
+table; a straddling duplicate block can extend nonzero observation weights
+beyond it. Lower-level rank-only APIs retain their rank-primitive semantics.</p>
+    </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="weights_dnn.html">weights_dnn()</a></code>, <code><a href="rank_weight_eval_batch.html">rank_weight_eval_batch()</a></code>, <code><a href="distance_eval_batch.html">distance_eval_batch()</a></code></p></div>

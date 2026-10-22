@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,7 @@
       <h1>DNN weights and ranks</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.1/vignettes/dnn-weights.Rmd" class="external-link"><code>vignettes/dnn-weights.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/master/vignettes/dnn-weights.Rmd" class="external-link"><code>vignettes/dnn-weights.Rmd</code></a></small>
       <div class="d-none name"><code>dnn-weights.Rmd</code></div>
     </div>
 
@@ -77,12 +77,17 @@ interface.</p>
 <li>exact DNN weights are computed from the <strong>full rank
 permutation</strong> for each target, not by keeping only the first
 <code>s</code> observations;</li>
-<li>for the exact finite-population rule, support in rank order is
+<li>for the unaveraged exact finite-population rank table, support is
 <code>j &lt;= n - s + k</code>, and in particular
 <code>j &lt;= n - s + 1</code> when <code>k = 1</code>;</li>
 <li>the asymptotic Beta-increment approximation is typically treated as
 a full-support rank-weight sequence.</li>
 </ul>
+<p>Weights for identical localization covariate rows are averaged within
+each duplicate block. A block crossing the exact table’s support edge
+can therefore give observations beyond that rank positive weight. The
+block’s total mass is preserved, while individual weights and ESS can
+change.</p>
 <p>Fixed top-<code>k</code> DNN kernels are implemented for
 <code>1 &lt;= k &lt;= s</code>. The accompanying <a href="https://jakobjuergens.com/research/#orthogonal-inference-conditional-z" class="external-link">paper</a>
 gives the theory for <code>k = 1</code>; accepting another
@@ -137,6 +142,52 @@ gives the theory for <code>k = 1</code>; accepting another
 <span><span class="co">#&gt; [1] 150   1</span></span></code></pre></div>
 </div>
 <div class="section level2">
+<h2 id="identical-covariate-rows">Identical covariate rows<a class="anchor" aria-label="anchor" href="#identical-covariate-rows"></a>
+</h2>
+<p>The equality check uses every raw localization covariate exactly.
+Distinct vectors at equal distance remain ordered lexicographically;
+nearby values are not merged. For this example the original rank table
+is <code>(1/2, 1/3, 1/6, 0)</code>. The two identical rows receive
+<code>(1/2 + 1/3)/2 = 5/12</code> each:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">X_tied</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">wt_tied</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/weights_dnn.html">weights_dnn</a></span><span class="op">(</span>X <span class="op">=</span> <span class="va">X_tied</span>, x0 <span class="op">=</span> <span class="fl">0</span>, k <span class="op">=</span> <span class="fl">1L</span>, s <span class="op">=</span> <span class="fl">2L</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: Identical covariate rows detected; weights are averaged within</span></span>
+<span><span class="co">#&gt; duplicate-covariate blocks, including jackknife deletions. This</span></span>
+<span><span class="co">#&gt; permutation-invariant modification is not covered by the paper's theory.</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/drop.html" class="external-link">drop</a></span><span class="op">(</span><span class="va">wt_tied</span><span class="op">$</span><span class="va">W</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 0.4166667 0.4166667 0.1666667 0.0000000</span></span></code></pre></div>
+<p>The call warns that this permutation-invariant modification is not
+covered by the paper’s theory. High-level estimators apply the same
+policy to every delete-one sample: the deleted observation is removed
+before averaging the remaining block’s <code>n-1</code> weights.
+Averaging only the full-sample weights would not define matching
+jackknife uncertainty. Aligned outcomes and nuisance rows must move with
+their covariate rows when comparing permutations.</p>
+<p>For a block occupying ranks <code>a:b</code>, the full-sample weight
+per member is <code>sum(w_n[a:b])/(b-a+1)</code>. Deleting a member
+leaves <code>b-a</code> survivors at ranks <code>a:(b-1)</code>, each
+with weight <code>sum(w_(n-1)[a:(b-1)])/(b-a)</code>; a deleted
+singleton contributes zero. The table and the denominator both change.
+In the example, deleting the first row raises its identical partner’s
+weight from <code>5/12</code> to <code>2/3</code>:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">wt_deleted</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/weights_dnn.html">weights_dnn</a></span><span class="op">(</span>X <span class="op">=</span> <span class="va">X_tied</span><span class="op">[</span><span class="op">-</span><span class="fl">1L</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span>,</span>
+<span>                          x0 <span class="op">=</span> <span class="fl">0</span>, k <span class="op">=</span> <span class="fl">1L</span>, s <span class="op">=</span> <span class="fl">2L</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/drop.html" class="external-link">drop</a></span><span class="op">(</span><span class="va">wt_deleted</span><span class="op">$</span><span class="va">W</span><span class="op">)</span>  <span class="co"># 2/3, 1/3, 0</span></span>
+<span><span class="co">#&gt; [1] 0.6666667 0.3333333 0.0000000</span></span></code></pre></div>
+<p>If all covariate rows are identical and weights are normalized, each
+receives <code>1/n</code>, and each survivor receives
+<code>1/(n-1)</code> after a deletion. Increasing <code>s</code> cannot
+distinguish identical covariates. This numerical averaging rule does not
+establish an inference theorem for that design.</p>
+<p>Returned ranks and orders remain permutations used to locate the
+blocks. With duplicates, the final <code>W</code> cannot be
+reconstructed from a rank table alone; the grouping information is also
+needed. Standalone rank-only utilities have no covariates from which to
+infer those groups.</p>
+</div>
+<div class="section level2">
 <h2 id="working-with-returned-diagnostics">Working with Returned Diagnostics<a class="anchor" aria-label="anchor" href="#working-with-returned-diagnostics"></a>
 </h2>
 <p><code>return</code> can include:</p>
@@ -160,7 +211,7 @@ gives the theory for <code>k = 1</code>; accepting another
 <div class="section level2">
 <h2 id="exact-vs-asymptotic">Exact vs Asymptotic<a class="anchor" aria-label="anchor" href="#exact-vs-asymptotic"></a>
 </h2>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mu_signal</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span>
 <span><span class="va">mu_exact</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/crossprod.html" class="external-link">crossprod</a></span><span class="op">(</span><span class="va">mu_signal</span>, <span class="va">wt_exact</span><span class="op">$</span><span class="va">W</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">mu_asymp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/crossprod.html" class="external-link">crossprod</a></span><span class="op">(</span><span class="va">mu_signal</span>, <span class="va">wt_asymp</span><span class="op">$</span><span class="va">W</span><span class="op">)</span><span class="op">)</span></span>
@@ -174,6 +225,23 @@ gives the theory for <code>k = 1</code>; accepting another
 <p>Exact weights are the package default. Setting
 <code>method = "asymp"</code> changes the weight construction; it is
 separate from choosing a compiled or R calculation engine.</p>
+</div>
+<div class="section level2">
+<h2 id="numerical-limits">Numerical limits<a class="anchor" aria-label="anchor" href="#numerical-limits"></a>
+</h2>
+<p>Asymptotic tables use host Beta-distribution routines. At the
+smallest representable scales, rounding the interval endpoints can erase
+a tail mass or give R and Stata different zero versus nonzero support.
+Averaging several order statistics and combining signed TDNN tables can
+also lose tiny masses. This remains an unresolved numerical limitation.
+Extreme outcomes can make such differences visible in estimates and
+jackknife covariance.</p>
+<p>Renormalizing the table or selecting a compiled deletion engine
+cannot recover probability already lost during table construction. Exact
+weights use a different finite-population rule; switching to them
+changes the method rather than repairing an asymptotic table. The
+maintainer reference on <a href="https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/19_weighted_accumulation.md" class="external-link">weighted
+accumulation</a> describes the arithmetic and its limits.</p>
 </div>
 <div class="section level2">
 <h2 id="related-articles">Related Articles<a class="anchor" aria-label="anchor" href="#related-articles"></a>

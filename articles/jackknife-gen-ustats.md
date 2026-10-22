@@ -37,8 +37,10 @@ The argument named `ranks` below contains **observation indices**, with
 one row per target. This differs from the `n x m` rank permutations used
 by
 [`jackknife_rank_full()`](https://JakobJuergens.github.io/RdistNN/reference/jackknife_rank_full.md).
-The compact-support rule is not the exact DNN weight rule: exact DNN
-support extends to `n-s+k`, rather than the first `s` observations.
+The compact-support rule is not the exact DNN weight rule: the
+unaveraged exact DNN rank table extends to `n-s+k`, rather than the
+first `s` observations. Covariate-aware block averaging can extend
+nonzero observation weights beyond that rank.
 
 ## Compare fast and reference calculations
 
@@ -51,8 +53,30 @@ all.equal(fast$theta_loo, slow$theta_loo, tolerance = 1e-12)
 ```
 
 `theta0` averages the rule across the supplied target rows; it is not a
-vector of separate local fits. `theta_loo` has one row per deleted
-reference observation and one column per signal component.
+vector of separate local fits. These rank-only utilities do not identify
+duplicate covariate groups. High-level covariate-aware estimators
+additionally average duplicate-block weights in the full sample and
+every deletion, with a warning that this practical modification is
+outside the paper’s theory. Deleting a member reduces its block size as
+well as the reference-sample size; the survivors use the `n-1` table
+divided by the remaining block size. The shared estimator path reuses
+prefix/postfix deletion sums with a block correction, rather than
+rebuilding a weight matrix for each removed row. See the [worked
+deletion
+example](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.html#identical-covariate-rows).
+
+Block deletions accumulate the original signals with their actual
+survivor weights and retain both parts of each compensated prefix/suffix
+sum until the final merge. Averaging a block’s signals first can erase a
+small observation that survives deletion of a dominant member. Shared
+origin selection also accounts for tiny coefficients and nonzero tiny
+table masses: exceptional calculations retain the separately rounded raw
+products before division by mass. These safeguards use finite double
+precision and cannot recover mass already lost in [asymptotic table
+construction](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.html#numerical-limits).
+
+`theta_loo` has one row per deleted reference observation and one column
+per signal component.
 
 ``` r
 

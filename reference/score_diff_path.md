@@ -2,7 +2,8 @@
 
 Returns closures for value and gradient evaluation of a score at any
 parameter vector `theta`, using analytic or finite-difference
-derivatives.
+derivatives. The `data` argument is evaluated when the path is
+constructed.
 
 ## Usage
 

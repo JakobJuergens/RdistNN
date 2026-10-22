@@ -6,6 +6,14 @@ vector**. It does not solve for coefficients. This guide shows how
 moment uncertainty differs from density-backed coefficient uncertainty;
 the entire PLQR interface remains experimental.
 
+PLQR uses the shared localization weights: exactly identical raw
+reporting covariates receive their block’s average weight, and each
+jackknife deletion redistributes its remaining block’s `n-1` table mass
+over the survivors. Regressors, outcomes and nuisance predictions do not
+define the duplicate groups. The package warns that this modification is
+outside the paper’s theory; see the [weight
+guide](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.html#identical-covariate-rows).
+
 For statistical background, see the
 [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
 For the supported CATE, regression and CLATE workflows, use [Getting
@@ -46,6 +54,11 @@ data.frame(
 #> 1                  0.5 -0.12784942 0.05934042     0.06939776
 #> 2                  0.5 -0.03771978 0.05977131     0.07589505
 ```
+
+Use either `data` with column selectors or the direct `X`, `Y`, `D`, `g`
+and `mD` inputs; mixing those routes is rejected. A direct `density`
+vector is allowed with either route. Use `density_col` only with `data`,
+and supply `density` or `density_col`, never both.
 
 The two SE columns have different units. `moment_se` describes variation
 in the localized score; `theta_se` additionally uses the density-backed

@@ -107,6 +107,13 @@ use `eval_param`/`eval_param_batch` and optionally `grad`/`grad_batch`
 to enable derivative-aware workflows via
 [`score_diff_path()`](https://JakobJuergens.github.io/RdistNN/reference/score_diff_path.md).
 
+Scalar evaluators return one finite numeric value. The scalar-to-batch
+fallback checks each value before assembly; logical values and multiple
+values are rejected rather than coerced or truncated. Analytic batch
+gradients must have exactly two dimensions: subsets by parameter
+components. For a scalar parameter, a numeric vector with one entry per
+subset is also accepted and converted to a one-column matrix.
+
 ## See also
 
 [`as_score()`](https://JakobJuergens.github.io/RdistNN/reference/as_score.md),

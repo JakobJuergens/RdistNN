@@ -22,8 +22,10 @@ training rows, even if the learner used additional covariates.
 
 - `s` is the subsample order. Larger `s` gives tighter localization.
 - `k` counts neighbors inside each subsample; the default is `k = 1`.
-- `s` does not count retained full-sample neighbors. Exact weight
-  support reaches rank `n - s + k` (`n - s + 1` at the default `k = 1`).
+- `s` does not count retained full-sample neighbors. The unaveraged
+  exact rank table reaches rank `n - s + k` (`n - s + 1` at the default
+  `k = 1`). A duplicate block crossing that edge can give later
+  observations positive averaged weight.
 - Jackknife uncertainty needs `s < n`; estimate-only fits can use
   `s = n`.
 
@@ -47,13 +49,21 @@ overlap interpretations do not carry over to it.
 
 ### Numerical geometry and covariance
 
-Fresh fits break exact represented distance ties lexicographically by
-the original covariates in their supplied column order. Outcomes,
-treatments and nuisance values do not enter ordering. Identical
-covariate rows still use input position; this remaining ambiguity is not
-resolved by averaging ties. The rank-weight vector and ESS are
-unchanged. Refit objects created by older development versions before
-reusing them with the current package.
+Fresh fits order exact represented distance ties between distinct
+covariate vectors lexicographically by the original supplied columns.
+Within each group of exactly identical localization covariate rows, each
+observation receives the average of the group’s original rank weights.
+The block’s total mass is preserved; individual weights, support and ESS
+can change. No distance tolerance groups nearby values, and outcomes,
+treatments and nuisances do not define groups.
+
+Each jackknife deletion removes the actual observation, updates ranks,
+and averages the `n-1` weight table over every remaining block. This
+makes estimates and covariance invariant to aligned row permutations up
+to numerical precision. The package warns when duplicate groups occur
+because the modification is not covered by the paper’s theory. Refit
+tied saved objects created before this policy; rank-only utilities
+without covariates do not infer duplicate groups.
 
 Saved prediction reuses the fitted training geometry. Fast jackknife
 calculations also freeze it; NP/TDNN/CATE `jackknife = "loo"` refits

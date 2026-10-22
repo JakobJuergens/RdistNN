@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,7 @@
       <h1>Using the rank-jackknife utilities</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.1/vignettes/jackknife-gen-ustats.Rmd" class="external-link"><code>vignettes/jackknife-gen-ustats.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/master/vignettes/jackknife-gen-ustats.Rmd" class="external-link"><code>vignettes/jackknife-gen-ustats.Rmd</code></a></small>
       <div class="d-none name"><code>jackknife-gen-ustats.Rmd</code></div>
     </div>
 
@@ -88,8 +88,10 @@ the rule averages the first three neighbors at each of two targets:</p>
 <strong>observation indices</strong>, with one row per target. This
 differs from the <code>n x m</code> rank permutations used by
 <code><a href="../reference/jackknife_rank_full.html">jackknife_rank_full()</a></code>. The compact-support rule is not the
-exact DNN weight rule: exact DNN support extends to <code>n-s+k</code>,
-rather than the first <code>s</code> observations.</p>
+exact DNN weight rule: the unaveraged exact DNN rank table extends to
+<code>n-s+k</code>, rather than the first <code>s</code> observations.
+Covariate-aware block averaging can extend nonzero observation weights
+beyond that rank.</p>
 </div>
 <div class="section level2">
 <h2 id="compare-fast-and-reference-calculations">Compare fast and reference calculations<a class="anchor" aria-label="anchor" href="#compare-fast-and-reference-calculations"></a>
@@ -100,9 +102,28 @@ rather than the first <code>s</code> observations.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">fast</span><span class="op">$</span><span class="va">theta_loo</span>, <span class="va">slow</span><span class="op">$</span><span class="va">theta_loo</span>, tolerance <span class="op">=</span> <span class="fl">1e-12</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 <p><code>theta0</code> averages the rule across the supplied target
-rows; it is not a vector of separate local fits. <code>theta_loo</code>
-has one row per deleted reference observation and one column per signal
-component.</p>
+rows; it is not a vector of separate local fits. These rank-only
+utilities do not identify duplicate covariate groups. High-level
+covariate-aware estimators additionally average duplicate-block weights
+in the full sample and every deletion, with a warning that this
+practical modification is outside the paper’s theory. Deleting a member
+reduces its block size as well as the reference-sample size; the
+survivors use the <code>n-1</code> table divided by the remaining block
+size. The shared estimator path reuses prefix/postfix deletion sums with
+a block correction, rather than rebuilding a weight matrix for each
+removed row. See the <a href="dnn-weights.html#identical-covariate-rows">worked deletion
+example</a>.</p>
+<p>Block deletions accumulate the original signals with their actual
+survivor weights and retain both parts of each compensated prefix/suffix
+sum until the final merge. Averaging a block’s signals first can erase a
+small observation that survives deletion of a dominant member. Shared
+origin selection also accounts for tiny coefficients and nonzero tiny
+table masses: exceptional calculations retain the separately rounded raw
+products before division by mass. These safeguards use finite double
+precision and cannot recover mass already lost in <a href="dnn-weights.html#numerical-limits">asymptotic table
+construction</a>.</p>
+<p><code>theta_loo</code> has one row per deleted reference observation
+and one column per signal component.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">deleted</span> <span class="op">&lt;-</span> <span class="va">fast</span><span class="op">$</span><span class="va">theta_loo</span><span class="op">[</span>, <span class="fl">1L</span><span class="op">]</span></span>
 <span><span class="va">n_ref</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">deleted</span><span class="op">)</span></span>

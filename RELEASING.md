@@ -6,7 +6,17 @@ weights, pointwise jackknife uncertainty, tuning, diagnostics and plots.
 Ratio confidence-set inversion, PLQR and local IV-GMM remain
 experimental.
 
-Version `0.1.1` combines numerical fixes, canonical covariate tie
+Version `0.1.2` entered production `master` through the reviewed squash
+merge of [PR \#20](https://github.com/JakobJuergens/RdistNN/pull/20) on
+2026-10-22 at
+[`c96878562f105a22290edf989631f197d9735e1c`](https://github.com/JakobJuergens/RdistNN/commit/c96878562f105a22290edf989631f197d9735e1c).
+It adds duplicate-covariate block averaging and deletion-aware survivor
+weights, with a theory warning; see
+[NEWS.md](https://JakobJuergens.github.io/RdistNN/NEWS.md). Production
+source publication does not itself create a version tag or replace
+GitHub release assets.
+
+The `0.1.1` baseline combines numerical fixes, canonical covariate tie
 ordering, shared implementation modules and a current-only interface,
 aligned with the Stata companion. Earlier development fit schemas and
 obsolete aliases require refitting with current syntax. The previous
@@ -24,7 +34,31 @@ and assets require separate authorization. Retain the intended release
 version during candidate preparation. Matching R/Stata versions do not
 imply identical feature coverage.
 
+Review the known asymptotic-tail limitation in the [numerical
+reference](https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/19_weighted_accumulation.md)
+when assessing a candidate. Engine agreement on fixed tables does not
+establish correct construction or cross-language support parity at
+subnormal scales. Check that generated `Rplots.pdf` files, including
+nested outputs, remain excluded from the source package.
+
 ## Candidate identity and scientific reproduction
+
+The next planned version-pinned tag is `v0.1.2` in both packages. The
+production PRs are merged; create the tags and publish their verified
+assets only after the final production commits pass the required checks
+and tag publication is authorized. The dated changelog records
+production source publication. After the tagged release is published,
+install with:
+
+``` r
+
+pak::pak("JakobJuergens/RdistNN@v0.1.2")
+```
+
+This planned tag is not an installation source yet. Keep the ordinary
+README installation on production `master` and retain historical tags,
+assets and paper dependency pins. Record the paired final commits and
+asset checksums in the release-set manifest below.
 
 Commit candidates locally. Publish review branches/PRs, tags,
 downloadable assets and websites only when authorized; do not push

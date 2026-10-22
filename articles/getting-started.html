@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,7 @@
       <h1>Getting started: CATE and regression</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.1/vignettes/getting-started.Rmd" class="external-link"><code>vignettes/getting-started.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/master/vignettes/getting-started.Rmd" class="external-link"><code>vignettes/getting-started.Rmd</code></a></small>
       <div class="d-none name"><code>getting-started.Rmd</code></div>
     </div>
 
@@ -181,9 +181,13 @@ alone do not establish it.</p>
 <p>The documented sampling framework uses independent observations and
 supplies neither cluster nor survey-design inference. Exact distance
 ties use the original covariates lexicographically in their supplied
-column order. Only identical covariate rows retain input-order ties.
-Outcomes, treatments and nuisance values do not enter this ordering, and
-the rank-weight vector and ESS are preserved. The reported
+column order. Identical localization covariate rows receive their
+block’s average weight, with the same rule applied to every deletion’s
+remaining block. Outcomes, treatments and nuisance values do not define
+the groups. Aligned row permutations then preserve estimates and
+covariance up to numerical precision. A warning identifies this
+practical modification, which is not covered by the paper’s theory.
+Individual weights, support and ESS can change. The reported
 <code>s/n</code> is descriptive; it is not a calibrated inference
 threshold.</p>
 </div>
@@ -261,11 +265,12 @@ concentrates more weight near the target. The written manuscript
 derivations use <code>k = 1</code>; larger fixed <code>k</code> is
 supported in the implementation.</p>
 <p>The order <code>s</code> is not a count of observations retained in a
-nearest-neighbor truncation. Exact weights use the full rank permutation
-and have support through rank <code>n - s + k</code>
-(<code>n - s + 1</code> for <code>k = 1</code>). The optional
-<code>neighbors</code> extra reports the first <code>k</code> neighbors,
-rather than the full weight support.</p>
+nearest-neighbor truncation. The unaveraged exact rank table has support
+through rank <code>n - s + k</code> (<code>n - s + 1</code> for
+<code>k = 1</code>). Block averaging can extend nonzero observation
+weights to the end of an identical-covariate block crossing that edge.
+The optional <code>neighbors</code> extra reports the first
+<code>k</code> neighbors, rather than the full weight support.</p>
 <p>For sensitivity analysis, compare the paper’s candidate orders
 without changing the primary result:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">

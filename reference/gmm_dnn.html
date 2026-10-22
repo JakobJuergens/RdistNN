@@ -15,7 +15,7 @@ This local IV-GMM interface is experimental and may change."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,7 +38,7 @@ This local IV-GMM interface is experimental and may change."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Local GMM estimation via DNN rank weights</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.1/R/user-dnn-gmm.R" class="external-link"><code>R/user-dnn-gmm.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/master/R/user-dnn-gmm.R" class="external-link"><code>R/user-dnn-gmm.R</code></a></small>
       <div class="d-none name"><code>gmm_dnn.Rd</code></div>
     </div>
 
@@ -143,7 +143,12 @@ localization; a warning is emitted in that case.</p></dd>
 
 <dt id="arg-start">start<a class="anchor" aria-label="anchor" href="#arg-start"></a></dt>
 <dd><p>Optional numeric vector of length <code>p_theta</code>, or <code>p_theta x m</code>
-matrix, used as optimizer starts.</p></dd>
+matrix, used as optimizer starts. When omitted, the model's <code><a href="https://rdrr.io/r/stats/start.html" class="external-link">start()</a></code>
+callback is evaluated separately at every target, or zero is used when
+the model has no callback. Targets do not inherit previous targets' starts
+or solutions. An explicit vector is reused at all targets; matrix column
+<code>j</code> supplies target <code>j</code>. Either explicit form takes precedence over the
+model callback.</p></dd>
 
 
 <dt id="arg-optimizer">optimizer<a class="anchor" aria-label="anchor" href="#arg-optimizer"></a></dt>
@@ -187,16 +192,28 @@ propagated from the training data when available), and requested extras.</p>
     <p>The documented sampling framework uses independent observations; cluster
 and survey-design inference are not supplied. Exact distance ties use
 lexicographic order of the original covariates, in their supplied column
-order. Identical covariate rows retain input-order ties; permuting those
-duplicates can change estimates. Ordering uses no outcomes or nuisances.</p>
+order. Rows identical on every raw localization covariate share the average
+of their rank weights. Each jackknife deletion recomputes this average over
+the surviving block at sample size n-1. This permutation-invariant
+modification is not covered by the paper's theory and emits a warning.
+Distinct covariate vectors at equal distance are not averaged. Ordering uses
+no outcomes or nuisances. Retained tied fits from the earlier policy require
+refitting before reporting or reuse.</p>
 <p>Two interfaces are supported.</p><ol><li><p>Data-frame interface: pass <code>data</code>, <code>x_cols</code>, and a <code>gmm_model</code>.</p></li>
 <li><p>Matrix interface: pass <code>X</code>, one of <code>X0</code> or <code>x0</code>, a <code>gmm_model</code>, and
 <code>model_data</code> when the model needs observation-level variables.</p></li>
 </ol><p>Nuisance quantities are not fit internally.  They must be supplied to the
 model through <code>data</code> or <code>model_data</code>.</p>
+<p>The resolved distance specification and its fitted training context are
+retained for weight reconstruction. Replacing a registered metric after
+fitting does not change the fit's geometry. Custom callbacks with mutable
+external state retain their own reproducibility obligations.</p>
 <p>Exact DNN localization uses the full rank permutation at each target rather
 than an <code>s</code>-nearest-neighbor truncation. For exact DNN fits, the
-finite-population support edge is rank <code>n - s + k</code>, not rank <code>s</code>.</p>
+unaveraged rank-table support edge is rank <code>n - s + k</code>, not rank <code>s</code>.</p>
+<p>Averaging can extend nonzero observation weights through the end of a
+duplicate block that straddles the nominal rank-table edge. Effective sample
+sizes and weight diagnostics use the resulting observation weights.</p>
     </div>
 
     <div class="section level2">

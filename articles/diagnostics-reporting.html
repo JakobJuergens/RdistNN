@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,7 @@
       <h1>Diagnostics and Reporting</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.1/vignettes/diagnostics-reporting.Rmd" class="external-link"><code>vignettes/diagnostics-reporting.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/master/vignettes/diagnostics-reporting.Rmd" class="external-link"><code>vignettes/diagnostics-reporting.Rmd</code></a></small>
       <div class="d-none name"><code>diagnostics-reporting.Rmd</code></div>
     </div>
 
@@ -66,8 +66,13 @@
 estimator-specific information from a fitted object. NP/TDNN, CATE and
 PLQR use retained weights and model state; paired-ratio/CLATE
 diagnostics reconstruct weights from cached ranks and can evaluate
-deletion-score concentration. No nuisance models are refitted. For
-NP/TDNN and CATE, <code><a href="https://rdrr.io/r/stats/nobs.html" class="external-link">nobs()</a></code> reports training rows;
+deletion-score concentration. No nuisance models are refitted.
+Duplicate-covariate blocks use their averaged weights, including
+deletion-based concentration. These weights can change ESS and support.
+Candidate summaries take minimum ESS and maximum weight/concentration
+over targets; inspect target diagnostics for the individual profiles. A
+warning identifies block averaging as a modification outside the paper’s
+theory. For NP/TDNN and CATE, <code><a href="https://rdrr.io/r/stats/nobs.html" class="external-link">nobs()</a></code> reports training rows;
 <code>n_eff</code> below describes local weight concentration.</p>
 <p>The shared fields include:</p>
 <ul>

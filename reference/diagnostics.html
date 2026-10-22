@@ -3,13 +3,19 @@
 DNN diagnostics report fixed top-1, top-5, and top-10 weight concentration
 shares. Distance diagnostics such as radius_rank_k and radius_rank_s
 are ordinary nearest-rank scale summaries; radius_rank_s is not the DNN
-support radius. For exact DNN fits the finite-population support edge is
-rank n - s + k."><meta property="og:description" content="Returns a compact diagnostics table for supported fit objects. Per-target
+support radius. For exact DNN fits the unaveraged rank-table support edge is
+rank n - s + k; duplicate-block averaging can extend nonzero observation
+weights through the end of a block crossing that edge. ESS, support counts
+and concentration use the final averaged weights and can vary by target.
+See weights_matrix() for the averaging rule and its theory warning."><meta property="og:description" content="Returns a compact diagnostics table for supported fit objects. Per-target
 DNN diagnostics report fixed top-1, top-5, and top-10 weight concentration
 shares. Distance diagnostics such as radius_rank_k and radius_rank_s
 are ordinary nearest-rank scale summaries; radius_rank_s is not the DNN
-support radius. For exact DNN fits the finite-population support edge is
-rank n - s + k."></head><body>
+support radius. For exact DNN fits the unaveraged rank-table support edge is
+rank n - s + k; duplicate-block averaging can extend nonzero observation
+weights through the end of a block crossing that edge. ESS, support counts
+and concentration use the final averaged weights and can vary by target.
+See weights_matrix() for the averaging rule and its theory warning."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -17,7 +23,7 @@ rank n - s + k."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +46,7 @@ rank n - s + k."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Compute diagnostics for fitted localized estimators</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.1/R/user-dnn-cate-diagnostics.R" class="external-link"><code>R/user-dnn-cate-diagnostics.R</code></a>, <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.1/R/user-dnn-diagnostics.R" class="external-link"><code>R/user-dnn-diagnostics.R</code></a>, <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.1/R/user-dnn-np-diagnostics.R" class="external-link"><code>R/user-dnn-np-diagnostics.R</code></a>, and 1 more</small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/master/R/user-dnn-cate-diagnostics.R" class="external-link"><code>R/user-dnn-cate-diagnostics.R</code></a>, <a href="https://github.com/JakobJuergens/RdistNN/blob/master/R/user-dnn-diagnostics.R" class="external-link"><code>R/user-dnn-diagnostics.R</code></a>, <a href="https://github.com/JakobJuergens/RdistNN/blob/master/R/user-dnn-np-diagnostics.R" class="external-link"><code>R/user-dnn-np-diagnostics.R</code></a>, and 1 more</small>
       <div class="d-none name"><code>diagnostics.Rd</code></div>
     </div>
 
@@ -49,8 +55,11 @@ rank n - s + k."></head><body>
 DNN diagnostics report fixed top-1, top-5, and top-10 weight concentration
 shares. Distance diagnostics such as <code>radius_rank_k</code> and <code>radius_rank_s</code>
 are ordinary nearest-rank scale summaries; <code>radius_rank_s</code> is not the DNN
-support radius. For exact DNN fits the finite-population support edge is
-rank <code>n - s + k</code>.</p>
+support radius. For exact DNN fits the unaveraged rank-table support edge is
+rank <code>n - s + k</code>; duplicate-block averaging can extend nonzero observation
+weights through the end of a block crossing that edge. ESS, support counts
+and concentration use the final averaged weights and can vary by target.
+See <code><a href="weights_matrix.html">weights_matrix()</a></code> for the averaging rule and its theory warning.</p>
     </div>
 
     <div class="section level2">
@@ -90,7 +99,10 @@ reconstruct weights from cached ranks without optional extras.</p></dd>
 fit. Use <code>"all"</code> or a character vector of candidate ids to report
 candidate-level grid diagnostics from <code>object$tuning_grid</code>. Candidate
 grid diagnostics include <code>top5_weight_share</code>; the cutoff is recorded as
-<code>top_n = 5</code> and is independent of the estimator's <code>k</code>.</p></dd>
+<code>top_n = 5</code> and is independent of the estimator's <code>k</code>. A candidate row
+reports minimum ESS, maximum absolute weight and maximum top-five share
+across targets; <code>degenerate</code> is true if any target reaches
+<code>0.9 * n</code> ESS. Use target diagnostics for individual profiles.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

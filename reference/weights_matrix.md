@@ -53,7 +53,9 @@ weights_matrix(
 
   optional shared context passed to ranking and weight evaluators. On
   the ranking side, if `ctx` is `NULL` and a distance spec defines
-  `setup(X)`, that setup path is used automatically.
+  `setup(X)`, that setup path is used automatically. It is evaluated
+  once for the target batch, including scalar-only distance
+  specifications; singleton samples retain an `n x m` distance matrix.
 
 - return:
 
@@ -68,6 +70,24 @@ An object of class `weights_result` with components:
 - optional: `ord`, `ranks`, `dx`,
 
 - `meta`: list with `n, m, p, weight_kind, weight_name`.
+
+## Duplicate-covariate blocks
+
+Rows identical on every supplied raw covariate receive the average of
+their assigned rank weights, preserving each block's total mass. This
+includes caller-supplied ranks and signed or unnormalized rank rules.
+Distinct covariate vectors at equal distance remain separate. A warning
+identifies this permutation-invariant modification as outside the
+paper's theory, including for `k = 1`. Estimator jackknife deletions
+repeat the average over each remaining duplicate block using the
+selected rule's sample-size-n-1 table. For a block at consecutive ranks
+`a:b`, the full weight is `sum(w_n[a:b]) / (b-a+1)` per member; after
+deleting a member, each survivor receives
+`sum(w_(n-1)[a:(b-1)]) / (b-a)`. A deleted singleton contributes zero.
+The smaller block size must be used in the deletion. An exact support
+edge describes the unaveraged rank table; a straddling duplicate block
+can extend nonzero observation weights beyond it. Lower-level rank-only
+APIs retain their rank-primitive semantics.
 
 ## See also
 

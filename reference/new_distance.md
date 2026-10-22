@@ -30,6 +30,16 @@ new_distance(name, eval = NULL, eval_batch = NULL, setup = NULL)
 
 A validated `dnn_distance` spec.
 
+## Details
+
+A batch evaluator must return an actual `n x m` numeric matrix,
+including when either dimension is one. With only `eval`, the shared
+batch evaluator assembles those dimensions for you and validates each
+result. When `ctx` is `NULL`, `setup(X)` runs once per evaluation call,
+not once per target in a batch.
+[`weights_matrix()`](https://JakobJuergens.github.io/RdistNN/reference/weights_matrix.md)
+uses this same evaluator.
+
 ## Examples
 
 ``` r

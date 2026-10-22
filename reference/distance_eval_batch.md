@@ -1,6 +1,7 @@
 # Evaluate a distance spec for many targets (batch)
 
-Evaluate a distance spec for many targets (batch)
+Scalar-only specifications are supported through the shared fallback.
+The result retains both matrix dimensions for singleton samples/targets.
 
 ## Usage
 
@@ -44,4 +45,9 @@ distance_eval_batch(distance_l2(), x_mat, x0_mat)
 #> [2,] 2.125100 2.813195
 #> [3,] 1.669451 1.583606
 #> [4,] 2.286328 3.928913
+scalar_l1 <- as_distance(function(X, x0) {
+  rowSums(abs(sweep(X, 2L, x0, "-")))
+})
+dim(distance_eval_batch(scalar_l1, x_mat[1L, , drop = FALSE], x0_mat))
+#> [1] 1 2
 ```

@@ -15,10 +15,16 @@ The following support conventions matter in practice:
 
 - exact DNN weights are computed from the **full rank permutation** for
   each target, not by keeping only the first `s` observations;
-- for the exact finite-population rule, support in rank order is
+- for the unaveraged exact finite-population rank table, support is
   `j <= n - s + k`, and in particular `j <= n - s + 1` when `k = 1`;
 - the asymptotic Beta-increment approximation is typically treated as a
   full-support rank-weight sequence.
+
+Weights for identical localization covariate rows are averaged within
+each duplicate block. A block crossing the exact table’s support edge
+can therefore give observations beyond that rank positive weight. The
+block’s total mass is preserved, while individual weights and ESS can
+change.
 
 Fixed top-`k` DNN kernels are implemented for `1 <= k <= s`. The
 accompanying
@@ -76,6 +82,58 @@ dim(wt_single$W)  # n x 1
 #> [1] 150   1
 ```
 
+## Identical covariate rows
+
+The equality check uses every raw localization covariate exactly.
+Distinct vectors at equal distance remain ordered lexicographically;
+nearby values are not merged. For this example the original rank table
+is `(1/2, 1/3, 1/6, 0)`. The two identical rows receive
+`(1/2 + 1/3)/2 = 5/12` each:
+
+``` r
+
+X_tied <- matrix(c(0, 0, 1, 2), ncol = 1)
+wt_tied <- weights_dnn(X = X_tied, x0 = 0, k = 1L, s = 2L)
+#> Warning: Identical covariate rows detected; weights are averaged within
+#> duplicate-covariate blocks, including jackknife deletions. This
+#> permutation-invariant modification is not covered by the paper's theory.
+drop(wt_tied$W)
+#> [1] 0.4166667 0.4166667 0.1666667 0.0000000
+```
+
+The call warns that this permutation-invariant modification is not
+covered by the paper’s theory. High-level estimators apply the same
+policy to every delete-one sample: the deleted observation is removed
+before averaging the remaining block’s `n-1` weights. Averaging only the
+full-sample weights would not define matching jackknife uncertainty.
+Aligned outcomes and nuisance rows must move with their covariate rows
+when comparing permutations.
+
+For a block occupying ranks `a:b`, the full-sample weight per member is
+`sum(w_n[a:b])/(b-a+1)`. Deleting a member leaves `b-a` survivors at
+ranks `a:(b-1)`, each with weight `sum(w_(n-1)[a:(b-1)])/(b-a)`; a
+deleted singleton contributes zero. The table and the denominator both
+change. In the example, deleting the first row raises its identical
+partner’s weight from `5/12` to `2/3`:
+
+``` r
+
+wt_deleted <- weights_dnn(X = X_tied[-1L, , drop = FALSE],
+                          x0 = 0, k = 1L, s = 2L)
+drop(wt_deleted$W)  # 2/3, 1/3, 0
+#> [1] 0.6666667 0.3333333 0.0000000
+```
+
+If all covariate rows are identical and weights are normalized, each
+receives `1/n`, and each survivor receives `1/(n-1)` after a deletion.
+Increasing `s` cannot distinguish identical covariates. This numerical
+averaging rule does not establish an inference theorem for that design.
+
+Returned ranks and orders remain permutations used to locate the blocks.
+With duplicates, the final `W` cannot be reconstructed from a rank table
+alone; the grouping information is also needed. Standalone rank-only
+utilities have no covariates from which to infer those groups.
+
 ## Working with Returned Diagnostics
 
 `return` can include:
@@ -110,6 +168,24 @@ cbind(mu_exact, mu_asymp)
 Exact weights are the package default. Setting `method = "asymp"`
 changes the weight construction; it is separate from choosing a compiled
 or R calculation engine.
+
+## Numerical limits
+
+Asymptotic tables use host Beta-distribution routines. At the smallest
+representable scales, rounding the interval endpoints can erase a tail
+mass or give R and Stata different zero versus nonzero support.
+Averaging several order statistics and combining signed TDNN tables can
+also lose tiny masses. This remains an unresolved numerical limitation.
+Extreme outcomes can make such differences visible in estimates and
+jackknife covariance.
+
+Renormalizing the table or selecting a compiled deletion engine cannot
+recover probability already lost during table construction. Exact
+weights use a different finite-population rule; switching to them
+changes the method rather than repairing an asymptotic table. The
+maintainer reference on [weighted
+accumulation](https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/19_weighted_accumulation.md)
+describes the arithmetic and its limits.
 
 ## Related Articles
 

@@ -2,10 +2,10 @@
 
 Three views of the localization weights stored on a fitted object.
 `type = "profile"` draws weight against rank with a guide at the exact
-finite-population support edge `n - s + k` for DNN fits (`n - s + 1` in
-the paper-default `k = 1` case); `type = "cumulative"` draws the
-cumulative weight share with guides at 0.5 and 0.9 and markers at the
-top-1/5/10 shares; `type = "kernel"` draws weight against stored
+nominal unaveraged rank-table support edge `n - s + k` for DNN fits
+(`n - s + 1` in the paper-default `k = 1` case); `type = "cumulative"`
+draws the cumulative weight share with guides at 0.5 and 0.9 and markers
+at the top-1/5/10 shares; `type = "kernel"` draws weight against stored
 distance — the effective data-driven kernel — with a guide at the
 rank-`s` radius. The rank-`s` radius is a scale diagnostic, not the DNN
 support radius.
@@ -37,7 +37,8 @@ plot_weights(
 
 - targets:
 
-  Optional integer vector of target ids to display.
+  Optional integer vector of target ids to display, including
+  target-specific profiles when comparing candidates.
 
 - log_weights:
 
@@ -49,8 +50,11 @@ plot_weights(
 
   Candidate rows to compare for grid fits. The default `"default"`
   preserves the stored weight-matrix display. Use `"all"` or a character
-  vector of candidate ids with `type = "profile"` to compare rank-weight
-  profiles without refitting.
+  vector of candidate ids with `type = "profile"` to compare weight
+  profiles without refitting. Duplicate-covariate block averaging can
+  make these profiles vary by target; the selected target profiles are
+  shown in separate panels. Untied default profiles coincide across
+  targets and are shown once unless `targets` is explicitly supplied.
 
 - ...:
 

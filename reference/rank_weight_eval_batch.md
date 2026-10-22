@@ -1,6 +1,8 @@
 # Evaluate rank-weight for many targets (batch)
 
-Evaluate rank-weight for many targets (batch)
+A scalar-only rule is evaluated and validated separately for each
+target. The assembled result remains an `n x m` matrix when `n = 1` or
+`m = 1`. A supplied `eval_batch` must itself return that matrix shape.
 
 ## Usage
 
@@ -37,4 +39,6 @@ rank_weight_eval_batch(rw, rank_matrix)
 #> [1,] 0.3333333 0.3333333
 #> [2,] 0.3333333 0.3333333
 #> [3,] 0.3333333 0.3333333
+dim(rank_weight_eval_batch(rw, matrix(1L, nrow = 1L, ncol = 2L)))
+#> [1] 1 2
 ```

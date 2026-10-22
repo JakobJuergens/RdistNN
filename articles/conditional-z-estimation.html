@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,7 @@
       <h1>Experimental PLQR: moments and coefficient uncertainty</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.1/vignettes/conditional-z-estimation.Rmd" class="external-link"><code>vignettes/conditional-z-estimation.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/master/vignettes/conditional-z-estimation.Rmd" class="external-link"><code>vignettes/conditional-z-estimation.Rmd</code></a></small>
       <div class="d-none name"><code>conditional-z-estimation.Rmd</code></div>
     </div>
 
@@ -64,6 +64,12 @@ a <strong>supplied coefficient vector</strong>. It does not solve for
 coefficients. This guide shows how moment uncertainty differs from
 density-backed coefficient uncertainty; the entire PLQR interface
 remains experimental.</p>
+<p>PLQR uses the shared localization weights: exactly identical raw
+reporting covariates receive their block’s average weight, and each
+jackknife deletion redistributes its remaining block’s <code>n-1</code>
+table mass over the survivors. Regressors, outcomes and nuisance
+predictions do not define the duplicate groups. The package warns that
+this modification is outside the paper’s theory; see the <a href="dnn-weights.html#identical-covariate-rows">weight guide</a>.</p>
 <p>For statistical background, see the <a href="https://jakobjuergens.com/research/#orthogonal-inference-conditional-z" class="external-link">paper</a>.
 For the supported CATE, regression and CLATE workflows, use <a href="getting-started.html">Getting started</a> and <a href="conditional-late.html">Conditional LATE</a>.</p>
 <div class="section level2">
@@ -97,6 +103,12 @@ density-backed coefficient sandwich with
 <span><span class="co">#&gt;   supplied_coefficient      moment  moment_se coefficient_se</span></span>
 <span><span class="co">#&gt; 1                  0.5 -0.12784942 0.05934042     0.06939776</span></span>
 <span><span class="co">#&gt; 2                  0.5 -0.03771978 0.05977131     0.07589505</span></span></code></pre></div>
+<p>Use either <code>data</code> with column selectors or the direct
+<code>X</code>, <code>Y</code>, <code>D</code>, <code>g</code> and
+<code>mD</code> inputs; mixing those routes is rejected. A direct
+<code>density</code> vector is allowed with either route. Use
+<code>density_col</code> only with <code>data</code>, and supply
+<code>density</code> or <code>density_col</code>, never both.</p>
 <p>The two SE columns have different units. <code>moment_se</code>
 describes variation in the localized score; <code>theta_se</code>
 additionally uses the density-backed Jacobian. A small moment is not an

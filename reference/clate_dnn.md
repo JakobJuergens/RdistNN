@@ -124,8 +124,10 @@ clate_dnn(
 
   Existing distance specification, registered name or function. Geometry
   is frozen across deletions. Exact distance ties use original
-  covariates lexicographically; identical covariate rows use input
-  position.
+  covariates lexicographically. Identical raw covariate rows share
+  averaged rank-weight mass, including each deletion's surviving block.
+  This permutation-invariant modification is outside the paper's theory
+  and warns. Distinct vectors at equal distance are not averaged.
 
 - method:
 
@@ -204,8 +206,13 @@ iv_signals construction record, including raw/used propensity.
 The documented sampling framework uses independent observations; cluster
 and survey-design inference are not supplied. Exact distance ties use
 lexicographic order of the original covariates, in their supplied column
-order. Identical covariate rows retain input-order ties; permuting those
-duplicates can change estimates. Ordering uses no outcomes or nuisances.
+order. Rows identical on every raw localization covariate share the
+average of their rank weights. Each jackknife deletion recomputes this
+average over the surviving block at sample size n-1. This
+permutation-invariant modification is not covered by the paper's theory
+and emits a warning. Distinct covariate vectors at equal distance are
+not averaged. Ordering uses no outcomes or nuisances. Retained tied fits
+from the earlier policy require refitting before reporting or reuse.
 
 Nuisance predictions use all pre-instrument adjustment variables, while
 weights use the reporting coordinates X. The estimate is the ratio of

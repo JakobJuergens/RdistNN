@@ -142,8 +142,13 @@ An object of class `tdnn_np_result` with components:
 The documented sampling framework uses independent observations; cluster
 and survey-design inference are not supplied. Exact distance ties use
 lexicographic order of the original covariates, in their supplied column
-order. Identical covariate rows retain input-order ties; permuting those
-duplicates can change estimates. Ordering uses no outcomes or nuisances.
+order. Rows identical on every raw localization covariate share the
+average of their rank weights. Each jackknife deletion recomputes this
+average over the surviving block at sample size n-1. This
+permutation-invariant modification is not covered by the paper's theory
+and emits a warning. Distinct covariate vectors at equal distance are
+not averaged. Ordering uses no outcomes or nuisances. Retained tied fits
+from the earlier policy require refitting before reporting or reuse.
 
 Two interfaces are supported.
 

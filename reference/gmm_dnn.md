@@ -102,7 +102,13 @@ gmm_dnn(
 - start:
 
   Optional numeric vector of length `p_theta`, or `p_theta x m` matrix,
-  used as optimizer starts.
+  used as optimizer starts. When omitted, the model's
+  [`start()`](https://rdrr.io/r/stats/start.html) callback is evaluated
+  separately at every target, or zero is used when the model has no
+  callback. Targets do not inherit previous targets' starts or
+  solutions. An explicit vector is reused at all targets; matrix column
+  `j` supplies target `j`. Either explicit form takes precedence over
+  the model callback.
 
 - optimizer:
 
@@ -147,8 +153,13 @@ from the training data when available), and requested extras.
 The documented sampling framework uses independent observations; cluster
 and survey-design inference are not supplied. Exact distance ties use
 lexicographic order of the original covariates, in their supplied column
-order. Identical covariate rows retain input-order ties; permuting those
-duplicates can change estimates. Ordering uses no outcomes or nuisances.
+order. Rows identical on every raw localization covariate share the
+average of their rank weights. Each jackknife deletion recomputes this
+average over the surviving block at sample size n-1. This
+permutation-invariant modification is not covered by the paper's theory
+and emits a warning. Distinct covariate vectors at equal distance are
+not averaged. Ordering uses no outcomes or nuisances. Retained tied fits
+from the earlier policy require refitting before reporting or reuse.
 
 Two interfaces are supported.
 
@@ -160,9 +171,19 @@ Two interfaces are supported.
 Nuisance quantities are not fit internally. They must be supplied to the
 model through `data` or `model_data`.
 
+The resolved distance specification and its fitted training context are
+retained for weight reconstruction. Replacing a registered metric after
+fitting does not change the fit's geometry. Custom callbacks with
+mutable external state retain their own reproducibility obligations.
+
 Exact DNN localization uses the full rank permutation at each target
 rather than an `s`-nearest-neighbor truncation. For exact DNN fits, the
-finite-population support edge is rank `n - s + k`, not rank `s`.
+unaveraged rank-table support edge is rank `n - s + k`, not rank `s`.
+
+Averaging can extend nonzero observation weights through the end of a
+duplicate block that straddles the nominal rank-table edge. Effective
+sample sizes and weight diagnostics use the resulting observation
+weights.
 
 ## Examples
 

@@ -36,6 +36,17 @@ rank_weight_tdnn_asymp(s1, s2, dim, normalize = TRUE)
 
 A `rank_weight` spec (list with class `"rank_weight"`).
 
+## Numerical limits
+
+Asymptotic intervals use host Beta probabilities. At subnormal scales,
+endpoint rounding can erase an interval or change its zero/nonzero
+support; R and the Stata companion can disagree. Signed TDNN
+combinations can amplify component rounding. These extreme-tail
+limitations remain unresolved. Normalization or switching the R/compiled
+deletion engine does not recover probability mass already lost during
+table construction. Exact and asymptotic weights are different
+constructions; changing the method changes the localization rule.
+
 ## See also
 
 [`rank_weight_tdnn_exact()`](https://JakobJuergens.github.io/RdistNN/reference/rank_weight_tdnn_exact.md),

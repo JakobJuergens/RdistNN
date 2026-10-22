@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,6 +51,7 @@
 </h1></div>
 <!-- badges: start -->
 
+<p>Version <strong>0.1.2</strong>. See <a href="NEWS.html">NEWS</a> for changes.</p>
 <p><strong>RdistNN</strong> estimates conditional treatment effects and regression functions using distributional nearest-neighbor (DNN) weights. Choose covariate profiles, fit local estimates, and inspect jackknife standard errors, local support and tuning sensitivity. For causal estimation, you supply nuisance predictions; the package constructs the adjusted signals and performs local estimation.</p>
 <p><a href="https://JakobJuergens.github.io/RdistNN/articles/getting-started.html">Get started</a> · <a href="https://JakobJuergens.github.io/RdistNN/reference/index.html">Function reference</a> · <a href="https://github.com/JakobJuergens/RdistNN_stata" class="external-link">Stata companion</a></p>
 <div class="section level2">
@@ -175,7 +176,8 @@
 <div class="section level2">
 <h2 id="interpreting-inference">Interpreting inference<a class="anchor" aria-label="anchor" href="#interpreting-inference"></a>
 </h2>
-<p>Intervals are <strong>pointwise</strong>. The framework assumes independent observations; cluster and survey-design inference are not supplied. Exact distance ties use the original covariates in lexicographic column order, without outcomes or nuisances. Identical covariate rows retain input-order ties, so reordering those duplicates can change a result.</p>
+<p>Intervals are <strong>pointwise</strong>. The framework assumes independent observations; cluster and survey-design inference are not supplied. Exact distance ties between different covariate rows use lexicographic covariate order. For identical localization covariate rows, weights are averaged within each duplicate block, including the remaining block in each jackknife deletion. Estimates and covariance are then invariant to aligned row permutations up to numerical precision. The package warns because this modification is not covered by the paper’s theory. It can change individual weights, support and effective sample size. Refit saved objects created before this policy.</p>
+<p>Asymptotic Beta tables retain a known rounding limitation at extremely small tail masses, including possible R/Stata support differences. See the <a href="https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.html#numerical-limits">weight guide</a> before interpreting calculations at those scales.</p>
 <p>Nuisance predictions must be aligned with the estimation observations. Propensity clipping is numerical protection, not a remedy for poor overlap. Diagnostics describe local support; they do not establish validity. For the identification, nuisance-learning and localization conditions and theoretical results, see the accompanying <a href="https://jakobjuergens.com/research/#orthogonal-inference-conditional-z" class="external-link">paper</a>. The package guides explain the corresponding inputs and outputs.</p>
 </div>
 <div class="section level2">
@@ -195,7 +197,12 @@
 <div class="section level2">
 <h2 id="contributors">Contributors<a class="anchor" aria-label="anchor" href="#contributors"></a>
 </h2>
-<p>Quality assurance, testing and validation: <a href="https://github.com/Zakareya-Chehime" class="external-link">Zakareya Chehime</a>.</p>
+<ul>
+<li>
+<a href="https://jakobjuergens.com/" class="external-link">Jakob R. Juergens</a>: main package author and maintainer.</li>
+<li>
+<a href="https://github.com/Zakareya-Chehime" class="external-link">Zakareya Chehime</a>: quality assurance, testing and validation.</li>
+</ul>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">

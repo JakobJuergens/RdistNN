@@ -41,7 +41,11 @@ new_gmm_model(
 
 - start:
 
-  Optional function returning a numeric starting vector.
+  Optional function `(sample, ctx, w, x0)` returning a finite numeric
+  starting vector, evaluated independently for each target. An explicit
+  `start` passed to
+  [`gmm_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/gmm_dnn.md)
+  takes precedence.
 
 - coef_names:
 

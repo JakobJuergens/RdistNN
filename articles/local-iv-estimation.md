@@ -16,6 +16,14 @@ The example uses the doubly robust IV moment model created by
 and the IV simulation DGPs exposed through
 [`sim_iv_data()`](https://JakobJuergens.github.io/RdistNN/reference/sim_iv_data.md).
 
+The localization step uses the shared duplicate-covariate rule: exactly
+identical raw X rows receive averaged weights, including redistribution
+over surviving block members in each jackknife deletion. Instruments,
+regressors and nuisance predictions do not define these groups. The
+warning about this modification being outside the paper’s theory also
+applies to GMM; see [DNN weights and
+ranks](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.html#identical-covariate-rows).
+
 These synthetic IV examples are experimental benchmarks. The paper
 replication is described in [Paper
 replication](https://JakobJuergens.github.io/RdistNN/articles/paper-affine-replication.md).
@@ -113,6 +121,21 @@ confint(fit_iv)
 #>     target  term  conf.low conf.high
 #> 1 target_1 theta -1.032784  2.064023
 ```
+
+## Optimizer starts and fitted geometry
+
+Each target gets an independent starting value. An explicit `start`
+vector is reused for every target; an explicit matrix supplies one
+column per target. Either takes precedence over the model’s
+`start(sample, ctx, w, x0)` callback. Without an explicit start or
+callback, the optimizer starts at zero; it does not use the previous
+target’s solution. This avoids an implicit dependence on target order,
+but does not guarantee a unique or global optimum.
+
+The fit retains its resolved distance specification and training context
+for later weight reconstruction. Replacing a registered distance does
+not change that geometry. Custom callbacks that close over mutable
+external state remain responsible for reproducible behavior.
 
 ## Small IV Simulation
 

@@ -9,7 +9,7 @@ Supply eval or eval_batch for score_eval() and score_eval_batch()."></head><body
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,7 +32,7 @@ Supply eval or eval_batch for score_eval() and score_eval_batch()."></head><body
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Score specification (S3) for U-stat kernels</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.1/R/api-scores.R" class="external-link"><code>R/api-scores.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/master/R/api-scores.R" class="external-link"><code>R/api-scores.R</code></a></small>
       <div class="d-none name"><code>new_score.Rd</code></div>
     </div>
 
@@ -138,6 +138,12 @@ do not dispatch through this pointer; they require <code>eval</code> or <code>ev
     <p>If your score depends on a parameter vector (for example Z-estimation), use
 <code>eval_param</code>/<code>eval_param_batch</code> and optionally <code>grad</code>/<code>grad_batch</code> to enable
 derivative-aware workflows via <code><a href="score_diff_path.html">score_diff_path()</a></code>.</p>
+<p>Scalar evaluators return one finite numeric value. The scalar-to-batch
+fallback checks each value before assembly; logical values and multiple
+values are rejected rather than coerced or truncated. Analytic batch
+gradients must have exactly two dimensions: subsets by parameter components.
+For a scalar parameter, a numeric vector with one entry per subset is also
+accepted and converted to a one-column matrix.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

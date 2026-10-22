@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,7 @@
       <h1>Visualising fitted local estimators</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.1/vignettes/visualising-fits.Rmd" class="external-link"><code>vignettes/visualising-fits.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/master/vignettes/visualising-fits.Rmd" class="external-link"><code>vignettes/visualising-fits.Rmd</code></a></small>
       <div class="d-none name"><code>visualising-fits.Rmd</code></div>
     </div>
 
@@ -110,6 +110,24 @@ choices.</p>
 effective kernel view plots weight against distance, with the
 rank-<code>s</code> radius marked as a scale diagnostic. That marker is
 not the DNN support radius.</p>
+<p>Profiles and cumulative views use the final block-averaged
+observation weights, so profiles can differ across targets when
+covariates repeat. The profile guide marks the nominal unaveraged exact
+rank-table edge; a duplicate block can carry nonzero weights beyond it.
+<code>targets</code> also selects target panels in candidate comparisons
+such as
+<code>plot_weights(grid_fit, candidates = "all", targets = 2L)</code>.
+For these comparisons, plot data include <code>target_id</code> when
+profiles vary by target or <code>targets</code> is supplied. With untied
+covariates the default candidate profile is shared and shown once. The
+<a href="dnn-weights.html#identical-covariate-rows">weight guide</a>
+explains the averaging rule and its warning about the paper’s
+theory.</p>
+<p>Target selectors are integer-valued numeric positions. Fractional,
+logical, complex and character selectors are rejected; repeated
+positions are removed in first-occurrence order. A public plot or
+dashboard call emits the duplicate-policy warning once, even when it
+reconstructs several panels.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_weights.html">plot_weights</a></span><span class="op">(</span><span class="va">fit</span>, type <span class="op">=</span> <span class="st">"kernel"</span>, targets <span class="op">=</span> <span class="fl">6L</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualising-fits_files/figure-html/weights-kernel-1.png" class="r-plt" alt="" width="672"></p>

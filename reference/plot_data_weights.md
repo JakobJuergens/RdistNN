@@ -7,8 +7,9 @@ ascending stored distance when `dx` is available and by descending
 weight otherwise; the two orderings coincide for monotone single-scale
 DNN weights, while two-scale (TDNN) fits should request
 `return = c("W", "dx")` for distance-based ranks. For exact DNN fits the
-finite-population support edge is rank `n - s + k`, not rank `s`; `s` is
-the subsample/localization order.
+unaveraged rank-table support edge is rank `n - s + k`, not rank `s`; a
+duplicate block can extend nonzero observation weights beyond that edge
+after averaging. `s` is the subsample/localization order.
 
 ## Usage
 

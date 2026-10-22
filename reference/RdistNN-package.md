@@ -75,6 +75,18 @@ estimator-specific. The underlying toolkit combines:
   [`plot_weights()`](https://JakobJuergens.github.io/RdistNN/reference/plot_weights.md)
   (requires ggplot2).
 
+## Identical localization covariates
+
+Covariate-aware estimators average weights within exactly identical raw
+covariate blocks, including every jackknife deletion's surviving
+members. The package warns because this permutation-invariant
+modification is not covered by the paper's theory. It can change
+observation weights, support and effective sample size. See
+[`weights_matrix()`](https://JakobJuergens.github.io/RdistNN/reference/weights_matrix.md)
+for the rule; rank-only utilities without covariates cannot infer
+duplicate groups. Refit tied saved objects created before this policy
+before reporting or reusing them.
+
 ## Experimental and Advanced Workflows
 
 All PLQR functionality is **experimental**, including

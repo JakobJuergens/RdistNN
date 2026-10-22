@@ -7,7 +7,12 @@ reports localization and estimator-specific information from a fitted
 object. NP/TDNN, CATE and PLQR use retained weights and model state;
 paired-ratio/CLATE diagnostics reconstruct weights from cached ranks and
 can evaluate deletion-score concentration. No nuisance models are
-refitted. For NP/TDNN and CATE,
+refitted. Duplicate-covariate blocks use their averaged weights,
+including deletion-based concentration. These weights can change ESS and
+support. Candidate summaries take minimum ESS and maximum
+weight/concentration over targets; inspect target diagnostics for the
+individual profiles. A warning identifies block averaging as a
+modification outside the paper’s theory. For NP/TDNN and CATE,
 [`nobs()`](https://rdrr.io/r/stats/nobs.html) reports training rows;
 `n_eff` below describes local weight concentration.
 
