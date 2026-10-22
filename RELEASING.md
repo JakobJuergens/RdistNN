@@ -38,18 +38,18 @@ excluded from the source package.
 
 ## Candidate identity and scientific reproduction
 
-The next planned version-pinned tag is `v0.1.2` in both packages. The production
-PRs are merged; create the tags and publish their verified assets only after
-the final production commits pass the required checks and tag publication is
-authorized. The dated changelog records production source publication.
-After the tagged release is published, install with:
+The current version-pinned R release is
+[`v0.1.2`](https://github.com/JakobJuergens/RdistNN/releases/tag/v0.1.2),
+published from the verified production commit
+`9f571526c64e2bc7069e62ddf06281b7af4ff205`. Its installable source package
+and checksum file are attached to the release. Install with:
 
 ```r
 pak::pak("JakobJuergens/RdistNN@v0.1.2")
 ```
 
-This planned tag is not an installation source yet. Keep the ordinary README
-installation on production `master` and retain historical tags, assets and
+The tag fixes the installation source at the released commit. Keep the ordinary
+README installation on production `master` and retain historical tags, assets and
 paper dependency pins. Record the paired final commits and asset checksums in
 the release-set manifest below.
 
