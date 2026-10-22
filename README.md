@@ -11,8 +11,7 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 [![test-coverage](https://github.com/JakobJuergens/RdistNN/actions/workflows/test-coverage.yaml/badge.svg)](https://github.com/JakobJuergens/RdistNN/actions/workflows/test-coverage.yaml)
 <!-- badges: end -->
 
-Release candidate **0.1.2** (unreleased). See [NEWS](NEWS.md) for
-changes.
+Version **0.1.2**. See [NEWS](NEWS.md) for changes.
 
 **RdistNN** estimates conditional treatment effects and regression
 functions using distributional nearest-neighbor (DNN) weights. Choose
