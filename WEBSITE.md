@@ -2,7 +2,7 @@
 
 Prepared for a software entry or research-page addition on
 [jakobjuergens.com](https://jakobjuergens.com/). The text below describes the
-planned release version `0.1.2`. This revision is unpublished. The package
+production source version `0.1.2`, published on 2026-10-22. The package
 documentation is live at its canonical pkgdown URL. The latest tagged release
 remains `v0.1.0`; a tagged-release announcement should link to its verified
 source archive and release assets.
@@ -26,7 +26,7 @@ remain experimental.
 [Getting started](https://JakobJuergens.github.io/RdistNN/articles/getting-started.html) ·
 [Accompanying paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
 
-## 0.1.2 release announcement draft
+## 0.1.2 production-update announcement draft
 
 RdistNN 0.1.2 averages weights across exactly identical
 reporting-covariate rows and redistributes their block mass after every jackknife
@@ -46,7 +46,8 @@ also describes the remaining asymptotic-tail rounding limitation.
 Task-oriented guides, runnable vignettes and focused function help support
 conditional-effect and regression workflows. Seeded demos and simulations
 preserve caller RNG state; native calculations use two threads by default with
-a configurable opt-in. This release candidate has not been published.
+a configurable opt-in. Version 0.1.2 is available from production
+`master`; tagged release assets will be announced separately.
 
 [Source updates](https://github.com/JakobJuergens/RdistNN/blob/master/NEWS.md) ·
 [Tagged releases](https://github.com/JakobJuergens/RdistNN/releases) ·

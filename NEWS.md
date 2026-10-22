@@ -1,4 +1,4 @@
-# RdistNN 0.1.2 (unreleased)
+# RdistNN 0.1.2 (2026-10-22)
 
 - Average localization weights within blocks of exactly identical raw covariate
   rows. Recompute the average on each deletion's remaining block so estimates,
