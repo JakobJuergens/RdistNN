@@ -148,7 +148,9 @@
   model_k <- .validate_scalar_int(model$k, "object$.model$k")
   model_s <- .validate_scalar_int(model$s, "object$.model$s")
   if (k != model_k || parent_s != model_s) {
-    .abort_bad_state("Retained `k/s` controls are inconsistent between metadata and model state. Refit the current estimator.")
+    .abort_bad_state(
+      "Retained `k/s` controls are inconsistent between metadata and model state. Refit the current estimator."
+    )
   }
   s <- as.integer(row$s[[1L]])
   if (k < 1L || k > s || s > n || parent_s < k || parent_s > n) {
@@ -166,7 +168,9 @@
   key <- row$computed_key
   if (!is.character(key) || length(key) != 1L || is.na(key) ||
       !identical(key, sprintf("s_%d", s))) {
-    .abort_bad_state("The selected candidate's `computed_key` is inconsistent with its order. Refit the current estimator.")
+    .abort_bad_state(
+      "The selected candidate's `computed_key` is inconsistent with its order. Refit the current estimator."
+    )
   }
   estimates <- object$tuning_grid$estimates
   required_rows <- c("candidate_id", "computed_key", "s")
@@ -181,7 +185,9 @@
   if (!is.numeric(selected$s) ||
       anyNA(selected$s) || any(selected$s != s) ||
       anyNA(selected$computed_key) || any(selected$computed_key != key)) {
-    .abort_bad_state("Stored candidate estimates are inconsistent with the selected order. Refit the current estimator.")
+    .abort_bad_state(
+      "Stored candidate estimates are inconsistent with the selected order. Refit the current estimator."
+    )
   }
   invisible(NULL)
 }
