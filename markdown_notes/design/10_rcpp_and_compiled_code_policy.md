@@ -47,9 +47,24 @@ break exact distance ties lexicographically by original raw covariates, in
 their supplied column order, then by row position for identical covariate rows.
 Distance-only sorting primitives without covariates retain stable index ties;
 explicit supplied ranks/orders remain authoritative. Outcomes, treatment,
-nuisances and row identifiers never define covariate-aware tie order. No tie
-averaging or tolerance grouping changes rank weights or ESS. Scale fitting and saved prediction
-must reuse the same fitted geometry contract.
+nuisances and row identifiers never define covariate-aware tie order. X-aware
+weight construction averages weights across exactly identical raw covariate
+rows, preserving block mass but potentially changing individual weights, support
+and ESS. No tolerance grouping merges nearby covariates or different vectors at
+equal distance. Deletions repeat the average after removing the observation,
+using the selected rule's `n-1` table. Scale fitting and saved prediction must
+reuse the same fitted geometry and block policy.
+
+R, C++ and Mata must implement the same block arithmetic through shared weight
+and deletion helpers. Accumulate original signals with each block's actual
+unshifted, shifted or survivor-averaged weights. Retain the leading and correction
+states until the outside-block and within-block survivor sums are merged.
+Rounded group-mean signals can erase a finite survivor after actual deletion.
+Canonical contiguous blocks retain linear work in sample size; explicitly
+interleaved supplied groups use direct regrouping within the selected engine.
+Tests establish actual engine execution and compare independent explicit
+deletions. Public calls warn that this modification is not covered by the paper's
+theory; averaging does not establish a new inference guarantee.
 Current saved fits reuse their retained geometry and cached ranks. Older
 development fit schemas do not require compatibility readers.
 
@@ -113,3 +128,12 @@ as required by the [testing policy](09_testing_and_regression_policy.md).
 Benchmark representative runtime/allocation costs. A faster implementation must
 preserve the statistical method and readable ownership; performance does not
 justify hidden API policy or weaker validation.
+
+The shared observed-origin policy accepts actual weight summaries for deletion
+calculations. Zero is used for subnormal weighted amplitude, nonzero subnormal
+mass, or nonzero mass times supported amplitude below the normal range. Native
+and R paths preserve original rounded products and divide by mass afterward;
+zero signed mass alone retains centering. Reuse table summaries rather than
+adding pure-R table scans to compiled paths. Finite-support native flattening
+uses `size_t` before multiplication so valid long-vector buffers do not overflow
+an intermediate `int` index.

@@ -190,7 +190,7 @@ test_that("audit adapter preserves settings while restoring frozen serialization
   expect_identical(readRDS(path), cfg)
   expect_false(identical(readBin(path, "raw", n = file.info(path)$size), readBin(frozen, "raw", n = file.info(frozen)$size)))
   bundle$env$replication_restore_config(frozen, path)
-  expect_identical(readBin(path, "raw", n = file.info(path)$size), readBin(frozen, "raw", n = file.info(frozen)$size))
+  .expect_identical_fast(readBin(path, "raw", n = file.info(path)$size), readBin(frozen, "raw", n = file.info(frozen)$size))
   cfg$master_seed <- 1L
   saveRDS(cfg, path)
   expect_error(bundle$env$replication_restore_config(frozen, path), "settings differ")

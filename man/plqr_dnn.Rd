@@ -76,7 +76,9 @@ interface.}
 \item{density}{Optional positive numeric vector (\code{n}) estimating the
 conditional density of \code{Y} at the threshold \verb{D' theta_eval + g}. When
 supplied with \code{se = TRUE}, PLQR uses the direct coefficient sandwich
-route and returns coefficient standard errors in \code{theta_se}.}
+route and returns coefficient standard errors in \code{theta_se}. A direct
+vector is allowed with either input interface; do not also supply
+\code{density_col}.}
 
 \item{density_col}{Optional column name or index in \code{data} containing the
 positive density values used for the direct coefficient sandwich.}
@@ -191,8 +193,13 @@ supplied evaluation value (\code{meta$theta_source = "supplied"}).
 The documented sampling framework uses independent observations; cluster
 and survey-design inference are not supplied. Exact distance ties use
 lexicographic order of the original covariates, in their supplied column
-order. Identical covariate rows retain input-order ties; permuting those
-duplicates can change estimates. Ordering uses no outcomes or nuisances.
+order. Rows identical on every raw localization covariate share the average
+of their rank weights. Each jackknife deletion recomputes this average over
+the surviving block at sample size n-1. This permutation-invariant
+modification is not covered by the paper's theory and emits a warning.
+Distinct covariate vectors at equal distance are not averaged. Ordering uses
+no outcomes or nuisances. Retained tied fits from the earlier policy require
+refitting before reporting or reuse.
 
 Two interfaces are supported.
 \enumerate{
@@ -200,6 +207,10 @@ Two interfaces are supported.
 \code{g_col}, \code{mD_cols}, and \code{y_col}.
 \item Matrix interface: pass \code{X}, \code{D}, \code{g}, \code{mD}, and \code{Y}.
 }
+
+With \code{data}, omit \code{X}, \code{D}, \code{g}, \code{mD}, and \code{Y}; these direct inputs are
+reserved for the matrix interface. Column selectors require \code{data}.
+A direct \code{density} vector is supported with either interface.
 
 Supply the shape component \code{g}, residualized-regressor means \code{mD} and,
 for coefficient uncertainty, positive threshold densities. These can use
@@ -215,8 +226,12 @@ see the \href{https://jakobjuergens.com/research/#orthogonal-inference-condition
 As in \code{\link[=weights_dnn]{weights_dnn()}}, exact DNN localization uses the full rank permutation
 at each target rather than an \code{s}-nearest-neighbor truncation. The \code{"fast"}
 jackknife option reuses the full-sample rank matrix and updates ranks under
-deletion. For exact DNN fits, the finite-population support edge is rank
+deletion. For exact DNN fits, the unaveraged rank-table support edge is rank
 \code{n - s + k}, not rank \code{s}.
+
+Averaging can extend nonzero observation weights through the end of a
+duplicate block that straddles the nominal rank-table edge. Effective sample
+sizes and weight diagnostics use the resulting observation weights.
 
 \code{tuning_mode = "default"} evaluates only the default kernel order and
 preserves the ordinary scalar-fit return shape. \code{tuning_mode = "grid"}

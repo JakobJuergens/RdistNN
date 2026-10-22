@@ -35,7 +35,11 @@ and `meta`.
 | `lambda`, `s` | DNN tuning label and resolved integer order |
 
 IDs are deterministic and disambiguated when labels collide. Consumers should
-select stored IDs rather than recreate their formatting. If a custom grid
+select stored IDs rather than recreate their formatting. For repeated resolved
+orders, plot labels include candidate IDs where needed to distinguish them.
+Reconstruction validates retained controls, candidate/target identities and
+cached permutations before computing a view; refit incomplete or inconsistent
+state. If a custom grid
 omits the resolved default, the resolver inserts an anchor row. Equal DNN
 orders have equal computation keys, while distinct user rows remain present.
 
@@ -108,6 +112,12 @@ length-n rank-to-weight vector, normalized consistently with the specification.
 table with each target's rank permutation. Arbitrary user-supplied rank rules
 can lack this representation; preserve their supported evaluation fallback.
 
+Candidate concentration summaries use actual averaged weights at every target.
+The one-row-per-candidate display takes the minimum ESS and maximum absolute
+weight/top-five absolute-mass share across targets; the near-uniform flag is
+true if any target reaches the existing threshold. With duplicates, weight
+profiles can differ by target even at one fixed candidate order.
+
 ## Rank weights and delete-one identity
 
 For exact DNN with fixed `(n,k,s)`, the weight at rank `r` is
@@ -116,7 +126,10 @@ For exact DNN with fixed `(n,k,s)`, the weight at rank `r` is
 w_rank[r] = (1/k) * sum_{j=1}^k C(r-1,j-1) * C(n-r,s-j) / C(n,s)
 ```
 
-Out-of-range binomials contribute zero; support ends at rank `n-s+k`.
+Out-of-range binomials contribute zero; the unaveraged table's support ends at
+rank `n-s+k`. X-aware construction averages each exact duplicate-covariate
+block, so actual nonzero observation support can extend to the end of a block
+crossing that edge. Reuse the shared block and deletion helpers for every candidate.
 The table depends on ranks and parameters rather than observed signal values.
 Asymptotic DNN also has a rank table. The low-level TDNN weight layer has
 signed tables; its availability there does not authorize TDNN for CATE/CLATE.
@@ -125,8 +138,8 @@ Every retained rank vector after one deletion is a permutation of `1..n-1`.
 Consequently, normalization by the sum of a rank table is the same across
 all deletions and targets and can be performed once for that sample size.
 
-With full rank `r_i` and the size-`n-1` table `w`, a frozen signal's deleted
-average is
+Without duplicate-covariate blocks, full rank `r_i` and the size-`n-1` table
+`w` give a frozen signal's deleted average
 
 ```
 L_i = sum_{r < r_i} signal_(r) * w[r]
@@ -139,6 +152,14 @@ implementation is `src/jackknife_rank_full.cpp`; the R reference and explicit
 loop remain independent comparison paths. Never use unguarded zero indices
 inside `ifelse()` for boundary ranks: R drops index zero and can silently
 misalign a vector. Pad cumulative arrays or guard indices themselves.
+
+With duplicate blocks, reuse the shared original-signal block deletion path:
+the removed observation's block gets its actual survivor average from the
+`n-1` table, and outside blocks use unshifted or shifted block averages.
+Retain prefix/suffix and within-block correction states through their merge;
+do not substitute rounded block-mean signals. The
+[weighted accumulation reference](19_weighted_accumulation.md) owns this
+arithmetic and its linear-work versus interleaved-group fallback bounds.
 
 ## Candidate views and plots
 

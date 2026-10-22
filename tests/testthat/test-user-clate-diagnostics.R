@@ -9,7 +9,7 @@ test_that("ratio diagnostics reconstruct paired uncertainty and score concentrat
   expect_equal(z$component_correlation, .5 / sqrt(.5 * .75))
   expect_equal(z$component_covariance, .5)
   expect_identical(z$geometry_rule, "frozen_full_sample")
-  expect_identical(z$tie_rule, "distance_then_covariates_then_input_position")
+  expect_identical(z$tie_rule, "distance_then_covariates_with_duplicate_block_averaging")
   expect_equal(z$neff, 18 / 7)
   expect_equal(z$max_weight, .5)
   expect_equal(z$radius_90, 3)

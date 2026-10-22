@@ -101,11 +101,15 @@ jobs:
       - name: Test installed package without optional feature dependencies
         if: runner.os == 'Linux' && matrix.config.r == 'release'
         shell: bash
+        env:
+          MAKEFLAGS: -j2
         run: |
           R CMD build --no-build-vignettes --no-manual .
           Rscript tools/ci/check_minimal_dependencies.R RdistNN_*.tar.gz
 
       - uses: r-lib/actions/check-r-package@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2.14.0
+        env:
+          MAKEFLAGS: -j2
         with:
           upload-snapshots: true
           build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
@@ -159,6 +163,8 @@ jobs:
           stopifnot(requireNamespace("patchwork", quietly = TRUE))
       - name: Run focused source plotting tests
         shell: Rscript {0}
+        env:
+          MAKEFLAGS: -j2
         run: |
           testthat::test_local(filter = "^(plot|clate-plots|tuning-grid-diagnostics-plots)",
             reporter = "summary", stop_on_failure = TRUE)

@@ -16,7 +16,11 @@ that label. [Package scope](../rdistnn_roadmap.md) records extension boundaries.
 
 ## Public changes
 
-Version 0.1.1 is the first intended shared release. Earlier development versions
+Version 0.1.1 records the shared interface baseline. Version 0.1.2 is the next
+planned shared, version-pinned release; it remains unpublished while prepared
+on `development`. See [RELEASING.md](../../RELEASING.md) for the publication
+gates. A fourth component starting at 9000 marks development revisions rather
+than public releases. Earlier development versions
 have no external users, so their retired interfaces and fit schemas are removed
 without deprecation shims. Current fits must still survive serialization and
 support the documented prediction, candidate and reporting paths.

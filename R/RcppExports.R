@@ -13,6 +13,10 @@ rustat_compensated_crossprod <- function(x, y) {
     .Call(`_RdistNN_rustat_compensated_crossprod`, x, y)
 }
 
+rustat_block_rank_loo <- function(ranks, signal, table, groups, direct = FALSE) {
+    .Call(`_RdistNN_rustat_block_rank_loo`, ranks, signal, table, groups, direct)
+}
+
 rustat_dist_l1 <- function(X, x0) {
     .Call(`_RdistNN_rustat_dist_l1`, X, x0)
 }

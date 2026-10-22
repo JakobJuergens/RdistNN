@@ -1,4 +1,5 @@
 test_that("frozen-rank loop and R fast paths agree for paired signals", {
+  .with_duplicate_policy_warnings({
   old <- options(RdistNN.use_compiled = FALSE)
   on.exit(options(old), add = TRUE)
   for (n in c(2L, 4L, 17L)) for (m in c(1L, 3L)) for (s in unique(c(1L, min(2L, n - 1L), n - 1L))) {
@@ -18,6 +19,7 @@ test_that("frozen-rank loop and R fast paths agree for paired signals", {
       expect_equal(fast[[nm]], loop[[nm]], tolerance = 1e-12)
     }
   }
+  })
 })
 
 test_that("available compiled paired engine agrees with the R implementation", {

@@ -10,11 +10,13 @@
 #' @importFrom stats nobs
 #' @export
 nobs.np_result <- function(object, ...) {
+  .dnn_check_tie_model(object$.model)
   object$meta$n
 }
 
 #' @rdname nobs.np_result
 #' @export
 nobs.cate_result <- function(object, ...) {
+  .dnn_check_tie_model(object$.model)
   object$meta$n
 }

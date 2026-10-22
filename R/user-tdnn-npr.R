@@ -19,8 +19,13 @@
 #' The documented sampling framework uses independent observations; cluster
 #' and survey-design inference are not supplied. Exact distance ties use
 #' lexicographic order of the original covariates, in their supplied column
-#' order. Identical covariate rows retain input-order ties; permuting those
-#' duplicates can change estimates. Ordering uses no outcomes or nuisances.
+#' order. Rows identical on every raw localization covariate share the average
+#' of their rank weights. Each jackknife deletion recomputes this average over
+#' the surviving block at sample size n-1. This permutation-invariant
+#' modification is not covered by the paper's theory and emits a warning.
+#' Distinct covariate vectors at equal distance are not averaged. Ordering uses
+#' no outcomes or nuisances. Retained tied fits from the earlier policy require
+#' refitting before reporting or reuse.
 #'
 #' Two interfaces are supported.
 #'
@@ -217,6 +222,7 @@ np_tdnn <- function(
 
   # Request ranks on the first weights call so the fast jackknife can
   # reuse them without recomputing distances.
+  .dnn_duplicate_scope(x_mat)
   geometry <- .dnn_fitted_geometry(distance, x_mat, ctx)
   weight_return <- return
   if (isTRUE(se) && identical(jackknife, "fast")) {
@@ -278,7 +284,7 @@ np_tdnn <- function(
       method   = method,
       distance = .dnn_distance_name(distance),
       jackknife = if (isTRUE(se)) jackknife else "none",
-      tie_rule = "distance_then_covariates_then_input_position"
+      tie_rule = .dnn_tie_policy()
     )
   )
   # k = 1L is TDNN's fixed single-neighbor order; used only by the

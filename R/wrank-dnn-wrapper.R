@@ -48,6 +48,7 @@ rank_weight_dnn_exact <- function(k, s) {
 }
 
 #' Rank-weight: DNN asymptotic (full U, WOR)
+#' @inheritSection weights_dnn_asymp Numerical limits
 #' @inheritParams rank_weight_dnn_exact
 #' @param normalize logical; renormalize to sum 1 (default TRUE)
 #' @return rank_weight spec (list)

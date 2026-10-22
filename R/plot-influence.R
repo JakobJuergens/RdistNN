@@ -47,6 +47,7 @@ plot_influence <- function(object,
                            pseudo_outcome = NULL,
                            n_label = 3L,
                            ...) {
+  .dnn_reuse_scope(object)
   .plot_require_ggplot2("plot_influence")
   clate <- inherits(object, "clate_result")
   if (!inherits(object, "cate_result") && !clate) {

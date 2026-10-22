@@ -88,6 +88,7 @@ plot_dashboard.default <- function(object, ...) {
 #' @rdname plot_dashboard
 #' @export
 plot_dashboard.cate_result <- function(object, ...) {
+  .dnn_reuse_scope(object)
   .plot_dashboard_effect(object, ...)
 }
 
@@ -120,12 +121,14 @@ plot_dashboard.cate_result <- function(object, ...) {
 #' @rdname plot_dashboard
 #' @export
 plot_dashboard.clate_result <- function(object, ...) {
+  .dnn_reuse_scope(object)
   .plot_dashboard_effect(object, ...)
 }
 
 #' @rdname plot_dashboard
 #' @export
 plot_dashboard.np_result <- function(object, ...) {
+  .dnn_reuse_scope(object)
   .plot_require_ggplot2("plot_dashboard")
   specs <- list(
     estimates = function() plot_estimates(object, ...),

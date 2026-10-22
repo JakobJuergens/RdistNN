@@ -68,6 +68,7 @@ plot_overlap <- function(object,
                          targets = NULL,
                          instrument = NULL,
                          ...) {
+  .dnn_reuse_scope(object)
   .plot_require_ggplot2("plot_overlap")
   type <- match.arg(type)
   clate <- inherits(object, "clate_result")

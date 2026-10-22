@@ -28,7 +28,8 @@ Jackknife covariance paths subtract a common numerical reference per target
 and signal before summing deletions. Choose that reference only from the union
 of observations with nonzero weight in any deletion. A nonzero entry at rank
 `r` in the `n-1` table can use original ranks `r` and `r+1`; support must include
-both. Ignore unused observations before subtraction, including extreme values
+both and expand to every member of a duplicate covariate block it intersects.
+Ignore unused observations before subtraction, including extreme values
 that could overflow despite their zero weights. Signed TDNN tables use nonzero
 support. Asymptotic tables retain all represented nonzero weights without an
 extra cutoff or normalization. Covariance calculations keep the shifted values;
@@ -84,8 +85,8 @@ candidate adapters update the retained order; estimator adapters own the
 resulting means, effects or paired covariance/status quantities. Sharing the
 target boundary does not change these inference contracts.
 
-`R/user-dnn-geometry.R` owns `.dnn_fitted_geometry()` for NP/TDNN, CATE, PLQR and
-paired-ratio/CLATE fits. It resolves the specification and training context once,
+`R/user-dnn-geometry.R` owns `.dnn_fitted_geometry()` for NP/TDNN, CATE, PLQR,
+GMM and paired-ratio/CLATE fits. It resolves the specification and training context once,
 retains a setup-free specification for prediction, and separately retains the
 original resolved specification/context for explicit deletion refitting. Registry
 replacement therefore cannot change a saved fit. NP/TDNN and CATE `loo` keep
@@ -93,14 +94,46 @@ their established deletion-specific geometry; paired-ratio `loo` remains the
 frozen-rank reference. Custom closures with mutable external state retain their
 own reproducibility obligations.
 
-Tie policy is retained with the fitted state. New covariate-aware rankings use
+GMM resolves optimizer starts independently for each target: an explicit
+vector or target-column matrix takes precedence over the model callback, then
+zero is the fallback. Do not introduce an implicit previous-target warm start.
+Discover moment dimensions at an available actual target start, caching each
+attempted start or failure so callbacks run once per target. A failed target
+must not force a zero probe before later valid starts have been tried.
+Its retained fitted geometry also supplies later weight reconstruction.
+Nonfinite local information cannot produce a valid zero covariance through
+matrix inversion: retain fitted coefficients, warn about rescaling, and leave
+coefficient uncertainty unavailable. A finite singular information matrix keeps
+the existing unavailable-inference behavior.
+
+Tie policy is retained with the fitted state. Covariate-aware rankings use
 exact represented distance, lexicographic original raw covariates in supplied
-column order, then input position for identical covariate rows. No signal or
-nuisance value enters ordering; rank-weight values and ESS do not change.
+column order, then input position for identical covariate rows. Weights are
+subsequently averaged within exactly identical raw-covariate groups. No signal
+or nuisance value defines the groups. Block mass is preserved; individual
+weights, support and ESS can change. Distinct covariate vectors at equal
+distance and approximately equal vectors are not grouped.
 Shared retained-state adapters reuse current cached ranks for prediction,
 covariance and plot reconstruction. Older development fit schemas are not a
 compatibility target. Distance-only and caller-supplied rank/order APIs retain
 their documented semantics.
+
+For a group occupying ranks `a:b`, give each observation
+`sum(w_n[a:b]) / (b-a+1)`. Every deletion removes the actual observation,
+updates ranks, and repeats this operation on the remaining groups using
+`w_(n-1)`. A deleted singleton contributes no signal. Use shared helpers for
+group identification, averaging, retained-state checks and deletion arithmetic;
+estimator adapters must not maintain separate copies of this policy.
+Common deletions retain paired-signal and cross-target covariance. Signed TDNN
+weights follow the same averaging without absolute values or renormalization.
+PLQR/GMM calculations also use the actual averaged localization weights.
+
+Fit, prediction, candidate, diagnostics and weight-plot paths must agree on
+these weights. In particular, a rank table alone no longer supplies realized
+ESS or weight concentration with duplicates. Old tied saved objects must request
+refitting before reuse rather than mixing old stored estimates with the new
+weight policy. Warn at public boundaries, avoiding repeated internal deletion
+or grid warnings, that the modification is not covered by the paper's theory.
 
 ## CATE joint covariance
 

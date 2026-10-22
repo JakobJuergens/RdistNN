@@ -91,7 +91,7 @@
       stop(label, " must return a K x length(theta) finite matrix.", call. = FALSE)
     }
   }
-  if (!is.numeric(G) || nrow(G) != K || ncol(G) != p || any(!is.finite(G))) {
+  if (!is.matrix(G) || !is.numeric(G) || nrow(G) != K || ncol(G) != p || any(!is.finite(G))) {
     stop(label, " must return a K x length(theta) finite matrix.", call. = FALSE)
   }
   matrix(as.numeric(G), nrow = K, ncol = p)
@@ -174,10 +174,11 @@ score_eval_param_batch <- function(score, subs, data, theta, ctx = NULL, rng = N
     .score_assert_theta_support(score$eval_param, "score$eval_param")
     out <- numeric(K)
     for (k in seq_len(K)) {
-      out[k] <- .call_with_supported_args(
+      value <- .call_with_supported_args(
         score$eval_param,
         list(idxs = subs[k, ], data = data, theta = theta, param = theta, ctx = ctx, rng = rng)
       )
+      out[k] <- .score_validate_scalar_numeric(value, "score$eval_param")
     }
     return(.score_validate_batch_numeric(out, K, "score$eval_param"))
   }
@@ -190,10 +191,11 @@ score_eval_param_batch <- function(score, subs, data, theta, ctx = NULL, rng = N
     .score_assert_theta_support(score$eval, "score$eval")
     out <- numeric(K)
     for (k in seq_len(K)) {
-      out[k] <- .call_with_supported_args(
+      value <- .call_with_supported_args(
         score$eval,
         list(idxs = subs[k, ], data = data, theta = theta, param = theta, ctx = ctx, rng = rng)
       )
+      out[k] <- .score_validate_scalar_numeric(value, "score$eval")
     }
     return(.score_validate_batch_numeric(out, K, "score$eval"))
   }
@@ -332,6 +334,7 @@ score_grad_batch <- function(
 #'
 #' Returns closures for value and gradient evaluation of a score at any
 #' parameter vector `theta`, using analytic or finite-difference derivatives.
+#' The `data` argument is evaluated when the path is constructed.
 #'
 #' @param score A `ustat_score`.
 #' @param data Data object passed to score evaluators.
@@ -375,6 +378,7 @@ score_diff_path <- function(
   fd_step_eff <- .score_check_fd_step_base(fd_step_eff)
   fd_scheme_eff <- if (is.null(fd_scheme)) score$fd_scheme else fd_scheme
   fd_scheme_eff <- .score_check_fd_scheme(fd_scheme_eff)
+  force(data)
   if (is.null(ctx)) {
     ctx <- score_setup(score, data)
   }

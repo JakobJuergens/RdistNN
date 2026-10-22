@@ -112,7 +112,7 @@ test_that("current CATE fits preserve prediction shapes and serialized state", {
         }
       }
     }
-    expect_identical(restored, before)
+    .expect_identical_fast(restored, before)
     restored$.model <- NULL
     expect_error(predict(restored, x0 = 0), "fitted model state")
     expect_error(vcov(restored), "fitted model state")

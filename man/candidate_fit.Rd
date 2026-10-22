@@ -68,6 +68,19 @@ the parent carried them, and candidate-independent state carried over. The
 rebuilt \code{neighbors} extra is the first \code{k} nearest observations, not the
 full DNN weight support.
 }
+\details{
+Reconstructed weights use both cached ranks and retained raw covariates,
+averaging within exactly identical covariate blocks as in \code{\link[=weights_matrix]{weights_matrix()}}.
+Candidate uncertainty redistributes each deleted member's block mass over
+the survivors using the \code{n-1} rank table. A warning identifies this
+modification as outside the paper's theory. Tied fits created before this
+policy require refitting before candidate extraction.
+
+Candidate IDs identify grid rows, not unique values of \code{s}. Repeated resolved
+orders remain separate candidates, and plots distinguish their IDs in labels.
+Extraction validates retained controls, target IDs and cached ranks; an
+incomplete or inconsistent saved object must be refitted.
+}
 \section{Experimental methods}{
 
 Methods for \code{plqr_result} objects are experimental, as is all PLQR

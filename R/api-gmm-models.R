@@ -24,7 +24,9 @@
 #' @param jacobian_obs Optional function returning observation-level Jacobians.
 #'   For scalar `theta`, an `n x q` matrix is accepted; otherwise use an
 #'   `n x q x p` array.
-#' @param start Optional function returning a numeric starting vector.
+#' @param start Optional function `(sample, ctx, w, x0)` returning a finite
+#'   numeric starting vector, evaluated independently for each target.
+#'   An explicit `start` passed to [gmm_dnn()] takes precedence.
 #' @param coef_names Non-empty character vector naming the parameter entries.
 #' @param moment_names Optional character vector naming the moment components.
 #'

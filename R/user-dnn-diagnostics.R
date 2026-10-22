@@ -307,8 +307,11 @@
 #' DNN diagnostics report fixed top-1, top-5, and top-10 weight concentration
 #' shares. Distance diagnostics such as `radius_rank_k` and `radius_rank_s`
 #' are ordinary nearest-rank scale summaries; `radius_rank_s` is not the DNN
-#' support radius. For exact DNN fits the finite-population support edge is
-#' rank `n - s + k`.
+#' support radius. For exact DNN fits the unaveraged rank-table support edge is
+#' rank `n - s + k`; duplicate-block averaging can extend nonzero observation
+#' weights through the end of a block crossing that edge. ESS, support counts
+#' and concentration use the final averaged weights and can vary by target.
+#' See [weights_matrix()] for the averaging rule and its theory warning.
 #'
 #' PLQR fits additionally report residualized-design Gram conditioning
 #' (`gram_min_eig`, `gram_condition_number`) and, when direct-sandwich
@@ -335,7 +338,10 @@
 #'   fit. Use `"all"` or a character vector of candidate ids to report
 #'   candidate-level grid diagnostics from `object$tuning_grid`. Candidate
 #'   grid diagnostics include `top5_weight_share`; the cutoff is recorded as
-#'   `top_n = 5` and is independent of the estimator's `k`.
+#'   `top_n = 5` and is independent of the estimator's `k`. A candidate row
+#'   reports minimum ESS, maximum absolute weight and maximum top-five share
+#'   across targets; `degenerate` is true if any target reaches
+#'   `0.9 * n` ESS. Use target diagnostics for individual profiles.
 #' @param ... Not used.
 #' @return An object of class `dnn_diagnostics`.
 #' @name diagnostics

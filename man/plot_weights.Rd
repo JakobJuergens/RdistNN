@@ -20,7 +20,8 @@ distances via \code{return = c("W", "dx")}).}
 
 \item{type}{One of \code{"profile"}, \code{"cumulative"}, or \code{"kernel"}.}
 
-\item{targets}{Optional integer vector of target ids to display.}
+\item{targets}{Optional integer vector of target ids to display, including
+target-specific profiles when comparing candidates.}
 
 \item{log_weights}{Logical (default \code{FALSE}); for rank-domain views,
 drop non-positive weights and use a log10 y scale (the number of
@@ -29,7 +30,10 @@ dropped weights is reported in the caption).}
 \item{candidates}{Candidate rows to compare for grid fits. The default
 \code{"default"} preserves the stored weight-matrix display. Use \code{"all"} or
 a character vector of candidate ids with \code{type = "profile"} to compare
-rank-weight profiles without refitting.}
+weight profiles without refitting. Duplicate-covariate block averaging
+can make these profiles vary by target; the selected target profiles are
+shown in separate panels. Untied default profiles coincide across targets
+and are shown once unless \code{targets} is explicitly supplied.}
 
 \item{...}{Ignored; reserved for future options.}
 }
@@ -39,7 +43,7 @@ A ggplot object.
 \description{
 Three views of the localization weights stored on a fitted object.
 \code{type = "profile"} draws weight against rank with a guide at the exact
-finite-population support edge \code{n - s + k} for DNN fits (\code{n - s + 1} in
+nominal unaveraged rank-table support edge \code{n - s + k} for DNN fits (\code{n - s + 1} in
 the paper-default \code{k = 1} case); \code{type = "cumulative"} draws the
 cumulative weight share with guides at 0.5 and 0.9 and markers at the
 top-1/5/10 shares; \code{type = "kernel"} draws weight against stored distance

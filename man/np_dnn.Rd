@@ -109,8 +109,13 @@ DNN-based local weights.
 The documented sampling framework uses independent observations; cluster
 and survey-design inference are not supplied. Exact distance ties use
 lexicographic order of the original covariates, in their supplied column
-order. Identical covariate rows retain input-order ties; permuting those
-duplicates can change estimates. Ordering uses no outcomes or nuisances.
+order. Rows identical on every raw localization covariate share the average
+of their rank weights. Each jackknife deletion recomputes this average over
+the surviving block at sample size n-1. This permutation-invariant
+modification is not covered by the paper's theory and emits a warning.
+Distinct covariate vectors at equal distance are not averaged. Ordering uses
+no outcomes or nuisances. Retained tied fits from the earlier policy require
+refitting before reporting or reuse.
 
 Two interfaces are supported.
 \enumerate{
@@ -123,10 +128,14 @@ With \code{data}, omit \code{X} and \code{Y}; use exactly one of \code{y_col} or
 Column selectors require \code{data}. Conflicting routes are rejected.
 
 For \code{method = "exact"}, DNN weights are computed from the full rank
-permutation at each target. The exact support extends through rank
+permutation at each target. The unaveraged rank-table support extends through rank
 \code{n - s + k} (\code{n - s + 1} in the paper-faithful \code{k = 1} case); this is not
 an \code{s}-nearest-neighbor truncation. The \code{"fast"} jackknife option reuses
 the full-sample rank matrix and updates ranks under deletion.
+
+Averaging can extend nonzero observation weights through the end of a
+duplicate block that straddles the nominal rank-table edge. Effective sample
+sizes and weight diagnostics use the resulting observation weights.
 
 \code{tuning_mode = "default"} evaluates only the default kernel order and
 preserves the ordinary scalar-fit return shape. \code{tuning_mode = "grid"}

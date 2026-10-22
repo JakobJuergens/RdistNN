@@ -113,7 +113,7 @@
     }
 
     loo <- .dnn_loo_centered(sig, ranks_full, .rank_weight_table(rw, n - 1L),
-                              rw = rw)$loo
+                              rw = rw, groups = .dnn_duplicate_groups(x_mat))$loo
 
     return(.dnn_jackknife_se_from_loo(loo = loo, q = q, n = n, m = m))
   }
@@ -207,7 +207,8 @@
     wnm1 <- tdnn_rank_table_asymp(n - 1L,  s1i, s2i, dimi, normalize = normalize)
   }
 
-  loo <- .dnn_loo_centered(sig, ranks_full, wnm1, tab_full = wn)$loo
+  loo <- .dnn_loo_centered(sig, ranks_full, wnm1, tab_full = wn,
+                           groups = .dnn_duplicate_groups(x_mat))$loo
 
   .dnn_jackknife_se_from_loo(loo = loo, q = q, n = n, m = m)
 }

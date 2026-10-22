@@ -44,12 +44,14 @@ NULL
 #' @rdname affine_ratio_result
 #' @export
 coef.affine_ratio_result <- function(object, ...) {
+  .dnn_check_tie_model(object$.model)
   stats::setNames(object$theta, paste0("target_", seq_along(object$theta)))
 }
 
 #' @rdname affine_ratio_result
 #' @export
 vcov.affine_ratio_result <- function(object, target = NULL, ...) {
+  .dnn_reuse_scope(object)
   if (is.null(object$theta_vcov)) {
     .abort_bad_arg("object", "has no covariance; refit with se = TRUE and an active jackknife")
   }
@@ -82,6 +84,7 @@ vcov.affine_ratio_result <- function(object, target = NULL, ...) {
 #' @rdname affine_ratio_result
 #' @export
 confint.affine_ratio_result <- function(object, parm = NULL, level = .95, ...) {
+  .dnn_check_tie_model(object$.model)
   level <- .validate_scalar_prob(level, "level")
   if (is.null(object$se)) {
     .abort_bad_arg("object", "has no covariance; refit with se = TRUE and an active jackknife")
@@ -107,6 +110,7 @@ confint.affine_ratio_result <- function(object, parm = NULL, level = .95, ...) {
 #' @rdname affine_ratio_result
 #' @export
 summary.affine_ratio_result <- function(object, level = .95, ...) {
+  .dnn_check_tie_model(object$.model)
   ci <- .affine_wald_bounds(object, level)
   m <- length(object$theta)
   se <- if (is.null(object$se)) rep(NA_real_, m) else object$se
@@ -136,6 +140,7 @@ summary.affine_ratio_result <- function(object, level = .95, ...) {
 #' @rdname affine_ratio_result
 #' @export
 print.affine_ratio_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
+  .dnn_check_tie_model(x$.model)
   kind <- if (inherits(x, "clate_result")) "clate_result" else "affine_ratio_result"
   cat("<", kind, "> paired DNN ratio; ", length(x$theta), " target(s)\n", sep = "")
   cat("  DNN: method=", x$meta$method, ", k=", x$meta$k,
@@ -147,6 +152,7 @@ print.affine_ratio_result <- function(x, digits = max(3L, getOption("digits") - 
 #' @rdname affine_ratio_result
 #' @export
 print.summary.affine_ratio_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
+  .dnn_check_tie_model(x$.model)
   .dnn_print_localization(x$meta)
   roles <- x$meta$component_roles
   if (!is.null(roles)) {
@@ -160,6 +166,7 @@ print.summary.affine_ratio_result <- function(x, digits = max(3L, getOption("dig
 
 .affine_prediction_state <- function(object) {
   model <- object$.model
+  .dnn_check_tie_model(model)
   if (!is.list(model) || is.null(model$x_mat) || is.null(model$signal) ||
     is.null(model$s) || is.null(model$row_ids)) {
     .abort_bad_arg("object$.model", "is missing frozen model state; refit with affine_ratio_dnn or clate_dnn")
@@ -178,6 +185,7 @@ predict.affine_ratio_result <- function(
   object, newdata = NULL, X0 = NULL, x0 = NULL, se.fit = FALSE,
   interval = c("none", "confidence"), level = .95, ...
 ) {
+  .dnn_reuse_scope(object)
   interval <- match.arg(interval)
   se.fit <- .validate_scalar_logical(se.fit, "se.fit")
   level <- .validate_scalar_prob(level, "level")
@@ -209,6 +217,7 @@ predict.affine_ratio_result <- function(
 #' @rdname plot_data_estimates
 #' @export
 plot_data_estimates.affine_ratio_result <- function(object, level = .95, candidates = "default", ...) {
+  .dnn_reuse_scope(object)
   if (!.plot_candidates_is_default(candidates)) {
     return(.plot_candidate_estimates_frame(object, candidates, level, "plot_data_estimates")$data)
   }

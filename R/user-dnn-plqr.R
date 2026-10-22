@@ -106,14 +106,23 @@ plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
 #' The documented sampling framework uses independent observations; cluster
 #' and survey-design inference are not supplied. Exact distance ties use
 #' lexicographic order of the original covariates, in their supplied column
-#' order. Identical covariate rows retain input-order ties; permuting those
-#' duplicates can change estimates. Ordering uses no outcomes or nuisances.
+#' order. Rows identical on every raw localization covariate share the average
+#' of their rank weights. Each jackknife deletion recomputes this average over
+#' the surviving block at sample size n-1. This permutation-invariant
+#' modification is not covered by the paper's theory and emits a warning.
+#' Distinct covariate vectors at equal distance are not averaged. Ordering uses
+#' no outcomes or nuisances. Retained tied fits from the earlier policy require
+#' refitting before reporting or reuse.
 #'
 #' Two interfaces are supported.
 #'
 #' 1. Data-frame interface (recommended): pass `data` with `x_cols`, `D_cols`,
 #'    `g_col`, `mD_cols`, and `y_col`.
 #' 2. Matrix interface: pass `X`, `D`, `g`, `mD`, and `Y`.
+#'
+#' With `data`, omit `X`, `D`, `g`, `mD`, and `Y`; these direct inputs are
+#' reserved for the matrix interface. Column selectors require `data`.
+#' A direct `density` vector is supported with either interface.
 #'
 #' Supply the shape component `g`, residualized-regressor means `mD` and,
 #' for coefficient uncertainty, positive threshold densities. These can use
@@ -129,8 +138,12 @@ plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
 #' As in [weights_dnn()], exact DNN localization uses the full rank permutation
 #' at each target rather than an `s`-nearest-neighbor truncation. The `"fast"`
 #' jackknife option reuses the full-sample rank matrix and updates ranks under
-#' deletion. For exact DNN fits, the finite-population support edge is rank
+#' deletion. For exact DNN fits, the unaveraged rank-table support edge is rank
 #' `n - s + k`, not rank `s`.
+#'
+#' Averaging can extend nonzero observation weights through the end of a
+#' duplicate block that straddles the nominal rank-table edge. Effective sample
+#' sizes and weight diagnostics use the resulting observation weights.
 #'
 #' `tuning_mode = "default"` evaluates only the default kernel order and
 #' preserves the ordinary scalar-fit return shape. `tuning_mode = "grid"`
@@ -171,7 +184,9 @@ plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
 #' @param density Optional positive numeric vector (`n`) estimating the
 #'   conditional density of `Y` at the threshold `D' theta_eval + g`. When
 #'   supplied with `se = TRUE`, PLQR uses the direct coefficient sandwich
-#'   route and returns coefficient standard errors in `theta_se`.
+#'   route and returns coefficient standard errors in `theta_se`. A direct
+#'   vector is allowed with either input interface; do not also supply
+#'   `density_col`.
 #' @param density_col Optional column name or index in `data` containing the
 #'   positive density values used for the direct coefficient sandwich.
 #' @param X0 Numeric matrix (`m x p`) of target points; mutually exclusive with
@@ -326,6 +341,10 @@ plqr_dnn <- function(
     .abort_bad_arg("theta_eval", "must be a finite numeric vector")
   }
   theta_eval <- as.numeric(theta_eval)
+
+  .dnn_validate_input_route(data, list(X = X, D = D, g = g, mD = mD, Y = Y),
+    list(x_cols = x_cols, D_cols = D_cols, g_col = g_col,
+      mD_cols = mD_cols, y_col = y_col))
 
   if (!is.null(data)) {
     if (!is.data.frame(data)) {
@@ -513,6 +532,7 @@ plqr_dnn <- function(
 
   x0_mat <- .dnn_resolve_targets(x_mat, X0 = X0, x0 = x0)
 
+  .dnn_duplicate_scope(x_mat)
   geometry <- .dnn_fitted_geometry(distance, x_mat, ctx)
   weight_return <- return
   if (identical(tuning_mode, "grid") || (isTRUE(se) && identical(jackknife, "fast"))) {
@@ -625,7 +645,7 @@ plqr_dnn <- function(
       } else {
         "none"
       },
-      tie_rule = "distance_then_covariates_then_input_position",
+      tie_rule = .dnn_tie_policy(),
       theta_source = "supplied",
       theta_se_method = if (isTRUE(se) && isTRUE(direct_available)) "direct_sandwich" else "none",
       theta_meat_method = theta_meat_method,

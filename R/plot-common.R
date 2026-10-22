@@ -141,7 +141,9 @@ utils::globalVariables(".data")
 .plot_select_targets <- function(all_targets, neff_by_target, targets = NULL) {
   m <- length(all_targets)
   if (!is.null(targets)) {
-    targets <- unique(as.integer(targets))
+    targets <- unique(.validate_index_vector(
+      targets, max(all_targets), "targets", label = "target ids"
+    ))
     if (!all(targets %in% all_targets)) {
       .abort_bad_arg(
         "targets",
@@ -270,6 +272,11 @@ utils::globalVariables(".data")
     function(i) .plot_candidate_label(candidates[i, , drop = FALSE]),
     character(1L)
   )
+  repeated <- duplicated(candidates$candidate_label) |
+    duplicated(candidates$candidate_label, fromLast = TRUE)
+  candidates$candidate_label[repeated] <- sprintf(
+    "%s [%s]", candidates$candidate_label[repeated], candidates$candidate_id[repeated]
+  )
   candidates
 }
 
@@ -373,7 +380,7 @@ utils::globalVariables(".data")
 }
 
 .plot_candidate_levels <- function(candidates) {
-  as.character(.plot_order_candidates(.plot_ok_candidates(candidates))$candidate_label)
+  unique(as.character(.plot_ok_candidates(.plot_order_candidates(candidates))$candidate_label))
 }
 
 .plot_order_candidate_frame <- function(df) {
@@ -453,7 +460,7 @@ utils::globalVariables(".data")
   )
 }
 
-.plot_candidate_weight_frame <- function(object, candidates, fn) {
+.plot_candidate_weight_frame <- function(object, candidates, fn, targets = NULL) {
   selected <- .plot_resolve_candidates(object, candidates = candidates, fn = fn)
   ok <- .plot_ok_candidates(selected)
   if (nrow(ok) < 1L) {
@@ -465,6 +472,16 @@ utils::globalVariables(".data")
   }
   ranks <- .candidate_cached_ranks(object)
   n <- nrow(ranks)
+  groups <- if (is.null(object$.model$x_mat)) NULL else .dnn_duplicate_groups(object$.model$x_mat)
+  separate_targets <- anyDuplicated(groups) || !is.null(targets)
+  target_ids <- 1L
+  if (separate_targets) {
+    candidates_all <- .candidate_grid_payload(object)$candidates
+    default <- candidates_all[candidates_all$is_default, , drop = FALSE]
+    default_W <- .candidate_weights_from_ranks(object, default)
+    target_ids <- .plot_select_targets(seq_len(ncol(ranks)),
+                                      1 / colSums(default_W^2), targets)
+  }
   frames <- vector("list", nrow(ok))
   for (i in seq_len(nrow(ok))) {
     row <- ok[i, , drop = FALSE]
@@ -474,17 +491,24 @@ utils::globalVariables(".data")
       ctx <- if (is.list(object$.model)) object$.model$ctx else NULL
       tab <- rank_weight_eval(spec, seq_len(n), ctx = ctx)
     }
-    total <- sum(tab)
-    frames[[i]] <- data.frame(
-      candidate_id = row$candidate_id,
-      candidate_label = row$candidate_label,
-      s = as.integer(row$s),
-      is_default = as.logical(row$is_default),
-      rank = seq_len(n),
-      weight = as.numeric(tab),
-      cum_share = if (is.finite(total) && abs(total) > 0) cumsum(tab) / total else NA_real_,
-      stringsAsFactors = FALSE
-    )
+    W <- .dnn_average_duplicate_weights(matrix(tab[ranks], n, ncol(ranks)), groups)
+    by_target <- lapply(target_ids, function(j) {
+      values <- W[order(ranks[, j]), j]
+      total <- sum(values)
+      frame <- data.frame(
+        candidate_id = row$candidate_id,
+        candidate_label = row$candidate_label,
+        s = as.integer(row$s),
+        is_default = as.logical(row$is_default),
+        rank = seq_len(n),
+        weight = as.numeric(values),
+        cum_share = if (is.finite(total) && abs(total) > 0) cumsum(values) / total else NA_real_,
+        stringsAsFactors = FALSE
+      )
+      if (separate_targets) frame$target_id <- j
+      frame
+    })
+    frames[[i]] <- do.call(rbind, by_target)
   }
   out <- do.call(rbind, frames)
   out$candidate_label <- factor(

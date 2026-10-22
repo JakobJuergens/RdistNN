@@ -1,4 +1,5 @@
 test_that("NP marginal prediction uncertainty agrees with explicit deletions", {
+  .with_duplicate_policy_warnings({
   X <- cbind(c(-2, -1, 0, 0, 1, 2, 4), c(3, 1, 0, 0, 3, 2, -1))
   X0 <- rbind(c(1.7, 1), c(-.2, .1), c(0, 0), c(1.7, 1))
   y <- c(2, -1, 3, 7, -2, 4, 1)
@@ -30,7 +31,7 @@ test_that("NP marginal prediction uncertainty agrees with explicit deletions", {
         W[, j] <- table[order(.tie_reference_order(d, x_mat))]
       }
     }
-    W
+    .block_oracle_average_weights(W, x_mat)
   }
 
   for (tdnn in c(FALSE, TRUE)) for (method in c("exact", "asymp")) {
@@ -73,6 +74,28 @@ test_that("NP marginal prediction uncertainty agrees with explicit deletions", {
         expected_se[2], tolerance = 1e-12)
     }
   }
+  })
+})
+
+.np_allocation_threshold <- function(n, m) 8 * n * m / 2
+
+test_that("the allocation trace retains buffers forbidden by the prediction guard", {
+  skip_if_not(isTRUE(capabilities("profmem")), "R memory profiling is unavailable")
+  n <- 8L
+  m <- 256L
+  limit <- 8 * n * m * 8
+  profile <- tempfile("np-allocation-control-", fileext = ".log")
+  on.exit(unlink(profile), add = TRUE)
+  on.exit(Rprofmem(NULL), add = TRUE)
+  Rprofmem(profile, threshold = .np_allocation_threshold(n, m))
+  # A permitted n-by-m work buffer and a forbidden m-by-m covariance buffer.
+  allowed <- matrix(0, n, m)
+  forbidden <- matrix(0, m, m)
+  Rprofmem(NULL)
+  lines <- readLines(profile, warn = FALSE)
+  allocations <- as.numeric(sub(" .*", "", lines[grepl("^[0-9]+", lines)]))
+  expect_true(any(allocations >= 8 * n * m & allocations < limit))
+  expect_true(any(allocations >= limit))
 })
 
 test_that("NP prediction uncertainty avoids quadratic target allocations", {
@@ -92,7 +115,9 @@ test_that("NP prediction uncertainty avoids quadratic target allocations", {
   for (fit in fits) for (interval in c("none", "confidence")) {
     # Load lazy code before measuring the target-dependent allocations.
     predict(fit, X0 = X0[1:2, , drop = FALSE], se.fit = TRUE, interval = interval)
-    Rprofmem(profile)
+    # Retain large work buffers and every allocation at the rejection limit,
+    # without recording the many smaller allocations and their call stacks.
+    Rprofmem(profile, threshold = .np_allocation_threshold(nrow(X), nrow(X0)))
     prediction <- tryCatch(
       predict(fit, X0 = X0, se.fit = interval == "none", interval = interval),
       finally = Rprofmem(NULL)

@@ -182,12 +182,14 @@ test_that("distance ties are ordered deterministically", {
   # Force exact distance ties: duplicate a block of rows.
   x_base[21:30, ] <- x_base[1:10, ]
   y <- rnorm(n)
-  fit <- np_dnn(
+  expect_warning(fit <- np_dnn(
     X = x_base, x0 = c(0, 0), Y = y,
     k = 1L, s = 6L, se = FALSE, return = c("W", "dx")
-  )
-  dw1 <- plot_data_weights(fit)
-  dw2 <- plot_data_weights(fit)
+  ), "Identical covariate rows detected", fixed = TRUE)
+  expect_warning(dw1 <- plot_data_weights(fit),
+                 "Identical covariate rows detected", fixed = TRUE)
+  expect_warning(dw2 <- plot_data_weights(fit),
+                 "Identical covariate rows detected", fixed = TRUE)
 
   expect_identical(dw1, dw2)
   expect_identical(sort(dw1$obs_id), seq_len(n))

@@ -47,7 +47,13 @@ It generally differs from population CATE and from residualized IV-GMM.
 ## Localization and frozen state
 
 The solution of the affine score `theta * phi_d - phi_y` is a ratio of the two
-weighted signal averages. Never average observation-level signal ratios,
+weighted signal averages. Exactly identical reporting-covariate rows share
+their block's average weight, using the same groups for both signals. Each
+deletion removes the observation before averaging its remaining block's `n-1`
+weights. This preserves paired covariance and aligned permutation invariance;
+the public warning states that the modification is outside the paper's theory.
+The grouping uses reporting X, not instrument, treatment or nuisance values.
+Never average observation-level signal ratios,
 floor the aggregate denominator or clip negative augmented first stages.
 
 Exact/asymptotic single-scale DNN, general `1 <= k <= s`, normalization,
@@ -126,6 +132,16 @@ uncertainty through coefficient formation and verify roots against the input
 components/covariance; rounded polynomial coefficients cannot certify a false
 singleton. This helper does not replace `confint()` or establish uniform
 weak-instrument coverage.
+
+Covariance validation uses the correlation calculation away from its PSD
+boundary and the exact sign of the represented two-by-two determinant near
+absolute correlation one. Rounded square roots can otherwise hide a negative
+determinant or reject an exactly singular PSD matrix. At `tol = 0` a negative
+represented determinant is rejected; a small negative determinant within the
+relative tolerance gives `near_psd_boundary` and unresolved intervals. The
+near-boundary sign check reuses the shared exact sum-of-products arithmetic.
+`R/utils-exact-products.R` owns that arithmetic for both this check and the
+PLQR comparison adapter; ratio inference must not copy the expansion logic.
 
 Diagnostics expose both components and their covariance, first-stage variation,
 instrument support, clipping, localization and centered score concentration.

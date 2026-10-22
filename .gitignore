@@ -21,6 +21,7 @@ src/symbols.rds
 *.Rcheck/
 *.Rout
 *.Rout.fail
+Rplots.pdf
 *.tar.gz
 
 # Local troubleshooting outputs (do not commit)

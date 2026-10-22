@@ -19,15 +19,15 @@ test_that("L2 retains finite huge and tiny norms through scalar, batch and order
         D <- spec$eval_batch(XX, X0, ctx)
         expect_equal(D / h, matrix(reference, 5, 3), tolerance = 4e-15)
         expect_identical(order(D[, 1], seq_len(5)), c(4L, 3L, 1L, 2L, 5L))
-        expect_identical(spec$eval(XX, X0[1, ], ctx), D[, 1])
-        expect_identical(spec$eval_batch(XX[c(3, 1), , drop = FALSE], X0, ctx),
+        .expect_identical_fast(spec$eval(XX, X0[1, ], ctx), D[, 1])
+        .expect_identical_fast(spec$eval_batch(XX[c(3, 1), , drop = FALSE], X0, ctx),
                          D[c(3, 1), , drop = FALSE])
         ordered <- if (scaled) order_by_l2_scaled(XX, X0[1, ], "custom", c(2, 4)) else order_by_l2(XX, X0[1, ])
-        expect_identical(ordered$dx, D[, 1])
+        .expect_identical_fast(ordered$dx, D[, 1])
         # The 5h tie uses raw covariates: (0,5h), (3h,4h), (4h,3h).
         # Positive column scaling preserves that lexicographic order.
         expect_identical(ordered$ord, c(4L, 3L, 5L, 1L, 2L))
-        if (!is.null(previous)) expect_identical(D, previous)
+        if (!is.null(previous)) .expect_identical_fast(D, previous)
         previous <- D
       }
     }
@@ -89,7 +89,7 @@ test_that("mixed ordinary and underflowing coordinates retain cross-engine arith
     native <- distance_l2(squared)$eval_batch(X, matrix(0, 2, 3))
     options(RdistNN.use_compiled = FALSE)
     fallback <- distance_l2(squared)$eval_batch(X, matrix(0, 2, 3))
-    expect_identical(fallback, native)
+    .expect_identical_fast(fallback, native)
     expect_equal(fallback[, 1], if (squared) c(25, 25, 1e16, 25, 25, 0) else c(5, 5, 1e8, 5, 5, 0), tolerance = 0)
     expect_identical(order(fallback[, 1]), c(6L, 1L, 2L, 4L, 5L, 3L))
   }
@@ -105,8 +105,8 @@ test_that("mixed ordinary and underflowing coordinates retain cross-engine arith
   }
   for (compiled in c(TRUE, FALSE)) {
     options(RdistNN.use_compiled = compiled)
-    expect_identical(dist_l2(ordinary, rep(0, 7), TRUE), expected)
-    expect_identical(dist_l2(ordinary, rep(0, 7)), sqrt(expected))
+    .expect_identical_fast(dist_l2(ordinary, rep(0, 7), TRUE), expected)
+    .expect_identical_fast(dist_l2(ordinary, rep(0, 7)), sqrt(expected))
   }
 })
 
@@ -122,10 +122,10 @@ test_that("L2 uses the same exceptional range at the Stata finite boundary", {
   for (compiled in c(TRUE, FALSE)) {
     options(RdistNN.use_compiled = compiled)
     D <- distance_l2()$eval_batch(X, matrix(0, 2, 2))
-    expect_identical(D[, 1], c(0x1.9af4345292aafp+511, 0x1.9af4345292aaep+511))
+    .expect_identical_fast(D[, 1], c(0x1.9af4345292aafp+511, 0x1.9af4345292aaep+511))
     expect_identical(order(D[, 1]), 2:1)
     expect_identical(order_by_l2(X, c(0, 0))$ord, 2:1)
-    expect_identical(D[, 1], D[, 2])
+    .expect_identical_fast(D[, 1], D[, 2])
     squared <- distance_l2(TRUE)$eval_batch(X, matrix(0, 2, 2))
     expect_true(all(is.finite(squared)))
     expect_equal(squared / 1e308, D^2 / 1e308, tolerance = 5e-16)
@@ -134,8 +134,8 @@ test_that("L2 uses the same exceptional range at the Stata finite boundary", {
     ctx <- S$setup(XX)
     target <- -0x1.c1ffba583e5f2p+1022
     DD <- S$eval_batch(XX, matrix(rep(target, 2)), ctx)
-    expect_identical(DD[, 1], c(0x1.6a47127468a76p+1020, 0x1.6a47127468a75p+1020))
+    .expect_identical_fast(DD[, 1], c(0x1.6a47127468a76p+1020, 0x1.6a47127468a75p+1020))
     expect_identical(order(DD[, 1]), 2:1)
-    expect_identical(S$eval(XX, target, ctx), DD[, 1])
+    .expect_identical_fast(S$eval(XX, target, ctx), DD[, 1])
   }
 })

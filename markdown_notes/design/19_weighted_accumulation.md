@@ -4,7 +4,8 @@
 
 `R/utils-accumulation.R` owns compensated reductions, weighted signal products
 and retained-state rank deletions. `src/accumulation.cpp` provides thin native
-reductions; `inst/include/compensated_arithmetic.hpp` owns standalone C++
+reductions and `src/block_rank_loo.cpp` exposes original-signal block deletions;
+`inst/include/compensated_arithmetic.hpp` owns standalone C++
 arithmetic and rank-table deletion passes. The header is mirrored in the Stata
 companion. Its `_rdistnn_accumulation.ado` provides native Mata quad reductions
 and an analogous retained-state fallback. Estimators continue to own scores,
@@ -42,9 +43,33 @@ and centering error, not error already incurred when multiplying two doubles.
 ## Deletions and workspace
 
 The arbitrary-table deletion engine supports nonnegative DNN and signed TDNN
-tables. Retain the existing union-of-deletion-support centering. Store the
-forward sum's leading value and correction in the two prefix working arrays,
-then stream the reverse accumulator. Merge leading prefix, leading suffix,
+tables. X-aware construction averages rank weights within exactly identical
+raw-covariate groups. Use compensated block mass reductions and preserve signed
+and unnormalized masses. Each deletion shrinks the deleted observation's block
+before averaging the `n-1` table; it is not deletion from a permanently averaged
+full-sample table. Retain union-of-deletion-support centering and expand that
+union to entire intersecting duplicate blocks before choosing an origin.
+
+For contiguous rank blocks, accumulate original signals using three block
+coefficients: the mean of the unshifted table entries for a deletion after the
+block, the mean of the shifted entries for a deletion before it, and the mean
+of the surviving entries for a deletion within it. Merge prefix and suffix
+states strictly outside the deleted block with its actual survivor prefix and
+suffix states. Add all four leading values, then their four corrections, before
+rounding. Do not form rounded group-mean signals and subtract the removed row:
+that can lose a finite survivor or turn signed-table variation into zero.
+The R, C++ and Mata canonical sweeps perform O(n*m*q) work with O(n*q) scratch.
+Caller-supplied ranks that interleave groups or reorder original members
+within a group use direct deletion/regrouping within the selected implementation,
+taking O(n^2*m*q) work. Forced native
+execution uses the native block kernel, including that uncommon direct path.
+Direct regrouping reduces each block's table entries in original observation
+order, then reduces signal products in localization-rank order. Retain original
+observation identities through native transport so rank sorting cannot change
+the block-mass reduction order.
+
+The rank-only engine stores the forward sum's leading value and correction in
+two prefix working arrays, then streams the reverse accumulator. Merge leading prefix, leading suffix,
 prefix correction, suffix correction and restored offset in that order, before
 rounding the result. R/Mata process the reverse sweep in blocks of at most
 2,048 rows, bounding vectorized merge temporaries. No additional full deletion
@@ -115,8 +140,16 @@ retained correction state. Normalize the mixture once. Keep mantissa and binary
 exponent separate during recurrence so subnormal multiplication cannot stick
 at the smallest double. Workspace is O(n), work O(n + k*(n-s+1)); k=s is exactly uniform.
 This avoids host-specific log-gamma rounding in exact tables. Asymptotic tables
-retain host Beta routines: their continuous values can differ by rounding and
-can still select different observations at an exceptionally close CDF boundary.
+retain host Beta routines. Rounded interval endpoints can lose a tail mass or
+produce different zero/nonzero support in R and Mata at subnormal scales.
+Order-statistic averaging, signed TDNN blending and normalization can lose
+additional tiny masses. This remains unresolved, including downstream effects
+on estimates and deletion covariance for extreme signals. A component-only
+probability fix would not establish correctness of the final mixed table.
+Engine parity for a supplied table does not verify its construction, and
+normalization cannot restore probability already lost. Exact and asymptotic
+tables define different methods. Continuous values can also select different
+observations at an exceptionally close CDF boundary.
 Identical represented tables use the exact common CDF rule; no epsilon merges
 distinct selected observations.
 
@@ -125,8 +158,26 @@ origin and exact-subtraction policy for SD, covariance and deletions.
 Deletion origins use the first eligible localization rank if subtractions
 are within the common numeric range and exact (checked by a two-difference
 residual). Fall back to the established same-sign endpoint/zero range policy;
-use zero if subtraction would lose a separately represented component. This
-protects both large local offsets with nonzero remote tails and mixed-sign
+use zero if subtraction would lose a separately represented component. Columns
+whose entire supported amplitude is subnormal also use zero: translating them
+can erase an unrepresentable weighted residual before restoring the origin.
+When actual deletion weights are available, also use zero if the maximum
+absolute coefficient times supported signal amplitude is subnormal. A nonzero
+subnormal table mass, or a nonzero mass whose product with that amplitude is
+subnormal, uses zero as well. This retains original separately rounded products
+before any requested division by mass; it does not normalize weights first.
+Exact zero mass alone does not disable centering. Maximum coefficient and mass
+summaries are reused across components/targets; geometry-refitting references
+collect actual maxima and the smallest nonzero mass in their existing support
+pass. Ordinary tiny tails with normal coefficient amplitude and mass retain
+their observed origin. These are underflow safeguards, not a guarantee of exact
+product distributivity after arbitrary normal-table block averaging/cancellation.
+Custom signed subnormal masses can still overflow during normalization even
+when raw sums are finite; finite arithmetic does not guarantee partial recovery
+of every aggregate. Keep those range limits separate from probability-table
+construction and from covariance representability.
+This exceptional policy is shared by fast and explicit deletion paths. These
+choices protect both large local offsets with nonzero remote tails and mixed-sign
 cancellation fixtures. Never restore the origin before covariance centering.
 Geometry-refitting reference deletions choose the observation with largest
 total absolute deletion weight. Ordinary SD/covariance paths apply the same

@@ -59,6 +59,17 @@ Rcpp::List rustat_jackknife_rank_full(const IntegerMatrix &ranks, const NumericM
   if ((int)wnm1.size() != n - 1)
     stop("length(wnm1) must equal nrow(ranks) - 1.");
 
+  std::vector<unsigned char> seen(n);
+  for (int t = 0; t < m; ++t) {
+    std::fill(seen.begin(), seen.end(), 0);
+    for (int i = 0; i < n; ++i) {
+      const int rank = ranks(i, t);
+      if (rank == NA_INTEGER || rank < 1 || rank > n || seen[rank - 1])
+        stop("ranks columns must be permutations of 1..n.");
+      seen[rank - 1] = 1;
+    }
+  }
+
   NumericMatrix theta0(q, m);
   for (int t = 0; t < m; ++t) {
     for (int component = 0; component < q; ++component) {

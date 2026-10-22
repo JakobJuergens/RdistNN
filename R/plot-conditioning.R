@@ -38,6 +38,7 @@
 #' }
 #' @export
 plot_conditioning <- function(object, cond_limits = c(1e3, 1e6), ...) {
+  .dnn_reuse_scope(object)
   .plot_require_ggplot2("plot_conditioning")
   if (!inherits(object, "plqr_result")) {
     .abort_bad_arg(

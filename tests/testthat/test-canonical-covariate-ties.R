@@ -1,4 +1,5 @@
 test_that("covariate-aware ordering uses exact raw lexicographic tie keys", {
+  .with_duplicate_policy_warnings({
   X <- rbind(c(1, 0), c(-1, 0), c(0, 1), c(0, -1), c(1, 0), c(2, 0))
   expected <- c(2L, 4L, 3L, 1L, 5L, 6L)
   for (distance in c("l1", "l2")) {
@@ -12,6 +13,7 @@ test_that("covariate-aware ordering uses exact raw lexicographic tie keys", {
     ranking = list(dx = matrix(c(1, 1 + 2^-52))),
     weight = rank_weight_dnn_exact(k = 1L, s = 2L), return = "ord")
   expect_identical(as.integer(out$ord), 1:2)
+  })
 })
 
 test_that("custom distances use raw covariates and supplied ranks remain explicit", {
@@ -131,14 +133,16 @@ test_that("PLQR moments and saved inference use covariate-only tie order", {
   }
 })
 
-test_that("identical covariate rows retain the documented row-position fallback", {
+test_that("identical covariate rows retain ranks but share weight mass", {
+  .with_duplicate_policy_warnings({
   X <- matrix(c(1, -1, 1, -1))
   out <- weights_dnn(X, x0 = 0, k = 1L, s = 2L, return = "ord")
   expect_identical(as.integer(out$ord), c(2L, 4L, 1L, 3L))
-  # Swapping signals on identical rows is allowed to alter their allocated mass.
+  # Swapping signals on identical rows preserves their averaged block mass.
   first <- cate_dnn(X = X, x0 = 0, s = 2L, pseudo_outcome = c(1, 2, 3, 4), se = FALSE)
   second <- cate_dnn(X = X, x0 = 0, s = 2L, pseudo_outcome = c(1, 4, 3, 2), se = FALSE)
-  expect_false(identical(first$tau, second$tau))
+  expect_equal(first$tau, second$tau)
+  })
 })
 
 test_that("weight plotting respects retained canonical orders", {

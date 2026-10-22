@@ -32,6 +32,12 @@ Apply the constraints of the selected estimator rather than a generic coercion.
 Accept integer-like scalars or vector-to-matrix conversion only when meaning
 is preserved. Reject coercions that would change interpretation.
 
+Plot target selectors are integer-valued numeric indices, with duplicates
+removed in first-occurrence order. Reject fractional, logical, complex and
+character selectors before indexing. Candidate reconstruction validates retained
+controls, candidate/target identities and cached rank permutations; incomplete
+or inconsistent saved state requires refitting.
+
 ## Messages and tests
 
 Do not use `stopifnot()` on user-facing paths. Use explicit argument-specific

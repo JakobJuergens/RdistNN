@@ -64,7 +64,12 @@ localization; a warning is emitted in that case.}
 \item{normalize}{Logical; normalize weight columns to sum to one.}
 
 \item{start}{Optional numeric vector of length \code{p_theta}, or \verb{p_theta x m}
-matrix, used as optimizer starts.}
+matrix, used as optimizer starts. When omitted, the model's \code{start()}
+callback is evaluated separately at every target, or zero is used when
+the model has no callback. Targets do not inherit previous targets' starts
+or solutions. An explicit vector is reused at all targets; matrix column
+\code{j} supplies target \code{j}. Either explicit form takes precedence over the
+model callback.}
 
 \item{optimizer}{Optimizer method passed to \code{\link[stats:optim]{stats::optim()}}.}
 
@@ -98,8 +103,13 @@ This local IV-GMM interface is experimental and may change.
 The documented sampling framework uses independent observations; cluster
 and survey-design inference are not supplied. Exact distance ties use
 lexicographic order of the original covariates, in their supplied column
-order. Identical covariate rows retain input-order ties; permuting those
-duplicates can change estimates. Ordering uses no outcomes or nuisances.
+order. Rows identical on every raw localization covariate share the average
+of their rank weights. Each jackknife deletion recomputes this average over
+the surviving block at sample size n-1. This permutation-invariant
+modification is not covered by the paper's theory and emits a warning.
+Distinct covariate vectors at equal distance are not averaged. Ordering uses
+no outcomes or nuisances. Retained tied fits from the earlier policy require
+refitting before reporting or reuse.
 
 Two interfaces are supported.
 \enumerate{
@@ -111,9 +121,18 @@ Two interfaces are supported.
 Nuisance quantities are not fit internally.  They must be supplied to the
 model through \code{data} or \code{model_data}.
 
+The resolved distance specification and its fitted training context are
+retained for weight reconstruction. Replacing a registered metric after
+fitting does not change the fit's geometry. Custom callbacks with mutable
+external state retain their own reproducibility obligations.
+
 Exact DNN localization uses the full rank permutation at each target rather
 than an \code{s}-nearest-neighbor truncation. For exact DNN fits, the
-finite-population support edge is rank \code{n - s + k}, not rank \code{s}.
+unaveraged rank-table support edge is rank \code{n - s + k}, not rank \code{s}.
+
+Averaging can extend nonzero observation weights through the end of a
+duplicate block that straddles the nominal rank-table edge. Effective sample
+sizes and weight diagnostics use the resulting observation weights.
 }
 \examples{
 dgp <- sim_iv_data("dgp2_iv_homog_overid", n = 120, kx = 2, q = 2, seed = 1)

@@ -119,6 +119,7 @@ plot_data_estimates.default <- function(object, level = 0.95, ...) {
 #' @rdname plot_data_estimates
 #' @export
 plot_data_estimates.np_result <- function(object, level = 0.95, candidates = "default", ...) {
+  .dnn_reuse_scope(object)
   if (!.plot_candidates_is_default(candidates)) {
     return(.plot_candidate_estimates_frame(object, candidates, level, "plot_data_estimates")$data)
   }
@@ -132,6 +133,7 @@ plot_data_estimates.np_result <- function(object, level = 0.95, candidates = "de
 #' @rdname plot_data_estimates
 #' @export
 plot_data_estimates.cate_result <- function(object, level = 0.95, candidates = "default", ...) {
+  .dnn_reuse_scope(object)
   if (!.plot_candidates_is_default(candidates)) {
     return(.plot_candidate_estimates_frame(object, candidates, level, "plot_data_estimates")$data)
   }
@@ -153,6 +155,7 @@ plot_data_estimates.cate_result <- function(object, level = 0.95, candidates = "
 plot_data_estimates.plqr_result <- function(object, level = 0.95,
                                             quantity = c("moment", "theta"),
                                             ...) {
+  .dnn_reuse_scope(object)
   quantity <- match.arg(quantity)
   if (identical(quantity, "theta")) {
     est <- as.matrix(object$theta)
@@ -179,6 +182,7 @@ plot_data_estimates.plqr_result <- function(object, level = 0.95,
 #' @rdname plot_data_estimates
 #' @export
 plot_data_estimates.gmm_result <- function(object, level = 0.95, ...) {
+  .dnn_reuse_scope(object)
   est <- as.matrix(object$theta)
   coef_names <- object$meta$coef_names
   if (is.null(coef_names)) coef_names <- rownames(est)
@@ -199,8 +203,10 @@ plot_data_estimates.gmm_result <- function(object, level = 0.95, ...) {
 #' stored distance when `dx` is available and by descending weight otherwise;
 #' the two orderings coincide for monotone single-scale DNN weights, while
 #' two-scale (TDNN) fits should request `return = c("W", "dx")` for
-#' distance-based ranks. For exact DNN fits the finite-population support edge
-#' is rank `n - s + k`, not rank `s`; `s` is the subsample/localization order.
+#' distance-based ranks. For exact DNN fits the unaveraged rank-table support
+#' edge is rank `n - s + k`, not rank `s`; a duplicate block can extend
+#' nonzero observation weights beyond that edge after averaging. `s` is the
+#' subsample/localization order.
 #'
 #' @param object A fitted result object holding the weight matrix `W`
 #'   (stored by default via `return = c("W")`).
@@ -222,6 +228,7 @@ plot_data_estimates.gmm_result <- function(object, level = 0.95, ...) {
 #' head(plot_data_weights(fit))
 #' @export
 plot_data_weights <- function(object) {
+  .dnn_reuse_scope(object)
   W <- object$W
   if (is.null(W)) {
     .abort_bad_arg(

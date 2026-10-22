@@ -91,6 +91,8 @@ rank_weight_tdnn_exact <- function(s1, s2, dim) {
 #' evaluated across the full rank grid. Combined entries can be zero through
 #' signed cancellation or numeric underflow.
 #'
+#' @inheritSection weights_dnn_asymp Numerical limits
+#'
 #' @param s1 Positive integer; smaller U-statistic order (\code{s1 < s2}).
 #' @param s2 Positive integer; larger U-statistic order.
 #' @param dim Positive integer; localization dimension.

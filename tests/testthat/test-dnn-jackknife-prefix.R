@@ -119,24 +119,29 @@
 }
 
 test_that("prefix LOO helper matches deletion loop for scalar signals", {
+  .with_duplicate_policy_warnings({
   .expect_dnn_prefix_matches_loop(
     method = "exact", k = 1L, s = 2L, n = 24L, m = 4L, q = 1L
   )
   .expect_dnn_prefix_matches_loop(
     method = "asymp", k = 2L, s = 12L, n = 30L, m = 4L, q = 1L
   )
+  })
 })
 
 test_that("prefix LOO helper matches deletion loop for vector signals", {
+  .with_duplicate_policy_warnings({
   .expect_dnn_prefix_matches_loop(
     method = "exact", k = 2L, s = 5L, n = 25L, m = 1L, q = 3L
   )
   .expect_dnn_prefix_matches_loop(
     method = "asymp", k = 1L, s = 10L, n = 28L, m = 3L, q = 2L
   )
+  })
 })
 
 test_that("fast scalar wrappers keep the layer-0 SE contract", {
+  .with_duplicate_policy_warnings({
   d <- .make_dnn_prefix_data(n = 28L, m = 3L)
 
   np <- np_dnn(
@@ -225,9 +230,11 @@ test_that("fast scalar wrappers keep the layer-0 SE contract", {
     precomputed_ranks = plqr$ranks
   )
   expect_equal(unname(plqr$moment_se), unname(plqr_ref), tolerance = 1e-12)
+  })
 })
 
 test_that("loop fallback remains available for rank weights without tables", {
+  .with_duplicate_policy_warnings({
   d <- .make_dnn_prefix_data(n = 18L, m = 2L)
   sig <- .dnn_prefix_signal(d$y, q = 2L)
   ranks <- weights_dnn(
@@ -249,4 +256,5 @@ test_that("loop fallback remains available for rank weights without tables", {
     .dnn_prefix_loop_loo(sig, ranks, rw),
     tolerance = 1e-12
   )
+  })
 })

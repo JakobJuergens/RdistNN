@@ -8,12 +8,14 @@
   if (is.null(fitted_ctx) && is.function(spec$setup)) fitted_ctx <- spec$setup(x_mat)
   frozen <- spec
   frozen$setup <- NULL
-  list(distance = frozen, ctx = fitted_ctx, inference_distance = spec, inference_ctx = ctx)
+  list(distance = frozen, ctx = fitted_ctx, inference_distance = spec, inference_ctx = ctx,
+       tie_policy = .dnn_tie_policy())
 }
 
 # Cached ranks/orders are authoritative. Reconstructed ranks use the current
 # canonical covariate tie rule through the ordinary geometry resolver.
 .dnn_retained_ranking <- function(object, allow_recompute = TRUE) {
+  .dnn_check_tie_model(object$.model)
   model <- object$.model
   ranks <- if (is.list(model)) model$ranks else NULL
   if (is.null(ranks) && is.list(model)) ranks <- model$geometry$ranks

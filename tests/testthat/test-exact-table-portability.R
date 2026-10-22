@@ -11,10 +11,10 @@ test_that("exact rank tables use the same represented law in both engines", {
       if (!is.function(cpp)) next
       options(RdistNN.use_compiled = TRUE)
       b <- rank_weight_eval(rank_weight_dnn_exact(k, s), seq_len(n))
-      expect_identical(a, b)
-      expect_identical(a, cpp(n, k, s))
+      .expect_identical_fast(a, b)
+      .expect_identical_fast(a, cpp(n, k, s))
       expect_equal(.compensated_sum_R(a), 1, tolerance = 2e-15)
-      if (k == s) expect_identical(a, rep(1 / n, n))
+      if (k == s) .expect_identical_fast(a, rep(1 / n, n))
     }
   }
 })
@@ -59,6 +59,6 @@ test_that("near-full subsets retain their analytic near-uniform law", {
   a <- rank_weight_eval(rank_weight_dnn_exact(k, s), seq_len(n))
   options(RdistNN.use_compiled = TRUE)
   b <- rank_weight_eval(rank_weight_dnn_exact(k, s), seq_len(n))
-  expect_identical(a, b)
+  .expect_identical_fast(a, b)
   expect_equal(a, oracle, tolerance = 3e-15)
 })

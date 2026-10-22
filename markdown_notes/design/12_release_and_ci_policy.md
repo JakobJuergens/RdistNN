@@ -19,6 +19,12 @@ The compiled matrix covers Linux x86-64, Windows x86-64, macOS arm64 and macOS
 x86-64; Linux exercises R devel, release and oldrel. Jobs verify actual runner
 architecture against their labels.
 
+Package-build steps allow two concurrent compiler jobs through `MAKEFLAGS`.
+Keep this bound separate from runtime OpenMP/BLAS or future-worker settings.
+Compiler optimization and floating-point flags, platform coverage and numerical
+acceptance requirements stay the same. Do not cache package test results or
+reuse native objects across incompatible compiler/R configurations.
+
 ## What CI protects
 
 CI checks portability, compiled/fallback parity, generated-file consistency and

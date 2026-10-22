@@ -47,7 +47,10 @@ sample vectors.}
 
 \item{distance}{Existing distance specification, registered name or function.
 Geometry is frozen across deletions. Exact distance ties use original
-covariates lexicographically; identical covariate rows use input position.}
+covariates lexicographically. Identical raw covariate rows share averaged
+rank-weight mass, including each deletion's surviving block. This
+permutation-invariant modification is outside the paper's theory and
+warns. Distinct vectors at equal distance are not averaged.}
 
 \item{method}{One of "exact" or "asymp", as in \code{\link[=cate_dnn]{cate_dnn()}} and \code{\link[=np_dnn]{np_dnn()}}.}
 

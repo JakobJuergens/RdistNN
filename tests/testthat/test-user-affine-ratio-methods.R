@@ -41,7 +41,7 @@ test_that("ratio summaries retain undefined and degenerate targets without fabri
   expect_equal(tab$components$denominator_se, vapply(f$component_vcov, function(v) sqrt(v[2L, 2L]), numeric(1L)))
   expect_output(ret <- withVisible(print(f)), "zero_denominator")
   expect_false(ret$visible)
-  expect_identical(ret$value, f)
+  .expect_identical_fast(ret$value, f)
   expect_output(ret <- withVisible(print(tab)), "zero_denominator")
   expect_false(ret$visible)
   degenerate <- .ratio_fixture(numerator = 4 * c(1, -1, 2, 1))

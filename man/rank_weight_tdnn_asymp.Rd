@@ -26,6 +26,18 @@ rank table from \code{tdnn_rank_table_asymp()}.  Structurally identical to
 evaluated across the full rank grid. Combined entries can be zero through
 signed cancellation or numeric underflow.
 }
+\section{Numerical limits}{
+
+Asymptotic intervals use host Beta probabilities. At subnormal scales,
+endpoint rounding can erase an interval or change its zero/nonzero support;
+R and the Stata companion can disagree. Signed TDNN combinations can amplify
+component rounding. These extreme-tail limitations remain unresolved.
+Normalization or switching the R/compiled deletion engine does not recover
+probability mass already lost during table construction. Exact and
+asymptotic weights are different constructions; changing the method changes
+the localization rule.
+}
+
 \examples{
 rw <- rank_weight_tdnn_asymp(s1 = 3L, s2 = 6L, dim = 2L)
 R <- matrix(c(2L, 1L, 3L, 4L, 5L, 6L,

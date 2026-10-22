@@ -52,13 +52,14 @@
     se <- if (identical(jackknife, "fast")) {
       spec <- .np_dnn_rank_weight_spec(method = method, k = k, s = s, normalize = normalize)
       loo <- if (is.null(tab_jk)) {
-        .dnn_loo_loop(y_vec, ranks, spec, center = TRUE)
+        .dnn_loo_loop(y_vec, ranks, spec, center = TRUE, groups = .dnn_duplicate_groups(x_mat))
       } else {
         .dnn_loo_centered(
           y_vec,
           ranks,
           tab_jk,
-          tab_full = attr(tab_jk, "tab_full", exact = TRUE)
+          tab_full = attr(tab_jk, "tab_full", exact = TRUE),
+          groups = .dnn_duplicate_groups(x_mat)
         )$loo
       }
       as.numeric(.dnn_jackknife_se_from_loo(
@@ -157,8 +158,8 @@
       )
     },
     se_fn = se_fn,
-    ctx = list(k = k),
-    precomputed = if (reuse_default) .np_dnn_grid_default_precomputed(
+    ctx = list(k = k, groups = .dnn_duplicate_groups(x_mat)),
+    precomputed = if (reuse_default && !anyDuplicated(.dnn_duplicate_groups(x_mat))) .np_dnn_grid_default_precomputed(
       candidates = candidates,
       mu_hat = mu_hat,
       se_hat = se_hat,

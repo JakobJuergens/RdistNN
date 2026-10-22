@@ -199,8 +199,22 @@ ratio_confidence_set <- function(
     diagonal <- .ratio_pow2(diag(V), -2 * powers)
     off <- .ratio_pow2(V[1L, 2L], -sum(powers))
     rho <- off / sqrt(diagonal[1L]) / sqrt(diagonal[2L])
-    if (!is.finite(rho) || abs(rho) > 1 + tol) .abort_bad_arg(arg, "must be positive semidefinite")
-    if (abs(rho) > 1) status <- "near_psd_boundary"
+    if (!is.finite(rho)) .abort_bad_arg(arg, "must be positive semidefinite")
+    # Normalization bounds the diagonal entries near one. Rounded square
+    # roots/divisions can hide a negative determinant or put an exact singular
+    # covariance just above rho=1. Certify the represented products inside
+    # that rounding envelope, without discarding either product's residual.
+    boundary <- abs(abs(rho) - 1) <= 8 * .Machine$double.eps
+    if (!boundary && abs(rho) > 1 + tol) .abort_bad_arg(arg, "must be positive semidefinite")
+    negative <- if (boundary) {
+      !.exact_sum_products_nonnegative(c(diagonal[1L], off), c(diagonal[2L], -off))
+    } else {
+      abs(rho) > 1
+    }
+    if (negative) {
+      if (tol == 0 || abs(rho) > 1 + tol) .abort_bad_arg(arg, "must be positive semidefinite")
+      status <- "near_psd_boundary"
+    }
   }
   list(covariance = V, status = status)
 }

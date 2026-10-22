@@ -32,7 +32,7 @@
 #'
 #' Three views of the localization weights stored on a fitted object.
 #' `type = "profile"` draws weight against rank with a guide at the exact
-#' finite-population support edge `n - s + k` for DNN fits (`n - s + 1` in
+#' nominal unaveraged rank-table support edge `n - s + k` for DNN fits (`n - s + 1` in
 #' the paper-default `k = 1` case); `type = "cumulative"` draws the
 #' cumulative weight share with guides at 0.5 and 0.9 and markers at the
 #' top-1/5/10 shares; `type = "kernel"` draws weight against stored distance
@@ -48,14 +48,18 @@
 #'   (stored by default; `type = "kernel"` additionally requires stored
 #'   distances via `return = c("W", "dx")`).
 #' @param type One of `"profile"`, `"cumulative"`, or `"kernel"`.
-#' @param targets Optional integer vector of target ids to display.
+#' @param targets Optional integer vector of target ids to display, including
+#'   target-specific profiles when comparing candidates.
 #' @param log_weights Logical (default `FALSE`); for rank-domain views,
 #'   drop non-positive weights and use a log10 y scale (the number of
 #'   dropped weights is reported in the caption).
 #' @param candidates Candidate rows to compare for grid fits. The default
 #'   `"default"` preserves the stored weight-matrix display. Use `"all"` or
 #'   a character vector of candidate ids with `type = "profile"` to compare
-#'   rank-weight profiles without refitting.
+#'   weight profiles without refitting. Duplicate-covariate block averaging
+#'   can make these profiles vary by target; the selected target profiles are
+#'   shown in separate panels. Untied default profiles coincide across targets
+#'   and are shown once unless `targets` is explicitly supplied.
 #' @param ... Ignored; reserved for future options.
 #'
 #' @return A ggplot object.
@@ -79,12 +83,14 @@ plot_weights <- function(object,
                          log_weights = FALSE,
                          candidates = "default",
                          ...) {
+  .dnn_reuse_scope(object)
   .plot_require_ggplot2("plot_weights")
   type <- match.arg(type)
   if (!.plot_candidates_is_default(candidates)) {
     return(.plot_weights_candidates(
       object = object,
       type = type,
+      targets = targets,
       log_weights = log_weights,
       candidates = candidates
     ))
@@ -134,6 +140,10 @@ plot_weights <- function(object,
   support_edge <- .dnn_profile_support_edge(object, n = n)
 
   if (type == "profile") {
+    if (!is.na(support_edge) && !is.null(object$.model$x_mat) &&
+        anyDuplicated(.dnn_duplicate_groups(object$.model$x_mat))) {
+      captions <- c(captions, "dotted guide: nominal rank-table edge before duplicate-block averaging")
+    }
     if (isTRUE(log_weights)) {
       dropped <- sum(dw$weight <= 0)
       dw <- dw[dw$weight > 0, , drop = FALSE]
@@ -195,7 +205,7 @@ plot_weights <- function(object,
   p + .rdistnn_theme()
 }
 
-.plot_weights_candidates <- function(object, type, log_weights, candidates) {
+.plot_weights_candidates <- function(object, type, log_weights, candidates, targets = NULL) {
   if (!identical(type, "profile")) {
     .abort_bad_arg(
       "type",
@@ -209,7 +219,8 @@ plot_weights <- function(object,
   payload <- .plot_candidate_weight_frame(
     object = object,
     candidates = candidates,
-    fn = "plot_weights"
+    fn = "plot_weights",
+    targets = targets
   )
   dw <- payload$data
   captions <- character(0)
@@ -229,6 +240,11 @@ plot_weights <- function(object,
     captions <- c(captions, payload$drop_caption)
   }
 
+  if ("target_id" %in% names(dw)) {
+    dw$profile_group <- interaction(dw$candidate_id, dw$target_id)
+  } else {
+    dw$profile_group <- dw$candidate_id
+  }
   p <- ggplot2::ggplot(
     dw,
     ggplot2::aes(
@@ -237,10 +253,11 @@ plot_weights <- function(object,
       colour = .data$candidate_label,
       linetype = .data$candidate_label,
       linewidth = .data$default_linewidth,
-      group = .data$candidate_id
+      group = .data$profile_group
     )
   ) +
     ggplot2::geom_step()
+  if ("target_id" %in% names(dw)) p <- p + ggplot2::facet_wrap(~target_id)
   if (signed && !isTRUE(log_weights)) {
     p <- p + ggplot2::geom_hline(yintercept = 0, linetype = "dashed")
   }

@@ -26,6 +26,17 @@ matrix-route `X` or `Y`. CATE allows `data` plus `pseudo_outcome`, but not `X`.
 `.dnn_validate_input_route()` checks conflicts before canonicalization. Paired
 ratios/CLATE retain strict column/direct signal exclusivity.
 
+PLQR uses either `data` with selectors or direct `X`, `Y`, `D`, `g` and `mD`.
+Its direct `density` vector is allowed with either route; `density_col`
+requires `data`, and those density inputs are mutually exclusive.
+
+Shared batch evaluators preserve `n x m` distance/rank-weight matrices when
+either dimension is one. Custom batch callbacks must return actual matrices;
+scalar adapters assemble validated columns. Distance setup runs once per batch
+when context is absent. Scalar scores return one finite numeric value per
+subset. Analytic batch gradients have exactly two dimensions, `K x p`; a
+length-`K` vector is accepted only for `p = 1` and canonicalized to a matrix.
+
 ## Results
 
 Successful high-level calls return classed objects with stable estimates,
