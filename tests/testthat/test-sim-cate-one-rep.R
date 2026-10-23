@@ -300,3 +300,72 @@ test_that("simulation method rows require the current explicit status and schema
   row$status <- "failed"
   expect_identical(validate(row)$status, "failed")
 })
+
+test_that("estimated CATE simulation signals honor a requested tiny clip", {
+  restore_rng <- .rdistnn_rng_restore()
+  on.exit(restore_rng(), add = TRUE)
+  RNGkind("Mersenne-Twister", "Inversion", "Rejection")
+  clip <- 1e-10
+  cases <- list(
+    list(method = "dnn_fullsample", n = 8L, seed = 1L, s = 3L),
+    list(method = "dnn_crossfit", n = 24L, seed = 3L, s = 4L)
+  )
+  for (case in cases) {
+    # Restart the actual data-then-fold stream. These small samples deliberately
+    # produce separated propensity fits, so suppress their expected GLM warnings.
+    set.seed(case$seed)
+    dgp <- sim_cate_data("dgp3_sparse_overlap", n = case$n, kx = 2L,
+      seed = NULL, clip = clip)
+    dat <- dgp$data
+    x_cols <- c("X1", "X2")
+    if (case$method == "dnn_fullsample") {
+      nuis <- suppressWarnings(.test_fit_aipw_nuisances(dat, x_cols, clip = clip))
+    } else {
+      fold_ids <- sample(rep_len(1:4, case$n))
+      nuis <- list(e_hat = numeric(case$n), m0_hat = numeric(case$n),
+        m1_hat = numeric(case$n))
+      for (fold in 1:4) {
+        test <- fold_ids == fold
+        trained <- suppressWarnings(.test_fit_aipw_nuisances(
+          dat, x_cols, train = !test, clip = clip))
+        for (name in names(nuis)) nuis[[name]][test] <- trained[[name]][test]
+      }
+    }
+    expect_true(any(nuis$e_hat < 1e-8 | nuis$e_hat > 1 - 1e-8))
+    # Independent score formula uses the requested-clipped predictions directly;
+    # the old generic test score helper imposes its own 1e-8 floor.
+    signal <- nuis$m1_hat - nuis$m0_hat +
+      dat$D * (dat$Y - nuis$m1_hat) / nuis$e_hat -
+      (1 - dat$D) * (dat$Y - nuis$m0_hat) / (1 - nuis$e_hat)
+    expected <- cate_dnn(X = as.matrix(dat[, x_cols]), x0 = dgp$x0,
+      pseudo_outcome = signal, k = 1L, s = case$s, se = TRUE)
+    actual <- suppressWarnings(sim_cate_one_rep(
+      n = case$n, kx = 2L, k = 1L, s = case$s,
+      design = "dgp3_sparse_overlap", methods = case$method,
+      seed = case$seed, clip = clip, n_folds = 4L))
+    expect_identical(actual$status, "ok")
+    expect_equal(actual$tau_hat, expected$tau, tolerance = 1e-12)
+    expect_equal(actual$se, expected$se, tolerance = 1e-12)
+  }
+})
+
+test_that("invalid CATE cross-fit fold counts propagate argument errors", {
+  for (folds in c(0, .5, 2.5, 41)) {
+    expect_error(sim_cate_one_rep(
+      n = 40L, kx = 2L, k = 1L, s = 4L,
+      design = "dgp2_nonlinear", methods = c("dnn_oracle", "dnn_crossfit"),
+      seed = 42L, n_folds = folds), "n_folds", class = "rdistnn_input_error")
+  }
+})
+
+test_that("CATE cross-fitting accepts two folds through leave-one-out folds", {
+  for (folds in c(2L, 24L)) {
+    actual <- sim_cate_one_rep(
+      n = 24L, kx = 2L, k = 1L, s = 4L,
+      design = "dgp1_linear", methods = "dnn_crossfit",
+      seed = 42L, n_folds = folds)
+    expect_identical(actual$status, "ok")
+    expect_true(is.finite(actual$tau_hat))
+    expect_true(is.finite(actual$se) && actual$se > 0)
+  }
+})

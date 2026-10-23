@@ -66,7 +66,7 @@ check_scaled_arithmetic <- function(X, X0, metric, rule, scale_vec = NULL,
       ordered <- do.call(orderer, c(list(X, X0[q, ], rule = rule,
                                        scale_vec = scale_vec, eps = 1e-8), flags))
       expect_equal(dx, native[, q], tolerance = 1e-14)
-      expect_identical(.tie_reference_order(dx, X), native_order$ord)
+      expect_identical(.tie_reference_order(dx), native_order$ord)
       expect_equal(ordered$dx, native[, q], tolerance = 1e-14)
       expect_identical(ordered$ord, native_order$ord)
     }
@@ -140,7 +140,7 @@ test_that("unscaled ranks use the same coordinate accumulation as native code", 
         expect_identical(order(dx, seq_along(dx)), 1:2)
         ordered <- do.call(get(paste0("order_by_", metric)),
                            c(list(X, X0[1L, ]), flags))
-        expect_identical(ordered$ord, 2:1)
+        expect_identical(ordered$ord, 1:2)
       }
     }
   }

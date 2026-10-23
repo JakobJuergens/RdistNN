@@ -18,13 +18,13 @@ utils::globalVariables(".data")
 
 .plot_require_ggplot2 <- function(fn) {
   if (!.plot_pkg_installed("ggplot2")) {
-    .abort_bad_state(sprintf(
+    .dnn_abort("dependency_missing", sprintf(
       "%s() requires the suggested package 'ggplot2'; install it with install.packages(\"ggplot2\").",
       fn
     ))
   }
   if (.plot_pkg_version("ggplot2") < "3.4.1") {
-    .abort_bad_state(sprintf(
+    .dnn_abort("dependency_missing", sprintf(
       "%s() requires ggplot2 >= 3.4.1; installed version is %s. Update with install.packages(\"ggplot2\").",
       fn, .plot_pkg_version("ggplot2")
     ))
@@ -60,11 +60,17 @@ utils::globalVariables(".data")
   }
 
   if (!is.null(x_var)) {
+    if (length(x_var) != 1L ||
+        !(is.numeric(x_var) || is.character(x_var)) ||
+        anyNA(x_var)) {
+      .abort_bad_arg("x_var", "must be one coordinate name or a positive integer coordinate index")
+    }
     if (length(x0_cols) == 0L) {
       .abort_bad_arg("x_var", "was supplied, but the fit stores no target coordinates")
     }
     if (is.numeric(x_var)) {
-      col <- sprintf("x0_%d", as.integer(x_var))
+      index <- .validate_index_vector(x_var, length(x0_cols), "x_var", label = "coordinate indices")
+      col <- sprintf("x0_%d", index)
     } else if (!is.null(x0_names) && x_var %in% x0_names) {
       col <- sprintf("x0_%d", match(x_var, x0_names))
     } else {
@@ -220,6 +226,8 @@ utils::globalVariables(".data")
     }, character(1L))
     paste(parts, collapse = ", ")
   }, character(1L))
+  repeated <- duplicated(labs) | duplicated(labs, fromLast = TRUE)
+  labs[repeated] <- sprintf("%s [target %d]", labs[repeated], ids[repeated])
   stats::setNames(labs, ids)
 }
 
@@ -241,11 +249,7 @@ utils::globalVariables(".data")
       quoted = FALSE
     )
   }
-  if (!is.list(grid) || !is.data.frame(grid$candidates) ||
-      !is.data.frame(grid$estimates) || !is.data.frame(grid$diagnostics)) {
-    .abort_bad_state("`object$tuning_grid` is malformed.")
-  }
-  grid
+  .candidate_grid_payload(object)
 }
 
 .plot_format_candidate_value <- function(x) {
@@ -317,6 +321,10 @@ utils::globalVariables(".data")
       "must be \"default\", \"all\", or a character vector of candidate ids",
       quoted = FALSE
     )
+  }
+  for (id in rows$candidate_id[as.character(rows$status) == "ok"]) {
+    row <- .candidate_resolve_row(object, id)
+    .candidate_estimates(object, row)
   }
   .plot_order_candidates(rows)
 }
@@ -396,7 +404,9 @@ utils::globalVariables(".data")
   ), , drop = FALSE]
 }
 
-.plot_candidate_estimates_frame <- function(object, candidates, level, fn) {
+.plot_candidate_estimates_frame <- function(object, candidates, level, fn,
+                                            quantity = c("moment", "theta"), ...) {
+  if (inherits(object, "plqr_result")) quantity <- match.arg(quantity)
   grid <- .plot_require_grid(object, fn = fn)
   selected <- .plot_resolve_candidates(object, candidates = candidates, fn = fn)
   ok <- .plot_ok_candidates(selected)
@@ -417,7 +427,7 @@ utils::globalVariables(".data")
   ), , drop = FALSE]
   rows$.candidate_order <- NULL
   idx <- match(rows$candidate_id, ok$candidate_id)
-  z <- stats::qnorm(1 - (1 - .validate_scalar_prob(level, arg = "level")) / 2)
+  z <- .dnn_normal_critical(level)
   out <- data.frame(
     candidate_id = rows$candidate_id,
     candidate_label = ok$candidate_label[idx],
@@ -433,11 +443,20 @@ utils::globalVariables(".data")
     reason = rows$reason,
     stringsAsFactors = FALSE
   )
+  if (inherits(object, "plqr_result") && identical(quantity, "theta")) {
+    # PLQR grids retain moment uncertainty only. Supplied coefficients are
+    # the same values at each candidate; moment SEs cannot accompany them.
+    component <- match(rows$component, rownames(object$moment))
+    theta <- as.matrix(object$theta)
+    out$estimate <- as.numeric(theta[cbind(component, rows$target_id)])
+    out$coef <- rownames(theta)[component]
+    out$se <- NA_real_
+  }
   out$ci_lower <- out$estimate - z * out$se
   out$ci_upper <- out$estimate + z * out$se
   if (inherits(object, "affine_ratio_result")) {
     wald_ok <- rows$wald_available
-    critical <- stats::qnorm((1 - level) / 2, lower.tail = FALSE)
+    critical <- .dnn_normal_critical(level)
     out$ci_lower <- out$ci_upper <- NA_real_
     out$ci_lower[wald_ok] <- out$estimate[wald_ok] - critical * out$se[wald_ok]
     out$ci_upper[wald_ok] <- out$estimate[wald_ok] + critical * out$se[wald_ok]
@@ -452,6 +471,7 @@ utils::globalVariables(".data")
     levels = c("candidate", "default")
   )
   attr(out, "level") <- level
+  if (inherits(object, "plqr_result")) attr(out, "quantity") <- quantity
   list(
     data = .plot_order_candidate_frame(out),
     drop_caption = .plot_candidate_drop_caption(selected),
@@ -472,8 +492,8 @@ utils::globalVariables(".data")
   }
   ranks <- .candidate_cached_ranks(object)
   n <- nrow(ranks)
-  groups <- if (is.null(object$.model$x_mat)) NULL else .dnn_duplicate_groups(object$.model$x_mat)
-  separate_targets <- anyDuplicated(groups) || !is.null(targets)
+  groups <- object$.model$groups
+  separate_targets <- .dnn_has_ties(groups) || !is.null(targets)
   target_ids <- 1L
   if (separate_targets) {
     candidates_all <- .candidate_grid_payload(object)$candidates
@@ -488,10 +508,10 @@ utils::globalVariables(".data")
     spec <- .candidate_rank_weight_spec(object, row)
     tab <- .rank_weight_table(spec, n)
     if (is.null(tab)) {
-      ctx <- if (is.list(object$.model)) object$.model$ctx else NULL
+      ctx <- object$.model$ctx
       tab <- rank_weight_eval(spec, seq_len(n), ctx = ctx)
     }
-    W <- .dnn_average_duplicate_weights(matrix(tab[ranks], n, ncol(ranks)), groups)
+    W <- .dnn_average_distance_weights(matrix(tab[ranks], n, ncol(ranks)), groups)
     by_target <- lapply(target_ids, function(j) {
       values <- W[order(ranks[, j]), j]
       total <- sum(values)
@@ -530,6 +550,13 @@ utils::globalVariables(".data")
 
 # Ratio uncertainty may be unavailable despite a requested covariance calculation.
 .plot_estimate_availability_caption <- function(object, data) {
+  if (inherits(object, "plqr_result") && all(is.na(data$se))) {
+    return(if (identical(attr(data, "quantity"), "theta")) {
+      "coefficient standard errors unavailable; moment standard errors do not supply coefficient inference"
+    } else {
+      "no moment standard errors stored"
+    })
+  }
   if (!inherits(object, "affine_ratio_result")) {
     return(if (all(is.na(data$se))) "no standard errors stored (se = FALSE)" else character())
   }

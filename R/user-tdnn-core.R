@@ -8,7 +8,7 @@
 .tdnn_weights_with_extras <- function(
   x_mat, x0_mat, distance, method, s1, s2, dim, normalize, ctx, return
 ) {
-  keep_extras <- intersect(return, c("ranks", "ord", "dx"))
+  keep_extras <- unique(c("ranks", "dx", intersect(return, "ord")))
   if ("neighbors" %in% return) keep_extras <- unique(c(keep_extras, "ranks"))
   wt <- weights_tdnn(
     X         = x_mat,
@@ -22,7 +22,7 @@
     ctx       = ctx,
     return    = unique(c("W", keep_extras))
   )
-  .dnn_warn_degenerate_weights(wt$W)
+  .dnn_warn_degenerate_weights(wt$W, method = "TDNN")
   list(
     wt = wt,
     W  = wt$W,
@@ -65,7 +65,7 @@
   x_mat, x0_mat, signal, distance, method, s1, s2, dim, normalize, ctx,
   signal_arg         = "signal",
   jackknife          = c("fast", "loo"),
-  precomputed_ranks  = NULL
+  precomputed_ranks  = NULL, precomputed_groups = NULL
 ) {
   jackknife <- match.arg(jackknife)
   n <- nrow(x_mat)
@@ -83,8 +83,8 @@
   # ---- fast path: rank-update loop ----------------------------------------
   if (identical(jackknife, "fast")) {
     ranks_full <- precomputed_ranks
-    if (is.null(ranks_full)) {
-      ranks_full <- weights_tdnn(
+    if (is.null(ranks_full) || is.null(precomputed_groups)) {
+      ranking_full <- weights_tdnn(
         X         = x_mat,
         X0        = x0_mat,
         distance  = distance,
@@ -95,7 +95,9 @@
         normalize = normalize,
         ctx       = ctx,
         return    = "ranks"
-      )$ranks
+      )
+      if (is.null(ranks_full)) ranks_full <- ranking_full$ranks
+      precomputed_groups <- ranking_full$groups
     }
 
     ranks_full <- as.matrix(ranks_full)
@@ -113,7 +115,7 @@
     }
 
     loo <- .dnn_loo_centered(sig, ranks_full, .rank_weight_table(rw, n - 1L),
-                              rw = rw, groups = .dnn_duplicate_groups(x_mat))$loo
+      tab_full = .rank_weight_table(rw, n), groups = precomputed_groups)$loo
 
     return(.dnn_jackknife_se_from_loo(loo = loo, q = q, n = n, m = m))
   }
@@ -162,7 +164,7 @@
 .tdnn_jackknife_se_loo_full <- function(
   x_mat, x0_mat, signal, distance, method, s1, s2, dim, normalize, ctx,
   signal_arg        = "signal",
-  precomputed_ranks = NULL
+  precomputed_ranks = NULL, precomputed_groups = NULL
 ) {
   n <- nrow(x_mat)
   if (as.integer(s2) >= n) {
@@ -178,8 +180,8 @@
 
   # Ranks
   ranks_full <- precomputed_ranks
-  if (is.null(ranks_full)) {
-    ranks_full <- weights_tdnn(
+  if (is.null(ranks_full) || is.null(precomputed_groups)) {
+    ranking_full <- weights_tdnn(
       X         = x_mat,
       X0        = x0_mat,
       distance  = distance,
@@ -190,7 +192,9 @@
       normalize = normalize,
       ctx       = ctx,
       return    = "ranks"
-    )$ranks
+    )
+    if (is.null(ranks_full)) ranks_full <- ranking_full$ranks
+    precomputed_groups <- ranking_full$groups
   }
   if (!is.integer(ranks_full)) storage.mode(ranks_full) <- "integer"
 
@@ -208,7 +212,7 @@
   }
 
   loo <- .dnn_loo_centered(sig, ranks_full, wnm1, tab_full = wn,
-                           groups = .dnn_duplicate_groups(x_mat))$loo
+                           groups = precomputed_groups)$loo
 
   .dnn_jackknife_se_from_loo(loo = loo, q = q, n = n, m = m)
 }

@@ -4,12 +4,10 @@
 \alias{plot_tdnn_scales}
 \title{Plot the TDNN two-scale decomposition}
 \usage{
-plot_tdnn_scales(object, X = NULL, Y = NULL, ...)
+plot_tdnn_scales(object, ...)
 }
 \arguments{
 \item{object}{A \code{tdnn_np_result} from \code{\link[=np_tdnn]{np_tdnn()}}.}
-
-\item{X, Y}{Optional training data; used when the fit does not store it.}
 
 \item{...}{Ignored; reserved for future options.}
 }

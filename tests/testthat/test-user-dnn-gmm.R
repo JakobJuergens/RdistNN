@@ -175,3 +175,18 @@ test_that("gmm_dnn multi-target output shape and return warning are stable", {
   expect_equal(length(fit$ess), 2L)
   expect_equal(nrow(fit$convergence), 2L)
 })
+test_that("L-BFGS-B uses its supported objective tolerance control", {
+  X <- matrix(1:8)
+  y <- c(1, 4, 2, 7, 3, 8, 6, 5)
+  model <- new_gmm_model("lbfgsb_tolerance", setup = function(sample, n, ...) list(y = y),
+    moment_obs = function(sample, theta, ctx) matrix(ctx$y - theta[1L]),
+    jacobian_obs = function(sample, theta, ctx) matrix(-1, length(ctx$y)),
+    coef_names = "mean")
+  expect_no_warning(fit <- gmm_dnn(X = X, X0 = matrix(c(.1, 4.1)), model = model,
+    s = 3, optimizer = "L-BFGS-B"))
+  expect_equal(as.numeric(fit$theta), as.numeric(crossprod(y, fit$W)), tolerance = 1e-7)
+  expect_identical(fit$convergence$target, c("target_1", "target_2"))
+  expect_length(fit$convergence$convergence_first, 2L)
+  expect_length(fit$convergence$convergence_second, 2L)
+  expect_identical(fit$meta$optimizer, "L-BFGS-B")
+})

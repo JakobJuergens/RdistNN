@@ -11,18 +11,14 @@
 #' diagnostic for the supplied threshold; the band does not test the full
 #' coefficient moment condition or account for fitted-nuisance uncertainty.
 #'
-#' The below-threshold indicator is stored on the fit; alternatively,
-#' supply `residuals` (`Y - D' theta - g`, length `n`), whose non-positive
-#' entries define the indicator.
+#' The below-threshold indicator is taken from the fit's retained state.
+#' Refit if this indicator is missing or invalid.
 #'
 #' @section Lifecycle:
 #' **Experimental.** The PLQR API and inference interfaces may change.
 #' @param object A `plqr_result` with the weight matrix `W` stored (the
 #'   default).
-#' @param residuals Optional numeric vector of length `n` of quantile
-#'   residuals; used when the fit does not store the indicator.
 #' @param level Confidence level of the reference band (default `0.95`).
-#' @param ... Ignored; reserved for future options.
 #'
 #' @return A ggplot object.
 #'
@@ -42,7 +38,7 @@
 #'   plot_calibration(fit)
 #' }
 #' @export
-plot_calibration <- function(object, residuals = NULL, level = 0.95, ...) {
+plot_calibration <- function(object, level = 0.95) {
   .dnn_reuse_scope(object)
   .plot_require_ggplot2("plot_calibration")
   if (!inherits(object, "plqr_result")) {
@@ -69,33 +65,19 @@ plot_calibration <- function(object, residuals = NULL, level = 0.95, ...) {
   n <- nrow(W)
   model <- object$.model
 
-  below <- if (is.list(model) && !is.null(model$below_threshold)) {
-    model$below_threshold
-  } else if (!is.null(residuals)) {
-    r <- as.numeric(residuals)
-    if (length(r) != n || any(!is.finite(r))) {
-      .abort_bad_arg(
-        "residuals",
-        sprintf("must be a finite numeric vector of length n = %d", n),
-        quoted = FALSE
-      )
-    }
-    as.numeric(r <= 0)
-  } else {
-    .abort_bad_arg(
-      "residuals",
-      paste0(
-        "is required when fitted calibration indicators are unavailable; ",
-        "refit or supply `residuals` (Y - D'theta - g, length n)"
-      ),
-      quoted = FALSE
-    )
+  below <- model$below_threshold
+  if (!is.numeric(below) || is.complex(below) || !is.null(dim(below)) ||
+      length(below) != n || any(!is.finite(below)) || any(!below %in% c(0, 1))) {
+    .abort_bad_state(paste0(
+      "Retained `object$.model$below_threshold` must be a 0/1 numeric vector aligned with the observations. ",
+      "Refit with plqr_dnn()."
+    ))
   }
 
   tau <- object$tau
   share <- as.numeric(crossprod(below, W))
   neff <- 1 / colSums(W^2)
-  z <- stats::qnorm(1 - (1 - level) / 2)
+  z <- .dnn_normal_critical(level)
   half <- z * sqrt(tau * (1 - tau) / neff)
 
   dd <- .plot_diag_frame(object)

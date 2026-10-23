@@ -10,6 +10,7 @@
 }
 
 test_that("GMM weight reporting retains its resolved metric and fitted context", {
+  .with_distance_tie_warning({
   original <- get_distance("l2")
   on.exit(register_distance("l2", original), add = TRUE)
   setup_calls <- 0L
@@ -35,6 +36,7 @@ test_that("GMM weight reporting retains its resolved metric and fitted context",
   expect_identical(plot_data_weights(restored), before)
   expect_identical(plot_data_weights(fit), before)
   expect_identical(setup_calls, 1L)
+  })
 })
 
 test_that("GMM explicit metric contexts remain frozen during weight reporting", {

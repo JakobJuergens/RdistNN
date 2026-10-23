@@ -1,4 +1,6 @@
 import re
+import shutil
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -7,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 POLICY = ROOT / ".github" / "workflows" / "repository-policy.yml"
 ALIGNMENT = ROOT / ".github" / "workflows" / "alignment-guardrails.yaml"
 DESCRIPTION = ROOT / "DESCRIPTION"
+LINT = ROOT / ".github" / "workflows" / "lint-style.yaml"
 
 
 class RepositoryPolicyTests(unittest.TestCase):
@@ -56,3 +59,36 @@ class RepositoryPolicyTests(unittest.TestCase):
 
         alignment = ALIGNMENT.read_text(encoding="utf-8")
         self.assertIn("roxygen2@{}".format(match.group(1)), alignment)
+
+    @unittest.skipUnless(shutil.which("bash"), "bash is required")
+    def test_lint_enforcer_requires_explicit_success_from_both_jobs(self):
+        lines = LINT.read_text(encoding="utf-8").splitlines()
+        step = lines.index("      - name: Fail workflow if any style check failed")
+        run = next(index for index in range(step + 1, len(lines))
+                   if lines[index] == "        run: |")
+        body = []
+        for line in lines[run + 1:]:
+            if line.strip() and not line.startswith("          "):
+                break
+            body.append(line[10:] if line.strip() else "")
+        script = "\n".join(body)
+        self.assertTrue(script.strip(), "lint enforcer has no Bash body")
+
+        for r_lint in ("false", "true", "", "unexpected"):
+            for cxx_style in ("false", "true", "", "unexpected"):
+                with self.subTest(r_lint=r_lint, cxx_style=cxx_style):
+                    rendered = script.replace(
+                        "${{ needs.r-lint.outputs.had_failure }}", r_lint,
+                    ).replace(
+                        "${{ needs.cxx-style.outputs.had_failure }}", cxx_style,
+                    )
+                    self.assertNotIn("${{", rendered, "unresolved workflow expression")
+                    result = subprocess.run(
+                        ["bash", "-c", rendered], capture_output=True, text=True,
+                        timeout=10,
+                    )
+                    self.assertEqual(
+                        result.returncode == 0,
+                        r_lint == cxx_style == "false",
+                        result.stdout + result.stderr,
+                    )

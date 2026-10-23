@@ -15,6 +15,7 @@ test_that("shared covariance recovers finite large and subnormal cross-products"
 })
 
 test_that("shared covariance preserves ordinary identities and adapter scaling", {
+  .with_distance_tie_warning({
   X <- cbind(c(-2, -1, 0, 1, 2, 3), c(1, 2, 1, -1, 0, 2))
   Y <- c(1, -2, 0, 3, -1, 1)
   V <- .covariance_matrix(X, 5 / 6)
@@ -45,6 +46,7 @@ test_that("shared covariance preserves ordinary identities and adapter scaling",
       }
     }
   }
+  })
 })
 
 test_that("shared covariance distinguishes unavailable variance from determinism", {

@@ -20,7 +20,7 @@ test_that("hand fixture returns paired ratio covariance and exact array identiti
 })
 
 test_that("subset enumeration matches full and retained arrays including ties", {
-  .with_duplicate_policy_warnings({
+  .with_localization_policy_warnings({
   for (n in 2:8) for (s in seq_len(n - 1L)) {
     X <- matrix(seq_len(n) %% 3L, ncol = 1L)
     signal <- cbind(seq_len(n)^2 / n, 1 + seq_len(n) / n)
@@ -38,10 +38,11 @@ test_that("subset enumeration matches full and retained arrays including ties", 
 })
 
 test_that("signed and zero denominators retain every target and component covariance", {
-  fit <- affine_ratio_dnn(
+  .with_distance_tie_warning({
+  expect_warning(fit <- affine_ratio_dnn(
     X = matrix(1:4, ncol = 1L), X0 = matrix(c(0, 3, 5), ncol = 1L),
     numerator = c(2, 1, 4, 3), denominator = c(0, 0, -1, 2), s = 3L
-  )
+  ), class = "rdistnn_partial_result_warning")
   expect_equal(fit$status$target_id, 1:3)
   expect_equal(fit$status$ratio_status, c("zero_denominator", "ok", "ok"))
   expect_identical(fit$status$negative_denominator, c(FALSE, TRUE, FALSE))
@@ -52,12 +53,14 @@ test_that("signed and zero denominators retain every target and component covari
   expect_true(all(is.finite(fit$theta[-1L])))
   expect_identical(dim(fit$components), c(3L, 2L))
   expect_identical(dim(fit$x0), c(3L, 1L))
+  })
 })
 
 test_that("affine signal transformations preserve ratio and variance semantics", {
   base <- .ratio_fixture()
   for (a in c(-3, 0, 2)) {
-    fit <- .ratio_fixture(numerator = a * c(2, 1, 4, 3) + 4 * c(1, -1, 2, 1))
+    run <- function() .ratio_fixture(numerator = a * c(2, 1, 4, 3) + 4 * c(1, -1, 2, 1))
+    if (a == 0) expect_warning(fit <- run(), class = "rdistnn_partial_result_warning") else fit <- run()
     expect_equal(fit$theta, a * base$theta + 4)
     expect_equal(fit$theta_vcov[[1L]], a^2 * base$theta_vcov[[1L]], tolerance = 1e-12)
     if (a == 0) {

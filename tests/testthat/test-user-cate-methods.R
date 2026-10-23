@@ -204,15 +204,14 @@ test_that("predict validates fitted model state before computing", {
   bad_psi$.model$psi <- bad_psi$.model$psi[-1L]
   expect_error(
     predict(bad_psi, X0 = obj$X0),
-    "object\\$\\.model\\$psi.*length"
+    "object\\$\\.model\\$psi.*[Rr]efit"
   )
 
   bad_x <- obj$fit
   bad_x$.model$x_mat[1L, 1L] <- Inf
   expect_error(
     predict(bad_x, X0 = obj$X0),
-    "object$.model$x_mat cannot contain non-finite values",
-    fixed = TRUE
+    "localization model state.*[Rr]efit"
   )
 
   bad_k <- obj$fit
@@ -305,7 +304,7 @@ test_that("methods validate level/parm and error on missing model state", {
   fit_no_model$.model <- NULL
   expect_error(
     predict(fit_no_model, X0 = obj$X0),
-    "does not contain fitted model state",
+    "localization model state.*[Rr]efit",
     ignore.case = TRUE
   )
 })

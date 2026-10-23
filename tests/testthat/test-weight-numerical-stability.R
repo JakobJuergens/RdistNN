@@ -2,6 +2,38 @@
 # two-scale coefficient denominator. Decimal literals below were calculated
 # independently with Python Decimal at 100-digit precision.
 
+test_that("selecting every subset neighbor is exactly uniform under either law", {
+  # Summing all s order-statistic densities gives s on [0,1]. Thus every
+  # rank receives 1/n, independently of s, without subtracting rounded CDFs.
+  for (n in c(1L, 7L, 31L, 257L)) {
+    for (s in unique(c(1L, max(1L, n %/% 2L), n))) {
+      ranks <- rev(seq_len(n))
+      uniform <- rep(1 / n, n)
+      for (normalize in c(FALSE, TRUE)) {
+        direct <- dnn_weights_asymp_full_from_ranks(ranks, s, s, normalize)
+        expect_identical(direct$w_rank, uniform)
+        expect_identical(direct$w, uniform)
+        rw <- rank_weight_dnn_asymp(s, s, normalize)
+        expected <- if (normalize) uniform / .compensated_sum(uniform) else uniform
+        expect_identical(rank_weight_eval(rw, ranks), expected)
+        expect_identical(rank_weight_eval_batch(rw, cbind(ranks, rev(ranks))),
+          matrix(expected, nrow = n, ncol = 2L))
+      }
+    }
+    for (normalize in c(FALSE, TRUE)) {
+      expect_identical(.dnn_rank_table_asymp_k1(n, 1L, normalize), rep(1 / n, n))
+    }
+    if (n >= 2L) {
+      # dim=2 and scales (1,2) have coefficients (-1,2). The first component
+      # must retain the same exact uniform identity before signed blending.
+      j <- seq_len(n)
+      second <- .beta_interval_mass((j - 1) / n, j / n, 1L, 2L)
+      expect_identical(tdnn_rank_table_asymp(n, 1L, 2L, 2L, FALSE),
+        -rep(1 / n, n) + 2 * second)
+    }
+  }
+})
+
 test_that("asymptotic DNN and TDNN retain represented right-tail mass", {
   want <- 1.6542999783940550651810050759970065291673e-68
   for (normalize in c(FALSE, TRUE)) {

@@ -30,29 +30,35 @@ test_that("confidence quantiles remain finite at the largest representable level
 })
 
 test_that("ratio summaries retain undefined and degenerate targets without fabricated intervals", {
-  f <- .ratio_fixture(X0 = matrix(c(0, 3, 5), ncol = 1L), x0 = NULL,
-                       denominator = c(0, 0, -1, 2), s = 3L)
-  tab <- summary(f)
+  .with_distance_tie_warning({
+  expect_warning(f <- .ratio_fixture(X0 = matrix(c(0, 3, 5), ncol = 1L), x0 = NULL,
+                       denominator = c(0, 0, -1, 2), s = 3L), class = "rdistnn_partial_result_warning")
+  expect_warning(tab <- summary(f), class = "rdistnn_partial_result_warning")
   expect_s3_class(tab, "summary.affine_ratio_result")
   expect_type(tab, "list")
   expect_equal(tab$status$target_id, 1:3)
   expect_true(is.na(tab$coefficients$estimate[1L]))
-  expect_true(all(is.na(confint(f)[1L, ])))
+  expect_warning(ci <- confint(f), class = "rdistnn_partial_result_warning")
+  expect_true(all(is.na(ci[1L, ])))
   expect_equal(tab$components$denominator_se, vapply(f$component_vcov, function(v) sqrt(v[2L, 2L]), numeric(1L)))
-  expect_output(ret <- withVisible(print(f)), "zero_denominator")
+  expect_warning(expect_output(ret <- withVisible(print(f)), "zero_denominator"),
+    class = "rdistnn_partial_result_warning")
   expect_false(ret$visible)
   .expect_identical_fast(ret$value, f)
   expect_output(ret <- withVisible(print(tab)), "zero_denominator")
   expect_false(ret$visible)
-  degenerate <- .ratio_fixture(numerator = 4 * c(1, -1, 2, 1))
+  expect_warning(degenerate <- .ratio_fixture(numerator = 4 * c(1, -1, 2, 1)),
+    class = "rdistnn_partial_result_warning")
   expect_equal(degenerate$se, 0)
-  expect_true(all(is.na(confint(degenerate))))
+  expect_warning(ci <- confint(degenerate), class = "rdistnn_partial_result_warning")
+  expect_true(all(is.na(ci)))
   no_cov <- .ratio_fixture(se = FALSE)
   point_table <- summary(no_cov)
   expect_equal(point_table$coefficients$estimate, no_cov$theta)
   expect_true(all(is.na(point_table$coefficients$std.error)))
   expect_error(vcov(no_cov), "covariance")
   expect_error(confint(no_cov), "covariance")
+  })
 })
 
 test_that("prediction relocalizes frozen arrays and survives serialization", {
@@ -102,4 +108,30 @@ test_that("numeric reporting selectors retain column identity for newdata", {
   saveRDS(fit, path)
   expect_equal(predict(readRDS(path), newdata = data.frame(x = 0), se.fit = TRUE),
                list(fit = 4, se.fit = sqrt(34)))
+})
+
+test_that("ratio reuse requires retained normalization controls", {
+  fit <- .ratio_fixture(method = "asymp", normalize = FALSE)
+  expect_equal(predict(fit, x0 = 0), fit$theta)
+  expect_equal(diagnostics(fit)$n_eff, fit$neff)
+  for (normalize in list(NULL, NA, 1, logical(), c(TRUE, FALSE))) {
+    bad <- fit
+    bad$.model$normalize <- normalize
+    expect_error(predict(bad, x0 = 0), "normalize.*[Rr]efit")
+    expect_error(diagnostics(bad), "normalize.*[Rr]efit")
+  }
+})
+
+test_that("ratio reuse requires retained jackknife controls and supports point-only uncertainty", {
+  fit <- .ratio_fixture()
+  for (jackknife in list(NULL, NA_character_, "retired", character(),
+                        c("fast", "loo"), 1)) {
+    bad <- fit
+    bad$meta$jackknife <- jackknife
+    expect_error(predict(bad, x0 = 0), "jackknife.*[Rr]efit")
+    expect_error(diagnostics(bad), "jackknife.*[Rr]efit")
+  }
+  point <- .ratio_fixture(se = FALSE)
+  expect_identical(point$meta$jackknife, "none")
+  expect_equal(predict(point, x0 = 0, se.fit = TRUE)$se.fit, .ratio_fixture()$se)
 })

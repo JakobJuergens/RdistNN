@@ -1,13 +1,90 @@
-.abort_bad_arg <- function(arg, msg, expected = NULL, actual = NULL, quoted = TRUE) {
-  arg_lbl <- if (isTRUE(quoted)) sprintf("`%s`", arg) else as.character(arg)
-  parts <- c(sprintf("%s %s.", arg_lbl, msg))
-  if (!is.null(expected)) parts <- c(parts, sprintf("Expected: %s.", expected))
-  if (!is.null(actual)) parts <- c(parts, sprintf("Got: %s.", actual))
-  stop(paste(parts, collapse = " "), call. = FALSE)
+# Only bounded descriptions belong in conditions. Never retain a failing array,
+# fitted object or call environment merely to format a diagnostic.
+.dnn_brief <- function(x, limit = 80L) {
+  x <- encodeString(as.character(x), quote = "")
+  long <- nchar(x, type = "chars") > limit
+  x[long] <- paste0(substr(x[long], 1L, limit - 3L), "...")
+  x
 }
 
-.abort_bad_state <- function(msg) {
-  stop(msg, call. = FALSE)
+.dnn_message_examples <- function(examples) {
+  if (is.null(examples)) return(list(values = NULL, text = NULL))
+  values <- .dnn_brief(utils::head(examples, 5L))
+  omitted <- length(examples) - length(values)
+  text <- paste(values, collapse = ", ")
+  if (omitted > 0L) text <- sprintf("%s (%d more)", text, omitted)
+  list(values = values, text = text)
+}
+
+# The dynamic scope is installed at a public orchestration boundary and dies
+# with that operation. Numerical loops do not look it up or signal conditions.
+.dnn_reporting_scope <- function() {
+  for (frame in rev(sys.frames())) {
+    if (exists("..dnn_distance_warning_scope", envir = frame, inherits = FALSE)) {
+      scope <- get("..dnn_distance_warning_scope", envir = frame, inherits = FALSE)
+      if (is.environment(scope)) return(scope)
+    }
+  }
+  NULL
+}
+
+.dnn_abort <- function(code, message, argument = NULL, expected = NULL, actual = NULL,
+                       hint = NULL, parent = NULL) {
+  families <- c(argument_invalid = "rdistnn_input_error", state_invalid = "rdistnn_state_error",
+    extra_unavailable = "rdistnn_extra_unavailable", dependency_missing = "rdistnn_dependency_error",
+    engine_unavailable = "rdistnn_engine_error", numerical_range = "rdistnn_numerical_error",
+    candidate_failure = "rdistnn_candidate_failure", callback_invalid = "rdistnn_callback_error",
+    internal_invariant = "rdistnn_internal_error")
+  family <- unname(families[code])
+  family <- family[!is.na(family)]
+  hint <- if (is.null(hint)) NULL else .dnn_brief(hint, 240L)
+  cnd <- structure(list(message = paste(c(message, hint), collapse = " "), call = NULL,
+    code = code, argument = if (is.null(argument)) NULL else .dnn_brief(argument),
+    expected = if (is.null(expected)) NULL else .dnn_brief(expected),
+    actual = if (is.null(actual)) NULL else .dnn_brief(actual), hint = hint,
+    parent = if (is.null(parent)) NULL else list(message = .dnn_brief(conditionMessage(parent), 240L),
+      class = utils::head(class(parent), 5L))),
+    class = c(family, "rdistnn_error", "error", "condition"))
+  stop(cnd)
+}
+
+.dnn_warn <- function(code, message, affected = NULL, examples = NULL, hint = NULL) {
+  scope <- .dnn_reporting_scope()
+  if (!is.null(scope)) {
+    if (code %in% scope$emitted) return(invisible(NULL))
+    scope$emitted <- c(scope$emitted, code)
+  }
+  details <- .dnn_message_examples(examples)
+  hint <- if (is.null(hint)) NULL else .dnn_brief(hint, 240L)
+  cnd <- structure(list(message = paste(c(message,
+    if (length(details$values)) paste0("First affected: ", details$text, "."), hint), collapse = " "),
+    call = NULL, code = code, affected = affected, examples = details$values, hint = hint),
+    class = c(paste0("rdistnn_", code, "_warning"), "rdistnn_warning", "warning", "condition"))
+  warning(cnd)
+  invisible(NULL)
+}
+
+.abort_bad_arg <- function(arg, msg, expected = NULL, actual = NULL, quoted = TRUE) {
+  arg_lbl <- if (isTRUE(quoted)) sprintf("`%s`", .dnn_brief(arg)) else .dnn_brief(arg)
+  parts <- c(sprintf("%s %s.", arg_lbl, msg))
+  if (!is.null(expected)) parts <- c(parts, sprintf("Expected: %s.", .dnn_brief(expected)))
+  if (!is.null(actual)) parts <- c(parts, sprintf("Got: %s.", .dnn_brief(actual)))
+  .dnn_abort("argument_invalid", paste(parts, collapse = " "), argument = arg,
+    expected = expected, actual = actual)
+}
+
+.abort_bad_state <- function(msg, code = "validation_failed", hint = NULL) {
+  .dnn_abort(code, msg, hint = hint)
+}
+
+# Reuse the ordinary validators at a retained-state owner, while distinguishing
+# corruption from a new bad argument. Only owned input validation is translated;
+# interruptions, resource failures and unexpected errors keep their identity.
+.dnn_validate_retained <- function(code) {
+  tryCatch(code, rdistnn_input_error = function(e) {
+    .dnn_abort("state_invalid", conditionMessage(e),
+      hint = "Refit with the current estimator before reusing this fit.", parent = e)
+  })
 }
 
 .abort_bad_length <- function(arg, relation, expected = NULL, actual = NULL, quoted = TRUE) {
@@ -46,7 +123,7 @@
   x_int <- as.integer(x)
   if (x_int < as.integer(min)) {
     if (as.integer(min) == 1L) {
-      .abort_bad_arg(arg, "must be a positive integer")
+      .abort_bad_arg(arg, "must be a positive integer", expected = "an integer >= 1", actual = x_int)
     }
     .abort_bad_arg(arg, sprintf("must be >= %d", as.integer(min)))
   }
@@ -98,14 +175,14 @@
     .abort_bad_arg(arg, sprintf("must have at least %d column(s)", min_cols))
   }
   .abort_if_na_or_nonfinite(x_mat, arg = arg)
-  if (any(x_mat != as.integer(x_mat))) {
+  if (any(x_mat != trunc(x_mat)) || any(x_mat > .Machine$integer.max)) {
     .abort_bad_arg(arg, "must contain integer indices")
+  }
+  if (any(x_mat < 1)) {
+    .abort_bad_arg(arg, "indices must be >= 1")
   }
   x_int <- matrix(as.integer(x_mat), nrow = nrow(x_mat), ncol = ncol(x_mat))
   dimnames(x_int) <- dimnames(x_mat)
-  if (any(x_int < 1L)) {
-    .abort_bad_arg(arg, "indices must be >= 1")
-  }
   x_int
 }
 
@@ -282,15 +359,15 @@
       .abort_bad_arg("idxs", sprintf("must have %d elements (order s)", s))
     }
     .abort_if_na_or_nonfinite(idxs_num, arg = "idxs")
-    if (any(idxs_num != as.integer(idxs_num))) {
+    if (any(idxs_num != trunc(idxs_num))) {
       .abort_bad_arg("idxs", "must contain integer indices")
+    }
+    if (any(idxs_num < 1 | idxs_num > n)) {
+      .abort_bad_arg("idxs", "must lie in 1..n")
     }
     idxs <- as.integer(idxs_num)
     if (length(idxs) != s) {
       .abort_bad_arg("idxs", sprintf("must have %d elements (order s)", s))
-    }
-    if (any(idxs < 1L | idxs > n)) {
-      .abort_bad_arg("idxs", "must lie in 1..n")
     }
     if (isTRUE(unique_within_subset) && anyDuplicated(idxs)) {
       .abort_bad_arg("idxs", "must not contain duplicated indices")
@@ -309,14 +386,14 @@
     .abort_bad_arg("subs", "must be a numeric or integer matrix of indices")
   }
   .abort_if_na_or_nonfinite(subs, arg = "subs")
-  if (any(subs != as.integer(subs))) {
+  if (any(subs != trunc(subs))) {
     .abort_bad_arg("subs", "must contain integer indices")
+  }
+  if (any(subs < 1 | subs > n)) {
+    .abort_bad_arg("subs", "indices must lie in 1..n")
   }
   if (!is.integer(subs)) {
     storage.mode(subs) <- "integer"
-  }
-  if (any(subs < 1L | subs > n)) {
-    .abort_bad_arg("subs", "indices must lie in 1..n")
   }
   if (isTRUE(unique_within_subset) && any(apply(subs, 1L, function(row) anyDuplicated(row) > 0L))) {
     .abort_bad_arg("subs", "each row must not contain duplicated indices")
@@ -330,16 +407,15 @@
   }
   ranks_num <- as.numeric(ranks)
   .abort_if_na_or_nonfinite(ranks_num, arg = arg)
-  if (any(ranks_num != as.integer(ranks_num))) {
+  if (any(ranks_num != trunc(ranks_num))) {
     .abort_bad_arg(arg, "must contain integer ranks")
   }
-  ranks <- as.integer(ranks_num)
-  n <- length(ranks)
+  n <- length(ranks_num)
   if (n == 0L) .abort_bad_arg(arg, "must have positive length")
-  if (!setequal(ranks, seq_len(n))) {
+  if (!setequal(ranks_num, seq_len(n))) {
     .abort_bad_arg(arg, "must be a permutation of 1..n")
   }
-  ranks
+  as.integer(ranks_num)
 }
 
 .validate_permutation_matrix <- function(rank_matrix, arg = "R", col_arg = "ranks") {
@@ -357,11 +433,9 @@
 .warn_unknown_return <- function(return, valid) {
   unknown <- setdiff(return, valid)
   if (length(unknown) > 0L) {
-    warning(sprintf(
-      "Unknown `return` value(s) ignored: %s.\nValid options: %s.",
-      paste(unknown, collapse = ", "),
-      paste(valid, collapse = ", ")
-    ), call. = FALSE)
+    .dnn_warn("unknown_return", "Unknown `return` value(s) ignored.",
+      affected = length(unknown), examples = unknown,
+      hint = sprintf("Valid options: %s.", paste(valid, collapse = ", ")))
   }
   invisible(NULL)
 }

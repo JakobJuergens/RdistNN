@@ -66,8 +66,7 @@ test_that("actual subnormal duplicate signals follow direct rounded products", {
 
 test_that("interleaved group masses retain prefix and suffix cancellation residuals", {
   table <- c(2^54, 0, 1, 0, 0, -2^54, 0)
-  expect_equal(RdistNN:::.dnn_duplicate_deleted_mass(c(1L, 3L, 5L, 7L), table)[3L], 1, tolerance = 0)
-  # Directly enumerate surviving equal-X rows. The table and signal products
+  # Directly enumerate surviving equal-distance group members. The table and signal products
   # are dyadic; the expected values do not rely on the block-mean identity.
   groups <- c(1L, 2L, 1L, 3L, 1L, 4L, 1L, 5L)
   signal <- c(1, 0, 1, 0, 2, 0, 1, 0)
@@ -101,7 +100,8 @@ test_that("interleaved block deletions retain the public observation-order mass"
   X <- matrix(c(rep(0, 5L), 1:5))
   rw <- as_rank_weight(function(r) table[r])
   W <- suppressWarnings(weights_matrix(X[-10L, , drop = FALSE], x0 = 0,
-    ranking = ranks[-10L, , drop = FALSE], weight = rw))$W
+    ranking = list(ranks = ranks[-10L, , drop = FALSE],
+      dx = matrix(abs(X[-10L, 1L]), ncol = 1L)), weight = rw))$W
   expect_equal(as.numeric(W[1:5, ]), rep(1 / 5, 5L), tolerance = 0)
   expect_equal(sum(W * signal[-10L]), 4 / 5, tolerance = 0)
   original <- options(RdistNN.use_compiled = TRUE)

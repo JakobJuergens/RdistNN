@@ -5,6 +5,31 @@ CLATE and ordinary paired-signal ratios, with DNN weights, pointwise jackknife
 uncertainty, tuning, diagnostics and plots. Ratio confidence-set inversion,
 PLQR and local IV-GMM remain experimental.
 
+Version `0.1.3` replaces the 0.1.2 identical-covariate rule with
+target-specific exact represented distance averaging. Earlier saved fits
+require refitting. Preserve all historical tags, assets and scientific
+dependency pins when publishing this release.
+
+## Version progression
+
+The first development commit after production `0.1.x` establishes
+`0.1.x.9000`. Increment its fourth component in each subsequent development
+commit, even a small documentation or implementation change. Drafting a version
+in uncommitted changes does not advance this sequence. Read the current version
+from `DESCRIPTION` and the current `NEWS.md` heading; keep them synchronized.
+For example, development after production `0.1.2` starts at `0.1.2.9000`, then
+`0.1.2.9001`.
+
+For each production merge, default to `0.1.(x+1)` unless the maintainer
+explicitly selects another version. Prepare that production version in the
+reviewed candidate before merging, then start the next development cycle by
+appending `.9000` to the selected production version. Thus the current default
+cycle leads to production `0.1.3`, followed by development `0.1.3.9000`.
+Production merging, tagging and asset publication remain separate authorized
+steps. Retain full commit and checked-archive identities alongside version numbers.
+
+## Production history
+
 Version `0.1.2` entered production `master` through the reviewed squash merge
 of [PR #20](https://github.com/JakobJuergens/RdistNN/pull/20) on 2026-10-22
 at [`c96878562f105a22290edf989631f197d9735e1c`](https://github.com/JakobJuergens/RdistNN/commit/c96878562f105a22290edf989631f197d9735e1c).
@@ -26,7 +51,8 @@ The exact-table recurrence, compensated reductions, numerical origins, shared
 covariance and fitted whitening policy first shipped in the merged 0.1.0.9003
 snapshot, not 0.1.0.9002. See [NEWS.md](NEWS.md). A verified candidate requires
 the final-source checks below. Public tags and assets require separate
-authorization. Retain the intended release version during candidate preparation.
+authorization. Keep the selected production version throughout its final
+verification and merge; ongoing development commits follow the policy above.
 Matching R/Stata versions do not imply identical feature coverage.
 
 Review the known asymptotic-tail limitation in the
@@ -39,13 +65,12 @@ excluded from the source package.
 ## Candidate identity and scientific reproduction
 
 The current version-pinned R release is
-[`v0.1.2`](https://github.com/JakobJuergens/RdistNN/releases/tag/v0.1.2),
-published from the verified production commit
-`9f571526c64e2bc7069e62ddf06281b7af4ff205`. Its installable source package
-and checksum file are attached to the release. Install with:
+[`v0.1.3`](https://github.com/JakobJuergens/RdistNN/releases/tag/v0.1.3).
+The tag selects the verified production snapshot; its installable source
+package and checksum file are attached to the release. Install with:
 
 ```r
-pak::pak("JakobJuergens/RdistNN@v0.1.2")
+pak::pak("JakobJuergens/RdistNN@v0.1.3")
 ```
 
 The tag fixes the installation source at the released commit. Keep the ordinary
@@ -69,9 +94,9 @@ pak::pak("JakobJuergens/RdistNN@3394ae55383ffa4cb6bfad909730378dd8c7d4cb")
 
 The unpinned README command follows production `master`; `@v0.1.0` selects the
 existing older public tag. The `0.1.0.9004` source update and pkgdown deployment
-did not create a new tag or replace the `v0.1.0` release assets. Different source
-snapshots can share a development version, so retain the full commit or checked
-archive identity.
+did not create a new tag or replace the `v0.1.0` release assets. Historical source
+snapshots shared development versions; retain their full commit or checked
+archive identity. Current development commits follow the increment policy above.
 
 For an unpublished future candidate, check out its full recorded commit in a
 separate local checkout and use `pak::local_install(".")`, or install its

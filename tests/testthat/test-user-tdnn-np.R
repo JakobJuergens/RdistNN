@@ -133,12 +133,9 @@ test_that("return extras are populated with correct shapes", {
     )
 
     expect_equal(dim(out$W),     c(nrow(d$X), nrow(d$X0)))
-    if (!is.null(out$ranks))
-      expect_equal(dim(out$ranks), c(nrow(d$X), nrow(d$X0)))
-    if (!is.null(out$ord))
-      expect_equal(dim(out$ord),   c(nrow(d$X), nrow(d$X0)))
-    if (!is.null(out$dx))
-      expect_equal(dim(out$dx),    c(nrow(d$X), nrow(d$X0)))
+    expect_equal(dim(out$ranks), c(nrow(d$X), nrow(d$X0)))
+    expect_equal(dim(out$ord),   c(nrow(d$X), nrow(d$X0)))
+    expect_equal(dim(out$dx),    c(nrow(d$X), nrow(d$X0)))
     expect_equal(out$y,   d$y, tolerance = 1e-12)
     expect_equal(out$ess, 1 / colSums(out$W^2), tolerance = 1e-12)
     # TDNN k = 1: neighbors is a 1 x m matrix of nearest-neighbor indices.

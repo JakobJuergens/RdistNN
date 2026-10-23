@@ -4,9 +4,10 @@
 # number is squared. A binary scale prevents covariance-range failures.
 .mahal_fit <- function(X) {
   if (ncol(X) < 1L)
-    stop("distance_mahalanobis() requires at least one covariate.", call. = FALSE)
+    .dnn_abort("argument_invalid", "distance_mahalanobis() requires at least one covariate.", argument = "X")
   if (nrow(X) < 2L)
-    stop("distance_mahalanobis() requires at least two training observations.", call. = FALSE)
+    .dnn_abort("argument_invalid",
+      "distance_mahalanobis() requires at least two training observations.", argument = "X")
   # Preserve small represented coordinates beside a distant first row. This
   # origin is retained for prediction; the centered SVD arithmetic stays fixed.
   origin <- .numeric_signal_level(X)
@@ -82,7 +83,8 @@
     Z[i, ] <- value
   }
   if (any(!is.finite(Z)))
-    stop("Mahalanobis projection is outside the numeric range; rescale covariates and targets.", call. = FALSE)
+    .dnn_abort("numerical_range",
+      "Mahalanobis projection is outside the numeric range; rescale covariates and targets.")
   Z
 }
 
@@ -99,9 +101,9 @@
       !identical(dim(ctx$factor), c(p, p)) || any(!is.finite(ctx$factor)) ||
       !is.numeric(ctx$rank) || length(ctx$rank) != 1L || !is.finite(ctx$rank) ||
       ctx$rank < 0 || ctx$rank > p || ctx$rank != floor(ctx$rank)) {
-    stop(
+    .dnn_abort("argument_invalid",
       "`ctx` must be a current fitted Mahalanobis whitening context; refit with distance_mahalanobis()$setup(X).",
-      call. = FALSE
+      argument = "ctx"
     )
   }
   distance_l2()$eval_batch(.mahal_project(X, ctx), .mahal_project(X0, ctx))
@@ -128,11 +130,17 @@
 #' change the retained numerical rank. The factor is reused through `ctx`,
 #' including for subsets and new targets, following [distance_l2_scaled()].
 #' Euclidean norms after projection use the selected C++ or R distance engine.
-#' The explicit rank policy can change neighbors relative to older fits that
-#' truncated covariance singular values after an inverse failed. Different
-#' linear-algebra libraries can still differ at a numerical rank boundary.
+#' SVD fitting and projection rounding can change represented distance equality
+#' or ordering across packages or platforms, even for well-conditioned full-rank
+#' designs away from the cutoff. Ranks, exact-distance groups, weights and
+#' estimates may then differ. Group averaging uses each fit's computed distances
+#' and cannot reconcile these differences. See the
+#' [numerical geometry contract][geometry-contract].
 #'
-#' Particularly useful for DGPs with correlated covariates (e.g.\
+#' [geometry-contract]:
+#' https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/18_geometry_and_covariance_arithmetic.md
+#'
+#' Particularly useful for DGPs with correlated covariates (e.g.
 #' `"dgp5_correlated"`) where L2 or diagonal-scaled L2 distances fail to
 #' adapt to the off-diagonal covariance structure.
 #'

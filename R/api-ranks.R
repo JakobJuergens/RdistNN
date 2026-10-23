@@ -191,9 +191,7 @@ as_rank_weight <- function(fun, name = "user_rank_weight") {
 #' nm %in% rank_weight_names()
 #' @export
 register_rank_weight <- function(name, spec) {
-  if (!is.character(name) || length(name) != 1L || !nzchar(name)) {
-    .abort_bad_arg("name", "must be a non-empty character scalar")
-  }
+  name <- .validate_registry_name(name)
   if (is.function(spec)) spec <- as_rank_weight(spec, name = name)
   if (is.list(spec)) {
     missing_name <- is.null(spec$name) ||
@@ -217,9 +215,7 @@ register_rank_weight <- function(name, spec) {
 #' is_rank_weight(get_rank_weight("tmp_rank_get"))
 #' @export
 get_rank_weight <- function(name) {
-  if (!is.character(name) || length(name) != 1L) {
-    .abort_bad_arg("name", "must be a character scalar")
-  }
+  name <- .validate_registry_name(name)
   if (!exists(name, envir = .rank_registry, inherits = FALSE)) {
     known <- ls(.rank_registry, all.names = FALSE)
     .abort_bad_arg(

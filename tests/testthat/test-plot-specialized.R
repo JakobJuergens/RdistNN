@@ -114,19 +114,20 @@ test_that("plot_calibration reproduces the weighted indicator share", {
   expect_true(all(c("GeomRibbon", "GeomHline", "GeomLine") %in% geoms))
   expect_match(p$labels$caption, "reference band")
 
-  # Argument path: residuals reproduce the stored indicator.
-  fit_old <- fit
-  fit_old$.model$below_threshold <- NULL
-  expect_error(plot_calibration(fit_old), "residuals")
-  demo <- plqr_demo_data(n = 90L, p = 2L, p_d = 2L, tau = 0.5, seed = 101L)
-  df <- demo$data
-  r <- as.numeric(df$Y) -
-    as.vector(as.matrix(df[paste0("D", 1:2)]) %*% demo$truth$theta_true) -
-    as.numeric(df$g_oracle)
-  p_arg <- plot_calibration(fit_old, residuals = r)
-  expect_equal(p_arg$data$share, share_ref)
-
   expect_error(plot_calibration(.plot_special_cate_fit()), "plqr_result")
+})
+
+test_that("calibration requires its current retained indicator without repair inputs", {
+  skip_if_not_installed("ggplot2")
+  fit <- .plot_special_plqr_fit()
+  expect_error(plot_calibration(fit, residuals = rep(0, nrow(fit$W))),
+               "unused argument.*residuals")
+  for (indicator in list(NULL, numeric(), rep(NA_real_, nrow(fit$W)),
+                        rep(.5, nrow(fit$W)), rep("0", nrow(fit$W)))) {
+    bad <- fit
+    bad$.model$below_threshold <- indicator
+    expect_error(plot_calibration(bad), "below_threshold.*[Rr]efit")
+  }
 })
 
 test_that("plot_influence computes contributions and labels extremes", {
@@ -155,11 +156,20 @@ test_that("plot_influence computes contributions and labels extremes", {
   expect_match(p$labels$caption, "top-1 weight share")
 
   expect_error(plot_influence(.plot_special_plqr_fit()), "cate_result")
-  fit_nopsi <- fit
-  fit_nopsi$.model$psi <- NULL
-  expect_error(plot_influence(fit_nopsi), "pseudo_outcome")
-  p_arg <- plot_influence(fit_nopsi, targets = 3L, pseudo_outcome = psi)
-  expect_equal(sort(p_arg$data$contribution), sort(contrib_ref))
+})
+
+test_that("influence requires its current retained signal without repair inputs", {
+  skip_if_not_installed("ggplot2")
+  fit <- .plot_special_cate_fit()
+  n <- nrow(fit$W)
+  expect_error(plot_influence(fit, pseudo_outcome = fit$.model$psi),
+               "unused argument.*pseudo_outcome")
+  for (signal in list(NULL, numeric(), rep(NA_real_, n), rep("1", n),
+                     matrix(1, n, 1L))) {
+    bad <- fit
+    bad$.model$psi <- signal
+    expect_error(plot_influence(bad), "psi.*[Rr]efit")
+  }
 })
 
 test_that("plot_tdnn_scales overlays refits that match manual estimates", {
@@ -194,9 +204,7 @@ test_that("plot_tdnn_scales overlays refits that match manual estimates", {
   expect_error(plot_tdnn_scales(.plot_special_cate_fit()), "tdnn_np_result")
   fit_old <- fit
   fit_old$.model <- NULL
-  expect_error(plot_tdnn_scales(fit_old), "supply both")
-  p_args <- plot_tdnn_scales(fit_old, X = x_mat, Y = y_vec)
-  expect_equal(p_args$data$estimate, p$data$estimate)
+  expect_error(plot_tdnn_scales(fit_old), "localization model state.*[Rr]efit")
 })
 
 test_that("plot_tuning evaluates candidate grids and marks the fit", {
@@ -240,7 +248,7 @@ test_that("plot_tuning evaluates candidate grids and marks the fit", {
   expect_identical(class(p_plqr$facet)[1L], "FacetWrap")
   bad_state <- fit
   bad_state$.model$x_mat <- NULL
-  expect_error(plot_tuning(bad_state), "required fitted training data.*refit")
+  expect_error(plot_tuning(bad_state), "localization model state.*[Rr]efit")
 })
 
 test_that("PLQR plot quantity controls zero lines and plotted values", {

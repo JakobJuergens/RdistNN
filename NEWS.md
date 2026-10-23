@@ -1,3 +1,73 @@
+# RdistNN 0.1.3 (2026-10-22)
+
+- Remove the retired lexicographic tie-breaking implementation from portable
+  and native coordinate-order primitives; all distance rankings now use
+  original row index within exact represented distance ties.
+- Reject oversized supplied ranks and subset indices before integer coercion,
+  and validate retained jackknife modes and uncertainty availability before
+  reporting or reuse.
+- Use shared structured R errors and warnings with bounded, actionable details.
+  Reuse prepared or validated distance-group facts across grids and reporting.
+  Optional grid and dashboard recovery preserves unexpected errors, interrupts
+  and warnings promoted by the caller; only declared optional failures recover.
+  Summarize unavailable ratio results and expected simulation method failures
+  once while retaining their detailed statuses and failure records.
+
+- Replace the 0.1.2 identical-covariate rule with one target-specific
+  exact-distance policy. Observations at exactly equal represented distance
+  under the selected metric receive the mean of their assigned rank weights,
+  including zero entries beyond nominal support. No rounding or tolerance is
+  used; signed and unnormalized group masses are preserved.
+- Order high-level ranks by distance and original row index. Distinct profiles
+  at equal distance share weights. Bare supplied ranks/orders remain strict
+  orders; supplying distances alongside them enables distance-group averaging.
+- Rebuild each deletion from the actual survivors and the `n-1` rank table,
+  reusing the existing block engines with target-specific groups. Retain the
+  existing frozen-geometry versus deletion-refitted geometry choices and common
+  deletions for paired signals and joint target covariance.
+- Cache and validate the selected `exact_distance_block_averaging_v1` policy and
+  per-target groups across prediction, candidates, diagnostics and weight plots.
+  Refit objects created under earlier policies, including version 0.1.2.
+- Remove plot repair inputs and incomplete-fit defaults retained for older
+  versions. Current plots and reuse require the fitted signals, diagnostics
+  and controls; refit objects with missing state.
+- The paper assumes a continuous distance distribution, under which the old and
+  new rules agree almost surely. Persistent distance-tie inference and a uniform
+  mean-squared-error improvement are not established. Keep the released 0.1.2
+  tag, assets and historical scientific pins unchanged.
+- Validate current reporting arrays, target dimensions, weight methods, column
+  selectors and uncertainty state before reporting or reuse. Require retained
+  CATE and CLATE diagnostic signals and nuisance state; preserve legitimate
+  explicit NULL fields and disabled uncertainty in candidate views. Reject
+  duplicate scalar candidate-target rows.
+- Reject nonfinite computed mean estimates with rescaling guidance at fitting
+  and prediction. Report nonfinite paired component averages as NA with their
+  original overflow status, preserving finite components and retained signals.
+- Count every represented nonzero localization weight in support diagnostics.
+  Use stable normal critical values throughout the allowed confidence-level
+  range, disambiguate repeated targets in forest plots, and reject fractional
+  plotting selectors and missing or empty registry names.
+- Use the exact uniform identity for asymptotic weights when `k = s`, including
+  the `s = 1` TDNN component. Form weighted-SD root weights before normalizing
+  to retain representable contributions from extreme unnormalized weights.
+- Recover exceptional scaled L1/L2 norms before individual coordinate products
+  underflow, preserving representable distances and their exact tie groups.
+  Use the same binary arithmetic and range decisions across the shared engines,
+  including huge negative raw differences.
+- Clarify that independently fitted Mahalanobis SVD factors can round
+  differently even in well-conditioned full-rank designs. Exact distance
+  groups, weights and estimates can consequently differ across packages or
+  platforms; distance averaging does not resolve this portability limitation.
+- Honor the requested propensity clipping in CATE simulations and reject
+  noninteger or infeasible cross-fitting fold counts as input errors.
+- Require replication output directories outside the installed package and
+  frozen bundle, including symlinked paths and resumed runs. Correct the
+  getting-started signal-reuse example and current reporting documentation.
+- Make lint enforcement reject missing results, run dependency-comparison
+  controls against the exact checked package without skips, and reduce static
+  CI dependencies and snapshot history transfers while retaining the full
+  portability matrix.
+
 # RdistNN 0.1.2 (2026-10-22)
 
 - Average localization weights within blocks of exactly identical raw covariate

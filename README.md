@@ -11,7 +11,7 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 [![test-coverage](https://github.com/JakobJuergens/RdistNN/actions/workflows/test-coverage.yaml/badge.svg)](https://github.com/JakobJuergens/RdistNN/actions/workflows/test-coverage.yaml)
 <!-- badges: end -->
 
-Version **0.1.2**. See [NEWS](NEWS.md) for changes.
+Version **0.1.3**. See [NEWS](NEWS.md) for changes.
 
 **RdistNN** estimates conditional treatment effects and regression
 functions using distributional nearest-neighbor (DNN) weights. Choose
@@ -37,6 +37,9 @@ This installs production `master`. R 4.1.0 or newer, Rcpp and a C++17
 compiler are required: Rtools on Windows, Xcode command line tools on
 macOS, or an R-compatible compiler on Linux. For plots, also install
 `ggplot2`; dashboards can use `patchwork`.
+
+For the version-pinned release, use
+`pak::pak("JakobJuergens/RdistNN@v0.1.3")`.
 
 For reproducible installation, retain the full source commit or checked
 archive identity;
@@ -174,15 +177,21 @@ explains the default rule and candidate fits.
 ## Interpreting inference
 
 Intervals are **pointwise**. The framework assumes independent
-observations; cluster and survey-design inference are not supplied.
-Exact distance ties between different covariate rows use lexicographic
-covariate order. For identical localization covariate rows, weights are
-averaged within each duplicate block, including the remaining block in
-each jackknife deletion. Estimates and covariance are then invariant to
-aligned row permutations up to numerical precision. The package warns
-because this modification is not covered by the paper’s theory. It can
-change individual weights, support and effective sample size. Refit
-saved objects created before this policy.
+observations; cluster and survey-design inference are not supplied. At
+each target, observations with exactly equal represented distance under
+the selected metric share the average of their assigned rank weights,
+including every deletion’s surviving group. Nearby distances are not
+merged. This includes different covariate profiles at equal distance;
+individual weights, support and effective sample size can change.
+Aligned row permutations preserve estimates and covariance up to
+numerical precision. Refit saved objects created under an earlier tie
+policy.
+
+The paper assumes a continuous distance distribution, under which the
+earlier and current rules agree almost surely. The package warns when
+distance ties occur: inference for persistent distance ties is not
+established. Averaging does not supply a uniform mean-squared-error
+improvement.
 
 Asymptotic Beta tables retain a known rounding limitation at extremely
 small tail masses, including possible R/Stata support differences. See

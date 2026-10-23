@@ -174,9 +174,7 @@ as_distance <- function(fun, name = "user_distance") {
 #' nm %in% distance_names()
 #' @export
 register_distance <- function(name, spec) {
-  if (!is.character(name) || length(name) != 1L || !nzchar(name)) {
-    .abort_bad_arg("name", "must be a non-empty character scalar")
-  }
+  name <- .validate_registry_name(name)
   if (is.function(spec)) spec <- as_distance(spec, name = name)
   if (is.list(spec) && (is.null(spec$name) ||
     (is.character(spec$name) && length(spec$name) == 1L &&
@@ -197,9 +195,7 @@ register_distance <- function(name, spec) {
 #' is_distance(d)
 #' @export
 get_distance <- function(name) {
-  if (!is.character(name) || length(name) != 1L) {
-    .abort_bad_arg("name", "must be a character scalar")
-  }
+  name <- .validate_registry_name(name)
   if (!exists(name, envir = .dist_registry, inherits = FALSE)) {
     known <- ls(.dist_registry, all.names = FALSE)
     .abort_bad_arg(

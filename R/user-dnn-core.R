@@ -10,28 +10,28 @@
   "user_distance"
 }
 
-.dnn_warn_degenerate_weights <- function(W) {
+.dnn_warn_degenerate_weights <- function(W, method = "DNN") {
   n <- nrow(W)
-  if (is.null(n) || n < 2L) {
-    return(invisible(NULL))
-  }
-  ess_max <- max(1 / colSums(W^2))
-  if (ess_max >= 0.9 * n) {
-    warning(
-      sprintf(
-        paste0(
-          "DNN weights are (near-)uniform at one or more target points ",
-          "(max effective sample size %.1f of n = %d), so the fit provides ",
-          "little or no localization. This can occur when `s` is too small ",
-          "relative to `k` (for example s = 1, or k = s), or when weights are ",
-          "averaged within duplicate-covariate blocks. Increase `s` when it is too small, or ",
-          "omit both `s` and `tuning` to use the default paper tuning rule. ",
-          "A larger `s` cannot distinguish observations with identical covariates."
-        ),
-        ess_max, n
-      ),
-      call. = FALSE
-    )
+  if (is.null(n) || n < 2L) return(invisible(NULL))
+  ess <- 1 / colSums(W^2)
+  affected <- which(ess >= 0.9 * n)
+  if (length(affected)) {
+    message <- if (identical(method, "TDNN")) {
+      sprintf("TDNN signed weights have high effective sample size at %d target(s) (maximum %.1f of n = %d).",
+        length(affected), max(ess), n)
+    } else {
+      sprintf(paste0("DNN weights are (near-)uniform at %d target(s) ",
+        "(maximum effective sample size %.1f of n = %d), providing little or no localization."),
+        length(affected), max(ess), n)
+    }
+    hint <- if (identical(method, "TDNN")) {
+      paste0("Inspect signed weights and distance diagnostics; ",
+        "effective sample size alone does not establish geometric localization.")
+    } else {
+      paste0("Increase `s` if it is too small relative to `k`, or omit `s` and `tuning` for default tuning. ",
+        "A larger `s` cannot distinguish observations at equal computed distance.")
+    }
+    .dnn_warn("weak_localization", message, affected = length(affected), examples = affected, hint = hint)
   }
   invisible(NULL)
 }
@@ -39,7 +39,7 @@
 .dnn_weights_with_extras <- function(
   x_mat, x0_mat, distance, method, k, s, normalize, ctx, return
 ) {
-  keep_extras <- intersect(return, c("ranks", "ord", "dx"))
+  keep_extras <- unique(c("ranks", "dx", intersect(return, "ord")))
   if ("neighbors" %in% return) keep_extras <- unique(c(keep_extras, "ranks"))
   wt <- weights_dnn(
     X = x_mat,
@@ -79,7 +79,14 @@
 
 .dnn_estimate_from_signal <- function(signal, W, n, arg = "signal") {
   sig <- .dnn_signal_matrix(signal, n = n, arg = arg)
-  .compensated_crossprod(sig, W)
+  estimate <- .compensated_crossprod(sig, W)
+  if (any(!is.finite(estimate))) {
+    targets <- which(colSums(!is.finite(estimate)) > 0L)
+    .dnn_abort("numerical_range", sprintf("`%s` produces nonfinite weighted estimates at target(s) %s.",
+      .dnn_brief(arg), .dnn_message_examples(targets)$text), argument = arg,
+      hint = "Rescale the signal before fitting or predicting.")
+  }
+  estimate
 }
 
 .dnn_attach_common_extras <- function(out, return, wt, W, k, tuning_payload = NULL) {

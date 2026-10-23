@@ -1,5 +1,5 @@
 test_that("frozen-rank loop and R fast paths agree for paired signals", {
-  .with_duplicate_policy_warnings({
+  .with_localization_policy_warnings({
   old <- options(RdistNN.use_compiled = FALSE)
   on.exit(options(old), add = TRUE)
   for (n in c(2L, 4L, 17L)) for (m in c(1L, 3L)) for (s in unique(c(1L, min(2L, n - 1L), n - 1L))) {
@@ -23,6 +23,7 @@ test_that("frozen-rank loop and R fast paths agree for paired signals", {
 })
 
 test_that("available compiled paired engine agrees with the R implementation", {
+  .with_distance_tie_warning({
   old <- options(RdistNN.use_compiled = TRUE)
   on.exit(options(old), add = TRUE)
   skip_if(is.null(.rdistnn_compiled_fun("rustat_jackknife_rank_full")))
@@ -41,6 +42,7 @@ test_that("available compiled paired engine agrees with the R implementation", {
       expect_equal(cpp[[nm]], r[[nm]], tolerance = 1e-11)
     }
   }
+  })
 })
 
 test_that("custom geometry is frozen even for the explicit deletion loop", {
@@ -74,6 +76,7 @@ test_that("distinct-distance row permutations preserve pairing and IDs", {
 })
 
 test_that("large signal scales and per-target overflow are explicit", {
+  .with_partial_result_warning({
   base <- affine_ratio_dnn(X = matrix(1:4, ncol = 1L), x0 = 0,
                            numerator = c(2, 1, 4, 3), denominator = c(1, -1, 2, 1), s = 2L)
   large <- affine_ratio_dnn(X = matrix(1:4, ncol = 1L), x0 = 0,
@@ -91,4 +94,5 @@ test_that("large signal scales and per-target overflow are explicit", {
   expect_identical(separate$status$covariance_status, c("numerical_failure", "zero_score_variance"))
   expect_true(is.na(separate$se[1L]))
   expect_equal(separate$se[2L], 0)
+  })
 })

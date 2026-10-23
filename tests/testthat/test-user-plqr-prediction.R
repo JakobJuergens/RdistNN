@@ -143,7 +143,7 @@ test_that("predict.plqr_result validates inputs and fitted model state", {
     bad_state$.model <- NULL
     expect_error(
       predict(bad_state, X0 = d$X0),
-      "fitted model state",
+      "localization model state.*[Rr]efit",
       ignore.case = TRUE
     )
   }, seed = 818L)
@@ -162,8 +162,7 @@ test_that("predict.plqr_result validates fitted model state before computing", {
     bad_x$.model$x_mat[1L, 1L] <- Inf
     expect_error(
       predict(bad_x, X0 = d$X0),
-      "object$.model$x_mat cannot contain non-finite values",
-      fixed = TRUE
+      "localization model state.*[Rr]efit"
     )
 
     bad_d <- fit

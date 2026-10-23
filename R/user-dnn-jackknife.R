@@ -78,8 +78,9 @@
     rank_matrix_i <- rank_matrix_i - (rank_matrix_i > r_i)
     if (!is.integer(rank_matrix_i)) storage.mode(rank_matrix_i) <- "integer"
 
-    .dnn_average_duplicate_weights(rank_weight_eval_batch(rw, rank_matrix_i),
-                                   if (is.null(groups)) NULL else groups[keep])
+    groups_i <- .dnn_group_subset(groups, keep)
+    .dnn_average_distance_weights(rank_weight_eval_batch(rw, rank_matrix_i), groups_i,
+      facts = .dnn_compute_group_facts(groups_i))
   }
   .jackknife_recomputed_centered(sig, weight_fun, restore = !center)
 }
@@ -112,15 +113,15 @@
   x_mat, x0_mat, signal, distance, method, k, s, normalize, ctx,
   signal_arg = "signal",
   jackknife = c("fast", "loo"),
-  precomputed_ranks = NULL
+  precomputed_ranks = NULL, precomputed_groups = NULL
 ) {
   jackknife <- match.arg(jackknife)
   n <- nrow(x_mat)
   if (as.integer(s) >= n) {
-    stop(sprintf(
+    .dnn_abort("argument_invalid", sprintf(
       "Delete-1 jackknife requires s < n (got s=%d, n=%d). Use `se = FALSE` or reduce `s`.",
       as.integer(s), n
-    ), call. = FALSE)
+    ), argument = "s", expected = sprintf("s < n = %d", n), actual = as.integer(s))
   }
 
   sig <- .dnn_signal_matrix(signal, n = n, arg = signal_arg)
@@ -129,8 +130,8 @@
 
   if (identical(jackknife, "fast")) {
     ranks_full <- precomputed_ranks
-    if (is.null(ranks_full)) {
-      ranks_full <- weights_dnn(
+    if (is.null(ranks_full) || is.null(precomputed_groups)) {
+      ranking_full <- weights_dnn(
         X = x_mat,
         X0 = x0_mat,
         distance = distance,
@@ -140,7 +141,9 @@
         normalize = normalize,
         ctx = ctx,
         return = "ranks"
-      )$ranks
+      )
+      if (is.null(ranks_full)) ranks_full <- ranking_full$ranks
+      precomputed_groups <- ranking_full$groups
     }
 
     ranks_full <- as.matrix(ranks_full)
@@ -153,11 +156,11 @@
 
     tab_jk <- .rank_weight_table(rw, n - 1L)
     loo <- if (is.null(tab_jk)) {
-      .dnn_loo_loop(sig, ranks_full, rw, center = TRUE, groups = .dnn_duplicate_groups(x_mat))
+      .dnn_loo_loop(sig, ranks_full, rw, center = TRUE, groups = precomputed_groups)
     } else {
       tab_full <- .rank_weight_table(rw, n)
       .dnn_loo_centered(sig, ranks_full, tab_jk, tab_full = tab_full,
-                        groups = .dnn_duplicate_groups(x_mat))$loo
+                        groups = precomputed_groups)$loo
     }
     return(loo)
   }
@@ -183,7 +186,7 @@
   x_mat, x0_mat, signal, distance, method, k, s, normalize, ctx,
   signal_arg = "signal",
   jackknife = c("fast", "loo"),
-  precomputed_ranks = NULL
+  precomputed_ranks = NULL, precomputed_groups = NULL
 ) {
   jackknife <- match.arg(jackknife)
   n <- nrow(x_mat)
@@ -200,7 +203,8 @@
     ctx = ctx,
     signal_arg = signal_arg,
     jackknife = jackknife,
-    precomputed_ranks = precomputed_ranks
+    precomputed_ranks = precomputed_ranks,
+    precomputed_groups = precomputed_groups
   )
   .dnn_jackknife_se_from_loo(loo = loo, q = ncol(sig), n = n, m = nrow(x0_mat))
 }

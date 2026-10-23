@@ -16,7 +16,8 @@
   normalize,
   ctx,
   signal_arg = "signal",
-  precomputed_ranks = NULL
+  precomputed_ranks = NULL,
+  precomputed_groups = NULL
 )
 }
 \arguments{

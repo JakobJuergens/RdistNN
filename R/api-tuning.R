@@ -371,9 +371,7 @@ as_tuning <- function(fun, name = "user_tuning") {
 #' "tmp_fixed_4" %in% tuning_names()
 #' @export
 register_tuning <- function(name, tuning) {
-  if (!is.character(name) || length(name) != 1L || !nzchar(name)) {
-    .abort_bad_arg("name", "must be a non-empty character scalar")
-  }
+  name <- .validate_registry_name(name)
   if (is.function(tuning)) tuning <- as_tuning(tuning, name = name)
   if (is.list(tuning) && (is.null(tuning$name) ||
     (is.character(tuning$name) && length(tuning$name) == 1L &&
@@ -393,9 +391,7 @@ register_tuning <- function(name, tuning) {
 #' get_tuning("paper_undersmooth")
 #' @export
 get_tuning <- function(name) {
-  if (!is.character(name) || length(name) != 1L) {
-    .abort_bad_arg("name", "must be a character scalar")
-  }
+  name <- .validate_registry_name(name)
   if (!exists(name, envir = .tuning_registry, inherits = FALSE)) {
     known <- ls(.tuning_registry, all.names = FALSE)
     .abort_bad_arg(

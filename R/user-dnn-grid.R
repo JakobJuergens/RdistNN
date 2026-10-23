@@ -65,21 +65,21 @@
 
 .dnn_grid_check_estimates <- function(estimates) {
   if (!is.data.frame(estimates)) {
-    .abort_bad_state("`estimate_fn()` must return a data.frame.")
+    .dnn_abort("callback_invalid", "`estimate_fn()` must return a data.frame.")
   }
   required <- c("target_id", "component", "estimate")
   missing <- setdiff(required, names(estimates))
   if (length(missing) > 0L) {
-    .abort_bad_state(sprintf(
+    .dnn_abort("callback_invalid", sprintf(
       "`estimate_fn()` output is missing required column(s): %s.",
       paste(missing, collapse = ", ")
     ))
   }
   if (nrow(estimates) < 1L) {
-    .abort_bad_state("`estimate_fn()` output must contain at least one row.")
+    .dnn_abort("callback_invalid", "`estimate_fn()` output must contain at least one row.")
   }
   if (!is.numeric(estimates$estimate)) {
-    .abort_bad_state("`estimate_fn()` column `estimate` must be numeric.")
+    .dnn_abort("callback_invalid", "`estimate_fn()` column `estimate` must be numeric.")
   }
   estimates <- as.data.frame(estimates, stringsAsFactors = FALSE)
   estimates$estimate <- as.numeric(estimates$estimate)
@@ -88,18 +88,18 @@
 
 .dnn_grid_check_se <- function(se) {
   if (!is.data.frame(se)) {
-    .abort_bad_state("`se_fn()` must return a data.frame.")
+    .dnn_abort("callback_invalid", "`se_fn()` must return a data.frame.")
   }
   required <- c("target_id", "component", "se")
   missing <- setdiff(required, names(se))
   if (length(missing) > 0L) {
-    .abort_bad_state(sprintf(
+    .dnn_abort("callback_invalid", sprintf(
       "`se_fn()` output is missing required column(s): %s.",
       paste(missing, collapse = ", ")
     ))
   }
   if (!is.numeric(se$se)) {
-    .abort_bad_state("`se_fn()` column `se` must be numeric.")
+    .dnn_abort("callback_invalid", "`se_fn()` column `se` must be numeric.")
   }
   se <- as.data.frame(se, stringsAsFactors = FALSE)
   se$se <- as.numeric(se$se)
@@ -154,12 +154,12 @@
 }
 
 .dnn_grid_compute_key <- function(
-  candidate_row, ranks, weight_spec_fn, estimate_fn, se_fn, ctx
+  candidate_row, ranks, weight_spec_fn, estimate_fn, se_fn, ctx, group_facts = NULL
 ) {
   n <- nrow(ranks)
   spec <- weight_spec_fn(candidate_row)
   if (!is_rank_weight(spec)) {
-    .abort_bad_state("`weight_spec_fn()` must return a rank_weight.")
+    .dnn_abort("callback_invalid", "`weight_spec_fn()` must return a rank_weight.")
   }
 
   tab <- .rank_weight_table(spec, n)
@@ -170,7 +170,7 @@
   }
 
   groups <- if (is.list(ctx)) ctx$groups else NULL
-  W <- .dnn_average_duplicate_weights(W, groups)
+  W <- .dnn_average_distance_weights(W, groups, facts = group_facts)
   estimates <- .dnn_grid_check_estimates(estimate_fn(W, candidate_row))
   se <- NULL
   if (!is.null(se_fn)) {
@@ -183,7 +183,7 @@
 
   list(
     estimates = .dnn_grid_merge_estimate_se(estimates, se),
-    diagnostics = if (is.null(groups) || !anyDuplicated(groups)) {
+    diagnostics = if (!.dnn_has_ties(groups, facts = group_facts)) {
       .dnn_grid_diagnostics_from_table(tab, n = n, ctx = ctx)
     } else {
       .dnn_grid_diagnostics_from_weights(W)
@@ -276,6 +276,18 @@
   )
 }
 
+# NP/CATE own this declaration: a validated weighted-mean range failure is
+# an expected optional-candidate outcome. The main order keeps its original
+# numerical error, and generic callback/kernel failures remain fatal.
+.dnn_grid_mean_estimate <- function(signal, W, n, arg, candidate_row) {
+  tryCatch(.dnn_estimate_from_signal(signal, W, n = n, arg = arg),
+    rdistnn_numerical_error = function(err) {
+      if (isTRUE(candidate_row$is_default[[1L]])) stop(err)
+      .dnn_abort("candidate_failure", conditionMessage(err),
+        argument = err$argument, parent = err)
+    })
+}
+
 .dnn_grid_eval <- function(
   candidates,
   ranks,
@@ -287,6 +299,7 @@
 ) {
   candidates <- .dnn_grid_check_candidates(candidates)
   ranks <- .rank_check_mat(ranks)
+  group_facts <- .dnn_group_facts(if (is.list(ctx)) ctx$groups else NULL)
   if (!is.function(weight_spec_fn)) {
     .abort_bad_arg("weight_spec_fn", "must be a function", quoted = FALSE)
   }
@@ -302,9 +315,8 @@
     .abort_bad_arg("candidates", "must contain at least one feasible candidate")
   }
   if (nrow(candidates) > 1L && length(unique(candidates$computed_key)) == 1L) {
-    warning(
-      "All feasible tuning candidates share the same computed key; the grid is effectively a single value.",
-      call. = FALSE
+    .dnn_warn("grid_single_value",
+      "All feasible tuning candidates share the same computed key; the grid is effectively a single value."
     )
   }
 
@@ -331,9 +343,10 @@
         weight_spec_fn = weight_spec_fn,
         estimate_fn = estimate_fn,
         se_fn = se_fn,
-        ctx = ctx
+        ctx = ctx,
+        group_facts = group_facts
       ),
-      error = function(err) {
+      rdistnn_candidate_failure = function(err) {
         if (key_is_default) {
           stop(err)
         }
@@ -346,6 +359,14 @@
       candidates$reason[failed_idx] <- result$reason
     }
     results[[key]] <- result
+  }
+
+  failed <- candidates$status == "failed"
+  if (any(failed)) {
+    .dnn_warn("partial_result",
+      sprintf(paste0("Evaluation failed for %d optional tuning candidate(s). ",
+        "Inspect `tuning_grid$candidates` for all candidate statuses and reasons."), sum(failed)),
+      affected = sum(failed), examples = candidates$candidate_id[failed])
   }
 
   template <- .dnn_grid_estimate_template(results, m = ncol(ranks))
@@ -380,14 +401,10 @@
   if (nrow(skipped) < 1L) {
     return(invisible(NULL))
   }
-  details <- paste(
-    sprintf("%s (%s)", skipped$candidate_id, skipped$reason),
-    collapse = ", "
-  )
-  warning(
-    sprintf("Skipped infeasible tuning candidate(s): %s.", details),
-    call. = FALSE
-  )
+  .dnn_warn("infeasible_candidates",
+    sprintf(paste0("Skipped infeasible tuning candidate(s): %d. ",
+      "Inspect `tuning_grid$candidates` for all candidate statuses and reasons."), nrow(skipped)),
+    affected = nrow(skipped), examples = skipped$candidate_id)
   invisible(NULL)
 }
 

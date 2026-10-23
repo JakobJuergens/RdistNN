@@ -1,13 +1,13 @@
 Package: RdistNN
 Title: Distributional Nearest-Neighbor Inference for Local Conditional Moment Models
-Version: 0.1.2
+Version: 0.1.3
 Authors@R: 
-    c(person(given = "Jakob", family = "Juergens", email = "info@jakobjuergens.com", role = c("aut", "cre")),
+    c(person(given = "Jakob R.", family = "Juergens", email = "info@jakobjuergens.com", role = c("aut", "cre")),
       person(given = "Zakareya", family = "Chehime", role = "ctb",
              comment = "Quality assurance, testing and validation"))
-Author: Jakob Juergens [aut, cre],
+Author: Jakob R. Juergens [aut, cre],
     Zakareya Chehime [ctb] (Quality assurance, testing and validation)
-Maintainer: Jakob Juergens <info@jakobjuergens.com>
+Maintainer: Jakob R. Juergens <info@jakobjuergens.com>
 Description: Implements distributional nearest-neighbor weights and
     diagnostics for local conditional moment and Z-estimation problems.
     Supported workflows include nonparametric regression, conditional average
@@ -39,6 +39,7 @@ Suggests:
     rmarkdown,
     methods,
     testthat (>= 3.0.0),
+    withr,
     digest,
     jsonlite,
     hdm,

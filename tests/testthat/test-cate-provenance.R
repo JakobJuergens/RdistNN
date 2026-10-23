@@ -11,6 +11,7 @@
 }
 
 test_that("CATE source records the input branch rather than signal values or names", {
+  .with_distance_tie_warning({
   d <- .cate_provenance_case()
   d$aipw_oracle <- with(d, m1 - m0 + d * (y - m1) / e -
     (1 - d) * (y - m0) / (1 - e))
@@ -38,9 +39,11 @@ test_that("CATE source records the input branch rather than signal values or nam
   ignored <- cate_dnn(data = d, x_cols = "x", x0 = 0, s = 3L,
     pseudo_outcome = d$aipw_oracle, m0_col = "absent")
   expect_identical(ignored$meta$signal_source, "supplied")
+  })
 })
 
 test_that("CATE summaries and restored fits preserve descriptive metadata", {
+  .with_distance_tie_warning({
   d <- .cate_provenance_case()
   fit <- .cate_provenance_fit(d, x0 = 0, s = 3L)
   restored <- unserialize(serialize(fit, NULL))
@@ -56,6 +59,7 @@ test_that("CATE summaries and restored fits preserve descriptive metadata", {
   expect_identical(vcov(restored), vcov(fit))
   expect_identical(predict(restored, x0 = .2, se.fit = TRUE),
     predict(fit, x0 = .2, se.fit = TRUE))
+  })
 })
 
 test_that("CATE candidates retain original signal source and creation version", {
@@ -114,8 +118,8 @@ test_that("current CATE fits preserve prediction shapes and serialized state", {
     }
     .expect_identical_fast(restored, before)
     restored$.model <- NULL
-    expect_error(predict(restored, x0 = 0), "fitted model state")
-    expect_error(vcov(restored), "fitted model state")
+    expect_error(predict(restored, x0 = 0), "localization model state.*[Rr]efit")
+    expect_error(vcov(restored), "localization model state.*[Rr]efit")
   }
 })
 
@@ -126,6 +130,7 @@ test_that("retired pooled-mean CATE arguments remain rejected", {
 })
 
 test_that("CATE reporting requires current provenance metadata", {
+  .with_distance_tie_warning({
   fit <- .cate_provenance_fit(.cate_provenance_case(), x0 = 0, s = 3L)
   for (field in c("signal_source", "created_with_version")) {
     bad <- fit
@@ -133,4 +138,5 @@ test_that("CATE reporting requires current provenance metadata", {
     expect_error(summary(bad), "metadata.*[Rr]efit")
     expect_error(print(bad), "metadata.*[Rr]efit")
   }
+  })
 })

@@ -17,7 +17,8 @@
   ctx,
   signal_arg = "signal",
   jackknife = c("fast", "loo"),
-  precomputed_ranks = NULL
+  precomputed_ranks = NULL,
+  precomputed_groups = NULL
 )
 }
 \arguments{

@@ -25,7 +25,7 @@
 #' @param ranks Integer matrix (T x (s+1)) of positive neighbor indices
 #'   (1-based). Each row t lists the first s+1 neighbors of target t.
 #'   Use distinct indices within each row for observation deletion. For repeated
-#'   indices, the legacy convention adds each position's replacement change.
+#'   indices, the repeated-index convention adds each position's replacement change.
 #' @param a Finite numeric length-s vector of L-stat coefficients a_1..a_s.
 #' @param phi either:
 #'   - finite numeric matrix (n_ref x q): row j is the q-vector phi(j), or

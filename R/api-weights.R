@@ -68,13 +68,11 @@
       .abort_bad_arg(arg, "must be numeric or integer")
     }
     .abort_if_na_or_nonfinite(mat, arg = arg)
-    if (any(mat != as.integer(mat))) {
+    if (any(mat != trunc(mat))) {
       .abort_bad_arg(arg, "each column must contain integer values")
     }
-    mat_int <- matrix(as.integer(mat), nrow = nrow(mat), ncol = ncol(mat))
-    dimnames(mat_int) <- dimnames(mat)
-    for (j in seq_len(ncol(mat_int))) {
-      vals <- mat_int[, j]
+    for (j in seq_len(ncol(mat))) {
+      vals <- mat[, j]
       if (!setequal(vals, seq_len(n))) {
         .abort_bad_arg(
           arg,
@@ -82,14 +80,15 @@
         )
       }
     }
+    mat_int <- matrix(as.integer(mat), nrow = nrow(mat), ncol = ncol(mat))
+    dimnames(mat_int) <- dimnames(mat)
     mat_int
   }
 
   make_from_dx <- function(dist_matrix) {
     dist_matrix <- validate_nm_matrix(dist_matrix, arg = "dx", finite = TRUE)
-    tie_key <- .covariate_tie_key(x_mat)
     order_matrix <- apply(dist_matrix, 2L, function(dx) {
-      .order_with_ties(dx, tie_key = tie_key)
+      .order_with_ties(dx)
     }) # n x m
     if (is.null(dim(order_matrix))) order_matrix <- matrix(order_matrix, nrow = n, ncol = m)
     rank_matrix <- apply(order_matrix, 2L, ord_to_ranks) # n x m
@@ -123,10 +122,14 @@
   # 3) List: respect whichever of ranks/ord/dx it provides
   if (is.list(ranking)) {
     if (!is.null(ranking$ranks)) {
-      return(make_from_ranks(ranking$ranks))
+      result <- make_from_ranks(ranking$ranks)
+      if (!is.null(ranking$dx)) result$dx <- validate_nm_matrix(ranking$dx, "dx", finite = TRUE)
+      return(result)
     }
     if (!is.null(ranking$ord)) {
-      return(make_from_ord(ranking$ord))
+      result <- make_from_ord(ranking$ord)
+      if (!is.null(ranking$dx)) result$dx <- validate_nm_matrix(ranking$dx, "dx", finite = TRUE)
+      return(result)
     }
     if (!is.null(ranking$dx)) {
       return(make_from_dx(ranking$dx))
@@ -192,21 +195,29 @@
 #' (distance, custom function, or precomputed ranks/orders/distances) and a weighting
 #' rule (`rank_weight`), then returns the weight matrix `W` (n x m).
 #'
-#' @section Duplicate-covariate blocks:
-#' Rows identical on every supplied raw covariate receive the average
-#' of their assigned rank weights, preserving each block's total mass. This
-#' includes caller-supplied ranks and signed or unnormalized rank rules.
-#' Distinct covariate vectors at equal distance remain separate. A warning
-#' identifies this permutation-invariant modification as outside the paper's
-#' theory, including for `k = 1`. Estimator jackknife deletions repeat the
-#' average over each remaining duplicate block using the selected rule's
-#' sample-size-n-1 table. For a block at consecutive ranks `a:b`, the full
-#' weight is `sum(w_n[a:b]) / (b-a+1)` per member; after deleting a member,
-#' each survivor receives `sum(w_(n-1)[a:(b-1)]) / (b-a)`. A deleted singleton
-#' contributes zero. The smaller block size must be used in the deletion.
-#' An exact support edge describes the unaveraged rank
-#' table; a straddling duplicate block can extend nonzero observation weights
-#' beyond it. Lower-level rank-only APIs retain their rank-primitive semantics.
+#' @section Exact distance ties:
+#' For each target, observations with exactly equal computed distance share
+#' the average of their assigned rank weights, including distinct covariate
+#' vectors. Equality is exact represented equality, without an epsilon or
+#' rounding. Groups may differ by target. Block mass is preserved for signed
+#' and unnormalized rules. Equal distances are ordered by original row index.
+#' A bare supplied rank or order matrix defines a strict order and is not
+#' averaged. A list containing ranks or orders together with `dx` preserves
+#' that authoritative permutation and averages by the supplied distances.
+#' No outcomes, treatments or nuisance values define membership.
+#'
+#' For a block at ranks `a:b`, each member receives
+#' `sum(w_n[a:b]) / (b-a+1)`. Estimator jackknife deletions remove the actual
+#' observation, update ranks, and average remaining blocks with `w_(n-1)`.
+#' If a member is deleted, each survivor receives
+#' `sum(w_(n-1)[a:(b-1)]) / (b-a)`; a deleted singleton contributes zero.
+#' Exact support edges describe the unaveraged rank table; averaging can
+#' extend nonzero observation weights through a block crossing that edge.
+#' Lower-level rank-only APIs retain their rank-primitive semantics.
+#'
+#' A warning is emitted once per public call with distance ties. The
+#' accompanying theory assumes a continuous distance distribution and does
+#' not establish inference under persistent ties, including for `k = 1`.
 #'
 #' @param X  numeric matrix (n x p), reference data.
 #' @param X0 numeric matrix (m x p), target points (rows). If missing, use `x0`.
@@ -265,6 +276,8 @@ weights_matrix <- function(
 
   .warn_unknown_return(return, valid = c("W", "ord", "ranks", "dx"))
 
+  .dnn_distance_scope()
+
   # ranking -> ranks (and ord/dx if computable)
   ranking_result <- .resolve_ranking(ranking, x_mat, x0_mat, ctx)
 
@@ -279,17 +292,20 @@ weights_matrix <- function(
     }
     rank_weight_eval_batch(wt_res$spec, ranking_result$ranks, ctx = ctx)
   }
-  groups <- .dnn_duplicate_groups(x_mat)
-  .dnn_duplicate_scope(x_mat, groups)
-  weight_matrix <- .dnn_average_duplicate_weights(weight_matrix, groups)
+  prepared <- .dnn_prepare_distance_groups(ranking_result$dx)
+  groups <- prepared$groups
+  .dnn_remember_group_facts(groups, prepared$tied_targets)
+  .dnn_distance_scope(groups, facts = prepared)
+  weight_matrix <- .dnn_average_distance_weights(weight_matrix, groups, facts = prepared)
 
   out <- list(
     W = weight_matrix,
+    groups = groups,
     meta = list(
       n = n, m = m, p = p,
       weight_kind = wt_res$kind,
       weight_name = wt_res$spec$name,
-      tie_rule = .dnn_tie_policy()
+      tie_rule = if (is.null(groups)) "supplied_strict_order" else .dnn_tie_policy()
     )
   )
   if ("ord" %in% return && !is.null(ranking_result$ord)) out$ord <- ranking_result$ord
@@ -329,13 +345,13 @@ print.weights_result <- function(x, ...) {
 #' Exact DNN weights are derived from the full rank permutation for each target.
 #' They are not constructed by keeping only the first `s` observations. For the
 #' exact finite-population rule, the unaveraged rank table has nominal support
-#' `j <= n - s + k`; for `k = 1` this becomes `j <= n - s + 1`. Duplicate-block
+#' `j <= n - s + k`; for `k = 1` this becomes `j <= n - s + 1`. Distance-block
 #' averaging can extend nonzero observation weights beyond this nominal edge.
 #' Fixed top-`k` kernels are implemented for `1 <= k <= s`. The accompanying
 #' [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
 #' gives the theory for the unmodified `k = 1` rule.
 #'
-#' @inheritSection weights_matrix Duplicate-covariate blocks
+#' @inheritSection weights_matrix Exact distance ties
 #' @param X numeric matrix (n x p)
 #' @param X0 numeric matrix (m x p); mutually exclusive with \code{x0}
 #' @param x0 numeric length-p single target (convenience for m=1)
@@ -381,7 +397,7 @@ weights_dnn_exact <- function(
 #' asymptotic weights are different constructions; changing the method changes
 #' the localization rule.
 #'
-#' @inheritSection weights_matrix Duplicate-covariate blocks
+#' @inheritSection weights_matrix Exact distance ties
 #' @inheritParams weights_dnn_exact
 #' @param normalize logical; renormalize columns to sum 1
 #' @return A `weights_result` object (same structure as [weights_dnn_exact()]).
@@ -415,7 +431,7 @@ weights_dnn_asymp <- function(
 #' current derivations are written for `k = 1`.
 #'
 #' @inheritSection weights_dnn_asymp Numerical limits
-#' @inheritSection weights_matrix Duplicate-covariate blocks
+#' @inheritSection weights_matrix Exact distance ties
 #' @inheritParams weights_dnn_asymp
 #' @param method one of \code{"exact"} or \code{"asymp"}
 #' @return A `weights_result` object.
@@ -463,14 +479,14 @@ weights_dnn <- function(
 #' two single-scale exact DNN tables at orders `s1` and `s2`; the combination
 #' coefficients are chosen to cancel the leading bias term in the DNN MSE
 #' expansion. The unaveraged table's nominal support ends at
-#' `n - s1 + 1`; averaging can extend observation weights through a duplicate
+#' `n - s1 + 1`; averaging can extend observation weights through a distance
 #' block that straddles this edge.
 #'
 #' **Signed weights.** The returned weight matrix `W` can contain negative
 #' entries; columns still sum to 1.  This is by design and reflects the
 #' bias-correction structure of TDNN.
 #'
-#' @inheritSection weights_matrix Duplicate-covariate blocks
+#' @inheritSection weights_matrix Exact distance ties
 #' @param X Numeric matrix (n x p).
 #' @param X0 Numeric matrix (m x p); mutually exclusive with \code{x0}.
 #' @param x0 Numeric length-p single target (convenience for m = 1).
@@ -523,7 +539,7 @@ weights_tdnn_exact <- function(
 #' may be negative or exactly zero through signed cancellation or underflow.
 #'
 #' @inheritSection weights_dnn_asymp Numerical limits
-#' @inheritSection weights_matrix Duplicate-covariate blocks
+#' @inheritSection weights_matrix Exact distance ties
 #' @inheritParams weights_tdnn_exact
 #' @param normalize Logical; renormalize rank table columns to sum 1
 #'   (default \code{TRUE}).
@@ -568,7 +584,7 @@ weights_tdnn_asymp <- function(
 #' ([weights_tdnn_asymp()]).
 #'
 #' @inheritSection weights_dnn_asymp Numerical limits
-#' @inheritSection weights_matrix Duplicate-covariate blocks
+#' @inheritSection weights_matrix Exact distance ties
 #' @inheritParams weights_tdnn_asymp
 #' @param method One of \code{"exact"} or \code{"asymp"}.
 #'

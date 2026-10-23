@@ -1,14 +1,14 @@
-test_that("covariate-aware ordering uses exact raw lexicographic tie keys", {
-  .with_duplicate_policy_warnings({
+test_that("localization ordering uses exact distances then original index", {
+  .with_localization_policy_warnings({
   X <- rbind(c(1, 0), c(-1, 0), c(0, 1), c(0, -1), c(1, 0), c(2, 0))
-  expected <- c(2L, 4L, 3L, 1L, 5L, 6L)
+  expected <- 1:6
   for (distance in c("l1", "l2")) {
     out <- weights_dnn(X, x0 = c(0, 0), k = 1L, s = 2L, distance = distance,
       return = c("W", "ord", "ranks"))
     expect_identical(as.integer(out$ord), expected)
-    expect_identical(as.integer(out$ranks), c(4L, 1L, 3L, 2L, 5L, 6L))
+    expect_identical(as.integer(out$ranks), 1:6)
   }
-  # A represented nonzero distance difference always precedes covariate keys.
+  # A represented nonzero distance difference always precedes input index.
   out <- weights_matrix(matrix(c(1, -1)), x0 = 0,
     ranking = list(dx = matrix(c(1, 1 + 2^-52))),
     weight = rank_weight_dnn_exact(k = 1L, s = 2L), return = "ord")
@@ -16,12 +16,13 @@ test_that("covariate-aware ordering uses exact raw lexicographic tie keys", {
   })
 })
 
-test_that("custom distances use raw covariates and supplied ranks remain explicit", {
+test_that("custom distances use input index and supplied ranks remain explicit", {
+  .with_localization_policy_warnings({
   d <- .tie_fixture()
   zero <- new_distance("canonical_zero", eval_batch = function(X, X0, ctx) {
     matrix(0, nrow(X), nrow(X0))
   })
-  expected <- c(2L, 4L, 3L, 6L, 1L, 5L)
+  expected <- 1:6
   rw <- rank_weight_dnn_exact(k = 1L, s = 2L)
   for (ranking in list(zero, list(dx = matrix(0, 6L, 3L)),
       function(X, X0, ctx) list(dx = matrix(0, nrow(X), nrow(X0))))) {
@@ -36,9 +37,11 @@ test_that("custom distances use raw covariates and supplied ranks remain explici
       return = field)
     expect_identical(out[[field]], explicit)
   }
+  })
 })
 
-test_that("native and R covariate order helpers share canonical full and subset ties", {
+test_that("native and R coordinate order helpers use current input indices for ties", {
+  .with_localization_policy_warnings({
   old <- options(RdistNN.use_compiled = TRUE)
   on.exit(options(old), add = TRUE)
   d <- .tie_fixture()
@@ -55,14 +58,16 @@ test_that("native and R covariate order helpers share canonical full and subset 
       for (ids in list(1:6, d$perm, c(6L, 2L, 5L, 1L))) {
         local <- d$X[ids, , drop = FALSE]
         result <- do.call(cases[[i]][[1L]], c(list(local, c(0, 0)), cases[[i]][[2L]]))
-        expected <- .tie_reference_order(result$dx, local, ids)
+        expected <- order(result$dx, seq_along(ids))
         expect_identical(ids[result$ord], ids[expected])
       }
     }
   }
+  })
 })
 
 test_that("estimator fits and saved predictions preserve distinct-row tie permutations", {
+  .with_localization_policy_warnings({
   d <- .tie_fixture()
   W <- .tie_reference_weights(d$X, d$X0, 1L, 3L)
   expected <- as.numeric(crossprod(d$y, W))
@@ -71,8 +76,7 @@ test_that("estimator fits and saved predictions preserve distinct-row tie permut
       args <- if (kind == "tdnn") list() else list(s = 3L)
       fit <- do.call(.tie_fit, c(list(kind, d, jackknife = jk), args))
       moved <- do.call(.tie_fit, c(list(kind, d, at = d$perm, jackknife = jk), args))
-      # Rank/support identities are exact; only signal accumulation gets slack.
-      expect_identical(moved$ranks[order(d$perm), ], fit$ranks)
+      # Within-block ranks follow the current input index; averaged weights agree.
       expect_identical(moved$W[order(d$perm), ], fit$W)
       expect_identical(colSums(moved$W != 0), colSums(fit$W != 0))
       expect_equal(moved$ess, fit$ess, tolerance = 1e-14)
@@ -86,9 +90,11 @@ test_that("estimator fits and saved predictions preserve distinct-row tie permut
         predict(moved, X0 = targets, se.fit = TRUE), tolerance = 1e-12)
     }
   }
+  })
 })
 
 test_that("candidate views retain canonical full-sample order under permutations", {
+  .with_localization_policy_warnings({
   d <- .tie_fixture()
   tuning <- new_tuning("canonical_tie_grid", eval = function(...) list(s = 3L),
     eval_grid = function(...) data.frame(s = c(2L, 3L, 4L)))
@@ -104,9 +110,11 @@ test_that("candidate views retain canonical full-sample order under permutations
       expect_equal(predict(view, X0 = d$X0), predict(other, X0 = d$X0), tolerance = 1e-12)
     }
   }
+  })
 })
 
-test_that("PLQR moments and saved inference use covariate-only tie order", {
+test_that("PLQR moments and saved inference use target distance blocks", {
+  .with_localization_policy_warnings({
   d <- .tie_fixture()
   D <- seq_len(nrow(d$X))
   make <- function(ids, density = NULL) {
@@ -121,7 +129,7 @@ test_that("PLQR moments and saved inference use covariate-only tie order", {
     fit <- make(seq_len(nrow(d$X)), density)
     other <- make(d$perm, density)
     expect_equal(fit$W, expected_W, tolerance = 1e-14)
-    expect_identical(fit$ranks, other$ranks[order(d$perm), ])
+    expect_equal(fit$W, other$W[order(d$perm), ], tolerance = 1e-14)
     expect_equal(as.numeric(fit$moment), as.numeric(crossprod(score, expected_W)),
       tolerance = 1e-12)
     expect_equal(fit$moment, other$moment, tolerance = 1e-12)
@@ -131,13 +139,14 @@ test_that("PLQR moments and saved inference use covariate-only tie order", {
     expect_equal(predict(restored, X0 = target, se.fit = !is.null(density)),
       predict(other, X0 = target, se.fit = !is.null(density)), tolerance = 1e-12)
   }
+  })
 })
 
 test_that("identical covariate rows retain ranks but share weight mass", {
-  .with_duplicate_policy_warnings({
+  .with_localization_policy_warnings({
   X <- matrix(c(1, -1, 1, -1))
   out <- weights_dnn(X, x0 = 0, k = 1L, s = 2L, return = "ord")
-  expect_identical(as.integer(out$ord), c(2L, 4L, 1L, 3L))
+  expect_identical(as.integer(out$ord), 1:4)
   # Swapping signals on identical rows preserves their averaged block mass.
   first <- cate_dnn(X = X, x0 = 0, s = 2L, pseudo_outcome = c(1, 2, 3, 4), se = FALSE)
   second <- cate_dnn(X = X, x0 = 0, s = 2L, pseudo_outcome = c(1, 4, 3, 2), se = FALSE)
@@ -146,32 +155,36 @@ test_that("identical covariate rows retain ranks but share weight mass", {
 })
 
 test_that("weight plotting respects retained canonical orders", {
+  .with_localization_policy_warnings({
   d <- .tie_fixture()
   for (kind in c("np", "tdnn", "cate", "clate")) {
     args <- if (kind == "tdnn") list() else list(s = 3L)
     fit <- do.call(.tie_fit, c(list(kind, d), args))
     view <- plot_data_weights(fit)
     expect_identical(view$obs_id[view$target_id == 1L], as.integer(fit$ord[, 1L]))
-    fit$ord <- fit$ranks <- fit$.model$ranks <- NULL
-    if (!is.null(fit$.model$geometry)) fit$.model$geometry$ranks <- NULL
+    fit$ord <- fit$ranks <- NULL
     expect_identical(plot_data_weights(fit)$obs_id, view$obs_id)
   }
+  })
 })
 
-test_that("raw covariates decide ties even in null directions of fitted geometry", {
+test_that("equal represented distances share mass in null directions of fitted geometry", {
+  .with_localization_policy_warnings({
   X <- cbind(c(2, -2, 1, -1), rep(2^600, 4L))
   zero_projection <- list(version = 2L, scale = 1, origin = c(0, 0),
     factor = matrix(c(0, 0, 0, 1), 2L), rank = 1L)
   fit <- weights_dnn(X, x0 = c(0, 2^600), k = 1L, s = 2L,
     distance = distance_mahalanobis(), ctx = zero_projection, return = "ord")
-  expect_identical(as.integer(fit$ord), c(2L, 4L, 3L, 1L))
+  expect_identical(as.integer(fit$ord), 1:4)
+  })
 })
 
-test_that("scaled ties retain raw keys when transformed coordinates underflow", {
+test_that("scaled ties retain input index when transformed coordinates underflow", {
+  .with_localization_policy_warnings({
   old <- options(RdistNN.use_compiled = TRUE)
   on.exit(options(old), add = TRUE)
   X <- matrix(c(2, -2, 1, -1) * .Machine$double.xmin)
-  expected <- c(2L, 4L, 3L, 1L)
+  expected <- 1:4
   for (native in c(TRUE, FALSE)) {
     options(RdistNN.use_compiled = native)
     for (ordering in list(order_by_l1_scaled, order_by_l2_scaled)) {
@@ -182,7 +195,66 @@ test_that("scaled ties retain raw keys when transformed coordinates underflow", 
     for (distance in list(distance_l1_scaled("custom", scale_vec = .Machine$double.xmax),
         distance_l2_scaled("custom", scale_vec = .Machine$double.xmax))) {
       fit <- weights_dnn(X, x0 = 0, k = 1L, s = 2L, distance = distance, return = "ord")
-      expect_identical(as.integer(fit$ord), expected)
+      expect_identical(as.integer(fit$ord), 1:4)
     }
   }
+  })
+})
+
+test_that("tie fixtures preserve unrelated constructor warnings for every estimator", {
+  for (kind in c("np", "tdnn", "cate", "clate")) {
+    constructor_name <- switch(kind,
+      np = "np_dnn", tdnn = "np_tdnn", cate = "cate_dnn", clate = "clate_dnn")
+    fit_ties <- .tie_fit
+    bindings <- new.env(parent = environment(fit_ties))
+    environment(fit_ties) <- bindings
+    bindings[[constructor_name]] <- local({
+      constructor <- get(constructor_name, asNamespace("RdistNN"))
+      function(...) {
+        warning("Unexpected numerical range probe", call. = FALSE)
+        constructor(...)
+      }
+    })
+    seen <- character()
+    args <- if (kind == "tdnn") list() else list(s = 3L)
+    fit <- withCallingHandlers(.with_localization_policy_warnings(
+      do.call(fit_ties, c(list(kind, .tie_fixture()), args))), warning = function(w) {
+        seen <<- c(seen, conditionMessage(w))
+        invokeRestart("muffleWarning")
+      })
+    expect_identical(seen, "Unexpected numerical range probe", info = kind)
+    expect_identical(dim(fit$W), c(6L, 3L))
+  }
+  messages <- c("Exact distance ties detected; fixture probe",
+    "DNN weights are (near-)uniform; fixture probe", "Unexpected numerical range probe")
+  emit <- function() {
+    for (i in seq_along(messages)) {
+      if (i <= 2L) RdistNN:::.dnn_warn(c("distance_ties", "weak_localization")[i], messages[i])
+      else warning(messages[i], call. = FALSE)
+    }
+    7L
+  }
+  for (near_uniform in c(TRUE, FALSE)) {
+    seen <- character()
+    value <- withCallingHandlers(.with_localization_policy_warnings(emit(), near_uniform = near_uniform),
+      warning = function(w) {
+        seen <<- c(seen, conditionMessage(w))
+        invokeRestart("muffleWarning")
+      })
+    expect_identical(value, 7L)
+    expect_identical(seen, if (near_uniform) messages[3L] else messages[2:3])
+  }
+  seen <- character()
+  withCallingHandlers(.with_distance_tie_warning(emit()), warning = function(w) {
+    seen <<- c(seen, conditionMessage(w))
+    invokeRestart("muffleWarning")
+  })
+  expect_identical(seen, messages[2:3])
+  # Identical prose from an unrelated source is not an owned condition.
+  seen <- character()
+  withCallingHandlers(.with_localization_policy_warnings(warning(messages[1L])), warning = function(w) {
+    seen <<- c(seen, conditionMessage(w))
+    invokeRestart("muffleWarning")
+  })
+  expect_identical(seen, messages[1L])
 })

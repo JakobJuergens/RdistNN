@@ -1,4 +1,5 @@
 test_that("nobs reports training observations independently of targets and uncertainty", {
+  .with_distance_tie_warning({
   X <- matrix(seq_len(12L), ncol = 1L)
   Y <- sin(X[, 1L])
   X0 <- matrix(c(2, 6, 10), ncol = 1L)
@@ -15,4 +16,5 @@ test_that("nobs reports training observations independently of targets and uncer
       expect_identical(stats::nobs(unserialize(serialize(fit, NULL))), 12L)
     }
   }
+  })
 })

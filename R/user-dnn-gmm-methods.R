@@ -10,7 +10,7 @@
   p <- nrow(theta)
   m <- ncol(theta)
   has_se <- is.matrix(object$se) && all(dim(object$se) == dim(theta))
-  crit <- stats::qnorm(0.5 + level / 2)
+  crit <- .dnn_normal_critical(level)
 
   rows <- vector("list", p * m)
   idx <- 1L
@@ -191,7 +191,7 @@ summary.gmm_result <- function(object, level = 0.95, ...) {
 #' @return `x`, invisibly.
 #' @export
 print.summary.gmm_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
-  .dnn_check_tie_model(x$.model)
+  .dnn_check_tie_policy(x$meta$tie_rule)
   cat("<summary.gmm_result>\n", sep = "")
   cat("  model  : ", x$meta$model, "\n", sep = "")
   cat("  targets: ", length(unique(x$coefficients$target)), "\n", sep = "")

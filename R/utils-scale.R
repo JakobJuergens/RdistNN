@@ -44,11 +44,77 @@
   d <- x - target
   recover <- abs(d) >= 2^1023 & is.finite(x) & is.finite(target) & abs(inverse) < 1
   if (any(recover)) {
-    d[recover] <- (x[recover] * .5 - target * .5) * (inverse + inverse)
+    half <- x[recover] * .5 - target * .5
+    quarter <- abs(half) >= 2^1023
+    half[quarter] <- (x[recover][quarter] * .25 - target * .25) * (4 * inverse)
+    half[!quarter] <- half[!quarter] * (inverse + inverse)
+    d[recover] <- half
     d[!recover] <- d[!recover] * inverse
     return(d)
   }
   d * inverse
+}
+
+# Split restoration avoids double rounding at the final subnormal boundary.
+.distance_power2 <- function(value, power) {
+  if (value == 0) return(value)
+  half <- trunc(power / 2)
+  (value * 2^half) * 2^(power - half)
+}
+
+# Exceptional rows retain a binary exponent until after norm accumulation.
+# Scratch remains scalar apart from the existing two-element decomposition.
+.scaled_distance_norm_row <- function(X, i, x0, inv_s, l2, squared = FALSE) {
+  scale_m <- total <- 0
+  scale_e <- 0
+  active <- 0L
+  rounded_max <- 0
+  for (j in seq_len(ncol(X))) {
+    raw <- X[i, j] - x0[j]
+    shift <- 0
+    if (abs(raw) >= 2^1023) {
+      raw <- X[i, j] * .25 - x0[j] * .25
+      shift <- 2
+    }
+    if (raw == 0 || inv_s[j] == 0) next
+    if (!is.finite(raw) || !is.finite(inv_s[j])) return(abs(raw * inv_s[j]))
+    active <- active + 1L
+    rounded_max <- max(rounded_max, abs(.scaled_distance_difference(X[i, j], x0[j], inv_s[j])))
+    parts <- .numeric_binary_parts(c(abs(raw), abs(inv_s[j])))
+    mantissa <- parts$value
+    exponent <- parts$power
+    while (any(mantissa >= 1)) {
+      upper <- mantissa >= 1
+      mantissa[upper] <- mantissa[upper] / 2
+      exponent[upper] <- exponent[upper] + 1
+    }
+    m <- mantissa[1L] * mantissa[2L]
+    e <- exponent[1L] + exponent[2L] + shift
+    if (m < .5) {
+      m <- m * 2
+      e <- e - 1
+    }
+    if (scale_m == 0) {
+      scale_m <- m
+      scale_e <- e
+      total <- 1
+    } else if (e > scale_e || (e == scale_e && m > scale_m)) {
+      ratio <- .distance_power2(scale_m / m, scale_e - e)
+      square <- ratio * ratio
+      term <- total * if (l2) square else ratio
+      total <- 1 + term
+      scale_m <- m
+      scale_e <- e
+    } else {
+      ratio <- .distance_power2(m / scale_m, e - scale_e)
+      square <- ratio * ratio
+      total <- total + if (l2) square else ratio
+    }
+  }
+  if (scale_m == 0) return(0)
+  if (active == 1L) return(if (squared) rounded_max * rounded_max else rounded_max)
+  if (squared) return(.distance_power2((scale_m * total) * scale_m, 2 * scale_e))
+  max(.distance_power2(scale_m * if (l2) sqrt(total) else total, scale_e), rounded_max)
 }
 
 .assert_no_na <- function(X, x0 = NULL) {

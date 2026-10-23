@@ -13,11 +13,12 @@
 #' @param x0 Numeric vector for a single target. Supply exactly one of X0,x0.
 #' @param numerator,denominator Finite numeric signal vectors for the matrix route.
 #' @param distance Existing distance specification, registered name or function.
-#'   Geometry is frozen across deletions. Exact distance ties use original
-#'   covariates lexicographically. Identical raw covariate rows share averaged
-#'   rank-weight mass, including each deletion's surviving block. This
-#'   permutation-invariant modification is outside the paper's theory and
-#'   warns. Distinct vectors at equal distance are not averaged.
+#'   Geometry is frozen across deletions. Exactly equal computed distances
+#'   share block-averaged rank-weight mass, including each deletion's surviving
+#'   block. Equality is represented equality without a tolerance; groups are
+#'   target-specific. Distance ties are ordered by original row index. The
+#'   accompanying theory assumes a continuous distance distribution and does
+#'   not establish inference under persistent ties; tied calls emit one warning.
 #' @param method One of "exact" or "asymp", as in [cate_dnn()] and [np_dnn()].
 #' @param k Number of neighbors averaged within each size-s subsample, 1 <= k <= s.
 #' @param s Deterministic integer order. Covariance requires s < n.
@@ -45,9 +46,12 @@
 #' theta_vcov is already on the estimator scale; theta_omega multiplies it by
 #' neff. Do not divide theta_vcov by neff again.
 #'
-#' Signed signals and finite negative denominators are retained. At exact zero
-#' denominator the components remain available and the ratio is NA. Computational
-#' statuses do not verify causal assumptions, learner stability, point-target
+#' Signed signals and finite negative denominators are retained. At an exact zero
+#' denominator, finite components remain available and the ratio is NA. A nonfinite
+#' computed full numerator or denominator component is returned as `NA` with
+#' `ratio_status = "component_overflow"`; finite components and the original
+#' supplied signals are preserved. Computational statuses do not verify causal
+#' assumptions, learner stability, point-target
 #' undersmoothing or weak-instrument-uniform validity.
 #' If nonzero component variation underflows its covariance, uncertainty is
 #' unavailable with numerical_failure status; it is not treated as deterministic.
@@ -136,7 +140,7 @@ affine_ratio_dnn <- function(
   if (active_covariance && (n < 2L || s >= n)) {
     .abort_bad_arg("s", sprintf("must satisfy s < n=%d for delete-1 covariance", n))
   }
-  .dnn_duplicate_scope(x_mat)
+  .dnn_distance_scope()
   geometry <- .dnn_fitted_geometry(distance, x_mat, ctx)
   # Resolve the geometry once, including for the explicit deletion reference.
   weights <- .dnn_weights_with_extras(
@@ -148,7 +152,7 @@ affine_ratio_dnn <- function(
   m <- ncol(W)
   signal <- cbind(numerator = num, denominator = den)
   model_weights <- list(k = k, s = s, method = method, normalize = normalize,
-                        groups = .dnn_duplicate_groups(x_mat))
+                        groups = wt$groups)
   out <- .affine_ratio_evaluate(signal, W, wt$ranks, .affine_rank_weight(model_weights),
                                 active_covariance, jackknife, denominator_tol, groups = model_weights$groups)
   loo <- out$deletions
@@ -178,6 +182,7 @@ affine_ratio_dnn <- function(
     x_mat = x_mat, signal = signal, x_cols = resolved_x_cols,
     k = k, s = s, method = method, normalize = normalize,
     denominator_tol = denominator_tol, row_ids = ids,
+    ranks = wt$ranks, groups = wt$groups, dx = wt$dx,
     geometry = list(ranks = wt$ranks, ord = wt$ord, dx = wt$dx)
   ), geometry)
   if (tuning_mode == "grid") {
@@ -185,6 +190,8 @@ affine_ratio_dnn <- function(
       active_covariance, jackknife, denominator_tol, resolved$tuning)
   }
   class(out) <- "affine_ratio_result"
+  .affine_warn_partial(out$status, requested_covariance = active_covariance,
+    grid = out$tuning_grid)
   out
 }
 
@@ -209,6 +216,7 @@ affine_ratio_dnn <- function(
     status$wald_available <- is.finite(theta) & is.finite(covariance$se) & covariance$se > 0
     loo <- .dnn_restore_loo(loo, jk$offset)
   }
+  components[!is.finite(components)] <- NA_real_
   c(list(theta = as.numeric(theta)), covariance[c("se", "component_vcov", "theta_vcov", "theta_omega")],
     list(components = components, neff = neff, status = status, deletions = loo))
 }
@@ -279,4 +287,25 @@ affine_ratio_dnn <- function(
     se = se, component_vcov = paired, theta_vcov = theta_vcov,
     theta_omega = theta_omega, status = status
   )
+}
+
+# The status table owns availability; a notice must never filter its rows.
+.affine_warn_partial <- function(status, requested_covariance, grid = NULL) {
+  unavailable <- status$ratio_status != "ok" |
+    (isTRUE(requested_covariance) & !status$wald_available)
+  ids <- status$target_id[unavailable]
+  if (!is.null(grid)) {
+    rows <- grid$estimates
+    unavailable_grid <- rows$status == "ok" & !is.na(rows$ratio_status) &
+      (rows$ratio_status != "ok" |
+        (isTRUE(requested_covariance) & !rows$wald_available))
+    ids <- unique(c(ids, rows$target_id[unavailable_grid]))
+  }
+  if (!length(ids)) return(invisible(NULL))
+  .dnn_warn("partial_result",
+    sprintf("Requested %s are unavailable at %d target(s). Inspect `status` and `components` for all target details%s.",
+      if (isTRUE(requested_covariance)) "ratios or pointwise intervals" else "ratios",
+      length(ids), if (is.null(grid)) "" else ", and `tuning_grid$estimates` for candidate details"),
+    affected = length(ids), examples = ids)
+  invisible(NULL)
 }

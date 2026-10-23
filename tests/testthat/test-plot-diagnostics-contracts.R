@@ -32,6 +32,49 @@
   )
 }
 
+.plot_diag_weight_corruptions <- function(W) {
+  nonfinite <- W
+  nonfinite[1L] <- Inf
+  list(observations = W[-1L, , drop = FALSE], targets = W[, -1L, drop = FALSE],
+    vector = as.numeric(W), complex = W + 0i, nonfinite = nonfinite)
+}
+
+test_that("weight diagnostics and extraction require aligned finite retained weights", {
+  cate <- .plot_diag_contract_cate_fit(n = 24L, m = 2L, s = 3L)
+  common <- list(X = cate$.model$x_mat, X0 = cate$x0, Y = cate$.model$psi, se = FALSE)
+  fits <- list(cate = cate, np = do.call(np_dnn, c(common, list(s = 3L))),
+    tdnn = do.call(np_tdnn, c(common, list(s1 = 2L, s2 = 4L))))
+  for (fit in fits) {
+    expect_no_error(diagnostics(fit))
+    expect_identical(nrow(plot_data_weights(fit)), fit$meta$n * fit$meta$m)
+    for (weights in .plot_diag_weight_corruptions(fit$W)) {
+      bad <- fit
+      bad$W <- weights
+      before <- serialize(bad, NULL)
+      for (route in list(diagnostics, plot_data_weights)) {
+        expect_error(route(bad), "object\\$W.*[Rr]efit")
+      }
+      .expect_identical_fast(serialize(bad, NULL), before)
+    }
+  }
+})
+
+test_that("overlap and influence panels share retained weight validation", {
+  skip_if_not_installed("ggplot2")
+  df <- .plot_diag_contract_cate_df(n = 24L)
+  cate <- .plot_diag_contract_cate_fit(n = 24L, m = 2L, s = 3L)
+  clate <- clate_dnn(X = as.matrix(df[c("X1", "X2")]), X0 = cate$x0,
+    Y = df$Y, D = df$T, A = df$T, e = df$e, m_y0 = df$m0, m_y1 = df$m1,
+    m_d0 = rep(0, nrow(df)), m_d1 = rep(1, nrow(df)), s = 3L, se = FALSE)
+  routes <- list(function(x) plot_overlap(x, type = "mass"),
+    function(x) plot_overlap(x, type = "propensity"), plot_influence)
+  for (fit in list(cate, clate)) for (weights in .plot_diag_weight_corruptions(fit$W)) {
+    bad <- fit
+    bad$W <- weights
+    for (route in routes) expect_error(route(bad), "object\\$W.*[Rr]efit")
+  }
+})
+
 test_that("overlap mass built layers reproduce independent computations", {
   skip_if_not_installed("ggplot2")
   fit <- .plot_diag_contract_cate_fit(m = 5L)
@@ -104,7 +147,7 @@ test_that("overlap display mode and inputs are validated at the boundaries", {
     e_col = "e", m0_col = "m0", m1_col = "m1",
     x0 = c(0, 0), k = 1L, s = 15L, se = FALSE, return = c("ess")
   )
-  expect_error(plot_overlap(fit_now, type = "mass"), "return = c")
+  expect_error(plot_overlap(fit_now, type = "mass"), class = "rdistnn_extra_unavailable")
 
   # Treatment argument must be binary.
   fit_mat <- cate_dnn(
@@ -138,14 +181,11 @@ test_that("propensity densities map weights and respect target subsetting", {
   expect_equal(sum(w2), 1)
   expect_equal(w2, fit$W[, 2L] / sum(fit$W[, 2L]))
 
-  # Removing the stored propensities makes the view unavailable with the
-  # documented remedies.
+  # Missing retained AIPW propensities require refitting for either view.
   fit_no_e <- fit
   fit_no_e$.model$e <- NULL
-  expect_error(plot_overlap(fit_no_e, type = "propensity"), "e_col")
-  expect_error(plot_overlap(fit_no_e, type = "propensity"), "propensity")
-  # Mass view is unaffected (treatment still stored).
-  expect_s3_class(plot_overlap(fit_no_e, type = "mass"), "ggplot")
+  expect_error(plot_overlap(fit_no_e, type = "propensity"), "object\\$\\.model\\$e.*[Rr]efit")
+  expect_error(plot_overlap(fit_no_e, type = "mass"), "object\\$\\.model\\$e.*[Rr]efit")
 })
 
 test_that("diagnostics facets reproduce the extractor and isolate the guide", {

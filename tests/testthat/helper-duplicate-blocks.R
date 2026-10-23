@@ -1,40 +1,51 @@
-# Independent explicit-deletion oracle: exact equality of original row values,
+# Independent explicit-deletion oracle: exact equality of computed distances,
 # ordinary canonical distance ordering and direct averaged rank-table weights.
-.with_duplicate_policy_warnings <- function(code) {
-  # Numerical and retained-state fixtures intentionally contain exact-X ties.
+.with_localization_policy_warnings <- function(code, near_uniform = TRUE) {
+  # Only owned exact-distance and near-uniform condition classes are muffled.
+  # Numerical, optimization, rescaling and other warnings remain visible.
   # Dedicated warning tests check the public message and its call scope.
   withCallingHandlers(code, warning = function(w) {
-    if (startsWith(conditionMessage(w), "Identical covariate rows detected;")) {
+    if (inherits(w, "rdistnn_distance_ties_warning") ||
+        (near_uniform && inherits(w, "rdistnn_weak_localization_warning"))) {
       invokeRestart("muffleWarning")
     }
   })
 }
 
-.block_oracle_average_weights <- function(W, X) {
+.with_distance_tie_warning <- function(code) {
+  .with_localization_policy_warnings(code, near_uniform = FALSE)
+}
+
+# Status-bearing fixtures deliberately contain unavailable outputs. Their
+# numerical/status suites accept this one owned notice; multiplicity, contents
+# and warning promotion are tested by test-reporting-recovery.R.
+.with_partial_result_warning <- function(code) {
+  withCallingHandlers(code, warning = function(w) {
+    if (inherits(w, "rdistnn_partial_result_warning")) invokeRestart("muffleWarning")
+  })
+}
+
+.block_oracle_average_weights <- function(W, dx) {
   result <- W
-  for (i in seq_len(nrow(X))) {
-    same <- vapply(seq_len(nrow(X)), function(h) all(X[h, ] == X[i, ]), logical(1L))
-    result[i, ] <- colMeans(W[same, , drop = FALSE])
+  for (j in seq_len(ncol(W))) for (i in seq_len(nrow(W))) {
+    same <- dx[, j] == dx[i, j]
+    result[i, j] <- mean(W[same, j])
   }
   result
 }
 
 .block_oracle_weights <- function(X, X0, table, ranks = NULL) {
   n <- nrow(X)
-  out <- matrix(0, n, nrow(X0))
-  for (j in seq_len(nrow(X0))) {
-    ord <- if (is.null(ranks)) {
-      dx <- sqrt(rowSums(sweep(X, 2L, X0[j, ], "-")^2))
-      do.call(order, c(list(dx), unname(as.list(as.data.frame(X))), list(seq_len(n))))
-    } else order(ranks[, j])
-    raw <- numeric(n)
-    raw[ord] <- table
-    for (i in seq_len(n)) {
-      same <- vapply(seq_len(n), function(h) all(X[h, ] == X[i, ]), logical(1L))
-      out[i, j] <- mean(raw[same])
-    }
-  }
-  out
+  dx <- vapply(seq_len(nrow(X0)), function(j) {
+    sqrt(rowSums(sweep(X, 2L, X0[j, ], "-")^2))
+  }, numeric(n))
+  raw <- vapply(seq_len(nrow(X0)), function(j) {
+    ord <- if (is.null(ranks)) order(dx[, j], seq_len(n)) else order(ranks[, j])
+    w <- numeric(n)
+    w[ord] <- table
+    w
+  }, numeric(n))
+  .block_oracle_average_weights(raw, dx)
 }
 
 .block_exact_table <- function(n, k, s) {

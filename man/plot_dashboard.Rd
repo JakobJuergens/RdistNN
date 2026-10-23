@@ -35,9 +35,9 @@ estimates, overlap mass, local propensity, and cumulative weight share;
 CLATE overlap describes the instrument. Stored tuning grids add a sensitivity panel.
 nonparametric-regression dashboards use estimates, the diagnostics
 facets, and the weight decay and concentration views. Panels whose
-inputs are unavailable are substituted (the diagnostics facets take the
-place of a missing overlap panel) or dropped rather than failing the
-dashboard.
+optional retained inputs are absent are substituted (the diagnostics facets
+take the place of a missing overlap panel) or dropped. Invalid plot options,
+malformed retained state and unexpected rendering failures propagate.
 }
 \details{
 When patchwork is not installed the panels are returned as a named list

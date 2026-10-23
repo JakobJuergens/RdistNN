@@ -20,16 +20,17 @@
   loo <- array(0, c(n, q, m))
   offset <- matrix(0, q, m)
   for (j in seq_len(m)) {
+    target_groups <- .dnn_group_column(groups, j)
     used <- active[ranks[, j]]
-    if (!is.null(groups)) used <- groups %in% unique(groups[used])
+    if (!is.null(target_groups)) used <- target_groups %in% unique(target_groups[used])
     local_order <- order(ranks[, j])[used[order(ranks[, j])]]
     level <- .numeric_signal_level(sig[local_order, , drop = FALSE],
       weights = weight_amplitude, weight_mass = table_mass)
     z <- matrix(0, n, q)
     z[used, ] <- sweep(sig[used, , drop = FALSE], 2L, level, "-")
     r <- ranks[, j, drop = FALSE]
-    value <- if (!is.null(groups) && anyDuplicated(groups)) {
-      .dnn_block_loo(z, r[, 1L], tab_jk, groups, direct = !is.null(rw))
+    value <- if (!is.null(target_groups) && anyDuplicated(target_groups)) {
+      .dnn_block_loo(z, r[, 1L], tab_jk, target_groups, direct = !is.null(rw))
     } else if (is.null(rw)) {
       .dnn_loo_prefix(z, r, tab_jk, tab_full)
     } else {

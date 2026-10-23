@@ -4,6 +4,13 @@
 [RELEASING.md](../../RELEASING.md) owns candidate identity and publication gates.
 This note records the cross-platform acceptance policy.
 
+Follow [version progression](../../RELEASING.md#version-progression) for each
+development commit and production merge; read the current version from
+`DESCRIPTION` and the current `NEWS.md` heading and keep them synchronized.
+The first development commit after production `0.1.x` establishes `0.1.x.9000`;
+subsequent commits increment to `.9001`, `.9002`, and so on.
+Drafting an uncommitted version does not advance that sequence.
+
 ## Merge and release gates
 
 Nontrivial changes need relevant regression coverage, current documentation and

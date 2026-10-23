@@ -28,10 +28,13 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2.14.0
         with:
-          extra-packages: |
+          packages: |
             any::yaml
             roxygen2@8.0.0
             any::Rcpp
+            any::digest
+            any::jsonlite
+          dependencies: 'NA'
 
       - name: Check test dependency declarations
         run: Rscript tools/ci/check_tests_declared_deps.R

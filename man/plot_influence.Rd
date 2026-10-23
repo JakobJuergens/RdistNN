@@ -4,13 +4,7 @@
 \alias{plot_influence}
 \title{Plot per-observation contributions to a CATE or CLATE estimating equation}
 \usage{
-plot_influence(
-  object,
-  targets = NULL,
-  pseudo_outcome = NULL,
-  n_label = 3L,
-  ...
-)
+plot_influence(object, targets = NULL, n_label = 3L)
 }
 \arguments{
 \item{object}{A \code{cate_result} or \code{clate_result} with the weight matrix \code{W} stored (the
@@ -19,13 +13,8 @@ default).}
 \item{targets}{Optional integer vector of target ids (defaults to the
 first/median-\code{n_eff}/last subset above eight targets).}
 
-\item{pseudo_outcome}{Optional numeric vector of length \code{n}; used when
-the fit does not store the pseudo-outcome.}
-
 \item{n_label}{Integer; number of largest absolute contributions to
 label per target (default \code{3}).}
-
-\item{...}{Ignored; reserved for future options.}
 }
 \value{
 A ggplot object.
@@ -39,8 +28,8 @@ three absolute contributions labelled by observation index and the
 weight-concentration diagnostics in the caption.
 }
 \details{
-The pseudo-outcome is taken from the fit; supply \code{pseudo_outcome} for
-fits that do not store it.
+The pseudo-outcome is taken from the fit's retained signal. Refit if
+the retained signal is missing or invalid.
 For CLATE the contribution is w_ij (phi_Yi - theta_j phi_Di), using both
 retained signals at the target's fitted ratio. These are weighted score
 residuals, not delete-one pseudo-values or estimated individual effects.

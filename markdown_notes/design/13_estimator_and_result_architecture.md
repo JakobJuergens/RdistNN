@@ -28,7 +28,8 @@ Jackknife covariance paths subtract a common numerical reference per target
 and signal before summing deletions. Choose that reference only from the union
 of observations with nonzero weight in any deletion. A nonzero entry at rank
 `r` in the `n-1` table can use original ranks `r` and `r+1`; support must include
-both and expand to every member of a duplicate covariate block it intersects.
+both and expand to every member of an intersecting target-specific
+exact-distance group.
 Ignore unused observations before subtraction, including extreme values
 that could overflow despite their zero weights. Signed TDNN tables use nonzero
 support. Asymptotic tables retain all represented nonzero weights without an
@@ -89,7 +90,7 @@ target boundary does not change these inference contracts.
 GMM and paired-ratio/CLATE fits. It resolves the specification and training context once,
 retains a setup-free specification for prediction, and separately retains the
 original resolved specification/context for explicit deletion refitting. Registry
-replacement therefore cannot change a saved fit. NP/TDNN and CATE `loo` keep
+replacement therefore cannot change a saved fit. NP/TDNN, CATE and PLQR `loo` keep
 their established deletion-specific geometry; paired-ratio `loo` remains the
 frozen-rank reference. Custom closures with mutable external state retain their
 own reproducibility obligations.
@@ -106,34 +107,52 @@ matrix inversion: retain fitted coefficients, warn about rescaling, and leave
 coefficient uncertainty unavailable. A finite singular information matrix keeps
 the existing unavailable-inference behavior.
 
-Tie policy is retained with the fitted state. Covariate-aware rankings use
-exact represented distance, lexicographic original raw covariates in supplied
-column order, then input position for identical covariate rows. Weights are
-subsequently averaged within exactly identical raw-covariate groups. No signal
-or nuisance value defines the groups. Block mass is preserved; individual
-weights, support and ESS can change. Distinct covariate vectors at equal
-distance and approximately equal vectors are not grouped.
-Shared retained-state adapters reuse current cached ranks for prediction,
-covariance and plot reconstruction. Older development fit schemas are not a
-compatibility target. Distance-only and caller-supplied rank/order APIs retain
-their documented semantics.
+Tie policy is retained with the fitted state as
+`exact_distance_block_averaging_v1`. High-level rankings use exact represented
+selected-metric distance, then original row index. For each target, average the
+assigned weights over every observation with the same represented distance;
+the groups can differ across targets. Equal raw covariates are one special case,
+and distinct profiles at equal distance belong to the same group. No tolerance
+or rounding merges nearby distances. Signals and nuisance values never define
+groups. Preserve each group's signed or unnormalized mass, including assigned
+zero weights beyond nominal support. Individual weights, support and ESS can change.
+
+Distance-aware weight results retain an `n x m` group matrix internally; fitted models retain
+`.model$groups` alongside cached ranks and the policy. Reuse validates the
+policy, dimensions, rank permutations and target-specific group membership.
+Incomplete state or an earlier policy requires a clear refit error, including
+objects created by 0.1.2. Bare supplied rank/order APIs retain strict-order
+semantics unless distances are retained alongside those orders; then distances
+define groups while the supplied permutations remain authoritative.
+
+The reporting architecture reuses these groups and derived tie facts
+across candidate, diagnostics, prediction and plot consumers within one public
+operation. After current-state validation, prepare call-local facts once;
+reporting must not recompute distances, sort or rebuild groups for each
+consumer. Do not store an unchecked derived tie flag or reporting scope in a
+fit. Recompute facts when geometry actually changes, including deletion-specific
+refitting. Keep the reporting context separate from scientific distance `ctx`;
+[the message policy](05_error_messages_and_warnings.md) owns warning scope and
+[the testing policy](09_testing_and_regression_policy.md) owns reuse evidence.
 
 For a group occupying ranks `a:b`, give each observation
 `sum(w_n[a:b]) / (b-a+1)`. Every deletion removes the actual observation,
-updates ranks, and repeats this operation on the remaining groups using
-`w_(n-1)`. A deleted singleton contributes no signal. Use shared helpers for
-group identification, averaging, retained-state checks and deletion arithmetic;
-estimator adapters must not maintain separate copies of this policy.
+updates ranks, and repeats this operation on survivors with `w_(n-1)`. Deleting
+a member leaves `b-a` survivors, each using the corresponding mass divided by
+`b-a`; a deleted singleton contributes no signal. Use existing shared block
+kernels per target rather than rebuilding an `n x n` deletion-weight matrix.
 Common deletions retain paired-signal and cross-target covariance. Signed TDNN
 weights follow the same averaging without absolute values or renormalization.
-PLQR/GMM calculations also use the actual averaged localization weights.
+PLQR/GMM calculations use the actual averaged localization weights.
 
-Fit, prediction, candidate, diagnostics and weight-plot paths must agree on
-these weights. In particular, a rank table alone no longer supplies realized
-ESS or weight concentration with duplicates. Old tied saved objects must request
-refitting before reuse rather than mixing old stored estimates with the new
-weight policy. Warn at public boundaries, avoiding repeated internal deletion
-or grid warnings, that the modification is not covered by the paper's theory.
+Fit, prediction, candidate, diagnostics and weight-plot paths agree on these
+weights. A rank table alone does not supply realized ESS or concentration when
+distances tie. Warn once per public call: the paper assumes a continuous distance
+distribution, under which old and new policies agree almost surely, while
+inference for persistent distance ties is not established. Averaging does not
+establish a uniform MSE improvement. Preserve the existing fast frozen-geometry versus
+NP/TDNN/CATE/PLQR `loo` deletion-refitting distinction; paired ratios freeze
+geometry on every route and share the same groups and weights for both signals.
 
 ## CATE joint covariance
 
@@ -216,6 +235,7 @@ unrequested extras.
 | NP retained state and joint covariance | `R/user-dnn-np-core.R` | Local means and DNN/TDNN controls; public methods in `R/user-dnn-np-methods.R` |
 | CATE retained-state and deletion adapter | `R/user-dnn-cate-core.R` | Frozen signal meaning, geometry requirements and descriptive provenance; public methods in `R/user-dnn-cate-methods.R` |
 | PLQR score arithmetic, coefficient sandwich and retained prediction state | `R/user-dnn-plqr-core.R` | Density-backed bread, distinct moment/coefficient uncertainty and supported prediction inputs |
+| Exact-distance groups, weight averaging and policy validation | `R/distance-blocks.R` | Retain per-target distances/groups; choose geometry refitting versus frozen geometry |
 | DNN rank weights | `.dnn_rank_weight_spec()` in `R/user-dnn-core.R` | Exact/asymptotic rule, `k`, `s`, normalization |
 | Order and candidate identities | `.dnn_resolve_s()` in `R/user-dnn-tuning.R` | Statistical feasibility and tuning specification |
 | Grid evaluation, cache reuse and common descriptive policy | `R/user-dnn-grid.R` | Estimate/SE callbacks and target-specific statuses in `user-dnn-np-grid.R`, `user-dnn-cate-grid.R`, `user-dnn-plqr-grid.R` and `user-dnn-affine-ratio-grid.R` |
@@ -239,6 +259,10 @@ profile, forest and pointrange styles; `plot_weights()` with profile,
 cumulative and kernel views; and the common overlap, influence, tuning and
 dashboard calls. Weight panels require the documented retained `W`/`dx`
 extras. Optional ggplot2 and patchwork behavior follows the same policy.
+Plotting validates the required current fitted state: influence uses retained
+signals, calibration uses the retained below-threshold indicator, and CLATE
+overlap uses retained instrument inputs. Missing or inconsistent state requires refitting; plot
+adapters do not repair old objects from caller-supplied replacements.
 
 CATE overlap uses treatment arms and treatment propensity. CLATE uses
 instrument arms and instrument propensity. CATE influence panels show

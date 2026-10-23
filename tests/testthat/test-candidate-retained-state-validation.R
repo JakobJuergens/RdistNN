@@ -21,6 +21,17 @@
   list(fits = fits, constructors = constructors, common = common)
 }
 
+test_that("retained candidate scalar corruption is a state error with refit guidance", {
+  fit <- .candidate_retained_state_fixtures()$fits$np
+  for (field in c("k", "s", "normalize")) {
+    broken <- fit
+    broken$.model[[field]] <- if (field == "normalize") NA else 0L
+    err <- tryCatch(.with_localization_policy_warnings(candidate_fit(broken, 1L)), error = identity)
+    expect_s3_class(err, "rdistnn_state_error")
+    expect_match(conditionMessage(err), "Refit", fixed = TRUE)
+  }
+})
+
 test_that("candidate payloads require nonempty unique candidate IDs", {
   fits <- .candidate_retained_state_fixtures()$fits
   for (fit in fits) {
@@ -154,5 +165,49 @@ test_that("candidate order identities cannot reuse stored rows for another order
     id <- bad$tuning_grid$candidates$candidate_id[1L]
     bad$tuning_grid$estimates$s[bad$tuning_grid$estimates$candidate_id == id] <- 7L
     expect_error(suppressWarnings(candidate_fit(bad, 1L)), "order|inconsistent|match")
+  }
+})
+
+test_that("candidate display consumers validate the same retained identities as extraction", {
+  fits <- .candidate_retained_state_fixtures("W")$fits
+  consumers <- list(
+    function(fit) diagnostics(fit, candidates = "all"),
+    function(fit) plot_data_estimates(fit, candidates = "all")
+  )
+  if (requireNamespace("ggplot2", quietly = TRUE)) {
+    consumers <- c(consumers, list(
+      function(fit) plot_estimates(fit, candidates = "all"),
+      function(fit) plot_weights(fit, candidates = "all")))
+  }
+  for (fit in fits) {
+    corruptions <- list(
+      function(x) { x$tuning_grid$candidates$s[1L] <- 7L; x },
+      function(x) { x$tuning_grid$estimates$target_id[1L] <- 1.5; x },
+      function(x) { x$meta$k <- 2L; x },
+      function(x) { x$tuning_grid$candidates$candidate_id[2L] <- x$tuning_grid$candidates$candidate_id[1L]; x }
+    )
+    for (change in corruptions) {
+      bad <- change(fit)
+      for (consume in consumers) {
+        expect_error(suppressWarnings(consume(bad)), "inconsistent|integer.*target_id|unique|match")
+      }
+    }
+    unavailable <- fit
+    unavailable$tuning_grid$candidates$s[4L] <- NA_integer_
+    unavailable$tuning_grid$candidates$status[4L] <- "infeasible"
+    unavailable$tuning_grid$candidates$reason[4L] <- "unavailable order"
+    for (consume in consumers) expect_no_error(suppressWarnings(consume(unavailable)))
+  }
+})
+
+test_that("candidate diagnostics validate their recorded computation identity", {
+  fits <- .candidate_retained_state_fixtures()$fits
+  for (fit in fits) {
+    for (field in c("s", "computed_key")) {
+      bad <- fit
+      bad$tuning_grid$diagnostics[[field]][1L] <- if (field == "s") 7L else "s_7"
+      expect_error(suppressWarnings(diagnostics(bad, candidates = "all")),
+        "diagnostics.*inconsistent.*[Rr]efit")
+    }
   }
 })

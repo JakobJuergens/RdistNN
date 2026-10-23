@@ -73,7 +73,7 @@ ratio_confidence_set <- function(
   }
   level <- .validate_scalar_prob(level, "level")
   tol <- .affine_nonnegative_scalar(tol, "tol")
-  critical <- stats::qnorm((1 - level) / 2, lower.tail = FALSE)
+  critical <- .dnn_normal_critical(level)
   out <- lapply(seq_len(m), function(j) {
     checked <- .ratio_validate_covariance(component_vcov[[j]], j, tol)
     V <- checked$covariance

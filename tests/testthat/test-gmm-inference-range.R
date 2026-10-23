@@ -27,6 +27,7 @@
 }
 
 test_that("nonfinite GMM information cannot become zero coefficient uncertainty", {
+  .with_distance_tie_warning({
   captured <- .gmm_range_capture(.gmm_range_fit(1e155))
   fit <- captured$value
   expect_identical(as.numeric(coef(fit)), 0)
@@ -40,6 +41,7 @@ test_that("nonfinite GMM information cannot become zero coefficient uncertainty"
   expected_vcov <- (1 / 1e155)^2 / 8
   expect_gt(expected_vcov, 0)
   expect_true(is.finite(expected_vcov))
+  })
 })
 
 test_that("GMM safe solve rejects nonfinite operands before LAPACK", {
@@ -52,6 +54,7 @@ test_that("GMM safe solve rejects nonfinite operands before LAPACK", {
 })
 
 test_that("finite GMM information preserves ordinary and singular controls", {
+  .with_distance_tie_warning({
   ordinary <- .gmm_range_capture(.gmm_range_fit(1))
   expect_identical(as.numeric(coef(ordinary$value)), 0)
   expect_equal(as.numeric(vcov(ordinary$value)), 1 / 8, tolerance = 1e-14)
@@ -63,4 +66,5 @@ test_that("finite GMM information preserves ordinary and singular controls", {
   expect_true(all(is.na(singular$value$se)))
   expect_null(vcov(singular$value))
   expect_false(any(grepl("outside the numeric range", singular$warnings)))
+  })
 })

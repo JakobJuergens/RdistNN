@@ -77,36 +77,33 @@ sim_iv_one_rep <- function(n, kx, q, k, s, design,
 
   rows <- lapply(methods, function(meth) {
     fn <- .get_sim_iv_method(meth)
-    res <- tryCatch(
-      fn(
-        dgp = dgp,
-        x_cols = x_cols,
-        k = k,
-        s = s,
-        alpha = alpha,
-        n_folds = n_folds,
-        clip = clip
-      ),
-      error = function(e) {
-        warning(sprintf(
-          "sim_iv_one_rep: method '%s' failed: %s",
-          meth, conditionMessage(e)
-        ), call. = FALSE)
-        NULL
-      }
-    )
+    res <- .sim_method_eval(function() {
+      fn(dgp = dgp, x_cols = x_cols, k = k, s = s, alpha = alpha,
+        n_folds = n_folds, clip = clip)
+    })
+    if (inherits(res, "rdistnn_simulation_failure")) {
+      row <- na_row
+      attr(row, "method_failures") <- data.frame(method = meth, reason = res$reason,
+        stringsAsFactors = FALSE)
+      return(row)
+    }
+    failures <- attr(res, "method_failures")
+    if (!is.null(failures)) failures$method <- meth
     if (is.null(res)) {
-      na_row
+      row <- na_row
     } else {
       missing <- setdiff(metric_names, names(res))
       if (length(missing) > 0L) {
         res <- c(res, stats::setNames(rep(NA_real_, length(missing)), missing))
       }
-      res[metric_names]
+      row <- res[metric_names]
     }
+    attr(row, "method_failures") <- failures
+    row
   })
 
-  do.call(rbind, lapply(seq_along(methods), function(i) {
+  failures <- do.call(rbind, lapply(rows, attr, which = "method_failures"))
+  out <- do.call(rbind, lapply(seq_along(methods), function(i) {
     r <- rows[[i]]
     data.frame(
       method = methods[i],
@@ -126,6 +123,9 @@ sim_iv_one_rep <- function(n, kx, q, k, s, design,
       row.names = NULL
     )
   }))
+  attr(out, "method_failures") <- failures
+  .sim_warn_method_failures(failures, "the result's unavailable metric rows")
+  out
 }
 
 .sim_iv_cells <- function(designs, n_vals, kx_vals, q_vals) {
@@ -287,55 +287,34 @@ sim_iv_run <- function(
     }
 
     reps <- .lapply(as.list(seeds), function(sd) {
-      result <- tryCatch(
-        sim_iv_one_rep(
-          n = n,
-          kx = kx,
-          q = q,
-          k = k,
-          s = s,
-          design = d,
-          methods = methods,
-          alpha = alpha,
-          sigma = sigma,
-          clip = clip,
-          seed = sd,
-          n_folds = n_folds
-        ),
-        error = function(e) {
-          warning(sprintf(
-            "sim_iv_run: rep seed %d failed [design=%s n=%d kx=%d q=%d]: %s",
-            sd, d, n, kx, q, conditionMessage(e)
-          ), call. = FALSE)
-          NULL
-        }
+      result <- withCallingHandlers(
+        sim_iv_one_rep(n = n, kx = kx, q = q, k = k, s = s, design = d,
+          methods = methods, alpha = alpha, sigma = sigma, clip = clip,
+          seed = sd, n_folds = n_folds),
+        rdistnn_method_failed_warning = function(w) invokeRestart("muffleWarning")
       )
-
-      if (is.null(result)) {
-        do.call(rbind, lapply(methods, function(meth) {
-          row <- as.list(.sim_iv_na_row(alpha = alpha)[metric_names])
-          data.frame(
-            design = d, n = n, kx = kx, q = q, s = s, seed = sd,
-            method = meth,
-            as.data.frame(row, check.names = FALSE),
-            stringsAsFactors = FALSE,
-            row.names = NULL
-          )
-        }))
-      } else {
-        result$design <- d
-        result$n <- n
-        result$kx <- kx
-        result$q <- q
-        result$s <- s
-        result$seed <- sd
-        result[, c("design", "n", "kx", "q", "s", "seed", "method", metric_names),
-               drop = FALSE]
-      }
+      failures <- attr(result, "method_failures")
+      if (!is.null(failures)) failures$seed <- sd
+      result$design <- d
+      result$n <- n
+      result$kx <- kx
+      result$q <- q
+      result$s <- s
+      result$seed <- sd
+      result <- result[, c("design", "n", "kx", "q", "s", "seed", "method", metric_names),
+        drop = FALSE]
+      attr(result, "method_failures") <- failures
+      result
     })
 
+    failures <- do.call(rbind, lapply(reps, attr, which = "method_failures"))
     all_rows[[i]] <- do.call(rbind, reps)
+    attr(all_rows[[i]], "method_failures") <- failures
   }
 
-  do.call(rbind, all_rows)
+  failures <- do.call(rbind, lapply(all_rows, attr, which = "method_failures"))
+  out <- do.call(rbind, all_rows)
+  attr(out, "method_failures") <- failures
+  .sim_warn_method_failures(failures, "the result's unavailable metric rows")
+  out
 }

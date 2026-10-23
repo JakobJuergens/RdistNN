@@ -6,7 +6,7 @@
 
 .sim_metric_iv <- function(theta_hat, se_hat, theta0, alpha, neff = NA_real_,
                            J = NA_real_, df = NA_integer_) {
-  z <- stats::qnorm(1 - alpha / 2)
+  z <- .dnn_normal_critical_alpha(alpha)
   finite_ci <- is.finite(theta_hat) && is.finite(se_hat) && se_hat > 0
   covered <- if (finite_ci) {
     (theta_hat - z * se_hat <= theta0) & (theta0 <= theta_hat + z * se_hat)
@@ -38,15 +38,18 @@
   grep(paste0("^", prefix, "[0-9]+"), names(dgp$data), value = TRUE)
 }
 
-.sim_iv_na_metric <- function(theta0, alpha) {
-  .sim_metric_iv(NA_real_, NA_real_, theta0, alpha)
+.sim_iv_na_metric <- function(theta0, alpha, reason) {
+  out <- .sim_metric_iv(NA_real_, NA_real_, theta0, alpha)
+  attr(out, "method_failures") <- data.frame(method = NA_character_,
+    reason = .dnn_brief(reason, 240L), stringsAsFactors = FALSE)
+  out
 }
 
 .sim_iv_safe_solve <- function(A, b = NULL) {
-  tryCatch(
-    if (is.null(b)) solve(A) else solve(A, b),
-    error = function(e) NULL
-  )
+  # Match solve.default's existing estimated 1-norm reciprocal-condition
+  # cutoff. Keep host handling of nonfinite matrices and unexpected failures.
+  if (all(is.finite(A)) && rcond(A, norm = "1") < .Machine$double.eps) return(NULL)
+  if (is.null(b)) solve(A) else solve(A, b)
 }
 
 .sim_iv_fit_lm <- function(formula, train, test) {
@@ -209,7 +212,8 @@
 
   denom_identity <- sum(b_bar^2)
   if (!is.finite(denom_identity) || denom_identity <= .Machine$double.eps) {
-    return(.sim_iv_na_metric(dgp$theta_x0, alpha))
+    return(.sim_iv_na_metric(dgp$theta_x0, alpha,
+      "The oracle IV denominator is nonfinite or no larger than the existing numerical tolerance."))
   }
   theta_1 <- sum(b_bar * a_bar) / denom_identity
   g1 <- A_obs - B_obs * theta_1
@@ -217,12 +221,14 @@
   Omega <- (Omega + t(Omega)) / 2
   Omega_inv <- .sim_iv_safe_solve(Omega)
   if (is.null(Omega_inv) || any(!is.finite(Omega_inv))) {
-    return(.sim_iv_na_metric(dgp$theta_x0, alpha))
+    return(.sim_iv_na_metric(dgp$theta_x0, alpha,
+      "The oracle IV score covariance is singular or its inverse is nonfinite."))
   }
 
   info <- as.numeric(t(b_bar) %*% Omega_inv %*% b_bar)
   if (!is.finite(info) || info <= .Machine$double.eps) {
-    return(.sim_iv_na_metric(dgp$theta_x0, alpha))
+    return(.sim_iv_na_metric(dgp$theta_x0, alpha,
+      "The oracle IV information is nonfinite or no larger than the existing numerical tolerance."))
   }
   theta_hat <- as.numeric(t(b_bar) %*% Omega_inv %*% a_bar / info)
   se_hat <- sqrt(1 / (neff * info))
@@ -269,17 +275,15 @@
 .method_dnn_iv_fullsample <- function(dgp, x_cols, k, s, alpha,
                                       clip = 1e-3, ...) {
   instrument_type <- .sim_iv_instrument_types(dgp)
-  nuis <- tryCatch(
-    .fit_sim_iv_nuisances_fullsample(
+  nuis <- .fit_sim_iv_nuisances_fullsample(
       dat = dgp$data,
       x_cols = x_cols,
       q = dgp$q,
       instrument_type = instrument_type,
       clip = clip
-    ),
-    error = function(e) NULL
   )
-  if (is.null(nuis)) return(.sim_iv_na_metric(dgp$theta_x0, alpha))
+  if (is.null(nuis)) return(.sim_iv_na_metric(dgp$theta_x0, alpha,
+      "Full-sample nuisance estimation returned no fitted predictions."))
 
   augmented <- .sim_iv_add_nuisance_cols(dgp$data, nuis, prefix = "fs")
   dgp_aug <- dgp
@@ -299,18 +303,16 @@
 .method_dnn_iv_crossfit <- function(dgp, x_cols, k, s, alpha,
                                     n_folds = 5L, clip = 1e-3, ...) {
   instrument_type <- .sim_iv_instrument_types(dgp)
-  nuis <- tryCatch(
-    .fit_sim_iv_nuisances_crossfit(
+  nuis <- .fit_sim_iv_nuisances_crossfit(
       dat = dgp$data,
       x_cols = x_cols,
       q = dgp$q,
       instrument_type = instrument_type,
       n_folds = n_folds,
       clip = clip
-    ),
-    error = function(e) NULL
   )
-  if (is.null(nuis)) return(.sim_iv_na_metric(dgp$theta_x0, alpha))
+  if (is.null(nuis)) return(.sim_iv_na_metric(dgp$theta_x0, alpha,
+      "Cross-fitted nuisance estimation returned no fitted predictions."))
 
   augmented <- .sim_iv_add_nuisance_cols(dgp$data, nuis, prefix = "cf")
   dgp_aug <- dgp
@@ -331,20 +333,23 @@
   dat <- dgp$data
   z_cols <- paste0("Z", seq_len(dgp$q))
   fs_formula <- stats::reformulate(c(z_cols, x_cols), response = "D")
-  fs <- tryCatch(stats::lm(fs_formula, data = dat), error = function(e) NULL)
-  if (is.null(fs)) return(.sim_iv_na_metric(dgp$theta_x0, alpha))
+  fs <- stats::lm(fs_formula, data = dat)
+  if (is.null(fs)) return(.sim_iv_na_metric(dgp$theta_x0, alpha,
+      "The first-stage regression returned no fitted model."))
 
   df2 <- dat
   df2$Dhat <- stats::predict(fs, newdata = dat)
   ss_formula <- stats::reformulate(c("Dhat", x_cols), response = "Y")
-  ss <- tryCatch(stats::lm(ss_formula, data = df2), error = function(e) NULL)
-  if (is.null(ss)) return(.sim_iv_na_metric(dgp$theta_x0, alpha))
+  ss <- stats::lm(ss_formula, data = df2)
+  if (is.null(ss)) return(.sim_iv_na_metric(dgp$theta_x0, alpha,
+      "The second-stage regression returned no fitted model."))
 
   co <- stats::coef(ss)
   vc <- stats::vcov(ss)
   if (!"Dhat" %in% names(co) || !is.finite(co[["Dhat"]]) ||
       !"Dhat" %in% rownames(vc)) {
-    return(.sim_iv_na_metric(dgp$theta_x0, alpha))
+    return(.sim_iv_na_metric(dgp$theta_x0, alpha,
+      "The second-stage treatment coefficient or covariance is unavailable."))
   }
 
   .sim_metric_iv(
@@ -378,20 +383,23 @@
   fit_cols <- paste0("hat_", endog_cols)
   for (j in seq_along(endog_cols)) {
     fs_formula <- stats::reformulate(inst_cols, response = endog_cols[j])
-    fs <- tryCatch(stats::lm(fs_formula, data = stage_df), error = function(e) NULL)
-    if (is.null(fs)) return(.sim_iv_na_metric(dgp$theta_x0, alpha))
+    fs <- stats::lm(fs_formula, data = stage_df)
+    if (is.null(fs)) return(.sim_iv_na_metric(dgp$theta_x0, alpha,
+      "An interacted first-stage regression returned no fitted model."))
     stage_df[[fit_cols[j]]] <- stats::predict(fs, newdata = stage_df)
   }
 
   ss_formula <- stats::reformulate(c(x_cols, fit_cols), response = "Y")
-  ss <- tryCatch(stats::lm(ss_formula, data = stage_df), error = function(e) NULL)
-  if (is.null(ss)) return(.sim_iv_na_metric(dgp$theta_x0, alpha))
+  ss <- stats::lm(ss_formula, data = stage_df)
+  if (is.null(ss)) return(.sim_iv_na_metric(dgp$theta_x0, alpha,
+      "The interacted second-stage regression returned no fitted model."))
 
   co <- stats::coef(ss)
   vc <- stats::vcov(ss)
   needed <- fit_cols
   if (!all(needed %in% names(co)) || any(!is.finite(co[needed]))) {
-    return(.sim_iv_na_metric(dgp$theta_x0, alpha))
+    return(.sim_iv_na_metric(dgp$theta_x0, alpha,
+      "A required interacted second-stage coefficient is unavailable."))
   }
 
   grad <- stats::setNames(c(1, dgp$x0), needed)
@@ -415,23 +423,27 @@
   Zloc <- sweep(X, 2, x0) / rep(h_vec, each = n)
   K_vals <- exp(-0.5 * rowSums(Zloc^2))
   if (!is.finite(sum(K_vals)) || sum(K_vals) <= .Machine$double.eps) {
-    return(.sim_iv_na_metric(dgp$theta_x0, alpha))
+    return(.sim_iv_na_metric(dgp$theta_x0, alpha,
+      "The local IV kernel mass is nonfinite or no larger than the existing numerical tolerance."))
   }
 
   fs_formula <- stats::reformulate(z_cols, response = "D")
-  fs <- tryCatch(stats::lm(fs_formula, data = dat, weights = K_vals), error = function(e) NULL)
-  if (is.null(fs)) return(.sim_iv_na_metric(dgp$theta_x0, alpha))
+  fs <- stats::lm(fs_formula, data = dat, weights = K_vals)
+  if (is.null(fs)) return(.sim_iv_na_metric(dgp$theta_x0, alpha,
+      "The local first-stage regression returned no fitted model."))
 
   df2 <- dat
   df2$Dhat <- stats::predict(fs, newdata = dat)
-  ss <- tryCatch(stats::lm(Y ~ Dhat, data = df2, weights = K_vals), error = function(e) NULL)
-  if (is.null(ss)) return(.sim_iv_na_metric(dgp$theta_x0, alpha))
+  ss <- stats::lm(Y ~ Dhat, data = df2, weights = K_vals)
+  if (is.null(ss)) return(.sim_iv_na_metric(dgp$theta_x0, alpha,
+      "The local second-stage regression returned no fitted model."))
 
   co <- stats::coef(ss)
   vc <- stats::vcov(ss)
   if (!"Dhat" %in% names(co) || !is.finite(co[["Dhat"]]) ||
       !"Dhat" %in% rownames(vc)) {
-    return(.sim_iv_na_metric(dgp$theta_x0, alpha))
+    return(.sim_iv_na_metric(dgp$theta_x0, alpha,
+      "The local second-stage treatment coefficient or covariance is unavailable."))
   }
 
   neff <- sum(K_vals)^2 / sum(K_vals^2)

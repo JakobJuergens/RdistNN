@@ -8,16 +8,23 @@
   # Match native arithmetic: subtract, scale, then accumulate in coordinate
   # order with double precision. rowSums() can break native ties differently.
   out <- numeric(nrow(X))
+  exceptional <- FALSE
   for (j in seq_len(ncol(X))) {
     d <- X[, j] - x0[j]
     if (!is.null(inv_s)) {
+      raw <- d
       d <- if (any(abs(d) >= 2^1023)) {
         .scaled_distance_difference(X[, j], x0[j], inv_s[j])
       } else {
         d * inv_s[j]
       }
+      exceptional <- exceptional | abs(raw) >= 2^1023 |
+        (raw != 0 & inv_s[j] != 0 & abs(d) < .Machine$double.xmin)
     }
     out <- out + abs(d)
+  }
+  for (i in which(exceptional)) {
+    out[i] <- .scaled_distance_norm_row(X, i, x0, inv_s, l2 = FALSE)
   }
   out
 }
@@ -59,7 +66,7 @@ dist_l1 <- function(X, x0) {
 #' Order rows by L1 distance to a point (stable ties)
 #'
 #' Returns distances and a stable ordering. A compiled fast path is used when
-#' available; otherwise the R helper applies the same raw-covariate tie order.
+#' available; otherwise the R helper applies the same input-index tie order.
 #'
 #' @inheritParams dist_l1
 #' @return A list with:
@@ -86,7 +93,7 @@ order_by_l1 <- function(X, x0) {
   }
 
   dx <- dist_l1(X, x0)
-  ord <- .order_with_ties(dx, X)
+  ord <- .order_with_ties(dx)
   list(dx = dx, ord = as.integer(ord))
 }
 
@@ -306,6 +313,6 @@ order_by_l1_scaled <- function(X, x0,
   }
 
   dx <- dist_l1_scaled(X, x0, inv_s)
-  ord <- .order_with_ties(dx, X)
+  ord <- .order_with_ties(dx)
   list(dx = dx, ord = as.integer(ord))
 }

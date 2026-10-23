@@ -1,4 +1,5 @@
 test_that("fitted SD recovers finite scales after intermediate range failures", {
+  .with_distance_tie_warning({
   for (h in c(1e154, 1e200, 1e-200)) {
     X <- cbind(c(-1, -1, 1, 1) * h, c(0, 1, 0, 1))
     for (builder in list(distance_l1_scaled, distance_l2_scaled)) {
@@ -8,11 +9,15 @@ test_that("fitted SD recovers finite scales after intermediate range failures", 
       expect_true(all(is.finite(ctx$inv_s) & ctx$inv_s > 0))
       f <- np_dnn(X = X, Y = c(0, 100, 0, 0), x0 = c(0, 1),
         k = 1, s = 4, se = FALSE, distance = spec)
-      expect_equal(f$mu, 100, tolerance = 0)
+      # Reflection of the first coordinate gives two equal nearest
+      # distances (rows 2 and 4). Size-n k=1 assigns half to each.
+      expect_identical(as.numeric(f$W), c(0, .5, 0, .5))
+      expect_equal(f$mu, mean(c(100, 0)), tolerance = 0)
       restored <- unserialize(serialize(f, NULL))
-      expect_equal(predict(restored, X0 = rbind(c(0, 1), c(0, 1))), c(100, 100), tolerance = 0)
+      expect_equal(predict(restored, X0 = rbind(c(0, 1), c(0, 1))), rep(mean(c(100, 0)), 2L), tolerance = 0)
     }
   }
+  })
 })
 
 test_that("exceptional SD centering preserves small variation around huge offsets", {

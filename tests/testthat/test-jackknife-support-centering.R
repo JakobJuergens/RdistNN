@@ -1,4 +1,5 @@
 test_that("zero-weight opposite-sign outliers do not create jackknife variation", {
+  .with_partial_result_warning({
   old <- options(RdistNN.use_compiled = FALSE)
   on.exit(options(old), add = TRUE)
   X <- matrix(seq_len(30L), ncol = 1L)
@@ -22,6 +23,7 @@ test_that("zero-weight opposite-sign outliers do not create jackknife variation"
       expect_equal(as.numeric(plqr$moment_se), 0)
     }
   }
+  })
 })
 
 test_that("centering uses each target's support and preserves cross-target covariance", {

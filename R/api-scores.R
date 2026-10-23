@@ -452,9 +452,7 @@ score_eval_batch.ustat_score <- function(score, subs, data, ctx = NULL, rng = NU
 #' "tmp_score_demo" %in% list_scores()
 #' @export
 register_score <- function(name, score) {
-  if (!is.character(name) || length(name) != 1L || !nzchar(name)) {
-    .abort_bad_arg("name", "must be a non-empty character scalar")
-  }
+  name <- .validate_registry_name(name)
   if (!is_score(score)) {
     .abort_bad_arg("score", "must be a `ustat_score` object")
   }
@@ -474,9 +472,7 @@ register_score <- function(name, score) {
 #' is_score(sc)
 #' @export
 get_score <- function(name) {
-  if (!is.character(name) || length(name) != 1L) {
-    .abort_bad_arg("name", "must be a character scalar")
-  }
+  name <- .validate_registry_name(name)
   if (!exists(name, envir = .score_registry, inherits = FALSE)) {
     known <- ls(envir = .score_registry, all.names = FALSE)
     .abort_bad_arg(

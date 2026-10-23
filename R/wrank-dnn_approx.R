@@ -62,16 +62,22 @@ dnn_weights_asymp_full_from_ranks <- function(ranks, k, s, normalize = TRUE) {
   normalize <- .validate_scalar_logical(normalize, "normalize")
 
   # ---- asymptotic Beta-increment weights over the j/n grid ----
-  j <- seq_len(n)
-  ii <- seq_len(k)
-  # n x k matrix of CDF increments on intervals ((j-1)/n, j/n]
-  inc <- outer(
-    j, ii,
-    function(J, I) {
-      .beta_interval_mass((J - 1) / n, J / n, I, s - I + 1)
-    }
-  )
-  w_rank <- as.numeric(rowMeans(inc))
+  if (k == s) {
+    # Averaging all subset order statistics is uniform. Avoid both the
+    # n-by-s allocation and rank asymmetry from rounded Beta increments.
+    w_rank <- rep(1 / n, n)
+  } else {
+    j <- seq_len(n)
+    ii <- seq_len(k)
+    # n x k matrix of CDF increments on intervals ((j-1)/n, j/n]
+    inc <- outer(
+      j, ii,
+      function(J, I) {
+        .beta_interval_mass((J - 1) / n, J / n, I, s - I + 1)
+      }
+    )
+    w_rank <- as.numeric(rowMeans(inc))
+  }
 
   # numerical guard: renormalize if requested
   if (normalize) {

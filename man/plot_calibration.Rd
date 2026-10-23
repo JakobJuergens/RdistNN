@@ -4,18 +4,13 @@
 \alias{plot_calibration}
 \title{Plot local quantile calibration for PLQR fits (experimental)}
 \usage{
-plot_calibration(object, residuals = NULL, level = 0.95, ...)
+plot_calibration(object, level = 0.95)
 }
 \arguments{
 \item{object}{A \code{plqr_result} with the weight matrix \code{W} stored (the
 default).}
 
-\item{residuals}{Optional numeric vector of length \code{n} of quantile
-residuals; used when the fit does not store the indicator.}
-
 \item{level}{Confidence level of the reference band (default \code{0.95}).}
-
-\item{...}{Ignored; reserved for future options.}
 }
 \value{
 A ggplot object.
@@ -29,9 +24,8 @@ diagnostic for the supplied threshold; the band does not test the full
 coefficient moment condition or account for fitted-nuisance uncertainty.
 }
 \details{
-The below-threshold indicator is stored on the fit; alternatively,
-supply \code{residuals} (\verb{Y - D' theta - g}, length \code{n}), whose non-positive
-entries define the indicator.
+The below-threshold indicator is taken from the fit's retained state.
+Refit if this indicator is missing or invalid.
 }
 \section{Lifecycle}{
 

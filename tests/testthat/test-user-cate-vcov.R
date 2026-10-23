@@ -5,19 +5,7 @@
 )
 
 .cate_vcov_subset <- function(X, X0, psi, s, k = 1L) {
-  original <- psi
-  for (i in seq_len(nrow(X))) {
-    same <- vapply(seq_len(nrow(X)), function(h) all(X[h, ] == X[i, ]), logical(1L))
-    psi[i] <- mean(original[same])
-  }
-  subsets <- utils::combn(nrow(X), s)
-  vapply(seq_len(nrow(X0)), function(j) {
-    distance <- rowSums(sweep(X, 2L, X0[j, ], "-")^2)
-    mean(vapply(seq_len(ncol(subsets)), function(b) {
-      ids <- subsets[, b]
-      mean(psi[ids[.tie_reference_order(distance[ids], X[ids, , drop = FALSE], ids)[seq_len(k)]]])
-    }, numeric(1L)))
-  }, numeric(1L))
+  as.numeric(crossprod(psi, .tie_reference_weights(X, X0, k, s)))
 }
 
 .cate_vcov_reference <- function(d, s = 3L, k = 2L, refit = FALSE) {
@@ -32,7 +20,7 @@
 }
 
 test_that("CATE vcov returns independent common-deletion target covariance", {
-  .with_duplicate_policy_warnings({
+  .with_localization_policy_warnings({
   d <- .cate_vcov_data()
   for (jk in c("fast", "loo")) {
     f <- cate_dnn(X = d$X, X0 = d$X0, pseudo_outcome = d$psi,
@@ -51,7 +39,7 @@ test_that("CATE vcov returns independent common-deletion target covariance", {
 })
 
 test_that("CATE vcov preserves deletion-refitted geometry and frozen candidates", {
-  .with_duplicate_policy_warnings({
+  .with_localization_policy_warnings({
   d <- .cate_vcov_data()
   f <- cate_dnn(X = d$X, X0 = d$X0, pseudo_outcome = d$psi,
     s = 3, k = 2, distance = distance_l2_scaled("sd"), jackknife = "loo")
@@ -69,7 +57,7 @@ test_that("CATE vcov preserves deletion-refitted geometry and frozen candidates"
 })
 
 test_that("CATE vcov distinguishes zero covariance, duplicates and absent inference", {
-  .with_duplicate_policy_warnings({
+  .with_localization_policy_warnings({
   d <- .cate_vcov_data()
   f <- cate_dnn(X = d$X, X0 = d$X0, pseudo_outcome = rep(5, 7), s = 3, return = character())
   expect_equal(unname(vcov(f)), matrix(0, 3, 3))
@@ -80,12 +68,12 @@ test_that("CATE vcov distinguishes zero covariance, duplicates and absent infere
   f0 <- cate_dnn(X = d$X, X0 = d$X0, pseudo_outcome = d$psi, s = 3, se = FALSE)
   expect_error(vcov(f0), "se = TRUE")
   f$.model <- NULL
-  expect_error(vcov(f), "fitted model state")
+  expect_error(vcov(f), "localization model state.*[Rr]efit")
   })
 })
 
 test_that("CATE covariance follows supplied AIPW signals and asymptotic normalization", {
-  .with_duplicate_policy_warnings({
+  .with_localization_policy_warnings({
   d <- cate_demo_data(n = 25, seed = 72)$data
   X0 <- rbind(c(0, 0), c(.2, -.1))
   f <- cate_dnn(data = d, x_cols = c("X1", "X2"), X0 = X0,
@@ -111,7 +99,7 @@ test_that("CATE covariance follows supplied AIPW signals and asymptotic normaliz
 })
 
 test_that("CATE covariance retains registered geometry and validates inference state", {
-  .with_duplicate_policy_warnings({
+  .with_localization_policy_warnings({
   d <- .cate_vcov_data()
   name <- "stage1_covariance_metric"
   register_distance(name, distance_l2_scaled("sd"))
@@ -130,7 +118,7 @@ test_that("CATE covariance retains registered geometry and validates inference s
 })
 
 test_that("CATE joint covariance exercises native and forced-R deletions", {
-  .with_duplicate_policy_warnings({
+  .with_localization_policy_warnings({
   original <- RdistNN:::.rdistnn_compiled_fun
   native_calls <- 0L
   testthat::local_mocked_bindings(.rdistnn_compiled_fun = function(name) {

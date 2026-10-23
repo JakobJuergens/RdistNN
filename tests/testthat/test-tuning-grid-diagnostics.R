@@ -56,7 +56,7 @@ test_that("candidate grid diagnostics are available without retained default W",
     expect_false("W" %in% names(fit))
     expect_error(
       diagnostics(fit),
-      "refit with `return` including \"W\""
+      class = "rdistnn_extra_unavailable"
     )
 
     d_all <- diagnostics(fit, candidates = "all")

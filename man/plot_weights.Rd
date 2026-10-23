@@ -30,7 +30,7 @@ dropped weights is reported in the caption).}
 \item{candidates}{Candidate rows to compare for grid fits. The default
 \code{"default"} preserves the stored weight-matrix display. Use \code{"all"} or
 a character vector of candidate ids with \code{type = "profile"} to compare
-weight profiles without refitting. Duplicate-covariate block averaging
+weight profiles without refitting. Exact-distance block averaging
 can make these profiles vary by target; the selected target profiles are
 shown in separate panels. Untied default profiles coincide across targets
 and are shown once unless \code{targets} is explicitly supplied.}

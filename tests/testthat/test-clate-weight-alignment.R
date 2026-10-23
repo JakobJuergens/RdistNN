@@ -96,6 +96,7 @@ test_that("both DNN schemes reduce CLATE estimates and inference to existing CAT
 })
 
 test_that("asymptotic and general-k paired engines agree across R compiled and frozen loops", {
+  .with_distance_tie_warning({
   old <- options(RdistNN.use_compiled = FALSE)
   on.exit(options(old), add = TRUE)
   for (method in c("exact", "asymp")) for (k in 1:2) for (n in c(4L, 13L)) {
@@ -113,4 +114,5 @@ test_that("asymptotic and general-k paired engines agree across R compiled and f
       expect_equal(fast[[field]], compiled[[field]], tolerance = 1e-11)
     }
   }
+  })
 })

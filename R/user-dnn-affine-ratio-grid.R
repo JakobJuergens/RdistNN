@@ -7,7 +7,7 @@
 .affine_ratio_tuning_grid <- function(default, signal, ranks, model, active, jackknife, tol, tuning,
                                      reuse_default = TRUE) {
   if (!is.null(default$.model$x_mat)) {
-    model$groups <- .dnn_duplicate_groups(default$.model$x_mat)
+    model$groups <- default$.model$groups
   }
   candidates <- tuning$grid$candidates
   .dnn_warn_infeasible_grid(candidates)
@@ -20,7 +20,7 @@
     candidate_model$s <- row$s[[1L]]
     .affine_rank_weight(candidate_model)
   }
-  precomputed <- if (reuse_default && !anyDuplicated(model$groups)) stats::setNames(list(list(
+  precomputed <- if (reuse_default && !.dnn_has_ties(model$groups)) stats::setNames(list(list(
     estimates = .affine_grid_estimates(default),
     diagnostics = .dnn_grid_diagnostics_from_table(.rank_weight_table(spec(default_row), nrow(signal)),
                                                   nrow(signal), list(k = model$k))

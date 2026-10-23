@@ -112,7 +112,34 @@ jobs:
           MAKEFLAGS: -j2
         with:
           upload-snapshots: true
+          check-dir: '"check"'
           build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
+
+      - name: Test installed dependency-comparison controls
+        if: runner.os == 'Linux' && matrix.config.r == 'release'
+        shell: bash
+        env:
+          R_LIBS: ${{ github.workspace }}/check/RdistNN.Rcheck
+          RDISTNN_CHECK_LIBRARY: ${{ github.workspace }}/check/RdistNN.Rcheck
+        run: |
+          Rscript --vanilla - <<'RSCRIPT'
+          expected <- normalizePath(file.path(Sys.getenv("RDISTNN_CHECK_LIBRARY"), "RdistNN"), mustWork = TRUE)
+          actual <- normalizePath(find.package("RdistNN"), mustWork = TRUE)
+          if (!identical(actual, expected)) {
+            stop("Expected checked RdistNN at ", expected, "; resolved ", actual)
+          }
+          message("Using checked RdistNN: ", actual)
+          RSCRIPT
+          python3 - <<'PYTHON'
+          import unittest
+
+          suite = unittest.defaultTestLoader.loadTestsFromName("tests.ci.test_affine_dependency_comparison")
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          if result.skipped or result.testsRun == 0:
+              raise SystemExit("Installed dependency-comparison tests must run without skips.")
+          if not result.wasSuccessful():
+              raise SystemExit(1)
+          PYTHON
 
       - name: Upload debug artifact (R CMD check state)
         if: failure()

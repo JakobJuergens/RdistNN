@@ -121,26 +121,12 @@ test_that("sim_cate_run default s_fn path is unchanged by tuning feature", {
   expect_equal(raw_default$se, raw_explicit$se, tolerance = 1e-12)
 })
 
-test_that("infeasible tuning values do not crash sim_cate_run and produce NA rows", {
-  raw <- expect_warning(
-    sim_cate_run(
-      designs = "dgp1_linear",
-      n_vals = 80L,
-      kx_vals = 2L,
-      n_reps = 1L,
-      master_seed = 66L,
-      k = 3L,
-      tuning = as_tuning(function(...) 1L, name = "infeasible_small_s"),
-      verbose = FALSE
-    ),
-    "method 'dnn_oracle' failed"
-  )
-
-  expect_true(all(raw$s == 1L))
-  expect_true(all(is.na(raw$tau_hat)))
-  expect_true(all(is.na(raw$se)))
-  expect_true(all(is.na(raw$bias)))
-  expect_true(all(is.na(raw$cover)))
+test_that("infeasible main tuning values propagate argument errors", {
+  expect_error(sim_cate_run(
+    designs = "dgp1_linear", n_vals = 80L, kx_vals = 2L,
+    n_reps = 1L, master_seed = 66L, k = 3L,
+    tuning = as_tuning(function(...) 1L, name = "infeasible_small_s"),
+    verbose = FALSE), "k <= s", class = "rdistnn_input_error")
 })
 
 test_that("tuning_dnn_paper kx_override controls cell-wise s variation", {

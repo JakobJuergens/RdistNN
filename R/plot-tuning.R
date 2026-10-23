@@ -50,17 +50,7 @@
 }
 
 .plot_tuning_ranks <- function(object) {
-  ranking <- .dnn_retained_ranking(object)
-  if (!is.null(ranking)) return(ranking$ranks)
-  model <- object$.model
-  if (!is.list(model) || is.null(model$x_mat)) {
-    .abort_bad_arg(
-      "object",
-      "does not contain the required fitted training data; refit before calling plot_tuning()",
-      quoted = FALSE
-    )
-  }
-  .abort_bad_state("This fit does not retain the geometry needed to reconstruct ranks.")
+  .dnn_retained_ranking(object)$ranks
 }
 
 .plot_tuning_grid_np <- function(object, tuning, se) {
@@ -78,7 +68,7 @@
   payload <- .plot_tuning_payload(object, tuning = tuning, se = se)
   suppressWarnings(.np_dnn_tuning_grid(
     candidates = payload$grid$candidates,
-    ranks = .plot_tuning_ranks(object),
+    ranks = .plot_tuning_ranks(object), groups = model$groups,
     mu_hat = object$mu,
     se_hat = object$se,
     x_mat = model$x_mat,
@@ -111,7 +101,7 @@
   payload <- .plot_tuning_payload(object, tuning = tuning, se = se)
   suppressWarnings(.cate_dnn_tuning_grid(
     candidates = payload$grid$candidates,
-    ranks = .plot_tuning_ranks(object),
+    ranks = .plot_tuning_ranks(object), groups = model$groups,
     tau_hat = object$tau,
     se_hat = object$se,
     x_mat = model$x_mat,
@@ -162,7 +152,7 @@
   payload <- .plot_tuning_payload(object, tuning = tuning, se = se)
   suppressWarnings(.plqr_dnn_tuning_grid(
     candidates = payload$grid$candidates,
-    ranks = .plot_tuning_ranks(object),
+    ranks = .plot_tuning_ranks(object), groups = model$groups,
     moment_hat = object$moment,
     se_hat = object$moment_se,
     x_mat = model$x_mat,
@@ -355,7 +345,7 @@ plot_tuning.np_result <- function(object, tuning = tuning_dnn_paper(),
                                   targets = NULL, level = 0.95, se = TRUE,
                                   candidates = "all",
                                   ...) {
-  .dnn_check_tie_model(object$.model)
+  .dnn_check_report_state(object)
   .plot_require_ggplot2("plot_tuning")
   se <- .validate_scalar_logical(se, "se")
   if (missing(tuning)) tuning <- NULL
@@ -369,7 +359,7 @@ plot_tuning.np_result <- function(object, tuning = tuning_dnn_paper(),
 plot_tuning.cate_result <- function(object, tuning = tuning_dnn_paper(),
                                     targets = NULL, level = 0.95,
                                     se = TRUE, candidates = "all", ...) {
-  .dnn_check_tie_model(object$.model)
+  .dnn_check_report_state(object)
   .plot_require_ggplot2("plot_tuning")
   se <- .validate_scalar_logical(se, "se")
   if (missing(tuning)) tuning <- NULL
@@ -382,7 +372,7 @@ plot_tuning.cate_result <- function(object, tuning = tuning_dnn_paper(),
 #' @export
 plot_tuning.affine_ratio_result <- function(object, tuning = tuning_dnn_paper(),
     targets = NULL, level = .95, se = TRUE, candidates = "all", ...) {
-  .dnn_check_tie_model(object$.model)
+  .dnn_check_report_state(object)
   .plot_require_ggplot2("plot_tuning")
   if (missing(tuning)) tuning <- NULL
   se <- .validate_scalar_logical(se, "se")
@@ -405,7 +395,7 @@ plot_tuning.affine_ratio_result <- function(object, tuning = tuning_dnn_paper(),
 plot_tuning.plqr_result <- function(object, tuning = tuning_dnn_paper(),
                                     targets = NULL, level = 0.95,
                                     se = TRUE, candidates = "all", ...) {
-  .dnn_check_tie_model(object$.model)
+  .dnn_check_report_state(object)
   .plot_require_ggplot2("plot_tuning")
   if (missing(tuning)) tuning <- NULL
   grid <- .plot_tuning_grid_plqr(object, tuning = tuning, se = se)

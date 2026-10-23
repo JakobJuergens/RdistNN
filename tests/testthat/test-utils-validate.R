@@ -80,3 +80,16 @@ test_that("scalar logical validator rejects silent truthiness coercions", {
   expect_error(v_logical("yes", arg = "normalize"), "normalize.*TRUE or FALSE")
   expect_error(v_logical(1, arg = "normalize"), "normalize.*TRUE or FALSE")
 })
+
+test_that("public neighbor and subset indices reject overflow before integer conversion", {
+  sc <- as_score(function(idxs, data) sum(data[idxs]), s = 2L)
+  for (value in c(2^40, -2^40, .Machine$integer.max)) {
+    expect_no_warning(expect_error(jackknife_fast_rank(matrix(c(1, value), 1L),
+      a = 1, phi = matrix(1:4)), class = "rdistnn_input_error"))
+    expect_no_warning(expect_error(score_eval(sc, c(1, value), 1:4), class = "rdistnn_input_error"))
+    expect_no_warning(expect_error(score_eval_batch(sc, matrix(c(1, value), 1L), 1:4),
+      class = "rdistnn_input_error"))
+  }
+  expect_identical(score_eval(sc, c(1, 4), 1:4), 5L)
+  expect_identical(score_eval_batch(sc, matrix(c(1, 4), 1L), 1:4), 5)
+})

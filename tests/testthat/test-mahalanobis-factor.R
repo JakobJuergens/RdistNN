@@ -1,4 +1,5 @@
 test_that("computed negative extremes retain finite rank-one geometry", {
+  .with_distance_tie_warning({
   old <- options(RdistNN.use_compiled = TRUE)
   on.exit(options(old), add = TRUE)
   X <- cbind(c((-5e307) * 2, 2e-300, 3e-300), 0)
@@ -19,14 +20,18 @@ test_that("computed negative extremes retain finite rank-one geometry", {
       expect_identical(weights$ranks, expected_ranks)
       fit <- np_dnn(X = X, X0 = targets, Y = 1:3, k = 1L, s = 3L,
         distance = metric, se = FALSE)
-      expect_identical(as.numeric(fit$mu), c(2, 1))
+      # Rows 2 and 3 both have represented distance zero at the first
+      # target, so the size-n nearest-neighbor rule gives their mean 2.5.
+      expect_identical(as.numeric(weights$W[, 1L]), c(0, .5, .5))
+      expect_identical(as.numeric(fit$mu), c(mean(2:3), 1))
       restored <- unserialize(serialize(fit, NULL))
-      expect_identical(as.numeric(predict(restored, X0 = targets)), c(2, 1))
+      expect_identical(as.numeric(predict(restored, X0 = targets)), c(mean(2:3), 1))
       at <- c(3L, 1L, 2L)
       expect_equal(metric$eval_batch(X[at, , drop = FALSE], targets,
         metric$setup(X[at, , drop = FALSE])), expected[at, ], tolerance = 2e-14)
     }
   }
+  })
 })
 
 test_that("whitening projections retain small contributions across row shapes", {
@@ -148,6 +153,7 @@ test_that("Mahalanobis factor preserves resolvable near-collinear geometry", {
 })
 
 test_that("exceptional projection preserves tiny target differences beside offsets", {
+  .with_distance_tie_warning({
   X <- cbind(2^50 + c(0, 1, 0, -1, 0, 0),
     c(0, 0, 2^-40, 0, -2^-40, 2^-1074))
   fit <- np_dnn(X = X, Y = c(10, 0, 0, 0, 0, 99), x0 = X[6, ],
@@ -157,6 +163,7 @@ test_that("exceptional projection preserves tiny target differences beside offse
   D <- spec$eval(X, X[6, ], spec$setup(X))
   expect_identical(D[6], 0)
   expect_true(D[1] > 0)
+  })
 })
 
 test_that("Mahalanobis factor handles extreme scales, zero rank and current contexts", {

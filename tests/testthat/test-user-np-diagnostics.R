@@ -126,7 +126,7 @@ test_that("diagnostics(np_result) errors clearly when W is not retained", {
 
     expect_error(
       diagnostics(fit),
-      "refit with `return` including \"W\""
+      class = "rdistnn_extra_unavailable"
     )
   }, seed = 777L)
 })
@@ -143,7 +143,7 @@ test_that("diagnostics(np_result) requires current fitted outcome state", {
       return = "W"
     )
     fit$.model <- NULL
-    expect_error(diagnostics(fit), "fitted outcome state.*[Rr]efit")
+    expect_error(diagnostics(fit), "localization model state.*[Rr]efit")
   }, seed = 777L)
 })
 

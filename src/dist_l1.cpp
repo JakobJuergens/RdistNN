@@ -10,6 +10,7 @@
 #include <vector>
 #include <cmath>   // std::fabs
 #include <cstddef> // std::size_t
+#include <limits>
 
 using namespace Rcpp;
 
@@ -28,13 +29,17 @@ static inline void dist_l1_core_ptr(const double *Xp, int n, int p, const double
 #endif
   for (int i = 0; i < n; ++i) {
     double acc = 0.0;
+    bool exceptional = false;
     for (int j = 0; j < p; ++j) {
       const double diff = Xp[i + j * stride_n] - x0p[j];
       const double d =
           invsp ? rustat::scaled_distance_difference(Xp[i + j * stride_n], x0p[j], invsp[j]) : diff;
+      exceptional = exceptional || (invsp && (std::fabs(diff) >= rustat::distance_range_limit ||
+                                              (diff != 0.0 && invsp[j] != 0.0 &&
+                                               std::fabs(d) < std::numeric_limits<double>::min())));
       acc += std::fabs(d);
     }
-    out[i] = acc;
+    out[i] = exceptional ? rustat::scaled_norm_row(Xp, n, p, i, x0p, 1, invsp, false) : acc;
   }
 }
 
@@ -53,14 +58,20 @@ static inline void dist_l1_batch_impl(const double *Xp, int n, int p, const doub
   for (int q = 0; q < m; ++q) {
     for (int i = 0; i < n; ++i) {
       double acc = 0.0;
+      bool exceptional = false;
       for (int j = 0; j < p; ++j) {
         const double x0j = X0p[q + j * stride_m];       // column-major X0
         const double diff = Xp[i + j * stride_n] - x0j; // column-major X
         const double d =
             invsp ? rustat::scaled_distance_difference(Xp[i + j * stride_n], x0j, invsp[j]) : diff;
+        exceptional =
+            exceptional || (invsp && (std::fabs(diff) >= rustat::distance_range_limit ||
+                                      (diff != 0.0 && invsp[j] != 0.0 &&
+                                       std::fabs(d) < std::numeric_limits<double>::min())));
         acc += std::fabs(d);
       }
-      out[i + q * stride_n] = acc; // column-major out
+      out[i + q * stride_n] =
+          exceptional ? rustat::scaled_norm_row(Xp, n, p, i, X0p + q, m, invsp, false) : acc;
     }
   }
 }
@@ -118,12 +129,12 @@ NumericMatrix rustat_dist_l1_scaled_batch(NumericMatrix X, NumericMatrix X0, Num
 }
 
 // =====================================================================
-// Order-by helpers: exact distance ties use original raw covariates.
+// Order-by helpers: exact distance ties use input-row index.
 // =====================================================================
-static inline IntegerVector order_by_dx(const std::vector<double> &dx, const NumericMatrix &X) {
+static inline IntegerVector order_by_dx(const std::vector<double> &dx) {
   const int n = static_cast<int>(dx.size());
   std::vector<int> ord0(n);
-  rustat::argsort_indices_covariates(dx.data(), REAL(X), n, X.ncol(), ord0.data());
+  rustat::argsort_indices(dx.data(), n, ord0.data());
   IntegerVector ord(n);
   for (int i = 0; i < n; ++i)
     ord[i] = ord0[i] + 1; // 1-based for R
@@ -139,7 +150,7 @@ Rcpp::List rustat_order_by_l1(NumericMatrix X, NumericVector x0) {
   std::vector<double> dx(n);
   dist_l1_core_ptr(REAL(X), n, p, REAL(x0), /*invsp=*/nullptr, dx.data());
 
-  return List::create(_["dx"] = NumericVector(dx.begin(), dx.end()), _["ord"] = order_by_dx(dx, X));
+  return List::create(_["dx"] = NumericVector(dx.begin(), dx.end()), _["ord"] = order_by_dx(dx));
 }
 
 // [[Rcpp::export]]
@@ -153,5 +164,5 @@ Rcpp::List rustat_order_by_l1_scaled(NumericMatrix X, NumericVector x0, NumericV
   std::vector<double> dx(n);
   dist_l1_core_ptr(REAL(X), n, p, REAL(x0), REAL(inv_s), dx.data());
 
-  return List::create(_["dx"] = NumericVector(dx.begin(), dx.end()), _["ord"] = order_by_dx(dx, X));
+  return List::create(_["dx"] = NumericVector(dx.begin(), dx.end()), _["ord"] = order_by_dx(dx));
 }

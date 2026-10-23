@@ -77,7 +77,7 @@
     "configs/proposal.json": "c667f55f810e1f4bb49d3c8b8c342f1355b3b8c6dd2a17ac07dcb0d972db8554",
     "configs/settings_comparison/config.rds": "f584b4259ede7a7235b2f78c7980d3866ee0e5ff56df6d3e7b39defd40034c5a",
     "evidence.zip": "1c43a185006804c4da6642d759b9b086484fa7fe4656b2278c72edc3746bd24a",
-    "helpers.R": "eadfae3af5220210d39317d6ef7a3fecd318e16b3c422dc7391cc768631de2f4",
+    "helpers.R": "00056b0f6c69ce6280780de57e65eb3abb4655769d6fab876182311eed6ae31c",
     "render_evidence.R": "5e4a5b5018bb5f897fae69667b030efb636f54f2f0b5f43133898e0f65881a91",
     "run_simulations.R": "bd962a47e7a988efb0f52e5a03fdcf072d5b01d5d6c0eb71256a77c5675e7e68",
     "run_sipp.R": "d34d1e81370791421d3b3a122c979a63598e4b980f8a9eb7ca8e427f058a3fbe",

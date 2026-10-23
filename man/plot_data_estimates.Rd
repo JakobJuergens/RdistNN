@@ -18,7 +18,13 @@ plot_data_estimates(object, level = 0.95, ...)
 
 \method{plot_data_estimates}{cate_result}(object, level = 0.95, candidates = "default", ...)
 
-\method{plot_data_estimates}{plqr_result}(object, level = 0.95, quantity = c("moment", "theta"), ...)
+\method{plot_data_estimates}{plqr_result}(
+  object,
+  level = 0.95,
+  quantity = c("moment", "theta"),
+  candidates = "default",
+  ...
+)
 
 \method{plot_data_estimates}{gmm_result}(object, level = 0.95, ...)
 
@@ -41,7 +47,9 @@ character vector of stored candidate ids.}
 jackknife \code{moment_se}; \code{"theta"} uses the supplied coefficient values
 (repeated \code{theta_eval}) and the direct-sandwich \code{theta_se}. While no
 root solver exists, moments are the target-specific quantity, so they
-are the default. The choice is recorded in \code{attr(., "quantity")}.}
+are the default. Candidate views support both quantities; supplied
+coefficients repeat across candidate orders without borrowing moment
+standard errors. The choice is recorded in \code{attr(., "quantity")}.}
 }
 \value{
 A \code{data.frame} with columns \code{target_id} (integer, \verb{1..m}),

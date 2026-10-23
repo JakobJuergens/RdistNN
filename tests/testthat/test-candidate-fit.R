@@ -215,7 +215,7 @@ test_that("CATE candidate prediction works without retained W but diagnostics re
   expect_equal(predict(view, X0 = d$X0), predict(ref, X0 = d$X0), tolerance = 1e-12)
   expect_error(
     diagnostics(view),
-    "refit with `return` including \"W\""
+    class = "rdistnn_extra_unavailable"
   )
 })
 
@@ -312,14 +312,14 @@ test_that("candidate_fit rejects stale cached ranks inconsistent with result dim
   short_ranks$.model$ranks <- .candidate_view_rank_matrix(nrow(d$X) - 1L, nrow(d$X0))
   expect_error(
     candidate_fit(short_ranks, "lambda_1p5"),
-    "row count.*object\\$meta\\$n"
+    "cached rank permutations|distance groups"
   )
 
   few_target_ranks <- fit
   few_target_ranks$.model$ranks <- .candidate_view_rank_matrix(nrow(d$X), nrow(d$X0) - 1L)
   expect_error(
     candidate_fit(few_target_ranks, "lambda_1p5"),
-    "column count.*target points"
+    "cached rank permutations|distance groups"
   )
 
   stale_x0 <- fit
@@ -334,7 +334,7 @@ test_that("candidate_fit rejects stale cached ranks inconsistent with result dim
   fallback_ranks$ranks <- .candidate_view_rank_matrix(nrow(d$X) - 1L, nrow(d$X0))
   expect_error(
     candidate_fit(fallback_ranks, "lambda_1p5"),
-    "row count.*object\\$meta\\$n"
+    "cached rank permutations|distance groups"
   )
 })
 

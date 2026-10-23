@@ -80,6 +80,7 @@ test_that("direct sandwich internals reject unnormalized weights", {
 # Analytic inference does not delete observations, so the largest feasible
 # weight order must not depend on the irrelevant jackknife selector.
 test_that("analytic PLQR full-sample order is independent of jackknife selector", {
+  .with_distance_tie_warning({
   args <- list(X = matrix(1:5), D = matrix(c(1, 2, 3, 2, 1)),
     mD = matrix(0, 5L, 1L), Y = c(-1, 1, -2, 2, 0), g = rep(0, 5L),
     density = rep(.5, 5L), theta_eval = .2, x0 = 2, s = 5L)
@@ -94,4 +95,5 @@ test_that("analytic PLQR full-sample order is independent of jackknife selector"
   expect_error(do.call(plqr_dnn, c(args, list(theta_meat = "jackknife"))), "s < n")
   args$density <- NULL
   expect_error(do.call(plqr_dnn, args), "s < n")
+  })
 })

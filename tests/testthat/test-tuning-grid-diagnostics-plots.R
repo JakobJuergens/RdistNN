@@ -203,6 +203,7 @@ test_that("plot_tuning uses stored grids or internal engines without public refi
 })
 
 test_that("scalar PLQR tuning plots apply one requested uncertainty policy", {
+  .with_distance_tie_warning({
   skip_if_not_installed("ggplot2")
   tuning <- new_tuning("scalar_plqr_plot_policy",
     eval = function(...) list(s = 2L),
@@ -233,6 +234,7 @@ test_that("scalar PLQR tuning plots apply one requested uncertainty policy", {
     expect_identical(stored_true$se, stored_false$se)
     expect_identical(is.finite(stored_true$se), rep(fitted_se, nrow(stored_true)))
   }
+  })
 })
 
 test_that("grid dashboards include a tuning panel while preserving default panels", {

@@ -38,9 +38,9 @@ IDs are deterministic and disambiguated when labels collide. Consumers should
 select stored IDs rather than recreate their formatting. For repeated resolved
 orders, plot labels include candidate IDs where needed to distinguish them.
 Reconstruction validates retained controls, candidate/target identities and
-cached permutations before computing a view; refit incomplete or inconsistent
-state. If a custom grid
-omits the resolved default, the resolver inserts an anchor row. Equal DNN
+cached permutations, target-specific distance groups and the selected policy
+before computing a view; refit incomplete or inconsistent state. If a custom
+grid omits the resolved default, the resolver inserts an anchor row. Equal DNN
 orders have equal computation keys, while distinct user rows remain present.
 
 The long estimates table has candidate identity/labels, `target_id`,
@@ -53,8 +53,11 @@ an undefined ratio at an individual target.
 
 The diagnostics table contains candidate-level weight information: `ess`,
 `max_weight`, `top_n`, `top5_weight_share` and `degenerate`.
-The concentration summary uses the first five rank positions,
-independently of estimator `k`. Target-dependent support or score diagnostics
+For each target, concentration uses the five largest absolute observation
+weights after exact-distance averaging, independently of estimator `k`.
+Candidate summaries retain the minimum target ESS, maximum absolute weight,
+maximum top-five absolute-mass share and a near-uniform flag if any target
+reaches the existing threshold. Target-dependent support or score diagnostics
 belong to estimator-specific diagnostic adapters. Metadata records the method,
 order resolution, sample dimensions and candidate computation counts.
 
@@ -67,8 +70,11 @@ Validate all orders before heavy computation. Every candidate needs `k <= s`
 and `s <= n`; active delete-one covariance additionally needs `s < n`.
 An invalid default is an error. Infeasible non-default candidates retain rows
 with `NA` estimates/SEs, status and reason, with a summary warning identifying
-the skipped candidates. A failed non-default calculation is recorded without
-aborting other candidates; a failed default propagates its error.
+the skipped candidates. A non-default calculation is recorded as failed only
+when its adapter declares an `rdistnn_candidate_failure`; a failed default
+propagates its error. Unexpected callback or kernel errors, resource failures,
+interrupts and warnings promoted to errors propagate rather than becoming
+failed-candidate rows. See the [reporting contract](05_error_messages_and_warnings.md#condition-identities-and-selective-recovery).
 
 Duplicate computation keys reuse calculations but preserve user-facing rows.
 The scalar near-uniform-weight warning applies to the default candidate;
@@ -115,7 +121,7 @@ can lack this representation; preserve their supported evaluation fallback.
 Candidate concentration summaries use actual averaged weights at every target.
 The one-row-per-candidate display takes the minimum ESS and maximum absolute
 weight/top-five absolute-mass share across targets; the near-uniform flag is
-true if any target reaches the existing threshold. With duplicates, weight
+true if any target reaches the existing threshold. With distance ties, weight
 profiles can differ by target even at one fixed candidate order.
 
 ## Rank weights and delete-one identity
@@ -127,9 +133,11 @@ w_rank[r] = (1/k) * sum_{j=1}^k C(r-1,j-1) * C(n-r,s-j) / C(n,s)
 ```
 
 Out-of-range binomials contribute zero; the unaveraged table's support ends at
-rank `n-s+k`. X-aware construction averages each exact duplicate-covariate
-block, so actual nonzero observation support can extend to the end of a block
-crossing that edge. Reuse the shared block and deletion helpers for every candidate.
+rank `n-s+k`. High-level construction averages assigned weights within each
+exact represented selected-metric distance group, separately for each target.
+Actual nonzero observation support can extend to the end of a group crossing
+that edge. Reuse cached per-target groups and the shared block/deletion helpers
+for every candidate.
 The table depends on ranks and parameters rather than observed signal values.
 Asymptotic DNN also has a rank table. The low-level TDNN weight layer has
 signed tables; its availability there does not authorize TDNN for CATE/CLATE.
@@ -138,8 +146,8 @@ Every retained rank vector after one deletion is a permutation of `1..n-1`.
 Consequently, normalization by the sum of a rank table is the same across
 all deletions and targets and can be performed once for that sample size.
 
-Without duplicate-covariate blocks, full rank `r_i` and the size-`n-1` table
-`w` give a frozen signal's deleted average
+Without exact-distance groups of size greater than one, full rank `r_i` and
+the size-`n-1` table `w` give a frozen signal's deleted average
 
 ```
 L_i = sum_{r < r_i} signal_(r) * w[r]
@@ -153,8 +161,8 @@ loop remain independent comparison paths. Never use unguarded zero indices
 inside `ifelse()` for boundary ranks: R drops index zero and can silently
 misalign a vector. Pad cumulative arrays or guard indices themselves.
 
-With duplicate blocks, reuse the shared original-signal block deletion path:
-the removed observation's block gets its actual survivor average from the
+With target-specific distance groups, reuse the shared original-signal block
+deletion path: the removed observation's block gets its actual survivor average from the
 `n-1` table, and outside blocks use unshifted or shifted block averages.
 Retain prefix/suffix and within-block correction states through their merge;
 do not substitute rounded block-mean signals. The
@@ -181,6 +189,9 @@ state and the same internal grid engine, not repeated public estimator calls.
 Stored grids reuse their stored uncertainty. Rowwise ratio Wald availability
 must survive tidy extraction and plotting. Dashboards include tuning panels
 when appropriate, under the same optional-package policy as scalar displays.
+PLQR estimate displays preserve `quantity = "moment"` or `"theta"` for
+candidate comparisons. Supplied coefficients repeat across candidate orders;
+the grid's moment standard errors never become coefficient uncertainty.
 
 Scalar tuning plots re-evaluate all candidates under one
 requested SE policy; stored grid fits reuse their recorded uncertainty.

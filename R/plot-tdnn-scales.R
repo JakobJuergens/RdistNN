@@ -11,7 +11,6 @@
 #' bias-cancelling combination does relative to its components.
 #'
 #' @param object A `tdnn_np_result` from [np_tdnn()].
-#' @param X,Y Optional training data; used when the fit does not store it.
 #' @param ... Ignored; reserved for future options.
 #'
 #' @return A ggplot object.
@@ -30,7 +29,7 @@
 #'   plot_tdnn_scales(fit)
 #' }
 #' @export
-plot_tdnn_scales <- function(object, X = NULL, Y = NULL, ...) {
+plot_tdnn_scales <- function(object, ...) {
   .dnn_reuse_scope(object)
   .plot_require_ggplot2("plot_tdnn_scales")
   if (!inherits(object, "tdnn_np_result")) {
@@ -44,31 +43,12 @@ plot_tdnn_scales <- function(object, X = NULL, Y = NULL, ...) {
     )
   }
   model <- object$.model
-  x_mat <- if (is.list(model) && !is.null(model$x_mat)) model$x_mat else X
-  y_vec <- if (is.list(model) && !is.null(model$y_vec)) model$y_vec else Y
-  if (is.null(x_mat) || is.null(y_vec)) {
-    .abort_bad_arg(
-      "X",
-      "and `Y` are required when fitted training data are unavailable; refit or supply both",
-      quoted = FALSE
-    )
-  }
-  distance <- if (is.list(model) && !is.null(model$distance)) {
-    model$distance
-  } else {
-    "l2"
-  }
-  method <- if (is.list(model) && !is.null(model$method)) {
-    model$method
-  } else {
-    "exact"
-  }
-  normalize <- if (is.list(model) && !is.null(model$normalize)) {
-    model$normalize
-  } else {
-    TRUE
-  }
-  ctx <- if (is.list(model)) model$ctx else NULL
+  x_mat <- model$x_mat
+  y_vec <- model$y_vec
+  distance <- model$distance
+  method <- model$method
+  normalize <- model$normalize
+  ctx <- model$ctx
 
   s1 <- as.integer(object$meta$s1)
   s2 <- as.integer(object$meta$s2)

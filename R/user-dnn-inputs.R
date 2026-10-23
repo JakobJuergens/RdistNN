@@ -53,14 +53,14 @@
     if (.has_nonfinite_non_na(cols)) {
       .abort_bad_arg(arg, "cannot contain non-finite indices (`Inf`, `-Inf`, or `NaN`)")
     }
-    if (any(cols != as.integer(cols))) {
+    if (any(cols != trunc(cols))) {
       .abort_bad_arg(arg, "must be a non-empty integer vector of column indices")
     }
-    idx <- as.integer(cols)
     p <- ncol(data)
-    if (any(idx < 1L | idx > p)) {
+    if (any(cols < 1L | cols > p | cols > .Machine$integer.max)) {
       .abort_bad_arg(arg, sprintf("contains out-of-range indices; valid range is 1..%d", p))
     }
+    idx <- as.integer(cols)
     resolved <- data_names[idx]
   } else {
     .abort_bad_arg(arg, "must be a character vector of column names or an integer vector of indices")

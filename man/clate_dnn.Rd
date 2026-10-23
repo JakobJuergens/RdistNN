@@ -84,11 +84,12 @@ in \eqn{[0,1]}. m_d0 may be omitted only with one_sided = TRUE.}
 under instrument 0. Requires D <= A and zero m_d0 if supplied.}
 
 \item{distance}{Existing distance specification, registered name or function.
-Geometry is frozen across deletions. Exact distance ties use original
-covariates lexicographically. Identical raw covariate rows share averaged
-rank-weight mass, including each deletion's surviving block. This
-permutation-invariant modification is outside the paper's theory and
-warns. Distinct vectors at equal distance are not averaged.}
+Geometry is frozen across deletions. Exactly equal computed distances
+share block-averaged rank-weight mass, including each deletion's surviving
+block. Equality is represented equality without a tolerance; groups are
+target-specific. Distance ties are ordered by original row index. The
+accompanying theory assumes a continuous distance distribution and does
+not establish inference under persistent ties; tied calls emit one warning.}
 
 \item{method}{One of "exact" or "asymp", as in \code{\link[=cate_dnn]{cate_dnn()}} and \code{\link[=np_dnn]{np_dnn()}}.}
 
@@ -121,7 +122,9 @@ full_sample, oob or cross_fit. It is not verified from predictions.}
 \item{ctx}{Optional context passed to the existing distance machinery.}
 
 \item{return}{Optional extras: W, ranks, ord, dx, ess, signals, deletions,
-pseudo_values, neighbors or tuning. Unknown values warn and are ignored.}
+pseudo_values, neighbors, tuning or nuisance. \code{"nuisance"} retains the
+complete \link[=iv_augmented_signals]{augmented-IV signal} construction record, including raw and
+clipped instrument propensities. Unknown values warn and are ignored.}
 }
 \value{
 A clate_result inheriting affine_ratio_result. Component roles are
@@ -135,15 +138,15 @@ predictions; the estimator fits no learners.
 }
 \details{
 The documented sampling framework uses independent observations; cluster
-and survey-design inference are not supplied. Exact distance ties use
-lexicographic order of the original covariates, in their supplied column
-order. Rows identical on every raw localization covariate share the average
-of their rank weights. Each jackknife deletion recomputes this average over
-the surviving block at sample size n-1. This permutation-invariant
-modification is not covered by the paper's theory and emits a warning.
-Distinct covariate vectors at equal distance are not averaged. Ordering uses
-no outcomes or nuisances. Retained tied fits from the earlier policy require
-refitting before reporting or reuse.
+and survey-design inference are not supplied. Observations with exactly
+equal computed distance to a target share their block's average rank weight,
+even when their covariates differ. Groups are target-specific and use exact
+represented equality, without a tolerance. Ordering uses distance then input
+row index; outcomes and nuisances do not define groups. Every jackknife
+deletion averages the surviving blocks with the sample-size-n-1 rule.
+A warning is emitted once per public call with distance ties: the accompanying
+theory assumes a continuous distance distribution and does not establish
+inference under persistent ties. Earlier retained fit schemas require refitting.
 
 Nuisance predictions use all pre-instrument adjustment variables, while
 weights use the reporting coordinates X. The estimate is the ratio of the

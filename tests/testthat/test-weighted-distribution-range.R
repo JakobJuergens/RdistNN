@@ -1,3 +1,15 @@
+test_that("weighted SD retains square roots of unrepresentable normalized weights", {
+  # For two observations, SD = |x2-x1|*sqrt(w1*w2)/(w1+w2).
+  # Here it rounds to one, although w2/sum(w) = 2^-2000 underflows.
+  # Every input, both square-root factors and the SD are representable.
+  for (at in list(1:2, 2:1)) {
+    for (sign in c(-1, 1)) {
+      expect_equal(.weighted_sd((sign * c(0, 2^1000))[at],
+        c(2^1000, 2^-1000)[at]), 1, tolerance = 2e-15)
+    }
+  }
+})
+
 test_that("weighted outcome SD avoids squaring physical units", {
   old <- options(RdistNN.use_compiled = TRUE)
   on.exit(options(old), add = TRUE)

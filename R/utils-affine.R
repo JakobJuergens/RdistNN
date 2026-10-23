@@ -58,7 +58,18 @@
 }
 .affine_rank_weight <- function(model) {
   .dnn_rank_weight_spec(model$method, model$k, model$s,
-                        if (is.null(model$normalize)) TRUE else model$normalize)
+                        .affine_retained_normalize(model))
+}
+
+.affine_retained_normalize <- function(model) {
+  normalize <- model$normalize
+  if (!is.logical(normalize) || length(normalize) != 1L || is.na(normalize)) {
+    .abort_bad_state(paste0(
+      "Retained `object$.model$normalize` must be TRUE or FALSE. ",
+      "Refit with affine_ratio_dnn() or clate_dnn()."
+    ))
+  }
+  normalize
 }
 
 .affine_weight_method <- function(method) {

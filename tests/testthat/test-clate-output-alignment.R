@@ -24,6 +24,8 @@ test_that("ratio summaries expose the existing coefficient-table schema", {
 })
 
 test_that("aligned summary tables retain unavailable target rows", {
+  .with_partial_result_warning({
+  .with_distance_tie_warning({
   fit <- .ratio_fixture(X0 = matrix(c(0, 3, 5), ncol = 1L), x0 = NULL,
                         denominator = c(0, 0, -1, 2), s = 3L)
   out <- summary(fit)
@@ -39,6 +41,8 @@ test_that("aligned summary tables retain unavailable target rows", {
   zero <- summary(.ratio_fixture(numerator = 4 * c(1, -1, 2, 1)))
   expect_equal(zero$coefficients$std.error, 0)
   expect_true(all(is.na(zero$coefficients[1L, c("statistic", "p.value", "conf.low", "conf.high")])))
+  })
+  })
 })
 
 test_that("CLATE estimates use the common tidy extraction schema", {
