@@ -17,15 +17,15 @@
 #'
 #' @details
 #' The documented sampling framework uses independent observations; cluster
-#' and survey-design inference are not supplied. Exact distance ties use
-#' lexicographic order of the original covariates, in their supplied column
-#' order. Rows identical on every raw localization covariate share the average
-#' of their rank weights. Each jackknife deletion recomputes this average over
-#' the surviving block at sample size n-1. This permutation-invariant
-#' modification is not covered by the paper's theory and emits a warning.
-#' Distinct covariate vectors at equal distance are not averaged. Ordering uses
-#' no outcomes or nuisances. Retained tied fits from the earlier policy require
-#' refitting before reporting or reuse.
+#' and survey-design inference are not supplied. Observations with exactly
+#' equal computed distance to a target share their block's average rank weight,
+#' even when their covariates differ. Groups are target-specific and use exact
+#' represented equality, without a tolerance. Ordering uses distance then input
+#' row index; outcomes and nuisances do not define groups. Every jackknife
+#' deletion averages the surviving blocks with the sample-size-n-1 rule.
+#' A warning is emitted once per public call with distance ties: the accompanying
+#' theory assumes a continuous distance distribution and does not establish
+#' inference under persistent ties. Earlier retained fit schemas require refitting.
 #'
 #' Two interfaces are supported.
 #'
@@ -222,7 +222,7 @@ np_tdnn <- function(
 
   # Request ranks on the first weights call so the fast jackknife can
   # reuse them without recomputing distances.
-  .dnn_duplicate_scope(x_mat)
+  .dnn_distance_scope()
   geometry <- .dnn_fitted_geometry(distance, x_mat, ctx)
   weight_return <- return
   if (isTRUE(se) && identical(jackknife, "fast")) {
@@ -263,7 +263,7 @@ np_tdnn <- function(
       normalize         = normalize,
       ctx               = ctx,
       jackknife         = jackknife,
-      precomputed_ranks = wt$ranks
+      precomputed_ranks = wt$ranks, precomputed_groups = wt$groups
     )
   }
 
@@ -296,7 +296,7 @@ np_tdnn <- function(
     kind = "tdnn", y_vec = y_vec, x_mat = x_mat,
     x_cols = if (!is.null(data)) .dnn_resolve_data_cols(x_cols, data, "x_cols") else NULL,
     k = 1L, s1 = s1, s2 = s2, dim = dim, method = method,
-    normalize = normalize, ranks = wt$ranks
+    normalize = normalize, ranks = wt$ranks, groups = wt$groups, dx = wt$dx
   ), geometry)
 
   class(out) <- c("tdnn_np_result", "np_result")
@@ -310,7 +310,7 @@ np_tdnn <- function(
 .np_tdnn_jackknife_se <- function(
   x_mat, x0_mat, y, distance, method, s1, s2, dim, normalize, ctx,
   jackknife         = c("fast", "loo"),
-  precomputed_ranks = NULL
+  precomputed_ranks = NULL, precomputed_groups = NULL
 ) {
   jackknife <- match.arg(jackknife)
 
@@ -330,7 +330,8 @@ np_tdnn <- function(
         normalize         = normalize,
         ctx               = ctx,
         signal_arg        = "Y",
-        precomputed_ranks = precomputed_ranks
+        precomputed_ranks = precomputed_ranks,
+        precomputed_groups = precomputed_groups
       )[1L, ]
     )
   } else {
@@ -349,7 +350,7 @@ np_tdnn <- function(
         ctx               = ctx,
         signal_arg        = "Y",
         jackknife         = "loo",
-        precomputed_ranks = NULL
+        precomputed_ranks = NULL, precomputed_groups = NULL
       )[1L, ]
     )
   }

@@ -87,6 +87,7 @@ test_that("GMM default starts preserve scalar and permuted target results", {
 }
 
 test_that("GMM probes positive-domain moments at explicit target starts", {
+  .with_distance_tie_warning({
   model <- .audit_gmm_positive_domain_model(start = function(...) {
     stop("Explicit starts must bypass the model callback.")
   })
@@ -99,9 +100,11 @@ test_that("GMM probes positive-domain moments at explicit target starts", {
     expect_equal(as.numeric(coef(fit)), as.numeric(exp(crossprod(y, fit$W))), tolerance = 1e-5)
     expect_true(all(fit$convergence$convergence_second == 0L))
   }
+  })
 })
 
 test_that("GMM reuses the first callback start after its dimension probe", {
+  .with_distance_tie_warning({
   calls <- numeric()
   model <- .audit_gmm_positive_domain_model(start = function(sample, ctx, w, x0) {
     calls <<- c(calls, x0[1L])
@@ -113,9 +116,11 @@ test_that("GMM reuses the first callback start after its dimension probe", {
     model_data = data.frame(y = y), model = model, s = 3L, se = FALSE)
   expect_identical(calls, targets)
   expect_equal(as.numeric(coef(fit)), as.numeric(exp(crossprod(y, fit$W))), tolerance = 1e-5)
+  })
 })
 
 test_that("GMM keeps zero fallback and target-local start failures", {
+  .with_distance_tie_warning({
   evaluations <- numeric()
   model <- new_gmm_model("start_failure_control",
     setup = function(sample, n, ...) list(y = sample$y),
@@ -140,9 +145,11 @@ test_that("GMM keeps zero fallback and target-local start failures", {
   expect_identical(calls, c(2, 6))
   expect_true(is.na(coef(fit)[1L, 1L]))
   expect_true(is.finite(coef(fit)[1L, 2L]))
+  })
 })
 
 test_that("GMM discovers positive-domain moments after an earlier callback failure", {
+  .with_distance_tie_warning({
   calls <- numeric()
   model <- .audit_gmm_positive_domain_model(start = function(sample, ctx, w, x0) {
     calls <<- c(calls, x0[1L])
@@ -158,9 +165,11 @@ test_that("GMM discovers positive-domain moments after an earlier callback failu
   expect_true(is.na(coef(fit)[1L, 1L]))
   expect_equal(as.numeric(coef(fit)[1L, 2:3]),
     as.numeric(exp(crossprod(y, fit$W[, 2:3]))), tolerance = 1e-5)
+  })
 })
 
 test_that("GMM keeps invalid-domain explicit starts local when a later probe succeeds", {
+  .with_distance_tie_warning({
   model <- .audit_gmm_positive_domain_model(start = function(...) {
     stop("Explicit starts must bypass the model callback.")
   })
@@ -172,6 +181,7 @@ test_that("GMM keeps invalid-domain explicit starts local when a later probe suc
   expect_true(is.na(coef(fit)[1L, 1L]))
   expect_equal(as.numeric(coef(fit)[1L, 2L]),
     as.numeric(exp(crossprod(y, fit$W[, 2L]))), tolerance = 1e-5)
+  })
 })
 
 test_that("GMM retains all-target callback failures when zero identifies the moment shape", {
@@ -191,7 +201,8 @@ test_that("GMM retains all-target callback failures when zero identifies the mom
   fit <- withCallingHandlers(gmm_dnn(X = matrix(1:8), X0 = matrix(targets),
     model_data = data.frame(y = 1:8), model = model, s = 3L, se = FALSE),
     warning = function(w) {
-      seen <<- c(seen, conditionMessage(w))
+      message <- conditionMessage(w)
+      if (!startsWith(message, "Exact distance ties detected;")) seen <<- c(seen, message)
       invokeRestart("muffleWarning")
     })
   expect_identical(calls, targets)

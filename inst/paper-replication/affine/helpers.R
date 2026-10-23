@@ -42,11 +42,39 @@ replication_args <- function(args, allowed = c("mode", "output-dir", "profiles",
   out
 }
 
-replication_new_output <- function(path) {
-  if (is.null(path) || length(path) != 1L || is.na(path) || !nzchar(path)) {
+replication_canonical_path <- function(path) {
+  path <- path.expand(path)
+  if (file.exists(path) || dir.exists(path)) return(normalizePath(path, winslash = "/", mustWork = TRUE))
+  parent <- dirname(path)
+  if (identical(parent, path)) stop("Cannot resolve directory path: ", path, call. = FALSE)
+  parent <- replication_canonical_path(parent)
+  name <- basename(path)
+  if (name == ".") return(parent)
+  if (name == "..") return(dirname(parent))
+  file.path(parent, name)
+}
+
+replication_output_path <- function(path, bundle) {
+  if (!is.character(path) || length(path) != 1L || is.na(path) || !nzchar(path)) {
     stop("Supply --output-dir with a new writable directory.", call. = FALSE)
   }
-  path <- normalizePath(path, winslash = "/", mustWork = FALSE)
+  path <- replication_canonical_path(path)
+  bundle <- replication_canonical_path(bundle)
+  protected <- bundle
+  package <- dirname(dirname(bundle))
+  description <- file.path(package, "DESCRIPTION")
+  if (file.exists(description) && identical(read.dcf(description, fields = "Package")[[1L]], "RdistNN")) {
+    protected <- c(protected, replication_canonical_path(package))
+  }
+  compare <- if (.Platform$OS.type == "windows") tolower else identity
+  if (any(compare(path) == compare(protected) | startsWith(compare(path), paste0(compare(protected), "/")))) {
+    stop("Supply an external output directory outside the RdistNN package and replication bundle.", call. = FALSE)
+  }
+  path
+}
+
+replication_new_output <- function(path, bundle) {
+  path <- replication_output_path(path, bundle)
   if (file.exists(path) || dir.exists(path)) {
     stop("Output directory already exists; choose a new directory.", call. = FALSE)
   }
@@ -194,6 +222,7 @@ replication_stage <- function(destination, stage, run, audit_file = NULL) {
 
 replication_simulations <- function(bundle, output, mode = c("smoke", "production"), profiles = NULL, resume = FALSE) {
   mode <- match.arg(mode)
+  output <- replication_output_path(output, bundle)
   replication_require(c("RdistNN", "digest", "jsonlite", "future", "future.apply"))
   replication_verify(bundle)
   configs <- replication_configs(bundle, mode)
@@ -216,7 +245,7 @@ replication_simulations <- function(bundle, output, mode = c("smoke", "productio
       stop("Resume bundle or mode mismatch.", call. = FALSE)
     }
   } else {
-    output <- replication_new_output(output)
+    output <- replication_new_output(output, bundle)
     dir.create(file.path(output, "configs"))
     file.copy(file.path(bundle, "configs", "proposal.json"), file.path(output, "configs", "proposal.json"))
     for (profile in names(configs)) {
@@ -370,9 +399,10 @@ replication_run_renderer <- function(script, args, paper_commit) {
 }
 
 replication_render <- function(bundle, output) {
+  output <- replication_output_path(output, bundle)
   replication_require(c("digest", "jsonlite", "ggplot2", "patchwork"))
   replication_verify(bundle)
-  output <- replication_new_output(output)
+  output <- replication_new_output(output, bundle)
   manifest <- replication_manifest(bundle)
   for (stored in names(manifest$source_mapping)) {
     target <- file.path(output, manifest$source_mapping[[stored]])
@@ -419,9 +449,10 @@ replication_render <- function(bundle, output) {
 
 replication_sipp <- function(bundle, output, mode = c("smoke", "production")) {
   mode <- match.arg(mode)
+  output <- replication_output_path(output, bundle)
   replication_require(c("hdm", "grf", "RdistNN", "digest", "jsonlite"))
   replication_verify(bundle)
-  output <- replication_new_output(output)
+  output <- replication_new_output(output, bundle)
   app <- file.path(bundle, "source", "sipp")
   fit_args <- c(
     "--run-id=paper-current", "--outcomes=raw", "--method-family=affine",

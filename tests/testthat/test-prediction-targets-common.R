@@ -17,7 +17,7 @@
 }
 
 test_that("prediction adapters share canonical reporting-target identities", {
-  .with_duplicate_policy_warnings({
+  .with_localization_policy_warnings({
   fits <- .common_prediction_fits()
   for (f in fits) {
     at <- f$x0
@@ -32,7 +32,7 @@ test_that("prediction adapters share canonical reporting-target identities", {
 })
 
 test_that("prediction adapters validate the selected target interface consistently", {
-  .with_duplicate_policy_warnings({
+  .with_localization_policy_warnings({
   fits <- .common_prediction_fits()
   for (f in fits) {
     at <- f$x0

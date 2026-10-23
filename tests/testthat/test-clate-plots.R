@@ -52,8 +52,27 @@ test_that("CLATE overlap plots use the instrument and its retained propensity", 
   expect_equal(density$data$e, iv$propensity$used)
   expect_equal(sum(density$data$w), 1)
   expect_match(density$labels$x, "Instrument")
-  expect_error(plot_overlap(fit, treatment = iv$D), "treatment.*instrument")
+  expect_error(plot_overlap(fit, treatment = iv$D), "treatment.*CATE")
   expect_error(plot_overlap(fit, share_limits = c(.9, .1)), "share_limits")
+})
+
+test_that("CLATE overlap requires retained instrument state without repair inputs", {
+  skip_if_not_installed("ggplot2")
+  fit <- .clate_plot_fit()
+  expect_error(plot_overlap(fit, instrument = fit$.model$iv$A),
+               "unused argument.*instrument")
+  expect_error(plot_overlap(fit, type = "propensity", propensity = rep(.5, 8L)),
+               "propensity.*CATE")
+  for (iv in list(NULL, 1, list(A = fit$.model$iv$A),
+                  list(propensity = fit$.model$iv$propensity),
+                  list(A = rep(NA_real_, 8L), propensity = fit$.model$iv$propensity),
+                  list(A = fit$.model$iv$A, propensity = list(used = rep(0, 8L))))) {
+    bad <- fit
+    bad$.model$iv <- iv
+    for (type in c("mass", "propensity")) {
+      expect_error(plot_overlap(bad, type = type), "iv.*[Rr]efit")
+    }
+  }
 })
 
 test_that("CLATE plot data survive serialization and candidate extraction", {
@@ -83,10 +102,11 @@ test_that("CLATE plot data survive serialization and candidate extraction", {
   expect_error(plot_influence(bare), "return.*W")
   bad <- .clate_plot_fit()
   bad$theta[1L] <- NA_real_
-  expect_error(plot_influence(bad, targets = 1L), "undefined|finite")
+  expect_error(plot_influence(bad, targets = 1L), "theta/status.*inconsistent unavailable ratios")
 })
 
 test_that("ratio plot bounds retain per-target Wald availability", {
+  .with_partial_result_warning({
   skip_if_not_installed("ggplot2")
   expect_warning(fit <- affine_ratio_dnn(X = matrix(1:8), X0 = matrix(c(0, 9)),
     numerator = rep(2, 8), denominator = rep(1, 8),
@@ -96,9 +116,11 @@ test_that("ratio plot bounds retain per-target Wald availability", {
   expect_true(all(is.na(data$ci_upper)))
   expect_true(all(data$estimate == 2))
   expect_s3_class(ggplot2::ggplot_build(plot_estimates(fit, candidates = "all")), "ggplot_built")
+  })
 })
 
 test_that("ratio plots explain unavailable uncertainty and draw finite points cleanly", {
+  .with_partial_result_warning({
   skip_if_not_installed("ggplot2")
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
@@ -113,6 +135,7 @@ test_that("ratio plots explain unavailable uncertainty and draw finite points cl
   expect_warning(ggplot2::ggplotGrob(p), NA)
   expect_equal(p$data$estimate, 2)
   expect_true(is.na(p$data$ci_lower))
+  })
 })
 
 test_that("CLATE influence plots retain paired score contributions", {
@@ -124,7 +147,8 @@ test_that("CLATE influence plots retain paired score contributions", {
   expect_equal(p$data$contribution, reference[p$data$obs_id], tolerance = 1e-12)
   expect_equal(sum(p$data$contribution), 0, tolerance = 1e-12)
   expect_match(p$labels$y, "CLATE")
-  expect_error(plot_influence(fit, pseudo_outcome = rep(0, 8L)), "paired|pseudo_outcome")
+  expect_error(plot_influence(fit, pseudo_outcome = rep(0, 8L)),
+               "unused argument.*pseudo_outcome")
   perfect <- .clate_plot_fit(perfect = TRUE)
   cate <- cate_dnn(X = perfect$.model$x_mat, X0 = perfect$x0,
     pseudo_outcome = perfect$.model$signal[, 1L], s = 3L, return = c("W", "dx"))

@@ -25,8 +25,8 @@ test_that("uniform-weight advice distinguishes duplicate blocks from a small ord
     })
   expect_length(messages, 2L)
   advice <- messages[grepl("near-", messages, fixed = TRUE)]
-  expect_match(advice, "averaged within duplicate-covariate blocks", fixed = TRUE)
-  expect_match(advice, "A larger `s` cannot distinguish observations with identical covariates", fixed = TRUE)
+  expect_match(messages[1L], "averaged within distance blocks", fixed = TRUE)
+  expect_match(advice, "A larger `s` cannot distinguish observations at equal computed distance", fixed = TRUE)
   expect_equal(fit$W, matrix(1 / 8, 8L, 1L), tolerance = 1e-15)
 })
 
@@ -35,7 +35,7 @@ test_that("block means preserve represented subnormals and recover finite overfl
   X <- matrix(c(0, 1, 1, 1), ncol = 1L)
   ranks <- matrix(1:4, ncol = 1L)
   jk <- RdistNN:::.dnn_loo_centered(c(0, eta, eta, eta), ranks, rep(1, 3L),
-    rep(1, 4L), groups = RdistNN:::.dnn_duplicate_groups(X))
+    rep(1, 4L), groups = c(1L, 2L, 2L, 2L))
   expect_equal(as.numeric(jk$loo) / eta, c(3, 2, 2, 2), tolerance = 0)
   rw <- as_rank_weight(function(r) rep(1e308, length(r)))
   W <- suppressWarnings(weights_matrix(matrix(0, 3L, 1L), x0 = 0,
@@ -134,7 +134,7 @@ test_that("complete support blocks are centered before averaging and unused extr
   changes <- c(0, 4, 8, -4, 12)
   signal <- c(2^54 + changes, .Machine$double.xmax, -.Machine$double.xmax, 0)
   ranks <- matrix(1:8, ncol = 1L)
-  groups <- RdistNN:::.dnn_duplicate_groups(X)
+  groups <- c(rep(1L, 5L), 2L, 3L, 4L)
   for (compiled in c(TRUE, FALSE)) {
     local_options <- options(RdistNN.use_compiled = compiled)
     jk <- RdistNN:::.dnn_loo_centered(signal, ranks, .block_exact_table(7L, 1L, 5L),
@@ -146,25 +146,23 @@ test_that("complete support blocks are centered before averaging and unused extr
   }
 })
 
-test_that("X-aware supplied rank APIs average exact raw rows without grouping distance ties", {
-  X <- cbind(c(-1, 1, -1, 2, 2, 3), 0)
-  X0 <- matrix(c(0, 0), nrow = 1L)
+test_that("bare supplied rank APIs stay strict and explicit distance metadata defines averaging", {
+  X <- matrix(c(-1, 1, -1, 2, 2, 3), ncol = 1L)
+  X0 <- matrix(0)
   ranks <- matrix(c(6L, 2L, 1L, 4L, 3L, 5L), ncol = 1L)
   rw <- rank_weight_dnn_exact(1L, 3L)
-  W <- suppressWarnings(weights_matrix(X, X0, ranking = ranks, weight = rw))$W
-  expect_equal(W, .block_oracle_weights(X, X0, .block_exact_table(6L, 1L, 3L), ranks),
-               tolerance = 1e-14)
+  strict <- weights_matrix(X, X0, ranking = ranks, weight = rw)$W
+  expect_equal(as.numeric(strict), .block_exact_table(6L, 1L, 3L)[ranks[, 1L]])
+  dx <- matrix(abs(X[, 1L]), ncol = 1L)
+  W <- suppressWarnings(weights_matrix(X, X0, ranking = list(ranks = ranks, dx = dx), weight = rw))$W
+  expect_equal(W, .block_oracle_weights(X, X0, .block_exact_table(6L, 1L, 3L), ranks), tolerance = 1e-14)
   signal <- c(1, 7, -3, 4, 10, -2)
   jk <- RdistNN:::.dnn_loo_centered(signal, ranks, .block_exact_table(5L, 1L, 3L),
-    .block_exact_table(6L, 1L, 3L), groups = RdistNN:::.dnn_duplicate_groups(X))
+    .block_exact_table(6L, 1L, 3L), groups = RdistNN:::.dnn_distance_groups(dx))
   ref <- .block_oracle_loo(X, X0, signal, .block_exact_table(5L, 1L, 3L), ranks)
-  expect_equal(as.numeric(RdistNN:::.dnn_restore_loo(jk$loo, jk$offset)),
-               as.numeric(ref), tolerance = 1e-13)
-  # Distinct vectors at the same distance keep their separate rank masses.
+  expect_equal(as.numeric(RdistNN:::.dnn_restore_loo(jk$loo, jk$offset)), as.numeric(ref), tolerance = 1e-13)
   d <- suppressWarnings(weights_dnn(matrix(c(-1, 1, -1)), x0 = 0, k = 1L, s = 2L))
-  expect_equal(d$W[1L], d$W[3L])
-  expect_false(isTRUE(all.equal(d$W[1L], d$W[2L])))
-  expect_equal(rank_weight_eval(rw, ranks[, 1L]), .block_exact_table(6L, 1L, 3L)[ranks[, 1L]])
+  expect_equal(as.numeric(d$W), rep(1 / 3, 3L), tolerance = 1e-15)
 })
 
 test_that("GMM localization and scalar pure-score subset aggregation share the X-aware rule", {
@@ -280,7 +278,7 @@ test_that("both actual original-signal block engines average each deletion", {
   X <- cbind(c(0, 0, 0, 1, 2, 2, 3, 4), 0)
   X0 <- rbind(c(0, 0), c(1.5, 0), c(4, 0))
   signal <- cbind(c(1, 7, -3, 4, 10, -2, 5, 11), c(-2, 3, 9, 1, 5, -7, 4, 8))
-  groups <- RdistNN:::.dnn_duplicate_groups(X)
+  groups <- RdistNN:::.dnn_distance_groups(distance_eval_batch(get_distance("l2"), X, X0))
   ranks <- suppressWarnings(weights_dnn(X, X0, k = 1, s = 5, return = "ranks"))$ranks
   old <- options(RdistNN.use_compiled = TRUE)
   on.exit(options(old), add = TRUE)
@@ -355,7 +353,7 @@ test_that("warning scopes avoid deletion and candidate floods and reject old tie
       invokeRestart("muffleWarning")
     })
   expect_length(seen, 1L)
-  expect_match(seen, "not covered by the paper's theory", fixed = TRUE)
+  expect_match(seen, "continuous distance distribution", fixed = TRUE)
   seen <- character()
   views <- withCallingHandlers(candidate_fits(fit), warning = function(w) {
     seen <<- c(seen, conditionMessage(w))

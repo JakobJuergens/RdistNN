@@ -69,7 +69,8 @@ plot_estimates <- function(object, level = 0.95,
       style = style,
       x_var = x_var,
       shade_significant = shade_significant,
-      candidates = candidates
+      candidates = candidates,
+      ...
     ))
   }
 
@@ -191,12 +192,13 @@ plot_estimates <- function(object, level = 0.95,
 }
 
 .plot_estimates_candidates <- function(object, level, style, x_var,
-                                       shade_significant, candidates) {
+                                       shade_significant, candidates, ...) {
   payload <- .plot_candidate_estimates_frame(
     object = object,
     candidates = candidates,
     level = level,
-    fn = "plot_estimates"
+    fn = "plot_estimates",
+    ...
   )
   df <- payload$data
   df$plot_group <- interaction(df$candidate_id, df$coef, drop = TRUE)
@@ -217,7 +219,8 @@ plot_estimates <- function(object, level = 0.95,
   if (!is.null(payload$drop_caption)) {
     captions <- c(captions, payload$drop_caption)
   }
-  zero_line <- inherits(object, "cate_result") || inherits(object, "clate_result") || inherits(object, "plqr_result")
+  zero_line <- inherits(object, "cate_result") || inherits(object, "clate_result") ||
+    (inherits(object, "plqr_result") && !identical(attr(df, "quantity"), "theta"))
   # All layers use positions from the complete candidate grid, so missing
   # intervals cannot change a candidate's offset relative to its point.
   candidate_index <- match(df$candidate_id, unique(df$candidate_id))
@@ -362,7 +365,8 @@ autoplot.plqr_result <- function(object, ...) {
   theta_txt <- paste(format(as.numeric(object$theta_eval), digits = 3),
                      collapse = ", ")
   p + ggplot2::labs(
-    subtitle = sprintf("PLQR moments at theta_eval = (%s), tau = %.2f",
+    subtitle = sprintf("PLQR %s at theta_eval = (%s), tau = %.2f",
+                       if (identical(attr(p$data, "quantity"), "theta")) "supplied coefficients" else "moments",
                        theta_txt, object$tau)
   )
 }

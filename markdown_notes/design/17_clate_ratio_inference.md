@@ -47,12 +47,15 @@ It generally differs from population CATE and from residualized IV-GMM.
 ## Localization and frozen state
 
 The solution of the affine score `theta * phi_d - phi_y` is a ratio of the two
-weighted signal averages. Exactly identical reporting-covariate rows share
-their block's average weight, using the same groups for both signals. Each
-deletion removes the observation before averaging its remaining block's `n-1`
-weights. This preserves paired covariance and aligned permutation invariance;
-the public warning states that the modification is outside the paper's theory.
-The grouping uses reporting X, not instrument, treatment or nuisance values.
+weighted signal averages. At each target, observations with exactly equal
+represented selected-metric distance share the mean of their assigned rank
+weights, using the same groups for both signals. Each deletion removes the
+actual observation before averaging its remaining group's `n-1` weights.
+This preserves paired covariance and aligned permutation invariance; groups
+use localization distances, not instrument, treatment or nuisance values.
+The paper assumes a continuous distance distribution, under which the earlier
+and current rules agree almost surely. The warning records that inference for
+persistent distance ties is not established.
 Never average observation-level signal ratios,
 floor the aggregate denominator or clip negative augmented first stages.
 
@@ -118,6 +121,9 @@ ratio. `ratio_status` distinguishes `ok`, `zero_denominator`,
 `component_overflow` and `ratio_overflow`. Near-zero and negative-denominator
 flags do not replace or filter estimates. `covariance_status` separately
 identifies unavailable, failed or zero-score covariance calculations.
+Nonfinite computed component averages are returned as `NA` with
+`component_overflow`; finite components and the original retained signals stay
+available. Status and covariance are computed before this reporting conversion.
 
 Nonzero component variation that underflows its variance is a numerical
 failure, not a deterministic covariance. Zero score variance has computational

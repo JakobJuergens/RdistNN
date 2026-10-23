@@ -1,5 +1,5 @@
 test_that("NP marginal prediction uncertainty agrees with explicit deletions", {
-  .with_duplicate_policy_warnings({
+  .with_localization_policy_warnings({
   X <- cbind(c(-2, -1, 0, 0, 1, 2, 4), c(3, 1, 0, 0, 3, 2, -1))
   X0 <- rbind(c(1.7, 1), c(-.2, .1), c(0, 0), c(1.7, 1))
   y <- c(2, -1, 3, 7, -2, 4, 1)
@@ -13,25 +13,17 @@ test_that("NP marginal prediction uncertainty agrees with explicit deletions", {
     n <- nrow(x_mat)
     W <- matrix(0, n, nrow(X0))
     if (method == "exact") {
-      subsets <- combn(n, s)
-      for (j in seq_len(nrow(X0))) {
-        d <- rowSums(sweep(x_mat, 2, scaled_X0[j, ], "-")^2)
-        for (a in seq_len(ncol(subsets))) {
-          ids <- subsets[, a]
-          take <- ids[.tie_reference_order(d[ids], x_mat[ids, , drop = FALSE], ids)][seq_len(k)]
-          W[take, j] <- W[take, j] + 1 / (k * ncol(subsets))
-        }
-      }
+      W <- .tie_reference_weights(x_mat, scaled_X0, k, s)
     } else {
       table <- rowMeans(vapply(seq_len(k), function(a) {
         diff(pbeta((0:n) / n, a, s - a + 1))
       }, numeric(n)))
       for (j in seq_len(nrow(X0))) {
         d <- rowSums(sweep(x_mat, 2, scaled_X0[j, ], "-")^2)
-        W[, j] <- table[order(.tie_reference_order(d, x_mat))]
+        W[, j] <- table[order(.tie_reference_order(d))]
       }
     }
-    .block_oracle_average_weights(W, x_mat)
+    .block_oracle_average_weights(W, vapply(seq_len(nrow(scaled_X0)), function(j) sqrt(rowSums(sweep(x_mat, 2L, scaled_X0[j, ], "-")^2)), numeric(nrow(x_mat))))
   }
 
   for (tdnn in c(FALSE, TRUE)) for (method in c("exact", "asymp")) {

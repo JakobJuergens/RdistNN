@@ -44,7 +44,7 @@ test_that("diagnostics(cate_result) reports overlap when treatment state is avai
   }, seed = 777L)
 })
 
-test_that("diagnostics(cate_result) separates overlap and propensity availability", {
+test_that("diagnostics(cate_result) requires retained AIPW propensity state", {
   .test_rng_scope({
     demo <- cate_demo_data(n = 60L, p = 2L, design = "hetero", sigma = 0.2, seed = 22L)
     fit <- cate_dnn(
@@ -61,15 +61,10 @@ test_that("diagnostics(cate_result) separates overlap and propensity availabilit
       se = FALSE,
       return = "W"
     )
-    fit$.model$e <- NULL
-    d <- diagnostics(fit)
-
-    expect_true(all(d$overlap_available))
-    expect_true(all(!d$propensity_available))
-    expect_false(any(is.na(d$treated_mass)))
-    expect_true(all(is.na(d$weighted_mean_propensity)))
-    expect_true(all(is.na(d$weighted_propensity_q10)))
-    expect_true(all(is.na(d$weighted_propensity_q90)))
+    fit$.model["e"] <- NULL
+    expect_error(diagnostics(fit), "e.*[Rr]efit")
+    fit$.model["e"] <- list(NULL)
+    expect_error(diagnostics(fit), "e.*[Rr]efit")
   }, seed = 777L)
 })
 
@@ -93,19 +88,19 @@ test_that("diagnostics(cate_result) validates retained treatment and propensity 
 
     bad_length <- fit
     bad_length$.model$t_vec <- bad_length$.model$t_vec[-1L]
-    expect_error(diagnostics(bad_length), "length equal to nrow\\(object\\$W\\)")
+    expect_error(diagnostics(bad_length), "t_vec.*[Rr]efit")
 
     bad_binary <- fit
     bad_binary$.model$t_vec[1L] <- 2
-    expect_error(diagnostics(bad_binary), "binary in \\{0,1\\}")
+    expect_error(diagnostics(bad_binary), "t_vec.*[Rr]efit")
 
     bad_e_length <- fit
     bad_e_length$.model$e <- bad_e_length$.model$e[-1L]
-    expect_error(diagnostics(bad_e_length), "object\\$\\.model\\$e.*length equal")
+    expect_error(diagnostics(bad_e_length), "e.*[Rr]efit")
 
     bad_e_na <- fit
     bad_e_na$.model$e[1L] <- NA_real_
-    expect_error(diagnostics(bad_e_na), "object\\$\\.model\\$e cannot contain `NA` values")
+    expect_error(diagnostics(bad_e_na), "e.*[Rr]efit")
   }, seed = 777L)
 })
 

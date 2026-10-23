@@ -35,14 +35,23 @@ is preserved. Reject coercions that would change interpretation.
 Plot target selectors are integer-valued numeric indices, with duplicates
 removed in first-occurrence order. Reject fractional, logical, complex and
 character selectors before indexing. Candidate reconstruction validates retained
-controls, candidate/target identities and cached rank permutations; incomplete
-or inconsistent saved state requires refitting.
+controls, candidate/target identities, the selected tie policy, cached rank
+permutations and per-target distance groups; incomplete or inconsistent saved
+state requires refitting.
 
 ## Messages and tests
 
 Do not use `stopifnot()` on user-facing paths. Use explicit argument-specific
 errors explaining what was expected, what was received and how to proceed;
 see [the message policy](05_error_messages_and_warnings.md).
+
+The shared argument helpers signal `rdistnn_input_error` with bounded argument,
+expected and actual facts. At retained-state owners, reuse these validators
+through `.dnn_validate_retained()` so malformed cached arrays become
+`rdistnn_state_error` with refit guidance. Translate only owned input-validation
+conditions there; do not relabel arbitrary errors, interruptions or resource
+failures as bad input. Missing optional extras have their own identity and
+exact retention option, distinct from incomplete required scientific state.
 
 Each new public validation rule needs a valid case, an invalid case exercising
 the branch and relevant boundary cases. Reuse small named validators for

@@ -72,8 +72,9 @@ exchangeability give
 The \code{localization_drift} field stores realized localization drift.
 The estimator remainder combines
 centered score variation with fitted-state effects.
-Failed methods have \code{NA} for all metric columns and \code{status = "failed"};
-registered route metadata is retained when it is known from the selected
+Declared method failures have \code{NA} for all metric columns and
+\code{status = "failed"}; unexpected method errors propagate.
+Registered route metadata is retained when it is known from the selected
 method.
 }
 \description{

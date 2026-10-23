@@ -88,7 +88,7 @@
   y_hat_supplied <- as.logical(.sim_recycle(y_hat_supplied, n_out))
   w_hat_supplied <- as.logical(.sim_recycle(w_hat_supplied, n_out))
 
-  z <- stats::qnorm(1 - alpha / 2)
+  z <- .dnn_normal_critical_alpha(alpha)
   finite <- is.finite(tau_hat) & is.finite(se_hat) & se_hat > 0
   covered <- rep(NA_real_, n_out)
   if (any(finite)) {
@@ -223,18 +223,9 @@
   if (is.null(tuning)) {
     return(NA_real_)
   }
-  default <- tryCatch(
-    tuning_eval(
-      tuning = tuning,
-      n = n,
-      kx = kx,
-      k = k,
-      se = TRUE,
-      jackknife = "fast",
-      mode = "default"
-    ),
-    error = function(e) NULL
-  )
+  default <- tuning_eval(
+    tuning = tuning, n = n, kx = kx, k = k,
+    se = TRUE, jackknife = "fast", mode = "default")
   if (is.null(default) || is.null(default$meta$lambda)) {
     return(NA_real_)
   }
@@ -410,7 +401,8 @@
     d = dat$D,
     m1hat = nuis$m1_hat,
     m0hat = nuis$m0_hat,
-    ehat = nuis$e_hat
+    ehat = nuis$e_hat,
+    clip = clip
   )
 
   if (identical(tuning_mode, "grid")) {
@@ -459,6 +451,15 @@
                                  n_folds = 5L, clip = 1e-3, ...) {
   dat <- dgp$data
   n   <- nrow(dat)
+  n_folds <- .validate_scalar_int(n_folds, arg = "n_folds", min = 2L)
+  if (n_folds > n) {
+    .abort_bad_arg(
+      "n_folds",
+      "must be <= nrow(data)",
+      expected = sprintf("<= %d", n),
+      actual = sprintf("n_folds=%d", n_folds)
+    )
+  }
 
   # Balanced fold assignment; uses the RNG state continuing from the DGP draw,
   # so the result is deterministic for a given rep seed.
@@ -486,7 +487,8 @@
     d = dat$D,
     m1hat = m1_cf,
     m0hat = m0_cf,
-    ehat = e_cf
+    ehat = e_cf,
+    clip = clip
   )
 
   if (identical(tuning_mode, "grid")) {
@@ -674,17 +676,22 @@
   requireNamespace("grf", quietly = TRUE)
 }
 
+.sim_cate_grf_unavailable <- function(method, alpha) {
+  metadata <- .sim_cate_method_metadata(method)
+  out <- .sim_metric(NA_real_, NA_real_, NA_real_, alpha, status = "failed",
+    method_variant = metadata$method_variant,
+    forest_nuisance = metadata$forest_nuisance,
+    y_hat_supplied = metadata$y_hat_supplied,
+    w_hat_supplied = metadata$w_hat_supplied)
+  attr(out, "method_failures") <- data.frame(method = method,
+    reason = 'grf is not installed; install.packages("grf") to use this method.',
+    stringsAsFactors = FALSE)
+  out
+}
+
 .method_causal_forest <- function(dgp, x_cols, alpha, ...) {
   if (!.sim_cate_grf_available()) {
-    warning("grf not available; causal_forest returns NA.", call. = FALSE)
-    metadata <- .sim_cate_method_metadata("causal_forest")
-    return(.sim_metric(
-      NA_real_, NA_real_, NA_real_, alpha, status = "failed",
-      method_variant = metadata$method_variant,
-      forest_nuisance = metadata$forest_nuisance,
-      y_hat_supplied = metadata$y_hat_supplied,
-      w_hat_supplied = metadata$w_hat_supplied
-    ))
+    return(.sim_cate_grf_unavailable("causal_forest", alpha))
   }
   dat    <- dgp$data
   X      <- as.matrix(dat[, x_cols])
@@ -722,15 +729,7 @@
 
 .method_llf <- function(dgp, x_cols, alpha, ll_lambda = 0.1, ...) {
   if (!.sim_cate_grf_available()) {
-    warning("grf not available; llf returns NA.", call. = FALSE)
-    metadata <- .sim_cate_method_metadata("llf")
-    return(.sim_metric(
-      NA_real_, NA_real_, NA_real_, alpha, status = "failed",
-      method_variant = metadata$method_variant,
-      forest_nuisance = metadata$forest_nuisance,
-      y_hat_supplied = metadata$y_hat_supplied,
-      w_hat_supplied = metadata$w_hat_supplied
-    ))
+    return(.sim_cate_grf_unavailable("llf", alpha))
   }
   dat    <- dgp$data
   X      <- as.matrix(dat[, x_cols])

@@ -369,6 +369,16 @@ test_that("integerish numeric ranks are accepted; non-integer permutations rejec
   )
 })
 
+test_that("rank evaluators reject out-of-range numbers without coercion warnings", {
+  rw <- rank_weight_dnn_exact(k = 1L, s = 2L)
+  for (bad in list(c(1, 2, 2^40), c(1, 2, -2^40), c(1, 2, .Machine$integer.max),
+    c(1, 2, 3.5), c(1, 2, 3 + 1i), c(TRUE, FALSE, TRUE))) {
+    expect_no_warning(expect_error(rank_weight_eval(rw, bad), class = "rdistnn_input_error"))
+    expect_no_warning(expect_error(rank_weight_eval_batch(rw, matrix(bad)), class = "rdistnn_input_error"))
+  }
+  expect_identical(rank_weight_eval(rw, c(3, 1, 2)), c(0, 2 / 3, 1 / 3))
+})
+
 test_that("n = 1 trivial case works (both eval and eval_batch paths)", {
 
   rw_eval <- as_rank_weight(function(r) 1, "trivial_eval")

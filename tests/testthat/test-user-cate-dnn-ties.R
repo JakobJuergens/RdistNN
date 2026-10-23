@@ -34,7 +34,7 @@ test_that("deterministic ties in distances lead to deterministic ordering and st
 
   l2 <- get_distance("l2")
   DX <- distance_eval_batch(l2, X, X0)
-  exp_ord1 <- .tie_reference_order(DX[, 1], X)
+  exp_ord1 <- .tie_reference_order(DX[, 1])
   expect_equal(out$ord[, 1], exp_ord1)
 
   out2 <- suppressWarnings(cate_dnn(

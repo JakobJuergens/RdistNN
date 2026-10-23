@@ -1,4 +1,5 @@
 test_that("CATE paper diagnostics use physical Euclidean radii and retained scores", {
+  .with_distance_tie_warning({
   X <- rbind(c(-1, 0), c(1, 0), c(0, -1), c(0, 1))
   fit <- suppressWarnings(
     cate_dnn(
@@ -13,6 +14,7 @@ test_that("CATE paper diagnostics use physical Euclidean radii and retained scor
   expect_true(is.na(diag$treated_ess))
   expect_true(diag$score_contribution_available)
   expect_true(is.finite(diag$top5_score_share))
+  })
 })
 
 test_that("CATE arm ESS distinguishes tiny positive and zero local mass", {

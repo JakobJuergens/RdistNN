@@ -47,15 +47,16 @@ local weights with \code{\link[=plot_weights]{plot_weights()}} (requires ggplot2
 }
 }
 
-\section{Identical localization covariates}{
+\section{Exact distance ties}{
 
-Covariate-aware estimators average weights within exactly identical raw
-covariate blocks, including every jackknife deletion's surviving members.
-The package warns because this permutation-invariant modification is not
-covered by the paper's theory. It can change observation weights, support
-and effective sample size. See \code{\link[=weights_matrix]{weights_matrix()}} for the rule; rank-only
-utilities without covariates cannot infer duplicate groups. Refit tied saved
-objects created before this policy before reporting or reusing them.
+Distance-based estimators average rank weights within exactly equal computed
+distances, separately for every target, including each deletion's surviving
+members. Block mass is preserved for signed and unnormalized rules. Equality
+uses represented values without a tolerance. Bare ranks/orders remain strict;
+adding \code{dx} metadata enables averaging while preserving supplied permutations.
+Calls with ties warn once: the accompanying theory assumes a continuous
+distance distribution and does not establish inference under persistent ties.
+Earlier retained fit schemas require refitting before reporting or reuse.
 }
 
 \section{Experimental and Advanced Workflows}{
@@ -121,11 +122,11 @@ the accompanying \href{https://jakobjuergens.com/research/#orthogonal-inference-
 \code{\link[=new_score]{new_score()}}, \code{\link[=distance_l2]{distance_l2()}}
 }
 \author{
-\strong{Maintainer}: Jakob Juergens \email{info@jakobjuergens.com}
+\strong{Maintainer}: Jakob R. Juergens \email{info@jakobjuergens.com}
 
 Authors:
 \itemize{
-  \item Jakob Juergens \email{info@jakobjuergens.com}
+  \item Jakob R. Juergens \email{info@jakobjuergens.com}
 }
 
 Other contributors:

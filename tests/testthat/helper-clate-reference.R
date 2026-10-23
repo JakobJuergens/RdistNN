@@ -12,19 +12,7 @@
 
 # Independent finite-subset oracle: no package weights or deletion helpers.
 .clate_subset_average <- function(X, x0, signal, s, k = 1L) {
-  original <- signal
-  for (i in seq_len(nrow(X))) {
-    same <- vapply(seq_len(nrow(X)), function(h) all(X[h, ] == X[i, ]), logical(1L))
-    signal[i, ] <- colMeans(original[same, , drop = FALSE])
-  }
-  subsets <- utils::combn(seq_len(nrow(X)), s)
-  distance <- rowSums(sweep(X, 2L, x0, "-")^2)
-  averages <- vapply(seq_len(ncol(subsets)), function(j) {
-    idx <- subsets[, j]
-    winners <- idx[.tie_reference_order(distance[idx], X[idx, , drop = FALSE], idx)[seq_len(k)]]
-    colMeans(signal[winners, , drop = FALSE])
-  }, numeric(ncol(signal)))
-  rowMeans(averages)
+  crossprod(.tie_reference_weights(X, matrix(x0, nrow = 1L), k, s), signal)[1L, ]
 }
 
 .clate_subset_reference <- function(X, x0, signal, s) {

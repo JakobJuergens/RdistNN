@@ -7,11 +7,11 @@
 # Exceptional rows use a scaled sum of squares with scalar workspace. Recompute
 # differences only here so ordinary values retain subtract-then-scale rounding.
 .l2_range_row <- function(X, i, x0, inv_s, squared) {
+  if (!is.null(inv_s)) return(.scaled_distance_norm_row(X, i, x0, inv_s, TRUE, squared))
   scale <- 0
   ssq <- 1
   for (j in seq_len(ncol(X))) {
     d <- X[i, j] - x0[j]
-    if (!is.null(inv_s)) d <- .scaled_distance_difference(X[i, j], x0[j], inv_s[j])
     a <- abs(d)
     if (!is.finite(a)) return(a)
     if (a != 0) {
@@ -42,10 +42,13 @@
   for (j in seq_len(ncol(X))) {
     d <- X[, j] - x0[j]
     if (!is.null(inv_s)) {
+      raw <- d
       if (any(abs(d) >= .l2_range_limit)) {
         exceptional <- exceptional | (abs(d) >= .l2_range_limit)
       }
       d <- d * inv_s[j]
+      exceptional <- exceptional |
+        (raw != 0 & inv_s[j] != 0 & abs(d) < .Machine$double.xmin)
     }
     square <- d * d
     # Only allocate a row mask if a square can have underflowed. Nonfinite
@@ -110,7 +113,7 @@ order_by_l2 <- function(X, x0, squared = FALSE) {
   }
 
   dx <- dist_l2(X, x0, squared)
-  ord <- .order_with_ties(dx, X)
+  ord <- .order_with_ties(dx)
   list(dx = dx, ord = as.integer(ord))
 }
 
@@ -316,6 +319,6 @@ order_by_l2_scaled <- function(X, x0,
   }
 
   dx <- dist_l2_scaled(X, x0, inv_s, squared)
-  ord <- .order_with_ties(dx, X)
+  ord <- .order_with_ties(dx)
   list(dx = dx, ord = as.integer(ord))
 }

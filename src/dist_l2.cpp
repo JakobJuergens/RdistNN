@@ -27,13 +27,13 @@ static inline double rounded_square(const double d) {
 // Exceptional recomputation only: scalar workspace, no per-row buffer.
 static inline double l2_range_row(const double *Xp, int n, int p, int i, const double *x0p,
                                   int stride0, const double *invsp, bool squared) {
+  if (invsp)
+    return rustat::scaled_norm_row(Xp, n, p, i, x0p, stride0, invsp, true, squared);
   double scale = 0.0, ssq = 1.0;
   for (int j = 0; j < p; ++j) {
     const double x = Xp[i + static_cast<std::size_t>(j) * n];
     const double target = x0p[static_cast<std::size_t>(j) * stride0];
     double d = x - target;
-    if (invsp)
-      d = rustat::scaled_distance_difference(x, target, invsp[j]);
     const double a = std::fabs(d);
     if (!std::isfinite(a))
       return a;
@@ -70,6 +70,8 @@ static inline void dist_l2_core_ptr(const double *Xp, int n, int p, const double
       const double diff = Xp[i + j * stride_n] - x0p[j];
       const double d = invsp ? diff * invsp[j] : diff;
       exceptional = exceptional || (invsp && std::fabs(diff) >= l2_range_limit);
+      exceptional = exceptional || (invsp && diff != 0.0 && invsp[j] != 0.0 &&
+                                    std::fabs(d) < std::numeric_limits<double>::min());
       const double square = rounded_square(d);
       // Nonfinite squares propagate to acc; check that once after the loop.
       exceptional = exceptional || (d != 0.0 && square < std::numeric_limits<double>::min());
@@ -102,6 +104,8 @@ static inline void dist_l2_batch_impl(const double *Xp, int n, int p, const doub
         const double diff = Xp[i + j * stride_n] - x0j; // column-major X
         const double d = invsp ? diff * invsp[j] : diff;
         exceptional = exceptional || (invsp && std::fabs(diff) >= l2_range_limit);
+        exceptional = exceptional || (invsp && diff != 0.0 && invsp[j] != 0.0 &&
+                                      std::fabs(d) < std::numeric_limits<double>::min());
         const double square = rounded_square(d);
         // Nonfinite squares propagate to acc; check that once after the loop.
         exceptional = exceptional || (d != 0.0 && square < std::numeric_limits<double>::min());
@@ -171,10 +175,10 @@ NumericMatrix rustat_dist_l2_scaled_batch(NumericMatrix X, NumericMatrix X0, Num
 }
 
 // Shared ordering helper
-static inline IntegerVector order_by_dx(const std::vector<double> &dx, const NumericMatrix &X) {
+static inline IntegerVector order_by_dx(const std::vector<double> &dx) {
   const int n = static_cast<int>(dx.size());
   std::vector<int> ord0(n);
-  rustat::argsort_indices_covariates(dx.data(), REAL(X), n, X.ncol(), ord0.data());
+  rustat::argsort_indices(dx.data(), n, ord0.data());
   IntegerVector ord(n);
   for (int i = 0; i < n; ++i)
     ord[i] = ord0[i] + 1; // 1-based for R
@@ -189,7 +193,7 @@ Rcpp::List rustat_order_by_l2(NumericMatrix X, NumericVector x0, bool squared = 
 
   std::vector<double> dx(n);
   dist_l2_core_ptr(REAL(X), n, p, REAL(x0), /*invsp=*/nullptr, dx.data(), squared);
-  return List::create(_["dx"] = NumericVector(dx.begin(), dx.end()), _["ord"] = order_by_dx(dx, X));
+  return List::create(_["dx"] = NumericVector(dx.begin(), dx.end()), _["ord"] = order_by_dx(dx));
 }
 
 // [[Rcpp::export]]
@@ -203,5 +207,5 @@ Rcpp::List rustat_order_by_l2_scaled(NumericMatrix X, NumericVector x0, NumericV
 
   std::vector<double> dx(n);
   dist_l2_core_ptr(REAL(X), n, p, REAL(x0), REAL(inv_s), dx.data(), squared);
-  return List::create(_["dx"] = NumericVector(dx.begin(), dx.end()), _["ord"] = order_by_dx(dx, X));
+  return List::create(_["dx"] = NumericVector(dx.begin(), dx.end()), _["ord"] = order_by_dx(dx));
 }

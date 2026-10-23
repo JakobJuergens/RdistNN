@@ -163,39 +163,12 @@ test_that("sim_cate_run grid mode records infeasible candidates without duplicat
   expect_true(is.na(bench$s))
 })
 
-test_that("sim_cate_run grid mode shapes total-failure rows by method and candidate", {
-  raw <- NULL
-  expect_warning(
-    raw <- sim_cate_run(
-      designs = "bad_design",
-      n_vals = 50L,
-      kx_vals = 2L,
-      n_reps = 1L,
-      master_seed = 8805L,
-      k = 1L,
-      tuning = .sim_cate_grid_tuning(),
-      tuning_mode = "grid",
-      methods = c("dnn_oracle", "ols_interact"),
-      verbose = FALSE
-    ),
-    "rep seed"
-  )
-
-  expect_equal(names(raw), .sim_cate_grid_raw_schema)
-  expect_equal(nrow(raw), 4L)
-  expect_equal(sum(raw$method == "dnn_oracle"), 3L)
-  expect_equal(sum(raw$method == "ols_interact"), 1L)
-  expect_equal(raw$status, rep("failed", 4L))
-  expect_true(all(is.na(raw$tau_hat)))
-  expect_true(all(is.na(raw$s[raw$method == "ols_interact"])))
-  dnn <- raw[raw$method == "dnn_oracle", , drop = FALSE]
-  expect_equal(nrow(dnn), 3L)
-  expect_false(anyNA(dnn$candidate_id))
-  expect_equal(dnn$s, c(4L, 6L, 8L))
-  expect_true(all(is.na(dnn$method_variant)))
-  expect_true(all(is.na(dnn$forest_nuisance)))
-  expect_true(all(is.na(dnn$y_hat_supplied)))
-  expect_true(all(is.na(dnn$w_hat_supplied)))
+test_that("sim_cate_run grid mode propagates invalid DGP requests", {
+  expect_error(sim_cate_run(
+    designs = "bad_design", n_vals = 50L, kx_vals = 2L,
+    n_reps = 1L, master_seed = 8805L, k = 1L,
+    tuning = .sim_cate_grid_tuning(), tuning_mode = "grid",
+    methods = c("dnn_oracle", "ols_interact"), verbose = FALSE), "Unknown design")
 })
 
 test_that("summarise_sim_results groups by candidate fields with NA-safe benchmark groups", {

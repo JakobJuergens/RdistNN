@@ -16,7 +16,7 @@ test_that("public estimate and dashboard plots issue one duplicate-policy warnin
       invokeRestart("muffleWarning")
     })
     list(value = value, count = sum(grepl(
-      "Identical covariate rows detected", warnings, fixed = TRUE)))
+      "Exact distance ties detected", warnings, fixed = TRUE)))
   }
   for (fit in fits) {
     estimate <- capture(plot_estimates(fit))
@@ -55,6 +55,7 @@ test_that("public estimate and dashboard plots issue one duplicate-policy warnin
 })
 
 test_that("repeated candidate orders retain distinct public plotting identities", {
+  .with_distance_tie_warning({
   skip_if_not_installed("ggplot2")
   tuning <- new_tuning("plot_audit_repeated_orders",
     eval = function(...) list(s = 5L),
@@ -78,9 +79,11 @@ test_that("repeated candidate orders retain distinct public plotting identities"
     expect_equal(length(unique(repeated$candidate_id)), 2L)
   }
   expect_s3_class(plot_tuning(fit), "ggplot")
+  })
 })
 
 test_that("plot target selectors reject values that would change during coercion", {
+  .with_distance_tie_warning({
   skip_if_not_installed("ggplot2")
   fit <- np_dnn(X = matrix(seq_len(12)), Y = sin(seq_len(12)),
     X0 = matrix(c(2, 6, 10)), s = 4L, return = c("W", "dx"))
@@ -93,6 +96,7 @@ test_that("plot target selectors reject values that would change during coercion
     plot <- builder(fit, targets = c(3, 1, 3))
     expect_setequal(plot$data$target_id, c(3L, 1L))
   }
+  })
 })
 
 test_that("plot scope checks preserve actionable class validation", {

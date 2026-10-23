@@ -29,6 +29,27 @@
 
 # ── Shared row helpers ────────────────────────────────────────────────────────
 
+# Only an explicitly declared method failure becomes a replacement result.
+# Opaque external errors, including unclassed allocation failures, propagate.
+.sim_method_eval <- function(fn) {
+  tryCatch(fn(), rdistnn_simulation_method_failure = function(e) {
+    if (!inherits(e, "error") || inherits(e, c("warning", "interrupt",
+      "resourceError", "memoryError", "stackOverflowError", "CStackOverflowError",
+      "bad_alloc", "std::bad_alloc"))) stop(e)
+    structure(list(error = e, reason = .dnn_brief(conditionMessage(e), 240L)),
+      class = "rdistnn_simulation_failure")
+  })
+}
+
+.sim_warn_method_failures <- function(failures, destination) {
+  if (is.null(failures) || !nrow(failures)) return(invisible(NULL))
+  .dnn_warn("method_failed",
+    sprintf(paste0("%d simulation method evaluation(s) failed. Inspect %s for failed rows ",
+      "and the `method_failures` attribute for reasons."), nrow(failures), destination),
+    affected = nrow(failures), examples = unique(failures$method))
+  invisible(NULL)
+}
+
 .sim_cate_raw_schema <- function() {
   c(
     "method", "design", "n", "kx", "k", "tuning_source",
@@ -234,8 +255,9 @@
 #'   The `localization_drift` field stores realized localization drift.
 #'   The estimator remainder combines
 #'   centered score variation with fitted-state effects.
-#'   Failed methods have `NA` for all metric columns and `status = "failed"`;
-#'   registered route metadata is retained when it is known from the selected
+#'   Declared method failures have `NA` for all metric columns and
+#'   `status = "failed"`; unexpected method errors propagate.
+#'   Registered route metadata is retained when it is known from the selected
 #'   method.
 #'
 #' @examples
@@ -297,16 +319,14 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
   rows <- lapply(seq_along(methods), function(i) {
     meth <- methods[[i]]
     fn <- fns[[i]]
-    res <- tryCatch(
+    res <- .sim_method_eval(function() {
       fn(dgp = dgp, x_cols = x_cols, k = k, s = s,
          tuning = tuning, tuning_mode = tuning_mode, alpha = alpha,
-         n_folds = n_folds, clip = clip),
-      error = function(e) {
-        warning(sprintf("sim_cate_one_rep: method '%s' failed: %s",
-                        meth, conditionMessage(e)), call. = FALSE)
-        NULL
-      }
-    )
+         n_folds = n_folds, clip = clip)
+    })
+    failure <- if (inherits(res, "rdistnn_simulation_failure")) res else NULL
+    declared_failures <- attr(res, "method_failures")
+    if (!is.null(failure)) res <- NULL
     if (is.null(res)) {
       res <- .sim_cate_failure_rows(
         method = meth,
@@ -323,10 +343,18 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
       res <- .sim_cate_normalize_method_rows(res)
     }
     res$method <- meth
-    res[, c("method", .sim_cate_row_names()), drop = FALSE]
+    res <- res[, c("method", .sim_cate_row_names()), drop = FALSE]
+    if (!is.null(failure)) declared_failures <- data.frame(
+      method = meth, reason = failure$reason, stringsAsFactors = FALSE)
+    attr(res, "method_failures") <- declared_failures
+    res
   })
 
-  do.call(rbind, rows)
+  failures <- do.call(rbind, lapply(rows, attr, which = "method_failures"))
+  out <- do.call(rbind, rows)
+  attr(out, "method_failures") <- failures
+  .sim_warn_method_failures(failures, "the result's `status` column")
+  out
 }
 
 # ── Monte Carlo grid ──────────────────────────────────────────────────────────
@@ -376,10 +404,12 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
 #' availability alongside seeds when saving a simulation configuration.
 #'
 #' @section Fault tolerance:
-#' Each replicate is wrapped in `tryCatch`.  A total rep failure (e.g. DGP
-#' draw error) records `NA` for all metrics and all methods and emits a warning;
-#' per-method failures are handled inside [sim_cate_one_rep()]. Registered GRF
-#' route metadata is retained in both replacement paths.
+#' Explicitly declared method failures and status-bearing unavailable results
+#' retain their metric rows and registered method metadata. One
+#' aggregate warning identifies the affected methods; the `method_failures`
+#' attribute retains declared failure reasons and replicate seeds. DGP failures,
+#' opaque external errors, package errors, interrupts, resource failures and
+#' warnings promoted to errors propagate. Caller warning handlers retain their usual control.
 #' [summarise_sim_results()] reports `n_failed` per candidate-aware group.
 #'
 #' @param designs Character vector of DGP names.
@@ -542,65 +572,33 @@ sim_cate_run <- function(
     }
 
     reps <- .lapply(as.list(seeds), function(sd) {
-      result <- tryCatch(
+      result <- withCallingHandlers(
         sim_cate_one_rep(n = n, kx = kx, k = k, s = cell$s,
                          design = d, methods = methods,
                          tuning = tuning, tuning_mode = tuning_mode,
                          alpha = alpha, sigma = sigma,
                          clip = clip, seed = sd, n_folds = n_folds),
-        error = function(e) {
-          warning(sprintf(
-            "sim_cate_run: rep seed %d failed [design=%s n=%d kx=%d]: %s",
-            sd, d, n, kx, conditionMessage(e)
-          ), call. = FALSE)
-          NULL
-        }
+        rdistnn_method_failed_warning = function(w) invokeRestart("muffleWarning")
       )
-
-      if (is.null(result)) {
-        # Total rep failure: shape rows by the rows each method would have
-        # emitted in this cell.
-        do.call(rbind, lapply(methods, function(meth) {
-          fail <- .sim_cate_failure_rows(
-            method = meth,
-            n = n,
-            kx = kx,
-            k = k,
-            s = cell$s,
-            tuning = tuning,
-            tuning_mode = tuning_mode,
-            alpha = alpha,
-            by_candidate = TRUE
-          )
-          .sim_cate_add_cell_columns(
-            fail,
-            method = meth,
-            d = d,
-            n = n,
-            kx = kx,
-            k = k,
-            tuning_source = cell$tuning_source,
-            seed = sd
-          )
-        }))
-      } else {
-        do.call(rbind, lapply(split(result, seq_len(nrow(result))), function(row) {
-          .sim_cate_add_cell_columns(
-            row,
-            method = row$method[[1L]],
-            d = d,
-            n = n,
-            kx = kx,
-            k = k,
-            tuning_source = cell$tuning_source,
-            seed = sd
-          )
-        }))
-      }
+      failures <- attr(result, "method_failures")
+      if (!is.null(failures)) failures$seed <- sd
+      out <- do.call(rbind, lapply(split(result, seq_len(nrow(result))), function(row) {
+        .sim_cate_add_cell_columns(
+          row, method = row$method[[1L]], d = d, n = n, kx = kx, k = k,
+          tuning_source = cell$tuning_source, seed = sd)
+      }))
+      attr(out, "method_failures") <- failures
+      out
     })
 
+    failures <- do.call(rbind, lapply(reps, attr, which = "method_failures"))
     all_rows[[i]] <- do.call(rbind, reps)
+    attr(all_rows[[i]], "method_failures") <- failures
   }
 
-  do.call(rbind, all_rows)
+  failures <- do.call(rbind, lapply(all_rows, attr, which = "method_failures"))
+  out <- do.call(rbind, all_rows)
+  attr(out, "method_failures") <- failures
+  .sim_warn_method_failures(failures, "the result's `status` column")
+  out
 }

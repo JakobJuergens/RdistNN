@@ -65,103 +65,43 @@ test_that("sim_cate_run: no future.apply RNG misuse warning", {
   expect_false(any(grepl("UNRELIABLE VALUE|future\\.seed", warns, ignore.case = TRUE)))
 })
 
-test_that("grf-missing benchmark warnings are emitted without call metadata", {
-  testthat::local_mocked_bindings(
-    .sim_cate_grf_available = function() FALSE,
-    .package = "RdistNN"
-  )
-
-  m_cf <- getFromNamespace(".method_causal_forest", "RdistNN")
-  m_llf <- getFromNamespace(".method_llf", "RdistNN")
-  metric_names <- getFromNamespace(".sim_cate_metric_names", "RdistNN")()
+test_that("grf-missing benchmark status retains registered identity and cause", {
+  testthat::local_mocked_bindings(.sim_cate_grf_available = function() FALSE,
+    .package = "RdistNN")
   dgp <- sim_cate_data("dgp1_linear", n = 40L, kx = 2L, seed = 11L)
   x_cols <- grep("^X", names(dgp$data), value = TRUE)
-
-  w_cf <- NULL
-  cf_result <- withCallingHandlers(
-    m_cf(dgp, x_cols = x_cols, alpha = 0.05),
-    warning = function(w) {
-      w_cf <<- w
-      invokeRestart("muffleWarning")
-    }
-  )
-  expect_s3_class(w_cf, "warning")
-  expect_match(conditionMessage(w_cf), "grf not available; causal_forest returns NA\\.")
-  expect_null(conditionCall(w_cf))
-  expect_identical(cf_result$status, "failed")
-  expect_true(all(is.na(cf_result[, metric_names, drop = FALSE])))
-  expect_identical(cf_result$method_variant, "grf_oracle_nuisance")
-  expect_identical(cf_result$forest_nuisance, "oracle")
-  expect_true(cf_result$y_hat_supplied)
-  expect_true(cf_result$w_hat_supplied)
-
-  w_llf <- NULL
-  llf_result <- withCallingHandlers(
-    m_llf(dgp, x_cols = x_cols, alpha = 0.05),
-    warning = function(w) {
-      w_llf <<- w
-      invokeRestart("muffleWarning")
-    }
-  )
-  expect_s3_class(w_llf, "warning")
-  expect_match(conditionMessage(w_llf), "grf not available; llf returns NA\\.")
-  expect_null(conditionCall(w_llf))
-  expect_identical(llf_result$status, "failed")
-  expect_true(all(is.na(llf_result[, metric_names, drop = FALSE])))
-  expect_identical(llf_result$method_variant, "grf_local_linear_oracle_nuisance")
-  expect_identical(llf_result$forest_nuisance, "oracle")
-  expect_true(llf_result$y_hat_supplied)
-  expect_true(llf_result$w_hat_supplied)
+  metric_names <- RdistNN:::.sim_cate_metric_names()
+  for (method in c("causal_forest", "llf")) {
+    result <- RdistNN:::.get_sim_method(method)(dgp, x_cols = x_cols, alpha = .05)
+    expect_identical(result$status, "failed")
+    expect_true(all(is.na(result[, metric_names, drop = FALSE])))
+    expect_identical(result$forest_nuisance, "oracle")
+    expect_true(result$y_hat_supplied)
+    expect_true(result$w_hat_supplied)
+    expect_identical(attr(result, "method_failures")$method, method)
+    expect_match(attr(result, "method_failures")$reason, "install.packages")
+  }
 })
 
-test_that("method runtime failures retain registered GRF identity", {
+test_that("opaque method runtime failures propagate unchanged", {
   original_get <- getFromNamespace(".get_sim_method", "RdistNN")
-  testthat::local_mocked_bindings(
-    .get_sim_method = function(name) {
-      if (identical(name, "causal_forest")) {
-        return(function(...) stop("injected GRF runtime failure", call. = FALSE))
-      }
-      original_get(name)
-    },
-    .package = "RdistNN"
-  )
-
-  failed <- NULL
-  expect_warning(
-    failed <- sim_cate_one_rep(
-      n = 40L, kx = 2L, k = 1L, s = 6L,
-      design = "dgp1_linear", methods = "causal_forest", seed = 122L
-    ),
-    "injected GRF runtime failure"
-  )
-  metric_names <- getFromNamespace(".sim_cate_metric_names", "RdistNN")()
-
-  expect_identical(failed$status, "failed")
-  expect_true(all(is.na(failed[, metric_names, drop = FALSE])))
-  expect_identical(failed$method_variant, "grf_oracle_nuisance")
-  expect_identical(failed$forest_nuisance, "oracle")
-  expect_true(failed$y_hat_supplied)
-  expect_true(failed$w_hat_supplied)
+  testthat::local_mocked_bindings(.get_sim_method = function(name) {
+    if (identical(name, "causal_forest")) {
+      return(function(...) stop("injected GRF runtime failure", call. = FALSE))
+    }
+    original_get(name)
+  }, .package = "RdistNN")
+  expect_error(sim_cate_one_rep(
+    n = 40L, kx = 2L, k = 1L, s = 6L,
+    design = "dgp1_linear", methods = "causal_forest", seed = 122L),
+    "injected GRF runtime failure")
 })
 
-test_that("outer replicate failures retain registered GRF identity", {
-  failed <- NULL
-  expect_warning(
-    failed <- sim_cate_run(
-      designs = "bad_design", n_vals = 40L, kx_vals = 2L,
-      n_reps = 1L, master_seed = 123L, methods = "causal_forest",
-      verbose = FALSE
-    ),
-    "rep seed"
-  )
-  metric_names <- getFromNamespace(".sim_cate_metric_names", "RdistNN")()
-
-  expect_identical(failed$status, "failed")
-  expect_true(all(is.na(failed[, metric_names, drop = FALSE])))
-  expect_identical(failed$method_variant, "grf_oracle_nuisance")
-  expect_identical(failed$forest_nuisance, "oracle")
-  expect_true(failed$y_hat_supplied)
-  expect_true(failed$w_hat_supplied)
+test_that("outer replicate failures propagate the original DGP error", {
+  expect_error(sim_cate_run(
+    designs = "bad_design", n_vals = 40L, kx_vals = 2L,
+    n_reps = 1L, master_seed = 123L, methods = "causal_forest",
+    verbose = FALSE), "Unknown design")
 })
 
 test_that("unknown simulation methods are rejected before failure shaping", {

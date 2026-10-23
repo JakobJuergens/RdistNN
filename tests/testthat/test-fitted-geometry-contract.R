@@ -1,4 +1,5 @@
 test_that("saved core fits retain the resolved metric and fitted context", {
+  .with_localization_policy_warnings({
   metric <- "core_audit_saved_metric"
   on.exit(rm(list = metric, envir = .dist_registry), add = TRUE)
   calls <- 0L
@@ -32,9 +33,11 @@ test_that("saved core fits retain the resolved metric and fitted context", {
   })
   expect_equal(after, before, tolerance = 0)
   expect_identical(calls, 5L)
+  })
 })
 
 test_that("CATE LOO refits geometry and explicit contexts bypass setup", {
+  .with_localization_policy_warnings({
   X <- cbind(c(0, 2, 3, 8, 4, 7, 1), c(0, 7, 1, 2, 9, 3, 5))
   targets <- rbind(c(0, 0), c(3, 4))
   signal <- c(1, -2, 3, 4, -1, 6, 2)
@@ -63,5 +66,50 @@ test_that("CATE LOO refits geometry and explicit contexts bypass setup", {
     fit <- fun()
     expect_equal(predict(unserialize(serialize(fit, NULL)), X0 = targets),
       if (inherits(fit, "cate_result")) fit$tau else fit$theta)
+  }
+  })
+})
+
+test_that("current fits distinguish missing geometry context fields from retained NULL", {
+  X <- cbind(c(-3, -1, 0, 2, 4, 6), c(1, 3, -2, 2, 1, -1))
+  y <- c(1, 4, 2, 7, 3, 8)
+  X0 <- rbind(c(.2, .3), c(2.3, 1.2))
+  metric <- new_distance("retained_context_contract", eval = function(X, x0, ctx = NULL) {
+    scale <- if (is.null(ctx)) c(1, 1) else ctx$scale
+    rowSums(abs(sweep(X, 2L, x0, "-")) * matrix(scale, nrow(X), 2L, byrow = TRUE))
+  })
+  constructors <- list(
+    np = function(...) np_dnn(X = X, Y = y, X0 = X0, s = 3, ...),
+    tdnn = function(...) np_tdnn(X = X, Y = y, X0 = X0, s1 = 2, s2 = 4, ...),
+    cate = function(...) cate_dnn(X = X, pseudo_outcome = y, X0 = X0, s = 3, ...),
+    ratio = function(...) affine_ratio_dnn(X = X, numerator = y,
+      denominator = rep(1, 6), X0 = X0, s = 3, ...),
+    plqr = function(...) plqr_dnn(X = X, Y = y, D = matrix(1:6),
+      mD = matrix(0, 6), g = rep(0, 6), theta_eval = .5, density = rep(1, 6),
+      X0 = X0, s = 3, ...)
+  )
+  for (make in constructors) {
+    fit <- suppressWarnings(make(distance = metric, ctx = list(scale = c(.1, 10))))
+    reference <- suppressWarnings(predict(fit, X0 = X0, se.fit = TRUE))
+    expect_identical(suppressWarnings(predict(unserialize(serialize(fit, NULL)),
+      X0 = X0, se.fit = TRUE)), reference)
+    for (field in c("ctx", "inference_ctx", "distance", "inference_distance")) {
+      bad <- fit
+      bad$.model[field] <- NULL
+      expect_error(predict(bad, X0 = X0, se.fit = TRUE), "geometry.*[Rr]efit")
+    }
+    null_fit <- suppressWarnings(make(distance = metric, ctx = NULL))
+    expect_true(all(c("ctx", "inference_ctx") %in% names(null_fit$.model)))
+    expect_null(null_fit$.model$ctx)
+    expect_null(null_fit$.model$inference_ctx)
+    expect_identical(suppressWarnings(predict(unserialize(serialize(null_fit, NULL)),
+      X0 = X0, se.fit = TRUE)), suppressWarnings(predict(null_fit, X0 = X0, se.fit = TRUE)))
+  }
+  for (make in constructors[c("np", "tdnn")]) {
+    fit <- suppressWarnings(make(distance = metric, ctx = list(scale = c(.1, 10)), jackknife = "loo"))
+    expect_equal(unname(diag(suppressWarnings(vcov(fit)))), fit$se^2, tolerance = 1e-13)
+    bad <- fit
+    bad$.model["inference_ctx"] <- NULL
+    expect_error(vcov(bad), "geometry.*[Rr]efit")
   }
 })

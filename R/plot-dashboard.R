@@ -6,7 +6,7 @@
 .plot_dashboard_panels <- function(specs) {
   panels <- list()
   for (nm in names(specs)) {
-    p <- tryCatch(specs[[nm]](), error = function(e) NULL)
+    p <- tryCatch(specs[[nm]](), rdistnn_extra_unavailable = function(e) NULL)
     if (!is.null(p)) panels[[nm]] <- p
   }
   panels
@@ -41,9 +41,9 @@
 #' CLATE overlap describes the instrument. Stored tuning grids add a sensitivity panel.
 #' nonparametric-regression dashboards use estimates, the diagnostics
 #' facets, and the weight decay and concentration views. Panels whose
-#' inputs are unavailable are substituted (the diagnostics facets take the
-#' place of a missing overlap panel) or dropped rather than failing the
-#' dashboard.
+#' optional retained inputs are absent are substituted (the diagnostics facets
+#' take the place of a missing overlap panel) or dropped. Invalid plot options,
+#' malformed retained state and unexpected rendering failures propagate.
 #'
 #' When patchwork is not installed the panels are returned as a named list
 #' of ggplot objects with a message.
@@ -100,6 +100,12 @@ plot_dashboard.cate_result <- function(object, ...) {
     propensity = function() plot_overlap(object, type = "propensity"),
     weights = function() plot_weights(object, type = "cumulative")
   )
+  # Matrix/supplied-score CATE fits may deliberately omit these optional
+  # inputs. Malformed retained inputs still reach their scientific validators.
+  if (!inherits(object, "clate_result")) {
+    if (is.null(object$.model$t_vec)) specs$overlap <- NULL
+    if (is.null(object$.model$e)) specs$propensity <- NULL
+  }
   if (!is.null(object$tuning_grid)) {
     specs$tuning <- function() plot_tuning(object)
   }
@@ -109,7 +115,7 @@ plot_dashboard.cate_result <- function(object, ...) {
   if (!"overlap" %in% names(panels)) {
     diag_panel <- tryCatch(
       ggplot2::autoplot(diagnostics(object)),
-      error = function(e) NULL
+      rdistnn_extra_unavailable = function(e) NULL
     )
     if (!is.null(diag_panel)) {
       panels <- append(panels, list(diagnostics = diag_panel), after = 1L)

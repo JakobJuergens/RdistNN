@@ -244,19 +244,20 @@ test_that("single x0 agrees with the first target column", {
   })
 })
 
-test_that("geometry uses original covariate ordering within exact distance ties", {
+test_that("geometry uses input index and averaged mass within exact distance ties", {
   with(.pipeline_geometry_fixture(), {
     # Deterministic tie handling
     DX <- W_with_ctx$dx
     DX_tie <- DX
     DX_tie[1, 1] <- DX_tie[2, 1] <- 7
     DX_tie[3, 1] <- DX_tie[4, 1] <- 7
-    W_tie <- weights_matrix(
+    expect_warning(W_tie <- weights_matrix(
       X, X0,
       ranking = list(dx = DX_tie), weight = rw, return = c("ord", "ranks", "W")
-    )
-    expect_equal(W_tie$ord[, 1], .tie_reference_order(DX_tie[, 1], X))
-    expect_equal(rank_weight_eval_batch(rw, W_tie$ranks), W_tie$W, tolerance = 1e-12)
+    ), "Exact distance ties detected", fixed = TRUE)
+    expect_equal(W_tie$ord[, 1], .tie_reference_order(DX_tie[, 1]))
+    expect_equal(.block_oracle_average_weights(rank_weight_eval_batch(rw, W_tie$ranks), DX_tie),
+      W_tie$W, tolerance = 1e-12)
   })
 })
 
@@ -305,14 +306,14 @@ test_that("single-target pipeline retains matrix dimensions and normalized weigh
 })
 
 test_that("duplicate-row pipeline retains stable cosine ranks", {
-  .with_duplicate_policy_warnings({
+  .with_localization_policy_warnings({
   with(.pipeline_single_target_fixture(), {
     X_dup <- rbind(X, matrix(X[1, ], 2, p, byrow = TRUE)) # add two exact duplicates
     X0_dup <- matrix(x0, nrow = 1L)
 
     Wdup <- weights_matrix(X_dup, x0 = x0, ranking = cosine_spec, weight = rw, return = c("ord", "ranks", "dx"))
 
-    # Covariate lexicographic keys retain index only for identical rows.
+    # Equal represented cosine distances retain input-row order.
     ord_dup <- Wdup$ord
     if (is.null(ord_dup) && !is.null(Wdup$ranks)) {
       # ranks -> order for comparison
@@ -321,7 +322,7 @@ test_that("duplicate-row pipeline retains stable cosine ranks", {
 
     # recompute cosine distances to form the tie-broken order we expect (m=1)
     DX_dup_cos <- distance_eval_batch(cosine_spec, X_dup, X0_dup, ctx = NULL)
-    ord_tie <- .tie_reference_order(as.vector(DX_dup_cos[, 1]), X_dup)
+    ord_tie <- .tie_reference_order(as.vector(DX_dup_cos[, 1]))
 
     expect_equal(ord_dup[, 1], ord_tie)
   })
@@ -344,7 +345,7 @@ test_that("a distance-returning ranker function agrees with a distance specifica
 test_that("all-equal distances retain training-row tie order", {
   with(.pipeline_single_target_fixture(), {
     DX_all_equal <- matrix(7, nrow = n, ncol = 1) # all equal distances
-    Wall <- weights_matrix(X, x0 = x0, ranking = list(dx = DX_all_equal), weight = rw, return = "ord")
+    expect_warning(Wall <- weights_matrix(X, x0 = x0, ranking = list(dx = DX_all_equal), weight = rw, return = "ord"), "Exact distance ties detected", fixed = TRUE)
     expect_equal(as.integer(Wall$ord[, 1]), seq_len(n)) # ties broken by row index
   })
 })

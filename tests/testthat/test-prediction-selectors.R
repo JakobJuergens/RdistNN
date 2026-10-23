@@ -1,4 +1,5 @@
 test_that("retained selectors reproduce duplicated and matrix-valued data columns", {
+  .with_distance_tie_warning({
   d <- data.frame(x = 1:8, x.1 = 8:1, y = 1:8)
   for (family in c("np", "cate", "tdnn")) {
     fit <- switch(family,
@@ -17,4 +18,5 @@ test_that("retained selectors reproduce duplicated and matrix-valued data column
       tdnn = np_tdnn(data = d, x_cols = "pair", y_col = "y", x0 = c(0, 0), s1 = 2, s2 = 3, se = FALSE))
     expect_equal(unname(predict(fit, newdata = d)), unname(predict(fit, X0 = as.matrix(d$pair))))
   }
+  })
 })

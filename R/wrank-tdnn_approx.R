@@ -25,9 +25,13 @@
   #   w_rank[j] = pbeta(j/n, 1, s) - pbeta((j-1)/n, 1, s)
   n <- as.integer(n)
   s <- as.integer(s)
-  j <- seq_len(n)
-  w_rank <- .beta_interval_mass((j - 1L) / n, j / n, 1L, s)
-  w_rank <- as.numeric(w_rank)
+  if (s == 1L) {
+    w_rank <- rep(1 / n, n)
+  } else {
+    j <- seq_len(n)
+    w_rank <- .beta_interval_mass((j - 1L) / n, j / n, 1L, s)
+    w_rank <- as.numeric(w_rank)
+  }
   if (isTRUE(normalize)) {
     sw <- .compensated_sum(w_rank)
     if (!is.finite(sw) || sw <= 0) {

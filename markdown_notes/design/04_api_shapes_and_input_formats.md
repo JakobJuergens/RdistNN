@@ -45,8 +45,8 @@ extras are additive and unknown entries warn and are ignored under the current
 interface. Main fields must not change meaning when an extra is requested.
 
 Use the common argument names `X`, `X0`, `x0`, `x_cols`, `k`, `s`, `method`,
-`distance`, `jackknife` and `return`; introduce synonyms only for a justified
-compatibility need. New estimators follow the same sequence: resolve/validate,
+`distance`, `jackknife` and `return`; introduce alternatives only for an
+explicitly documented current-interface requirement. New estimators follow the same sequence: resolve/validate,
 canonicalize, compute weights/signals, estimate, calculate requested uncertainty,
 and assemble the result. See [architecture](13_estimator_and_result_architecture.md)
 for class-specific fields and shared methods.

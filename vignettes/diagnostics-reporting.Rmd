@@ -18,13 +18,36 @@ library(RdistNN)
 a fitted object. NP/TDNN, CATE and PLQR use retained weights and model state;
 paired-ratio/CLATE diagnostics reconstruct weights from cached ranks and
 can evaluate deletion-score concentration. No nuisance models are refitted.
-Duplicate-covariate blocks use their averaged weights, including deletion-based
+Target-specific exact-distance groups use their averaged rank weights, including deletion-based
 concentration. These weights can change ESS and support. Candidate summaries
 take minimum ESS and maximum weight/concentration over targets; inspect target
 diagnostics for the individual profiles. A warning identifies block averaging
-as a modification outside the paper's theory.
+as a rule for which persistent distance-tie inference is not established.
 For NP/TDNN and CATE, `nobs()` reports training rows; `n_eff` below describes
 local weight concentration.
+
+Warnings summarize one issue family per call. Exact-distance ties retain their
+inference qualification; near-uniform DNN weights and high effective sample
+size for signed TDNN weights have different interpretations. A later independent
+report or plot can warn again. Base R warning controls and calling handlers
+apply, including `options(warn = 2)`.
+
+Paired-ratio and CLATE calls retain every target, including targets whose ratio
+or requested interval is unavailable. One warning points to `status` and
+`components`; inspect those tables before interpreting the other targets.
+Negative denominators alone are descriptive, and intentionally disabled
+uncertainty does not produce an unavailable-interval warning. Ordinary mean
+fits instead stop if their computed estimates are nonfinite and request
+rescaling.
+
+Dashboard panels can omit genuinely absent optional extras. Invalid plotting
+options, inconsistent retained state and unexpected rendering failures stop.
+Errors for absent optional extras have class `rdistnn_extra_unavailable`;
+invalid current state has class `rdistnn_state_error` and requires refitting.
+Warnings inherit `rdistnn_warning` with a specific family such as
+`rdistnn_distance_ties_warning` or `rdistnn_partial_result_warning`. Code should
+use those identities when handling a recognized condition, rather than parsing
+English messages.
 
 The shared fields include:
 

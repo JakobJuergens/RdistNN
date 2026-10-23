@@ -35,14 +35,15 @@
 #' - Plot CATE and regression estimates with [plot_estimates()] and inspect
 #'   local weights with [plot_weights()] (requires ggplot2).
 #'
-#' @section Identical localization covariates:
-#' Covariate-aware estimators average weights within exactly identical raw
-#' covariate blocks, including every jackknife deletion's surviving members.
-#' The package warns because this permutation-invariant modification is not
-#' covered by the paper's theory. It can change observation weights, support
-#' and effective sample size. See [weights_matrix()] for the rule; rank-only
-#' utilities without covariates cannot infer duplicate groups. Refit tied saved
-#' objects created before this policy before reporting or reusing them.
+#' @section Exact distance ties:
+#' Distance-based estimators average rank weights within exactly equal computed
+#' distances, separately for every target, including each deletion's surviving
+#' members. Block mass is preserved for signed and unnormalized rules. Equality
+#' uses represented values without a tolerance. Bare ranks/orders remain strict;
+#' adding `dx` metadata enables averaging while preserving supplied permutations.
+#' Calls with ties warn once: the accompanying theory assumes a continuous
+#' distance distribution and does not establish inference under persistent ties.
+#' Earlier retained fit schemas require refitting before reporting or reuse.
 #'
 #' @section Experimental and Advanced Workflows:
 #' All PLQR functionality is **experimental**, including [plqr_dnn()], its

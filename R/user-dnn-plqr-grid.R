@@ -42,7 +42,7 @@
 }
 
 .plqr_dnn_grid_se_fn <- function(
-  ranks, score_mat, x_mat, x0_mat, distance, method, k, normalize, ctx, jackknife
+  ranks, score_mat, x_mat, x0_mat, distance, method, k, normalize, ctx, jackknife, groups = NULL
 ) {
   force(ranks)
   force(score_mat)
@@ -60,14 +60,14 @@
     se <- if (identical(jackknife, "fast")) {
       spec <- .plqr_dnn_rank_weight_spec(method = method, k = k, s = s, normalize = normalize)
       loo <- if (is.null(tab_jk)) {
-        .dnn_loo_loop(score_mat, ranks, spec, center = TRUE, groups = .dnn_duplicate_groups(x_mat))
+        .dnn_loo_loop(score_mat, ranks, spec, center = TRUE, groups = groups)
       } else {
         .dnn_loo_centered(
           score_mat,
           ranks,
           tab_jk,
           tab_full = attr(tab_jk, "tab_full", exact = TRUE),
-          groups = .dnn_duplicate_groups(x_mat)
+          groups = groups
         )$loo
       }
       .dnn_jackknife_se_from_loo(
@@ -128,7 +128,7 @@
   se,
   jackknife,
   tuning_payload,
-  reuse_default = TRUE
+  reuse_default = TRUE, groups = NULL
 ) {
   .plqr_dnn_warn_infeasible_grid(candidates)
   se_fn <- if (isTRUE(se) && !identical(jackknife, "none")) {
@@ -142,7 +142,7 @@
       k = k,
       normalize = normalize,
       ctx = ctx,
-      jackknife = jackknife
+      jackknife = jackknife, groups = groups
     )
   } else {
     NULL
@@ -166,8 +166,8 @@
       .plqr_dnn_grid_estimates(moment = moment, se = NULL)
     },
     se_fn = se_fn,
-    ctx = list(k = k, groups = .dnn_duplicate_groups(x_mat)),
-    precomputed = if (reuse_default && !anyDuplicated(.dnn_duplicate_groups(x_mat))) .plqr_dnn_grid_default_precomputed(
+    ctx = list(k = k, groups = groups),
+    precomputed = if (reuse_default && !.dnn_has_ties(groups)) .plqr_dnn_grid_default_precomputed(
       candidates = candidates,
       moment_hat = moment_hat,
       se_hat = se_hat,

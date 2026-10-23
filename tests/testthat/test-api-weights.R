@@ -17,11 +17,11 @@ test_that("helpers: deterministic ordering + ranks conversion round-trip", {
   DX[, 2] <- c(1, 1, 2, 2, 3, 3) # create ties
 
   # What api_weights.R would compute from DX
-  ORD <- apply(DX, 2L, function(dx) .tie_reference_order(dx, X))
+  ORD <- apply(DX, 2L, function(dx) .tie_reference_order(dx))
   RKS <- apply(ORD, 2L, ord_to_ranks)
 
-  # Exact ties use original covariates, then index for identical rows.
-  expect_equal(ORD[, 2], .tie_reference_order(DX[, 2], X))
+  # Exact distance ties use the current input-row index.
+  expect_equal(ORD[, 2], .tie_reference_order(DX[, 2]))
 
   # Each column is a permutation 1..n
   for (j in seq_len(m)) {
@@ -41,7 +41,7 @@ test_that(".resolve_ranking works for dx, ord, ranks, and function outputs", {
   DX <- vapply(seq_len(m), function(j) {
     rowSums((X - matrix(X0[j, ], n, p, byrow = TRUE))^2)
   }, numeric(n))
-  ORD <- apply(DX, 2L, function(dx) .tie_reference_order(dx, X))
+  ORD <- apply(DX, 2L, function(dx) .tie_reference_order(dx))
   RKS <- apply(ORD, 2L, ord_to_ranks)
 
   # 1) list(dx=...)
@@ -119,6 +119,21 @@ test_that(".resolve_ranking rejects malformed shapes", {
   expect_error(.resolve_ranking(bad_ranker, X, X0), "dx.*non-finite", ignore.case = TRUE)
 })
 
+test_that("supplied rank and order indices reject integer overflow before coercion", {
+  X <- matrix(1:4)
+  rw <- rank_weight_dnn_exact(k = 1L, s = 2L)
+  for (value in c(2^40, -2^40, .Machine$integer.max)) {
+    bad <- matrix(c(1, 2, 3, value))
+    for (ranking in list(bad, list(ranks = bad), list(ord = bad),
+      function(X, X0, ctx) list(ranks = bad))) {
+      expect_no_warning(expect_error(weights_matrix(X, x0 = 0, ranking = ranking, weight = rw),
+        class = "rdistnn_input_error"))
+    }
+  }
+  expect_identical(weights_matrix(X, x0 = 0, ranking = matrix(c(4, 1, 3, 2)), weight = rw)$W,
+    matrix(c(0, .5, 1 / 6, 1 / 3)))
+})
+
 test_that(".resolve_weight identifies rank_weight and zero-arg factories", {
 
   # A simple rank_weight: w_i ∝ 1 / rank_i
@@ -184,13 +199,13 @@ test_that("weights_matrix works with distance-based ranking + rank_weight", {
   DX_tie <- DX
   DX_tie[1:2, 1] <- 7
   DX_tie[3:4, 1] <- 7
-  res2 <- weights_matrix(
+  expect_warning(res2 <- weights_matrix(
     X = X, X0 = X0,
     ranking = list(dx = DX_tie),
     weight = rw,
     return = "ord"
-  )
-  expect_equal(res2$ord[, 1], .tie_reference_order(DX_tie[, 1], X))
+  ), "Exact distance ties detected", fixed = TRUE)
+  expect_equal(res2$ord[, 1], .tie_reference_order(DX_tie[, 1]))
 })
 
 test_that("weights_matrix passes ctx through to rank_weight evaluators", {
@@ -236,7 +251,7 @@ test_that("weights_matrix passes ctx through to rank_weight evaluators", {
 })
 
 test_that("weights_matrix handles x0 vs X0 and basic shape errors", {
-  .with_duplicate_policy_warnings({
+  .with_localization_policy_warnings({
 
   n <- 4
   p <- 2
@@ -322,7 +337,7 @@ test_that("end-to-end parity: dx vs ord vs ranks produce identical W", {
   DX <- vapply(seq_len(m), function(j) {
     rowSums((X - matrix(X0[j, ], n, p, byrow = TRUE))^2)
   }, numeric(n))
-  ORD <- apply(DX, 2L, function(dx) .tie_reference_order(dx, X))
+  ORD <- apply(DX, 2L, function(dx) .tie_reference_order(dx))
   RKS <- apply(ORD, 2L, ord_to_ranks)
 
   # Simple rank weight
@@ -540,7 +555,7 @@ test_that("deterministic ties with massive plateaus still stable", {
     w / sum(w)
   }, name = "inv_rank_plateau")
 
-  res <- weights_matrix(X, x0 = x0, ranking = list(dx = DX), weight = rw, return = c("ord", "ranks", "W"))
+  expect_warning(res <- weights_matrix(X, x0 = x0, ranking = list(dx = DX), weight = rw, return = c("ord", "ranks", "W")), "Exact distance ties detected", fixed = TRUE)
   expect_equal(as.integer(res$ord[, 1]), seq_len(n))
   expect_setequal(res$ranks[, 1], seq_len(n))
   expect_true(abs(sum(res$W[, 1]) - 1) < 1e-12)

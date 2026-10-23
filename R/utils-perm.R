@@ -15,16 +15,6 @@ ord_to_ranks <- function(ord) {
   r
 }
 
-# Canonical numeric row keys use original covariates in their supplied column
-# order. Observation position resolves only rows identical on every covariate.
-.covariate_tie_key <- function(X, row_ids = seq_len(nrow(X))) {
-  columns <- unname(as.list(as.data.frame(X)))
-  ord_to_ranks(do.call(order, c(columns, list(row_ids, method = "radix"))))
-}
-
-.order_with_ties <- function(dx, X = NULL, tie_key = NULL) {
-  if (is.null(tie_key)) {
-    tie_key <- if (is.null(X)) seq_along(dx) else .covariate_tie_key(X)
-  }
-  order(dx, tie_key, method = "radix")
+.order_with_ties <- function(dx) {
+  order(dx, seq_along(dx), method = "radix")
 }

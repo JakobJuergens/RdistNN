@@ -38,8 +38,8 @@ diagnostics.affine_ratio_result <- function(object, candidates = "default", ...)
   }
   ranks <- .validate_permutation_matrix(geometry$ranks, "object$.model$geometry$ranks")
   rw <- .affine_rank_weight(model)
-  W <- .dnn_average_duplicate_weights(rank_weight_eval_batch(rw, ranks),
-                                       .dnn_duplicate_groups(model$x_mat))
+  W <- .dnn_average_distance_weights(rank_weight_eval_batch(rw, ranks),
+                                       model$groups)
   m <- ncol(W)
   out <- .dnn_weight_diagnostics(W, object$meta, geometry$dx, object$meta$tuning)
   ns <- .affine_component_se(object, 1L)
@@ -62,7 +62,7 @@ diagnostics.affine_ratio_result <- function(object, candidates = "default", ...)
       model$signal, ranks,
       .rank_weight_table(rw, nrow(model$x_mat) - 1L),
       tab_full = .rank_weight_table(rw, nrow(model$x_mat)),
-      groups = .dnn_duplicate_groups(model$x_mat)
+      groups = model$groups
     )$loo
     for (j in seq_len(m)) {
       if (!is.finite(object$theta[j])) next

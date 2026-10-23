@@ -1,17 +1,6 @@
 # Independent small-sample exact DNN weights by enumerating all subsamples.
 .np_ref_weights <- function(X, X0, s, k = 1L) {
-  n <- nrow(X)
-  subsets <- combn(n, s)
-  W <- matrix(0, n, nrow(X0))
-  for (j in seq_len(nrow(X0))) {
-    d <- rowSums(sweep(X, 2, X0[j, ], "-")^2)
-    for (a in seq_len(ncol(subsets))) {
-      ids <- subsets[, a]
-      take <- ids[.tie_reference_order(d[ids], X[ids, , drop = FALSE], ids)][seq_len(k)]
-      W[take, j] <- W[take, j] + 1 / (k * ncol(subsets))
-    }
-  }
-  .block_oracle_average_weights(W, X)
+  .tie_reference_weights(X, X0, k, s)
 }
 
 .np_ref_cov <- function(X, X0, y, s, k = 1L, s2 = NULL, dim = ncol(X)) {
@@ -35,7 +24,7 @@
 )
 
 test_that("NP methods expose means and joint common-deletion covariance", {
-  .with_duplicate_policy_warnings({
+  .with_localization_policy_warnings({
   d <- .np_method_data()
   for (jk in c("fast", "loo")) {
     f <- np_dnn(X = d$X, X0 = d$X0, Y = d$y, k = 2, s = 3, jackknife = jk, return = character())
@@ -62,7 +51,7 @@ test_that("NP methods expose means and joint common-deletion covariance", {
 })
 
 test_that("NP prediction retains tabular inputs and fitted geometry through serialization", {
-  .with_duplicate_policy_warnings({
+  .with_localization_policy_warnings({
   d <- .np_method_data()
   dat <- data.frame(a = d$X[, 1], b = d$X[, 2], y = d$y)
   metric <- distance_l2_scaled("sd")
@@ -82,7 +71,7 @@ test_that("NP prediction retains tabular inputs and fitted geometry through seri
 })
 
 test_that("NP zero variance and absent uncertainty remain distinguishable", {
-  .with_duplicate_policy_warnings({
+  .with_localization_policy_warnings({
   d <- .np_method_data()
   f <- np_dnn(X = d$X, X0 = d$X0, Y = rep(5, 7), s = 3)
   expect_equal(unname(vcov(f)), matrix(0, 3, 3))
@@ -106,7 +95,7 @@ test_that("NP zero variance and absent uncertainty remain distinguishable", {
 })
 
 test_that("NP candidate views update covariance and prediction controls", {
-  .with_duplicate_policy_warnings({
+  .with_localization_policy_warnings({
   d <- .np_method_data()
   tun <- new_tuning("np_methods", eval = function(...) list(s = 3L),
     eval_grid = function(...) data.frame(s = c(2L, 3L, 4L)))
@@ -123,7 +112,7 @@ test_that("NP candidate views update covariance and prediction controls", {
 })
 
 test_that("NP methods validate public targets and inference controls", {
-  .with_duplicate_policy_warnings({
+  .with_localization_policy_warnings({
   d <- .np_method_data()
   f <- np_dnn(X = d$X, X0 = d$X0, Y = d$y, s = 3)
   expect_error(summary(f, level = 0), "level")
@@ -133,12 +122,12 @@ test_that("NP methods validate public targets and inference controls", {
   expect_error(predict(f, X0 = d$X0, se.fit = NA), "se.fit")
   expect_error(predict(f, x0 = c(NA, 0)), "NA")
   f$.model <- NULL
-  expect_error(predict(f, X0 = d$X0), "fitted model state")
+  expect_error(predict(f, X0 = d$X0), "localization model state.*[Rr]efit")
   })
 })
 
 test_that("TDNN inherits NP methods with actual signed covariance", {
-  .with_duplicate_policy_warnings({
+  .with_localization_policy_warnings({
   d <- .np_method_data()
   for (jk in c("fast", "loo")) {
     f <- np_tdnn(X = d$X, X0 = d$X0, Y = d$y, s1 = 2, s2 = 4, dim = 2,
@@ -152,7 +141,7 @@ test_that("TDNN inherits NP methods with actual signed covariance", {
 })
 
 test_that("loo covariance preserves deletion-specific fitted geometry", {
-  .with_duplicate_policy_warnings({
+  .with_localization_policy_warnings({
   d <- .np_method_data()
   loo <- t(vapply(seq_len(nrow(d$X)), function(i) {
     Xi <- d$X[-i, , drop = FALSE]
@@ -173,7 +162,7 @@ test_that("loo covariance preserves deletion-specific fitted geometry", {
 })
 
 test_that("NP resolves registered custom geometry once for saved predictions", {
-  .with_duplicate_policy_warnings({
+  .with_localization_policy_warnings({
   d <- .np_method_data()
   metric <- new_distance("np_saved_custom",
     setup = function(X) list(scale = apply(X, 2, sd)),
@@ -198,7 +187,7 @@ test_that("NP resolves registered custom geometry once for saved predictions", {
 })
 
 test_that("asymptotic NP and TDNN covariance matches explicit beta-grid deletions", {
-  .with_duplicate_policy_warnings({
+  .with_localization_policy_warnings({
   d <- .np_method_data()
   weights <- function(X, X0, s, k) {
     n <- nrow(X)
@@ -207,9 +196,9 @@ test_that("asymptotic NP and TDNN covariance matches explicit beta-grid deletion
     }, numeric(n)))
     W <- vapply(seq_len(nrow(X0)), function(j) {
       distance <- rowSums(sweep(X, 2, X0[j, ], "-")^2)
-      table[order(.tie_reference_order(distance, X))]
+      table[order(.tie_reference_order(distance))]
     }, numeric(n))
-    .block_oracle_average_weights(W, X)
+    .block_oracle_average_weights(W, vapply(seq_len(nrow(X0)), function(j) sqrt(rowSums(sweep(X, 2L, X0[j, ], "-")^2)), numeric(nrow(X))))
   }
   for (tdnn in c(FALSE, TRUE)) for (normalize in c(FALSE, TRUE)) {
     n <- nrow(d$X)
@@ -236,15 +225,18 @@ test_that("asymptotic NP and TDNN covariance matches explicit beta-grid deletion
 })
 
 test_that("NP covariance keeps support-local variation with extreme unused outcomes", {
+  .with_localization_policy_warnings({
   X <- matrix(0:7, ncol = 1)
   y <- c(1e15 + c(0, 1, 3), rep(-1e300, 5))
   f <- np_dnn(X = X, X0 = matrix(c(0, .1), ncol = 1), Y = y, s = 7, return = character())
   ref <- .np_ref_cov(X, matrix(c(0, .1), ncol = 1), c(0, 1, 3, rep(0, 5)), 7)
   expect_equal(unname(vcov(f)), ref, tolerance = 1e-12)
   expect_gt(vcov(f)[1, 1], 0)
+  })
 })
 
 test_that("NP singular geometry and scalar/batch prediction are coherent", {
+  .with_localization_policy_warnings({
   X <- cbind(a = c(-2, -1, 0, 1, 2, 3), b = c(-4, -2, 0, 2, 4, 6))
   X0 <- rbind(c(0, 0), c(1, 2))
   f <- np_dnn(X = X, X0 = X0, Y = c(1, 3, -1, 4, 2, 5),
@@ -257,10 +249,11 @@ test_that("NP singular geometry and scalar/batch prediction are coherent", {
   no_deletions <- np_dnn(X = X, X0 = X0, Y = 1:6, s = 6, se = FALSE)
   expect_equal(predict(no_deletions, X0 = X0), no_deletions$mu)
   expect_error(predict(no_deletions, X0 = X0, se.fit = TRUE), "s < n")
+  })
 })
 
 test_that("TDNN tabular saved state works without optional outputs or fitted SE", {
-  .with_duplicate_policy_warnings({
+  .with_localization_policy_warnings({
   d <- .np_method_data()
   dat <- data.frame(a = d$X[, 1], b = d$X[, 2], y = d$y)
   f <- np_tdnn(data = dat, x_cols = 1:2, y_col = "y", X0 = d$X0,
@@ -279,7 +272,7 @@ test_that("TDNN tabular saved state works without optional outputs or fitted SE"
 })
 
 test_that("NP rejects corrupted saved model state before prediction", {
-  .with_duplicate_policy_warnings({
+  .with_localization_policy_warnings({
   d <- .np_method_data()
   f <- np_dnn(X = d$X, X0 = d$X0, Y = d$y, s = 3, return = character())
   bad <- f
@@ -287,7 +280,7 @@ test_that("NP rejects corrupted saved model state before prediction", {
   expect_error(predict(bad, X0 = d$X0), "y_vec.*length")
   bad <- f
   bad$.model$x_mat[1, 1] <- Inf
-  expect_error(predict(bad, X0 = d$X0), "x_mat.*non-finite")
+  expect_error(predict(bad, X0 = d$X0), "localization model state.*[Rr]efit")
   bad <- f
   bad$.model$k <- 4
   expect_error(predict(bad, X0 = d$X0), "k <= s")
@@ -307,6 +300,7 @@ test_that("NP rejects corrupted saved model state before prediction", {
 })
 
 test_that("print.np_result runs without error", {
+  .with_localization_policy_warnings({
   .test_rng_scope({
     d <- .make_np_data(n = 16L, p = 2L, m = 2L)
     out <- np_dnn(
@@ -316,9 +310,11 @@ test_that("print.np_result runs without error", {
     txt <- capture.output(print(out))
     expect_true(any(grepl("<np_result>", txt, fixed = TRUE)))
   }, seed = 123L)
+  })
 })
 
 test_that("print.tdnn_np_result runs and shows key fields", {
+  .with_localization_policy_warnings({
   .test_rng_scope({
     d   <- .make_tdnn_data(n = 20L, m = 2L)
     out <- np_tdnn(X = d$X, X0 = d$X0, Y = d$y, s1 = 1L, s2 = 2L, se = FALSE)
@@ -328,4 +324,5 @@ test_that("print.tdnn_np_result runs and shows key fields", {
     expect_true(any(grepl("s1=", txt)))
     expect_true(any(grepl("s2=", txt)))
   }, seed = 123L)
+  })
 })

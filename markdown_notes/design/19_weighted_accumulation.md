@@ -43,12 +43,14 @@ and centering error, not error already incurred when multiplying two doubles.
 ## Deletions and workspace
 
 The arbitrary-table deletion engine supports nonnegative DNN and signed TDNN
-tables. X-aware construction averages rank weights within exactly identical
-raw-covariate groups. Use compensated block mass reductions and preserve signed
-and unnormalized masses. Each deletion shrinks the deleted observation's block
+tables. `R/distance-blocks.R` owns per-target group identification, weight
+averaging and selected-policy validation. High-level construction averages assigned rank weights within exact
+represented selected-metric distance groups, separately for each target.
+Use compensated block mass reductions and preserve signed and unnormalized
+masses, including zero entries beyond nominal support. Each deletion shrinks the deleted observation's block
 before averaging the `n-1` table; it is not deletion from a permanently averaged
 full-sample table. Retain union-of-deletion-support centering and expand that
-union to entire intersecting duplicate blocks before choosing an origin.
+union to entire intersecting target-specific distance groups before choosing an origin.
 
 For contiguous rank blocks, accumulate original signals using three block
 coefficients: the mean of the unshifted table entries for a deletion after the
@@ -120,6 +122,8 @@ fixture generator; this does not claim correct rounding for every input.
 
 Weighted outcome SD uses positive-weight observations, an exact binary scale,
 an observed origin and a scaled norm of square-root-weighted centered outcomes.
+Form square-root weights before normalizing them, so an underflowed normalized
+weight cannot erase a representable root contribution for unnormalized inputs.
 Restore the SD directly, so its squared variance need not fit in a double.
 Zero-weight extreme outcomes cannot set the scale. Signed TDNN weights do not
 define a probability-distribution SD or quantiles; those diagnostics are missing.
@@ -140,7 +144,9 @@ retained correction state. Normalize the mixture once. Keep mantissa and binary
 exponent separate during recurrence so subnormal multiplication cannot stick
 at the smallest double. Workspace is O(n), work O(n + k*(n-s+1)); k=s is exactly uniform.
 This avoids host-specific log-gamma rounding in exact tables. Asymptotic tables
-retain host Beta routines. Rounded interval endpoints can lose a tail mass or
+also use the uniform identity when k=s, including the s=1 single-scale
+component of TDNN; other cases retain host Beta routines.
+Rounded interval endpoints can lose a tail mass or
 produce different zero/nonzero support in R and Mata at subnormal scales.
 Order-statistic averaging, signed TDNN blending and normalization can lose
 additional tiny masses. This remains unresolved, including downstream effects

@@ -71,7 +71,11 @@ or solutions. An explicit vector is reused at all targets; matrix column
 \code{j} supplies target \code{j}. Either explicit form takes precedence over the
 model callback.}
 
-\item{optimizer}{Optimizer method passed to \code{\link[stats:optim]{stats::optim()}}.}
+\item{optimizer}{Optimizer method passed to \code{\link[stats:optim]{stats::optim()}}. Both stages
+allow 1000 iterations. BFGS and Nelder-Mead use \code{reltol = 1e-12};
+L-BFGS-B uses \code{factr = 1e-12 / .Machine$double.eps} and the default
+projected-gradient tolerance. Convergence statuses remain available in
+the returned object.}
 
 \item{jacobian}{One of \code{"auto"}, \code{"analytic"}, or \code{"fd"}.}
 
@@ -101,15 +105,15 @@ This local IV-GMM interface is experimental and may change.
 }
 \details{
 The documented sampling framework uses independent observations; cluster
-and survey-design inference are not supplied. Exact distance ties use
-lexicographic order of the original covariates, in their supplied column
-order. Rows identical on every raw localization covariate share the average
-of their rank weights. Each jackknife deletion recomputes this average over
-the surviving block at sample size n-1. This permutation-invariant
-modification is not covered by the paper's theory and emits a warning.
-Distinct covariate vectors at equal distance are not averaged. Ordering uses
-no outcomes or nuisances. Retained tied fits from the earlier policy require
-refitting before reporting or reuse.
+and survey-design inference are not supplied. Observations with exactly
+equal computed distance to a target share their block's average rank weight,
+even when their covariates differ. Groups are target-specific and use exact
+represented equality, without a tolerance. Ordering uses distance then input
+row index; outcomes and nuisances do not define groups. Every jackknife
+deletion averages the surviving blocks with the sample-size-n-1 rule.
+A warning is emitted once per public call with distance ties: the accompanying
+theory assumes a continuous distance distribution and does not establish
+inference under persistent ties. Earlier retained fit schemas require refitting.
 
 Two interfaces are supported.
 \enumerate{
@@ -131,7 +135,7 @@ than an \code{s}-nearest-neighbor truncation. For exact DNN fits, the
 unaveraged rank-table support edge is rank \code{n - s + k}, not rank \code{s}.
 
 Averaging can extend nonzero observation weights through the end of a
-duplicate block that straddles the nominal rank-table edge. Effective sample
+distance block that straddles the nominal rank-table edge. Effective sample
 sizes and weight diagnostics use the resulting observation weights.
 }
 \examples{

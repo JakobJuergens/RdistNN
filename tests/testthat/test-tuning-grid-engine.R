@@ -76,7 +76,7 @@
     s <- as.integer(candidate_row$s[[1L]])
     calls$keys <- c(calls$keys, as.character(candidate_row$computed_key[[1L]]))
     if (s %in% fail_s) {
-      stop(sprintf("boom s=%d", s), call. = FALSE)
+      RdistNN:::.dnn_abort("candidate_failure", sprintf("boom s=%d", s))
     }
     rank_weight_dnn_exact(k = 1L, s = s)
   }
@@ -199,20 +199,20 @@ test_that("grid engine emits NA rows for skipped infeasible candidates", {
   expect_false("top_share" %in% names(skipped_diag))
 })
 
-test_that("grid engine records failed non-default candidate rows", {
+test_that("grid engine records declared failed non-default candidate rows", {
   ranks <- .grid_engine_ranks()
   candidates <- .grid_engine_candidates()
   calls <- new.env(parent = emptyenv())
   calls$keys <- character()
 
-  out <- RdistNN:::.dnn_grid_eval(
+  expect_warning(out <- RdistNN:::.dnn_grid_eval(
     candidates = candidates,
     ranks = ranks,
     weight_spec_fn = .grid_engine_counted_dnn_spec(calls, fail_s = 4L),
     estimate_fn = .grid_engine_estimator(c(1, 2, 3, 4, 5)),
     se_fn = .grid_engine_se(ranks),
     ctx = list(k = 2L)
-  )
+  ), class = "rdistnn_partial_result_warning")
 
   failed_id <- candidates$candidate_id[candidates$s == 4L]
   failed_est <- out$estimates[out$estimates$candidate_id == failed_id, ]

@@ -27,7 +27,7 @@
   q <- nrow(est)
   m <- ncol(est)
   se_mat <- .plot_data_se_qxm(se, q = q, m = m)
-  z <- stats::qnorm(1 - (1 - level) / 2)
+  z <- .dnn_normal_critical(level)
 
   out <- data.frame(
     target_id = rep(seq_len(m), each = q),
@@ -150,13 +150,20 @@ plot_data_estimates.cate_result <- function(object, level = 0.95, candidates = "
 #'   jackknife `moment_se`; `"theta"` uses the supplied coefficient values
 #'   (repeated `theta_eval`) and the direct-sandwich `theta_se`. While no
 #'   root solver exists, moments are the target-specific quantity, so they
-#'   are the default. The choice is recorded in `attr(., "quantity")`.
+#'   are the default. Candidate views support both quantities; supplied
+#'   coefficients repeat across candidate orders without borrowing moment
+#'   standard errors. The choice is recorded in `attr(., "quantity")`.
 #' @export
 plot_data_estimates.plqr_result <- function(object, level = 0.95,
                                             quantity = c("moment", "theta"),
+                                            candidates = "default",
                                             ...) {
   .dnn_reuse_scope(object)
   quantity <- match.arg(quantity)
+  if (!.plot_candidates_is_default(candidates)) {
+    return(.plot_candidate_estimates_frame(object, candidates, level,
+      "plot_data_estimates", quantity = quantity)$data)
+  }
   if (identical(quantity, "theta")) {
     est <- as.matrix(object$theta)
     se <- object$theta_se
@@ -199,12 +206,12 @@ plot_data_estimates.gmm_result <- function(object, level = 0.95, ...) {
 #'
 #' Returns one row per (target point, rank) with the DNN weight, cumulative
 #' weight share, the originating observation index, and — when distances were
-#' stored — the distance to the target. Ranks are assigned by ascending
-#' stored distance when `dx` is available and by descending weight otherwise;
-#' the two orderings coincide for monotone single-scale DNN weights, while
-#' two-scale (TDNN) fits should request `return = c("W", "dx")` for
+#' stored — the distance to the target. Current fitted objects use their
+#' retained localization order, including signed two-scale (TDNN) fits without
+#' optional `dx`. Request `return = c("W", "dx")` to include numeric distance
+#' values in the frame; `dx` does not determine whether these fits retain
 #' distance-based ranks. For exact DNN fits the unaveraged rank-table support
-#' edge is rank `n - s + k`, not rank `s`; a duplicate block can extend
+#' edge is rank `n - s + k`, not rank `s`; a distance block can extend
 #' nonzero observation weights beyond that edge after averaging. `s` is the
 #' subsample/localization order.
 #'
@@ -229,15 +236,7 @@ plot_data_estimates.gmm_result <- function(object, level = 0.95, ...) {
 #' @export
 plot_data_weights <- function(object) {
   .dnn_reuse_scope(object)
-  W <- object$W
-  if (is.null(W)) {
-    .abort_bad_arg(
-      "object",
-      "must store the weight matrix `W`; refit with `return = c(\"W\")` (add \"dx\" for distance-based ranks)",
-      quoted = FALSE
-    )
-  }
-  W <- as.matrix(W)
+  W <- .dnn_diag_require_W(object)
   n <- nrow(W)
   m <- ncol(W)
   dx <- object$dx

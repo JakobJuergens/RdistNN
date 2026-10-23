@@ -112,6 +112,7 @@ test_that("retained deletion states survive reverse-buffer boundaries", {
 })
 
 test_that("public means and restored predictions share compensated weighting", {
+  .with_distance_tie_warning({
   old <- options(RdistNN.use_compiled = TRUE)
   on.exit(options(old), add = TRUE)
   x <- matrix(1:4, ncol = 1L)
@@ -130,6 +131,7 @@ test_that("public means and restored predictions share compensated weighting", {
     expect_identical(as.numeric(predict(unserialize(serialize(np, NULL)), X0 = targets)), rep(.5, 3))
     expect_identical(as.numeric(predict(unserialize(serialize(cate, NULL)), X0 = targets)), rep(.5, 3))
   }
+  })
 })
 
 

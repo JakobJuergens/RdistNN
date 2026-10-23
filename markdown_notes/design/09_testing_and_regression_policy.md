@@ -10,7 +10,8 @@ boundary available; use internals only when necessary.
 Set seeds explicitly and locally. Reuse domain helpers rather than duplicate
 random setup. Test shape, invariants, interface equivalence and known identities,
 not incidental execution order. Match consequential errors/warnings on meaningful
-substrings unless exact wording is part of the contract.
+substrings unless exact wording is part of the contract. For structured package
+conditions, assert identity and useful fields as described below.
 
 Keep the flat `tests/testthat/` layout and assign test blocks to their observable
 contract: primitive arithmetic, estimator behavior, input validation, result
@@ -27,6 +28,57 @@ tolerances and native-engine requirements. Update the suite map and complete-fam
 filters together, then run each moved suite independently. Cross-estimator suites
 such as subset shapes and simulation backends remain cohesive; include them in
 the relevant family selections even when their filenames have a shared prefix.
+
+## Error and warning contracts
+
+Follow [the reporting design](05_error_messages_and_warnings.md) when
+adding or consolidating conditions. Shared constructors need a small reviewed
+set of complete-message examples, including expected/actual facts and an
+actionable remedy. Consumer tests should assert the condition class/code,
+relevant argument/location fields and meaningful remedy text. Do not repeat
+complete English snapshots across every estimator or make punctuation an
+accidental recovery protocol.
+
+Test valid input, invalid input and relevant boundaries. Include missing
+optional extras separately from inconsistent retained state. Exercise malformed
+extension output and explicit invalid plot options; a convenience fallback
+must not hide them. Prove that a recognized optional-panel/candidate failure
+recovers, while an unexpected error, interrupt or allocation failure propagates.
+The default candidate must not quietly become a missing result.
+
+Cover `options(warn = -1/0/1/2)`, calling handlers and warning muffling, with
+options restored after success and error. A warning promoted by `warn = 2`
+must not become a failed-candidate row or disappear in a dashboard. Shared test
+warning filters should identify only the intended package condition family
+once structured conditions exist. Inject an unrelated warning to prove it is
+still observable; blanket suppression is not a substitute for this coverage.
+
+Verify one warning per issue family per public call, including nested panels
+and grids, and a fresh warning in a separate independent call. Test early
+ignored-input warnings, bounded lists with omitted counts, long/unusual names
+and dynamic literal text. Mixed-target and all-unavailable ratio results must
+preserve every row/status; deliberately disabled uncertainty is not a warning.
+For shared Stata methods, cover ordinary, quiet, capture and capture-noisily
+execution, exact standard return codes, literal rendering and promised caller
+state preservation.
+
+## Group reuse and reporting cost
+
+Prove actual grouping reuse through scalar/batch fits, target reorderings,
+grids, predictions, serialized current fits and multi-panel consumers. After
+group preparation, reporting must cause no distance evaluation, sorting or
+group reconstruction. Instrument those operations rather than merely asserting
+that a cache field exists. Counts refer to actual unchanged geometry, not an
+incidental helper-call sequence. Include corruption rejected before reuse,
+independent calls, and a deletion-refitted geometry whose tie pattern differs
+from the full sample.
+
+Check that success paths do not construct messages or allocate per-observation
+conditions, and that summaries retain at most bounded example lists. Keep
+structural/performance tests with the behavior they protect; share fixtures
+and counters when genuinely reused. Benchmarks measure before/after scalar,
+batch, grid and reuse cost and allocations. They are review evidence, not
+flaky wall-clock CI thresholds or a reason to skip scientific safety checks.
 
 ## Numerical assertions
 
@@ -56,6 +108,14 @@ Test reporting immutability on the fitted object or diagnostic data directly,
 not serialized closure/source-cache bytes. Keep genuine save/restore behavior
 tests and frozen-file byte checks separate. Never replace exact rank, support,
 status or RNG-state checks with approximate comparisons merely to quiet CI.
+
+Keep numerical regressions tied to mathematical contracts. Use independently
+demonstrable overflow to test overflow guards, alongside finite controls. Do
+not require a mathematically finite result to fail merely because the current
+accumulator does. Preserve the original public regression while permitting
+valid accuracy improvements; do not encode an implementation defect as the
+desired answer. Integrate cases into their owning suites and shared helpers
+instead of accumulating copied fixtures and one-off exception tests.
 
 ## Engine and cross-package parity
 

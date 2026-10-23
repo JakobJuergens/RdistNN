@@ -104,15 +104,15 @@ plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
 #'
 #' @details
 #' The documented sampling framework uses independent observations; cluster
-#' and survey-design inference are not supplied. Exact distance ties use
-#' lexicographic order of the original covariates, in their supplied column
-#' order. Rows identical on every raw localization covariate share the average
-#' of their rank weights. Each jackknife deletion recomputes this average over
-#' the surviving block at sample size n-1. This permutation-invariant
-#' modification is not covered by the paper's theory and emits a warning.
-#' Distinct covariate vectors at equal distance are not averaged. Ordering uses
-#' no outcomes or nuisances. Retained tied fits from the earlier policy require
-#' refitting before reporting or reuse.
+#' and survey-design inference are not supplied. Observations with exactly
+#' equal computed distance to a target share their block's average rank weight,
+#' even when their covariates differ. Groups are target-specific and use exact
+#' represented equality, without a tolerance. Ordering uses distance then input
+#' row index; outcomes and nuisances do not define groups. Every jackknife
+#' deletion averages the surviving blocks with the sample-size-n-1 rule.
+#' A warning is emitted once per public call with distance ties: the accompanying
+#' theory assumes a continuous distance distribution and does not establish
+#' inference under persistent ties. Earlier retained fit schemas require refitting.
 #'
 #' Two interfaces are supported.
 #'
@@ -142,7 +142,7 @@ plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
 #' `n - s + k`, not rank `s`.
 #'
 #' Averaging can extend nonzero observation weights through the end of a
-#' duplicate block that straddles the nominal rank-table edge. Effective sample
+#' distance block that straddles the nominal rank-table edge. Effective sample
 #' sizes and weight diagnostics use the resulting observation weights.
 #'
 #' `tuning_mode = "default"` evaluates only the default kernel order and
@@ -532,7 +532,7 @@ plqr_dnn <- function(
 
   x0_mat <- .dnn_resolve_targets(x_mat, X0 = X0, x0 = x0)
 
-  .dnn_duplicate_scope(x_mat)
+  .dnn_distance_scope()
   geometry <- .dnn_fitted_geometry(distance, x_mat, ctx)
   weight_return <- return
   if (identical(tuning_mode, "grid") || (isTRUE(se) && identical(jackknife, "fast"))) {
@@ -590,7 +590,7 @@ plqr_dnn <- function(
         normalize = normalize,
         ctx = ctx,
         jackknife = jackknife,
-        precomputed_ranks = wt$ranks,
+        precomputed_ranks = wt$ranks, precomputed_groups = wt$groups,
         coef_names = coef_names,
         target_names = target_names
       )
@@ -619,7 +619,7 @@ plqr_dnn <- function(
       normalize = normalize,
       ctx = ctx,
       jackknife = jackknife,
-      precomputed_ranks = wt$ranks
+      precomputed_ranks = wt$ranks, precomputed_groups = wt$groups
     )
     rownames(moment_se) <- rownames(moment_hat)
     colnames(moment_se) <- colnames(moment_hat)
@@ -674,7 +674,7 @@ plqr_dnn <- function(
   if (identical(tuning_mode, "grid")) {
     out$tuning_grid <- .plqr_dnn_tuning_grid(
       candidates = tuning_payload$grid$candidates,
-      ranks = wt$ranks,
+      ranks = wt$ranks, groups = wt$groups,
       moment_hat = moment_hat,
       se_hat = moment_se,
       x_mat = x_mat,
@@ -702,7 +702,7 @@ plqr_dnn <- function(
     k = k,
     s = s,
     normalize = normalize,
-    ranks = if (identical(tuning_mode, "grid")) wt$ranks else NULL,
+    ranks = wt$ranks, groups = wt$groups, dx = wt$dx,
     d_resid_mat = d_resid_mat,
     below_threshold = as.numeric(below_threshold),
     density = density_vec,

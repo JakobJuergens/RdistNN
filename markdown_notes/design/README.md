@@ -29,6 +29,13 @@ not a release task list.
 11. [Examples, vignettes and pkgdown](11_examples_vignettes_and_pkgdown_policy.md)
 12. [Release and CI](12_release_and_ci_policy.md)
 
+For reporting changes, read notes 05, 09 and 10 together: they record the
+intended message identities/severity, selective recovery, grouping reuse,
+native boundaries and behavioral/performance tests. These requirements guide
+implementation; they do not claim that every existing call site has already
+been migrated. Source, help and the affected regression checks establish
+implemented behavior.
+
 ## Architecture and numerical contracts
 
 13. [Estimator and result architecture](13_estimator_and_result_architecture.md)

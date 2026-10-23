@@ -7,15 +7,15 @@
 #'
 #' @details
 #' The documented sampling framework uses independent observations; cluster
-#' and survey-design inference are not supplied. Exact distance ties use
-#' lexicographic order of the original covariates, in their supplied column
-#' order. Rows identical on every raw localization covariate share the average
-#' of their rank weights. Each jackknife deletion recomputes this average over
-#' the surviving block at sample size n-1. This permutation-invariant
-#' modification is not covered by the paper's theory and emits a warning.
-#' Distinct covariate vectors at equal distance are not averaged. Ordering uses
-#' no outcomes or nuisances. Retained tied fits from the earlier policy require
-#' refitting before reporting or reuse.
+#' and survey-design inference are not supplied. Observations with exactly
+#' equal computed distance to a target share their block's average rank weight,
+#' even when their covariates differ. Groups are target-specific and use exact
+#' represented equality, without a tolerance. Ordering uses distance then input
+#' row index; outcomes and nuisances do not define groups. Every jackknife
+#' deletion averages the surviving blocks with the sample-size-n-1 rule.
+#' A warning is emitted once per public call with distance ties: the accompanying
+#' theory assumes a continuous distance distribution and does not establish
+#' inference under persistent ties. Earlier retained fit schemas require refitting.
 #'
 #' Two interfaces are supported.
 #'
@@ -33,7 +33,7 @@
 #' the full-sample rank matrix and updates ranks under deletion.
 #'
 #' Averaging can extend nonzero observation weights through the end of a
-#' duplicate block that straddles the nominal rank-table edge. Effective sample
+#' distance block that straddles the nominal rank-table edge. Effective sample
 #' sizes and weight diagnostics use the resulting observation weights.
 #'
 #' `tuning_mode = "default"` evaluates only the default kernel order and
@@ -209,7 +209,7 @@ np_dnn <- function(
 
   x0_mat <- .dnn_resolve_targets(x_mat, X0 = X0, x0 = x0)
 
-  .dnn_duplicate_scope(x_mat)
+  .dnn_distance_scope()
   geometry <- .dnn_fitted_geometry(distance, x_mat, ctx)
   weight_return <- return
   if (identical(tuning_mode, "grid") || (isTRUE(se) && identical(jackknife, "fast"))) {
@@ -245,7 +245,7 @@ np_dnn <- function(
       normalize = normalize,
       ctx = ctx,
       jackknife = jackknife,
-      precomputed_ranks = wt$ranks
+      precomputed_ranks = wt$ranks, precomputed_groups = wt$groups
     )
   }
 
@@ -274,7 +274,7 @@ np_dnn <- function(
   if (identical(tuning_mode, "grid")) {
     out$tuning_grid <- .np_dnn_tuning_grid(
       candidates = tuning_payload$grid$candidates,
-      ranks = wt$ranks,
+      ranks = wt$ranks, groups = wt$groups,
       mu_hat = mu_hat,
       se_hat = se_hat,
       x_mat = x_mat,
@@ -294,7 +294,7 @@ np_dnn <- function(
     kind = "dnn", y_vec = y_vec, x_mat = x_mat,
     x_cols = if (!is.null(data)) .dnn_resolve_data_cols(x_cols, data, "x_cols") else NULL,
     k = k, s = s, method = method, normalize = normalize,
-    ranks = wt$ranks
+    ranks = wt$ranks, groups = wt$groups, dx = wt$dx
   ), geometry)
 
   class(out) <- "np_result"

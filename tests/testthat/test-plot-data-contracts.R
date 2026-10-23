@@ -51,15 +51,12 @@ test_that("estimates frame reproduces stored components exactly", {
 })
 
 test_that("stored-se shapes are normalized and mismatches abort", {
-  # Synthetic np_result exercising .plot_data_se_qxm branches directly.
-  base <- structure(
-    list(
-      mu = c(0.1, 0.2, 0.3),
-      se = NULL,
-      x0 = matrix(seq_len(6L), 3L, 2L)
-    ),
-    class = "np_result"
-  )
+  # Test the shape adapter directly; a fitted result must retain current
+  # scientific state even when its optional reporting extras are omitted.
+  base <- list(mu = c(0.1, 0.2, 0.3), se = NULL,
+               x0 = matrix(seq_len(6L), 3L, 2L))
+  extract <- function(fit) RdistNN:::.plot_data_estimates_frame(
+    matrix(fit$mu, nrow = 1L), fit$se, fit$x0, "mu", .95)
 
   # Vector se and 1 x m matrix se give identical frames.
   fit_vec <- base
@@ -67,18 +64,18 @@ test_that("stored-se shapes are normalized and mismatches abort", {
   fit_mat <- base
   fit_mat$se <- matrix(c(1, 2, 3), nrow = 1L)
   expect_identical(
-    plot_data_estimates(fit_vec),
-    plot_data_estimates(fit_mat)
+    extract(fit_vec),
+    extract(fit_mat)
   )
-  expect_identical(plot_data_estimates(fit_vec)$se, c(1, 2, 3))
+  expect_identical(extract(fit_vec)$se, c(1, 2, 3))
 
   # Wrong dimensions abort with the dimension message.
   fit_bad <- base
   fit_bad$se <- matrix(1, nrow = 2L, ncol = 3L)
-  expect_error(plot_data_estimates(fit_bad), "dimensions")
+  expect_error(extract(fit_bad), "dimensions")
 
   # x0 without column names: coordinate columns, no name attribute.
-  df <- plot_data_estimates(fit_vec)
+  df <- extract(fit_vec)
   expect_true(all(c("x0_1", "x0_2") %in% names(df)))
   expect_null(attr(df, "x0_names"))
 })
@@ -185,11 +182,11 @@ test_that("distance ties are ordered deterministically", {
   expect_warning(fit <- np_dnn(
     X = x_base, x0 = c(0, 0), Y = y,
     k = 1L, s = 6L, se = FALSE, return = c("W", "dx")
-  ), "Identical covariate rows detected", fixed = TRUE)
+  ), "Exact distance ties detected", fixed = TRUE)
   expect_warning(dw1 <- plot_data_weights(fit),
-                 "Identical covariate rows detected", fixed = TRUE)
+                 "Exact distance ties detected", fixed = TRUE)
   expect_warning(dw2 <- plot_data_weights(fit),
-                 "Identical covariate rows detected", fixed = TRUE)
+                 "Exact distance ties detected", fixed = TRUE)
 
   expect_identical(dw1, dw2)
   expect_identical(sort(dw1$obs_id), seq_len(n))
@@ -232,12 +229,11 @@ test_that("weights frame and diagnostics frame agree target by target", {
     expect_equal(dd$n_eff[j], 1 / sum(dj$weight^2))
     expect_equal(dd$max_weight[j], max(dj$weight))
     expect_equal(dd$top1_weight_share[j], max(dj$weight) / sum(dj$weight))
-    # n_nonzero_weight counts numerically nonzero weights (eps threshold),
-    # not exact nonzeros: tail weights C(n-i, s-1)/C(n, s) fall below
-    # sqrt(.Machine$double.eps) well before the exact support edge.
+    # Every represented nonzero weight belongs to diagnostic support,
+    # including tail weights below sqrt(.Machine$double.eps).
     expect_equal(
       dd$n_nonzero_weight[j],
-      sum(abs(dj$weight) > sqrt(.Machine$double.eps))
+      sum(dj$weight != 0)
     )
     # The rank-s radius equals the distance at rank s in the weight frame.
     expect_equal(dd$radius_rank_s[j], dj$distance[fit$meta$s])

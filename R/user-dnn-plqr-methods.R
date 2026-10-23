@@ -11,7 +11,7 @@
   m <- ncol(theta)
   has_inference <- identical(object$meta$theta_se_method, "direct_sandwich") &&
     is.matrix(object$theta_se) && all(dim(object$theta_se) == dim(theta))
-  crit <- stats::qnorm(0.5 + level / 2)
+  crit <- .dnn_normal_critical(level)
 
   coef_names <- rownames(theta)
   if (is.null(coef_names)) {
@@ -62,7 +62,7 @@
 #' @seealso [plqr_dnn()].
 #' @export
 print.plqr_result <- function(x, ...) {
-  .dnn_check_tie_model(x$.model)
+  .dnn_check_report_state(x)
   cat("<plqr_result>\n", sep = "")
   cat("  data  : n=", x$meta$n, ", p=", x$meta$p, ", p_d=", x$meta$p_d,
     ", m=", x$meta$m, "\n",
@@ -119,7 +119,7 @@ print.plqr_result <- function(x, ...) {
 #' @seealso [plqr_dnn()].
 #' @export
 coef.plqr_result <- function(object, ...) {
-  .dnn_check_tie_model(object$.model)
+  .dnn_check_report_state(object)
   out <- object$theta
   attr(out, "theta_source") <- object$meta$theta_source
   out
@@ -188,7 +188,7 @@ vcov.plqr_result <- function(object, target = NULL, ...) {
 #' @export
 confint.plqr_result <- function(object, parm = NULL, level = 0.95,
                                 target = NULL, ...) {
-  .dnn_check_tie_model(object$.model)
+  .dnn_check_report_state(object)
   if (is.null(object$theta_vcov) || !identical(object$meta$theta_se_method, "direct_sandwich")) {
     .abort_bad_state(
       "Direct PLQR coefficient intervals are not available. Refit with `density` or `density_col` and `se = TRUE`."
@@ -249,7 +249,7 @@ confint.plqr_result <- function(object, parm = NULL, level = 0.95,
 #' @seealso [plqr_dnn()].
 #' @export
 summary.plqr_result <- function(object, level = 0.95, ...) {
-  .dnn_check_tie_model(object$.model)
+  .dnn_check_report_state(object)
   out <- list(
     coefficients = .plqr_result_coef_table(object, level = level),
     moment = as.matrix(object$moment),
@@ -274,7 +274,7 @@ summary.plqr_result <- function(object, level = 0.95, ...) {
 #' @seealso [plqr_dnn()].
 #' @export
 print.summary.plqr_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
-  .dnn_check_tie_model(x$.model)
+  .dnn_check_tie_policy(x$meta$tie_rule)
   cat("<summary.plqr_result>\n", sep = "")
   cat("  targets: ", length(unique(x$coefficients$target)), "\n", sep = "")
   if (identical(x$theta_source, "supplied")) {
@@ -358,7 +358,7 @@ predict.plqr_result <- function(
     interval = c("none", "confidence"),
     level = 0.95,
     ...) {
-  .dnn_reuse_scope(object)
+  .dnn_reuse_scope(object, groups = NULL)
   interval <- match.arg(interval)
   level <- .validate_scalar_prob(level, arg = "level")
   se.fit <- .validate_scalar_logical(se.fit, arg = "se.fit")
@@ -416,7 +416,7 @@ predict.plqr_result <- function(
     return(list(fit = theta, se.fit = se_hat))
   }
 
-  crit <- stats::qnorm(0.5 + level / 2)
+  crit <- .dnn_normal_critical(level)
   out <- list(
     fit = theta,
     lwr = theta - crit * se_hat,

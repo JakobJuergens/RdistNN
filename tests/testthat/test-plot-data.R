@@ -41,19 +41,15 @@ test_that("plot_data_estimates returns the documented frame for np fits", {
   expect_error(plot_data_estimates(fit, level = 1.2), "in \\(0,1\\)")
 })
 
-test_that("plot_data_estimates handles missing se and missing x0", {
+test_that("plot_data_estimates keeps disabled uncertainty and rejects incomplete targets", {
   fit <- .pd_np_fit(se = FALSE)
   df <- plot_data_estimates(fit)
   expect_true(all(is.na(df$se)))
   expect_true(all(is.na(df$ci_lower)))
 
-  # Objects predating the x0 component simply omit the coordinate columns.
+  # Current snapshots retain their targets even without uncertainty.
   fit$x0 <- NULL
-  df_old <- plot_data_estimates(fit)
-  expect_identical(
-    names(df_old),
-    c("target_id", "coef", "estimate", "se", "ci_lower", "ci_upper")
-  )
+  expect_error(plot_data_estimates(fit), "x0.*[Rr]efit")
 })
 
 test_that("plot_data_estimates dispatches for cate, plqr, and gmm fits", {
@@ -149,7 +145,7 @@ test_that("plot_data_weights orders ranks and computes cumulative shares", {
 
   # Missing W: actionable error naming the remedy.
   fit_now <- .pd_np_fit(se = FALSE, return = c("ess"))
-  expect_error(plot_data_weights(fit_now), "return = c")
+  expect_error(plot_data_weights(fit_now), class = "rdistnn_extra_unavailable")
 })
 
 test_that("plot_data_diagnostics tidies the diagnostics frame", {

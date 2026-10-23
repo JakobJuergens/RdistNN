@@ -1,4 +1,5 @@
 test_that("fit and summary printing report localization fractions without changing fits", {
+  .with_distance_tie_warning({
   X <- matrix(1:8, ncol = 1L)
   y <- c(2, 1, 4, 3, 6, 5, 7, 9)
   fits <- list(np_dnn(X = X, x0 = 2, Y = y, s = 3),
@@ -14,9 +15,11 @@ test_that("fit and summary printing report localization fractions without changi
     .expect_identical_fast(f, before)
   }
   expect_match(paste(capture.output(print(fits[[1L]])), collapse = " "), "0.375")
+  })
 })
 
 test_that("causal diagnostics expose available arm and contribution summaries", {
+  .with_distance_tie_warning({
   d <- cate_demo_data(n = 40, seed = 5)$data
   f <- cate_dnn(data = d, x_cols = c("X1", "X2"), x0 = c(0, 0),
     y_col = "Y", t_col = "D", e_col = "e_oracle",
@@ -31,4 +34,5 @@ test_that("causal diagnostics expose available arm and contribution summaries", 
   .expect_identical_fast(diag, before)
   f <- cate_dnn(X = matrix(1:8, ncol = 1L), x0 = 2, pseudo_outcome = 1:8, s = 3)
   expect_match(paste(capture.output(print(diagnostics(f))), collapse = " "), "unavailable")
+  })
 })

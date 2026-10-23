@@ -33,8 +33,20 @@ This explicit design-scale cutoff replaces the old solve-then-truncate policy
 on covariance singular values. New fits can intentionally choose different
 neighbors when the old calculation lost a resolvable direction. Tests check
 the resulting ranks and estimates against independent latent-coordinate
-formulas. The cutoff is shared across packages; SVD libraries can still differ
-at its rounding boundary. Do not claim universal bitwise SVD equivalence.
+formulas. The cutoff is shared across packages, but SVD fitting and projection
+rounding can change represented distance equality or ordering even for
+well-conditioned full-rank designs far from the cutoff. Ranks, exact-distance
+groups, weights and estimates therefore need not agree across packages or
+platforms at this boundary. Applying the same norm after projection does not
+make independently fitted geometry bitwise equivalent. Group averaging uses
+each fit's computed distances, with no tolerance or additional rounding; it
+cannot reconcile different computed distances.
+
+For example, the centered rows `(2,1)`, `(-2,-1)`, `(1,2)`, `(-1,-2)` are
+mathematically equidistant from zero, with squared Mahalanobis distance `3/2`.
+A one-ULP difference in computed distances can split this group even though
+the design has full rank. With outcomes `(0,0,10,10)`, `k=1` and `s=3`,
+weights `(.5,.5,0,0)` give estimate zero, while uniform weights give five.
 
 Contexts retain scale, a subtraction-safe raw origin, factor, version and rank.
 The origin may be zero when an observed-value shift would erase represented

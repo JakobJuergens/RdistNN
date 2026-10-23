@@ -19,12 +19,12 @@ A \code{data.frame} with columns \code{target_id} (integer), \code{rank}
 \description{
 Returns one row per (target point, rank) with the DNN weight, cumulative
 weight share, the originating observation index, and — when distances were
-stored — the distance to the target. Ranks are assigned by ascending
-stored distance when \code{dx} is available and by descending weight otherwise;
-the two orderings coincide for monotone single-scale DNN weights, while
-two-scale (TDNN) fits should request \code{return = c("W", "dx")} for
+stored — the distance to the target. Current fitted objects use their
+retained localization order, including signed two-scale (TDNN) fits without
+optional \code{dx}. Request \code{return = c("W", "dx")} to include numeric distance
+values in the frame; \code{dx} does not determine whether these fits retain
 distance-based ranks. For exact DNN fits the unaveraged rank-table support
-edge is rank \code{n - s + k}, not rank \code{s}; a duplicate block can extend
+edge is rank \code{n - s + k}, not rank \code{s}; a distance block can extend
 nonzero observation weights beyond that edge after averaging. \code{s} is the
 subsample/localization order.
 }

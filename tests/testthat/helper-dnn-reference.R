@@ -78,6 +78,7 @@
     )$ranks
   }
 
+  dx_full <- distance_eval_batch(.resolve_distance(distance), x_mat, x0_mat, ctx)
   ranks_full <- as.matrix(ranks_full)
   if (nrow(ranks_full) != n || ncol(ranks_full) != m) {
     stop("Layer-0 reference ranks must be an n x m matrix.", call. = FALSE)
@@ -106,7 +107,7 @@
     storage.mode(rank_matrix_i) <- "integer"
 
     W_i <- .dnn_reference_eval_rank_weight_columns(rw, rank_matrix_i)
-    W_i <- .block_oracle_average_weights(W_i, x_mat[keep, , drop = FALSE])
+    W_i <- .block_oracle_average_weights(W_i, dx_full[keep, , drop = FALSE])
     est_i <- crossprod(sig[keep, , drop = FALSE], W_i)
     if (q == 1L) {
       loo[i, ] <- as.numeric(est_i[1L, ])

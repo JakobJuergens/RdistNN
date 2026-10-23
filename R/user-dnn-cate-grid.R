@@ -34,7 +34,7 @@
 }
 
 .cate_dnn_grid_se_fn <- function(
-  ranks, psi, x_mat, x0_mat, distance, method, k, normalize, ctx, jackknife
+  ranks, psi, x_mat, x0_mat, distance, method, k, normalize, ctx, jackknife, groups = NULL
 ) {
   force(ranks)
   force(psi)
@@ -52,14 +52,14 @@
     se <- if (identical(jackknife, "fast")) {
       spec <- .cate_dnn_rank_weight_spec(method = method, k = k, s = s, normalize = normalize)
       loo <- if (is.null(tab_jk)) {
-        .dnn_loo_loop(psi, ranks, spec, center = TRUE, groups = .dnn_duplicate_groups(x_mat))
+        .dnn_loo_loop(psi, ranks, spec, center = TRUE, groups = groups)
       } else {
         .dnn_loo_centered(
           psi,
           ranks,
           tab_jk,
           tab_full = attr(tab_jk, "tab_full", exact = TRUE),
-          groups = .dnn_duplicate_groups(x_mat)
+          groups = groups
         )$loo
       }
       as.numeric(.dnn_jackknife_se_from_loo(
@@ -117,7 +117,7 @@
   se,
   jackknife,
   tuning_payload,
-  reuse_default = TRUE
+  reuse_default = TRUE, groups = NULL
 ) {
   .cate_dnn_warn_infeasible_grid(candidates)
   se_fn <- if (isTRUE(se) && !identical(jackknife, "none")) {
@@ -131,7 +131,7 @@
       k = k,
       normalize = normalize,
       ctx = ctx,
-      jackknife = jackknife
+      jackknife = jackknife, groups = groups
     )
   } else {
     NULL
@@ -149,7 +149,8 @@
       )
     },
     estimate_fn = function(W, candidate_row) {
-      tau <- as.numeric(.dnn_estimate_from_signal(psi, W, n = nrow(x_mat), arg = "pseudo_outcome")[1L, ])
+      tau <- as.numeric(.dnn_grid_mean_estimate(
+        psi, W, n = nrow(x_mat), arg = "pseudo_outcome", candidate_row = candidate_row)[1L, ])
       data.frame(
         target_id = seq_along(tau),
         component = NA_character_,
@@ -158,8 +159,8 @@
       )
     },
     se_fn = se_fn,
-    ctx = list(k = k, groups = .dnn_duplicate_groups(x_mat)),
-    precomputed = if (reuse_default && !anyDuplicated(.dnn_duplicate_groups(x_mat))) .cate_dnn_grid_default_precomputed(
+    ctx = list(k = k, groups = groups),
+    precomputed = if (reuse_default && !.dnn_has_ties(groups)) .cate_dnn_grid_default_precomputed(
       candidates = candidates,
       tau_hat = tau_hat,
       se_hat = se_hat,

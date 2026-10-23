@@ -54,7 +54,7 @@ DNN diagnostics report fixed top-1, top-5, and top-10 weight concentration
 shares. Distance diagnostics such as \code{radius_rank_k} and \code{radius_rank_s}
 are ordinary nearest-rank scale summaries; \code{radius_rank_s} is not the DNN
 support radius. For exact DNN fits the unaveraged rank-table support edge is
-rank \code{n - s + k}; duplicate-block averaging can extend nonzero observation
+rank \code{n - s + k}; distance-block averaging can extend nonzero observation
 weights through the end of a block crossing that edge. ESS, support counts
 and concentration use the final averaged weights and can vary by target.
 See \code{\link[=weights_matrix]{weights_matrix()}} for the averaging rule and its theory warning.

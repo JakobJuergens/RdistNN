@@ -7,7 +7,7 @@
 #' @return `x`, invisibly.
 #' @export
 print.np_result <- function(x, ...) {
-  .dnn_check_tie_model(x$.model)
+  .dnn_check_report_state(x)
   cat("<np_result>\n", sep = "")
   .dnn_print_localization(x$meta)
   cat("  data  : n=", x$meta$n, ", p=", x$meta$p, ", m=", x$meta$m, "\n", sep = "")
@@ -36,7 +36,7 @@ print.np_result <- function(x, ...) {
     dimnames = list(paste0("target_", seq_along(mu)), c("conf.low", "conf.high")))
   if (!is.null(se)) {
     ok <- is.finite(se) & se >= 0 & is.finite(mu)
-    delta <- stats::qnorm(.5 + level / 2) * se[ok]
+    delta <- .dnn_normal_critical(level) * se[ok]
     ci[ok, ] <- cbind(mu[ok] - delta, mu[ok] + delta)
   }
   ci
@@ -103,7 +103,7 @@ NULL
 #' @rdname np_result
 #' @export
 coef.np_result <- function(object, ...) {
-  .dnn_check_tie_model(object$.model)
+  .dnn_check_report_state(object)
   stats::setNames(as.numeric(object$mu), paste0("target_", seq_along(object$mu)))
 }
 
@@ -116,13 +116,13 @@ vcov.np_result <- function(object, ...) {
   }
   model <- .np_prediction_state(object)
   ranking <- if (identical(object$meta$jackknife, "fast")) .dnn_retained_ranking(object) else NULL
-  .np_joint_covariance(model, object$x0, ranking$ranks, object$meta$jackknife)
+  .np_joint_covariance(model, object$x0, ranking$ranks, object$meta$jackknife, model$groups)
 }
 
 #' @rdname np_result
 #' @export
 summary.np_result <- function(object, level = .95, ...) {
-  .dnn_check_tie_model(object$.model)
+  .dnn_check_report_state(object)
   level <- .validate_scalar_prob(level, "level")
   mu <- as.numeric(object$mu)
   se <- object$se
@@ -144,7 +144,7 @@ summary.np_result <- function(object, level = .95, ...) {
 #' @rdname np_result
 #' @export
 print.summary.np_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
-  .dnn_check_tie_model(x$.model)
+  .dnn_check_tie_policy(x$meta$tie_rule)
   cat("<summary.np_result>\n")
   .dnn_print_localization(x$meta)
   if (!isTRUE(x$has_se)) cat("  Standard errors are not available.\n")
@@ -155,7 +155,7 @@ print.summary.np_result <- function(x, digits = max(3L, getOption("digits") - 3L
 #' @rdname np_result
 #' @export
 confint.np_result <- function(object, parm = NULL, level = .95, ...) {
-  .dnn_check_tie_model(object$.model)
+  .dnn_check_report_state(object)
   level <- .validate_scalar_prob(level, "level")
   if (is.null(object$se)) {
     .abort_bad_state("Standard errors are not available. Refit with `se = TRUE` and an active jackknife.")
@@ -172,7 +172,7 @@ confint.np_result <- function(object, parm = NULL, level = .95, ...) {
 #' @export
 predict.np_result <- function(object, newdata = NULL, X0 = NULL, x0 = NULL,
     se.fit = FALSE, interval = c("none", "confidence"), level = .95, ...) {
-  .dnn_reuse_scope(object)
+  .dnn_reuse_scope(object, groups = NULL)
   interval <- match.arg(interval)
   se.fit <- .validate_scalar_logical(se.fit, "se.fit")
   level <- .validate_scalar_prob(level, "level")
@@ -182,7 +182,7 @@ predict.np_result <- function(object, newdata = NULL, X0 = NULL, x0 = NULL,
   wt <- .np_prediction_weights(model, x0_mat, if (need_se) c("W", "ranks") else "W")
   fit <- as.numeric(.dnn_estimate_from_signal(model$y_vec, wt$W, nrow(model$x_mat), "Y"))
   if (!need_se) return(fit)
-  se <- sqrt(pmax(.np_marginal_variance(model, x0_mat, wt$ranks), 0))
+  se <- sqrt(pmax(.np_marginal_variance(model, x0_mat, wt$ranks, groups = wt$groups), 0))
   if (interval == "confidence") {
     ci <- .np_wald_bounds(fit, se, level)
     fit <- cbind(fit = fit, lwr = ci[, 1L], upr = ci[, 2L])

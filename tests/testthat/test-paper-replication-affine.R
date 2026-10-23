@@ -14,6 +14,87 @@
   list(path = path, env = env)
 }
 
+test_that("replication outputs stay outside installed package and source bundle trees", {
+  helpers <- .affine_helpers()
+  if (is.null(helpers)) return(invisible(NULL))
+  directory <- tempfile("replication output boundary ")
+  dir.create(directory)
+  on.exit(unlink(directory, recursive = TRUE), add = TRUE)
+  package <- file.path(directory, "library", "RdistNN")
+  bundle <- file.path(package, "paper-replication", "affine")
+  dir.create(bundle, recursive = TRUE)
+  writeLines("Package: RdistNN", file.path(package, "DESCRIPTION"))
+  for (path in c(package, bundle, file.path(package, "new", "nested"))) {
+    expect_error(helpers$env$replication_new_output(path, bundle), "external output directory")
+  }
+  expect_false(dir.exists(file.path(package, "new")))
+  previous_directory <- setwd(directory)
+  on.exit(setwd(previous_directory), add = TRUE, after = FALSE)
+  for (bundle_spelling in c(
+    file.path(bundle, "."),
+    file.path("library", "RdistNN", "paper-replication", "affine"),
+    file.path("library", "RdistNN", "paper-replication", "affine", ".")
+  )) {
+    expect_error(helpers$env$replication_new_output(
+      file.path(package, "new", "nested"), bundle_spelling
+    ), "external output directory")
+  }
+  expect_false(dir.exists(file.path(package, "new")))
+  external <- file.path(directory, "external output with spaces", "new", "nested")
+  expect_identical(helpers$env$replication_new_output(external, bundle),
+    normalizePath(external, winslash = "/"))
+  expect_true(dir.exists(external))
+  sibling <- file.path(dirname(package), "RdistNN-output")
+  expect_identical(helpers$env$replication_new_output(sibling, bundle),
+    normalizePath(sibling, winslash = "/"))
+  source <- file.path(directory, "checkout", "inst", "paper-replication", "affine")
+  dir.create(source, recursive = TRUE)
+  writeLines("Package: RdistNN", file.path(directory, "checkout", "DESCRIPTION"))
+  expect_error(helpers$env$replication_new_output(source, source), "external output directory")
+  inside <- file.path(source, "new", "nested")
+  expect_error(helpers$env$replication_new_output(inside, source), "external output directory")
+  expect_false(dir.exists(file.path(source, "new")))
+  outside <- file.path(directory, "checkout", "archives", "new run")
+  expect_identical(helpers$env$replication_new_output(outside, source),
+    normalizePath(outside, winslash = "/"))
+})
+
+test_that("replication outputs resolve symlinked parents before creating directories", {
+  helpers <- .affine_helpers()
+  if (is.null(helpers)) return(invisible(NULL))
+  directory <- tempfile("replication symlink boundary ")
+  dir.create(directory)
+  on.exit(unlink(directory, recursive = TRUE), add = TRUE)
+  package <- file.path(directory, "RdistNN")
+  bundle <- file.path(package, "paper-replication", "affine")
+  dir.create(bundle, recursive = TRUE)
+  writeLines("Package: RdistNN", file.path(package, "DESCRIPTION"))
+  link <- file.path(directory, "linked package")
+  skip_if_not(suppressWarnings(file.symlink(package, link)), "Directory symlinks are unavailable")
+  output <- file.path(link, "new", "nested")
+  expect_error(helpers$env$replication_new_output(output, bundle), "external output directory")
+  expect_false(dir.exists(file.path(package, "new")))
+  expect_error(helpers$env$replication_new_output(link, bundle), "external output directory")
+})
+
+test_that("all replication launchers reject protected output paths before doing work", {
+  helpers <- .affine_helpers()
+  if (is.null(helpers)) return(invisible(NULL))
+  directory <- tempfile("replication launcher boundary ")
+  dir.create(directory)
+  on.exit(unlink(directory, recursive = TRUE), add = TRUE)
+  bundle <- file.path(directory, "RdistNN", "paper-replication", "affine")
+  dir.create(bundle, recursive = TRUE)
+  writeLines("Package: RdistNN", file.path(directory, "RdistNN", "DESCRIPTION"))
+  output <- file.path(directory, "RdistNN", "new", "nested")
+  expect_error(helpers$env$replication_render(bundle, output), "external output directory")
+  expect_error(helpers$env$replication_sipp(bundle, output), "external output directory")
+  expect_error(helpers$env$replication_simulations(bundle, output), "external output directory")
+  expect_error(helpers$env$replication_simulations(bundle, bundle,
+    mode = "production", resume = TRUE), "external output directory")
+  expect_false(dir.exists(file.path(directory, "RdistNN", "new")))
+})
+
 test_that("renderer adapters preserve caller bindings when nested scripts reject arguments", {
   bundle <- .affine_helpers()
   if (is.null(bundle)) return(invisible(NULL))
@@ -155,6 +236,9 @@ test_that("accepted evidence regenerates all current manuscript tables", {
 
 test_that("SIPP smoke replication retains three distinct prediction mechanisms", {
   for (pkg in c("digest", "jsonlite", "hdm", "grf")) skip_if_not_installed(pkg)
+  installed_metadata <- system.file("Meta", "package.rds", package = "RdistNN")
+  skip_if_not(nzchar(installed_metadata) && file.exists(installed_metadata),
+    "SIPP child processes require the installed package; source-only loading is unavailable.")
   bundle <- .affine_helpers()
   if (is.null(bundle)) {
     return(invisible(NULL))

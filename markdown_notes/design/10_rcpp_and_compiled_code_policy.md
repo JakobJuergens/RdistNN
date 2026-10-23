@@ -12,6 +12,31 @@ layout. Avoid silent narrowing. Edit source/attributes and regenerate
 `RcppExports.cpp`/`RcppExports.R`; never hand-edit them, and commit required
 generated changes together. See [CONTRIBUTING.md](../../CONTRIBUTING.md) for tools.
 
+## Diagnostic signaling
+
+Follow [the reporting design](05_error_messages_and_warnings.md). Numerical
+kernels return facts/statuses; wrappers own user context, warning aggregation
+and actionable errors. Do not format messages or signal host conditions from
+OpenMP worker loops. Signal R errors/warnings on the main thread after workers
+join. Keep native invariant and direct-call guards, and contain every exception
+at the Stata plugin ABI with allocation-safe failure handling.
+
+Distinguish unavailable acceleration from actual execution failure. Automatic
+fallback needs a known unavailable capability or a specifically documented
+equivalent recovery route. Unexpected invariants, allocation failures and
+interrupts must not silently become "native unavailable". Preserve applicable
+host resource codes. Do not choose recovery by matching English error text or
+add a formatting wrapper to every successful inner call for cosmetic parity.
+The [testing policy](09_testing_and_regression_policy.md) requires separate
+capability, forced-engine, genuine-failure and cleanup controls.
+
+The companion ABI maps allocation failures to Stata's resource code 909 and
+unexpected native failures to 498, retaining specific input/transport codes.
+Host bridges clean temporary matrices and files before propagating the original
+failure. Only declared missing capability permits automatic portable dispatch.
+R's existing capability selector likewise leaves real native exceptions visible;
+do not add a generic retry around it.
+
 ## Semantics and arithmetic parity
 
 When an R fallback and a compiled path both exist, they must agree on:
@@ -31,29 +56,44 @@ availability choices; they must preserve the selected estimator's semantics.
 ### Arithmetic and reproducibility
 
 Specify operation order and precision where rounding can change a discrete
-decision. Distance kernels subtract before applying fitted inverse scales,
-accumulate coordinates in order using doubles, and round each L2 squared
-coordinate before addition. L2 uses a shared exceptional-row recurrence when
-the accumulated squared sum reaches `2^1023`, a nonzero coordinate's square is
-subnormal or zero, or a scaled raw difference reaches `2^1023`. This common
-boundary accounts for Stata's missing-value range; waiting for IEEE overflow
-in R/C++ can change ranks relative to Mata. For a huge raw difference and an
-inverse scale below one, both L1 and L2 compute the difference of binary-halved operands and
-multiply by twice the inverse scale. Recover the norm with scaled sum of
-squares and constant accumulator state; rescan only exceptional rows. Squared
-R APIs still return squared results, including genuine squared overflow.
-Keep native and fallback implementations aligned;
-break exact distance ties lexicographically by original raw covariates, in
-their supplied column order, then by row position for identical covariate rows.
-Distance-only sorting primitives without covariates retain stable index ties;
-explicit supplied ranks/orders remain authoritative. Outcomes, treatment,
-nuisances and row identifiers never define covariate-aware tie order. X-aware
-weight construction averages weights across exactly identical raw covariate
-rows, preserving block mass but potentially changing individual weights, support
-and ESS. No tolerance grouping merges nearby covariates or different vectors at
-equal distance. Deletions repeat the average after removing the observation,
-using the selected rule's `n-1` table. Scale fitting and saved prediction must
-reuse the same fitted geometry and block policy.
+decision. Ordinary distance kernels subtract before applying fitted inverse
+scales, accumulate coordinates in order using doubles, and round each L2 squared
+coordinate before addition. Unscaled L2 uses a shared exceptional-row recurrence
+when the accumulated squared sum reaches `2^1023` or a nonzero coordinate's
+square is subnormal or zero. Scaled L1/L2 also recover rows whose raw difference
+reaches `2^1023` in magnitude or whose nonzero scaled coordinate product becomes
+subnormal, including zero. The common boundary accounts for Stata's
+missing-value range for both signs; waiting for IEEE overflow in R/C++ can
+change ranks relative to Mata.
+
+Exceptional scaled rows retain each coordinate product as a binary mantissa
+and exponent before forming the L1 sum or L2 scaled sum of squares. This keeps
+individually unrepresentable scaled coordinates available when their complete
+norm is representable. For huge raw differences, this recovery uses separately
+rounded binary quarters before subtraction. Restore the final binary power in
+two balanced steps to avoid premature subnormal rounding. Recovery uses constant
+accumulator state and rescans only exceptional rows; ordinary rows keep their existing
+arithmetic. A coordinate is active when its raw difference and inverse scale
+are both nonzero. With exactly one active coordinate, retain its directly
+rounded scaled magnitude; squared R L2 APIs then round its square separately.
+With multiple active coordinates, an unsquared recovered norm is at least the
+largest directly rounded scaled magnitude. No additional lower bound is applied
+to multi-coordinate squared results. Recovery does not guarantee correct rounding
+for every norm. Squared R APIs retain genuine squared overflow. Keep native and
+fallback implementations aligned.
+
+High-level ranks use exact represented distance then original row index.
+Per-target groups contain every observation at exactly the same selected-metric
+distance, including distinct raw covariate profiles and zero-weight ranks beyond
+nominal support. Average assigned rank weights over observations in each group;
+never evaluate a weight rule at a mean rank. No tolerance, additional rounding, outcome, treatment or
+nuisance defines the groups. Signed and unnormalized mass is preserved.
+Bare supplied ranks/orders remain strict orders. Supplied distances retained
+alongside a rank/order object define its target-specific groups without changing
+the supplied permutation. Deletions remove the actual observation and average
+the selected `n-1` table over each surviving group, dividing by the survivor
+count. Scale fitting and saved prediction reuse the fitted geometry and the
+selected `exact_distance_block_averaging_v1` policy.
 
 R, C++ and Mata must implement the same block arithmetic through shared weight
 and deletion helpers. Accumulate original signals with each block's actual
@@ -63,8 +103,10 @@ Rounded group-mean signals can erase a finite survivor after actual deletion.
 Canonical contiguous blocks retain linear work in sample size; explicitly
 interleaved supplied groups use direct regrouping within the selected engine.
 Tests establish actual engine execution and compare independent explicit
-deletions. Public calls warn that this modification is not covered by the paper's
-theory; averaging does not establish a new inference guarantee.
+deletions. Public calls warn that inference with persistent distance ties is not
+established. The paper assumes a continuous distance distribution, under which
+the previous and current policies agree almost surely; averaging does not
+establish a uniform MSE improvement.
 Current saved fits reuse their retained geometry and cached ranks. Older
 development fit schemas do not require compatibility readers.
 

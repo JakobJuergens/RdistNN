@@ -291,3 +291,14 @@ test_that("autoplot passes arguments through to plot_estimates", {
   expect_s3_class(p_tdnn, "ggplot")
   expect_match(p_tdnn$labels$caption, "s1 = 4.*s2 = 8")
 })
+test_that("profile coordinate indices are validated before integer conversion", {
+  skip_if_not_installed("ggplot2")
+  fit <- np_dnn(X = cbind(1:8, (1:8)^2), Y = 1:8,
+    X0 = rbind(c(0, 0), c(1, 2)), s = 3, se = FALSE)
+  for (value in list(1.75, 1 + 1i, TRUE, FALSE, NA_real_, Inf,
+                     c(1, 2), character(), c("x0_1", "x0_2"))) {
+    expect_error(plot_estimates(fit, x_var = value), "x_var")
+  }
+  expect_identical(plot_estimates(fit, x_var = 1)$labels$x, "x[1]")
+  expect_identical(plot_estimates(fit, x_var = "x0_1")$labels$x, "x[1]")
+})

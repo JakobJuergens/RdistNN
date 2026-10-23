@@ -14,11 +14,14 @@ The [design reference](design/README.md) specifies maintained contracts.
 
 ## Current capabilities
 
-- X-aware localization averages rank weights within exactly identical raw
-  covariate groups, including every deletion's remaining block. Shared helpers
-  apply the policy to fitting and reuse across numerical engines. The user is
-  warned that this permutation-invariant modification is outside the paper's
-  theory; it does not establish inference for discrete covariate designs.
+- High-level localization averages assigned rank weights within exact represented
+  selected-metric distance groups, separately for every target and deletion's
+  surviving observations. Cached groups and the selected policy are validated
+  across fitting and reuse; legacy fits require refitting. The paper assumes a
+  continuous distance distribution, under which old and new policies agree almost
+  surely. Persistent distance-tie inference and a uniform MSE improvement are
+  not established. Version 0.1.3 uses this exact-distance policy; released
+  0.1.2 and scientific dependency pins remain immutable.
 
 - Matrix/vector and data-frame interfaces resolve to common numeric inputs.
 - Exact/asymptotic DNN supports shared tuning sensitivity, diagnostics and

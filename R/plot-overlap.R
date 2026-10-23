@@ -1,7 +1,6 @@
 # CATE overlap panels (plan panels C-3 and C-4): treated/control weighted
-# mass and the local weighted propensity view. Inputs resolve through the
-# plan's precedence chain: stored fit components, then user-supplied
-# vectors, then an actionable error.
+# mass and the local weighted propensity view. CATE accepts stored or supplied
+# overlap inputs; CLATE uses its retained instrument record.
 
 #' Plot local overlap for CATE and CLATE fits
 #'
@@ -14,7 +13,7 @@
 #' selected target when observation-level propensities are available, and
 #' the weighted mean with a q10–q90 whisker summary otherwise.
 #'
-#' Inputs resolve in a fixed order: components stored on the fit
+#' For CATE, inputs resolve in a fixed order: components stored on the fit
 #' (`t_vec`/`e` from the data-frame interface), then the `treatment`/
 #' `propensity` arguments, then an actionable error. Nothing is
 #' recomputed from first stages.
@@ -22,22 +21,20 @@
 #' For [clate_dnn()] fits these same panels describe instrument overlap:
 #' the arms are A=1 and A=0 and the propensity is P(A=1|V). Both are retained
 #' by the CLATE fit. Treatment uptake D is not used as the instrument arm.
+#' Refit a CLATE model whose retained instrument record is missing or invalid.
 #'
 #' @param object A `cate_result` or `clate_result` with the weight matrix `W` stored (the
 #'   default).
 #' @param type One of `"mass"` or `"propensity"`.
 #' @param share_limits Numeric length-2 vector (default `c(0.1, 0.9)`);
 #'   treated shares outside this range are flagged as overlap warnings.
-#' @param treatment Optional 0/1 vector of length `n`; used when the fit
-#'   does not store treatment (matrix interface). For CLATE use `instrument`.
+#' @param treatment Optional 0/1 vector of length `n` for CATE; used when
+#'   the fit does not store treatment (supplied-signal interface).
 #' @param propensity Optional numeric vector of length `n` in (0, 1); used
-#'   when the fit does not store propensities.
-#' @param instrument Optional 0/1 instrument vector for a CLATE fit whose
-#'   instrument record is unavailable. Stored instrument data take precedence.
+#'   for CATE when the fit does not store propensities.
 #' @param targets Optional integer vector of target ids for the density
 #'   view (defaults to the first/median-`n_eff`/last subset above eight
 #'   targets).
-#' @param ... Ignored; reserved for future options.
 #'
 #' @return A ggplot object.
 #'
@@ -65,9 +62,7 @@ plot_overlap <- function(object,
                          share_limits = c(0.1, 0.9),
                          treatment = NULL,
                          propensity = NULL,
-                         targets = NULL,
-                         instrument = NULL,
-                         ...) {
+                         targets = NULL) {
   .dnn_reuse_scope(object)
   .plot_require_ggplot2("plot_overlap")
   type <- match.arg(type)
@@ -83,22 +78,17 @@ plot_overlap <- function(object,
     )
   }
   if (clate && !is.null(treatment)) {
-    .abort_bad_arg("treatment", "is a CATE argument; use instrument for a CLATE overlap plot")
+    .abort_bad_arg("treatment", "is a CATE argument; CLATE uses its retained instrument record")
+  }
+  if (clate && !is.null(propensity)) {
+    .abort_bad_arg("propensity", "is a CATE argument; CLATE uses its retained instrument propensity")
   }
   if (!is.numeric(share_limits) || length(share_limits) != 2L ||
       any(!is.finite(share_limits)) || share_limits[1L] >= share_limits[2L]) {
     .abort_bad_arg("share_limits", "must be two increasing finite numbers")
   }
 
-  W <- object$W
-  if (is.null(W)) {
-    .abort_bad_arg(
-      "object",
-      "must store the weight matrix `W` for overlap panels; refit with `return = c(\"W\")`",
-      quoted = FALSE
-    )
-  }
-  W <- as.matrix(W)
+  W <- .dnn_diag_require_W(object)
   n <- nrow(W)
   m <- ncol(W)
   model <- object$.model
@@ -110,8 +100,8 @@ plot_overlap <- function(object,
   if (type == "mass") {
     arm_arg <- if (clate) "instrument" else "treatment"
     t_use <- if (clate) {
-      if (!is.null(model$iv$A)) model$iv$A else instrument
-    } else if (is.list(model) && !is.null(model$t_vec)) {
+      model$iv$A
+    } else if (!is.null(model$t_vec)) {
       model$t_vec
     } else {
       treatment
@@ -121,8 +111,7 @@ plot_overlap <- function(object,
         arm_arg,
         paste0(
           "is required for type = \"mass\": fit through the data ",
-          if (clate) "interface with `a_col`, or supply `instrument` (0/1, length n)" else
-            "interface with `t_col`, or supply `treatment` (0/1, length n)"
+          "interface with `t_col`, or supply `treatment` (0/1, length n)"
         ),
         quoted = FALSE
       )
@@ -204,8 +193,8 @@ plot_overlap <- function(object,
 
   # type == "propensity"
   e_use <- if (clate) {
-    if (!is.null(model$iv$propensity$used)) model$iv$propensity$used else propensity
-  } else if (is.list(model) && !is.null(model$e)) {
+    model$iv$propensity$used
+  } else if (!is.null(model$e)) {
     model$e
   } else {
     propensity

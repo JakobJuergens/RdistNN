@@ -112,7 +112,7 @@
   top1 <- apply(w_mat, 2L, .dnn_diag_top_share, k = 1L)
   top5 <- apply(w_mat, 2L, .dnn_diag_top_share, k = 5L)
   top10 <- apply(w_mat, 2L, .dnn_diag_top_share, k = 10L)
-  n_nonzero <- colSums(abs(w_mat) > sqrt(.Machine$double.eps))
+  n_nonzero <- colSums(w_mat != 0)
 
   radius_rank_k <- rep(NA_real_, m)
   radius_rank_s <- rep(NA_real_, m)
@@ -195,13 +195,20 @@
 
 .dnn_diag_require_W <- function(object) {
   if (is.null(object$W)) {
-    .abort_bad_arg(
-      "object$W",
-      "is required for diagnostics; refit with `return` including \"W\"",
-      quoted = FALSE
-    )
+    .dnn_abort("extra_unavailable",
+      "This fit did not retain the weights required for diagnostics.",
+      argument = "object$W", hint = 'Refit with `return = "W"`.')
   }
-  object$W
+  W <- object$W
+  shape <- c(nrow(object$.model$x_mat), ncol(object$.model$groups))
+  if (!is.matrix(W) || !is.numeric(W) || is.complex(W) ||
+      !identical(dim(W), as.integer(shape)) || any(!is.finite(W))) {
+    .dnn_abort("state_invalid", paste0(
+      "Retained `object$W` must be a finite real weight matrix aligned with the fitted observations and targets. ",
+      "Refit with the current estimator."
+    ))
+  }
+  W
 }
 
 .dnn_diag_tuning_payload <- function(object) {
@@ -255,6 +262,11 @@
   }
 
   diag <- diag[diag$candidate_id %in% selected_id, , drop = FALSE]
+  for (i in which(as.character(selected$status) == "ok")) {
+    row <- selected[i, , drop = FALSE]
+    .candidate_validate_order_identity(
+      diag[diag$candidate_id == row$candidate_id[[1L]], , drop = FALSE], row, "diagnostics")
+  }
   diag$.candidate_order <- match(diag$candidate_id, selected_id)
   diag[order(diag$.candidate_order), , drop = FALSE]
 }
@@ -308,7 +320,7 @@
 #' shares. Distance diagnostics such as `radius_rank_k` and `radius_rank_s`
 #' are ordinary nearest-rank scale summaries; `radius_rank_s` is not the DNN
 #' support radius. For exact DNN fits the unaveraged rank-table support edge is
-#' rank `n - s + k`; duplicate-block averaging can extend nonzero observation
+#' rank `n - s + k`; distance-block averaging can extend nonzero observation
 #' weights through the end of a block crossing that edge. ESS, support counts
 #' and concentration use the final averaged weights and can vary by target.
 #' See [weights_matrix()] for the averaging rule and its theory warning.

@@ -15,7 +15,7 @@ test_that("general diagnostics reject unsupported objects and malformed retained
 
     bad_w <- fit
     bad_w$W[1L, 1L] <- NA_real_
-    expect_error(diagnostics(bad_w), "W cannot contain `NA` values")
+    expect_error(diagnostics(bad_w), "object\\$W.*[Rr]efit")
 
     bad_dx_dim <- fit
     bad_dx_dim$dx <- fit$dx[-1L, , drop = FALSE]

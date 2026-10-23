@@ -11,8 +11,8 @@
 #' three absolute contributions labelled by observation index and the
 #' weight-concentration diagnostics in the caption.
 #'
-#' The pseudo-outcome is taken from the fit; supply `pseudo_outcome` for
-#' fits that do not store it.
+#' The pseudo-outcome is taken from the fit's retained signal. Refit if
+#' the retained signal is missing or invalid.
 #' For CLATE the contribution is w_ij (phi_Yi - theta_j phi_Di), using both
 #' retained signals at the target's fitted ratio. These are weighted score
 #' residuals, not delete-one pseudo-values or estimated individual effects.
@@ -21,11 +21,8 @@
 #'   default).
 #' @param targets Optional integer vector of target ids (defaults to the
 #'   first/median-`n_eff`/last subset above eight targets).
-#' @param pseudo_outcome Optional numeric vector of length `n`; used when
-#'   the fit does not store the pseudo-outcome.
 #' @param n_label Integer; number of largest absolute contributions to
 #'   label per target (default `3`).
-#' @param ... Ignored; reserved for future options.
 #'
 #' @return A ggplot object.
 #'
@@ -44,9 +41,7 @@
 #' @export
 plot_influence <- function(object,
                            targets = NULL,
-                           pseudo_outcome = NULL,
-                           n_label = 3L,
-                           ...) {
+                           n_label = 3L) {
   .dnn_reuse_scope(object)
   .plot_require_ggplot2("plot_influence")
   clate <- inherits(object, "clate_result")
@@ -63,34 +58,13 @@ plot_influence <- function(object,
   n_label <- .validate_scalar_int(n_label, "n_label")
 
   model <- object$.model
-  if (clate && !is.null(pseudo_outcome)) {
-    .abort_bad_arg("pseudo_outcome", "is a CATE input; CLATE uses its paired stored signals")
-  }
   psi <- if (clate) {
     .affine_prediction_state(object)$signal
-  } else if (is.list(model) && !is.null(model$psi)) {
-    model$psi
   } else {
-    pseudo_outcome
-  }
-  if (is.null(psi)) {
-    .abort_bad_arg(
-      "pseudo_outcome",
-      "is required: the fit does not store the pseudo-outcome",
-      quoted = FALSE
-    )
+    model$psi
   }
 
   dw <- plot_data_weights(object)
-  n <- max(dw$rank)
-  if (!clate) psi <- as.numeric(psi)
-  if ((!clate && length(psi) != n) || (clate && nrow(psi) != n) || any(!is.finite(psi))) {
-    .abort_bad_arg(
-      "pseudo_outcome",
-      sprintf("must be a finite numeric vector of length n = %d", n),
-      quoted = FALSE
-    )
-  }
 
   all_targets <- sort(unique(dw$target_id))
   neff_by_target <- vapply(

@@ -86,6 +86,51 @@ test_that("NP and CATE tidy extractors select stored candidate rows", {
   }
 })
 
+test_that("PLQR tidy candidates preserve moment and supplied-coefficient quantities", {
+  X <- matrix(1:8)
+  D <- cbind(slope = 1:8, intercept = rep(1, 8))
+  fit <- plqr_dnn(X = X, Y = c(1, 3, 2, 7, 5, 4, 8, 6), D = D,
+    mD = matrix(0, 8, 2), g = rep(0, 8), theta_eval = c(.2, .7),
+    X0 = matrix(c(.1, 3.1)), tuning = .consumer_tuning(grid = c(2, 3, 3, 4)),
+    tuning_mode = "grid")
+  ids <- fit$tuning_grid$candidates$candidate_id
+  for (quantity in c("moment", "theta")) {
+    rows <- plot_data_estimates(fit, candidates = "all", quantity = quantity)
+    expect_identical(attr(rows, "quantity"), quantity)
+    expect_setequal(rows$candidate_id, ids)
+    expect_identical(nrow(rows), length(ids) * 2L * 2L)
+    for (id in ids) {
+      expected <- plot_data_estimates(candidate_fit(fit, id), quantity = quantity)
+      actual <- rows[rows$candidate_id == id, , drop = FALSE]
+      actual <- actual[order(actual$target_id, actual$coef), ]
+      expected <- expected[order(expected$target_id, expected$coef), ]
+      expect_identical(actual$target_id, expected$target_id)
+      expect_identical(actual$coef, expected$coef)
+      expect_equal(actual$estimate, expected$estimate, tolerance = 0)
+      expect_equal(actual$se, expected$se, tolerance = 0)
+    }
+    selected <- plot_data_estimates(fit, candidates = ids[2:3], quantity = quantity)
+    expect_setequal(selected$candidate_id, ids[2:3])
+  }
+  expect_error(plot_data_estimates(fit, candidates = "unknown"), "Unknown candidate")
+  skip_if_not_installed("ggplot2")
+  for (quantity in c("moment", "theta")) {
+    p <- plot_estimates(fit, candidates = "all", quantity = quantity)
+    expected <- plot_data_estimates(fit, candidates = "all", quantity = quantity)
+    expect_identical(p$data$estimate, expected$estimate)
+    expect_identical(p$data$coef, expected$coef)
+    if (quantity == "theta") {
+      expect_match(p$labels$caption, "coefficient standard errors unavailable")
+      expect_false(grepl("se = FALSE", p$labels$caption, fixed = TRUE))
+    }
+    expect_identical(any(vapply(p$layers, function(layer) inherits(layer$geom, "GeomHline"), logical(1L))),
+      quantity == "moment")
+    expect_s3_class(ggplot2::ggplot_build(p), "ggplot_built")
+    auto <- ggplot2::autoplot(fit, candidates = "all", quantity = quantity)
+    expect_match(auto$labels$subtitle, if (quantity == "theta") "supplied coefficients" else "moments")
+  }
+})
+
 test_that("scalar plots revalidate point-only candidate feasibility for SEs", {
   tuning <- .consumer_tuning(8L, c(3L, 8L))
   for (family in c("np", "cate")) {

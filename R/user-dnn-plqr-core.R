@@ -16,7 +16,7 @@
 .plqr_dnn_jackknife_se_loo <- function(
   x_mat, x0_mat, score_mat, distance, method, k, s, normalize, ctx,
   jackknife = c("fast", "loo"),
-  precomputed_ranks = NULL
+  precomputed_ranks = NULL, precomputed_groups = NULL
 ) {
   jackknife <- match.arg(jackknife)
   .dnn_jackknife_se_loo_matrix(
@@ -31,7 +31,8 @@
     ctx = ctx,
     signal_arg = "score",
     jackknife = jackknife,
-    precomputed_ranks = precomputed_ranks
+    precomputed_ranks = precomputed_ranks,
+    precomputed_groups = precomputed_groups
   )
 }
 
@@ -193,7 +194,7 @@
 .plqr_jackknife_meat_sandwich <- function(
   x_mat, x0_mat, score_mat, d_mat, mD_mat, density_vec, W,
   distance, method, k, s, normalize, ctx, jackknife,
-  precomputed_ranks, coef_names, target_names
+  precomputed_ranks, coef_names, target_names, precomputed_groups = NULL
 ) {
   .plqr_validate_normalized_weights(W)
 
@@ -209,7 +210,8 @@
     ctx = ctx,
     signal_arg = "score",
     jackknife = jackknife,
-    precomputed_ranks = precomputed_ranks
+    precomputed_ranks = precomputed_ranks,
+    precomputed_groups = precomputed_groups
   )
   jk <- .dnn_jackknife_vcov_from_loo(
     loo = loo,

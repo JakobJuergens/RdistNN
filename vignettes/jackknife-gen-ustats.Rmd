@@ -56,15 +56,16 @@ all.equal(fast$theta_loo, slow$theta_loo, tolerance = 1e-12)
 ```
 
 `theta0` averages the rule across the supplied target rows; it is not a
-vector of separate local fits. These rank-only utilities do not identify
-duplicate covariate groups. High-level covariate-aware estimators additionally
-average duplicate-block weights in the full sample and every deletion, with a
-warning that this practical modification is outside the paper's theory.
+vector of separate local fits. Bare rank-only utilities use strict orders.
+High-level estimators additionally average assigned rank weights within exact
+represented selected-metric distance groups, separately for each target and
+every deletion. A warning records that inference with persistent distance ties
+is not established.
 Deleting a member reduces its block size as well as the reference-sample size;
 the survivors use the `n-1` table divided by the remaining block size. The
 shared estimator path reuses prefix/postfix deletion sums with a block
 correction, rather than rebuilding a weight matrix for each removed row.
-See the [worked deletion example](dnn-weights.html#identical-covariate-rows).
+See the [worked deletion example](dnn-weights.html#exact-distance-ties).
 
 Block deletions accumulate the original signals with their actual survivor
 weights and retain both parts of each compensated prefix/suffix sum until the

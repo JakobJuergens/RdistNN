@@ -44,7 +44,7 @@ NULL
 #' @rdname affine_ratio_result
 #' @export
 coef.affine_ratio_result <- function(object, ...) {
-  .dnn_check_tie_model(object$.model)
+  .dnn_check_report_state(object)
   stats::setNames(object$theta, paste0("target_", seq_along(object$theta)))
 }
 
@@ -74,7 +74,7 @@ vcov.affine_ratio_result <- function(object, target = NULL, ...) {
   ))
   if (!is.null(object$se)) {
     ok <- object$status$wald_available
-    delta <- stats::qnorm((1 - level) / 2, lower.tail = FALSE) * object$se[ok]
+    delta <- .dnn_normal_critical(level) * object$se[ok]
     ci[ok, 1L] <- object$theta[ok] - delta
     ci[ok, 2L] <- object$theta[ok] + delta
   }
@@ -84,7 +84,7 @@ vcov.affine_ratio_result <- function(object, target = NULL, ...) {
 #' @rdname affine_ratio_result
 #' @export
 confint.affine_ratio_result <- function(object, parm = NULL, level = .95, ...) {
-  .dnn_check_tie_model(object$.model)
+  .dnn_check_report_state(object)
   level <- .validate_scalar_prob(level, "level")
   if (is.null(object$se)) {
     .abort_bad_arg("object", "has no covariance; refit with se = TRUE and an active jackknife")
@@ -94,6 +94,7 @@ confint.affine_ratio_result <- function(object, parm = NULL, level = .95, ...) {
   } else {
     .validate_index_vector(parm, length(object$theta), "parm", label = "target indices")
   }
+  .affine_warn_partial(object$status[idx, , drop = FALSE], requested_covariance = TRUE)
   .affine_wald_bounds(object, level)[idx, , drop = FALSE]
 }
 
@@ -110,7 +111,7 @@ confint.affine_ratio_result <- function(object, parm = NULL, level = .95, ...) {
 #' @rdname affine_ratio_result
 #' @export
 summary.affine_ratio_result <- function(object, level = .95, ...) {
-  .dnn_check_tie_model(object$.model)
+  .dnn_check_report_state(object)
   ci <- .affine_wald_bounds(object, level)
   m <- length(object$theta)
   se <- if (is.null(object$se)) rep(NA_real_, m) else object$se
@@ -134,13 +135,14 @@ summary.affine_ratio_result <- function(object, level = .95, ...) {
               has_se = any(is.finite(se)), meta = object$meta,
               components = components, status = object$status)
   class(out) <- "summary.affine_ratio_result"
+  .affine_warn_partial(object$status, requested_covariance = !is.null(object$se))
   out
 }
 
 #' @rdname affine_ratio_result
 #' @export
 print.affine_ratio_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
-  .dnn_check_tie_model(x$.model)
+  .dnn_check_report_state(x)
   kind <- if (inherits(x, "clate_result")) "clate_result" else "affine_ratio_result"
   cat("<", kind, "> paired DNN ratio; ", length(x$theta), " target(s)\n", sep = "")
   cat("  DNN: method=", x$meta$method, ", k=", x$meta$k,
@@ -152,7 +154,7 @@ print.affine_ratio_result <- function(x, digits = max(3L, getOption("digits") - 
 #' @rdname affine_ratio_result
 #' @export
 print.summary.affine_ratio_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
-  .dnn_check_tie_model(x$.model)
+  .dnn_check_tie_policy(x$meta$tie_rule)
   .dnn_print_localization(x$meta)
   roles <- x$meta$component_roles
   if (!is.null(roles)) {
@@ -167,14 +169,22 @@ print.summary.affine_ratio_result <- function(x, digits = max(3L, getOption("dig
 .affine_prediction_state <- function(object) {
   model <- object$.model
   .dnn_check_tie_model(model)
-  if (!is.list(model) || is.null(model$x_mat) || is.null(model$signal) ||
-    is.null(model$s) || is.null(model$row_ids)) {
+  if (is.null(model$signal) || is.null(model$s) || is.null(model$row_ids)) {
     .abort_bad_arg("object$.model", "is missing frozen model state; refit with affine_ratio_dnn or clate_dnn")
   }
   model$x_mat <- .validate_matrix(model$x_mat, "object$.model$x_mat", numeric = TRUE, finite = TRUE)
   model$signal <- .validate_matrix(model$signal, "object$.model$signal", numeric = TRUE, finite = TRUE)
   if (nrow(model$signal) != nrow(model$x_mat) || ncol(model$signal) != 2L) {
     .abort_bad_arg("object$.model$signal", "must be an n by 2 matrix aligned with the reporting design")
+  }
+  .affine_retained_normalize(model)
+  jackknife <- object$meta$jackknife
+  if (!is.character(jackknife) || length(jackknife) != 1L || is.na(jackknife) ||
+      !jackknife %in% c("fast", "loo", "none")) {
+    .abort_bad_state(paste0(
+      "Retained `object$meta$jackknife` must be 'fast', 'loo' or 'none'. ",
+      "Refit with affine_ratio_dnn() or clate_dnn()."
+    ))
   }
   model
 }
@@ -185,7 +195,7 @@ predict.affine_ratio_result <- function(
   object, newdata = NULL, X0 = NULL, x0 = NULL, se.fit = FALSE,
   interval = c("none", "confidence"), level = .95, ...
 ) {
-  .dnn_reuse_scope(object)
+  .dnn_reuse_scope(object, groups = NULL)
   interval <- match.arg(interval)
   se.fit <- .validate_scalar_logical(se.fit, "se.fit")
   level <- .validate_scalar_prob(level, "level")
@@ -193,7 +203,7 @@ predict.affine_ratio_result <- function(
   x0_mat <- .dnn_resolve_prediction_targets(model, newdata, X0, x0)
   need_se <- se.fit || interval == "confidence"
   engine <- object$meta$jackknife
-  if (is.null(engine) || !engine %in% c("fast", "loo")) engine <- "fast"
+  if (identical(engine, "none")) engine <- "fast"
   fit <- affine_ratio_dnn(
     X = model$x_mat, X0 = x0_mat,
     numerator = model$signal[, 1L], denominator = model$signal[, 2L],
@@ -226,5 +236,6 @@ plot_data_estimates.affine_ratio_result <- function(object, level = .95, candida
   ci <- .affine_wald_bounds(object, level)
   out$ci_lower <- ci[, 1L]
   out$ci_upper <- ci[, 2L]
+  .affine_warn_partial(object$status, requested_covariance = !is.null(object$se))
   out
 }

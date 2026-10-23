@@ -56,7 +56,7 @@
 #' @param candidates Candidate rows to compare for grid fits. The default
 #'   `"default"` preserves the stored weight-matrix display. Use `"all"` or
 #'   a character vector of candidate ids with `type = "profile"` to compare
-#'   weight profiles without refitting. Duplicate-covariate block averaging
+#'   weight profiles without refitting. Exact-distance block averaging
 #'   can make these profiles vary by target; the selected target profiles are
 #'   shown in separate panels. Untied default profiles coincide across targets
 #'   and are shown once unless `targets` is explicitly supplied.
@@ -141,8 +141,8 @@ plot_weights <- function(object,
 
   if (type == "profile") {
     if (!is.na(support_edge) && !is.null(object$.model$x_mat) &&
-        anyDuplicated(.dnn_duplicate_groups(object$.model$x_mat))) {
-      captions <- c(captions, "dotted guide: nominal rank-table edge before duplicate-block averaging")
+        .dnn_has_ties(object$.model$groups)) {
+      captions <- c(captions, "dotted guide: nominal rank-table edge before distance-block averaging")
     }
     if (isTRUE(log_weights)) {
       dropped <- sum(dw$weight <= 0)

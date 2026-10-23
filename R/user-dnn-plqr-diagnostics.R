@@ -89,10 +89,9 @@
   model <- object$.model
   density <- if (is.list(model)) model$density else NULL
   if (is.numeric(density) && length(density) == nrow(w_mat)) {
-    support_tol <- sqrt(.Machine$double.eps)
     for (j in seq_len(m)) {
       w_j <- as.numeric(w_mat[, j])
-      support <- w_j > support_tol
+      support <- w_j > 0
       if (any(support)) {
         # Support extrema: plain min/max of the density over observations
         # carrying weight, not weighted statistics.

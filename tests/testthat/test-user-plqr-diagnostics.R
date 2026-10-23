@@ -30,7 +30,7 @@ test_that("diagnostics(plqr_result) reports residual-regressor Gram diagnostics"
 
     bad_state <- fit
     bad_state$.model <- NULL
-    expect_error(diagnostics(bad_state), "residualized design state.*[Rr]efit")
+    expect_error(diagnostics(bad_state), "localization model state.*[Rr]efit")
   }, seed = 777L)
 })
 
@@ -194,4 +194,28 @@ test_that("nearly singular PLQR Jacobians report large condition numbers", {
     expect_true(all(dd$jacobian_available))
     expect_true(all(dd$jacobian_condition_number > 1e6))
   }, seed = 818L)
+})
+test_that("diagnostic support includes every represented positive localization weight", {
+  n <- 80L
+  X <- matrix(seq_len(n))
+  density <- rep(1, n)
+  density[20L] <- 1000
+  fits <- list(
+    np = np_dnn(X = X, Y = seq_len(n), x0 = 0, s = 50L, se = FALSE),
+    cate = cate_dnn(X = X, pseudo_outcome = seq_len(n), x0 = 0, s = 50L, se = FALSE),
+    ratio = affine_ratio_dnn(X = X, numerator = seq_len(n), denominator = rep(1, n),
+      x0 = 0, s = 50L, se = FALSE),
+    plqr = plqr_dnn(X = X, Y = rep(1, n), D = matrix(1, n), mD = matrix(0, n),
+      g = rep(0, n), theta_eval = 0, density = density, x0 = 0, s = 50L)
+  )
+  for (fit in fits) {
+    expect_identical(sum(fit$W[, 1L] != 0), 31L)
+    expect_true(fit$W[20L, 1L] > 0 && fit$W[20L, 1L] < sqrt(.Machine$double.eps))
+    expect_identical(diagnostics(fit)$n_nonzero_weight, 31L)
+  }
+  dd <- diagnostics(fits$plqr)
+  expect_identical(dd$density_min_support, 1)
+  expect_identical(dd$density_max_support, 1000)
+  expect_identical(dd$density_median_weighted,
+    RdistNN:::.dnn_weighted_quantile(density, fits$plqr$W[, 1L], .5))
 })

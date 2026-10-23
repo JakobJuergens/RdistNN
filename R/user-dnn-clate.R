@@ -11,18 +11,22 @@
 #' @param m_y0_col,m_y1_col Data-frame outcome predictions by instrument arm.
 #' @param m_d0_col,m_d1_col Data-frame treatment predictions by instrument arm.
 #'   The zero-arm prediction may be omitted with one_sided = TRUE.
+#' @param return Optional extras: W, ranks, ord, dx, ess, signals, deletions,
+#'   pseudo_values, neighbors, tuning or nuisance. `"nuisance"` retains the
+#'   complete [augmented-IV signal][iv_augmented_signals()] construction record, including raw and
+#'   clipped instrument propensities. Unknown values warn and are ignored.
 #'
 #' @details
 #' The documented sampling framework uses independent observations; cluster
-#' and survey-design inference are not supplied. Exact distance ties use
-#' lexicographic order of the original covariates, in their supplied column
-#' order. Rows identical on every raw localization covariate share the average
-#' of their rank weights. Each jackknife deletion recomputes this average over
-#' the surviving block at sample size n-1. This permutation-invariant
-#' modification is not covered by the paper's theory and emits a warning.
-#' Distinct covariate vectors at equal distance are not averaged. Ordering uses
-#' no outcomes or nuisances. Retained tied fits from the earlier policy require
-#' refitting before reporting or reuse.
+#' and survey-design inference are not supplied. Observations with exactly
+#' equal computed distance to a target share their block's average rank weight,
+#' even when their covariates differ. Groups are target-specific and use exact
+#' represented equality, without a tolerance. Ordering uses distance then input
+#' row index; outcomes and nuisances do not define groups. Every jackknife
+#' deletion averages the surviving blocks with the sample-size-n-1 rule.
+#' A warning is emitted once per public call with distance ties: the accompanying
+#' theory assumes a continuous distance distribution and does not establish
+#' inference under persistent ties. Earlier retained fit schemas require refitting.
 #'
 #' Nuisance predictions use all pre-instrument adjustment variables, while
 #' weights use the reporting coordinates X. The estimate is the ratio of the
@@ -143,7 +147,7 @@ clate_dnn <- function(
   out$meta$training <- training
   out$meta$one_sided <- one_sided
   out$meta$propensity_clip <- clip
-  out$.model$x_cols <- resolved_x_cols
+  out$.model["x_cols"] <- list(resolved_x_cols)
   out$.model$iv <- list(
     A = as.integer(vectors$A), D = as.integer(vectors$D),
     propensity = signals$propensity, one_sided = one_sided, training = training

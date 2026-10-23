@@ -74,24 +74,11 @@ test_that("sim_iv_run expands IV cells, methods, and aligned seeds", {
   expect_true(all(method_count == 2L))
 })
 
-test_that("sim_iv_one_rep reports NA rows when a method fails internally", {
-  res <- sim_iv_one_rep(
-    n = 8L,
-    kx = 2L,
-    q = 2L,
-    k = 1L,
-    s = 3L,
-    design = "dgp2_iv_homog_overid",
-    methods = "dnn_iv_crossfit",
-    seed = 14L,
-    n_folds = 20L
-  )
-
-  expect_equal(nrow(res), 1L)
-  expect_equal(res$method, "dnn_iv_crossfit")
-  expect_true(is.na(res$theta_hat))
-  expect_true(is.na(res$se))
-  expect_true(is.na(res$cover))
+test_that("sim_iv_one_rep propagates invalid cross-fit controls", {
+  expect_error(sim_iv_one_rep(
+    n = 8L, kx = 2L, q = 2L, k = 1L, s = 3L,
+    design = "dgp2_iv_homog_overid", methods = "dnn_iv_crossfit",
+    seed = 14L, n_folds = 20L), "n_folds", class = "rdistnn_input_error")
 })
 
 test_that("sim_iv_run validates grid controls", {

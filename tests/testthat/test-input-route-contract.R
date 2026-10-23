@@ -32,3 +32,35 @@ test_that("GMM selectors require data while separate matrix model data stays sup
   frame_fit <- gmm_dnn(data = d, x_cols = "x", model = model, x0 = 0, s = 3L, se = FALSE)
   expect_equal(matrix_fit$theta, frame_fit$theta, tolerance = 1e-12)
 })
+
+test_that("tabular selector range errors precede integer conversion", {
+  data <- data.frame(x = 1:4, y = c(2, 1, 4, 3))
+  for (selector in c(2^31, -2^31, 1e100, -1e100,
+                     .Machine$double.xmax, -.Machine$double.xmax)) {
+    for (argument in c("x_cols", "y_col")) {
+      args <- list(data = data, x_cols = 1L, y_col = 2L,
+        x0 = 0, s = 2L, se = FALSE)
+      args[[argument]] <- selector
+      warnings <- character()
+      error <- withCallingHandlers(tryCatch({
+        do.call(np_dnn, args)
+        NULL
+      }, error = identity), warning = function(w) {
+        warnings <<- c(warnings, conditionMessage(w))
+        invokeRestart("muffleWarning")
+      })
+      expect_s3_class(error, "error")
+      expect_match(if (inherits(error, "error")) conditionMessage(error) else "",
+        paste0(argument, ".*out-of-range"))
+      expect_length(warnings, 0L)
+    }
+  }
+  for (selector in c(1L, ncol(data))) {
+    tabular <- np_dnn(data = data, x_cols = selector, y_col = 2L,
+      x0 = 0, s = 2L, se = FALSE)
+    explicit <- np_dnn(X = as.matrix(data[selector]), Y = data$y,
+      x0 = 0, s = 2L, se = FALSE)
+    expect_equal(tabular$mu, explicit$mu, tolerance = 0)
+    expect_identical(tabular$.model$x_cols, names(data)[selector])
+  }
+})

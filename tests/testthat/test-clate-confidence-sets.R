@@ -198,6 +198,7 @@ test_that("tiny component variance cannot be certified as zero uncertainty", {
 })
 
 test_that("unrepresentable component covariance cannot feed a deterministic set", {
+  .with_partial_result_warning({
   ordinary <- .ratio_fixture()
   expect_identical(ratio_confidence_set(ordinary$components,
                                         ordinary$component_vcov)[[1L]]$type, "two_rays")
@@ -209,4 +210,5 @@ test_that("unrepresentable component covariance cannot feed a deterministic set"
   expect_true(all(is.na(tiny$component_vcov[[1L]])))
   expect_true(is.na(tiny$se))
   expect_error(ratio_confidence_set(tiny$components, tiny$component_vcov), "component_vcov")
+  })
 })

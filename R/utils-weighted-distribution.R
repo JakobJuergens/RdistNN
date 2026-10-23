@@ -40,9 +40,12 @@
   if (amplitude == 0) return(0)
   scale <- 2^max(-1074, min(1022, floor(log(amplitude) / log(2))))
   z <- z / scale
+  # Take roots before normalizing: w/mass can underflow even when its square
+  # root and the final SD are representable for unnormalized input weights.
+  root_weights <- sqrt(w) / sqrt(mass)
   weights <- w / mass
   center <- .compensated_sum(z * weights)
-  d <- sqrt(weights) * (z - center)
+  d <- root_weights * (z - center)
   spread <- max(abs(d))
   if (spread == 0) return(0)
   z <- d / spread

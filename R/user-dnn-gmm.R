@@ -198,6 +198,11 @@
                                 moment_names, coef_names) {
   neff <- 1 / sum(w^2)
   theta_start <- .gmm_start_for_target(model, sample, ctx, w, x0, p, start)
+  optim_control <- if (identical(optimizer, "L-BFGS-B")) {
+    list(maxit = 1000L, factr = 1e-12 / .Machine$double.eps)
+  } else {
+    list(maxit = 1000L, reltol = 1e-12)
+  }
 
   opt1 <- stats::optim(
     par = theta_start,
@@ -209,7 +214,7 @@
     n = n,
     omega_inv = NULL,
     method = optimizer,
-    control = list(maxit = 1000L, reltol = 1e-12)
+    control = optim_control
   )
   theta_first <- as.numeric(opt1$par)
   g1 <- .gmm_eval_moment(model, sample, theta_first, ctx, n)
@@ -232,7 +237,7 @@
     n = n,
     omega_inv = Omega_inv,
     method = optimizer,
-    control = list(maxit = 1000L, reltol = 1e-12)
+    control = optim_control
   )
   theta_hat <- as.numeric(opt2$par)
   g2 <- .gmm_eval_moment(model, sample, theta_hat, ctx, n)
@@ -343,15 +348,15 @@
 #'
 #' @details
 #' The documented sampling framework uses independent observations; cluster
-#' and survey-design inference are not supplied. Exact distance ties use
-#' lexicographic order of the original covariates, in their supplied column
-#' order. Rows identical on every raw localization covariate share the average
-#' of their rank weights. Each jackknife deletion recomputes this average over
-#' the surviving block at sample size n-1. This permutation-invariant
-#' modification is not covered by the paper's theory and emits a warning.
-#' Distinct covariate vectors at equal distance are not averaged. Ordering uses
-#' no outcomes or nuisances. Retained tied fits from the earlier policy require
-#' refitting before reporting or reuse.
+#' and survey-design inference are not supplied. Observations with exactly
+#' equal computed distance to a target share their block's average rank weight,
+#' even when their covariates differ. Groups are target-specific and use exact
+#' represented equality, without a tolerance. Ordering uses distance then input
+#' row index; outcomes and nuisances do not define groups. Every jackknife
+#' deletion averages the surviving blocks with the sample-size-n-1 rule.
+#' A warning is emitted once per public call with distance ties: the accompanying
+#' theory assumes a continuous distance distribution and does not establish
+#' inference under persistent ties. Earlier retained fit schemas require refitting.
 #'
 #' Two interfaces are supported.
 #'
@@ -372,7 +377,7 @@
 #' unaveraged rank-table support edge is rank `n - s + k`, not rank `s`.
 #'
 #' Averaging can extend nonzero observation weights through the end of a
-#' duplicate block that straddles the nominal rank-table edge. Effective sample
+#' distance block that straddles the nominal rank-table edge. Effective sample
 #' sizes and weight diagnostics use the resulting observation weights.
 #'
 #' @param data Optional data frame containing covariates and model variables.
@@ -403,7 +408,11 @@
 #'   or solutions. An explicit vector is reused at all targets; matrix column
 #'   `j` supplies target `j`. Either explicit form takes precedence over the
 #'   model callback.
-#' @param optimizer Optimizer method passed to [stats::optim()].
+#' @param optimizer Optimizer method passed to [stats::optim()]. Both stages
+#'   allow 1000 iterations. BFGS and Nelder-Mead use `reltol = 1e-12`;
+#'   L-BFGS-B uses `factr = 1e-12 / .Machine$double.eps` and the default
+#'   projected-gradient tolerance. Convergence statuses remain available in
+#'   the returned object.
 #' @param jacobian One of `"auto"`, `"analytic"`, or `"fd"`.
 #' @param omega_ridge Non-negative ridge multiplier for local moment covariance.
 #' @param fd_step Positive finite finite-difference step multiplier.
@@ -549,7 +558,7 @@ gmm_dnn <- function(
   if ("neighbors" %in% return && !any(c("ranks", "ord") %in% return)) {
     weight_return <- unique(c(weight_return, "ranks"))
   }
-  .dnn_duplicate_scope(x_mat)
+  .dnn_distance_scope()
   geometry <- .dnn_fitted_geometry(distance, x_mat, ctx)
   weight_fit <- .dnn_weights_with_extras(
     x_mat = x_mat,
@@ -753,7 +762,7 @@ gmm_dnn <- function(
     method = method,
     k = k,
     s = s,
-    normalize = normalize
+    normalize = normalize, ranks = wt$ranks, groups = wt$groups, dx = wt$dx
   ), geometry)
 
   class(out) <- "gmm_result"
