@@ -67,11 +67,13 @@ affine_ratio_dnn(
 - distance:
 
   Existing distance specification, registered name or function. Geometry
-  is frozen across deletions. Exact distance ties use original
-  covariates lexicographically. Identical raw covariate rows share
-  averaged rank-weight mass, including each deletion's surviving block.
-  This permutation-invariant modification is outside the paper's theory
-  and warns. Distinct vectors at equal distance are not averaged.
+  is frozen across deletions. Exactly equal computed distances share
+  block-averaged rank-weight mass, including each deletion's surviving
+  block. Equality is represented equality without a tolerance; groups
+  are target-specific. Distance ties are ordered by original row index.
+  The accompanying theory assumes a continuous distance distribution and
+  does not establish inference under persistent ties; tied calls emit
+  one warning.
 
 - method:
 
@@ -153,8 +155,11 @@ centered deletion scores to retain cross-covariance. theta_vcov is
 already on the estimator scale; theta_omega multiplies it by neff. Do
 not divide theta_vcov by neff again.
 
-Signed signals and finite negative denominators are retained. At exact
-zero denominator the components remain available and the ratio is NA.
+Signed signals and finite negative denominators are retained. At an
+exact zero denominator, finite components remain available and the ratio
+is NA. A nonfinite computed full numerator or denominator component is
+returned as `NA` with `ratio_status = "component_overflow"`; finite
+components and the original supplied signals are preserved.
 Computational statuses do not verify causal assumptions, learner
 stability, point-target undersmoothing or weak-instrument-uniform
 validity. If nonzero component variation underflows its covariance,

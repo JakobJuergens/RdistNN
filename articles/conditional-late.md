@@ -8,15 +8,15 @@ defines the causal target and identifying assumptions. Reporting
 covariates can be a subset of the controls used to obtain the nuisance
 predictions.
 
-Exactly identical reporting-covariate rows share their block’s average
-weight in both the reduced form and first stage, even when their
-outcomes or nuisance predictions differ. Each deletion removes the
-actual row and redistributes its remaining block’s `n-1` weight-table
-mass over the survivors. This is a ratio of two weighted signal
-averages, not an average of individual ratios. The package warns that
-the block-averaging modification is outside the paper’s theory. See the
-[weight
-guide](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.html#identical-covariate-rows).
+Observations at exactly equal represented selected-metric distance to a
+target share the mean of their assigned rank weights in both the reduced
+form and first stage, even when their outcomes or nuisance predictions
+differ. Each deletion removes the actual row and redistributes its
+remaining block’s `n-1` weight-table mass over the survivors. This is a
+ratio of two weighted signal averages, not an average of individual
+ratios. The package warns that inference with persistent distance ties
+is not established. See the [weight
+guide](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.html#exact-distance-ties).
 
 ## Fit from a data frame
 

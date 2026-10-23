@@ -84,13 +84,14 @@ A named list of scalar-style candidate views.
 
 ## Details
 
-Reconstructed weights use both cached ranks and retained raw covariates,
-averaging within exactly identical covariate blocks as in
+Reconstructed weights use cached ranks and target-specific distance
+groups, averaging within exact-distance blocks as in
 [`weights_matrix()`](https://JakobJuergens.github.io/RdistNN/reference/weights_matrix.md).
 Candidate uncertainty redistributes each deleted member's block mass
-over the survivors using the `n-1` rank table. A warning identifies this
-modification as outside the paper's theory. Tied fits created before
-this policy require refitting before candidate extraction.
+over the survivors using the `n-1` rank table. Calls with ties warn
+once: the accompanying theory assumes a continuous distance distribution
+and does not establish inference under persistent ties. Earlier retained
+fit schemas require refitting before candidate extraction.
 
 Candidate IDs identify grid rows, not unique values of `s`. Repeated
 resolved orders remain separate candidates, and plots distinguish their

@@ -88,23 +88,31 @@ deletion engine does not recover probability mass already lost during
 table construction. Exact and asymptotic weights are different
 constructions; changing the method changes the localization rule.
 
-## Duplicate-covariate blocks
+## Exact distance ties
 
-Rows identical on every supplied raw covariate receive the average of
-their assigned rank weights, preserving each block's total mass. This
-includes caller-supplied ranks and signed or unnormalized rank rules.
-Distinct covariate vectors at equal distance remain separate. A warning
-identifies this permutation-invariant modification as outside the
-paper's theory, including for `k = 1`. Estimator jackknife deletions
-repeat the average over each remaining duplicate block using the
-selected rule's sample-size-n-1 table. For a block at consecutive ranks
-`a:b`, the full weight is `sum(w_n[a:b]) / (b-a+1)` per member; after
-deleting a member, each survivor receives
-`sum(w_(n-1)[a:(b-1)]) / (b-a)`. A deleted singleton contributes zero.
-The smaller block size must be used in the deletion. An exact support
-edge describes the unaveraged rank table; a straddling duplicate block
-can extend nonzero observation weights beyond it. Lower-level rank-only
-APIs retain their rank-primitive semantics.
+For each target, observations with exactly equal computed distance share
+the average of their assigned rank weights, including distinct covariate
+vectors. Equality is exact represented equality, without an epsilon or
+rounding. Groups may differ by target. Block mass is preserved for
+signed and unnormalized rules. Equal distances are ordered by original
+row index. A bare supplied rank or order matrix defines a strict order
+and is not averaged. A list containing ranks or orders together with
+`dx` preserves that authoritative permutation and averages by the
+supplied distances. No outcomes, treatments or nuisance values define
+membership.
+
+For a block at ranks `a:b`, each member receives
+`sum(w_n[a:b]) / (b-a+1)`. Estimator jackknife deletions remove the
+actual observation, update ranks, and average remaining blocks with
+`w_(n-1)`. If a member is deleted, each survivor receives
+`sum(w_(n-1)[a:(b-1)]) / (b-a)`; a deleted singleton contributes zero.
+Exact support edges describe the unaveraged rank table; averaging can
+extend nonzero observation weights through a block crossing that edge.
+Lower-level rank-only APIs retain their rank-primitive semantics.
+
+A warning is emitted once per public call with distance ties. The
+accompanying theory assumes a continuous distance distribution and does
+not establish inference under persistent ties, including for `k = 1`.
 
 ## See also
 

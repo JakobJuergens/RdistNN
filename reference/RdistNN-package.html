@@ -31,7 +31,7 @@ score objects (ustat_score) for flexible kernel-based moment evaluation.
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,7 +54,7 @@ score objects (ustat_score) for flexible kernel-based moment evaluation.
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>RdistNN: DNN Estimation for Conditional Effects and Regression</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.2/R/RdistNN-package.R" class="external-link"><code>R/RdistNN-package.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/R/RdistNN-package.R" class="external-link"><code>R/RdistNN-package.R</code></a></small>
       <div class="d-none name"><code>RdistNN-package.Rd</code></div>
     </div>
 
@@ -99,16 +99,17 @@ predictions.</p></li>
 local weights with <code><a href="plot_weights.html">plot_weights()</a></code> (requires ggplot2).</p></li>
 </ul></div>
     <div class="section level2">
-    <h2 id="identical-localization-covariates">Identical localization covariates<a class="anchor" aria-label="anchor" href="#identical-localization-covariates"></a></h2>
+    <h2 id="exact-distance-ties">Exact distance ties<a class="anchor" aria-label="anchor" href="#exact-distance-ties"></a></h2>
 
 
-<p>Covariate-aware estimators average weights within exactly identical raw
-covariate blocks, including every jackknife deletion's surviving members.
-The package warns because this permutation-invariant modification is not
-covered by the paper's theory. It can change observation weights, support
-and effective sample size. See <code><a href="weights_matrix.html">weights_matrix()</a></code> for the rule; rank-only
-utilities without covariates cannot infer duplicate groups. Refit tied saved
-objects created before this policy before reporting or reusing them.</p>
+<p>Distance-based estimators average rank weights within exactly equal computed
+distances, separately for every target, including each deletion's surviving
+members. Block mass is preserved for signed and unnormalized rules. Equality
+uses represented values without a tolerance. Bare ranks/orders remain strict;
+adding <code>dx</code> metadata enables averaging while preserving supplied permutations.
+Calls with ties warn once: the accompanying theory assumes a continuous
+distance distribution and does not establish inference under persistent ties.
+Earlier retained fit schemas require refitting before reporting or reuse.</p>
     </div>
     <div class="section level2">
     <h2 id="experimental-and-advanced-workflows">Experimental and Advanced Workflows<a class="anchor" aria-label="anchor" href="#experimental-and-advanced-workflows"></a></h2>
@@ -174,8 +175,8 @@ the accompanying <a href="https://jakobjuergens.com/research/#orthogonal-inferen
     </div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>
-    <p><strong>Maintainer</strong>: Jakob Juergens <a href="mailto:info@jakobjuergens.com">info@jakobjuergens.com</a></p>
-<p>Authors:</p><ul><li><p>Jakob Juergens <a href="mailto:info@jakobjuergens.com">info@jakobjuergens.com</a></p></li>
+    <p><strong>Maintainer</strong>: Jakob R. Juergens <a href="mailto:info@jakobjuergens.com">info@jakobjuergens.com</a></p>
+<p>Authors:</p><ul><li><p>Jakob R. Juergens <a href="mailto:info@jakobjuergens.com">info@jakobjuergens.com</a></p></li>
 </ul><p>Other contributors:</p><ul><li><p>Zakareya Chehime (Quality assurance, testing and validation) [contributor]</p></li>
 </ul></div>
 
@@ -184,7 +185,7 @@ the accompanying <a href="https://jakobjuergens.com/research/#orthogonal-inferen
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Jakob Juergens.</p>
+  <p>Developed by Jakob R. Juergens.</p>
 </div>
 
 <div class="pkgdown-footer-right">

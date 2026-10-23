@@ -11,7 +11,7 @@ may be negative or exactly zero through signed cancellation or underflow."></hea
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,7 +34,7 @@ may be negative or exactly zero through signed cancellation or underflow."></hea
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>TDNN weights (asymptotic, k = 1), distance-based ranking</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.2/R/api-weights.R" class="external-link"><code>R/api-weights.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/R/api-weights.R" class="external-link"><code>R/api-weights.R</code></a></small>
       <div class="d-none name"><code>weights_tdnn_asymp.Rd</code></div>
     </div>
 
@@ -127,23 +127,29 @@ asymptotic weights are different constructions; changing the method changes
 the localization rule.</p>
     </div>
     <div class="section level2">
-    <h2 id="duplicate-covariate-blocks">Duplicate-covariate blocks<a class="anchor" aria-label="anchor" href="#duplicate-covariate-blocks"></a></h2>
+    <h2 id="exact-distance-ties">Exact distance ties<a class="anchor" aria-label="anchor" href="#exact-distance-ties"></a></h2>
 
 
-<p>Rows identical on every supplied raw covariate receive the average
-of their assigned rank weights, preserving each block's total mass. This
-includes caller-supplied ranks and signed or unnormalized rank rules.
-Distinct covariate vectors at equal distance remain separate. A warning
-identifies this permutation-invariant modification as outside the paper's
-theory, including for <code>k = 1</code>. Estimator jackknife deletions repeat the
-average over each remaining duplicate block using the selected rule's
-sample-size-n-1 table. For a block at consecutive ranks <code>a:b</code>, the full
-weight is <code>sum(w_n[a:b]) / (b-a+1)</code> per member; after deleting a member,
-each survivor receives <code>sum(w_(n-1)[a:(b-1)]) / (b-a)</code>. A deleted singleton
-contributes zero. The smaller block size must be used in the deletion.
-An exact support edge describes the unaveraged rank
-table; a straddling duplicate block can extend nonzero observation weights
-beyond it. Lower-level rank-only APIs retain their rank-primitive semantics.</p>
+<p>For each target, observations with exactly equal computed distance share
+the average of their assigned rank weights, including distinct covariate
+vectors. Equality is exact represented equality, without an epsilon or
+rounding. Groups may differ by target. Block mass is preserved for signed
+and unnormalized rules. Equal distances are ordered by original row index.
+A bare supplied rank or order matrix defines a strict order and is not
+averaged. A list containing ranks or orders together with <code>dx</code> preserves
+that authoritative permutation and averages by the supplied distances.
+No outcomes, treatments or nuisance values define membership.</p>
+<p>For a block at ranks <code>a:b</code>, each member receives
+<code>sum(w_n[a:b]) / (b-a+1)</code>. Estimator jackknife deletions remove the actual
+observation, update ranks, and average remaining blocks with <code>w_(n-1)</code>.
+If a member is deleted, each survivor receives
+<code>sum(w_(n-1)[a:(b-1)]) / (b-a)</code>; a deleted singleton contributes zero.
+Exact support edges describe the unaveraged rank table; averaging can
+extend nonzero observation weights through a block crossing that edge.
+Lower-level rank-only APIs retain their rank-primitive semantics.</p>
+<p>A warning is emitted once per public call with distance ties. The
+accompanying theory assumes a continuous distance distribution and does
+not establish inference under persistent ties, including for <code>k = 1</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -165,7 +171,7 @@ beyond it. Lower-level rank-only APIs retain their rank-primitive semantics.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Jakob Juergens.</p>
+  <p>Developed by Jakob R. Juergens.</p>
 </div>
 
 <div class="pkgdown-footer-right">

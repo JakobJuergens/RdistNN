@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,7 @@
       <h1>Notation and Package Conventions</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.2/vignettes/notation-and-conventions.Rmd" class="external-link"><code>vignettes/notation-and-conventions.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/vignettes/notation-and-conventions.Rmd" class="external-link"><code>vignettes/notation-and-conventions.Rmd</code></a></small>
       <div class="d-none name"><code>notation-and-conventions.Rmd</code></div>
     </div>
 
@@ -88,9 +88,9 @@ is <code>k = 1</code>.</li>
 <li>
 <code>s</code> does not count retained full-sample neighbors. The
 unaveraged exact rank table reaches rank <code>n - s + k</code>
-(<code>n - s + 1</code> at the default <code>k = 1</code>). A duplicate
-block crossing that edge can give later observations positive averaged
-weight.</li>
+(<code>n - s + 1</code> at the default <code>k = 1</code>). An
+exact-distance group crossing that edge can give later observations
+positive averaged weight.</li>
 <li>Jackknife uncertainty needs <code>s &lt; n</code>; estimate-only
 fits can use <code>s = n</code>.</li>
 </ul>
@@ -114,27 +114,29 @@ overlap interpretations do not carry over to it.</p>
 <div class="section level3">
 <h3 id="numerical-geometry-and-covariance">Numerical geometry and covariance<a class="anchor" aria-label="anchor" href="#numerical-geometry-and-covariance"></a>
 </h3>
-<p>Fresh fits order exact represented distance ties between distinct
-covariate vectors lexicographically by the original supplied columns.
-Within each group of exactly identical localization covariate rows, each
-observation receives the average of the group’s original rank weights.
-The block’s total mass is preserved; individual weights, support and ESS
-can change. No distance tolerance groups nearby values, and outcomes,
-treatments and nuisances do not define groups.</p>
-<p>Each jackknife deletion removes the actual observation, updates
-ranks, and averages the <code>n-1</code> weight table over every
-remaining block. This makes estimates and covariance invariant to
-aligned row permutations up to numerical precision. The package warns
-when duplicate groups occur because the modification is not covered by
-the paper’s theory. Refit tied saved objects created before this policy;
-rank-only utilities without covariates do not infer duplicate
-groups.</p>
+<p>Fresh high-level fits order by represented selected-metric distance
+then original row index. At each target, observations with exactly equal
+distance receive the mean of their assigned rank weights, including
+distinct covariate profiles and zero-weight ranks beyond nominal
+support. The group’s signed or unnormalized mass is preserved;
+individual weights, support and ESS can change. No tolerance or rounding
+groups nearby distances, and signals/nuisances do not define groups.</p>
+<p>Each jackknife deletion removes the actual observation, updates ranks
+and averages the <code>n-1</code> table over every surviving group using
+its remaining size. Aligned row permutations preserve estimates and
+covariance up to numerical precision. The paper assumes a continuous
+distance distribution, under which old and new policies agree almost
+surely. Commands warn because inference for persistent distance ties is
+not established; no uniform MSE improvement is claimed. Refit objects
+created under earlier tie policies. Bare rank/order utilities use strict
+orders unless supplied distances define the groups.</p>
 <p>Saved prediction reuses the fitted training geometry. Fast jackknife
-calculations also freeze it; NP/TDNN/CATE <code>jackknife = "loo"</code>
-refits sample-dependent geometry for each deletion. The two calculations
-can differ. See <code><a href="../reference/distance_mahalanobis.html">?distance_mahalanobis</a></code> for the fitted metric
-and rank-deficient cases. Numerical engine details belong to the
-maintainer reference linked from <a href="https://github.com/JakobJuergens/RdistNN/blob/master/CONTRIBUTING.md" class="external-link">CONTRIBUTING</a>.</p>
+calculations also freeze it; NP/TDNN/CATE/PLQR
+<code>jackknife = "loo"</code> refits sample-dependent geometry for each
+deletion. The two calculations can differ. See
+<code><a href="../reference/distance_mahalanobis.html">?distance_mahalanobis</a></code> for the fitted metric and
+rank-deficient cases. Numerical engine details belong to the maintainer
+reference linked from <a href="https://github.com/JakobJuergens/RdistNN/blob/master/CONTRIBUTING.md" class="external-link">CONTRIBUTING</a>.</p>
 </div>
 </div>
 <div class="section level2">
@@ -500,7 +502,7 @@ bands.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Jakob Juergens.</p>
+  <p>Developed by Jakob R. Juergens.</p>
 </div>
 
 <div class="pkgdown-footer-right">

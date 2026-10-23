@@ -17,6 +17,38 @@ open a PR to `master`, complete review and required checks, then
 squash-merge. Direct pushes to `master` require an explicit override.
 Keep development current with the reviewed production state.
 
+The first development commit after production `0.1.x` establishes
+`0.1.x.9000`. Each subsequent development commit increments the fourth
+component, including small changes: `0.1.x.9001`, `0.1.x.9002`, and so
+on. Uncommitted drafts do not advance this sequence. Read the current
+version from `DESCRIPTION` and the current `NEWS.md` heading; update
+both together. By default, each production merge becomes `0.1.(x+1)`;
+the maintainer may choose another version. After that release, append
+`.9000` to the selected production version to start development. For
+example, the cycle after production `0.1.2` starts at `0.1.2.9000`, then
+`0.1.2.9001`; its next default production version is `0.1.3`.
+
+## Current development compatibility
+
+Use the current documented interfaces and complete current fit schemas.
+During this early development stage, remove compatibility layers for
+older package versions: retired aliases and wrappers, saved-state
+upgraders and migration shims. Keep one current implementation unless
+the maintainer explicitly requests an exception. Older, incomplete or
+inconsistent fits require an actionable refit error; do not silently
+reconstruct or repair them. Current fits must still survive
+serialization and support documented reuse.
+
+Document intentional interface changes and update their regression
+tests. Preserve historical changelogs, released tags/assets and frozen
+scientific evidence. Compatibility and deprecation commitments can be
+revisited when the packages stabilize; prior production releases do not
+change the current policy.
+
+See the [lifecycle
+policy](https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/07_lifecycle_and_deprecation_policy.md)
+for the package lifecycle and release context.
+
 ## Local setup
 
 Use R 4.1.0 or newer and a C++17 toolchain; OpenMP is optional. From the
@@ -76,9 +108,12 @@ R is the numerical reference for shared methods. Compare identical
 inputs, row order, targets, fitted geometry, signals, weight controls
 and covariance definitions. Require exact discrete decisions and
 justified numeric tolerances; force and establish each engine, then test
-automatic fallback separately. Keep independent analytic/deletion
-references. Do not regenerate golden values merely to make a failure
-pass. The [compiled-code
+automatic fallback separately. High-level distance ties require exact
+represented selected-metric groups per target, rank-weight averaging
+over observations and actual-survivor deletion references. Bare supplied
+orders remain strict unless distances accompany them. Keep independent
+analytic/deletion references. Do not regenerate golden values merely to
+make a failure pass. The [compiled-code
 policy](https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/10_rcpp_and_compiled_code_policy.md)
 owns the arithmetic contract.
 

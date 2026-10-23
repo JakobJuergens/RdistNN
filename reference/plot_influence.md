@@ -10,13 +10,7 @@ weight-concentration diagnostics in the caption.
 ## Usage
 
 ``` r
-plot_influence(
-  object,
-  targets = NULL,
-  pseudo_outcome = NULL,
-  n_label = 3L,
-  ...
-)
+plot_influence(object, targets = NULL, n_label = 3L)
 ```
 
 ## Arguments
@@ -31,19 +25,10 @@ plot_influence(
   Optional integer vector of target ids (defaults to the
   first/median-`n_eff`/last subset above eight targets).
 
-- pseudo_outcome:
-
-  Optional numeric vector of length `n`; used when the fit does not
-  store the pseudo-outcome.
-
 - n_label:
 
   Integer; number of largest absolute contributions to label per target
   (default `3`).
-
-- ...:
-
-  Ignored; reserved for future options.
 
 ## Value
 
@@ -51,11 +36,11 @@ A ggplot object.
 
 ## Details
 
-The pseudo-outcome is taken from the fit; supply `pseudo_outcome` for
-fits that do not store it. For CLATE the contribution is w_ij (phi_Yi -
-theta_j phi_Di), using both retained signals at the target's fitted
-ratio. These are weighted score residuals, not delete-one pseudo-values
-or estimated individual effects.
+The pseudo-outcome is taken from the fit's retained signal. Refit if the
+retained signal is missing or invalid. For CLATE the contribution is
+w_ij (phi_Yi - theta_j phi_Di), using both retained signals at the
+target's fitted ratio. These are weighted score residuals, not
+delete-one pseudo-values or estimated individual effects.
 
 ## Examples
 

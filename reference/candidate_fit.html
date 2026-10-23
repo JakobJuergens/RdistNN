@@ -19,7 +19,7 @@ full DNN weight support."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,7 +42,7 @@ full DNN weight support."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Extract one candidate view from a grid fit</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.2/R/candidate-fit.R" class="external-link"><code>R/candidate-fit.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/R/candidate-fit.R" class="external-link"><code>R/candidate-fit.R</code></a></small>
       <div class="d-none name"><code>candidate_fit.Rd</code></div>
     </div>
 
@@ -126,12 +126,13 @@ frozen ranks; nuisance models and geometry are never refitted.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Reconstructed weights use both cached ranks and retained raw covariates,
-averaging within exactly identical covariate blocks as in <code><a href="weights_matrix.html">weights_matrix()</a></code>.
+    <p>Reconstructed weights use cached ranks and target-specific distance groups,
+averaging within exact-distance blocks as in <code><a href="weights_matrix.html">weights_matrix()</a></code>.
 Candidate uncertainty redistributes each deleted member's block mass over
-the survivors using the <code>n-1</code> rank table. A warning identifies this
-modification as outside the paper's theory. Tied fits created before this
-policy require refitting before candidate extraction.</p>
+the survivors using the <code>n-1</code> rank table. Calls with ties warn once: the
+accompanying theory assumes a continuous distance distribution and does not
+establish inference under persistent ties. Earlier retained fit schemas
+require refitting before candidate extraction.</p>
 <p>Candidate IDs identify grid rows, not unique values of <code>s</code>. Repeated resolved
 orders remain separate candidates, and plots distinguish their IDs in labels.
 Extraction validates retained controls, target IDs and cached ranks; an
@@ -167,7 +168,7 @@ functionality in this release; see <code><a href="plqr_dnn.html">plqr_dnn()</a><
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Jakob Juergens.</p>
+  <p>Developed by Jakob R. Juergens.</p>
 </div>
 
 <div class="pkgdown-footer-right">

@@ -174,11 +174,13 @@ saving a simulation configuration.
 
 ## Fault tolerance
 
-Each replicate is wrapped in `tryCatch`. A total rep failure (e.g. DGP
-draw error) records `NA` for all metrics and all methods and emits a
-warning; per-method failures are handled inside
-[`sim_cate_one_rep()`](https://JakobJuergens.github.io/RdistNN/reference/sim_cate_one_rep.md).
-Registered GRF route metadata is retained in both replacement paths.
+Explicitly declared method failures and status-bearing unavailable
+results retain their metric rows and registered method metadata. One
+aggregate warning identifies the affected methods; the `method_failures`
+attribute retains declared failure reasons and replicate seeds. DGP
+failures, opaque external errors, package errors, interrupts, resource
+failures and warnings promoted to errors propagate. Caller warning
+handlers retain their usual control.
 [`summarise_sim_results()`](https://JakobJuergens.github.io/RdistNN/reference/summarise_sim_results.md)
 reports `n_failed` per candidate-aware group.
 

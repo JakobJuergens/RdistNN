@@ -108,9 +108,9 @@ expectation over the i.i.d. covariate sample and complete-DNN
 exchangeability give \$\$E(\mathrm{localized\\truth})=\alpha_s(x_0).\$\$
 The `localization_drift` field stores realized localization drift. The
 estimator remainder combines centered score variation with fitted-state
-effects. Failed methods have `NA` for all metric columns and
-`status = "failed"`; registered route metadata is retained when it is
-known from the selected method.
+effects. Declared method failures have `NA` for all metric columns and
+`status = "failed"`; unexpected method errors propagate. Registered
+route metadata is retained when it is known from the selected method.
 
 ## Examples
 

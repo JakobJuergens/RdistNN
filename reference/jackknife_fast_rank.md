@@ -17,8 +17,8 @@ jackknife_fast_rank(ranks, a, phi, normalize = TRUE)
   Integer matrix (T x (s+1)) of positive neighbor indices (1-based).
   Each row t lists the first s+1 neighbors of target t. Use distinct
   indices within each row for observation deletion. For repeated
-  indices, the legacy convention adds each position's replacement
-  change.
+  indices, the repeated-index convention adds each position's
+  replacement change.
 
 - a:
 

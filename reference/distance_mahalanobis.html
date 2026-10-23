@@ -17,7 +17,7 @@ the centered design is numerically rank deficient."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,7 @@ the centered design is numerically rank deficient."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Mahalanobis distance spec (with one-time factorization)</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.2/R/dist_mahal.R" class="external-link"><code>R/dist_mahal.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/R/dist_mahal.R" class="external-link"><code>R/dist_mahal.R</code></a></small>
       <div class="d-none name"><code>distance_mahalanobis.Rd</code></div>
     </div>
 
@@ -76,10 +76,13 @@ original covariate units; changing individual column units can therefore
 change the retained numerical rank. The factor is reused through <code>ctx</code>,
 including for subsets and new targets, following <code><a href="distance_l2_scaled.html">distance_l2_scaled()</a></code>.
 Euclidean norms after projection use the selected C++ or R distance engine.
-The explicit rank policy can change neighbors relative to older fits that
-truncated covariance singular values after an inverse failed. Different
-linear-algebra libraries can still differ at a numerical rank boundary.</p>
-<p>Particularly useful for DGPs with correlated covariates (e.g.\
+SVD fitting and projection rounding can change represented distance equality
+or ordering across packages or platforms, even for well-conditioned full-rank
+designs away from the cutoff. Ranks, exact-distance groups, weights and
+estimates may then differ. Group averaging uses each fit's computed distances
+and cannot reconcile these differences. See the
+<a href="https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/18_geometry_and_covariance_arithmetic.md" class="external-link">numerical geometry contract</a>.</p>
+<p>Particularly useful for DGPs with correlated covariates (e.g.
 <code>"dgp5_correlated"</code>) where L2 or diagonal-scaled L2 distances fail to
 adapt to the off-diagonal covariance structure.</p>
     </div>
@@ -105,7 +108,7 @@ adapt to the off-diagonal covariance structure.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Jakob Juergens.</p>
+  <p>Developed by Jakob R. Juergens.</p>
 </div>
 
 <div class="pkgdown-footer-right">

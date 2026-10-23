@@ -35,6 +35,7 @@ number of reporting profiles and the local effective sample size.
 
 ``` r
 fit <- np_dnn(X = matrix(1:12), Y = sin(1:12), x0 = 4, s = 3)
+#> Warning: Exact distance ties detected; weights are averaged within distance blocks, including jackknife deletions. The accompanying theory assumes a continuous distance distribution and does not establish inference under persistent ties.
 nobs(fit)
 #> [1] 12
 ```

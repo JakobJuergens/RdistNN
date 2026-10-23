@@ -11,7 +11,7 @@ it never divides individual signals or deleted component averages."></head><body
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,7 +34,7 @@ it never divides individual signals or deleted component averages."></head><body
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>DNN inference for a ratio of two supplied signal averages</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.2/R/user-dnn-affine-ratio.R" class="external-link"><code>R/user-dnn-affine-ratio.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/R/user-dnn-affine-ratio.R" class="external-link"><code>R/user-dnn-affine-ratio.R</code></a></small>
       <div class="d-none name"><code>affine_ratio_dnn.Rd</code></div>
     </div>
 
@@ -107,11 +107,12 @@ sample vectors.</p></dd>
 
 <dt id="arg-distance">distance<a class="anchor" aria-label="anchor" href="#arg-distance"></a></dt>
 <dd><p>Existing distance specification, registered name or function.
-Geometry is frozen across deletions. Exact distance ties use original
-covariates lexicographically. Identical raw covariate rows share averaged
-rank-weight mass, including each deletion's surviving block. This
-permutation-invariant modification is outside the paper's theory and
-warns. Distinct vectors at equal distance are not averaged.</p></dd>
+Geometry is frozen across deletions. Exactly equal computed distances
+share block-averaged rank-weight mass, including each deletion's surviving
+block. Equality is represented equality without a tolerance; groups are
+target-specific. Distance ties are ordered by original row index. The
+accompanying theory assumes a continuous distance distribution and does
+not establish inference under persistent ties; tied calls emit one warning.</p></dd>
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
@@ -185,9 +186,12 @@ $$(V_{YY}+\hat\theta^2 V_{DD}-2\hat\theta V_{YD})/\hat\Delta_D^2.$$
 The computation uses centered deletion scores to retain cross-covariance.
 theta_vcov is already on the estimator scale; theta_omega multiplies it by
 neff. Do not divide theta_vcov by neff again.</p>
-<p>Signed signals and finite negative denominators are retained. At exact zero
-denominator the components remain available and the ratio is NA. Computational
-statuses do not verify causal assumptions, learner stability, point-target
+<p>Signed signals and finite negative denominators are retained. At an exact zero
+denominator, finite components remain available and the ratio is NA. A nonfinite
+computed full numerator or denominator component is returned as <code>NA</code> with
+<code>ratio_status = "component_overflow"</code>; finite components and the original
+supplied signals are preserved. Computational statuses do not verify causal
+assumptions, learner stability, point-target
 undersmoothing or weak-instrument-uniform validity.
 If nonzero component variation underflows its covariance, uncertainty is
 unavailable with numerical_failure status; it is not treated as deterministic.</p>
@@ -221,7 +225,7 @@ re-registering the distance name does not change an existing fit.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Jakob Juergens.</p>
+  <p>Developed by Jakob R. Juergens.</p>
 </div>
 
 <div class="pkgdown-footer-right">

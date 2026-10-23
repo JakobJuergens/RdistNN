@@ -32,14 +32,15 @@ first stage or discarding the component cross-covariance gives a
 different calculation. Deletions hold supplied signals and geometry
 fixed; nuisance models are not refitted.
 
-With identical reporting covariates, both signals use the same averaged
-block weights. A deletion reduces that block’s size and redistributes
-the `n-1` table’s mass among its remaining members before forming paired
+At each target, observations with exactly equal represented
+selected-metric distance use the same averaged rank weights for both
+signals. A deletion reduces that block’s size and redistributes the
+`n-1` table’s mass among its remaining members before forming paired
 covariance. This preserves numerator/denominator dependence and
 row-permutation invariance up to numerical precision. The accompanying
-warning marks a practical change outside the paper’s theory; it does not
-establish valid inference for discrete covariate designs. [The weight
-guide](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.html#identical-covariate-rows)
+warning records that inference with persistent distance ties is not
+established. [The weight
+guide](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.html#exact-distance-ties)
 gives a worked deletion example. Old tied saved fits require refitting.
 
 ## Keep the variance scales distinct

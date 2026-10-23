@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,7 @@
       <h1>Local IV-GMM Estimation</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.2/vignettes/local-iv-estimation.Rmd" class="external-link"><code>vignettes/local-iv-estimation.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/vignettes/local-iv-estimation.Rmd" class="external-link"><code>vignettes/local-iv-estimation.Rmd</code></a></small>
       <div class="d-none name"><code>local-iv-estimation.Rmd</code></div>
     </div>
 
@@ -71,12 +71,12 @@ with <a href="getting-started.html">Getting started</a> and <a href="conditional
 <code><a href="../reference/gmm_dnn.html">gmm_dnn()</a></code>. The example uses the doubly robust IV moment
 model created by <code><a href="../reference/gmm_model_dr_iv.html">gmm_model_dr_iv()</a></code> and the IV simulation
 DGPs exposed through <code><a href="../reference/sim_iv_data.html">sim_iv_data()</a></code>.</p>
-<p>The localization step uses the shared duplicate-covariate rule:
-exactly identical raw X rows receive averaged weights, including
-redistribution over surviving block members in each jackknife deletion.
-Instruments, regressors and nuisance predictions do not define these
-groups. The warning about this modification being outside the paper’s
-theory also applies to GMM; see <a href="dnn-weights.html#identical-covariate-rows">DNN weights and
+<p>The localization step uses the shared exact-distance rule:
+observations at exactly equal represented selected-metric distance to
+each target receive the mean of their assigned rank weights, including
+each deletion’s surviving group. Instruments, regressors and nuisance
+predictions do not define these groups. The warning that inference with
+persistent distance ties is not established also applies to GMM; see <a href="dnn-weights.html#exact-distance-ties">DNN weights and
 ranks</a>.</p>
 <p>These synthetic IV examples are experimental benchmarks. The paper
 replication is described in <a href="paper-affine-replication.html">Paper replication</a>.</p>
@@ -247,7 +247,7 @@ localization diagnostics.</li>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Jakob Juergens.</p>
+  <p>Developed by Jakob R. Juergens.</p>
 </div>
 
 <div class="pkgdown-footer-right">

@@ -6,18 +6,18 @@ estimates, overlap mass, local propensity, and cumulative weight share;
 CLATE overlap describes the instrument. Stored tuning grids add a sensitivity panel.
 nonparametric-regression dashboards use estimates, the diagnostics
 facets, and the weight decay and concentration views. Panels whose
-inputs are unavailable are substituted (the diagnostics facets take the
-place of a missing overlap panel) or dropped rather than failing the
-dashboard."><meta property="og:description" content="A patchwork composition of the estimate panel with the weight and
+optional retained inputs are absent are substituted (the diagnostics facets
+take the place of a missing overlap panel) or dropped. Invalid plot options,
+malformed retained state and unexpected rendering failures propagate."><meta property="og:description" content="A patchwork composition of the estimate panel with the weight and
 overlap diagnostics, annotated with the fit's metadata (n, m, k,
 s with provenance, distance, and jackknife type). CATE and CLATE dashboards use
 estimates, overlap mass, local propensity, and cumulative weight share;
 CLATE overlap describes the instrument. Stored tuning grids add a sensitivity panel.
 nonparametric-regression dashboards use estimates, the diagnostics
 facets, and the weight decay and concentration views. Panels whose
-inputs are unavailable are substituted (the diagnostics facets take the
-place of a missing overlap panel) or dropped rather than failing the
-dashboard."></head><body>
+optional retained inputs are absent are substituted (the diagnostics facets
+take the place of a missing overlap panel) or dropped. Invalid plot options,
+malformed retained state and unexpected rendering failures propagate."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -25,7 +25,7 @@ dashboard."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,7 +48,7 @@ dashboard."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Compose a diagnostics dashboard for a fitted object</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.2/R/plot-dashboard.R" class="external-link"><code>R/plot-dashboard.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/R/plot-dashboard.R" class="external-link"><code>R/plot-dashboard.R</code></a></small>
       <div class="d-none name"><code>plot_dashboard.Rd</code></div>
     </div>
 
@@ -60,9 +60,9 @@ estimates, overlap mass, local propensity, and cumulative weight share;
 CLATE overlap describes the instrument. Stored tuning grids add a sensitivity panel.
 nonparametric-regression dashboards use estimates, the diagnostics
 facets, and the weight decay and concentration views. Panels whose
-inputs are unavailable are substituted (the diagnostics facets take the
-place of a missing overlap panel) or dropped rather than failing the
-dashboard.</p>
+optional retained inputs are absent are substituted (the diagnostics facets
+take the place of a missing overlap panel) or dropped. Invalid plot options,
+malformed retained state and unexpected rendering failures propagate.</p>
     </div>
 
     <div class="section level2">
@@ -127,7 +127,7 @@ of ggplot objects with a message.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Jakob Juergens.</p>
+  <p>Developed by Jakob R. Juergens.</p>
 </div>
 
 <div class="pkgdown-footer-right">

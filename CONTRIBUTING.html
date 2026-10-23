@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,7 +30,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Contributing to RdistNN</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.2/CONTRIBUTING.md" class="external-link"><code>CONTRIBUTING.md</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/CONTRIBUTING.md" class="external-link"><code>CONTRIBUTING.md</code></a></small>
     </div>
 
 <div id="contributing-to-rdistnn" class="section level1">
@@ -39,6 +39,13 @@
 <div class="section level2">
 <h2 id="development-and-production-workflow">Development and production workflow<a class="anchor" aria-label="anchor" href="#development-and-production-workflow"></a></h2>
 <p>Work on local <code>development</code> and keep it unpublished until publication is authorized. Branches in a public GitHub repository are public when pushed. For an authorized production update, publish a review branch, open a PR to <code>master</code>, complete review and required checks, then squash-merge. Direct pushes to <code>master</code> require an explicit override. Keep development current with the reviewed production state.</p>
+<p>The first development commit after production <code>0.1.x</code> establishes <code>0.1.x.9000</code>. Each subsequent development commit increments the fourth component, including small changes: <code>0.1.x.9001</code>, <code>0.1.x.9002</code>, and so on. Uncommitted drafts do not advance this sequence. Read the current version from <code>DESCRIPTION</code> and the current <code>NEWS.md</code> heading; update both together. By default, each production merge becomes <code>0.1.(x+1)</code>; the maintainer may choose another version. After that release, append <code>.9000</code> to the selected production version to start development. For example, the cycle after production <code>0.1.2</code> starts at <code>0.1.2.9000</code>, then <code>0.1.2.9001</code>; its next default production version is <code>0.1.3</code>.</p>
+</div>
+<div class="section level2">
+<h2 id="current-development-compatibility">Current development compatibility<a class="anchor" aria-label="anchor" href="#current-development-compatibility"></a></h2>
+<p>Use the current documented interfaces and complete current fit schemas. During this early development stage, remove compatibility layers for older package versions: retired aliases and wrappers, saved-state upgraders and migration shims. Keep one current implementation unless the maintainer explicitly requests an exception. Older, incomplete or inconsistent fits require an actionable refit error; do not silently reconstruct or repair them. Current fits must still survive serialization and support documented reuse.</p>
+<p>Document intentional interface changes and update their regression tests. Preserve historical changelogs, released tags/assets and frozen scientific evidence. Compatibility and deprecation commitments can be revisited when the packages stabilize; prior production releases do not change the current policy.</p>
+<p>See the <a href="https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/07_lifecycle_and_deprecation_policy.md" class="external-link">lifecycle policy</a> for the package lifecycle and release context.</p>
 </div>
 <div class="section level2">
 <h2 id="local-setup">Local setup<a class="anchor" aria-label="anchor" href="#local-setup"></a></h2>
@@ -76,7 +83,7 @@
 </div>
 <div class="section level2">
 <h2 id="r-and-stata-parity">R and Stata parity<a class="anchor" aria-label="anchor" href="#r-and-stata-parity"></a></h2>
-<p>R is the numerical reference for shared methods. Compare identical inputs, row order, targets, fitted geometry, signals, weight controls and covariance definitions. Require exact discrete decisions and justified numeric tolerances; force and establish each engine, then test automatic fallback separately. Keep independent analytic/deletion references. Do not regenerate golden values merely to make a failure pass. The <a href="https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/10_rcpp_and_compiled_code_policy.md" class="external-link">compiled-code policy</a> owns the arithmetic contract.</p>
+<p>R is the numerical reference for shared methods. Compare identical inputs, row order, targets, fitted geometry, signals, weight controls and covariance definitions. Require exact discrete decisions and justified numeric tolerances; force and establish each engine, then test automatic fallback separately. High-level distance ties require exact represented selected-metric groups per target, rank-weight averaging over observations and actual-survivor deletion references. Bare supplied orders remain strict unless distances accompany them. Keep independent analytic/deletion references. Do not regenerate golden values merely to make a failure pass. The <a href="https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/10_rcpp_and_compiled_code_policy.md" class="external-link">compiled-code policy</a> owns the arithmetic contract.</p>
 <p>The Stata checkout’s <code>tests/R_TEST_CROSSWALK.md</code> maps shared and R-only contracts. Its <code>tools/generate_r_*.R</code> scripts own cross-language fixtures, including reporting and saved-fit references. Run matching Stata regressions after an intentional shared-contract change. PLQR parity concerns supplied-coefficient moments; Stata has no density-backed coefficient inference.</p>
 <p>With both checkouts present, verify mirrored native headers from the R root:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="ex">python3</span> ../RdistNN_stata/tools/ci/package_hygiene.py <span class="at">--r-root</span> .</span></code></pre></div>
@@ -93,7 +100,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Jakob Juergens.</p>
+  <p>Developed by Jakob R. Juergens.</p>
 </div>
 
 <div class="pkgdown-footer-right">

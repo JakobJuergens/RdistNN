@@ -17,7 +17,7 @@ weight-concentration diagnostics in the caption."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,7 @@ weight-concentration diagnostics in the caption."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Plot per-observation contributions to a CATE or CLATE estimating equation</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.2/R/plot-influence.R" class="external-link"><code>R/plot-influence.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/R/plot-influence.R" class="external-link"><code>R/plot-influence.R</code></a></small>
       <div class="d-none name"><code>plot_influence.Rd</code></div>
     </div>
 
@@ -55,13 +55,7 @@ weight-concentration diagnostics in the caption.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">plot_influence</span><span class="op">(</span></span>
-<span>  <span class="va">object</span>,</span>
-<span>  targets <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  pseudo_outcome <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  n_label <span class="op">=</span> <span class="fl">3L</span>,</span>
-<span>  <span class="va">...</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">plot_influence</span><span class="op">(</span><span class="va">object</span>, targets <span class="op">=</span> <span class="cn">NULL</span>, n_label <span class="op">=</span> <span class="fl">3L</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -78,18 +72,9 @@ default).</p></dd>
 first/median-<code>n_eff</code>/last subset above eight targets).</p></dd>
 
 
-<dt id="arg-pseudo-outcome">pseudo_outcome<a class="anchor" aria-label="anchor" href="#arg-pseudo-outcome"></a></dt>
-<dd><p>Optional numeric vector of length <code>n</code>; used when
-the fit does not store the pseudo-outcome.</p></dd>
-
-
 <dt id="arg-n-label">n_label<a class="anchor" aria-label="anchor" href="#arg-n-label"></a></dt>
 <dd><p>Integer; number of largest absolute contributions to
 label per target (default <code>3</code>).</p></dd>
-
-
-<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Ignored; reserved for future options.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -98,8 +83,8 @@ label per target (default <code>3</code>).</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The pseudo-outcome is taken from the fit; supply <code>pseudo_outcome</code> for
-fits that do not store it.
+    <p>The pseudo-outcome is taken from the fit's retained signal. Refit if
+the retained signal is missing or invalid.
 For CLATE the contribution is w_ij (phi_Yi - theta_j phi_Di), using both
 retained signals at the target's fitted ratio. These are weighted score
 residuals, not delete-one pseudo-values or estimated individual effects.</p>
@@ -128,7 +113,7 @@ residuals, not delete-one pseudo-values or estimated individual effects.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Jakob Juergens.</p>
+  <p>Developed by Jakob R. Juergens.</p>
 </div>
 
 <div class="pkgdown-footer-right">

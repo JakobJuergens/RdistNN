@@ -51,8 +51,8 @@ resolved order. If two tuning settings resolve to the same `s`, they
 remain distinct candidates even when their computation is shared. Plot
 labels include their identifiers when needed to distinguish them.
 Candidate reconstruction validates the retained controls, target
-identities and cached ranks; refit an incomplete or inconsistent saved
-object.
+identities, cached ranks, per-target distance groups and selected
+policy; refit an incomplete or inconsistent saved object.
 
 CATE and CLATE use the same `tuning_mode` convention. See [Getting
 started](https://JakobJuergens.github.io/RdistNN/articles/getting-started.md)

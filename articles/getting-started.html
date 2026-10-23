@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,7 @@
       <h1>Getting started: CATE and regression</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.2/vignettes/getting-started.Rmd" class="external-link"><code>vignettes/getting-started.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/vignettes/getting-started.Rmd" class="external-link"><code>vignettes/getting-started.Rmd</code></a></small>
       <div class="d-none name"><code>getting-started.Rmd</code></div>
     </div>
 
@@ -87,7 +87,7 @@ choosing a nuisance learner.</p>
 <span>  data <span class="op">=</span> <span class="va">df</span>, x_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X1"</span>, <span class="st">"X2"</span><span class="op">)</span>, y_col <span class="op">=</span> <span class="st">"Y"</span>, t_col <span class="op">=</span> <span class="st">"D"</span>,</span>
 <span>  m0_col <span class="op">=</span> <span class="st">"m0_oracle"</span>, m1_col <span class="op">=</span> <span class="st">"m1_oracle"</span>, e_col <span class="op">=</span> <span class="st">"e_oracle"</span>,</span>
 <span>  x0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, k <span class="op">=</span> <span class="fl">1L</span>, se <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  return <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"W"</span>, <span class="st">"dx"</span><span class="op">)</span></span>
+<span>  return <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"W"</span>, <span class="st">"dx"</span>, <span class="st">"psi"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit_cate</span><span class="op">)</span></span>
@@ -179,16 +179,16 @@ observations retain dependence between profiles. Valid contrast
 inference requires the relevant joint assumptions; pointwise intervals
 alone do not establish it.</p>
 <p>The documented sampling framework uses independent observations and
-supplies neither cluster nor survey-design inference. Exact distance
-ties use the original covariates lexicographically in their supplied
-column order. Identical localization covariate rows receive their
-block’s average weight, with the same rule applied to every deletion’s
-remaining block. Outcomes, treatments and nuisance values do not define
-the groups. Aligned row permutations then preserve estimates and
-covariance up to numerical precision. A warning identifies this
-practical modification, which is not covered by the paper’s theory.
-Individual weights, support and ESS can change. The reported
-<code>s/n</code> is descriptive; it is not a calibrated inference
+supplies neither cluster nor survey-design inference. At each target,
+observations with exactly equal represented distance under the selected
+metric share the mean of their assigned rank weights, including each
+deletion’s surviving group. No tolerance merges nearby distances, and
+signals/nuisances do not define groups. Aligned row permutations
+preserve estimates and covariance up to numerical precision. Individual
+weights, support and ESS can change. The paper assumes a continuous
+distance distribution, under which old and new policies agree almost
+surely; inference with persistent distance ties is not established. The
+reported <code>s/n</code> is descriptive, not a calibrated inference
 threshold.</p>
 </div>
 <div class="section level3">
@@ -268,9 +268,9 @@ supported in the implementation.</p>
 nearest-neighbor truncation. The unaveraged exact rank table has support
 through rank <code>n - s + k</code> (<code>n - s + 1</code> for
 <code>k = 1</code>). Block averaging can extend nonzero observation
-weights to the end of an identical-covariate block crossing that edge.
-The optional <code>neighbors</code> extra reports the first
-<code>k</code> neighbors, rather than the full weight support.</p>
+weights to the end of an exact-distance group crossing that edge. The
+optional <code>neighbors</code> extra reports the first <code>k</code>
+neighbors, rather than the full weight support.</p>
 <p>For sensitivity analysis, compare the paper’s candidate orders
 without changing the primary result:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
@@ -336,7 +336,7 @@ views:</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">wt</span><span class="op">$</span><span class="va">W</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 180   2</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/vector.html" class="external-link">as.vector</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/crossprod.html" class="external-link">crossprod</a></span><span class="op">(</span><span class="va">wt</span><span class="op">$</span><span class="va">W</span>, <span class="va">fit_cate</span><span class="op">$</span><span class="va">psi</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.03588061 0.01509280 0.01509280 0.03588061</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.562277 1.169279</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="further-reading">Further reading<a class="anchor" aria-label="anchor" href="#further-reading"></a>
@@ -370,7 +370,7 @@ articles.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Jakob Juergens.</p>
+  <p>Developed by Jakob R. Juergens.</p>
 </div>
 
 <div class="pkgdown-footer-right">

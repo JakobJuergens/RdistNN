@@ -75,17 +75,17 @@ estimator-specific. The underlying toolkit combines:
   [`plot_weights()`](https://JakobJuergens.github.io/RdistNN/reference/plot_weights.md)
   (requires ggplot2).
 
-## Identical localization covariates
+## Exact distance ties
 
-Covariate-aware estimators average weights within exactly identical raw
-covariate blocks, including every jackknife deletion's surviving
-members. The package warns because this permutation-invariant
-modification is not covered by the paper's theory. It can change
-observation weights, support and effective sample size. See
-[`weights_matrix()`](https://JakobJuergens.github.io/RdistNN/reference/weights_matrix.md)
-for the rule; rank-only utilities without covariates cannot infer
-duplicate groups. Refit tied saved objects created before this policy
-before reporting or reusing them.
+Distance-based estimators average rank weights within exactly equal
+computed distances, separately for every target, including each
+deletion's surviving members. Block mass is preserved for signed and
+unnormalized rules. Equality uses represented values without a
+tolerance. Bare ranks/orders remain strict; adding `dx` metadata enables
+averaging while preserving supplied permutations. Calls with ties warn
+once: the accompanying theory assumes a continuous distance distribution
+and does not establish inference under persistent ties. Earlier retained
+fit schemas require refitting before reporting or reuse.
 
 ## Experimental and Advanced Workflows
 
@@ -173,11 +173,11 @@ does not change other packages' thread settings.
 
 ## Author
 
-**Maintainer**: Jakob Juergens <info@jakobjuergens.com>
+**Maintainer**: Jakob R. Juergens <info@jakobjuergens.com>
 
 Authors:
 
-- Jakob Juergens <info@jakobjuergens.com>
+- Jakob R. Juergens <info@jakobjuergens.com>
 
 Other contributors:
 

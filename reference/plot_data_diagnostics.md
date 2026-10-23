@@ -43,7 +43,7 @@ plot_data_diagnostics(fit)
 #>          top1_weight_share top5_weight_share top10_weight_share
 #> target_1         0.1666667         0.6120561          0.8637521
 #>          n_nonzero_weight distance_diagnostics_available radius_rank_k
-#> target_1               46                          FALSE            NA
+#> target_1               51                          FALSE            NA
 #>          radius_rank_s weighted_mean_distance weighted_median_distance
 #> target_1            NA                     NA                       NA
 #>          tuning_source tuning_name tuning_default_s tuning_grid_available

@@ -8,7 +8,7 @@ bias-cancelling combination does relative to its components.
 ## Usage
 
 ``` r
-plot_tdnn_scales(object, X = NULL, Y = NULL, ...)
+plot_tdnn_scales(object, ...)
 ```
 
 ## Arguments
@@ -17,10 +17,6 @@ plot_tdnn_scales(object, X = NULL, Y = NULL, ...)
 
   A `tdnn_np_result` from
   [`np_tdnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_tdnn.md).
-
-- X, Y:
-
-  Optional training data; used when the fit does not store it.
 
 - ...:
 

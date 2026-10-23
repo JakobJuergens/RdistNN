@@ -11,7 +11,7 @@ fitted-nuisance uncertainty.
 ## Usage
 
 ``` r
-plot_calibration(object, residuals = NULL, level = 0.95, ...)
+plot_calibration(object, level = 0.95)
 ```
 
 ## Arguments
@@ -20,18 +20,9 @@ plot_calibration(object, residuals = NULL, level = 0.95, ...)
 
   A `plqr_result` with the weight matrix `W` stored (the default).
 
-- residuals:
-
-  Optional numeric vector of length `n` of quantile residuals; used when
-  the fit does not store the indicator.
-
 - level:
 
   Confidence level of the reference band (default `0.95`).
-
-- ...:
-
-  Ignored; reserved for future options.
 
 ## Value
 
@@ -39,9 +30,8 @@ A ggplot object.
 
 ## Details
 
-The below-threshold indicator is stored on the fit; alternatively,
-supply `residuals` (`Y - D' theta - g`, length `n`), whose non-positive
-entries define the indicator.
+The below-threshold indicator is taken from the fit's retained state.
+Refit if this indicator is missing or invalid.
 
 ## Lifecycle
 

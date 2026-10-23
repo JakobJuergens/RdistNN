@@ -9,7 +9,7 @@ by np_tdnn(). Estimates are conditional means, not CATE coefficients."></head><b
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,7 +32,7 @@ by np_tdnn(). Estimates are conditional means, not CATE coefficients."></head><b
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Reporting and prediction for nonparametric regression results</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.2/R/user-dnn-np-methods.R" class="external-link"><code>R/user-dnn-np-methods.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/R/user-dnn-np-methods.R" class="external-link"><code>R/user-dnn-np-methods.R</code></a></small>
       <div class="d-none name"><code>np_result.Rd</code></div>
     </div>
 
@@ -154,29 +154,32 @@ the original fit used <code>se = FALSE</code>, provided the orders permit deleti
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="np_dnn.html">np_dnn</a></span><span class="op">(</span>X <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">7</span>, ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>, X0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">5</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>              Y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">1</span>, <span class="fl">4</span>, <span class="fl">3</span>, <span class="fl">6</span>, <span class="fl">5</span>, <span class="fl">7</span><span class="op">)</span>, s <span class="op">=</span> <span class="fl">3</span>, return <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Exact distance ties detected; weights are averaged within distance blocks, including jackknife deletions. The accompanying theory assumes a continuous distance distribution and does not establish inference under persistent ties.</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> target_1 target_2 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2.114286 4.828571 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2.228571 5.028571 </span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;summary.np_result&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   localization: s = 3, s/n = 0.429</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          estimate std.error statistic   p.value conf.low conf.high</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> target_1    2.114    0.9726     2.174 2.971e-02   0.2081     4.021</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> target_2    4.829    1.0100     4.782 1.732e-06   2.8500     6.807</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> target_1    2.229    1.0160     2.193 2.827e-02   0.2373     4.220</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> target_2    5.029    0.8675     5.796 6.773e-09   3.3280     6.729</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Exact distance ties detected; weights are averaged within distance blocks, including jackknife deletions. The accompanying theory assumes a continuous distance distribution and does not establish inference under persistent ties.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>           target_1  target_2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> target_1 0.9459184 0.1111224</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> target_2 0.1111224 1.0193878</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> target_1 1.0322449 0.1215306</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> target_2 0.1215306 0.7526020</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>           conf.low conf.high</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> target_1 0.2080574  4.020514</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> target_2 2.8496990  6.807444</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> target_1 0.2372587  4.219884</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> target_2 3.3282509  6.728892</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span>, x0 <span class="op">=</span> <span class="fl">4</span>, se.fit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Exact distance ties detected; weights are averaged within distance blocks, including jackknife deletions. The accompanying theory assumes a continuous distance distribution and does not establish inference under persistent ties.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $fit</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 3.685714</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 3.914286</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $se.fit</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.739829</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.8628382</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 </code></pre></div>
     </div>
@@ -185,7 +188,7 @@ the original fit used <code>se = FALSE</code>, provided the orders permit deleti
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Jakob Juergens.</p>
+  <p>Developed by Jakob R. Juergens.</p>
 </div>
 
 <div class="pkgdown-footer-right">

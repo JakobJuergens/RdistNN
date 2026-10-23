@@ -160,15 +160,18 @@ rw_top10 <- make_top_m(10L)
 ```
 
 [`rank_weight_eval()`](https://JakobJuergens.github.io/RdistNN/reference/rank_weight_eval.md)
-evaluates the supplied rank rule without covariate groups. When that
-rule is passed to
-[`weights_matrix()`](https://JakobJuergens.github.io/RdistNN/reference/weights_matrix.md),
-the covariate-aware layer averages its assigned weights within exactly
-identical raw-X groups, including signed or unnormalized rules. A
-support boundary inside a group can therefore give nonzero observation
-weights beyond the original cutoff. Custom rankers remain responsible
-for their own ordering policy. See [DNN weights and
-ranks](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.html#identical-covariate-rows)
+evaluates the supplied rank rule without distance groups. When that rule
+is passed to
+[`weights_matrix()`](https://JakobJuergens.github.io/RdistNN/reference/weights_matrix.md)
+with distances available, the localization layer averages its assigned
+weights within exact represented selected-metric distance groups,
+separately for each target. This includes signed or unnormalized rules
+and zero entries beyond nominal support. A support boundary inside a
+group can therefore give nonzero observation weights beyond the original
+cutoff. Custom rankers remain responsible for their supplied
+permutations; bare ranks/orders do not infer groups, while retained `dx`
+enables distance grouping. See [DNN weights and
+ranks](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.html#exact-distance-ties)
 for the grouping rule, deletion redistribution and theory warning.
 
 ### Batched Rank Weights and Shared `ctx`

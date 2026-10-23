@@ -24,7 +24,7 @@ training rows, even if the learner used additional covariates.
 - `k` counts neighbors inside each subsample; the default is `k = 1`.
 - `s` does not count retained full-sample neighbors. The unaveraged
   exact rank table reaches rank `n - s + k` (`n - s + 1` at the default
-  `k = 1`). A duplicate block crossing that edge can give later
+  `k = 1`). An exact-distance group crossing that edge can give later
   observations positive averaged weight.
 - Jackknife uncertainty needs `s < n`; estimate-only fits can use
   `s = n`.
@@ -49,26 +49,28 @@ overlap interpretations do not carry over to it.
 
 ### Numerical geometry and covariance
 
-Fresh fits order exact represented distance ties between distinct
-covariate vectors lexicographically by the original supplied columns.
-Within each group of exactly identical localization covariate rows, each
-observation receives the average of the group’s original rank weights.
-The block’s total mass is preserved; individual weights, support and ESS
-can change. No distance tolerance groups nearby values, and outcomes,
-treatments and nuisances do not define groups.
+Fresh high-level fits order by represented selected-metric distance then
+original row index. At each target, observations with exactly equal
+distance receive the mean of their assigned rank weights, including
+distinct covariate profiles and zero-weight ranks beyond nominal
+support. The group’s signed or unnormalized mass is preserved;
+individual weights, support and ESS can change. No tolerance or rounding
+groups nearby distances, and signals/nuisances do not define groups.
 
-Each jackknife deletion removes the actual observation, updates ranks,
-and averages the `n-1` weight table over every remaining block. This
-makes estimates and covariance invariant to aligned row permutations up
-to numerical precision. The package warns when duplicate groups occur
-because the modification is not covered by the paper’s theory. Refit
-tied saved objects created before this policy; rank-only utilities
-without covariates do not infer duplicate groups.
+Each jackknife deletion removes the actual observation, updates ranks
+and averages the `n-1` table over every surviving group using its
+remaining size. Aligned row permutations preserve estimates and
+covariance up to numerical precision. The paper assumes a continuous
+distance distribution, under which old and new policies agree almost
+surely. Commands warn because inference for persistent distance ties is
+not established; no uniform MSE improvement is claimed. Refit objects
+created under earlier tie policies. Bare rank/order utilities use strict
+orders unless supplied distances define the groups.
 
 Saved prediction reuses the fitted training geometry. Fast jackknife
-calculations also freeze it; NP/TDNN/CATE `jackknife = "loo"` refits
-sample-dependent geometry for each deletion. The two calculations can
-differ. See
+calculations also freeze it; NP/TDNN/CATE/PLQR `jackknife = "loo"`
+refits sample-dependent geometry for each deletion. The two calculations
+can differ. See
 [`?distance_mahalanobis`](https://JakobJuergens.github.io/RdistNN/reference/distance_mahalanobis.md)
 for the fitted metric and rank-deficient cases. Numerical engine details
 belong to the maintainer reference linked from

@@ -128,28 +128,31 @@ Prediction can request uncertainty even if the original fit used
 ``` r
 fit <- np_dnn(X = matrix(1:7, ncol = 1), X0 = matrix(c(2, 5), ncol = 1),
               Y = c(2, 1, 4, 3, 6, 5, 7), s = 3, return = character())
+#> Warning: Exact distance ties detected; weights are averaged within distance blocks, including jackknife deletions. The accompanying theory assumes a continuous distance distribution and does not establish inference under persistent ties.
 coef(fit)
 #> target_1 target_2 
-#> 2.114286 4.828571 
+#> 2.228571 5.028571 
 summary(fit)
 #> <summary.np_result>
 #>   localization: s = 3, s/n = 0.429
 #>          estimate std.error statistic   p.value conf.low conf.high
-#> target_1    2.114    0.9726     2.174 2.971e-02   0.2081     4.021
-#> target_2    4.829    1.0100     4.782 1.732e-06   2.8500     6.807
+#> target_1    2.229    1.0160     2.193 2.827e-02   0.2373     4.220
+#> target_2    5.029    0.8675     5.796 6.773e-09   3.3280     6.729
 vcov(fit)
+#> Warning: Exact distance ties detected; weights are averaged within distance blocks, including jackknife deletions. The accompanying theory assumes a continuous distance distribution and does not establish inference under persistent ties.
 #>           target_1  target_2
-#> target_1 0.9459184 0.1111224
-#> target_2 0.1111224 1.0193878
+#> target_1 1.0322449 0.1215306
+#> target_2 0.1215306 0.7526020
 confint(fit)
 #>           conf.low conf.high
-#> target_1 0.2080574  4.020514
-#> target_2 2.8496990  6.807444
+#> target_1 0.2372587  4.219884
+#> target_2 3.3282509  6.728892
 predict(fit, x0 = 4, se.fit = TRUE)
+#> Warning: Exact distance ties detected; weights are averaged within distance blocks, including jackknife deletions. The accompanying theory assumes a continuous distance distribution and does not establish inference under persistent ties.
 #> $fit
-#> [1] 3.685714
+#> [1] 3.914286
 #> 
 #> $se.fit
-#> [1] 0.739829
+#> [1] 0.8628382
 #> 
 ```

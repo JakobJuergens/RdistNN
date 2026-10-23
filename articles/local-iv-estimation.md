@@ -16,13 +16,14 @@ The example uses the doubly robust IV moment model created by
 and the IV simulation DGPs exposed through
 [`sim_iv_data()`](https://JakobJuergens.github.io/RdistNN/reference/sim_iv_data.md).
 
-The localization step uses the shared duplicate-covariate rule: exactly
-identical raw X rows receive averaged weights, including redistribution
-over surviving block members in each jackknife deletion. Instruments,
-regressors and nuisance predictions do not define these groups. The
-warning about this modification being outside the paper’s theory also
-applies to GMM; see [DNN weights and
-ranks](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.html#identical-covariate-rows).
+The localization step uses the shared exact-distance rule: observations
+at exactly equal represented selected-metric distance to each target
+receive the mean of their assigned rank weights, including each
+deletion’s surviving group. Instruments, regressors and nuisance
+predictions do not define these groups. The warning that inference with
+persistent distance ties is not established also applies to GMM; see
+[DNN weights and
+ranks](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.html#exact-distance-ties).
 
 These synthetic IV examples are experimental benchmarks. The paper
 replication is described in [Paper

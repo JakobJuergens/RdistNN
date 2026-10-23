@@ -23,7 +23,13 @@ plot_data_estimates(object, level = 0.95, candidates = "default", ...)
 plot_data_estimates(object, level = 0.95, candidates = "default", ...)
 
 # S3 method for class 'plqr_result'
-plot_data_estimates(object, level = 0.95, quantity = c("moment", "theta"), ...)
+plot_data_estimates(
+  object,
+  level = 0.95,
+  quantity = c("moment", "theta"),
+  candidates = "default",
+  ...
+)
 
 # S3 method for class 'gmm_result'
 plot_data_estimates(object, level = 0.95, ...)
@@ -60,7 +66,9 @@ plot_data_estimates(object, level = 0.95, candidates = "default", ...)
   `moment_se`; `"theta"` uses the supplied coefficient values (repeated
   `theta_eval`) and the direct-sandwich `theta_se`. While no root solver
   exists, moments are the target-specific quantity, so they are the
-  default. The choice is recorded in `attr(., "quantity")`.
+  default. Candidate views support both quantities; supplied
+  coefficients repeat across candidate orders without borrowing moment
+  standard errors. The choice is recorded in `attr(., "quantity")`.
 
 ## Value
 

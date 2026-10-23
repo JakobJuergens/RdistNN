@@ -2,13 +2,13 @@
 
 Returns one row per (target point, rank) with the DNN weight, cumulative
 weight share, the originating observation index, and — when distances
-were stored — the distance to the target. Ranks are assigned by
-ascending stored distance when `dx` is available and by descending
-weight otherwise; the two orderings coincide for monotone single-scale
-DNN weights, while two-scale (TDNN) fits should request
-`return = c("W", "dx")` for distance-based ranks. For exact DNN fits the
+were stored — the distance to the target. Current fitted objects use
+their retained localization order, including signed two-scale (TDNN)
+fits without optional `dx`. Request `return = c("W", "dx")` to include
+numeric distance values in the frame; `dx` does not determine whether
+these fits retain distance-based ranks. For exact DNN fits the
 unaveraged rank-table support edge is rank `n - s + k`, not rank `s`; a
-duplicate block can extend nonzero observation weights beyond that edge
+distance block can extend nonzero observation weights beyond that edge
 after averaging. `s` is the subsample/localization order.
 
 ## Usage

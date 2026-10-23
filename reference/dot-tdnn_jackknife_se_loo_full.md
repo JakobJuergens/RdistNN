@@ -21,7 +21,8 @@ rank tables at sizes \\n\\ and \\n-1\\ and passes them to
   normalize,
   ctx,
   signal_arg = "signal",
-  precomputed_ranks = NULL
+  precomputed_ranks = NULL,
+  precomputed_groups = NULL
 )
 ```
 

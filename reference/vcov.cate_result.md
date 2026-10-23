@@ -44,8 +44,10 @@ fit <- cate_dnn(X = matrix(1:7, ncol = 1),
   X0 = matrix(c(2, 5), ncol = 1),
   pseudo_outcome = c(2, 1, 4, 3, 6, 5, 7), s = 3,
   return = character())
+#> Warning: Exact distance ties detected; weights are averaged within distance blocks, including jackknife deletions. The accompanying theory assumes a continuous distance distribution and does not establish inference under persistent ties.
 vcov(fit)
+#> Warning: Exact distance ties detected; weights are averaged within distance blocks, including jackknife deletions. The accompanying theory assumes a continuous distance distribution and does not establish inference under persistent ties.
 #>           target_1  target_2
-#> target_1 0.9459184 0.1111224
-#> target_2 0.1111224 1.0193878
+#> target_1 1.0322449 0.1215306
+#> target_2 0.1215306 0.7526020
 ```

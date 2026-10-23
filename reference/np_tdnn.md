@@ -140,15 +140,16 @@ An object of class `tdnn_np_result` with components:
 ## Details
 
 The documented sampling framework uses independent observations; cluster
-and survey-design inference are not supplied. Exact distance ties use
-lexicographic order of the original covariates, in their supplied column
-order. Rows identical on every raw localization covariate share the
-average of their rank weights. Each jackknife deletion recomputes this
-average over the surviving block at sample size n-1. This
-permutation-invariant modification is not covered by the paper's theory
-and emits a warning. Distinct covariate vectors at equal distance are
-not averaged. Ordering uses no outcomes or nuisances. Retained tied fits
-from the earlier policy require refitting before reporting or reuse.
+and survey-design inference are not supplied. Observations with exactly
+equal computed distance to a target share their block's average rank
+weight, even when their covariates differ. Groups are target-specific
+and use exact represented equality, without a tolerance. Ordering uses
+distance then input row index; outcomes and nuisances do not define
+groups. Every jackknife deletion averages the surviving blocks with the
+sample-size-n-1 rule. A warning is emitted once per public call with
+distance ties: the accompanying theory assumes a continuous distance
+distribution and does not establish inference under persistent ties.
+Earlier retained fit schemas require refitting.
 
 Two interfaces are supported.
 

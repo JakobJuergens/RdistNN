@@ -37,12 +37,15 @@ change the retained numerical rank. The factor is reused through `ctx`,
 including for subsets and new targets, following
 [`distance_l2_scaled()`](https://JakobJuergens.github.io/RdistNN/reference/distance_l2_scaled.md).
 Euclidean norms after projection use the selected C++ or R distance
-engine. The explicit rank policy can change neighbors relative to older
-fits that truncated covariance singular values after an inverse failed.
-Different linear-algebra libraries can still differ at a numerical rank
-boundary.
+engine. SVD fitting and projection rounding can change represented
+distance equality or ordering across packages or platforms, even for
+well-conditioned full-rank designs away from the cutoff. Ranks,
+exact-distance groups, weights and estimates may then differ. Group
+averaging uses each fit's computed distances and cannot reconcile these
+differences. See the [numerical geometry
+contract](https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/18_geometry_and_covariance_arithmetic.md).
 
-Particularly useful for DGPs with correlated covariates (e.g.\\
+Particularly useful for DGPs with correlated covariates (e.g.
 `"dgp5_correlated"`) where L2 or diagonal-scaled L2 distances fail to
 adapt to the off-diagonal covariance structure.
 

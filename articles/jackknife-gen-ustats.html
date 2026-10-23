@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,7 @@
       <h1>Using the rank-jackknife utilities</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.2/vignettes/jackknife-gen-ustats.Rmd" class="external-link"><code>vignettes/jackknife-gen-ustats.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/vignettes/jackknife-gen-ustats.Rmd" class="external-link"><code>vignettes/jackknife-gen-ustats.Rmd</code></a></small>
       <div class="d-none name"><code>jackknife-gen-ustats.Rmd</code></div>
     </div>
 
@@ -102,16 +102,16 @@ beyond that rank.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">fast</span><span class="op">$</span><span class="va">theta_loo</span>, <span class="va">slow</span><span class="op">$</span><span class="va">theta_loo</span>, tolerance <span class="op">=</span> <span class="fl">1e-12</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 <p><code>theta0</code> averages the rule across the supplied target
-rows; it is not a vector of separate local fits. These rank-only
-utilities do not identify duplicate covariate groups. High-level
-covariate-aware estimators additionally average duplicate-block weights
-in the full sample and every deletion, with a warning that this
-practical modification is outside the paper’s theory. Deleting a member
-reduces its block size as well as the reference-sample size; the
-survivors use the <code>n-1</code> table divided by the remaining block
-size. The shared estimator path reuses prefix/postfix deletion sums with
-a block correction, rather than rebuilding a weight matrix for each
-removed row. See the <a href="dnn-weights.html#identical-covariate-rows">worked deletion
+rows; it is not a vector of separate local fits. Bare rank-only
+utilities use strict orders. High-level estimators additionally average
+assigned rank weights within exact represented selected-metric distance
+groups, separately for each target and every deletion. A warning records
+that inference with persistent distance ties is not established.
+Deleting a member reduces its block size as well as the reference-sample
+size; the survivors use the <code>n-1</code> table divided by the
+remaining block size. The shared estimator path reuses prefix/postfix
+deletion sums with a block correction, rather than rebuilding a weight
+matrix for each removed row. See the <a href="dnn-weights.html#exact-distance-ties">worked deletion
 example</a>.</p>
 <p>Block deletions accumulate the original signals with their actual
 survivor weights and retain both parts of each compensated prefix/suffix
@@ -146,7 +146,7 @@ guide</a> maps the array conventions.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Jakob Juergens.</p>
+  <p>Developed by Jakob R. Juergens.</p>
 </div>
 
 <div class="pkgdown-footer-right">

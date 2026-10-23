@@ -21,7 +21,7 @@ the weighted mean with a q10–q90 whisker summary otherwise.'></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,7 +44,7 @@ the weighted mean with a q10–q90 whisker summary otherwise.'></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Plot local overlap for CATE and CLATE fits</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.2/R/plot-overlap.R" class="external-link"><code>R/plot-overlap.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/R/plot-overlap.R" class="external-link"><code>R/plot-overlap.R</code></a></small>
       <div class="d-none name"><code>plot_overlap.Rd</code></div>
     </div>
 
@@ -67,9 +67,7 @@ the weighted mean with a q10–q90 whisker summary otherwise.</p>
 <span>  share_limits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.9</span><span class="op">)</span>,</span>
 <span>  treatment <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  propensity <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  targets <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  instrument <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  <span class="va">...</span></span>
+<span>  targets <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -92,28 +90,19 @@ treated shares outside this range are flagged as overlap warnings.</p></dd>
 
 
 <dt id="arg-treatment">treatment<a class="anchor" aria-label="anchor" href="#arg-treatment"></a></dt>
-<dd><p>Optional 0/1 vector of length <code>n</code>; used when the fit
-does not store treatment (matrix interface). For CLATE use <code>instrument</code>.</p></dd>
+<dd><p>Optional 0/1 vector of length <code>n</code> for CATE; used when
+the fit does not store treatment (supplied-signal interface).</p></dd>
 
 
 <dt id="arg-propensity">propensity<a class="anchor" aria-label="anchor" href="#arg-propensity"></a></dt>
 <dd><p>Optional numeric vector of length <code>n</code> in (0, 1); used
-when the fit does not store propensities.</p></dd>
+for CATE when the fit does not store propensities.</p></dd>
 
 
 <dt id="arg-targets">targets<a class="anchor" aria-label="anchor" href="#arg-targets"></a></dt>
 <dd><p>Optional integer vector of target ids for the density
 view (defaults to the first/median-<code>n_eff</code>/last subset above eight
 targets).</p></dd>
-
-
-<dt id="arg-instrument">instrument<a class="anchor" aria-label="anchor" href="#arg-instrument"></a></dt>
-<dd><p>Optional 0/1 instrument vector for a CLATE fit whose
-instrument record is unavailable. Stored instrument data take precedence.</p></dd>
-
-
-<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Ignored; reserved for future options.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -122,13 +111,14 @@ instrument record is unavailable. Stored instrument data take precedence.</p></d
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Inputs resolve in a fixed order: components stored on the fit
+    <p>For CATE, inputs resolve in a fixed order: components stored on the fit
 (<code>t_vec</code>/<code>e</code> from the data-frame interface), then the <code>treatment</code>/
 <code>propensity</code> arguments, then an actionable error. Nothing is
 recomputed from first stages.</p>
 <p>For <code><a href="clate_dnn.html">clate_dnn()</a></code> fits these same panels describe instrument overlap:
 the arms are A=1 and A=0 and the propensity is P(A=1|V). Both are retained
-by the CLATE fit. Treatment uptake D is not used as the instrument arm.</p>
+by the CLATE fit. Treatment uptake D is not used as the instrument arm.
+Refit a CLATE model whose retained instrument record is missing or invalid.</p>
     </div>
 
     <div class="section level2">
@@ -158,7 +148,7 @@ by the CLATE fit. Treatment uptake D is not used as the instrument arm.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Jakob Juergens.</p>
+  <p>Developed by Jakob R. Juergens.</p>
 </div>
 
 <div class="pkgdown-footer-right">

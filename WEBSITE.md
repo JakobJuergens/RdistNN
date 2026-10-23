@@ -2,11 +2,11 @@
 
 Prepared for a software entry or research-page addition on
 [jakobjuergens.com](https://jakobjuergens.com/). The text below
-describes the production source version `0.1.2`, published on
+describes the production source version `0.1.3`, published on
 2026-10-22. The package documentation is live at its canonical pkgdown
-URL. The latest tagged release remains `v0.1.0`; a tagged-release
-announcement should link to its verified source archive and release
-assets.
+URL. The current version-pinned release is
+[`v0.1.3`](https://github.com/JakobJuergens/RdistNN/releases/tag/v0.1.3),
+with a verified installable source archive and checksum file.
 
 ## Software entry
 
@@ -29,30 +29,34 @@ started](https://JakobJuergens.github.io/RdistNN/articles/getting-started.html)
 · [Accompanying
 paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
 
-## 0.1.2 production-update announcement draft
+## 0.1.3 production-update announcement draft
 
-RdistNN 0.1.2 averages weights across exactly identical
-reporting-covariate rows and redistributes their block mass after every
-jackknife deletion. Estimates and covariance are invariant to aligned
-row permutations up to numerical precision. Shared R/C++ helpers apply
-the rule to fitting, prediction, candidates, diagnostics and weight
-plots. Individual weights, support and effective sample size can change;
-old tied saved fits require refitting. The package warns that this
-practical modification is not covered by the accompanying paper’s
-theory. The paper supplies the underlying inference conditions;
-numerical invariance does not establish those conditions.
+RdistNN 0.1.3 averages localization weights over observations at exactly
+equal represented distance under the selected metric. The rule covers
+distinct covariate profiles at the same distance, preserves each group’s
+assigned mass, and recomputes survivor weights after every jackknife
+deletion. Shared R/C++ helpers apply it to fitting, prediction,
+candidates, diagnostics and weight plots. Refit saved objects from
+earlier tie policies.
 
-The guides and function help describe the updated callback shape,
-saved-state and independent GMM-start contracts. The [weight
+The paper assumes a continuous distance distribution, under which the
+old and new rules agree almost surely. Inference with persistent
+distance ties remains unestablished. Numerical symmetry does not
+establish the underlying inference conditions. Shared reporting now
+gives bounded, actionable errors and warnings while preserving
+unexpected failures and the caller’s warning policy.
+
+The [weight
 guide](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.html#numerical-limits)
-also describes the remaining asymptotic-tail rounding limitation.
+describes remaining numerical limits, including asymptotic-tail rounding
+and independently fitted Mahalanobis geometry.
 
 Task-oriented guides, runnable vignettes and focused function help
 support conditional-effect and regression workflows. Seeded demos and
 simulations preserve caller RNG state; native calculations use two
-threads by default with a configurable opt-in. Version 0.1.2 is
-available from production `master`; tagged release assets will be
-announced separately.
+threads by default with a configurable opt-in. Version 0.1.3 is
+available from production `master` and the version-pinned `v0.1.3`
+release.
 
 [Source
 updates](https://github.com/JakobJuergens/RdistNN/blob/master/NEWS.md) ·
@@ -60,7 +64,8 @@ updates](https://github.com/JakobJuergens/RdistNN/blob/master/NEWS.md) ·
 [Getting
 started](https://JakobJuergens.github.io/RdistNN/articles/getting-started.html)
 
-For a future tagged-release announcement, add the verified release URL.
-This repository copy is prepared text for the personal website;
-package-site deployment and personal-site publication are separate
-steps.
+Use the [verified release
+URL](https://github.com/JakobJuergens/RdistNN/releases/tag/v0.1.3) for
+version-pinned downloads. This repository copy is prepared text for the
+personal website; package-site deployment and personal-site publication
+are separate steps.

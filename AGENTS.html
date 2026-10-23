@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,7 +30,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Agent Instructions for RdistNN</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.2/AGENTS.md" class="external-link"><code>AGENTS.md</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/AGENTS.md" class="external-link"><code>AGENTS.md</code></a></small>
     </div>
 
 <div id="agent-instructions-for-rdistnn" class="section level1">
@@ -39,6 +39,12 @@
 <div class="section level2">
 <h2 id="development-and-production-branches">Development and production branches<a class="anchor" aria-label="anchor" href="#development-and-production-branches"></a></h2>
 <p>Develop on the local <code>development</code> branch. Keep it unpublished until the maintainer authorizes publication; branches in a public repository are public when pushed. Production is <code>master</code>. Submit production changes through a pull request and use a squash merge after review and required checks. Do not push development commits directly to <code>master</code> unless explicitly instructed to do so. See <code>CONTRIBUTING.md</code> for the workflow.</p>
+<p>The first development commit after production <code>0.1.x</code> establishes <code>0.1.x.9000</code>. Each subsequent development commit increments the fourth version component, including small changes; uncommitted drafts do not advance this sequence. Each production merge advances <code>0.1.x</code> to <code>0.1.(x+1)</code> unless the maintainer chooses otherwise. Resume development by appending <code>.9000</code> to the selected production version for the first development commit. <code>DESCRIPTION</code> and the current <code>NEWS.md</code> heading record the current version; keep them aligned. See <code>RELEASING.md</code> for the release transition and immutable-tag rules.</p>
+</div>
+<div class="section level2">
+<h2 id="current-development-compatibility-policy">Current development compatibility policy<a class="anchor" aria-label="anchor" href="#current-development-compatibility-policy"></a></h2>
+<p>Both packages are in early development. Support the current documented interfaces and complete current fitted-state schemas. Remove compatibility layers for earlier package versions, including retired aliases, wrappers, schema upgraders and migration shims, unless the maintainer explicitly requests an exception. Missing or inconsistent retained state must produce a clear refit error rather than reconstructing an older fit or silently repairing it. Current fits must still support their documented serialization and reuse paths.</p>
+<p>Keep historical changelogs, released tags/assets and frozen scientific evidence unchanged. Revisit compatibility and deprecation commitments when the packages stabilize; an earlier production release does not activate such a commitment.</p>
 </div>
 <div class="section level2">
 <h2 id="mandatory-read-order">Mandatory read order<a class="anchor" aria-label="anchor" href="#mandatory-read-order"></a></h2>
@@ -120,7 +126,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Jakob Juergens.</p>
+  <p>Developed by Jakob R. Juergens.</p>
 </div>
 
 <div class="pkgdown-footer-right">

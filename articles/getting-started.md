@@ -31,7 +31,7 @@ fit_cate <- cate_dnn(
   data = df, x_cols = c("X1", "X2"), y_col = "Y", t_col = "D",
   m0_col = "m0_oracle", m1_col = "m1_oracle", e_col = "e_oracle",
   x0 = c(0, 0), k = 1L, se = TRUE,
-  return = c("W", "dx")
+  return = c("W", "dx", "psi")
 )
 
 summary(fit_cate)
@@ -133,16 +133,16 @@ the relevant joint assumptions; pointwise intervals alone do not
 establish it.
 
 The documented sampling framework uses independent observations and
-supplies neither cluster nor survey-design inference. Exact distance
-ties use the original covariates lexicographically in their supplied
-column order. Identical localization covariate rows receive their
-block’s average weight, with the same rule applied to every deletion’s
-remaining block. Outcomes, treatments and nuisance values do not define
-the groups. Aligned row permutations then preserve estimates and
-covariance up to numerical precision. A warning identifies this
-practical modification, which is not covered by the paper’s theory.
-Individual weights, support and ESS can change. The reported `s/n` is
-descriptive; it is not a calibrated inference threshold.
+supplies neither cluster nor survey-design inference. At each target,
+observations with exactly equal represented distance under the selected
+metric share the mean of their assigned rank weights, including each
+deletion’s surviving group. No tolerance merges nearby distances, and
+signals/nuisances do not define groups. Aligned row permutations
+preserve estimates and covariance up to numerical precision. Individual
+weights, support and ESS can change. The paper assumes a continuous
+distance distribution, under which old and new policies agree almost
+surely; inference with persistent distance ties is not established. The
+reported `s/n` is descriptive, not a calibrated inference threshold.
 
 ### Check local support
 
@@ -233,9 +233,9 @@ supported in the implementation.
 The order `s` is not a count of observations retained in a
 nearest-neighbor truncation. The unaveraged exact rank table has support
 through rank `n - s + k` (`n - s + 1` for `k = 1`). Block averaging can
-extend nonzero observation weights to the end of an identical-covariate
-block crossing that edge. The optional `neighbors` extra reports the
-first `k` neighbors, rather than the full weight support.
+extend nonzero observation weights to the end of an exact-distance group
+crossing that edge. The optional `neighbors` extra reports the first `k`
+neighbors, rather than the full weight support.
 
 For sensitivity analysis, compare the paper’s candidate orders without
 changing the primary result:
@@ -317,7 +317,7 @@ wt <- weights_dnn(
 dim(wt$W)
 #> [1] 180   2
 as.vector(crossprod(wt$W, fit_cate$psi))
-#> [1] 0.03588061 0.01509280 0.01509280 0.03588061
+#> [1] 0.562277 1.169279
 ```
 
 ## Further reading

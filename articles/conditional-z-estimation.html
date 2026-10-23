@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,7 @@
       <h1>Experimental PLQR: moments and coefficient uncertainty</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.2/vignettes/conditional-z-estimation.Rmd" class="external-link"><code>vignettes/conditional-z-estimation.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/vignettes/conditional-z-estimation.Rmd" class="external-link"><code>vignettes/conditional-z-estimation.Rmd</code></a></small>
       <div class="d-none name"><code>conditional-z-estimation.Rmd</code></div>
     </div>
 
@@ -64,12 +64,12 @@ a <strong>supplied coefficient vector</strong>. It does not solve for
 coefficients. This guide shows how moment uncertainty differs from
 density-backed coefficient uncertainty; the entire PLQR interface
 remains experimental.</p>
-<p>PLQR uses the shared localization weights: exactly identical raw
-reporting covariates receive their block’s average weight, and each
-jackknife deletion redistributes its remaining block’s <code>n-1</code>
-table mass over the survivors. Regressors, outcomes and nuisance
-predictions do not define the duplicate groups. The package warns that
-this modification is outside the paper’s theory; see the <a href="dnn-weights.html#identical-covariate-rows">weight guide</a>.</p>
+<p>PLQR uses the shared localization weights: observations at exactly
+equal represented selected-metric distance to a target receive the mean
+of their assigned rank weights. Each deletion averages its
+<code>n-1</code> table over surviving groups. Regressors, outcomes and
+nuisance predictions do not define the groups. The package warns that
+inference with persistent distance ties is not established; see the <a href="dnn-weights.html#exact-distance-ties">weight guide</a>.</p>
 <p>For statistical background, see the <a href="https://jakobjuergens.com/research/#orthogonal-inference-conditional-z" class="external-link">paper</a>.
 For the supported CATE, regression and CLATE workflows, use <a href="getting-started.html">Getting started</a> and <a href="conditional-late.html">Conditional LATE</a>.</p>
 <div class="section level2">
@@ -163,7 +163,7 @@ accuracy, localization bias or the paper’s assumptions.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Jakob Juergens.</p>
+  <p>Developed by Jakob R. Juergens.</p>
 </div>
 
 <div class="pkgdown-footer-right">

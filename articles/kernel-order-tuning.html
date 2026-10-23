@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,7 @@
       <h1>Kernel Order Tuning</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.2/vignettes/kernel-order-tuning.Rmd" class="external-link"><code>vignettes/kernel-order-tuning.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/vignettes/kernel-order-tuning.Rmd" class="external-link"><code>vignettes/kernel-order-tuning.Rmd</code></a></small>
       <div class="d-none name"><code>kernel-order-tuning.Rmd</code></div>
     </div>
 
@@ -103,8 +103,9 @@ resolved order. If two tuning settings resolve to the same
 <code>s</code>, they remain distinct candidates even when their
 computation is shared. Plot labels include their identifiers when needed
 to distinguish them. Candidate reconstruction validates the retained
-controls, target identities and cached ranks; refit an incomplete or
-inconsistent saved object.</p>
+controls, target identities, cached ranks, per-target distance groups
+and selected policy; refit an incomplete or inconsistent saved
+object.</p>
 <p>CATE and CLATE use the same <code>tuning_mode</code> convention. See
 <a href="getting-started.html">Getting started</a> and <a href="conditional-late.html">Conditional LATE</a> for their signal
 inputs. <code>plot_tuning(fit)</code> draws the sensitivity comparison
@@ -162,7 +163,7 @@ conventions</a> lists the argument and result shapes.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Jakob Juergens.</p>
+  <p>Developed by Jakob R. Juergens.</p>
 </div>
 
 <div class="pkgdown-footer-right">
