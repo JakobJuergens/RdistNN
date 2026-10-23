@@ -62,8 +62,10 @@ test_that("scaled norm recovery preserves ordinary coordinate arithmetic", {
 })
 
 test_that("negative raw differences select the common exceptional range", {
-  X <- matrix(c(-1.2145570335719173e308, -1.0963786929977578e308,
-    -1.3598484029441836e308), nrow = 1L)
+  # Decimal conversion near DBL_MAX depends on R's long-double precision.
+  # Preserve the exact input bits used by the independent norm oracle.
+  X <- matrix(c(-0x1.59ead5d73161dp+1023, -0x1.38424eecf014bp+1023,
+    -0x1.834c34d2acddfp+1023), nrow = 1L)
   inverse <- rep(2^-700, 3L)
   # Independent exact-binary products with a 2000-digit square-root oracle.
   want <- as.numeric("0x1.2ef864d71ee05p+324")
