@@ -165,7 +165,7 @@ int topk_indices(const double *x, int n, int k, int *out_idx_sorted) {
 
 using namespace Rcpp;
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 IntegerVector rustat_argsort_dist(NumericVector d) {
   const int n = d.size();
   IntegerVector ord(n);
@@ -178,7 +178,7 @@ IntegerVector rustat_argsort_dist(NumericVector d) {
   return ord;
 }
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 IntegerVector rustat_ranks_from_dist(NumericVector d) {
   const int n = d.size();
   IntegerVector ranks(n);
@@ -191,7 +191,7 @@ IntegerVector rustat_ranks_from_dist(NumericVector d) {
   return ranks;
 }
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 IntegerVector rustat_topk_dist(NumericVector d, int k) {
   const int n = d.size();
   if (k < 0)

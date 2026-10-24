@@ -22,7 +22,8 @@
     ctx       = ctx,
     return    = unique(c("W", keep_extras))
   )
-  .dnn_warn_degenerate_weights(wt$W, method = "TDNN")
+  .dnn_warn_degenerate_weights(wt$W, method = "TDNN",
+    concentration = wt$meta$target_notices$weight_concentration)
   list(
     wt = wt,
     W  = wt$W,
@@ -67,13 +68,11 @@
   jackknife          = c("fast", "loo"),
   precomputed_ranks  = NULL, precomputed_groups = NULL
 ) {
-  jackknife <- match.arg(jackknife)
+  jackknife <- .dnn_match_arg(jackknife)
   n <- nrow(x_mat)
   if (as.integer(s2) >= n) {
-    stop(
-      "Delete-1 jackknife requires `s2 < n` so the same scales can be used after deletion.",
-      call. = FALSE
-    )
+    .dnn_abort("argument_invalid",
+      "Delete-1 jackknife requires `s2 < n` so the same scales can be used after deletion.", argument = "s2")
   }
 
   sig <- .dnn_signal_matrix(signal, n = n, arg = signal_arg)
@@ -102,7 +101,10 @@
 
     ranks_full <- as.matrix(ranks_full)
     if (nrow(ranks_full) != n || ncol(ranks_full) != m) {
-      .abort_bad_state("`precomputed_ranks` must be an n x m ranks matrix.")
+      .dnn_abort("argument_invalid",
+        "`precomputed_ranks` must be an n x m ranks matrix.",
+        argument = "precomputed_ranks"
+      )
     }
     if (!is.integer(ranks_full)) storage.mode(ranks_full) <- "integer"
 
@@ -142,8 +144,9 @@
 #' `.dnn_loo_centered()`, as does the `fast` route of
 #' `.tdnn_jackknife_se_loo_matrix()`.
 #'
-#' The C++ engine is used automatically when the package has been compiled;
-#' otherwise the same centered calculation uses its R fallback.
+#' With compiled execution enabled and the native routine available, this uses
+#' the C++ engine; otherwise the same centered calculation uses its R path.
+#' See [RdistNN] for engine controls.
 #'
 #' @param x_mat    Numeric matrix (n x p).
 #' @param x0_mat   Numeric matrix (m x p) of target points.
@@ -168,10 +171,8 @@
 ) {
   n <- nrow(x_mat)
   if (as.integer(s2) >= n) {
-    stop(
-      "Delete-1 jackknife requires `s2 < n` so the same scales can be used after deletion.",
-      call. = FALSE
-    )
+    .dnn_abort("argument_invalid",
+      "Delete-1 jackknife requires `s2 < n` so the same scales can be used after deletion.", argument = "s2")
   }
 
   sig <- .dnn_signal_matrix(signal, n = n, arg = signal_arg)

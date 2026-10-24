@@ -18,7 +18,10 @@ test_that("PLQR subset sums retain signed cancellation in scalar and batch engin
     for (row_order in seq_len(nrow(permutations))) {
       local_data <- dat[permutations[row_order, ], , drop = FALSE]
       ctx <- score_setup(score, local_data)
-      if (native) expect_type(ctx$ptr_ctx, "externalptr") else expect_null(ctx$ptr_ctx)
+      expect_false("ptr_ctx" %in% names(ctx))
+      restored <- unserialize(serialize(ctx, NULL))
+      expect_identical(restored, ctx)
+      expect_identical(score_eval(score, 1:3, local_data, restored), 1)
       # The represented contributions are exactly 2^100, 1 and -2^100.
       expect_identical(score_eval(score, 1:3, local_data, ctx), 1)
       expect_identical(score_eval_batch(score, permutations, local_data, ctx), rep(1, 6))
@@ -62,5 +65,27 @@ test_that("exact PLQR threshold cancellation retains inclusive equality", {
   ctx <- create(dat$Y, as.matrix(dat[c("D1", "D2")]), dat$g,
     as.matrix(dat[c("mD1", "mD2")]), c(2, -2), .5, 1L)
   expect_identical(.rdistnn_compiled_fun("rustat_plqr_g_all")(ctx), -0x1.1ccf385ebc8a0p+1022)
-  expect_identical(.rdistnn_compiled_fun("rustat_plqr_g_indexed")(1L, ctx), -0x1.1ccf385ebc8a0p+1022)
+})
+test_that("PLQR score factories capture selectors and targets before setup", {
+  dat <- data.frame(X = 1:3, D = 1:3, g = 0, mD = 0, Y = 1:3)
+  x0 <- 0
+  x <- "X"
+  d <- "D"
+  g <- "g"
+  md <- "mD"
+  y <- "Y"
+  score <- score_plqr_component(x0, x, d, g, md, y, theta = 0, s = 1L)
+  x0 <- c(0, 0)
+  x <- d <- g <- md <- y <- "missing"
+  ctx <- score_setup(score, dat)
+  expect_identical(ctx$score, c(.5, 1, 1.5))
+})
+
+test_that("PLQR validation aggregation preserves unexpected condition identities", {
+  failure <- structure(list(message = "resource sentinel", call = NULL),
+    class = c("resourceError", "error", "condition"))
+  local_mocked_bindings(.validate_scalar_prob = function(...) stop(failure), .package = "RdistNN")
+  caught <- tryCatch(score_plqr_component(0, "X", "D", "g", "mD", "Y", theta = 0, s = 1L),
+    error = identity)
+  expect_identical(caught, failure)
 })

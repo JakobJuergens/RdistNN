@@ -14,6 +14,7 @@
 }
 
 test_that("visual baselines for the core panels", {
+  withr::local_preserve_seed()
   skip_on_cran()
   skip_if(!.vdiffr_active(),
           "visual baselines run only with RDISTNN_VDIFFR=true")

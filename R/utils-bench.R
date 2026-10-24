@@ -1,7 +1,7 @@
 #' @keywords internal
 rdistnn_bench_require <- function() {
   if (!requireNamespace("bench", quietly = TRUE)) {
-    stop("Please install the 'bench' package (install.packages('bench')).")
+    .dnn_abort("dependency_missing", "Please install the 'bench' package (install.packages('bench')).")
   }
   invisible(TRUE)
 }
@@ -20,7 +20,10 @@ rdistnn_bench_call_eval <- function(score_obj, idx) {
   } else if (!is.null(score_obj$eval) && is.function(score_obj$eval)) {
     apply(idx, 1L, function(r) score_obj$eval(r))
   } else {
-    stop("Don't know how to call this score object. Expose $eval_batch() or return a function.")
+    .dnn_abort("argument_invalid",
+      "Don't know how to call this score object. Expose $eval_batch() or return a function.",
+      argument = "score_obj"
+    )
   }
 }
 
@@ -34,7 +37,10 @@ rdistnn_bench_maybe_setup <- function(score_obj, idx) {
 #' @keywords internal
 rdistnn_bench_parity <- function(a, b, tol, label) {
   if (!isTRUE(all.equal(a, b, tolerance = tol))) {
-    stop(sprintf("%s: compiled vs R mismatch beyond tolerance (tol=%.2e).", label, tol))
+    .dnn_abort("internal_invariant",
+      sprintf("%s: compiled vs R mismatch beyond tolerance (tol=%.2e).", label, tol),
+      hint = "Report a reproducible example of this internal inconsistency."
+    )
   }
 }
 

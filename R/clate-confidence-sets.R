@@ -11,7 +11,7 @@
 #' @param level Confidence level strictly between zero and one.
 #' @param tol Finite nonnegative relative numerical tolerance. It controls
 #'   covariance symmetry/PSD checks and near-zero discriminant diagnostics.
-#' @param x A ratio_confidence_sets object.
+#' @param x A rdistnn_ratio_confidence_sets object.
 #' @param digits Printing precision.
 #' @param ... Not used.
 #'
@@ -46,7 +46,7 @@
 #'   increasingly weak instruments. Algebraic zero-variance branches do not
 #'   automatically satisfy a positive-variance test theorem.
 #'
-#' @return A ratio_confidence_sets list with one record per target. Records
+#' @return A rdistnn_ratio_confidence_sets list with one record per target. Records
 #'   contain target_id, type, intervals (r-by-2 lower/upper matrix), quadratic,
 #'   discriminant, numerical_status, level and numerical scaling metadata.
 #'   Printing returns its input invisibly.
@@ -158,7 +158,7 @@ ratio_confidence_set <- function(
     }
     answer
   })
-  structure(out, class = c("ratio_confidence_sets", "list"), level = level)
+  structure(out, class = c("rdistnn_ratio_confidence_sets", "list"), level = level)
 }
 
 # Apply powers in representable chunks; exponent may exceed the range of 2^x.
@@ -320,7 +320,7 @@ ratio_confidence_set <- function(
 
 #' @rdname ratio_confidence_set
 #' @export
-print.ratio_confidence_sets <- function(x, digits = max(3L, getOption("digits") - 2L), ...) {
+print.rdistnn_ratio_confidence_sets <- function(x, digits = max(3L, getOption("digits") - 2L), ...) {
   cat("Paired ratio confidence sets\n")
   for (j in seq_along(x)) {
     record <- x[[j]]

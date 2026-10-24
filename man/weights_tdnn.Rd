@@ -46,7 +46,7 @@ evaluators.}
 \code{c("W", "ord", "ranks", "dx")}.}
 }
 \value{
-A \code{weights_result} object.
+A \code{rdistnn_weights_result} object.
 }
 \description{
 Unified entry point for TDNN weights.  Use \code{method = "exact"} for

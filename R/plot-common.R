@@ -101,8 +101,8 @@ utils::globalVariables(".data")
 }
 
 # Honesty caption (plan 3.0): median n_eff with range, plus s and its
-# provenance. Degrades gracefully when diagnostics are unavailable (for
-# example when W was not stored).
+# provenance. All current fits retain validated concentration facts, including
+# fits without optional weights or a public full-diagnostics method.
 .plot_honesty_caption <- function(object) {
   meta <- object$meta
   s_txt <- if (!is.null(meta$s)) {
@@ -113,16 +113,9 @@ utils::globalVariables(".data")
   } else {
     NULL
   }
-  neff_txt <- tryCatch(
-    {
-      dd <- plot_data_diagnostics(object)
-      sprintf(
-        "median n_eff = %.1f (%.1f-%.1f)",
-        stats::median(dd$n_eff), min(dd$n_eff), max(dd$n_eff)
-      )
-    },
-    error = function(e) NULL
-  )
+  concentration <- meta$target_notices$weight_concentration
+  neff_txt <- sprintf("median n_eff = %.1f (%.1f-%.1f)",
+    stats::median(concentration), min(concentration), max(concentration))
   paste(c(neff_txt, s_txt), collapse = "; ")
 }
 
@@ -238,7 +231,7 @@ utils::globalVariables(".data")
 }
 
 .plot_require_grid <- function(object, fn) {
-  grid <- object$tuning_grid
+  grid <- object[["tuning_grid", exact = TRUE]]
   if (is.null(grid)) {
     .abort_bad_arg(
       "candidates",
@@ -258,11 +251,7 @@ utils::globalVariables(".data")
 
 .plot_candidate_label <- function(candidate_row) {
   s <- as.integer(candidate_row$s[[1L]])
-  lambda <- if ("lambda" %in% names(candidate_row)) {
-    suppressWarnings(as.numeric(candidate_row$lambda[[1L]]))
-  } else {
-    NA_real_
-  }
+  lambda <- candidate_row$lambda[[1L]]
   if (!is.na(lambda) && is.finite(lambda)) {
     sprintf("lambda = %s (s = %d)", .plot_format_candidate_value(lambda), s)
   } else {
@@ -308,8 +297,8 @@ utils::globalVariables(".data")
         "candidates",
         sprintf(
           "Unknown candidate id(s): %s. Available candidate ids: %s",
-          paste(candidates[is.na(idx)], collapse = ", "),
-          paste(rows$candidate_id, collapse = ", ")
+          .dnn_message_examples(candidates[is.na(idx)])$text,
+          .dnn_message_examples(rows$candidate_id)$text
         ),
         quoted = FALSE
       )
@@ -356,11 +345,11 @@ utils::globalVariables(".data")
 
 .plot_grid_estimate_coef <- function(object, component) {
   coef <- as.character(component)
-  coef[is.na(component) | !nzchar(coef)] <- if (inherits(object, "np_result")) {
+  coef[is.na(component) | !nzchar(coef)] <- if (inherits(object, "rdistnn_np_result")) {
     "mu"
-  } else if (inherits(object, "cate_result")) {
+  } else if (inherits(object, "rdistnn_cate_result")) {
     "tau"
-  } else if (inherits(object, "affine_ratio_result")) {
+  } else if (inherits(object, "rdistnn_affine_ratio_result")) {
     "theta"
   } else {
     "estimate"
@@ -369,17 +358,8 @@ utils::globalVariables(".data")
 }
 
 .plot_attach_x0 <- function(out, object) {
-  if (is.null(object$x0)) {
-    return(out)
-  }
-  x0 <- as.matrix(object$x0)
-  if (!"target_id" %in% names(out)) {
-    return(out)
-  }
+  x0 <- object$x0
   target_id <- as.integer(out$target_id)
-  if (anyNA(target_id) || any(target_id < 1L | target_id > nrow(x0))) {
-    return(out)
-  }
   x0_df <- as.data.frame(x0[target_id, , drop = FALSE])
   names(x0_df) <- paste0("x0_", seq_len(ncol(x0)))
   out <- cbind(out, x0_df)
@@ -406,7 +386,7 @@ utils::globalVariables(".data")
 
 .plot_candidate_estimates_frame <- function(object, candidates, level, fn,
                                             quantity = c("moment", "theta"), ...) {
-  if (inherits(object, "plqr_result")) quantity <- match.arg(quantity)
+  if (inherits(object, "rdistnn_plqr_result")) quantity <- .dnn_match_arg(quantity)
   grid <- .plot_require_grid(object, fn = fn)
   selected <- .plot_resolve_candidates(object, candidates = candidates, fn = fn)
   ok <- .plot_ok_candidates(selected)
@@ -443,7 +423,7 @@ utils::globalVariables(".data")
     reason = rows$reason,
     stringsAsFactors = FALSE
   )
-  if (inherits(object, "plqr_result") && identical(quantity, "theta")) {
+  if (inherits(object, "rdistnn_plqr_result") && identical(quantity, "theta")) {
     # PLQR grids retain moment uncertainty only. Supplied coefficients are
     # the same values at each candidate; moment SEs cannot accompany them.
     component <- match(rows$component, rownames(object$moment))
@@ -454,7 +434,7 @@ utils::globalVariables(".data")
   }
   out$ci_lower <- out$estimate - z * out$se
   out$ci_upper <- out$estimate + z * out$se
-  if (inherits(object, "affine_ratio_result")) {
+  if (inherits(object, "rdistnn_affine_ratio_result")) {
     wald_ok <- rows$wald_available
     critical <- .dnn_normal_critical(level)
     out$ci_lower <- out$ci_upper <- NA_real_
@@ -471,7 +451,7 @@ utils::globalVariables(".data")
     levels = c("candidate", "default")
   )
   attr(out, "level") <- level
-  if (inherits(object, "plqr_result")) attr(out, "quantity") <- quantity
+  if (inherits(object, "rdistnn_plqr_result")) attr(out, "quantity") <- quantity
   list(
     data = .plot_order_candidate_frame(out),
     drop_caption = .plot_candidate_drop_caption(selected),
@@ -493,15 +473,18 @@ utils::globalVariables(".data")
   ranks <- .candidate_cached_ranks(object)
   n <- nrow(ranks)
   groups <- object$.model$groups
-  separate_targets <- .dnn_has_ties(groups) || !is.null(targets)
+  facts <- .dnn_group_facts(groups)
+  separate_targets <- .dnn_has_ties(groups, facts) || !is.null(targets)
   target_ids <- 1L
   if (separate_targets) {
-    candidates_all <- .candidate_grid_payload(object)$candidates
-    default <- candidates_all[candidates_all$is_default, , drop = FALSE]
-    default_W <- .candidate_weights_from_ranks(object, default)
     target_ids <- .plot_select_targets(seq_len(ncol(ranks)),
-                                      1 / colSums(default_W^2), targets)
+      object$meta$target_notices$weight_concentration, targets)
   }
+  # Validate the full retained geometry first; materialize only displayed
+  # columns. The default's concentration is already a validated retained fact.
+  ranks <- ranks[, target_ids, drop = FALSE]
+  groups <- groups[, target_ids, drop = FALSE]
+  facts <- list(tied_targets = facts$tied_targets[target_ids])
   frames <- vector("list", nrow(ok))
   for (i in seq_len(nrow(ok))) {
     row <- ok[i, , drop = FALSE]
@@ -511,8 +494,8 @@ utils::globalVariables(".data")
       ctx <- object$.model$ctx
       tab <- rank_weight_eval(spec, seq_len(n), ctx = ctx)
     }
-    W <- .dnn_average_distance_weights(matrix(tab[ranks], n, ncol(ranks)), groups)
-    by_target <- lapply(target_ids, function(j) {
+    W <- .dnn_average_distance_weights(matrix(tab[ranks], n, ncol(ranks)), groups, facts)
+    by_target <- lapply(seq_along(target_ids), function(j) {
       values <- W[order(ranks[, j]), j]
       total <- sum(values)
       frame <- data.frame(
@@ -525,7 +508,7 @@ utils::globalVariables(".data")
         cum_share = if (is.finite(total) && abs(total) > 0) cumsum(values) / total else NA_real_,
         stringsAsFactors = FALSE
       )
-      if (separate_targets) frame$target_id <- j
+      if (separate_targets) frame$target_id <- target_ids[j]
       frame
     })
     frames[[i]] <- do.call(rbind, by_target)
@@ -550,14 +533,14 @@ utils::globalVariables(".data")
 
 # Ratio uncertainty may be unavailable despite a requested covariance calculation.
 .plot_estimate_availability_caption <- function(object, data) {
-  if (inherits(object, "plqr_result") && all(is.na(data$se))) {
+  if (inherits(object, "rdistnn_plqr_result") && all(is.na(data$se))) {
     return(if (identical(attr(data, "quantity"), "theta")) {
       "coefficient standard errors unavailable; moment standard errors do not supply coefficient inference"
     } else {
       "no moment standard errors stored"
     })
   }
-  if (!inherits(object, "affine_ratio_result")) {
+  if (!inherits(object, "rdistnn_affine_ratio_result")) {
     return(if (all(is.na(data$se))) "no standard errors stored (se = FALSE)" else character())
   }
   missing_estimate <- sum(!is.finite(data$estimate))

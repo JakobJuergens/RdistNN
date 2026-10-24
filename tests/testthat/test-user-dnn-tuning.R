@@ -45,6 +45,7 @@ test_that("np_dnn tuning path matches manual s and exposes tuning payload", {
 })
 
 test_that("explicit s and tuning conflict is rejected across DNN wrappers", {
+  withr::local_seed(123L)
   x_mat <- matrix(rnorm(80), nrow = 40L, ncol = 2L)
   x0 <- c(0, 0)
   y_vec <- rnorm(40)
@@ -82,6 +83,7 @@ test_that("explicit s and tuning conflict is rejected across DNN wrappers", {
 })
 
 test_that("cate_dnn and plqr_dnn tuning path matches manual s", {
+  withr::local_preserve_seed()
   set.seed(123)
   n <- 70L
   x_mat <- matrix(rnorm(n * 2L), nrow = n, ncol = 2L)
@@ -138,6 +140,7 @@ test_that("cate_dnn and plqr_dnn tuning path matches manual s", {
 })
 
 test_that("omitted s resolves to the paper default; explicit s keeps the manual payload", {
+  withr::local_preserve_seed()
   set.seed(10)
   x_mat <- matrix(rnorm(80), nrow = 40L, ncol = 2L)
   y_vec <- rnorm(40L)
@@ -175,6 +178,7 @@ test_that("omitted s resolves to the paper default; explicit s keeps the manual 
 })
 
 test_that("tuning works via registered name and bare function in wrappers", {
+  withr::local_seed(123L)
   demo <- np_demo_data(n = 90L, p = 2L, seed = 2L)
   x_mat <- as.matrix(demo$data[, c("X1", "X2")])
   y_vec <- demo$data$Y
@@ -225,6 +229,7 @@ test_that("tuning metadata is attached even when `return` omits tuning payload",
 })
 
 test_that("tuning infeasibility k > s errors are propagated across wrappers", {
+  withr::local_preserve_seed()
   set.seed(21)
   x_mat <- matrix(rnorm(80), nrow = 40L, ncol = 2L)
   x0 <- c(0, 0)
@@ -263,6 +268,7 @@ test_that("tuning infeasibility k > s errors are propagated across wrappers", {
 })
 
 test_that("jackknife feasibility failures from tuning (s >= n) error clearly", {
+  withr::local_preserve_seed()
   set.seed(22)
   x_mat <- matrix(rnorm(80), nrow = 40L, ncol = 2L)
   x0 <- c(0, 0)
@@ -310,6 +316,7 @@ test_that("jackknife feasibility failures from tuning (s >= n) error clearly", {
 })
 
 test_that("cate_dnn and plqr_dnn expose stable tuning payload with `return = 'tuning'`", {
+  withr::local_preserve_seed()
   set.seed(23)
   n <- 70L
   x_mat <- matrix(rnorm(n * 2L), nrow = n, ncol = 2L)
@@ -350,6 +357,7 @@ test_that("cate_dnn and plqr_dnn expose stable tuning payload with `return = 'tu
 })
 
 test_that("matrix/data-frame interface parity is preserved with tuning enabled", {
+  withr::local_preserve_seed()
   set.seed(24)
   cate_demo <- cate_demo_data(n = 90L, p = 2L, design = "hetero", sigma = 0.3, seed = 24L)
   df <- cate_demo$data

@@ -16,7 +16,7 @@ new_tuning(name, eval = NULL, eval_grid = NULL, setup = NULL)
 \item{setup}{Optional setup function for future use.}
 }
 \value{
-A validated \code{dnn_tuning} spec.
+A validated \code{rdistnn_tuning} spec.
 }
 \description{
 Construct a tuning spec

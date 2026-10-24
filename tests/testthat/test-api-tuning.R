@@ -32,6 +32,7 @@ test_that("new_tuning()/as_tuning()/is_tuning() support eval and eval_grid specs
 })
 
 test_that("register_tuning()/get_tuning()/tuning_names() support function and list specs", {
+  withr::local_seed(123L)
   nm_fun <- paste0("tmp_fixed_", sample.int(1e6, 1L))
   register_tuning(nm_fun, function(...) 11L)
   expect_true(nm_fun %in% tuning_names())
@@ -136,10 +137,14 @@ test_that("tuning_eval validates argument types and accepts bare function tuning
     tuning_eval(tuning_dnn_paper(), n = 100L, kx = 2L, k = 2L, jackknife = 1),
     "character scalar"
   )
-  expect_error(
+  error <- tryCatch(
     tuning_eval(tuning_dnn_paper(), n = 100L, kx = 2L, k = 2L, jackknife = "bad"),
-    "should be one of"
+    error = identity
   )
+  expect_s3_class(error, "rdistnn_input_error")
+  expect_identical(error$code, "argument_invalid")
+  expect_identical(error$argument, "jackknife")
+  expect_match(conditionMessage(error), "fast, loo, none")
   expect_error(
     tuning_eval(list(), n = 100L, kx = 2L, k = 2L),
     "must be a tuning spec"
@@ -387,4 +392,43 @@ test_that("paper_undersmooth input validation is explicit", {
   expect_error(tuning_dnn_paper(lambda = 0), "positive finite numeric scalar")
   expect_error(tuning_dnn_paper(lambda_grid = c(0.5, 0)), "positive finite numeric vector")
   expect_error(tuning_dnn_paper(kx_override = 2.5), "integer scalar")
+})
+
+test_that("list tuning callback defects identify returned fields", {
+  invalid <- list(
+    s = list(s = 0),
+    `meta$name` = list(s = 2L, meta = list(name = "")),
+    `meta$n` = list(s = 2L, meta = list(n = 0)),
+    `meta$kx` = list(s = 2L, meta = list(kx = NA_real_))
+  )
+  for (field in names(invalid)) {
+    value <- invalid[[field]]
+    tuning <- new_tuning("bad_return", eval = function(...) value)
+    for (mode in c("default", "grid")) {
+      error <- tryCatch(tuning_eval(tuning, n = 10L, kx = 1L, k = 1L,
+        se = FALSE, mode = mode), error = identity)
+      expect_s3_class(error, "rdistnn_callback_error")
+      expect_identical(error$code, "callback_invalid")
+      expect_identical(error$argument, paste0("tuning$eval()$", field))
+      expect_match(conditionMessage(error), "Correct the callback.*documented result")
+    }
+  }
+  good <- new_tuning("good_return", eval = function(...)
+    list(s = 2L, meta = list(name = "valid", n = 10L, kx = 1L)))
+  result <- tuning_eval(good, n = 10L, kx = 1L, k = 1L, se = FALSE)
+  expect_identical(result$s, 2L)
+  expect_identical(result$meta$name, "valid")
+})
+
+test_that("tuning callbacks keep thrown conditions outside return validation", {
+  sentinel <- structure(list(message = "owned callback failure", call = NULL,
+    code = "argument_invalid", argument = "learner_input"),
+    class = c("rdistnn_input_error", "rdistnn_error", "error", "condition"))
+  for (mode in c("default", "grid")) {
+    tuning <- new_tuning("throws", eval = function(...) stop(sentinel),
+      eval_grid = function(...) stop(sentinel))
+    error <- tryCatch(tuning_eval(tuning, n = 10L, kx = 1L, k = 1L,
+      se = FALSE, mode = mode), error = identity)
+    expect_identical(error, sentinel)
+  }
 })

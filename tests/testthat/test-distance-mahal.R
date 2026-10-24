@@ -14,6 +14,7 @@
 # ── correctness ───────────────────────────────────────────────────────────────
 
 test_that("distance_mahalanobis: identity covariance matches L2", {
+  withr::local_preserve_seed()
   # When cov(X) ≈ I, Mahalanobis = Euclidean
   set.seed(1)
   n  <- 120L
@@ -49,6 +50,7 @@ test_that("distance_mahalanobis: known solution with diagonal covariance", {
 })
 
 test_that("distance_mahalanobis: correlated design gives different distances than L2", {
+  withr::local_preserve_seed()
   set.seed(42)
   n   <- 200L
   rho <- 0.9
@@ -71,6 +73,7 @@ test_that("distance_mahalanobis: correlated design gives different distances tha
 # ── setup / eval / eval_batch contract ───────────────────────────────────────
 
 test_that("distance_mahalanobis: eval matches column 1 of eval_batch", {
+  withr::local_preserve_seed()
   set.seed(2)
   X  <- matrix(rnorm(60L), 30L, 2L)
   X0 <- matrix(rnorm(10L), 5L, 2L)
@@ -84,6 +87,7 @@ test_that("distance_mahalanobis: eval matches column 1 of eval_batch", {
 })
 
 test_that("distance_mahalanobis: eval_batch columns equal loop over eval", {
+  withr::local_preserve_seed()
   set.seed(3)
   X  <- matrix(rnorm(80L), 40L, 2L)
   X0 <- matrix(rnorm(8L),  4L,  2L)
@@ -98,6 +102,7 @@ test_that("distance_mahalanobis: eval_batch columns equal loop over eval", {
 })
 
 test_that("distance_mahalanobis: setup called once is equivalent to NULL ctx", {
+  withr::local_preserve_seed()
   set.seed(7)
   X  <- matrix(rnorm(60L), 30L, 2L)
   x0 <- c(0.5, -0.5)
@@ -111,6 +116,7 @@ test_that("distance_mahalanobis: setup called once is equivalent to NULL ctx", {
 })
 
 test_that("distance_mahalanobis: output is non-negative finite", {
+  withr::local_preserve_seed()
   set.seed(9)
   X    <- matrix(rnorm(100L), 50L, 2L)
   x0   <- c(1, -1)
@@ -123,6 +129,7 @@ test_that("distance_mahalanobis: output is non-negative finite", {
 })
 
 test_that("distance_mahalanobis: self-distance is zero", {
+  withr::local_preserve_seed()
   set.seed(11)
   X    <- matrix(rnorm(40L), 20L, 2L)
   spec <- distance_mahalanobis()
@@ -137,6 +144,7 @@ test_that("distance_mahalanobis: self-distance is zero", {
 # ── singular/near-singular covariance ─────────────────────────────────────────
 
 test_that("distance_mahalanobis: near-singular covariance (constant column) falls back to pseudoinverse", {
+  withr::local_preserve_seed()
   # X with one constant column → cov is singular
   set.seed(5)
   X <- matrix(rnorm(60L), 30L, 2L)
@@ -162,6 +170,7 @@ test_that("distance_mahalanobis: supports kx = 1", {
 })
 
 test_that("distance_mahalanobis: rejects NA in X at eval", {
+  withr::local_preserve_seed()
   set.seed(6)
   X    <- matrix(rnorm(40L), 20L, 2L)
   spec <- distance_mahalanobis()
@@ -174,6 +183,7 @@ test_that("distance_mahalanobis: rejects NA in X at eval", {
 })
 
 test_that("distance_mahalanobis: rejects NA in X at eval_batch", {
+  withr::local_preserve_seed()
   set.seed(6)
   X    <- matrix(rnorm(40L), 20L, 2L)
   spec <- distance_mahalanobis()
@@ -186,6 +196,7 @@ test_that("distance_mahalanobis: rejects NA in X at eval_batch", {
 })
 
 test_that("distance_mahalanobis: rejects NA in X0 at eval_batch", {
+  withr::local_preserve_seed()
   set.seed(6)
   X    <- matrix(rnorm(40L), 20L, 2L)
   spec <- distance_mahalanobis()
@@ -198,6 +209,7 @@ test_that("distance_mahalanobis: rejects NA in X0 at eval_batch", {
 # ── string alias ──────────────────────────────────────────────────────────────
 
 test_that("'mahalanobis' string alias is registered and evaluates correctly", {
+  withr::local_preserve_seed()
   expect_true("mahalanobis" %in% distance_names())
   spec <- get_distance("mahalanobis")
   expect_true(is_distance(spec))
@@ -216,6 +228,7 @@ test_that("'mahalanobis' string alias is registered and evaluates correctly", {
 # ── integration ───────────────────────────────────────────────────────────────
 
 test_that("cate_dnn() accepts distance = 'mahalanobis'", {
+  withr::local_preserve_seed()
   set.seed(100)
   n   <- 120L
   rho <- 0.8
@@ -238,6 +251,7 @@ test_that("cate_dnn() accepts distance = 'mahalanobis'", {
 })
 
 test_that("cate_dnn() Mahalanobis vs L2: finite and structurally consistent", {
+  withr::local_preserve_seed()
   set.seed(101)
   n   <- 150L
   rho <- 0.85

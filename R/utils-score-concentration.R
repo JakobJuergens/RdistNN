@@ -3,7 +3,10 @@
 # exceptional finite-operand differences retain magnitude in binary exponents.
 .dnn_score_contributions <- function(w, left, right) {
   if (length(w) != length(left) || length(w) != length(right)) {
-    .abort_bad_state("Score concentration requires aligned weights and residual operands.")
+    .dnn_abort("internal_invariant",
+      "Score concentration requires aligned weights and residual operands.",
+      hint = "Report a reproducible example of this internal inconsistency."
+    )
   }
   contribution <- numeric(length(w))
   result <- function(available, share = NA_real_) {

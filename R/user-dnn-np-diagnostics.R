@@ -1,4 +1,4 @@
-# Nonparametric-regression-specific diagnostics for np_result objects.
+# Nonparametric-regression-specific diagnostics for rdistnn_np_result objects.
 
 .np_outcome_diagnostics <- function(W, y_vec) {
   w_mat <- as.matrix(W)
@@ -56,19 +56,19 @@
 
 #' @name diagnostics
 #' @export
-diagnostics.np_result <- function(object, candidates = "default", ...) {
+diagnostics.rdistnn_np_result <- function(object, candidates = "default", ...) {
   .dnn_reuse_scope(object)
   if (!.plot_candidates_is_default(candidates)) {
     return(.dnn_candidate_diagnostics(object, candidates = candidates))
   }
   model <- object$.model
   if (!is.list(model) || is.null(model$y_vec)) {
-    .abort_bad_state("This object lacks fitted outcome state. Refit with np_dnn() or np_tdnn().")
+    .dnn_abort("state_invalid", "This object lacks fitted outcome state. Refit with np_dnn() or np_tdnn().")
   }
   out <- .dnn_weight_diagnostics(
     W = .dnn_diag_require_W(object),
     meta = object$meta,
-    dx = object$dx,
+    dx = .dnn_retained_matrix(object, "dx"),
     tuning_payload = .dnn_diag_tuning_payload(object)
   )
   .dnn_diag_append(out, .np_outcome_diagnostics(object$W, y_vec = model$y_vec))

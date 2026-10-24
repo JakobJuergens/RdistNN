@@ -57,7 +57,8 @@ rank tables at sizes \eqn{n} and \eqn{n-1} and passes them to
 \code{.tdnn_jackknife_se_loo_matrix()}.
 }
 \details{
-The C++ engine is used automatically when the package has been compiled;
-otherwise the same centered calculation uses its R fallback.
+With compiled execution enabled and the native routine available, this uses
+the C++ engine; otherwise the same centered calculation uses its R path.
+See \link{RdistNN} for engine controls.
 }
 \keyword{internal}

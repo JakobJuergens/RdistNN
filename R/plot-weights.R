@@ -13,7 +13,7 @@
     return(NA_integer_)
   }
 
-  if (inherits(object, "tdnn_np_result")) {
+  if (inherits(object, "rdistnn_tdnn_np_result")) {
     if (is.null(meta$s1)) {
       return(NA_integer_)
     }
@@ -85,7 +85,8 @@ plot_weights <- function(object,
                          ...) {
   .dnn_reuse_scope(object)
   .plot_require_ggplot2("plot_weights")
-  type <- match.arg(type)
+  type <- .dnn_match_arg(type)
+  log_weights <- .validate_scalar_logical(log_weights, "log_weights")
   if (!.plot_candidates_is_default(candidates)) {
     return(.plot_weights_candidates(
       object = object,
@@ -96,27 +97,13 @@ plot_weights <- function(object,
     ))
   }
 
-  dw <- plot_data_weights(object)
-  n <- max(dw$rank)
-  all_targets <- sort(unique(dw$target_id))
-  m <- length(all_targets)
-
-  if (type == "kernel" && all(is.na(dw$distance))) {
-    .abort_bad_arg(
-      "object",
-      "must store distances for type = \"kernel\"; refit with `return = c(\"W\", \"dx\")`",
-      quoted = FALSE
-    )
-  }
-
-  neff_by_target <- vapply(
-    all_targets,
-    function(j) 1 / sum(dw$weight[dw$target_id == j]^2),
-    numeric(1L)
-  )
-  targets <- .plot_select_targets(all_targets, neff_by_target, targets)
-  dw <- dw[dw$target_id %in% targets, , drop = FALSE]
-  dw$target <- factor(dw$target_id)
+  W <- .dnn_diag_require_W(object)
+  dx <- .dnn_retained_matrix(object, "dx", required = type == "kernel")
+  n <- nrow(W)
+  targets <- .plot_select_targets(seq_len(ncol(W)),
+    object$meta$target_notices$weight_concentration, targets)
+  dw <- .plot_weight_profiles(object, W, dx, targets)
+  dw$target <- factor(dw$target_id, levels = targets)
   multi <- length(targets) > 1L
 
   captions <- character(0)

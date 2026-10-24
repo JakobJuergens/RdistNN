@@ -11,14 +11,15 @@
 #     degradation, and a full print smoke test.
 
 .plot_diag_contract_cate_df <- function(n = 120L, seed = 81L) {
-  set.seed(seed)
-  df <- data.frame(X1 = rnorm(n), X2 = rnorm(n))
-  df$e <- plogis(0.5 * df$X1)
-  df$T <- as.integer(runif(n) < df$e)
-  df$m0 <- df$X1
-  df$m1 <- df$X1 + 1
-  df$Y <- ifelse(df$T == 1L, df$m1, df$m0) + rnorm(n, sd = 0.3)
-  df
+  .test_rng_scope({
+    df <- data.frame(X1 = rnorm(n), X2 = rnorm(n))
+    df$e <- plogis(0.5 * df$X1)
+    df$T <- as.integer(runif(n) < df$e)
+    df$m0 <- df$X1
+    df$m1 <- df$X1 + 1
+    df$Y <- ifelse(df$T == 1L, df$m1, df$m0) + rnorm(n, sd = 0.3)
+    df
+  }, seed = seed)
 }
 
 .plot_diag_contract_cate_fit <- function(n = 120L, m = 5L, seed = 81L, se = FALSE,
@@ -105,59 +106,63 @@ test_that("overlap mass built layers reproduce independent computations", {
 })
 
 test_that("user-supplied treatment reproduces the stored-treatment panel", {
-  skip_if_not_installed("ggplot2")
-  df <- .plot_diag_contract_cate_df(seed = 82L)
-  fit_data <- cate_dnn(
-    data = df, x_cols = c("X1", "X2"), y_col = "Y", t_col = "T",
-    e_col = "e", m0_col = "m0", m1_col = "m1",
-    X0 = cbind(seq(-1, 1, length.out = 5L), 0),
-    k = 1L, s = 15L, se = FALSE
-  )
-  fit_mat <- cate_dnn(
-    X = as.matrix(df[, c("X1", "X2")]),
-    X0 = cbind(seq(-1, 1, length.out = 5L), 0),
-    pseudo_outcome = rnorm(nrow(df)),
-    k = 1L, s = 15L, se = FALSE
-  )
+  .test_rng_scope({
+    skip_if_not_installed("ggplot2")
+    df <- .plot_diag_contract_cate_df(seed = 82L)
+    fit_data <- cate_dnn(
+      data = df, x_cols = c("X1", "X2"), y_col = "Y", t_col = "T",
+      e_col = "e", m0_col = "m0", m1_col = "m1",
+      X0 = cbind(seq(-1, 1, length.out = 5L), 0),
+      k = 1L, s = 15L, se = FALSE
+    )
+    fit_mat <- cate_dnn(
+      X = as.matrix(df[, c("X1", "X2")]),
+      X0 = cbind(seq(-1, 1, length.out = 5L), 0),
+      pseudo_outcome = rnorm(nrow(df)),
+      k = 1L, s = 15L, se = FALSE
+    )
 
-  p_stored <- plot_overlap(fit_data, type = "mass")
-  p_arg <- plot_overlap(fit_mat, type = "mass", treatment = df$T)
-  # Same X and targets: identical weights, hence identical masses.
-  expect_equal(p_arg$data$mass, p_stored$data$mass)
-  expect_identical(p_arg$data$arm, p_stored$data$arm)
+    p_stored <- plot_overlap(fit_data, type = "mass")
+    p_arg <- plot_overlap(fit_mat, type = "mass", treatment = df$T)
+    # Same X and targets: identical weights, hence identical masses.
+    expect_equal(p_arg$data$mass, p_stored$data$mass)
+    expect_identical(p_arg$data$arm, p_stored$data$arm)
+  }, seed = 123L)
 })
 
 test_that("overlap display mode and inputs are validated at the boundaries", {
-  skip_if_not_installed("ggplot2")
-  # Profile lines at m = 4, dodged columns at m = 3.
-  fit4 <- .plot_diag_contract_cate_fit(m = 4L, seed = 83L)
-  expect_true("GeomLine" %in% .plot_layer_geoms(plot_overlap(fit4, type = "mass")))
-  fit3 <- .plot_diag_contract_cate_fit(m = 3L, seed = 84L)
-  expect_true("GeomCol" %in% .plot_layer_geoms(plot_overlap(fit3, type = "mass")))
+  .test_rng_scope({
+    skip_if_not_installed("ggplot2")
+    # Profile lines at m = 4, dodged columns at m = 3.
+    fit4 <- .plot_diag_contract_cate_fit(m = 4L, seed = 83L)
+    expect_true("GeomLine" %in% .plot_layer_geoms(plot_overlap(fit4, type = "mass")))
+    fit3 <- .plot_diag_contract_cate_fit(m = 3L, seed = 84L)
+    expect_true("GeomCol" %in% .plot_layer_geoms(plot_overlap(fit3, type = "mass")))
 
-  # share_limits validation.
-  expect_error(plot_overlap(fit4, share_limits = c(0.9, 0.1)), "increasing")
-  expect_error(plot_overlap(fit4, share_limits = 0.5), "increasing|two")
-  expect_error(plot_overlap(fit4, share_limits = c(0.1, Inf)), "finite")
+    # share_limits validation.
+    expect_error(plot_overlap(fit4, share_limits = c(0.9, 0.1)), "increasing")
+    expect_error(plot_overlap(fit4, share_limits = 0.5), "increasing|two")
+    expect_error(plot_overlap(fit4, share_limits = c(0.1, Inf)), "finite")
 
-  # Overlap panels need the stored weight matrix.
-  df <- .plot_diag_contract_cate_df(seed = 85L)
-  fit_now <- cate_dnn(
-    data = df, x_cols = c("X1", "X2"), y_col = "Y", t_col = "T",
-    e_col = "e", m0_col = "m0", m1_col = "m1",
-    x0 = c(0, 0), k = 1L, s = 15L, se = FALSE, return = c("ess")
-  )
-  expect_error(plot_overlap(fit_now, type = "mass"), class = "rdistnn_extra_unavailable")
+    # Overlap panels need the stored weight matrix.
+    df <- .plot_diag_contract_cate_df(seed = 85L)
+    fit_now <- cate_dnn(
+      data = df, x_cols = c("X1", "X2"), y_col = "Y", t_col = "T",
+      e_col = "e", m0_col = "m0", m1_col = "m1",
+      x0 = c(0, 0), k = 1L, s = 15L, se = FALSE, return = c("ess")
+    )
+    expect_error(plot_overlap(fit_now, type = "mass"), class = "rdistnn_extra_unavailable")
 
-  # Treatment argument must be binary.
-  fit_mat <- cate_dnn(
-    X = as.matrix(df[, c("X1", "X2")]), x0 = c(0, 0),
-    pseudo_outcome = rnorm(nrow(df)), k = 1L, s = 15L, se = FALSE
-  )
-  expect_error(
-    plot_overlap(fit_mat, type = "mass", treatment = runif(nrow(df))),
-    "0|binary"
-  )
+    # Treatment argument must be binary.
+    fit_mat <- cate_dnn(
+      X = as.matrix(df[, c("X1", "X2")]), x0 = c(0, 0),
+      pseudo_outcome = rnorm(nrow(df)), k = 1L, s = 15L, se = FALSE
+    )
+    expect_error(
+      plot_overlap(fit_mat, type = "mass", treatment = runif(nrow(df))),
+      "0|binary"
+    )
+  }, seed = 123L)
 })
 
 test_that("propensity densities map weights and respect target subsetting", {
@@ -189,106 +194,112 @@ test_that("propensity densities map weights and respect target subsetting", {
 })
 
 test_that("diagnostics facets reproduce the extractor and isolate the guide", {
-  skip_if_not_installed("ggplot2")
-  fit <- .plot_diag_contract_cate_fit(m = 5L, seed = 87L)
-  dd <- plot_data_diagnostics(fit)
-  p <- ggplot2::autoplot(diagnostics(fit))
-  built <- ggplot2::ggplot_build(p)
-  geoms <- .plot_layer_geoms(p)
+  .test_rng_scope({
+    skip_if_not_installed("ggplot2")
+    fit <- .plot_diag_contract_cate_fit(m = 5L, seed = 87L)
+    dd <- plot_data_diagnostics(fit)
+    p <- ggplot2::autoplot(diagnostics(fit))
+    built <- ggplot2::ggplot_build(p)
+    geoms <- .plot_layer_geoms(p)
 
-  # Facet values equal the extractor columns, target by target.
-  long <- p$data
-  expect_equal(long$value[long$metric == "n_eff"], dd$n_eff)
-  expect_equal(long$value[long$metric == "max weight"], dd$max_weight)
-  expect_equal(long$value[long$metric == "top-5 weight share"],
-               dd$top5_weight_share)
+    # Facet values equal the extractor columns, target by target.
+    long <- p$data
+    expect_equal(long$value[long$metric == "n_eff"], dd$n_eff)
+    expect_equal(long$value[long$metric == "max weight"], dd$max_weight)
+    expect_equal(long$value[long$metric == "top-5 weight share"],
+                 dd$top5_weight_share)
 
-  # The 0.9n guide is drawn in exactly one panel: the n_eff facet.
-  hline_built <- built$data[[which(geoms == "GeomHline")[1L]]]
-  expect_identical(length(unique(hline_built$PANEL)), 1L)
-  layout <- built$layout$layout
-  guide_panel <- layout$metric[layout$PANEL == unique(hline_built$PANEL)]
-  expect_identical(as.character(guide_panel), "n_eff")
+    # The 0.9n guide is drawn in exactly one panel: the n_eff facet.
+    hline_built <- built$data[[which(geoms == "GeomHline")[1L]]]
+    expect_identical(length(unique(hline_built$PANEL)), 1L)
+    layout <- built$layout$layout
+    guide_panel <- layout$metric[layout$PANEL == unique(hline_built$PANEL)]
+    expect_identical(as.character(guide_panel), "n_eff")
 
-  # Works across estimator classes, including TDNN via np inheritance.
-  set.seed(88)
-  n <- 60L
-  Xm <- matrix(rnorm(n * 2L), n, 2L)
-  fit_tdnn <- np_tdnn(X = Xm, x0 = c(0, 0), Y = rnorm(n),
-                      s1 = 4L, s2 = 8L, se = FALSE)
-  p_tdnn <- ggplot2::autoplot(diagnostics(fit_tdnn))
-  expect_s3_class(p_tdnn, "ggplot")
-  expect_no_error(ggplot2::ggplot_build(p_tdnn))
+    # Works across estimator classes, including TDNN via np inheritance.
+    set.seed(88)
+    n <- 60L
+    Xm <- matrix(rnorm(n * 2L), n, 2L)
+    fit_tdnn <- np_tdnn(X = Xm, x0 = c(0, 0), Y = rnorm(n),
+                        s1 = 4L, s2 = 8L, se = FALSE)
+    p_tdnn <- ggplot2::autoplot(diagnostics(fit_tdnn))
+    expect_s3_class(p_tdnn, "ggplot")
+    expect_no_error(ggplot2::ggplot_build(p_tdnn))
+  })
 })
 
 test_that("dashboards carry the expected panel counts and pass arguments", {
-  skip_if_not_installed("ggplot2")
-  skip_if_not_installed("patchwork")
+  .test_rng_scope({
+    skip_if_not_installed("ggplot2")
+    skip_if_not_installed("patchwork")
 
-  # Full-input cate dashboard: four panels (estimates, overlap,
-  # propensity, weights).
-  fit <- .plot_diag_contract_cate_fit(m = 5L, seed = 89L, se = TRUE)
-  dash <- plot_dashboard(fit)
-  expect_identical(length(dash$patches$plots) + 1L, 4L)
+    # Full-input cate dashboard: four panels (estimates, overlap,
+    # propensity, weights).
+    fit <- .plot_diag_contract_cate_fit(m = 5L, seed = 89L, se = TRUE)
+    dash <- plot_dashboard(fit)
+    expect_identical(length(dash$patches$plots) + 1L, 4L)
 
-  # Matrix-interface fit: overlap and propensity unavailable, diagnostics
-  # substituted -> three panels.
-  df <- .plot_diag_contract_cate_df(seed = 90L)
-  fit_mat <- cate_dnn(
-    X = as.matrix(df[, c("X1", "X2")]),
-    X0 = cbind(seq(-1, 1, length.out = 5L), 0),
-    pseudo_outcome = rnorm(nrow(df)), k = 1L, s = 15L, se = FALSE
-  )
-  dash_mat <- plot_dashboard(fit_mat)
-  expect_identical(length(dash_mat$patches$plots) + 1L, 3L)
+    # Matrix-interface fit: overlap and propensity unavailable, diagnostics
+    # substituted -> three panels.
+    df <- .plot_diag_contract_cate_df(seed = 90L)
+    fit_mat <- cate_dnn(
+      X = as.matrix(df[, c("X1", "X2")]),
+      X0 = cbind(seq(-1, 1, length.out = 5L), 0),
+      pseudo_outcome = rnorm(nrow(df)), k = 1L, s = 15L, se = FALSE
+    )
+    dash_mat <- plot_dashboard(fit_mat)
+    expect_identical(length(dash_mat$patches$plots) + 1L, 3L)
 
-  # Arguments pass through to the estimates panel (checked through the
-  # degraded list, which returns the panels directly).
-  testthat::local_mocked_bindings(
-    .plot_pkg_installed = function(pkg) pkg != "patchwork",
-    .package = "RdistNN"
-  )
-  suppressMessages(panels <- plot_dashboard(fit, level = 0.8))
-  expect_identical(attr(panels$estimates$data, "level"), 0.8)
-  expect_identical(names(panels),
-                   c("estimates", "overlap", "propensity", "weights"))
+    # Arguments pass through to the estimates panel (checked through the
+    # degraded list, which returns the panels directly).
+    testthat::local_mocked_bindings(
+      .plot_pkg_installed = function(pkg) pkg != "patchwork",
+      .package = "RdistNN"
+    )
+    suppressMessages(panels <- plot_dashboard(fit, level = 0.8))
+    expect_identical(attr(panels$estimates$data, "level"), 0.8)
+    expect_identical(names(panels),
+                     c("estimates", "overlap", "propensity", "weights"))
+  }, seed = 123L)
 })
 
 test_that("dashboards degrade to a single panel and survive printing", {
-  skip_if_not_installed("ggplot2")
-  skip_if_not_installed("patchwork")
+  .test_rng_scope({
+    skip_if_not_installed("ggplot2")
+    skip_if_not_installed("patchwork")
 
-  # np fit without stored W: weight and diagnostics panels are dropped,
-  # leaving a single-panel dashboard that still composes.
-  set.seed(91)
-  n <- 60L
-  X <- matrix(rnorm(n * 2L), n, 2L)
-  fit_now <- np_dnn(
-    X = X, X0 = cbind(seq(-1, 1, length.out = 5L), 0),
-    Y = X[, 1L] + rnorm(n, sd = 0.3), k = 1L, s = 10L,
-    se = FALSE, return = c("ess")
-  )
-  dash <- plot_dashboard(fit_now)
-  expect_s3_class(dash, "patchwork")
-  expect_identical(length(dash$patches$plots) + 1L, 1L)
+    # np fit without stored W: weight and diagnostics panels are dropped,
+    # leaving a single-panel dashboard that still composes.
+    set.seed(91)
+    n <- 60L
+    X <- matrix(rnorm(n * 2L), n, 2L)
+    fit_now <- np_dnn(
+      X = X, X0 = cbind(seq(-1, 1, length.out = 5L), 0),
+      Y = X[, 1L] + rnorm(n, sd = 0.3), k = 1L, s = 10L,
+      se = FALSE, return = c("ess")
+    )
+    dash <- plot_dashboard(fit_now)
+    expect_s3_class(dash, "patchwork")
+    expect_identical(length(dash$patches$plots) + 1L, 1L)
 
-  # Full render smoke test: the composed dashboard prints without error.
-  fit <- .plot_diag_contract_cate_fit(m = 5L, seed = 92L, se = TRUE)
-  dash_full <- plot_dashboard(fit)
-  pdf(NULL)
-  on.exit(dev.off(), add = TRUE)
-  expect_no_error(print(dash_full))
+    # Full render smoke test: the composed dashboard prints without error.
+    fit <- .plot_diag_contract_cate_fit(m = 5L, seed = 92L, se = TRUE)
+    dash_full <- plot_dashboard(fit)
+    pdf(NULL)
+    on.exit(dev.off(), add = TRUE)
+    expect_no_error(print(dash_full))
 
-  # paper_default provenance reaches the annotation.
-  df <- .plot_diag_contract_cate_df(seed = 93L)
-  fit_def <- cate_dnn(
-    data = df, x_cols = c("X1", "X2"), y_col = "Y", t_col = "T",
-    e_col = "e", m0_col = "m0", m1_col = "m1",
-    X0 = cbind(seq(-1, 1, length.out = 5L), 0),
-    k = 1L, se = FALSE
-  )
-  dash_def <- plot_dashboard(fit_def)
-  expect_match(dash_def$patches$annotation$caption, "paper_default")
-  expect_match(dash_def$patches$annotation$caption, "jackknife = none",
-               fixed = TRUE)
+    # paper_default provenance reaches the annotation.
+    df <- .plot_diag_contract_cate_df(seed = 93L)
+    fit_def <- cate_dnn(
+      data = df, x_cols = c("X1", "X2"), y_col = "Y", t_col = "T",
+      e_col = "e", m0_col = "m0", m1_col = "m1",
+      X0 = cbind(seq(-1, 1, length.out = 5L), 0),
+      k = 1L, se = FALSE
+    )
+    dash_def <- plot_dashboard(fit_def)
+    expect_match(dash_def$patches$annotation$caption, "paper_default")
+    expect_match(dash_def$patches$annotation$caption, "jackknife = none",
+                 fixed = TRUE)
+  })
 })

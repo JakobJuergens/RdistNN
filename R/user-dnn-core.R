@@ -10,10 +10,10 @@
   "user_distance"
 }
 
-.dnn_warn_degenerate_weights <- function(W, method = "DNN") {
+.dnn_warn_degenerate_weights <- function(W, method = "DNN", concentration = NULL) {
   n <- nrow(W)
-  if (is.null(n) || n < 2L) return(invisible(NULL))
-  ess <- 1 / colSums(W^2)
+  ess <- if (is.null(concentration)) 1 / colSums(W^2) else concentration
+  if (is.null(n) || n < 2L) return(invisible(ess))
   affected <- which(ess >= 0.9 * n)
   if (length(affected)) {
     message <- if (identical(method, "TDNN")) {
@@ -33,7 +33,21 @@
     }
     .dnn_warn("weak_localization", message, affected = length(affected), examples = affected, hint = hint)
   }
-  invisible(NULL)
+  invisible(ess)
+}
+
+# Descriptive facts, not warning-history flags. Group preparation/validation
+# already supplies target ties; weight concentration is computed while W exists.
+.dnn_attach_notice_facts <- function(meta, groups, concentration, facts = NULL) {
+  if (is.null(facts)) facts <- .dnn_group_facts(groups)
+  m <- length(concentration)
+  tied <- if (is.null(groups)) rep(FALSE, m) else unname(facts$tied_targets)
+  meta$target_notices <- data.frame(target_id = seq_len(m), distance_ties = tied,
+    weight_concentration = unname(concentration),
+    weak_localization = unname(meta$n >= 2L & concentration >= .9 * meta$n))
+  meta$n_tied_targets <- sum(tied)
+  meta$n_weak_targets <- sum(meta$target_notices$weak_localization)
+  meta
 }
 
 .dnn_weights_with_extras <- function(
@@ -52,7 +66,8 @@
     ctx = ctx,
     return = unique(c("W", keep_extras))
   )
-  .dnn_warn_degenerate_weights(wt$W)
+  .dnn_warn_degenerate_weights(wt$W,
+    concentration = wt$meta$target_notices$weight_concentration)
   list(
     wt = wt,
     W = wt$W,
@@ -68,7 +83,7 @@
 
   sig <- as.matrix(signal)
   if (nrow(sig) != n) {
-    .abort_bad_state(sprintf("nrow(%s) must equal nrow(X).", arg))
+    .abort_bad_arg(arg, "must have nrow(X) rows", expected = n, actual = nrow(sig))
   }
   if (!is.numeric(sig)) {
     .abort_bad_arg(arg, "must be numeric")
@@ -90,12 +105,19 @@
 }
 
 .dnn_attach_common_extras <- function(out, return, wt, W, k, tuning_payload = NULL) {
+  concentration <- wt$meta$target_notices$weight_concentration
+  if (!is.numeric(concentration) || length(concentration) != ncol(W) ||
+      anyNA(concentration) || any(concentration < 0)) {
+    .dnn_abort("internal_invariant", "Prepared weights lack current target concentration facts.",
+      hint = "Report a reproducible example of this internal inconsistency.")
+  }
+  out$meta <- .dnn_attach_notice_facts(out$meta, wt$groups, concentration)
   if ("W" %in% return) out$W <- W
   if ("ranks" %in% return && !is.null(wt$ranks)) out$ranks <- wt$ranks
   if ("ord" %in% return && !is.null(wt$ord)) out$ord <- wt$ord
   if ("dx" %in% return && !is.null(wt$dx)) out$dx <- wt$dx
   if ("tuning" %in% return && !is.null(tuning_payload)) out$tuning <- tuning_payload
-  if ("ess" %in% return) out$ess <- 1 / colSums(W^2)
+  if ("ess" %in% return) out$ess <- concentration
   if ("neighbors" %in% return) {
     k_eff <- max(1L, min(nrow(W), as.integer(k)))
     if (!is.null(wt$ord)) {

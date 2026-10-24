@@ -3,23 +3,23 @@
 \name{plot_dashboard}
 \alias{plot_dashboard}
 \alias{plot_dashboard.default}
-\alias{plot_dashboard.cate_result}
-\alias{plot_dashboard.clate_result}
-\alias{plot_dashboard.np_result}
+\alias{plot_dashboard.rdistnn_cate_result}
+\alias{plot_dashboard.rdistnn_clate_result}
+\alias{plot_dashboard.rdistnn_np_result}
 \title{Compose a diagnostics dashboard for a fitted object}
 \usage{
 plot_dashboard(object, ...)
 
 \method{plot_dashboard}{default}(object, ...)
 
-\method{plot_dashboard}{cate_result}(object, ...)
+\method{plot_dashboard}{rdistnn_cate_result}(object, ...)
 
-\method{plot_dashboard}{clate_result}(object, ...)
+\method{plot_dashboard}{rdistnn_clate_result}(object, ...)
 
-\method{plot_dashboard}{np_result}(object, ...)
+\method{plot_dashboard}{rdistnn_np_result}(object, ...)
 }
 \arguments{
-\item{object}{A fitted result object (\code{cate_result}, \code{clate_result} or \code{np_result}).}
+\item{object}{A fitted result object (\code{rdistnn_cate_result}, \code{rdistnn_clate_result} or \code{rdistnn_np_result}).}
 
 \item{...}{Passed on to \code{\link[=plot_estimates]{plot_estimates()}} for the estimates panel.}
 }

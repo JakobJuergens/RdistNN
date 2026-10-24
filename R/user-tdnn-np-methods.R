@@ -1,14 +1,14 @@
-# Methods for tdnn_np_result objects.
+# Methods for rdistnn_tdnn_np_result objects.
 
-#' Print a `tdnn_np_result` object
+#' Print a `rdistnn_tdnn_np_result` object
 #'
 #' @param x An object returned by [np_tdnn()].
 #' @param ... Not used.
 #' @return `x`, invisibly.
 #' @export
-print.tdnn_np_result <- function(x, ...) {
+print.rdistnn_tdnn_np_result <- function(x, ...) {
   .dnn_check_report_state(x)
-  cat("<tdnn_np_result>\n", sep = "")
+  cat("<rdistnn_tdnn_np_result>\n", sep = "")
   .dnn_print_localization(x$meta)
   cat("  data  : n=", x$meta$n, ", p=", x$meta$p, ", m=", x$meta$m, "\n", sep = "")
   cat("  TDNN  : method=", x$meta$method,

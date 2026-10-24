@@ -1,11 +1,11 @@
 #' Reporting and prediction for paired affine-ratio results
 #'
-#' These methods apply to affine_ratio_result and its clate_result subclass.
+#' These methods apply to rdistnn_affine_ratio_result and its rdistnn_clate_result subclass.
 #' Intervals are pointwise normal-reference intervals with frozen-score standard
 #' errors. A zero or numerically unavailable ratio variance gives NA interval
 #' bounds, not a zero-width confidence interval.
 #'
-#' @param object,x A fitted affine_ratio_result or clate_result.
+#' @param object,x A fitted rdistnn_affine_ratio_result or rdistnn_clate_result.
 #' @param target Optional single target index for vcov.
 #' @param parm Optional numeric target indices for confint.
 #' @param level Confidence level in (0,1).
@@ -28,7 +28,7 @@
 #'   reporting targets only, holding the observations, signals and order fixed.
 #'   It never trains nuisance models. A supplied-training label does not verify
 #'   the statistical or causal assumptions underlying inference.
-#' @name affine_ratio_result
+#' @name rdistnn_affine_ratio_result
 #' @examples
 #' f <- affine_ratio_dnn(
 #'   X = matrix(1:4, ncol = 1), x0 = 0,
@@ -41,19 +41,19 @@
 #' predict(f, x0 = 5, se.fit = TRUE)
 NULL
 
-#' @rdname affine_ratio_result
+#' @rdname rdistnn_affine_ratio_result
 #' @export
-coef.affine_ratio_result <- function(object, ...) {
+coef.rdistnn_affine_ratio_result <- function(object, ...) {
   .dnn_check_report_state(object)
   stats::setNames(object$theta, paste0("target_", seq_along(object$theta)))
 }
 
-#' @rdname affine_ratio_result
+#' @rdname rdistnn_affine_ratio_result
 #' @export
-vcov.affine_ratio_result <- function(object, target = NULL, ...) {
+vcov.rdistnn_affine_ratio_result <- function(object, target = NULL, ...) {
   .dnn_reuse_scope(object)
   if (is.null(object$theta_vcov)) {
-    .abort_bad_arg("object", "has no covariance; refit with se = TRUE and an active jackknife")
+    .dnn_abort("extra_unavailable", "This fit has no covariance; refit with se = TRUE and an active jackknife.")
   }
   if (is.null(target)) {
     if (length(object$theta_vcov) == 1L) {
@@ -81,13 +81,13 @@ vcov.affine_ratio_result <- function(object, target = NULL, ...) {
   ci
 }
 
-#' @rdname affine_ratio_result
+#' @rdname rdistnn_affine_ratio_result
 #' @export
-confint.affine_ratio_result <- function(object, parm = NULL, level = .95, ...) {
+confint.rdistnn_affine_ratio_result <- function(object, parm = NULL, level = .95, ...) {
   .dnn_check_report_state(object)
   level <- .validate_scalar_prob(level, "level")
   if (is.null(object$se)) {
-    .abort_bad_arg("object", "has no covariance; refit with se = TRUE and an active jackknife")
+    .dnn_abort("extra_unavailable", "This fit has no covariance; refit with se = TRUE and an active jackknife.")
   }
   idx <- if (is.null(parm)) {
     seq_along(object$theta)
@@ -108,9 +108,9 @@ confint.affine_ratio_result <- function(object, parm = NULL, level = .95, ...) {
   }, numeric(1L))
 }
 
-#' @rdname affine_ratio_result
+#' @rdname rdistnn_affine_ratio_result
 #' @export
-summary.affine_ratio_result <- function(object, level = .95, ...) {
+summary.rdistnn_affine_ratio_result <- function(object, level = .95, ...) {
   .dnn_check_report_state(object)
   ci <- .affine_wald_bounds(object, level)
   m <- length(object$theta)
@@ -134,16 +134,16 @@ summary.affine_ratio_result <- function(object, level = .95, ...) {
   out <- list(coefficients = coefficients, level = as.numeric(level),
               has_se = any(is.finite(se)), meta = object$meta,
               components = components, status = object$status)
-  class(out) <- "summary.affine_ratio_result"
+  class(out) <- "rdistnn_summary_affine_ratio_result"
   .affine_warn_partial(object$status, requested_covariance = !is.null(object$se))
   out
 }
 
-#' @rdname affine_ratio_result
+#' @rdname rdistnn_affine_ratio_result
 #' @export
-print.affine_ratio_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
+print.rdistnn_affine_ratio_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
   .dnn_check_report_state(x)
-  kind <- if (inherits(x, "clate_result")) "clate_result" else "affine_ratio_result"
+  kind <- if (inherits(x, "rdistnn_clate_result")) "rdistnn_clate_result" else "rdistnn_affine_ratio_result"
   cat("<", kind, "> paired DNN ratio; ", length(x$theta), " target(s)\n", sep = "")
   cat("  DNN: method=", x$meta$method, ", k=", x$meta$k,
       ", s=", x$meta$s, ", distance=", x$meta$distance, "\n", sep = "")
@@ -151,9 +151,9 @@ print.affine_ratio_result <- function(x, digits = max(3L, getOption("digits") - 
   invisible(x)
 }
 
-#' @rdname affine_ratio_result
+#' @rdname rdistnn_affine_ratio_result
 #' @export
-print.summary.affine_ratio_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
+print.rdistnn_summary_affine_ratio_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
   .dnn_check_tie_policy(x$meta$tie_rule)
   .dnn_print_localization(x$meta)
   roles <- x$meta$component_roles
@@ -181,7 +181,7 @@ print.summary.affine_ratio_result <- function(x, digits = max(3L, getOption("dig
   jackknife <- object$meta$jackknife
   if (!is.character(jackknife) || length(jackknife) != 1L || is.na(jackknife) ||
       !jackknife %in% c("fast", "loo", "none")) {
-    .abort_bad_state(paste0(
+    .dnn_abort("state_invalid", paste0(
       "Retained `object$meta$jackknife` must be 'fast', 'loo' or 'none'. ",
       "Refit with affine_ratio_dnn() or clate_dnn()."
     ))
@@ -189,14 +189,14 @@ print.summary.affine_ratio_result <- function(x, digits = max(3L, getOption("dig
   model
 }
 
-#' @rdname affine_ratio_result
+#' @rdname rdistnn_affine_ratio_result
 #' @export
-predict.affine_ratio_result <- function(
+predict.rdistnn_affine_ratio_result <- function(
   object, newdata = NULL, X0 = NULL, x0 = NULL, se.fit = FALSE,
   interval = c("none", "confidence"), level = .95, ...
 ) {
   .dnn_reuse_scope(object, groups = NULL)
-  interval <- match.arg(interval)
+  interval <- .dnn_match_arg(interval)
   se.fit <- .validate_scalar_logical(se.fit, "se.fit")
   level <- .validate_scalar_prob(level, "level")
   model <- .affine_prediction_state(object)
@@ -226,7 +226,7 @@ predict.affine_ratio_result <- function(
 
 #' @rdname plot_data_estimates
 #' @export
-plot_data_estimates.affine_ratio_result <- function(object, level = .95, candidates = "default", ...) {
+plot_data_estimates.rdistnn_affine_ratio_result <- function(object, level = .95, candidates = "default", ...) {
   .dnn_reuse_scope(object)
   if (!.plot_candidates_is_default(candidates)) {
     return(.plot_candidate_estimates_frame(object, candidates, level, "plot_data_estimates")$data)

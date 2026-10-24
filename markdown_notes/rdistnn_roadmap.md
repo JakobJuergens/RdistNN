@@ -37,7 +37,7 @@ The [design reference](design/README.md) specifies maintained contracts.
   `loo` refits deletion geometry.
   Covariance supplies the arithmetic for prespecified contrasts; valid contrast
   inference requires the corresponding joint assumptions. See the
-  [covariance reference](https://JakobJuergens.github.io/RdistNN/reference/vcov.cate_result.html).
+  [covariance reference](https://JakobJuergens.github.io/RdistNN/reference/vcov.rdistnn_cate_result.html).
 - CLATE constructs paired augmented binary-IV signals from supplied nuisance
   predictions, retaining components, estimator-scale covariance and numerical
   statuses. Its summaries, plots and candidate views use the shared interfaces.
@@ -57,8 +57,9 @@ The [design reference](design/README.md) specifies maintained contracts.
 A unified score-localize-solve-report conditional Z-estimation front end is not
 implemented. Current wrappers take externally fitted nuisance predictions;
 keeping nuisance training outside estimation is a deliberate design boundary.
-The bounded CLATE generator and internal ridge reference adapter provide
-numerical verification, not a general automatic learner interface.
+The bounded CLATE generator and independent supplied-signal references provide
+numerical verification. Automatic nuisance learning is outside the estimator
+interface.
 
 Adaptive candidate selection, post-selection inference, simultaneous bands,
 weak-instrument-uniform guarantees and new empirical/production campaigns

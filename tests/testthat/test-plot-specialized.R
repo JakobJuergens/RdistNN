@@ -19,15 +19,16 @@
 }
 
 .plot_special_cate_fit <- function(n = 100L, m = 5L, seed = 102L) {
-  set.seed(seed)
-  X <- matrix(rnorm(n * 2L), n, 2L,
-              dimnames = list(NULL, c("X1", "X2")))
-  psi <- rnorm(n, mean = X[, 1L])
-  cate_dnn(
-    X = X, X0 = cbind(seq(-1, 1, length.out = m), 0),
-    pseudo_outcome = psi, k = 1L, s = 15L, se = FALSE,
-    return = c("W", "dx")
-  )
+  .test_rng_scope({
+    X <- matrix(rnorm(n * 2L), n, 2L,
+                dimnames = list(NULL, c("X1", "X2")))
+    psi <- rnorm(n, mean = X[, 1L])
+    cate_dnn(
+      X = X, X0 = cbind(seq(-1, 1, length.out = m), 0),
+      pseudo_outcome = psi, k = 1L, s = 15L, se = FALSE,
+      return = c("W", "dx")
+    )
+  }, seed = seed)
 }
 
 test_that("plqr and gmm autoplot methods carry class-specific dressing", {
@@ -93,7 +94,7 @@ test_that("plot_conditioning facets eigenvalue and log condition number", {
 
   expect_error(plot_conditioning(fit, cond_limits = c(1e6, 1e3)),
                "increasing")
-  expect_error(plot_conditioning(.plot_special_cate_fit()), "plqr_result")
+  expect_error(plot_conditioning(.plot_special_cate_fit()), "rdistnn_plqr_result")
 })
 
 test_that("plot_calibration reproduces the weighted indicator share", {
@@ -114,7 +115,7 @@ test_that("plot_calibration reproduces the weighted indicator share", {
   expect_true(all(c("GeomRibbon", "GeomHline", "GeomLine") %in% geoms))
   expect_match(p$labels$caption, "reference band")
 
-  expect_error(plot_calibration(.plot_special_cate_fit()), "plqr_result")
+  expect_error(plot_calibration(.plot_special_cate_fit()), "rdistnn_plqr_result")
 })
 
 test_that("calibration requires its current retained indicator without repair inputs", {
@@ -155,7 +156,7 @@ test_that("plot_influence computes contributions and labels extremes", {
   expect_identical(p$labels$x, "Distance")
   expect_match(p$labels$caption, "top-1 weight share")
 
-  expect_error(plot_influence(.plot_special_plqr_fit()), "cate_result")
+  expect_error(plot_influence(.plot_special_plqr_fit()), "rdistnn_cate_result")
 })
 
 test_that("influence requires its current retained signal without repair inputs", {
@@ -173,82 +174,92 @@ test_that("influence requires its current retained signal without repair inputs"
 })
 
 test_that("plot_tdnn_scales overlays refits that match manual estimates", {
-  skip_if_not_installed("ggplot2")
-  set.seed(104)
-  n <- 90L
-  x_mat <- matrix(rnorm(n * 2L), n, 2L,
-                  dimnames = list(NULL, c("X1", "X2")))
-  y_vec <- x_mat[, 1L] + rnorm(n, sd = 0.3)
-  X0 <- cbind(seq(-1, 1, length.out = 5L), 0)
-  fit <- np_tdnn(X = x_mat, X0 = X0, Y = y_vec, s1 = 5L, s2 = 10L,
-                 se = FALSE)
-  p <- plot_tdnn_scales(fit)
-
-  expect_identical(levels(p$data$estimator),
-                   c("DNN(s = 5)", "DNN(s = 10)", "TDNN(5, 10)"))
-  expect_identical(nrow(p$data), 3L * 5L)
-
-  # The overlay curves equal manual refits and the stored TDNN estimate.
-  ref_s1 <- np_dnn(X = x_mat, X0 = X0, Y = y_vec, k = 1L, s = 5L,
+  .test_rng_scope({
+    skip_if_not_installed("ggplot2")
+    set.seed(104)
+    n <- 90L
+    x_mat <- matrix(rnorm(n * 2L), n, 2L,
+                    dimnames = list(NULL, c("X1", "X2")))
+    y_vec <- x_mat[, 1L] + rnorm(n, sd = 0.3)
+    X0 <- cbind(seq(-1, 1, length.out = 5L), 0)
+    fit <- np_tdnn(X = x_mat, X0 = X0, Y = y_vec, s1 = 5L, s2 = 10L,
                    se = FALSE)
-  expect_equal(
-    p$data$estimate[p$data$estimator == "DNN(s = 5)"],
-    as.numeric(ref_s1$mu)
-  )
-  expect_equal(
-    p$data$estimate[p$data$estimator == "TDNN(5, 10)"],
-    as.numeric(fit$mu)
-  )
+    p <- plot_tdnn_scales(fit)
 
-  # Wrong class and missing stored data error with remedies.
-  expect_error(plot_tdnn_scales(.plot_special_cate_fit()), "tdnn_np_result")
-  fit_old <- fit
-  fit_old$.model <- NULL
-  expect_error(plot_tdnn_scales(fit_old), "localization model state.*[Rr]efit")
+    expect_identical(levels(p$data$estimator),
+                     c("DNN(s = 5)", "DNN(s = 10)", "TDNN(5, 10)"))
+    expect_identical(nrow(p$data), 3L * 5L)
+
+    # The overlay curves equal manual refits and the stored TDNN estimate.
+    ref_s1 <- np_dnn(X = x_mat, X0 = X0, Y = y_vec, k = 1L, s = 5L,
+                     se = FALSE)
+    expect_equal(
+      p$data$estimate[p$data$estimator == "DNN(s = 5)"],
+      as.numeric(ref_s1$mu)
+    )
+    expect_equal(
+      p$data$estimate[p$data$estimator == "TDNN(5, 10)"],
+      as.numeric(fit$mu)
+    )
+
+    # Wrong class and missing stored data error with remedies.
+    expect_error(plot_tdnn_scales(.plot_special_cate_fit()), "rdistnn_tdnn_np_result")
+    fit_old <- fit
+    fit_old$.model <- NULL
+    error <- expect_error(plot_tdnn_scales(fit_old), class = "rdistnn_state_error")
+    expect_identical(error$code, "state_invalid")
+    expect_match(error$argument, "object$.model", fixed = TRUE)
+    expect_match(conditionMessage(error), "[Rr]efit")
+  })
 })
 
 test_that("plot_tuning evaluates candidate grids and marks the fit", {
-  skip_if_not_installed("ggplot2")
-  set.seed(105)
-  n <- 80L
-  x_mat <- matrix(rnorm(n * 2L), n, 2L)
-  y_vec <- x_mat[, 1L] + rnorm(n, sd = 0.3)
-  fit <- np_dnn(X = x_mat, x0 = c(0, 0), Y = y_vec, k = 1L, se = FALSE)
+  .test_rng_scope({
+    skip_if_not_installed("ggplot2")
+    set.seed(105)
+    n <- 80L
+    x_mat <- matrix(rnorm(n * 2L), n, 2L)
+    y_vec <- x_mat[, 1L] + rnorm(n, sd = 0.3)
+    fit <- np_dnn(X = x_mat, x0 = c(0, 0), Y = y_vec, k = 1L, se = FALSE)
 
-  p <- plot_tuning(fit, se = FALSE)
-  s_fit <- fit$meta$s
-  expect_true(s_fit %in% p$data$s)
-  expect_identical(sum(p$data$selected), 1L)
-  expect_identical(p$data$s[p$data$selected], s_fit)
+    p <- plot_tuning(fit, se = FALSE)
+    s_fit <- fit$meta$s
+    expect_true(s_fit %in% p$data$s)
+    expect_identical(sum(p$data$selected), 1L)
+    expect_identical(p$data$s[p$data$selected], s_fit)
 
-  # Candidate estimates equal scalar fits without requiring plot_tuning()
-  # to call public estimators internally.
-  s_other <- setdiff(unique(p$data$s), s_fit)[1L]
-  ref <- np_dnn(X = x_mat, x0 = c(0, 0), Y = y_vec, k = 1L, s = s_other,
-                se = FALSE)
-  expect_equal(p$data$estimate[p$data$s == s_other],
-               as.numeric(ref$mu))
-  # The fitted point reproduces the original estimate.
-  expect_equal(p$data$estimate[p$data$selected], as.numeric(fit$mu))
+    # Candidate estimates equal scalar fits without requiring plot_tuning()
+    # to call public estimators internally.
+    s_other <- setdiff(unique(p$data$s), s_fit)[1L]
+    ref <- np_dnn(X = x_mat, x0 = c(0, 0), Y = y_vec, k = 1L, s = s_other,
+                  se = FALSE)
+    expect_equal(p$data$estimate[p$data$s == s_other],
+                 as.numeric(ref$mu))
+    # The fitted point reproduces the original estimate.
+    expect_equal(p$data$estimate[p$data$selected], as.numeric(fit$mu))
 
-  # The vline marks the fitted s; caption names provenance.
-  geoms <- .plot_layer_geoms(p)
-  vl <- p$layers[[which(geoms == "GeomVline")[1L]]]
-  expect_identical(vl$data$xintercept, s_fit)
-  expect_match(p$labels$caption, "paper_default")
+    # The vline marks the fitted s; caption names provenance.
+    geoms <- .plot_layer_geoms(p)
+    vl <- p$layers[[which(geoms == "GeomVline")[1L]]]
+    expect_identical(vl$data$xintercept, s_fit)
+    expect_match(p$labels$caption, "paper_default")
 
-  # cate method, with se: pointranges drawn.
-  fit_cate <- .plot_special_cate_fit(m = 2L)
-  p_cate <- plot_tuning(fit_cate, se = TRUE)
-  expect_true("GeomPointrange" %in% .plot_layer_geoms(p_cate))
-  expect_identical(class(p_cate$facet)[1L], "FacetWrap")
+    # cate method, with se: pointranges drawn.
+    fit_cate <- .plot_special_cate_fit(m = 2L)
+    p_cate <- plot_tuning(fit_cate, se = TRUE)
+    expect_true("GeomPointrange" %in% .plot_layer_geoms(p_cate))
+    expect_identical(class(p_cate$facet)[1L], "FacetWrap")
 
-  p_plqr <- plot_tuning(.plot_special_plqr_fit(), se = FALSE)
-  expect_s3_class(p_plqr, "ggplot")
-  expect_identical(class(p_plqr$facet)[1L], "FacetWrap")
-  bad_state <- fit
-  bad_state$.model$x_mat <- NULL
-  expect_error(plot_tuning(bad_state), "localization model state.*[Rr]efit")
+    p_plqr <- plot_tuning(.plot_special_plqr_fit(), se = FALSE)
+    expect_s3_class(p_plqr, "ggplot")
+    expect_identical(class(p_plqr$facet)[1L], "FacetWrap")
+    bad_state <- fit
+    bad_state$.model$x_mat <- NULL
+    error <- expect_error(plot_tuning(bad_state), class = "rdistnn_state_error")
+    expect_identical(error$code, "state_invalid")
+    expect_identical(error$argument, "object$.model$x_mat")
+    expect_match(conditionMessage(error), "[Rr]efit")
+  })
 })
 
 test_that("PLQR plot quantity controls zero lines and plotted values", {

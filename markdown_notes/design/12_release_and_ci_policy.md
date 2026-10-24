@@ -31,6 +31,8 @@ Keep this bound separate from runtime OpenMP/BLAS or future-worker settings.
 Compiler optimization and floating-point flags, platform coverage and numerical
 acceptance requirements stay the same. Do not cache package test results or
 reuse native objects across incompatible compiler/R configurations.
+Apply the same compiler-job bound to pkgdown's local installation and coverage's
+instrumented installation; these are package builds as well.
 
 ## What CI protects
 
@@ -51,3 +53,20 @@ HTML, harvested logs and generated archives are not repository source. Keep
 them ignored and untracked. Workflows use finite artifact retention and must
 not commit logs/archives back to the default branch. The alignment workflow's
 repository-hygiene gate enforces candidate-file and ownership rules.
+
+## Developer analysis and CI ownership
+
+Keep fast script correctness checks in the existing alignment workflow. Pin
+analyzer versions and select meaningful correctness rules; formatting remains
+an explicit file selection, not an automatic repository-wide rewrite. Apply
+exclusions to explicit paths as well as recursive discovery, including frozen
+scientific source, generated files and private output. See
+[Ruff configuration](https://docs.astral.sh/ruff/configuration/).
+
+Use the same coverage runner locally and in the existing manual coverage
+workflow. Native Clang, compilation-database, tidy and sanitizer profiles are
+explicit developer commands. They complement required portability/release
+gates without adding a duplicate platform matrix. Optional analysis tools stay
+outside runtime package dependencies. Fail requested checks when tools or
+eligible inputs are missing, keep diagnostic exits visible, and retain bounded
+failure artifacts. Source archives exclude analyzer configuration and caches.

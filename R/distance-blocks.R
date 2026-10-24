@@ -238,12 +238,53 @@
   invisible(NULL)
 }
 
+.dnn_check_retained_distance <- function(spec, field) {
+  if (!is.list(spec) || !inherits(spec, "rdistnn_distance")) {
+    .dnn_abort("state_invalid", sprintf(
+      "Current fitted `%s` lacks current geometry identity. Refit with the current estimator.", field),
+      argument = field)
+  }
+  slots <- c("name", "eval", "eval_batch", "setup")
+  counts <- vapply(slots, function(slot) sum(names(spec) == slot, na.rm = TRUE), integer(1L))
+  if (counts[["name"]] != 1L || any(counts > 1L)) {
+    .dnn_abort("state_invalid", sprintf(
+      "Current fitted `%s` has missing or duplicated geometry fields. Refit with the current estimator.", field),
+      argument = field)
+  }
+  # Reject a missing exact slot only when downstream `$` would resolve an
+  # unknown alias. Known slots and metadata beside exact fields stay valid.
+  matched <- pmatch(slots[counts == 0L], names(spec), duplicates.ok = TRUE)
+  if (any(!is.na(matched) & !(names(spec)[matched] %in% slots))) {
+    .dnn_abort("state_invalid", sprintf(
+      "Current fitted `%s` has noncanonical geometry field aliases. Refit with the current estimator.", field),
+      argument = field)
+  }
+  # Validate an exact-field view through the existing structural owner. Its
+  # canonical return is discarded; retained specifications are never repaired.
+  exact <- stats::setNames(lapply(slots, function(slot) spec[[slot, exact = TRUE]]), slots)
+  .dnn_validate_retained({
+    if (is.null(exact$name)) {
+      .abort_bad_arg(paste0(field, "$name"), "must retain a non-empty geometry name")
+    }
+    .distance_validate_spec(exact)
+  })
+  invisible(NULL)
+}
+
 .dnn_check_tie_model <- function(model) {
   scope <- .dnn_reporting_scope()
   if (!is.null(scope) && !is.null(scope$validated_model) &&
       identical(model, scope$validated_model)) {
     .dnn_remember_group_facts(model$groups, scope$validated_model_facts$tied_targets, scope)
     return(invisible(NULL))
+  }
+  required <- c("x_mat", "tie_policy", "distance", "ctx", "inference_distance",
+    "inference_ctx", "groups", "dx", "ranks")
+  absent <- if (is.list(model)) setdiff(required, names(model)) else required
+  if (length(absent)) {
+    .dnn_abort("state_invalid", sprintf(
+      "Current fitted `object$.model$%s` is missing. Refit with the current estimator.", absent[[1L]]),
+      argument = paste0("object$.model$", absent[[1L]]))
   }
   if (!is.list(model) || !is.matrix(model$x_mat) || !is.numeric(model$x_mat) ||
       is.complex(model$x_mat) || any(!is.finite(model$x_mat)) ||
@@ -252,11 +293,8 @@
                 "Refit with the current implementation."))
   }
   .dnn_check_tie_policy(model$tie_policy)
-  geometry_fields <- c("distance", "ctx", "inference_distance", "inference_ctx")
-  if (!all(geometry_fields %in% names(model)) ||
-      !is.list(model$distance) || !is.list(model$inference_distance)) {
-    .dnn_abort("state_invalid", paste0("This retained fit lacks current fitted geometry state. ",
-                "Refit with the current implementation."))
+  for (field in c("distance", "inference_distance")) {
+    .dnn_check_retained_distance(model[[field, exact = TRUE]], paste0("object$.model$", field))
   }
   n <- nrow(model$x_mat)
   groups <- model$groups
@@ -304,20 +342,6 @@
         "Refit with the current implementation."))
     }
     tied[j] <- count < n
-  }
-  # Paired ratios retain the same geometry for their component diagnostics.
-  # Both copies belong to the current schema and must describe one fit.
-  if (!is.null(model$geometry)) {
-    same_matrix <- function(a, b) {
-      is.matrix(a) && is.numeric(a) && !is.complex(a) &&
-        identical(dim(a), dim(b)) && all(is.finite(a)) && all(a == b)
-    }
-    geometry <- model$geometry
-    if (!is.list(geometry) || !same_matrix(geometry$ranks, ranks) ||
-        !same_matrix(geometry$dx, dx) || !same_matrix(geometry$ord, ord)) {
-      .dnn_abort("state_invalid",
-        "This retained fit has inconsistent cached geometry. Refit with the current implementation.")
-    }
   }
   .dnn_remember_group_facts(groups, tied, scope)
   if (!is.null(scope)) {

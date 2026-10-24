@@ -7,7 +7,7 @@
 plot_influence(object, targets = NULL, n_label = 3L)
 }
 \arguments{
-\item{object}{A \code{cate_result} or \code{clate_result} with the weight matrix \code{W} stored (the
+\item{object}{A \code{rdistnn_cate_result} or \code{rdistnn_clate_result} with the weight matrix \code{W} stored (the
 default).}
 
 \item{targets}{Optional integer vector of target ids (defaults to the

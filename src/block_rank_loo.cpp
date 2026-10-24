@@ -4,7 +4,7 @@
 
 // Internal original-signal block deletion kernel. R validates fitted state;
 // this boundary also protects direct native callers before output writes.
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 Rcpp::NumericVector rustat_block_rank_loo(const Rcpp::IntegerMatrix &ranks,
                                           const Rcpp::NumericMatrix &signal,
                                           const Rcpp::NumericVector &table,

@@ -2,7 +2,7 @@
 % Please edit documentation in R/api-ranks.R
 \name{is_rank_weight}
 \alias{is_rank_weight}
-\title{Is this a rank_weight spec?}
+\title{Is this a rdistnn_rank_weight spec?}
 \usage{
 is_rank_weight(x)
 }

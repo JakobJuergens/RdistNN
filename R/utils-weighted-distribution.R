@@ -52,3 +52,15 @@
   norm <- spread * sqrt(.compensated_sum(z * z))
   norm * scale
 }
+
+# Within-arm probability-weight ESS. Preserve ordinary arithmetic; rescale
+# before squaring when even a positive squared sum has lost subnormal terms.
+.probability_weight_ess <- function(w) {
+  if (!length(w)) return(NA_real_)
+  squares <- sum(w^2)
+  if (squares >= .Machine$double.xmin) return(sum(w)^2 / squares)
+  scale <- max(w)
+  if (scale <= 0) return(NA_real_)
+  scaled <- w / scale
+  sum(scaled)^2 / sum(scaled^2)
+}

@@ -115,7 +115,7 @@
   jackknife = c("fast", "loo"),
   precomputed_ranks = NULL, precomputed_groups = NULL
 ) {
-  jackknife <- match.arg(jackknife)
+  jackknife <- .dnn_match_arg(jackknife)
   as.numeric(
     .dnn_jackknife_se_loo_matrix(
       x_mat = x_mat,

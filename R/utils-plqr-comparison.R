@@ -3,7 +3,10 @@
   a <- c(D, g, y)
   b <- c(theta, 1, -1)
   if (any(!is.finite(a)) || any(!is.finite(b))) {
-    .abort_bad_state("PLQR threshold comparisons require finite inputs.")
+    .dnn_abort("internal_invariant",
+      "PLQR threshold comparisons require finite inputs.",
+      hint = "Report a reproducible example of this internal inconsistency."
+    )
   }
   .exact_sum_products_nonnegative(a, b)
 }

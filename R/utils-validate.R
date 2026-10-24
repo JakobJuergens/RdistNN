@@ -7,9 +7,9 @@
   x
 }
 
-.dnn_message_examples <- function(examples) {
+.dnn_message_examples <- function(examples, width = 80L) {
   if (is.null(examples)) return(list(values = NULL, text = NULL))
-  values <- .dnn_brief(utils::head(examples, 5L))
+  values <- .dnn_brief(utils::head(examples, 5L), width)
   omitted <- length(examples) - length(values)
   text <- paste(values, collapse = ", ")
   if (omitted > 0L) text <- sprintf("%s (%d more)", text, omitted)
@@ -28,6 +28,36 @@
   NULL
 }
 
+# Resolve a public function only while signaling. Retain its bounded name,
+# never the call's arguments, closure, frame or traceback.
+.dnn_public_operation <- function() {
+  ns <- environment(.dnn_abort)
+  if (!isNamespace(ns)) return(NULL)
+  public <- getNamespaceExports(ns)
+  methods <- getNamespaceInfo(ns, "S3methods")
+  if (length(methods)) public <- unique(c(public, methods[, 3L]))
+  calls <- sys.calls()
+  for (i in seq_along(calls)) {
+    fun <- sys.function(i)
+    if (is.primitive(fun) || !identical(environment(fun), ns)) next
+    head <- calls[[i]][[1L]]
+    name <- if (is.symbol(head)) as.character(head) else if (is.call(head) &&
+      as.character(head[[1L]]) %in% c("::", ":::")) as.character(head[[3L]]) else ""
+    if (name %in% public && identical(fun, get(name, ns, inherits = FALSE))) return(.dnn_brief(name))
+    # A user can bind a public function to a local alias or call it via do.call.
+    for (candidate in public) {
+      if (exists(candidate, ns, inherits = FALSE) &&
+          identical(fun, get(candidate, ns, inherits = FALSE))) return(.dnn_brief(candidate))
+    }
+  }
+  NULL
+}
+
+.dnn_condition_message <- function(message, operation) {
+  if (is.null(operation) || startsWith(message, paste0(operation, "():"))) return(message)
+  paste0(operation, "(): ", message)
+}
+
 .dnn_abort <- function(code, message, argument = NULL, expected = NULL, actual = NULL,
                        hint = NULL, parent = NULL) {
   families <- c(argument_invalid = "rdistnn_input_error", state_invalid = "rdistnn_state_error",
@@ -37,28 +67,43 @@
     internal_invariant = "rdistnn_internal_error")
   family <- unname(families[code])
   family <- family[!is.na(family)]
+  operation <- .dnn_public_operation()
   hint <- if (is.null(hint)) NULL else .dnn_brief(hint, 240L)
-  cnd <- structure(list(message = paste(c(message, hint), collapse = " "), call = NULL,
+  cnd <- structure(list(message = .dnn_condition_message(paste(c(message, hint), collapse = " "), operation),
+    call = NULL, operation = operation,
     code = code, argument = if (is.null(argument)) NULL else .dnn_brief(argument),
     expected = if (is.null(expected)) NULL else .dnn_brief(expected),
     actual = if (is.null(actual)) NULL else .dnn_brief(actual), hint = hint,
     parent = if (is.null(parent)) NULL else list(message = .dnn_brief(conditionMessage(parent), 240L),
-      class = utils::head(class(parent), 5L))),
+      class = .dnn_brief(utils::head(class(parent), 5L)))),
     class = c(family, "rdistnn_error", "error", "condition"))
   stop(cnd)
 }
 
-.dnn_warn <- function(code, message, affected = NULL, examples = NULL, hint = NULL) {
+.dnn_warn <- function(code, message, affected = NULL, examples = NULL, hint = NULL, location = NULL) {
   scope <- .dnn_reporting_scope()
   if (!is.null(scope)) {
     if (code %in% scope$emitted) return(invisible(NULL))
     scope$emitted <- c(scope$emitted, code)
   }
   details <- .dnn_message_examples(examples)
+  if (is.null(location)) {
+    location <- switch(code, partial_result = "target", weak_localization = "target",
+      infeasible_candidates = "candidate", NULL)
+  }
+  locations <- if (is.null(location)) {
+    details$text
+  } else {
+    labeled <- .dnn_message_examples(paste(location, utils::head(examples, 5L)))$text
+    omitted <- length(examples) - length(details$values)
+    if (omitted > 0L) paste0(labeled, " (", omitted, " more)") else labeled
+  }
+  operation <- .dnn_public_operation()
   hint <- if (is.null(hint)) NULL else .dnn_brief(hint, 240L)
-  cnd <- structure(list(message = paste(c(message,
-    if (length(details$values)) paste0("First affected: ", details$text, "."), hint), collapse = " "),
-    call = NULL, code = code, affected = affected, examples = details$values, hint = hint),
+  cnd <- structure(list(message = .dnn_condition_message(paste(c(message,
+    if (length(details$values)) paste0("First affected: ", locations, "."), hint), collapse = " "), operation),
+    call = NULL, operation = operation, code = code, affected = affected,
+    examples = details$values, location = location, hint = hint),
     class = c(paste0("rdistnn_", code, "_warning"), "rdistnn_warning", "warning", "condition"))
   warning(cnd)
   invisible(NULL)
@@ -73,8 +118,40 @@
     expected = expected, actual = actual)
 }
 
-.abort_bad_state <- function(msg, code = "validation_failed", hint = NULL) {
-  .dnn_abort(code, msg, hint = hint)
+# Match public choices with base R's NULL/default/partial/multiple semantics,
+# while identifying the actual argument. No broad error handler can relabel an
+# interrupt or resource failure from matching or from a caller's promise.
+.dnn_match_arg <- function(arg, choices, several.ok = FALSE,
+                           argument = as.character(substitute(arg))) {
+  if (missing(choices)) {
+    caller <- sys.parent()
+    choices <- eval(formals(sys.function(caller))[[argument]], envir = sys.frame(caller))
+  }
+  if (is.null(arg)) return(choices[1L])
+  invalid <- function(problem) {
+    valid <- .dnn_message_examples(choices)$text
+    .abort_bad_arg(argument, problem, expected = paste0("one of: ", valid),
+      actual = if (is.character(arg)) .dnn_message_examples(arg)$text else
+        sprintf("%s of length %d", typeof(arg), length(arg)))
+  }
+  if (!is.character(arg)) invalid("must be NULL or a character vector")
+  all_match <- is.character(several.ok) && length(several.ok) == 1L &&
+    !is.na(several.ok) && startsWith(several.ok, "all")
+  if (all_match) several.ok <- TRUE
+  if (!is.logical(several.ok) || length(several.ok) != 1L || is.na(several.ok)) {
+    .abort_bad_arg("several.ok", "must be TRUE, FALSE or a string starting with 'all'")
+  }
+  if (!several.ok) {
+    if (identical(arg, choices)) return(arg[1L])
+    if (length(arg) != 1L) invalid("must have length 1")
+  } else if (!length(arg)) {
+    invalid("must have length at least 1")
+  }
+  matched <- pmatch(arg, choices, nomatch = 0L, duplicates.ok = TRUE)
+  if (all(matched == 0L) || (all_match && any(matched == 0L))) {
+    invalid("must match an available choice")
+  }
+  choices[matched[matched > 0L]]
 }
 
 # Reuse the ordinary validators at a retained-state owner, while distinguishing
@@ -83,7 +160,19 @@
 .dnn_validate_retained <- function(code) {
   tryCatch(code, rdistnn_input_error = function(e) {
     .dnn_abort("state_invalid", conditionMessage(e),
+      argument = e$argument, expected = e$expected, actual = e$actual,
       hint = "Refit with the current estimator before reusing this fit.", parent = e)
+  })
+}
+
+# Evaluate the callback first. This boundary translates only known validators
+# applied to its returned value, never exceptions raised by user execution.
+.dnn_validate_callback <- function(code, argument = NULL) {
+  tryCatch(code, rdistnn_input_error = function(e) {
+    .dnn_abort("callback_invalid", conditionMessage(e),
+      argument = if (is.null(argument)) e$argument else argument,
+      expected = e$expected, actual = e$actual,
+      hint = "Correct the callback to return the documented result.", parent = e)
   })
 }
 
@@ -431,6 +520,10 @@
 }
 
 .warn_unknown_return <- function(return, valid) {
+  if (!is.null(return) && (!is.character(return) || !is.null(dim(return)) || anyNA(return))) {
+    .abort_bad_arg("return", "must be NULL or a character vector without missing values",
+      expected = paste("a subset of", paste(valid, collapse = ", ")))
+  }
   unknown <- setdiff(return, valid)
   if (length(unknown) > 0L) {
     .dnn_warn("unknown_return", "Unknown `return` value(s) ignored.",
@@ -445,5 +538,5 @@
 }
 
 .validate_score_subs <- function(subs, n, s) {
-  .validate_subset_indices(subs, n, s, unique_within_subset = FALSE, allow_empty = FALSE)
+  .validate_subset_indices(subs, n, s, unique_within_subset = FALSE, allow_empty = TRUE)
 }

@@ -14,7 +14,7 @@ plot_overlap(
 )
 }
 \arguments{
-\item{object}{A \code{cate_result} or \code{clate_result} with the weight matrix \code{W} stored (the
+\item{object}{A \code{rdistnn_cate_result} or \code{rdistnn_clate_result} with the weight matrix \code{W} stored (the
 default).}
 
 \item{type}{One of \code{"mass"} or \code{"propensity"}.}

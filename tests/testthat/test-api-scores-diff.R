@@ -84,7 +84,7 @@ test_that("score_diff_path exposes modular value/gradient closures", {
   )
 
   path <- score_diff_path(sc, data = y, method = "auto")
-  expect_output(print(path), "<score_diff_path>")
+  expect_output(print(path), "<rdistnn_score_diff_path>")
   expect_equal(path$value(idxs, theta), theta[1] * sum(y[idxs]) + theta[2], tolerance = 1e-12)
   expect_equal(path$grad(idxs, theta), c(sum(y[idxs]), 1), tolerance = 1e-12)
 

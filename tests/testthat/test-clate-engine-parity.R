@@ -22,11 +22,22 @@ test_that("frozen-rank loop and R fast paths agree for paired signals", {
   })
 })
 
-test_that("available compiled paired engine agrees with the R implementation", {
+test_that("compiled paired engines agree with the R implementation", {
   .with_distance_tie_warning({
   old <- options(RdistNN.use_compiled = TRUE)
   on.exit(options(old), add = TRUE)
-  skip_if(is.null(.rdistnn_compiled_fun("rustat_jackknife_rank_full")))
+  dispatch <- .rdistnn_compiled_fun
+  engines <- c("rustat_jackknife_rank_full", "rustat_block_rank_loo")
+  for (name in engines) expect_type(dispatch(name), "closure")
+  native_calls <- 0L
+  local_mocked_bindings(.rdistnn_compiled_fun = function(name) {
+    fun <- dispatch(name)
+    if (!name %in% engines || is.null(fun)) return(fun)
+    function(...) {
+      native_calls <<- native_calls + 1L
+      fun(...)
+    }
+  }, .package = "RdistNN")
   for (n in c(2L, 4L, 17L, 37L)) for (m in c(1L, 3L)) for (s in unique(c(1L, min(11L, n - 1L), n - 1L))) {
     a <- list(
       X = cbind(seq_len(n) %% 5L, seq_len(n) / n),
@@ -35,9 +46,13 @@ test_that("available compiled paired engine agrees with the R implementation", {
       s = s, return = c("deletions", "pseudo_values")
     )
     options(RdistNN.use_compiled = TRUE)
+    before <- native_calls
     if (s == 1L) expect_warning(cpp <- do.call(affine_ratio_dnn, a), "uniform") else cpp <- do.call(affine_ratio_dnn, a)
+    expect_equal(native_calls - before, m)
     options(RdistNN.use_compiled = FALSE)
+    before <- native_calls
     if (s == 1L) expect_warning(r <- do.call(affine_ratio_dnn, a), "uniform") else r <- do.call(affine_ratio_dnn, a)
+    expect_identical(native_calls, before)
     for (nm in c("theta", "deletions", "pseudo_values", "component_vcov", "theta_vcov", "status")) {
       expect_equal(cpp[[nm]], r[[nm]], tolerance = 1e-11)
     }

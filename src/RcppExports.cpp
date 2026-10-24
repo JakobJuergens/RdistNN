@@ -15,7 +15,6 @@ double rustat_compensated_sum(const Rcpp::NumericVector& x);
 RcppExport SEXP _RdistNN_rustat_compensated_sum(SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type x(xSEXP);
     rcpp_result_gen = Rcpp::wrap(rustat_compensated_sum(x));
     return rcpp_result_gen;
@@ -26,7 +25,6 @@ int rustat_weighted_cdf_index(const Rcpp::NumericVector& w, double prob);
 RcppExport SEXP _RdistNN_rustat_weighted_cdf_index(SEXP wSEXP, SEXP probSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type w(wSEXP);
     Rcpp::traits::input_parameter< double >::type prob(probSEXP);
     rcpp_result_gen = Rcpp::wrap(rustat_weighted_cdf_index(w, prob));
@@ -38,7 +36,6 @@ Rcpp::NumericMatrix rustat_compensated_crossprod(const Rcpp::NumericMatrix& x, c
 RcppExport SEXP _RdistNN_rustat_compensated_crossprod(SEXP xSEXP, SEXP ySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const Rcpp::NumericMatrix& >::type x(xSEXP);
     Rcpp::traits::input_parameter< const Rcpp::NumericMatrix& >::type y(ySEXP);
     rcpp_result_gen = Rcpp::wrap(rustat_compensated_crossprod(x, y));
@@ -50,7 +47,6 @@ Rcpp::NumericVector rustat_block_rank_loo(const Rcpp::IntegerMatrix& ranks, cons
 RcppExport SEXP _RdistNN_rustat_block_rank_loo(SEXP ranksSEXP, SEXP signalSEXP, SEXP tableSEXP, SEXP groupsSEXP, SEXP directSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const Rcpp::IntegerMatrix& >::type ranks(ranksSEXP);
     Rcpp::traits::input_parameter< const Rcpp::NumericMatrix& >::type signal(signalSEXP);
     Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type table(tableSEXP);
@@ -65,7 +61,6 @@ NumericVector rustat_dist_l1(NumericMatrix X, NumericVector x0);
 RcppExport SEXP _RdistNN_rustat_dist_l1(SEXP XSEXP, SEXP x0SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type x0(x0SEXP);
     rcpp_result_gen = Rcpp::wrap(rustat_dist_l1(X, x0));
@@ -77,7 +72,6 @@ NumericVector rustat_dist_l1_scaled(NumericMatrix X, NumericVector x0, NumericVe
 RcppExport SEXP _RdistNN_rustat_dist_l1_scaled(SEXP XSEXP, SEXP x0SEXP, SEXP inv_sSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type x0(x0SEXP);
     Rcpp::traits::input_parameter< NumericVector >::type inv_s(inv_sSEXP);
@@ -90,7 +84,6 @@ NumericMatrix rustat_dist_l1_batch(NumericMatrix X, NumericMatrix X0);
 RcppExport SEXP _RdistNN_rustat_dist_l1_batch(SEXP XSEXP, SEXP X0SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type X0(X0SEXP);
     rcpp_result_gen = Rcpp::wrap(rustat_dist_l1_batch(X, X0));
@@ -102,7 +95,6 @@ NumericMatrix rustat_dist_l1_scaled_batch(NumericMatrix X, NumericMatrix X0, Num
 RcppExport SEXP _RdistNN_rustat_dist_l1_scaled_batch(SEXP XSEXP, SEXP X0SEXP, SEXP inv_sSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type X0(X0SEXP);
     Rcpp::traits::input_parameter< NumericVector >::type inv_s(inv_sSEXP);
@@ -115,7 +107,6 @@ Rcpp::List rustat_order_by_l1(NumericMatrix X, NumericVector x0);
 RcppExport SEXP _RdistNN_rustat_order_by_l1(SEXP XSEXP, SEXP x0SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type x0(x0SEXP);
     rcpp_result_gen = Rcpp::wrap(rustat_order_by_l1(X, x0));
@@ -127,7 +118,6 @@ Rcpp::List rustat_order_by_l1_scaled(NumericMatrix X, NumericVector x0, NumericV
 RcppExport SEXP _RdistNN_rustat_order_by_l1_scaled(SEXP XSEXP, SEXP x0SEXP, SEXP inv_sSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type x0(x0SEXP);
     Rcpp::traits::input_parameter< NumericVector >::type inv_s(inv_sSEXP);
@@ -140,7 +130,6 @@ NumericVector rustat_dist_l2(NumericMatrix X, NumericVector x0, bool squared);
 RcppExport SEXP _RdistNN_rustat_dist_l2(SEXP XSEXP, SEXP x0SEXP, SEXP squaredSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type x0(x0SEXP);
     Rcpp::traits::input_parameter< bool >::type squared(squaredSEXP);
@@ -153,7 +142,6 @@ NumericVector rustat_dist_l2_scaled(NumericMatrix X, NumericVector x0, NumericVe
 RcppExport SEXP _RdistNN_rustat_dist_l2_scaled(SEXP XSEXP, SEXP x0SEXP, SEXP inv_sSEXP, SEXP squaredSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type x0(x0SEXP);
     Rcpp::traits::input_parameter< NumericVector >::type inv_s(inv_sSEXP);
@@ -167,7 +155,6 @@ NumericMatrix rustat_dist_l2_batch(NumericMatrix X, NumericMatrix X0, bool squar
 RcppExport SEXP _RdistNN_rustat_dist_l2_batch(SEXP XSEXP, SEXP X0SEXP, SEXP squaredSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type X0(X0SEXP);
     Rcpp::traits::input_parameter< bool >::type squared(squaredSEXP);
@@ -180,7 +167,6 @@ NumericMatrix rustat_dist_l2_scaled_batch(NumericMatrix X, NumericMatrix X0, Num
 RcppExport SEXP _RdistNN_rustat_dist_l2_scaled_batch(SEXP XSEXP, SEXP X0SEXP, SEXP inv_sSEXP, SEXP squaredSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type X0(X0SEXP);
     Rcpp::traits::input_parameter< NumericVector >::type inv_s(inv_sSEXP);
@@ -194,7 +180,6 @@ Rcpp::List rustat_order_by_l2(NumericMatrix X, NumericVector x0, bool squared);
 RcppExport SEXP _RdistNN_rustat_order_by_l2(SEXP XSEXP, SEXP x0SEXP, SEXP squaredSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type x0(x0SEXP);
     Rcpp::traits::input_parameter< bool >::type squared(squaredSEXP);
@@ -207,7 +192,6 @@ Rcpp::List rustat_order_by_l2_scaled(NumericMatrix X, NumericVector x0, NumericV
 RcppExport SEXP _RdistNN_rustat_order_by_l2_scaled(SEXP XSEXP, SEXP x0SEXP, SEXP inv_sSEXP, SEXP squaredSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type x0(x0SEXP);
     Rcpp::traits::input_parameter< NumericVector >::type inv_s(inv_sSEXP);
@@ -221,7 +205,6 @@ IntegerVector rustat_argsort_dist(NumericVector d);
 RcppExport SEXP _RdistNN_rustat_argsort_dist(SEXP dSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericVector >::type d(dSEXP);
     rcpp_result_gen = Rcpp::wrap(rustat_argsort_dist(d));
     return rcpp_result_gen;
@@ -232,7 +215,6 @@ IntegerVector rustat_ranks_from_dist(NumericVector d);
 RcppExport SEXP _RdistNN_rustat_ranks_from_dist(SEXP dSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericVector >::type d(dSEXP);
     rcpp_result_gen = Rcpp::wrap(rustat_ranks_from_dist(d));
     return rcpp_result_gen;
@@ -243,7 +225,6 @@ IntegerVector rustat_topk_dist(NumericVector d, int k);
 RcppExport SEXP _RdistNN_rustat_topk_dist(SEXP dSEXP, SEXP kSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericVector >::type d(dSEXP);
     Rcpp::traits::input_parameter< int >::type k(kSEXP);
     rcpp_result_gen = Rcpp::wrap(rustat_topk_dist(d, k));
@@ -255,7 +236,6 @@ Rcpp::List rustat_jackknife_fast_rank(const IntegerMatrix& ranks, const NumericV
 RcppExport SEXP _RdistNN_rustat_jackknife_fast_rank(SEXP ranksSEXP, SEXP aSEXP, SEXP PHISEXP, SEXP normalizeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const IntegerMatrix& >::type ranks(ranksSEXP);
     Rcpp::traits::input_parameter< const NumericVector& >::type a(aSEXP);
     Rcpp::traits::input_parameter< const NumericMatrix& >::type PHI(PHISEXP);
@@ -269,7 +249,6 @@ Rcpp::List rustat_jackknife_rank_full(const IntegerMatrix& ranks, const NumericM
 RcppExport SEXP _RdistNN_rustat_jackknife_rank_full(SEXP ranksSEXP, SEXP PHISEXP, SEXP wnSEXP, SEXP wnm1SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const IntegerMatrix& >::type ranks(ranksSEXP);
     Rcpp::traits::input_parameter< const NumericMatrix& >::type PHI(PHISEXP);
     Rcpp::traits::input_parameter< const NumericVector& >::type wn(wnSEXP);
@@ -283,7 +262,6 @@ Rcpp::List rustat_thread_info();
 RcppExport SEXP _RdistNN_rustat_thread_info() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     rcpp_result_gen = Rcpp::wrap(rustat_thread_info());
     return rcpp_result_gen;
 END_RCPP
@@ -293,45 +271,10 @@ NumericVector rustat_exact_rank_table(int n, int k, int s);
 RcppExport SEXP _RdistNN_rustat_exact_rank_table(SEXP nSEXP, SEXP kSEXP, SEXP sSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< int >::type n(nSEXP);
     Rcpp::traits::input_parameter< int >::type k(kSEXP);
     Rcpp::traits::input_parameter< int >::type s(sSEXP);
     rcpp_result_gen = Rcpp::wrap(rustat_exact_rank_table(n, k, s));
-    return rcpp_result_gen;
-END_RCPP
-}
-// rustat_cate_ctx_create
-SEXP rustat_cate_ctx_create(NumericVector rho);
-RcppExport SEXP _RdistNN_rustat_cate_ctx_create(SEXP rhoSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericVector >::type rho(rhoSEXP);
-    rcpp_result_gen = Rcpp::wrap(rustat_cate_ctx_create(rho));
-    return rcpp_result_gen;
-END_RCPP
-}
-// rustat_cate_g_all
-NumericVector rustat_cate_g_all(SEXP ctx_);
-RcppExport SEXP _RdistNN_rustat_cate_g_all(SEXP ctx_SEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type ctx_(ctx_SEXP);
-    rcpp_result_gen = Rcpp::wrap(rustat_cate_g_all(ctx_));
-    return rcpp_result_gen;
-END_RCPP
-}
-// rustat_cate_g_indexed
-NumericVector rustat_cate_g_indexed(IntegerVector idxs, SEXP ctx_);
-RcppExport SEXP _RdistNN_rustat_cate_g_indexed(SEXP idxsSEXP, SEXP ctx_SEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerVector >::type idxs(idxsSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type ctx_(ctx_SEXP);
-    rcpp_result_gen = Rcpp::wrap(rustat_cate_g_indexed(idxs, ctx_));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -340,7 +283,6 @@ SEXP rustat_plqr_ctx_create(NumericVector Y, NumericMatrix D, NumericVector qx, 
 RcppExport SEXP _RdistNN_rustat_plqr_ctx_create(SEXP YSEXP, SEXP DSEXP, SEXP qxSEXP, SEXP mDSEXP, SEXP betaSEXP, SEXP tauSEXP, SEXP jSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericVector >::type Y(YSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type D(DSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type qx(qxSEXP);
@@ -352,37 +294,13 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// rustat_plqr_ctx_set_beta
-void rustat_plqr_ctx_set_beta(SEXP ctx_, NumericVector beta);
-RcppExport SEXP _RdistNN_rustat_plqr_ctx_set_beta(SEXP ctx_SEXP, SEXP betaSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type ctx_(ctx_SEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type beta(betaSEXP);
-    rustat_plqr_ctx_set_beta(ctx_, beta);
-    return R_NilValue;
-END_RCPP
-}
 // rustat_plqr_g_all
 NumericVector rustat_plqr_g_all(SEXP ctx_);
 RcppExport SEXP _RdistNN_rustat_plqr_g_all(SEXP ctx_SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type ctx_(ctx_SEXP);
     rcpp_result_gen = Rcpp::wrap(rustat_plqr_g_all(ctx_));
-    return rcpp_result_gen;
-END_RCPP
-}
-// rustat_plqr_g_indexed
-NumericVector rustat_plqr_g_indexed(IntegerVector idxs, SEXP ctx_);
-RcppExport SEXP _RdistNN_rustat_plqr_g_indexed(SEXP idxsSEXP, SEXP ctx_SEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerVector >::type idxs(idxsSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type ctx_(ctx_SEXP);
-    rcpp_result_gen = Rcpp::wrap(rustat_plqr_g_indexed(idxs, ctx_));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -391,7 +309,6 @@ NumericVector rustat_subset_row_sums_g(IntegerMatrix subs, NumericVector g);
 RcppExport SEXP _RdistNN_rustat_subset_row_sums_g(SEXP subsSEXP, SEXP gSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< IntegerMatrix >::type subs(subsSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type g(gSEXP);
     rcpp_result_gen = Rcpp::wrap(rustat_subset_row_sums_g(subs, g));
@@ -423,13 +340,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_RdistNN_rustat_jackknife_rank_full", (DL_FUNC) &_RdistNN_rustat_jackknife_rank_full, 4},
     {"_RdistNN_rustat_thread_info", (DL_FUNC) &_RdistNN_rustat_thread_info, 0},
     {"_RdistNN_rustat_exact_rank_table", (DL_FUNC) &_RdistNN_rustat_exact_rank_table, 3},
-    {"_RdistNN_rustat_cate_ctx_create", (DL_FUNC) &_RdistNN_rustat_cate_ctx_create, 1},
-    {"_RdistNN_rustat_cate_g_all", (DL_FUNC) &_RdistNN_rustat_cate_g_all, 1},
-    {"_RdistNN_rustat_cate_g_indexed", (DL_FUNC) &_RdistNN_rustat_cate_g_indexed, 2},
     {"_RdistNN_rustat_plqr_ctx_create", (DL_FUNC) &_RdistNN_rustat_plqr_ctx_create, 7},
-    {"_RdistNN_rustat_plqr_ctx_set_beta", (DL_FUNC) &_RdistNN_rustat_plqr_ctx_set_beta, 2},
     {"_RdistNN_rustat_plqr_g_all", (DL_FUNC) &_RdistNN_rustat_plqr_g_all, 1},
-    {"_RdistNN_rustat_plqr_g_indexed", (DL_FUNC) &_RdistNN_rustat_plqr_g_indexed, 2},
     {"_RdistNN_rustat_subset_row_sums_g", (DL_FUNC) &_RdistNN_rustat_subset_row_sums_g, 2},
     {NULL, NULL, 0}
 };

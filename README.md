@@ -11,7 +11,7 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 [![test-coverage](https://github.com/JakobJuergens/RdistNN/actions/workflows/test-coverage.yaml/badge.svg)](https://github.com/JakobJuergens/RdistNN/actions/workflows/test-coverage.yaml)
 <!-- badges: end -->
 
-Version **0.1.3**. See [NEWS](NEWS.md) for changes.
+Version **0.1.4**. See [NEWS](NEWS.md) for changes.
 
 **RdistNN** estimates conditional treatment effects and regression
 functions using distributional nearest-neighbor (DNN) weights. Choose
@@ -39,7 +39,7 @@ macOS, or an R-compatible compiler on Linux. For plots, also install
 `ggplot2`; dashboards can use `patchwork`.
 
 For the version-pinned release, use
-`pak::pak("JakobJuergens/RdistNN@v0.1.3")`.
+`pak::pak("JakobJuergens/RdistNN@v0.1.4")`.
 
 For reproducible installation, retain the full source commit or checked
 archive identity;
@@ -193,12 +193,6 @@ distance ties occur: inference for persistent distance ties is not
 established. Averaging does not supply a uniform mean-squared-error
 improvement.
 
-Asymptotic Beta tables retain a known rounding limitation at extremely
-small tail masses, including possible R/Stata support differences. See
-the [weight
-guide](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.html#numerical-limits)
-before interpreting calculations at those scales.
-
 Nuisance predictions must be aligned with the estimation observations.
 Propensity clipping is numerical protection, not a remedy for poor
 overlap. Diagnostics describe local support; they do not establish
@@ -206,6 +200,22 @@ validity. For the identification, nuisance-learning and localization
 conditions and theoretical results, see the accompanying
 [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
 The package guides explain the corresponding inputs and outputs.
+
+## Numerical behavior and engines
+
+Eligible calculations use C++ automatically, with R implementations
+available for engine comparisons and troubleshooting. The
+[getting-started
+guide](https://JakobJuergens.github.io/RdistNN/articles/getting-started.html#seeds-and-native-threads)
+explains engine selection, native thread limits and RNG behavior. Native
+execution errors stop the calculation; automatic fallback applies when a
+native routine is unavailable.
+
+Asymptotic Beta tables retain a known rounding limitation at extremely
+small tail masses, including possible R/Stata support differences. See
+the [weight
+guide](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.html#numerical-limits)
+before interpreting calculations at those scales.
 
 ## Further reading and help
 

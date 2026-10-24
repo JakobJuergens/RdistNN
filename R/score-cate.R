@@ -27,7 +27,7 @@
 #' @param rho Optional numeric vector (length \eqn{n}) of \eqn{\rho} values to
 #'   use when \code{rho_col} is \code{NULL}.
 #'
-#' @return An \code{ustat_score} object with:
+#' @return An \code{rdistnn_ustat_score} object with:
 #' \itemize{
 #'   \item \code{$name}: a descriptive name,
 #'   \item \code{$order}: the kernel order \eqn{s},
@@ -51,9 +51,14 @@ score_cate_rho <- function(
   x0, x_cols, s,
   rho_col = NULL, rho = NULL
 ) {
+  force(x0)
+  force(x_cols)
   # XOR: exactly one of rho_col or rho
   if (is.null(rho_col) == is.null(rho)) {
-    stop("Provide exactly one of 'rho_col' or 'rho' (mutually exclusive).", call. = FALSE)
+    .dnn_abort("argument_invalid",
+      "Provide exactly one of 'rho_col' or 'rho' (mutually exclusive).",
+      argument = "rho_col"
+    )
   }
   s <- .validate_scalar_int(s, arg = "s", min = 1L)
 
@@ -81,14 +86,22 @@ score_cate_rho <- function(
     # keep these guards (they make it fail at evaluation time):
     eval = function(idxs, data, ctx, rng) {
       gi <- ctx$g[idxs]
-      if (.has_na_only(gi)) stop("g contains `NA` values.", call. = FALSE)
-      if (.has_nonfinite_non_na(gi)) stop("g contains non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+      if (.has_na_only(gi)) .dnn_abort("argument_invalid", "g contains `NA` values.", argument = "data")
+      if (.has_nonfinite_non_na(gi)) .dnn_abort(
+        "argument_invalid",
+        "g contains non-finite values (`Inf`, `-Inf`, or `NaN`).",
+        argument = "data"
+      )
       .compensated_sum(gi)
     },
     eval_batch = function(subs, data, ctx, rng) {
       gi <- ctx$g
-      if (.has_na_only(gi)) stop("g contains `NA` values.", call. = FALSE)
-      if (.has_nonfinite_non_na(gi)) stop("g contains non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+      if (.has_na_only(gi)) .dnn_abort("argument_invalid", "g contains `NA` values.", argument = "data")
+      if (.has_nonfinite_non_na(gi)) .dnn_abort(
+        "argument_invalid",
+        "g contains non-finite values (`Inf`, `-Inf`, or `NaN`).",
+        argument = "data"
+      )
       if (!is.matrix(subs)) subs <- as.matrix(subs)
       if (nrow(subs) == 0L) {
         return(numeric(0L))

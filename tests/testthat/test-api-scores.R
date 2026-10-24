@@ -10,7 +10,7 @@ test_that("constructors and predicates: new_score / as_score / is_score / is_com
   )
   expect_true(is_score(sc1))
   expect_false(is_compiled(sc1))
-  expect_output(print(sc1), "<ustat_score: sc1>")
+  expect_output(print(sc1), "<rdistnn_ustat_score: sc1>")
   expect_output(print(sc1), "order: 2")
   expect_output(print(sc1), "R eval ")
 
@@ -18,7 +18,7 @@ test_that("constructors and predicates: new_score / as_score / is_score / is_com
   sc2 <- as_score(function(idxs, data, ctx, rng) prod(data[idxs]), s = 3L, name = "sc2")
   expect_true(is_score(sc2))
   expect_false(is_compiled(sc2))
-  expect_output(print(sc2), "<ustat_score: sc2>")
+  expect_output(print(sc2), "<rdistnn_ustat_score: sc2>")
 
   # as_score wrapper also accepts short signatures (idxs, data)
   sc2_short <- as_score(function(idxs, data) sum(data[idxs]), s = 2L, name = "sc2_short")
@@ -42,7 +42,7 @@ test_that("constructors and predicates: new_score / as_score / is_score / is_com
   # warning for non-symmetric
   expect_warning(
     new_score(name = "sc4", order = 2L, eval = function(i, d, c, r) 0, symmetric = FALSE),
-    "Score marked non-symmetric; engine assumes symmetry\\."
+    "engine assumes symmetry", class = "rdistnn_score_symmetry_warning"
   )
 })
 
@@ -118,6 +118,7 @@ test_that("score constructors and dynamic order reject malformed slots early", {
 })
 
 test_that("eval prefers eval_batch when available; batch-only score routes single subset through batch", {
+  withr::local_preserve_seed()
   set.seed(1)
   n <- 8L
   s <- 3L
@@ -149,6 +150,7 @@ test_that("eval prefers eval_batch when available; batch-only score routes singl
 })
 
 test_that("batch fallback uses scalar eval row-wise when eval_batch is missing", {
+  withr::local_preserve_seed()
   set.seed(2)
   n <- 7L
   s <- 2L
@@ -174,7 +176,7 @@ test_that("batch fallback uses scalar eval row-wise when eval_batch is missing",
   expect_equal(score_eval(sc_eval_only, c(5L, 7L), y, NULL), sum(y[c(5, 7)]^2))
 })
 
-test_that("subset validation in batch: shape, bounds, and empties are caught", {
+test_that("subset validation in batch preserves shape, bounds, and empty results", {
   n <- 6L
   s <- 3L
   y <- rep(1, n)
@@ -192,10 +194,10 @@ test_that("subset validation in batch: shape, bounds, and empties are caught", {
     "indices must lie in 1..n"
   )
 
-  # empty
-  expect_error(
+  # An empty batch has no subsets to evaluate and retains the declared width.
+  expect_identical(
     score_eval_batch(sc, matrix(integer(), 0L, s), y, NULL),
-    "must have at least one row"
+    numeric()
   )
 
   # NA vs non-finite are distinct diagnostics

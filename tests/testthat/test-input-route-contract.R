@@ -8,12 +8,12 @@ test_that("core input routes reject ignored direct inputs and selectors", {
     expect_error(do.call(fun, c(list(X = matrix(1:8), Y = 1:8, x_cols = "x", x0 = 0,
       se = FALSE), order_args)), "data")
     args$y_col <- NULL; args$y <- d$y
-    expect_s3_class(do.call(fun, args), "np_result")
+    expect_s3_class(do.call(fun, args), "rdistnn_np_result")
   }
   expect_error(cate_dnn(data = d, x_cols = "x", X = matrix(1:8),
     pseudo_outcome = 1:8, x0 = 0, s = 3, se = FALSE), "X")
   expect_s3_class(cate_dnn(data = d, x_cols = "x", pseudo_outcome = 1:8,
-    x0 = 0, s = 3, se = FALSE), "cate_result")
+    x0 = 0, s = 3, se = FALSE), "rdistnn_cate_result")
 })
 
 test_that("GMM selectors require data while separate matrix model data stays supported", {
@@ -63,4 +63,16 @@ test_that("tabular selector range errors precede integer conversion", {
     expect_equal(tabular$mu, explicit$mu, tolerance = 0)
     expect_identical(tabular$.model$x_cols, names(data)[selector])
   }
+})
+
+test_that("missing data columns carry bounded typed selector errors", {
+  d <- data.frame(x = 1:8, y = 1:8)
+  error <- tryCatch(np_dnn(data = d, x_cols = "X3", y_col = "y", x0 = 0,
+    s = 3, se = FALSE), error = identity)
+  expect_s3_class(error, "rdistnn_input_error")
+  expect_identical(error$code, "argument_invalid")
+  expect_identical(error$argument, "x_cols")
+  expect_match(conditionMessage(error), "X3.*x_cols")
+  expect_match(conditionMessage(error), "Available columns")
+  expect_match(conditionMessage(error), "Check")
 })

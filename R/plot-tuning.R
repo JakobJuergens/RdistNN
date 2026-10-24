@@ -8,7 +8,7 @@
 }
 
 .plot_tuning_payload <- function(object, tuning, se) {
-  payload <- if (!is.null(object$meta$tuning)) object$meta$tuning else object$tuning
+  payload <- .dnn_diag_tuning_payload(object)
   if (is.null(tuning) && is.list(payload) &&
       !identical(payload$source, "manual") &&
       !is.null(payload$grid$candidates) &&
@@ -54,8 +54,8 @@
 }
 
 .plot_tuning_grid_np <- function(object, tuning, se) {
-  if (!is.null(object$tuning_grid)) {
-    return(object$tuning_grid)
+  if (!is.null(object[["tuning_grid", exact = TRUE]])) {
+    return(object[["tuning_grid", exact = TRUE]])
   }
   model <- object$.model
   if (!is.list(model) || is.null(model$x_mat) || is.null(model$y_vec)) {
@@ -66,7 +66,7 @@
     )
   }
   payload <- .plot_tuning_payload(object, tuning = tuning, se = se)
-  suppressWarnings(.np_dnn_tuning_grid(
+  .np_dnn_tuning_grid(
     candidates = payload$grid$candidates,
     ranks = .plot_tuning_ranks(object), groups = model$groups,
     mu_hat = object$mu,
@@ -83,12 +83,12 @@
     jackknife = .plot_tuning_jackknife(se),
     tuning_payload = payload,
     reuse_default = FALSE
-  ))
+  )
 }
 
 .plot_tuning_grid_cate <- function(object, tuning, se) {
-  if (!is.null(object$tuning_grid)) {
-    return(object$tuning_grid)
+  if (!is.null(object[["tuning_grid", exact = TRUE]])) {
+    return(object[["tuning_grid", exact = TRUE]])
   }
   model <- object$.model
   if (!is.list(model) || is.null(model$x_mat) || is.null(model$psi)) {
@@ -99,7 +99,7 @@
     )
   }
   payload <- .plot_tuning_payload(object, tuning = tuning, se = se)
-  suppressWarnings(.cate_dnn_tuning_grid(
+  .cate_dnn_tuning_grid(
     candidates = payload$grid$candidates,
     ranks = .plot_tuning_ranks(object), groups = model$groups,
     tau_hat = object$tau,
@@ -116,7 +116,7 @@
     jackknife = .plot_tuning_jackknife(se),
     tuning_payload = payload,
     reuse_default = FALSE
-  ))
+  )
 }
 
 .plot_tuning_plqr_score <- function(object) {
@@ -137,8 +137,8 @@
 }
 
 .plot_tuning_grid_plqr <- function(object, tuning, se) {
-  if (!is.null(object$tuning_grid)) {
-    return(object$tuning_grid)
+  if (!is.null(object[["tuning_grid", exact = TRUE]])) {
+    return(object[["tuning_grid", exact = TRUE]])
   }
   model <- object$.model
   if (!is.list(model) || is.null(model$x_mat)) {
@@ -150,7 +150,7 @@
   }
   score_mat <- .plot_tuning_plqr_score(object)
   payload <- .plot_tuning_payload(object, tuning = tuning, se = se)
-  suppressWarnings(.plqr_dnn_tuning_grid(
+  .plqr_dnn_tuning_grid(
     candidates = payload$grid$candidates,
     ranks = .plot_tuning_ranks(object), groups = model$groups,
     moment_hat = object$moment,
@@ -167,7 +167,7 @@
     jackknife = .plot_tuning_jackknife(se),
     tuning_payload = payload,
     reuse_default = FALSE
-  ))
+  )
 }
 
 .plot_tuning_panel <- function(object, grid, targets, level, candidates) {
@@ -281,11 +281,11 @@
 #' without the required fitted training state must be refitted first.
 #'
 #' @section Experimental methods:
-#' Methods for `plqr_result` objects are experimental, as is all PLQR
+#' Methods for `rdistnn_plqr_result` objects are experimental, as is all PLQR
 #' functionality in this release; see [plqr_dnn()].
 #'
-#' @param object A fitted `np_result`, `cate_result`, `affine_ratio_result`
-#'   (including `clate_result`), or `plqr_result`.
+#' @param object A fitted `rdistnn_np_result`, `rdistnn_cate_result`, `rdistnn_affine_ratio_result`
+#'   (including `rdistnn_clate_result`), or `rdistnn_plqr_result`.
 #' @param tuning A tuning specification for the candidate grid. Scalar fits
 #'   use their retained tuning specification when omitted. Fits with a manually
 #'   chosen `s` use [tuning_dnn_paper()], including that fitted order; optional
@@ -341,7 +341,7 @@ plot_tuning.default <- function(object, tuning = tuning_dnn_paper(),
 
 #' @rdname plot_tuning
 #' @export
-plot_tuning.np_result <- function(object, tuning = tuning_dnn_paper(),
+plot_tuning.rdistnn_np_result <- function(object, tuning = tuning_dnn_paper(),
                                   targets = NULL, level = 0.95, se = TRUE,
                                   candidates = "all",
                                   ...) {
@@ -356,7 +356,7 @@ plot_tuning.np_result <- function(object, tuning = tuning_dnn_paper(),
 
 #' @rdname plot_tuning
 #' @export
-plot_tuning.cate_result <- function(object, tuning = tuning_dnn_paper(),
+plot_tuning.rdistnn_cate_result <- function(object, tuning = tuning_dnn_paper(),
                                     targets = NULL, level = 0.95,
                                     se = TRUE, candidates = "all", ...) {
   .dnn_check_report_state(object)
@@ -370,29 +370,29 @@ plot_tuning.cate_result <- function(object, tuning = tuning_dnn_paper(),
 
 #' @rdname plot_tuning
 #' @export
-plot_tuning.affine_ratio_result <- function(object, tuning = tuning_dnn_paper(),
+plot_tuning.rdistnn_affine_ratio_result <- function(object, tuning = tuning_dnn_paper(),
     targets = NULL, level = .95, se = TRUE, candidates = "all", ...) {
   .dnn_check_report_state(object)
   .plot_require_ggplot2("plot_tuning")
   if (missing(tuning)) tuning <- NULL
   se <- .validate_scalar_logical(se, "se")
-  grid <- object$tuning_grid
+  grid <- object[["tuning_grid", exact = TRUE]]
   if (is.null(grid)) {
     model <- .affine_prediction_state(object)
     payload <- .plot_tuning_payload(object, tuning, se)
     engine <- .plot_tuning_jackknife(se)
     default <- object
     default$meta$jackknife <- engine
-    grid <- suppressWarnings(.affine_ratio_tuning_grid(default, model$signal,
-      model$geometry$ranks, model, se, engine, model$denominator_tol, payload,
-      reuse_default = FALSE))
+    grid <- .affine_ratio_tuning_grid(default, model$signal,
+      model$ranks, model, se, engine, model$denominator_tol, payload,
+      reuse_default = FALSE)
   }
   .plot_tuning_panel(object, grid, targets, level, candidates)
 }
 
 #' @rdname plot_tuning
 #' @export
-plot_tuning.plqr_result <- function(object, tuning = tuning_dnn_paper(),
+plot_tuning.rdistnn_plqr_result <- function(object, tuning = tuning_dnn_paper(),
                                     targets = NULL, level = 0.95,
                                     se = TRUE, candidates = "all", ...) {
   .dnn_check_report_state(object)

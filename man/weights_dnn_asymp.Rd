@@ -36,7 +36,7 @@ weights_dnn_asymp(
 \item{return}{character vector of extras to include; any of \code{c("W","ord","ranks","dx")}}
 }
 \value{
-A \code{weights_result} object (same structure as \code{\link[=weights_dnn_exact]{weights_dnn_exact()}}).
+A \code{rdistnn_weights_result} object (same structure as \code{\link[=weights_dnn_exact]{weights_dnn_exact()}}).
 }
 \description{
 The asymptotic DNN rule is evaluated on the full rank grid and is therefore

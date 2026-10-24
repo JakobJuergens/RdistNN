@@ -45,3 +45,6 @@
 (^|/)__pycache__($|/)
 \.py[co]$
 ^\.claude$
+^\.clang-tidy$
+^\.ruff\.toml$
+^\.ruff_cache$

@@ -23,12 +23,12 @@ weights_matrix(
 
 \item{ranking}{one of:
 \itemize{
-\item a \code{dnn_distance} spec, a registered distance name (e.g., "l2","l1"),
+\item a \code{rdistnn_distance} spec, a registered distance name (e.g., "l2","l1"),
 \item a function \verb{(X, X0, ctx) ->} list with \verb{$ranks}/\verb{$ord}/\verb{$dx}, or an \verb{n x m} ranks matrix,
 \item precomputed object: list with \verb{$ranks}, \verb{$ord}, or \verb{$dx}, or a ranks matrix.
 }}
 
-\item{weight}{a \code{rank_weight} spec (or zero-arg factory returning one).}
+\item{weight}{a \code{rdistnn_rank_weight} spec (or zero-arg factory returning one).}
 
 \item{ctx}{optional shared context passed to ranking and weight evaluators.
 On the ranking side, if \code{ctx} is \code{NULL} and a distance spec defines
@@ -39,7 +39,7 @@ specifications; singleton samples retain an \verb{n x m} distance matrix.}
 \item{return}{which extras to include besides \code{W}: any of c("ord","ranks","dx").}
 }
 \value{
-An object of class \code{weights_result} with components:
+An object of class \code{rdistnn_weights_result} with components:
 \itemize{
 \item \code{W}   : numeric matrix n x m (columns typically sum to 1),
 \item optional: \code{ord}, \code{ranks}, \code{dx},
@@ -49,7 +49,7 @@ An object of class \code{weights_result} with components:
 \description{
 This is the general, ranker-agnostic top-layer. It consumes a \emph{ranking provider}
 (distance, custom function, or precomputed ranks/orders/distances) and a weighting
-rule (\code{rank_weight}), then returns the weight matrix \code{W} (n x m).
+rule (\code{rdistnn_rank_weight}), then returns the weight matrix \code{W} (n x m).
 }
 \section{Exact distance ties}{
 

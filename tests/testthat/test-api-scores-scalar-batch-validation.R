@@ -150,3 +150,107 @@ test_that("analytic batch gradients preserve matrix and one-parameter vector out
   expect_identical(path$grad_batch(matrix(1L), 1), matrix(2))
   expect_identical(path$grad(1L, 1), 2)
 })
+
+test_that("invalid score return values carry callback identity", {
+  bad <- new_score("invalid_value", order = 1L,
+    eval = function(idxs, data, ctx, rng) "invalid")
+  error <- tryCatch(score_eval(bad, 1L, 1:4), error = identity)
+  expect_s3_class(error, "rdistnn_callback_error")
+  expect_identical(error$code, "callback_invalid")
+  expect_identical(error$argument, "score$eval")
+  expect_match(conditionMessage(error), "Correct the callback")
+})
+
+test_that("score batches preserve zero-row shapes through value and gradient paths", {
+  data <- c(2, 4, 7)
+  ordinary <- new_score("empty_ordinary_batch", 2L,
+    eval = function(idxs, data, ctx, rng) sum(data[idxs]))
+  ordinary_batch <- new_score("empty_explicit_batch", 2L,
+    eval_batch = function(subs, data, ctx, rng) {
+      rowSums(matrix(data[subs], nrow = nrow(subs), ncol = ncol(subs)))
+    })
+  for (empty in list(matrix(integer(), 0L, 2L), matrix(numeric(), 0L, 2L))) {
+    expect_identical(score_eval_batch(ordinary, empty, data), numeric())
+    expect_identical(score_eval_batch(ordinary_batch, empty, data), numeric())
+    for (route in c("eval_param", "eval", "eval_param_batch", "eval_batch")) {
+      args <- list(name = "empty_parameter_batch", order = 2L)
+      args[[route]] <- if (grepl("batch$", route)) {
+        function(subs, data, theta) {
+          rowSums(matrix(data[subs], nrow = nrow(subs), ncol = ncol(subs))) * sum(theta)
+        }
+      } else {
+        function(idxs, data, theta) sum(data[idxs]) * sum(theta)
+      }
+      for (derivative in c("grad", "grad_batch", "forward", "central")) {
+        local_args <- args
+        method <- if (derivative %in% c("grad", "grad_batch")) "analytic" else "fd"
+        if (derivative == "grad") {
+          local_args$grad <- function(idxs, data, theta) rep(sum(data[idxs]), length(theta))
+        } else if (derivative == "grad_batch") {
+          local_args$grad_batch <- function(subs, data, theta) {
+            outer(rowSums(matrix(data[subs], nrow = nrow(subs), ncol = ncol(subs))),
+              rep(1, length(theta)))
+          }
+        }
+        path <- score_diff_path(do.call(new_score, local_args), data, method = method,
+          fd_scheme = if (method == "fd") derivative else "central")
+        for (theta in list(1, c(1, 2))) {
+          expect_identical(path$value_batch(empty, theta), numeric())
+          expect_identical(path$grad_batch(empty, theta), matrix(numeric(), 0L, length(theta)))
+          # Keep a nonempty control beside every evaluation/gradient route.
+          expect_equal(path$value_batch(rbind(c(1L, 3L)), theta), 9 * sum(theta))
+          expect_equal(path$grad_batch(rbind(c(1L, 3L)), theta),
+            matrix(rep(9, length(theta)), 1L), tolerance = 1e-7)
+        }
+      }
+    }
+  }
+})
+
+test_that("empty score batches retain input and callback validation", {
+  data <- c(2, 4, 7)
+  score <- new_score("empty_subset_validation", 2L,
+    eval = function(idxs, data, theta) sum(data[idxs]) * sum(theta),
+    grad = function(idxs, data, theta) rep(sum(data[idxs]), length(theta)))
+  path <- score_diff_path(score, data, method = "analytic")
+  for (bad in list(matrix(integer(), 0L, 1L), matrix(logical(), 0L, 2L),
+                   matrix(complex(), 0L, 2L), matrix(character(), 0L, 2L))) {
+    for (evaluate in list(function() score_eval_batch(score, bad, data),
+                          function() path$value_batch(bad, 1),
+                          function() path$grad_batch(bad, 1))) {
+      error <- expect_error(evaluate(), "columns|numeric or integer matrix",
+        class = "rdistnn_input_error")
+      expect_identical(error$code, "argument_invalid")
+      expect_identical(error$argument, "subs")
+    }
+  }
+  scalar_error <- expect_error(path$value(integer(), 1), "must have 2 elements",
+    class = "rdistnn_input_error")
+  expect_identical(scalar_error$argument, "idxs")
+
+  empty <- matrix(integer(), 0L, 2L)
+  for (bad in list(1, logical(), character())) {
+    invalid <- new_score("empty_invalid_callback", 2L,
+      eval_param_batch = function(subs, data, theta) bad,
+      grad_batch = function(subs, data, theta) matrix(TRUE, 0L, length(theta)))
+    invalid_path <- score_diff_path(invalid, data, method = "analytic")
+    value_error <- expect_error(invalid_path$value_batch(empty, 1),
+      class = "rdistnn_callback_error")
+    expect_identical(value_error$code, "callback_invalid")
+    expect_identical(value_error$argument, "score$eval_param_batch")
+    expect_match(conditionMessage(value_error), "numeric\\(K\\).*finite entries")
+    expect_match(value_error$hint, "Correct the callback")
+    gradient_error <- expect_error(invalid_path$grad_batch(empty, c(1, 2)),
+      class = "rdistnn_callback_error")
+    expect_identical(gradient_error$code, "callback_invalid")
+    expect_identical(gradient_error$argument, "score$grad_batch")
+    expect_match(conditionMessage(gradient_error), "finite matrix")
+    invalid_ordinary <- new_score("empty_invalid_ordinary_callback", 2L,
+      eval_batch = function(subs, data, ctx, rng) bad)
+    ordinary_error <- expect_error(score_eval_batch(invalid_ordinary, empty, data),
+      class = "rdistnn_callback_error")
+    expect_identical(ordinary_error$code, "callback_invalid")
+    expect_identical(ordinary_error$argument, "score$eval_batch")
+    expect_match(ordinary_error$hint, "Correct the callback")
+  }
+})

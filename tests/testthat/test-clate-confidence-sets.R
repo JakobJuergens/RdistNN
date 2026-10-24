@@ -25,7 +25,7 @@ test_that("paired confidence sets reduce to Wald geometry with deterministic den
   V <- list(diag(c(.5, 0)))
   set <- ratio_confidence_set(comp, V)
   critical <- stats::qnorm(.025, lower.tail = FALSE)
-  expect_s3_class(set, "ratio_confidence_sets")
+  expect_s3_class(set, "rdistnn_ratio_confidence_sets")
   expect_identical(set[[1L]]$type, "bounded")
   expect_equal(as.numeric(set[[1L]]$intervals), 2 + c(-1, 1) * critical * sqrt(.5))
   expect_output(ret <- withVisible(print(set)), "bounded")
@@ -52,6 +52,7 @@ test_that("zero denominators and singular covariances retain legitimate set-valu
 })
 
 test_that("resolved sets agree with the original moment inequality and contain the fitted ratio", {
+  withr::local_preserve_seed()
   set.seed(803)
   comp <- matrix(stats::rnorm(24L), 12L, 2L)
   comp[, 2L] <- comp[, 2L] + 1

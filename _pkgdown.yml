@@ -75,20 +75,20 @@ reference:
     contents:
       - candidate_fit
       - diagnostics
-      - print.cate_result
-      - print.np_result
-      - np_result
-      - nobs.np_result
-      - print.score_diff_path
-      - print.summary.cate_result
-      - print.tdnn_np_result
-      - print.ustat_score
-      - print.weights_result
-      - summary.cate_result
-      - confint.cate_result
-      - coef.cate_result
-      - vcov.cate_result
-      - predict.cate_result
+      - print.rdistnn_cate_result
+      - print.rdistnn_np_result
+      - rdistnn_np_result
+      - nobs.rdistnn_np_result
+      - print.rdistnn_score_diff_path
+      - print.rdistnn_summary_cate_result
+      - print.rdistnn_tdnn_np_result
+      - print.rdistnn_ustat_score
+      - print.rdistnn_weights_result
+      - summary.rdistnn_cate_result
+      - confint.rdistnn_cate_result
+      - coef.rdistnn_cate_result
+      - vcov.rdistnn_cate_result
+      - predict.rdistnn_cate_result
 
   - title: Plotting
     desc: >
@@ -102,7 +102,7 @@ reference:
       - plot_dashboard
       - plot_influence
       - plot_tuning
-      - autoplot.dnn_diagnostics
+      - autoplot.rdistnn_diagnostics
       - plot_data_estimates
       - plot_data_weights
       - plot_data_diagnostics
@@ -147,7 +147,7 @@ reference:
       - clate_dnn
       - iv_augmented_signals
       - affine_ratio_dnn
-      - affine_ratio_result
+      - rdistnn_affine_ratio_result
       - clate_diagnostics
       - clate_demo_data
 
@@ -170,13 +170,13 @@ reference:
       - score_plqr_component
       - plqr_demo_data
       - plqr_demo_subsets
-      - print.plqr_result
-      - print.summary.plqr_result
-      - summary.plqr_result
-      - confint.plqr_result
-      - coef.plqr_result
-      - vcov.plqr_result
-      - predict.plqr_result
+      - print.rdistnn_plqr_result
+      - print.rdistnn_summary_plqr_result
+      - summary.rdistnn_plqr_result
+      - confint.rdistnn_plqr_result
+      - coef.rdistnn_plqr_result
+      - vcov.rdistnn_plqr_result
+      - predict.rdistnn_plqr_result
       - plot_conditioning
       - plot_calibration
 
@@ -195,12 +195,12 @@ reference:
       - new_gmm_model
       - is_gmm_model
       - gmm_model_dr_iv
-      - print.gmm_result
-      - print.summary.gmm_result
-      - summary.gmm_result
-      - confint.gmm_result
-      - coef.gmm_result
-      - vcov.gmm_result
+      - print.rdistnn_gmm_result
+      - print.rdistnn_summary_gmm_result
+      - summary.rdistnn_gmm_result
+      - confint.rdistnn_gmm_result
+      - coef.rdistnn_gmm_result
+      - vcov.rdistnn_gmm_result
 
   - title: Developer API — scores (U-stat kernels)
     desc: >

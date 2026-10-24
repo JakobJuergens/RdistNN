@@ -20,7 +20,7 @@ struct PlqrCtx {
   double tau;         // quantile in (0,1)
 };
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 SEXP rustat_plqr_ctx_create(NumericVector Y, NumericMatrix D, NumericVector qx, NumericMatrix mD,
                             NumericVector beta, double tau, int j) {
   const int n = Y.size();
@@ -35,7 +35,7 @@ SEXP rustat_plqr_ctx_create(NumericVector Y, NumericMatrix D, NumericVector qx, 
   if (!(tau > 0.0 && tau < 1.0))
     stop("tau must be in (0,1).");
 
-  XPtr<PlqrCtx> ctx(new PlqrCtx(), true);
+  XPtr<PlqrCtx> ctx(new PlqrCtx(), true, Rf_install("RdistNN::PlqrCtx"));
   ctx->D = D;
   ctx->mD = mD;
   ctx->Y = Y;
@@ -48,25 +48,26 @@ SEXP rustat_plqr_ctx_create(NumericVector Y, NumericMatrix D, NumericVector qx, 
   return ctx;
 }
 
-// (Optional) update beta in-place without rebuilding the context
-// [[Rcpp::export]]
-void rustat_plqr_ctx_set_beta(SEXP ctx_, NumericVector beta) {
-  XPtr<PlqrCtx> ctx(ctx_);
-  if (beta.size() != ctx->p_d)
-    stop("beta length must equal ncol(D).");
-  ctx->beta = beta;
-}
-
 // Compute all per-row PLQR contributions g (parallel)
 // g_i = (tau - 1{ Y_i <= D_i^T beta + qx_i }) * (D_{i,j} - mD_{i,j})
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 NumericVector rustat_plqr_g_all(SEXP ctx_) {
-  XPtr<PlqrCtx> ctx(ctx_);
+  // External pointers do not survive serialization. Check identity and address
+  // before interpreting any payload, including a different real native pointer.
+  if (TYPEOF(ctx_) != EXTPTRSXP || R_ExternalPtrTag(ctx_) != Rf_install("RdistNN::PlqrCtx") ||
+      R_ExternalPtrAddr(ctx_) == nullptr)
+    stop("Invalid PLQR context; recreate the score context before native evaluation.");
+  const PlqrCtx *ctx = static_cast<PlqrCtx *>(R_ExternalPtrAddr(ctx_));
   const int n = ctx->n;
   const int p_d = ctx->p_d;
   const int j0 = ctx->j - 1;
   NumericVector g(n);
+  // Resolve R objects on the calling thread; workers use only plain buffers.
   const double *design = REAL(ctx->D), *coefficients = REAL(ctx->beta);
+  const double *nuisance = REAL(ctx->mD), *qx = REAL(ctx->qx), *outcome = REAL(ctx->Y);
+  double *scores = REAL(g);
+  const double tau = ctx->tau;
+  const double missing = NA_REAL;
 
 #ifdef _OPENMP
 #pragma omp parallel for num_threads(rustat::thread_limit()) schedule(static) if (n >= 1024)
@@ -74,62 +75,18 @@ NumericVector rustat_plqr_g_all(SEXP ctx_) {
   for (int i = 0; i < n; ++i) {
     double db = 0.0;
     for (int pd = 0; pd < p_d; ++pd)
-      db += ctx->D(i, pd) * ctx->beta[pd];
-    const double thr = db + ctx->qx[i];
+      db += design[i + static_cast<R_xlen_t>(n) * pd] * coefficients[pd];
+    const double thr = db + qx[i];
     const int ind = rdistnn_arithmetic::linear_threshold_indicator(design + i, n, coefficients, p_d,
-                                                                   ctx->qx[i], ctx->Y[i], thr);
+                                                                   qx[i], outcome[i], thr);
     if (ind < 0) {
-      g[i] = NA_REAL;
+      scores[i] = missing;
       continue;
     }
-    const double resid = ctx->tau - ind;
-    const double rDj = ctx->D(i, j0) - ctx->mD(i, j0);
-    g[i] = resid * rDj;
-  }
-  return g;
-}
-
-// Same, but for a supplied 1-based index set (useful for block work)
-// [[Rcpp::export]]
-NumericVector rustat_plqr_g_indexed(IntegerVector idxs, SEXP ctx_) {
-  XPtr<PlqrCtx> ctx(ctx_);
-  const int m = idxs.size();
-  const int p_d = ctx->p_d;
-  const int j0 = ctx->j - 1;
-  NumericVector g(m);
-  const double *design = REAL(ctx->D), *coefficients = REAL(ctx->beta);
-  int has_bad_index = 0;
-
-#ifdef _OPENMP
-#pragma omp parallel for num_threads(rustat::thread_limit()) schedule(static) if (m >= 1024)
-#endif
-  for (int t = 0; t < m; ++t) {
-    const int index = idxs[t];
-    if (index == NA_INTEGER || index < 1 || index > ctx->n) {
-#ifdef _OPENMP
-#pragma omp critical(rustat_plqr_g_indexed_error)
-#endif
-      { has_bad_index = 1; }
-      g[t] = NA_REAL;
-      continue;
-    }
-    const int i = index - 1;
-    double db = 0.0;
-    for (int pd = 0; pd < p_d; ++pd)
-      db += ctx->D(i, pd) * ctx->beta[pd];
-    const double thr = db + ctx->qx[i];
-    const int ind = rdistnn_arithmetic::linear_threshold_indicator(design + i, ctx->n, coefficients,
-                                                                   p_d, ctx->qx[i], ctx->Y[i], thr);
-    if (ind < 0) {
-      g[t] = NA_REAL;
-      continue;
-    }
-    const double resid = ctx->tau - ind;
-    const double rDj = ctx->D(i, j0) - ctx->mD(i, j0);
-    g[t] = resid * rDj;
-  }
-  if (has_bad_index) {
-    Rcpp::stop("Index out of bounds in plqr_g_indexed.");
+    const double resid = tau - ind;
+    const double rDj =
+        design[i + static_cast<R_xlen_t>(n) * j0] - nuisance[i + static_cast<R_xlen_t>(n) * j0];
+    scores[i] = resid * rDj;
   }
   return g;
 }

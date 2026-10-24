@@ -68,7 +68,10 @@ test_that("CATE vcov distinguishes zero covariance, duplicates and absent infere
   f0 <- cate_dnn(X = d$X, X0 = d$X0, pseudo_outcome = d$psi, s = 3, se = FALSE)
   expect_error(vcov(f0), "se = TRUE")
   f$.model <- NULL
-  expect_error(vcov(f), "localization model state.*[Rr]efit")
+  error <- expect_error(vcov(f), class = "rdistnn_state_error")
+  expect_identical(error$code, "state_invalid")
+  expect_match(error$argument, "object$.model", fixed = TRUE)
+  expect_match(conditionMessage(error), "[Rr]efit")
   })
 })
 
@@ -110,7 +113,10 @@ test_that("CATE covariance retains registered geometry and validates inference s
   register_distance(name, distance_l1())
   expect_equal(vcov(f), V)
   f$.model["inference_ctx"] <- NULL
-  expect_error(vcov(f), "fitted geometry.*Refit")
+  error <- expect_error(vcov(f), class = "rdistnn_state_error")
+  expect_identical(error$code, "state_invalid")
+  expect_identical(error$argument, "object$.model$inference_ctx")
+  expect_match(conditionMessage(error), "[Rr]efit")
   f <- cate_dnn(X = d$X, X0 = d$X0, pseudo_outcome = 2^40 + d$psi, s = 3)
   centered <- cate_dnn(X = d$X, X0 = d$X0, pseudo_outcome = d$psi, s = 3)
   expect_equal(vcov(f), vcov(centered), tolerance = 1e-12)

@@ -1,4 +1,4 @@
-# Methods for plqr_result objects.
+# Methods for rdistnn_plqr_result objects.
 
 .plqr_result_coef_table <- function(object, level = 0.95) {
   if (!is.numeric(level) || length(level) != 1L || !is.finite(level) ||
@@ -52,7 +52,7 @@
   do.call(rbind, rows)
 }
 
-#' Print a `plqr_result` object (experimental)
+#' Print a `rdistnn_plqr_result` object (experimental)
 #'
 #' @section Lifecycle:
 #' **Experimental.** The PLQR API and inference interfaces may change.
@@ -61,9 +61,9 @@
 #' @return `x`, invisibly.
 #' @seealso [plqr_dnn()].
 #' @export
-print.plqr_result <- function(x, ...) {
+print.rdistnn_plqr_result <- function(x, ...) {
   .dnn_check_report_state(x)
-  cat("<plqr_result>\n", sep = "")
+  cat("<rdistnn_plqr_result>\n", sep = "")
   cat("  data  : n=", x$meta$n, ", p=", x$meta$p, ", p_d=", x$meta$p_d,
     ", m=", x$meta$m, "\n",
     sep = ""
@@ -103,7 +103,7 @@ print.plqr_result <- function(x, ...) {
   invisible(x)
 }
 
-#' Extract coefficients from a `plqr_result` (experimental)
+#' Extract coefficients from a `rdistnn_plqr_result` (experimental)
 #'
 #' Returns the coefficient value represented by the object. For current
 #' [plqr_dnn()] fits this is the supplied `theta_eval` repeated across
@@ -112,34 +112,34 @@ print.plqr_result <- function(x, ...) {
 #'
 #' @section Lifecycle:
 #' **Experimental.** The PLQR API and inference interfaces may change.
-#' @param object A `plqr_result` object.
+#' @param object A `rdistnn_plqr_result` object.
 #' @param ... Not used.
 #' @return Matrix of PLQR coefficient values with a `theta_source`
 #'   attribute.
 #' @seealso [plqr_dnn()].
 #' @export
-coef.plqr_result <- function(object, ...) {
+coef.rdistnn_plqr_result <- function(object, ...) {
   .dnn_check_report_state(object)
   out <- object$theta
   attr(out, "theta_source") <- object$meta$theta_source
   out
 }
 
-#' Variance-covariance matrices for `plqr_result` (experimental)
+#' Variance-covariance matrices for `rdistnn_plqr_result` (experimental)
 #'
 #' @section Lifecycle:
 #' **Experimental.** The PLQR API and inference interfaces may change.
-#' @param object A `plqr_result` object.
+#' @param object A `rdistnn_plqr_result` object.
 #' @param target Optional target index. When omitted, returns one matrix for a
 #'   single-target fit and a named list for a multi-target fit.
 #' @param ... Not used.
 #' @return A covariance matrix or list of covariance matrices.
 #' @seealso [plqr_dnn()].
 #' @export
-vcov.plqr_result <- function(object, target = NULL, ...) {
+vcov.rdistnn_plqr_result <- function(object, target = NULL, ...) {
   .dnn_reuse_scope(object)
   if (is.null(object$theta_vcov)) {
-    .abort_bad_state(
+    .dnn_abort("extra_unavailable",
       paste0(
         "Direct PLQR variance-covariance matrices are not available. ",
         "Refit with `density` or `density_col` and `se = TRUE`."
@@ -164,7 +164,7 @@ vcov.plqr_result <- function(object, target = NULL, ...) {
   object$theta_vcov[[target]]
 }
 
-#' Confidence intervals for `plqr_result` (experimental)
+#' Confidence intervals for `rdistnn_plqr_result` (experimental)
 #'
 #' @details
 #' Coefficient uncertainty requires a fit with `density` or `density_col`.
@@ -177,7 +177,7 @@ vcov.plqr_result <- function(object, target = NULL, ...) {
 #'
 #' @section Lifecycle:
 #' **Experimental.** The PLQR API and inference interfaces may change.
-#' @param object A `plqr_result` object from [plqr_dnn()].
+#' @param object A `rdistnn_plqr_result` object from [plqr_dnn()].
 #' @param parm Optional coefficient names or indices.
 #' @param level Confidence level.
 #' @param target Optional target indices.
@@ -186,11 +186,11 @@ vcov.plqr_result <- function(object, target = NULL, ...) {
 #'   attribute.
 #' @seealso [plqr_dnn()].
 #' @export
-confint.plqr_result <- function(object, parm = NULL, level = 0.95,
+confint.rdistnn_plqr_result <- function(object, parm = NULL, level = 0.95,
                                 target = NULL, ...) {
   .dnn_check_report_state(object)
   if (is.null(object$theta_vcov) || !identical(object$meta$theta_se_method, "direct_sandwich")) {
-    .abort_bad_state(
+    .dnn_abort("extra_unavailable",
       "Direct PLQR coefficient intervals are not available. Refit with `density` or `density_col` and `se = TRUE`."
     )
   }
@@ -234,7 +234,7 @@ confint.plqr_result <- function(object, parm = NULL, level = 0.95,
   out
 }
 
-#' Summarize a `plqr_result` (experimental)
+#' Summarize a `rdistnn_plqr_result` (experimental)
 #'
 #' @details
 #' Coefficient uncertainty requires a fit with `density` or `density_col`.
@@ -242,13 +242,13 @@ confint.plqr_result <- function(object, parm = NULL, level = 0.95,
 #'
 #' @section Lifecycle:
 #' **Experimental.** The PLQR API and inference interfaces may change.
-#' @param object A `plqr_result` object from [plqr_dnn()].
+#' @param object A `rdistnn_plqr_result` object from [plqr_dnn()].
 #' @param level Confidence level.
 #' @param ... Not used.
-#' @return An object of class `summary.plqr_result`.
+#' @return An object of class `rdistnn_summary_plqr_result`.
 #' @seealso [plqr_dnn()].
 #' @export
-summary.plqr_result <- function(object, level = 0.95, ...) {
+summary.rdistnn_plqr_result <- function(object, level = 0.95, ...) {
   .dnn_check_report_state(object)
   out <- list(
     coefficients = .plqr_result_coef_table(object, level = level),
@@ -259,23 +259,23 @@ summary.plqr_result <- function(object, level = 0.95, ...) {
     theta_source = object$meta$theta_source,
     meta = object$meta
   )
-  class(out) <- "summary.plqr_result"
+  class(out) <- "rdistnn_summary_plqr_result"
   out
 }
 
-#' Print a `summary.plqr_result` (experimental)
+#' Print a `rdistnn_summary_plqr_result` (experimental)
 #'
 #' @section Lifecycle:
 #' **Experimental.** The PLQR API and inference interfaces may change.
-#' @param x A `summary.plqr_result` object.
+#' @param x A `rdistnn_summary_plqr_result` object.
 #' @param digits Number of significant digits for printing.
 #' @param ... Not used.
 #' @return `x`, invisibly.
 #' @seealso [plqr_dnn()].
 #' @export
-print.summary.plqr_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
+print.rdistnn_summary_plqr_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
   .dnn_check_tie_policy(x$meta$tie_rule)
-  cat("<summary.plqr_result>\n", sep = "")
+  cat("<rdistnn_summary_plqr_result>\n", sep = "")
   cat("  targets: ", length(unique(x$coefficients$target)), "\n", sep = "")
   if (identical(x$theta_source, "supplied")) {
     cat(
@@ -295,7 +295,7 @@ print.summary.plqr_result <- function(x, digits = max(3L, getOption("digits") - 
   invisible(x)
 }
 
-#' Predict from a `plqr_result` object at new targets (experimental)
+#' Predict from a `rdistnn_plqr_result` object at new targets (experimental)
 #'
 #' @details
 #' The returned fit matrix repeats the supplied `theta_eval`
@@ -312,7 +312,7 @@ print.summary.plqr_result <- function(x, digits = max(3L, getOption("digits") - 
 #'
 #' @section Lifecycle:
 #' **Experimental.** The PLQR API and inference interfaces may change.
-#' @param object A `plqr_result` object from [plqr_dnn()].
+#' @param object A `rdistnn_plqr_result` object from [plqr_dnn()].
 #' @param newdata Optional matrix/data frame of target covariates.
 #' @param X0 Optional numeric matrix of targets (rows).
 #' @param x0 Optional numeric vector for a single target.
@@ -349,7 +349,7 @@ print.summary.plqr_result <- function(x, digits = max(3L, getOption("digits") - 
 #' predict(fit, x0 = c(0.2, -0.1))
 #' @seealso [plqr_dnn()].
 #' @export
-predict.plqr_result <- function(
+predict.rdistnn_plqr_result <- function(
     object,
     newdata = NULL,
     X0 = NULL,
@@ -359,7 +359,7 @@ predict.plqr_result <- function(
     level = 0.95,
     ...) {
   .dnn_reuse_scope(object, groups = NULL)
-  interval <- match.arg(interval)
+  interval <- .dnn_match_arg(interval)
   level <- .validate_scalar_prob(level, arg = "level")
   se.fit <- .validate_scalar_logical(se.fit, arg = "se.fit")
 
@@ -392,7 +392,7 @@ predict.plqr_result <- function(
     return(theta)
   }
   if (is.null(model$density)) {
-    .abort_bad_state(paste0(
+    .dnn_abort("extra_unavailable", paste0(
       "Direct PLQR coefficient standard errors are not available for prediction ",
       "because this object does not retain density values. The jackknife SE on ",
       "the moment is not a validated basis for a coefficient-level interval here ",

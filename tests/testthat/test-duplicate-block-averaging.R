@@ -52,7 +52,7 @@ test_that("scalar paired-ratio tuning reconstruction derives groups from retaine
   f <- suppressWarnings(affine_ratio_dnn(X = X, x0 = 0, numerator = y,
     denominator = rep(1, 8L), s = 3L))
   payload <- RdistNN:::.plot_tuning_payload(f, tuning, TRUE)
-  grid <- RdistNN:::.affine_ratio_tuning_grid(f, f$.model$signal, f$.model$geometry$ranks,
+  grid <- RdistNN:::.affine_ratio_tuning_grid(f, f$.model$signal, f$.model$ranks,
     f$.model, TRUE, "fast", f$.model$denominator_tol, payload, reuse_default = FALSE)
   for (i in seq_len(nrow(grid$candidates))) {
     s <- grid$candidates$s[i]
@@ -363,9 +363,12 @@ test_that("warning scopes avoid deletion and candidate floods and reject old tie
   expect_length(views, 3L)
   old <- fit
   old$.model$tie_policy <- NULL
-  expect_error(predict(old, x0 = 0), "Refit.*current implementation")
-  expect_error(candidate_fit(old, 1L), "Refit.*current implementation")
-  expect_error(vcov(old), "Refit.*current implementation")
-  expect_error(diagnostics(old), "Refit.*current implementation")
-  expect_error(plot_data_weights(old), "Refit.*current implementation")
+  for (consume in list(function(x) predict(x, x0 = 0),
+      function(x) candidate_fit(x, 1L), vcov, diagnostics, plot_data_weights)) {
+    err <- tryCatch(consume(old), error = identity)
+    expect_s3_class(err, "rdistnn_state_error")
+    expect_identical(err$code, "state_invalid")
+    expect_identical(err$argument, "object$.model$tie_policy")
+    expect_match(conditionMessage(err), "Refit", fixed = TRUE)
+  }
 })

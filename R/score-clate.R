@@ -33,7 +33,7 @@
 #' compliance. They remain unchanged. The CLATE equation averages both signals
 #' before dividing; do not average observation-level signal ratios.
 #'
-#' @return An iv_signals list with phi_y, phi_d, row_ids,
+#' @return An rdistnn_iv_signals list with phi_y, phi_d, row_ids,
 #'   propensity (raw, used, clipped), nuisance
 #'   (m_y0, m_y1, m_d0, m_d1) and meta.
 #' @examples
@@ -99,6 +99,6 @@ iv_augmented_signals <- function(
     nuisance = list(m_y0 = my0, m_y1 = my1, m_d0 = md0, m_d1 = md1),
     meta = list(n = n, clip = as.numeric(clip), one_sided = one_sided, training = training)
   )
-  class(out) <- "iv_signals"
+  class(out) <- "rdistnn_iv_signals"
   out
 }

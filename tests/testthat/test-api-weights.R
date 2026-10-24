@@ -2,6 +2,7 @@
 # ------------------------------------------------------------------------------
 
 test_that("helpers: deterministic ordering + ranks conversion round-trip", {
+  withr::local_preserve_seed()
 
   set.seed(1)
   n <- 6
@@ -134,9 +135,9 @@ test_that("supplied rank and order indices reject integer overflow before coerci
     matrix(c(0, .5, 1 / 6, 1 / 3)))
 })
 
-test_that(".resolve_weight identifies rank_weight and zero-arg factories", {
+test_that(".resolve_weight identifies rdistnn_rank_weight and zero-arg factories", {
 
-  # A simple rank_weight: w_i ∝ 1 / rank_i
+  # A simple rdistnn_rank_weight: w_i ∝ 1 / rank_i
   rw <- as_rank_weight(function(r, ctx = NULL) {
     w <- 1 / as.numeric(r)
     w / sum(w)
@@ -151,7 +152,8 @@ test_that(".resolve_weight identifies rank_weight and zero-arg factories", {
   expect_equal(got2$spec$name, "inv_rank")
 })
 
-test_that("weights_matrix works with distance-based ranking + rank_weight", {
+test_that("weights_matrix works with distance-based ranking + rdistnn_rank_weight", {
+  withr::local_preserve_seed()
 
   n <- 5
   p <- 2
@@ -208,7 +210,8 @@ test_that("weights_matrix works with distance-based ranking + rank_weight", {
   expect_equal(res2$ord[, 1], .tie_reference_order(DX_tie[, 1]))
 })
 
-test_that("weights_matrix passes ctx through to rank_weight evaluators", {
+test_that("weights_matrix passes ctx through to rdistnn_rank_weight evaluators", {
+  withr::local_preserve_seed()
   n <- 5
   p <- 2
   m <- 2
@@ -290,7 +293,7 @@ test_that("weights_matrix handles x0 vs X0 and basic shape errors", {
   })
 })
 
-test_that("print.weights_result is informative", {
+test_that("print.rdistnn_weights_result is informative", {
   n <- 3
   m <- 2
   p <- 1
@@ -298,13 +301,14 @@ test_that("print.weights_result is informative", {
     W = matrix(0, n, m),
     meta = list(n = n, m = m, p = p, weight_kind = "rank", weight_name = "mock")
   )
-  class(out) <- "weights_result"
-  expect_output(print(out), "<weights_result>")
+  class(out) <- "rdistnn_weights_result"
+  expect_output(print(out), "<rdistnn_weights_result>")
   expect_output(print(out), "data  : n=3, p=1, m=2")
   expect_output(print(out), "weight: rank \\(mock\\)")
 })
 
 test_that("DNN weights expose the expected rank-weight integration outputs", {
+  withr::local_preserve_seed()
 
   set.seed(9)
   n <- 6
@@ -325,6 +329,7 @@ test_that("DNN weights expose the expected rank-weight integration outputs", {
 # ------------------------------------------------------------------------------
 
 test_that("end-to-end parity: dx vs ord vs ranks produce identical W", {
+  withr::local_preserve_seed()
 
   n <- 7
   p <- 3
@@ -355,6 +360,7 @@ test_that("end-to-end parity: dx vs ord vs ranks produce identical W", {
 })
 
 test_that("return= filters extras: only requested components are present", {
+  withr::local_preserve_seed()
 
   n <- 6
   p <- 2
@@ -386,6 +392,7 @@ test_that("return= filters extras: only requested components are present", {
 })
 
 test_that("ranking name path works via distance registry", {
+  withr::local_preserve_seed()
 
   n <- 5
   p <- 2
@@ -425,6 +432,7 @@ test_that("ranking name path works via distance registry", {
 })
 
 test_that("x0 convenience path equals 1-column X0 path", {
+  withr::local_preserve_seed()
 
   n <- 8
   p <- 3
@@ -446,6 +454,7 @@ test_that("x0 convenience path equals 1-column X0 path", {
 })
 
 test_that("metadata types and contents are stable", {
+  withr::local_preserve_seed()
 
   n <- 5
   p <- 4
@@ -477,6 +486,7 @@ test_that("metadata types and contents are stable", {
 })
 
 test_that("weights_matrix warns on unknown return values", {
+  withr::local_preserve_seed()
 
   n <- 5L; p <- 2L; m <- 2L
   set.seed(42)
@@ -509,7 +519,7 @@ test_that("error paths: missing weight and unsupported ranking type", {
   # missing weight
   expect_error(
     weights_matrix(X, X0, ranking = list(dx = DX), weight = NULL),
-    "`weight` must be a rank_weight",
+    "`weight` must be a rdistnn_rank_weight",
     fixed = TRUE
   )
   msg_missing_weight <- tryCatch(

@@ -7,7 +7,7 @@
 score_setup(score, data, ...)
 }
 \arguments{
-\item{score}{ustat_score}
+\item{score}{rdistnn_ustat_score}
 
 \item{data}{Data object understood by the score, such as a vector, matrix
 or data frame.}

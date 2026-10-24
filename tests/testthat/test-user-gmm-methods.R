@@ -1,5 +1,5 @@
 # GMM result selectors, inference availability, and summaries.
-test_that("gmm_result methods validate availability and selectors", {
+test_that("rdistnn_gmm_result methods validate availability and selectors", {
   dgp <- sim_iv_data("dgp2_iv_homog_overid", n = 100L, kx = 2L, q = 2L, seed = 27L)
   model <- .test_dr_iv_model(dgp$q)
   fit <- gmm_dnn(
@@ -42,7 +42,7 @@ test_that("gmm_result methods validate availability and selectors", {
   expect_error(confint(fit_no_se), "not available")
 })
 
-test_that("gmm_result summaries expose inference and overidentification state", {
+test_that("rdistnn_gmm_result summaries expose inference and overidentification state", {
   overid_dgp <- sim_iv_data(
     "dgp2_iv_homog_overid", n = 100L, kx = 2L, q = 2L, seed = 34L
   )
@@ -56,7 +56,7 @@ test_that("gmm_result summaries expose inference and overidentification state", 
   )
   summary_overid <- summary(fit_overid)
 
-  expect_s3_class(summary_overid, "summary.gmm_result")
+  expect_s3_class(summary_overid, "rdistnn_summary_gmm_result")
   expect_named(
     summary_overid$coefficients,
     c(
@@ -74,8 +74,8 @@ test_that("gmm_result summaries expose inference and overidentification state", 
   summary_text <- capture.output(summary_returned <- print(summary_overid))
   .expect_identical_fast(fit_returned, fit_overid)
   .expect_identical_fast(summary_returned, summary_overid)
-  expect_true(any(grepl("<gmm_result>", fit_text, fixed = TRUE)))
-  expect_true(any(grepl("<summary.gmm_result>", summary_text, fixed = TRUE)))
+  expect_true(any(grepl("<rdistnn_gmm_result>", fit_text, fixed = TRUE)))
+  expect_true(any(grepl("<rdistnn_summary_gmm_result>", summary_text, fixed = TRUE)))
   expect_true(any(grepl(
     "Overidentification diagnostics:", summary_text, fixed = TRUE
   )))

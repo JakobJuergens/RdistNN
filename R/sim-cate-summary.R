@@ -109,7 +109,10 @@ summarise_sim_results <- function(raw) {
   )
   missing  <- setdiff(required, names(raw))
   if (length(missing) > 0L)
-    stop("raw is missing required columns: ", paste(missing, collapse = ", "), call. = FALSE)
+    .dnn_abort("argument_invalid",
+      paste0("raw is missing required columns: ", paste(missing, collapse = ", ")),
+      argument = "raw"
+    )
 
   route_cols <- c(
     "method_variant", "forest_nuisance", "y_hat_supplied", "w_hat_supplied"

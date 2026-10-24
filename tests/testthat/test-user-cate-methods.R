@@ -1,22 +1,22 @@
-set.seed(456)
-
-.make_cate_fit <- function(n = 40L, p = 2L, m = 3L, se = TRUE) {
-  X <- matrix(rnorm(n * p), n, p)
-  X0 <- matrix(rnorm(m * p), m, p)
-  psi <- X[, 1] - 0.25 * X[, min(2L, p)] + rnorm(n, sd = 0.2)
-  fit <- cate_dnn(
-    X = X, X0 = X0, pseudo_outcome = psi,
-    distance = "l2", method = "exact",
-    k = 2L, s = 3L, se = se, return = "W"
-  )
-  list(fit = fit, X0 = X0)
+.make_cate_fit <- function(n = 40L, p = 2L, m = 3L, se = TRUE, seed = 456L) {
+  .test_rng_scope({
+    X <- matrix(rnorm(n * p), n, p)
+    X0 <- matrix(rnorm(m * p), m, p)
+    psi <- X[, 1] - 0.25 * X[, min(2L, p)] + rnorm(n, sd = 0.2)
+    fit <- cate_dnn(
+      X = X, X0 = X0, pseudo_outcome = psi,
+      distance = "l2", method = "exact",
+      k = 2L, s = 3L, se = se, return = "W"
+    )
+    list(fit = fit, X0 = X0)
+  }, seed = seed)
 }
 
-test_that("summary.cate_result returns expected structure", {
+test_that("summary.rdistnn_cate_result returns expected structure", {
   obj <- .make_cate_fit(se = TRUE)
   s <- summary(obj$fit)
 
-  expect_s3_class(s, "summary.cate_result")
+  expect_s3_class(s, "rdistnn_summary_cate_result")
   expect_true(is.data.frame(s$coefficients))
   expect_equal(
     colnames(s$coefficients),
@@ -36,7 +36,7 @@ test_that("summary handles missing se by returning NA inferential columns", {
   expect_true(all(is.na(s$coefficients$p.value)))
 })
 
-test_that("confint.cate_result returns valid intervals and honors parm", {
+test_that("confint.rdistnn_cate_result returns valid intervals and honors parm", {
   obj <- .make_cate_fit(se = TRUE)
   ci_all <- confint(obj$fit)
   ci_one <- confint(obj$fit, parm = 2L)
@@ -50,14 +50,16 @@ test_that("confint.cate_result returns valid intervals and honors parm", {
 
 test_that("confint errors when standard errors are not available", {
   obj <- .make_cate_fit(se = FALSE)
-  expect_error(
+  missing_extra <- expect_error(
     confint(obj$fit),
     "se = TRUE",
-    ignore.case = TRUE
+    ignore.case = TRUE, class = "rdistnn_extra_unavailable"
   )
+  expect_identical(missing_extra$code, "extra_unavailable")
+  expect_match(conditionMessage(missing_extra), "[Rr]efit.*se = TRUE")
 })
 
-test_that("predict.cate_result reproduces fitted tau on same X0", {
+test_that("predict.rdistnn_cate_result reproduces fitted tau on same X0", {
   obj <- .make_cate_fit(se = TRUE)
   pred <- predict(obj$fit, X0 = obj$X0)
   expect_equal(pred, obj$fit$tau, tolerance = 1e-12)
@@ -142,19 +144,23 @@ test_that("predict validates se.fit and target values before weight computation"
     predict(obj$fit, X0 = obj$X0, se.fit = NA),
     "se.fit.*TRUE or FALSE"
   )
-  expect_error(
+  missing_target <- expect_error(
     predict(obj$fit, x0 = c(NA_real_, 0)),
     "x0 cannot contain `NA` values",
-    fixed = TRUE
+    fixed = TRUE, class = "rdistnn_input_error"
   )
+  expect_identical(missing_target$code, "argument_invalid")
+  expect_identical(missing_target$argument, "x0")
 
   bad_X0 <- obj$X0
   bad_X0[1L, 1L] <- Inf
-  expect_error(
+  nonfinite_target <- expect_error(
     predict(obj$fit, X0 = bad_X0),
     "X0 cannot contain non-finite values",
-    fixed = TRUE
+    fixed = TRUE, class = "rdistnn_input_error"
   )
+  expect_identical(nonfinite_target$code, "argument_invalid")
+  expect_identical(nonfinite_target$argument, "X0")
 
   bad_newdata <- obj$X0
   bad_newdata[1L, 1L] <- NaN
@@ -209,56 +215,57 @@ test_that("predict validates fitted model state before computing", {
 
   bad_x <- obj$fit
   bad_x$.model$x_mat[1L, 1L] <- Inf
-  expect_error(
-    predict(bad_x, X0 = obj$X0),
-    "localization model state.*[Rr]efit"
-  )
+  error <- expect_error(predict(bad_x, X0 = obj$X0), class = "rdistnn_state_error")
+  expect_identical(error$code, "state_invalid")
+  expect_match(conditionMessage(error), "[Rr]efit")
 
   bad_k <- obj$fit
   bad_k$.model$k <- bad_k$.model$s + 1L
-  expect_error(
+  error <- expect_error(
     predict(bad_k, X0 = obj$X0),
-    "object$.model$k must satisfy k <= s",
-    fixed = TRUE
+    "meta\\$k/\\.model\\$k.*inconsistent.*[Rr]efit",
+    class = "rdistnn_state_error"
   )
+  expect_identical(error$code, "state_invalid")
 
   bad_s <- obj$fit
   bad_s$.model$s <- nrow(bad_s$.model$x_mat) + 1L
   expect_error(
     predict(bad_s, X0 = obj$X0),
-    "object$.model$s must satisfy s <= n",
-    fixed = TRUE
+    "meta\\$s/\\.model\\$s.*inconsistent.*[Rr]efit",
+    class = "rdistnn_state_error"
   )
 
   bad_method <- obj$fit
   bad_method$.model$method <- "bogus"
   expect_error(
     predict(bad_method, X0 = obj$X0),
-    "object$.model$method must be one of",
-    fixed = TRUE
+    "method.*exact.*asymp.*[Rr]efit",
+    class = "rdistnn_state_error"
   )
 
   bad_normalize <- obj$fit
   bad_normalize$.model$normalize <- NA
   expect_error(
     predict(bad_normalize, X0 = obj$X0),
-    "object$.model$normalize must be TRUE or FALSE",
-    fixed = TRUE
+    "normalize.*TRUE or FALSE.*[Rr]efit",
+    class = "rdistnn_state_error"
   )
 })
 
 test_that("predict interval requests enforce jackknife feasibility", {
   obj <- .make_cate_fit(se = FALSE)
-  bad <- obj$fit
-  bad$.model$s <- nrow(bad$.model$x_mat)
+  model <- obj$fit$.model
+  full_order <- cate_dnn(X = model$x_mat, X0 = obj$X0, pseudo_outcome = model$psi,
+    k = model$k, s = nrow(model$x_mat), se = FALSE, return = character())
 
   expect_error(
-    predict(bad, X0 = obj$X0, se.fit = TRUE),
+    predict(full_order, X0 = obj$X0, se.fit = TRUE),
     "s < n",
     fixed = TRUE
   )
   expect_error(
-    predict(bad, X0 = obj$X0, interval = "confidence"),
+    predict(full_order, X0 = obj$X0, interval = "confidence"),
     "s < n",
     fixed = TRUE
   )
@@ -302,26 +309,25 @@ test_that("methods validate level/parm and error on missing model state", {
 
   fit_no_model <- obj$fit
   fit_no_model$.model <- NULL
-  expect_error(
-    predict(fit_no_model, X0 = obj$X0),
-    "localization model state.*[Rr]efit",
-    ignore.case = TRUE
-  )
+  error <- expect_error(predict(fit_no_model, X0 = obj$X0), class = "rdistnn_state_error")
+  expect_identical(error$code, "state_invalid")
+  expect_match(error$argument, "object$.model", fixed = TRUE)
+  expect_match(conditionMessage(error), "[Rr]efit")
 })
 
-test_that("print.summary.cate_result runs", {
+test_that("print.rdistnn_summary_cate_result runs", {
   obj <- .make_cate_fit(se = TRUE)
   s <- summary(obj$fit)
   txt_summary <- capture.output(print(s))
-  expect_true(any(grepl("<summary.cate_result>", txt_summary, fixed = TRUE)))
+  expect_true(any(grepl("<rdistnn_summary_cate_result>", txt_summary, fixed = TRUE)))
 })
 
-test_that("print.cate_result reports standard-error availability invisibly", {
+test_that("print.rdistnn_cate_result reports standard-error availability invisibly", {
   with_se <- .make_cate_fit(se = TRUE)$fit
   with_se_text <- capture.output(with_se_returned <- print(with_se))
 
   expect_identical(with_se_returned, with_se)
-  expect_true(any(grepl("<cate_result>", with_se_text, fixed = TRUE)))
+  expect_true(any(grepl("<rdistnn_cate_result>", with_se_text, fixed = TRUE)))
   expect_true(any(grepl("SEs available", with_se_text, fixed = TRUE)))
 
   without_se <- .make_cate_fit(se = FALSE)$fit
@@ -331,7 +337,7 @@ test_that("print.cate_result reports standard-error availability invisibly", {
   expect_true(any(grepl("SEs not requested", without_se_text, fixed = TRUE)))
 })
 
-test_that("coef.cate_result returns named target estimates", {
+test_that("coef.rdistnn_cate_result returns named target estimates", {
   obj <- .make_cate_fit(se = FALSE)
   expect_equal(unname(coef(obj$fit)), obj$fit$tau)
   expect_identical(names(coef(obj$fit)), paste0("target_", seq_along(obj$fit$tau)))

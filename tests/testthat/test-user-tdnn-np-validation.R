@@ -173,3 +173,57 @@ test_that("np_tdnn jackknife feasibility diagnostics include expected and actual
     expect_match(msg, "Got:", ignore.case = FALSE)
   }, seed = 123L)
 })
+
+test_that("np_tdnn rejects nonfinite signals before geometry on every input route", {
+  df <- data.frame(x = 1:8, y = 2 * (1:8))
+  for (bad in c(NA_real_, NaN, Inf, -Inf)) {
+    signal <- df$y
+    signal[3L] <- bad
+    bad_df <- df
+    bad_df$y <- signal
+    routes <- list(
+      list(X = matrix(df$x), Y = signal),
+      list(data = df, x_cols = "x", y = signal),
+      list(data = bad_df, x_cols = "x", y_col = "y"),
+      list(data = bad_df, x_cols = 1L, y_col = 2L)
+    )
+    for (i in seq_along(routes)) {
+      probe <- .counted_l1_distance()
+      err <- expect_error(do.call(np_tdnn, c(routes[[i]],
+        list(x0 = 0, s1 = 2L, s2 = 3L, se = FALSE, distance = probe$metric))),
+        "cannot contain.*(NA|non-finite)", class = "rdistnn_input_error")
+      expect_identical(err$code, "argument_invalid")
+      expect_identical(err$argument, c("Y", "y", "y_col", "y_col")[[i]])
+      expect_identical(err$operation, "np_tdnn")
+      expect_identical(probe$counts$setup, 0L)
+      expect_identical(probe$counts$eval, 0L)
+    }
+  }
+})
+
+test_that("np_tdnn preserves valid geometry callbacks and their failures", {
+  args <- list(X = matrix(1:8), Y = 2 * (1:8), x0 = 0,
+    s1 = 2L, s2 = 3L, se = FALSE)
+  baseline <- do.call(np_tdnn, c(args, list(distance = "l1")))
+  probe <- .counted_l1_distance()
+  actual <- do.call(np_tdnn, c(args, list(distance = probe$metric)))
+  expect_equal(actual$mu, baseline$mu, tolerance = 1e-14)
+  expect_identical(probe$counts$setup, 1L)
+  expect_identical(probe$counts$eval, 1L)
+
+  opaque <- structure(list(message = "opaque geometry failure", call = NULL),
+    class = c("opaque_geometry_error", "error", "condition"))
+  for (phase in c("on_setup", "on_eval")) {
+    probe <- do.call(.counted_l1_distance,
+      setNames(list(function() stop(opaque)), phase))
+    caught <- tryCatch(do.call(np_tdnn, c(args, list(distance = probe$metric))),
+      error = identity)
+    expect_identical(caught, opaque)
+    withr::local_options(warn = 2)
+    probe <- do.call(.counted_l1_distance,
+      setNames(list(function() warning("opaque geometry warning")), phase))
+    promoted <- expect_error(do.call(np_tdnn,
+      c(args, list(distance = probe$metric))), "opaque geometry warning")
+    expect_false(inherits(promoted, "rdistnn_input_error"))
+  }
+})

@@ -1,0 +1,4 @@
+Checks: '-*,clang-analyzer-core.*,clang-analyzer-cplusplus.*,clang-analyzer-deadcode.*,openmp-exception-escape,bugprone-argument-comment,bugprone-assert-side-effect,bugprone-bool-pointer-implicit-conversion,bugprone-dangling-handle,bugprone-infinite-loop,bugprone-macro-parentheses,bugprone-misplaced-widening-cast,bugprone-move-forwarding-reference,bugprone-sizeof-expression,bugprone-string-constructor,bugprone-suspicious-memory-comparison,bugprone-undefined-memory-manipulation,bugprone-use-after-move'
+WarningsAsErrors: '*'
+HeaderFilterRegex: '(src/|inst/include/).*[.](h|hpp)$'
+SystemHeaders: false

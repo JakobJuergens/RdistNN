@@ -254,7 +254,6 @@ test_that("malformed saved distance group state fails cleanly before coercion or
   }
   corrupt <- f
   corrupt$.model$ranks <- corrupt$.model$dx <- NULL
-  corrupt$.model$geometry <- 2
   expect_error(coef(corrupt), "distance groups|Refit|refit")
 })
 
@@ -428,17 +427,5 @@ test_that("current saved fits require canonical finite rank permutations and com
                          function(x) predict(x, x0 = .25))) {
       expect_warning(expect_error(consumer(bad), "Refit|refit", info = name), NA)
     }
-  }
-})
-
-test_that("paired-ratio duplicated geometry caches must agree with its canonical retained state", {
-  d <- .distance_fixture()
-  fit <- suppressWarnings(affine_ratio_dnn(X = d$X, X0 = d$X0,
-    numerator = d$y, denominator = rep(1, 8L), s = 5L, return = character()))
-  for (field in c("ranks", "dx", "ord")) {
-    bad <- fit
-    bad$.model$geometry[[field]] <- bad$.model$geometry[[field]][8:1, , drop = FALSE]
-    expect_warning(expect_error(diagnostics(bad), "Refit|refit"), NA)
-    expect_warning(expect_error(coef(bad), "Refit|refit"), NA)
   }
 })

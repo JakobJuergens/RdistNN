@@ -2,16 +2,16 @@
 % Please edit documentation in R/plot-estimates.R
 \name{plot_estimates}
 \alias{plot_estimates}
-\alias{autoplot.np_result}
-\alias{autoplot.cate_result}
-\alias{autoplot.affine_ratio_result}
-\alias{autoplot.plqr_result}
-\alias{autoplot.gmm_result}
-\alias{plot.np_result}
-\alias{plot.cate_result}
-\alias{plot.affine_ratio_result}
-\alias{plot.plqr_result}
-\alias{plot.gmm_result}
+\alias{autoplot.rdistnn_np_result}
+\alias{autoplot.rdistnn_cate_result}
+\alias{autoplot.rdistnn_affine_ratio_result}
+\alias{autoplot.rdistnn_plqr_result}
+\alias{autoplot.rdistnn_gmm_result}
+\alias{plot.rdistnn_np_result}
+\alias{plot.rdistnn_cate_result}
+\alias{plot.rdistnn_affine_ratio_result}
+\alias{plot.rdistnn_plqr_result}
+\alias{plot.rdistnn_gmm_result}
 \title{Plot estimates with confidence bounds across target points}
 \usage{
 plot_estimates(
@@ -24,25 +24,25 @@ plot_estimates(
   ...
 )
 
-autoplot.np_result(object, ...)
+autoplot.rdistnn_np_result(object, ...)
 
-autoplot.cate_result(object, ...)
+autoplot.rdistnn_cate_result(object, ...)
 
-autoplot.affine_ratio_result(object, ...)
+autoplot.rdistnn_affine_ratio_result(object, ...)
 
-autoplot.plqr_result(object, ...)
+autoplot.rdistnn_plqr_result(object, ...)
 
-autoplot.gmm_result(object, ...)
+autoplot.rdistnn_gmm_result(object, ...)
 
-\method{plot}{np_result}(x, ...)
+\method{plot}{rdistnn_np_result}(x, ...)
 
-\method{plot}{cate_result}(x, ...)
+\method{plot}{rdistnn_cate_result}(x, ...)
 
-\method{plot}{affine_ratio_result}(x, ...)
+\method{plot}{rdistnn_affine_ratio_result}(x, ...)
 
-\method{plot}{plqr_result}(x, ...)
+\method{plot}{rdistnn_plqr_result}(x, ...)
 
-\method{plot}{gmm_result}(x, ...)
+\method{plot}{rdistnn_gmm_result}(x, ...)
 }
 \arguments{
 \item{object}{A fitted result object accepted by
@@ -80,7 +80,7 @@ The estimate panel of the plotting layer: point estimates with normal
 confidence bounds from the stored estimator-specific standard errors, drawn as a
 profile band when the targets vary along a single stored coordinate, as
 a forest layout for small non-profile target sets, and as pointranges
-otherwise. \code{autoplot()} and \code{plot()} on \code{np_result}, \code{cate_result} and \code{affine_ratio_result}
+otherwise. \code{autoplot()} and \code{plot()} on \code{rdistnn_np_result}, \code{rdistnn_cate_result} and \code{rdistnn_affine_ratio_result}
 objects delegate here.
 }
 \details{
@@ -91,7 +91,7 @@ CATE and CLATE panels draw a dashed zero reference line.
 }
 \section{Experimental methods}{
 
-Methods for \code{plqr_result} objects are experimental, as is all PLQR
+Methods for \code{rdistnn_plqr_result} objects are experimental, as is all PLQR
 functionality in this release; see \code{\link[=plqr_dnn]{plqr_dnn()}}.
 }
 

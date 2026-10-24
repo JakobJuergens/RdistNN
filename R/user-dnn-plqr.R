@@ -135,6 +135,11 @@ plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
 #' coefficient standard error. For statistical background and conditions,
 #' see the [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
 #'
+#' A Jacobian, its inverse, or the assembled sandwich covariance outside the
+#' numeric range leaves coefficient uncertainty unavailable with rescaling
+#' guidance. Supplied coefficients and evaluated moments remain available.
+#' Finite singular Jacobians also leave coefficient uncertainty unavailable.
+#'
 #' As in [weights_dnn()], exact DNN localization uses the full rank permutation
 #' at each target rather than an `s`-nearest-neighbor truncation. The `"fast"`
 #' jackknife option reuses the full-sample rank matrix and updates ranks under
@@ -232,7 +237,7 @@ plqr_score_matrix <- function(data, y_col, D_cols, g_col, mD_cols, theta, tau) {
 #'   `neighbors` is a `k x m` matrix of nearest training-observation indices,
 #'   one column per target. It is a rank summary, not the full DNN weight support.
 #'
-#' @return An object of class `plqr_result` with components:
+#' @return An object of class `rdistnn_plqr_result` with components:
 #'   - `moment`: matrix (`p_d x m`) of localized PLQR moments;
 #'   - `theta`: matrix (`p_d x m`) of the supplied coefficient values, repeated
 #'     across targets; no root solving is performed;
@@ -316,10 +321,10 @@ plqr_dnn <- function(
   ctx = NULL,
   return = c("W")
 ) {
-  method <- match.arg(method)
-  jackknife <- match.arg(jackknife)
-  theta_meat <- match.arg(theta_meat)
-  tuning_mode <- match.arg(tuning_mode)
+  method <- .dnn_match_arg(method)
+  jackknife <- .dnn_match_arg(jackknife)
+  theta_meat <- .dnn_match_arg(theta_meat)
+  tuning_mode <- .dnn_match_arg(tuning_mode)
   s_arg <- s
   k <- .validate_scalar_int(k, "k")
   normalize <- .validate_scalar_logical(normalize, "normalize")
@@ -712,6 +717,6 @@ plqr_dnn <- function(
     coef_names = coef_names
   ), geometry)
 
-  class(out) <- "plqr_result"
+  class(out) <- "rdistnn_plqr_result"
   out
 }

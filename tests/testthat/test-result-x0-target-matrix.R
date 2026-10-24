@@ -12,6 +12,7 @@
 }
 
 test_that("np_dnn and cate_dnn store x0 with propagated covariate names", {
+  withr::local_preserve_seed()
   set.seed(21)
   n <- 60L
   df <- data.frame(
@@ -46,6 +47,7 @@ test_that("np_dnn and cate_dnn store x0 with propagated covariate names", {
 })
 
 test_that("user-supplied X0 column names are preserved over training names", {
+  withr::local_preserve_seed()
   set.seed(22)
   n <- 50L
   df <- data.frame(X1 = rnorm(n), X2 = rnorm(n), Y = rnorm(n))
@@ -59,6 +61,7 @@ test_that("user-supplied X0 column names are preserved over training names", {
 })
 
 test_that("plqr_dnn, gmm_dnn, and tdnn_np store x0", {
+  withr::local_seed(123L)
   demo <- plqr_demo_data(n = 80L, p = 2L, p_d = 2L, tau = 0.5, seed = 5)
   df <- demo$data
   X <- as.matrix(df[paste0("X", 1:2)])
@@ -99,6 +102,7 @@ test_that("plqr_dnn, gmm_dnn, and tdnn_np store x0", {
 })
 
 test_that("stored x0 is invariant to se, jackknife, and return options", {
+  withr::local_preserve_seed()
   set.seed(24)
   n <- 50L
   x_mat <- matrix(rnorm(n * 2L), n, 2L,

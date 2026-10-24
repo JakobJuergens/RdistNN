@@ -59,7 +59,7 @@ do not dispatch through this pointer; they require \code{eval} or \code{eval_bat
 \item{symmetric}{Logical: permutation symmetry (engine assumes TRUE).}
 }
 \value{
-An object of class \code{ustat_score}.
+An object of class \code{rdistnn_ustat_score}.
 }
 \description{
 A score (kernel) is a symmetric function evaluated on s-sized subsets.

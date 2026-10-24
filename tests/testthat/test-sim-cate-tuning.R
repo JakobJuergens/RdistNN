@@ -52,6 +52,7 @@ test_that("sim_cate_run remains deterministic with tuning and fixed master_seed"
 })
 
 test_that("sim_cate_run accepts tuning as registered name and bare function", {
+  withr::local_seed(123L)
   base_args <- list(
     designs = "dgp2_nonlinear",
     n_vals = 120L,

@@ -17,7 +17,7 @@ test_that("CLATE candidate views preserve paired inference and frozen state", {
       scalar <- suppressWarnings(do.call(clate_dnn,
         c(args, list(method = method, k = 2L, normalize = normalize))))
       view <- candidate_fit(grid, i)
-      expect_s3_class(view, "clate_result")
+      expect_s3_class(view, "rdistnn_clate_result")
       expect_equal(view, views[[candidates$candidate_id[i]]])
       for (field in c("theta", "se", "components", "component_vcov", "theta_vcov",
                       "theta_omega", "status", "neff", "W", "ess", "neighbors",
@@ -25,7 +25,6 @@ test_that("CLATE candidate views preserve paired inference and frozen state", {
         expect_equal(view[[field]], scalar[[field]], tolerance = 1e-12, info = field)
       }
       expect_identical(view$.model$iv, grid$.model$iv)
-      expect_identical(view$.model$geometry, grid$.model$geometry)
       expect_equal(summary(view)$coefficients, summary(scalar)$coefficients)
       expect_equal(suppressWarnings(predict(view, X0 = a$X0, se.fit = TRUE)),
                    suppressWarnings(predict(scalar, X0 = a$X0, se.fit = TRUE)))

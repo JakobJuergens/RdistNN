@@ -45,7 +45,7 @@ using namespace Rcpp;
 //               element [i, qq, t] at position i + n*qq + n*q*t (0-based, C order)
 //   info      : List(n, m, q)
 //
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 Rcpp::List rustat_jackknife_rank_full(const IntegerMatrix &ranks, const NumericMatrix &PHI,
                                       const NumericVector &wn, const NumericVector &wnm1) {
   const int n = ranks.nrow();

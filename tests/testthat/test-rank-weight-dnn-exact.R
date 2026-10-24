@@ -11,6 +11,7 @@
 # -------------------------------------------------------------------
 
 test_that("[smoke] returns weights of length n that are nonnegative and sum to 1", {
+  withr::local_preserve_seed()
   set.seed(1)
   n <- 12L
   s <- 5L
@@ -32,6 +33,7 @@ test_that("[smoke] returns weights of length n that are nonnegative and sum to 1
 })
 
 test_that("[edge] s = n gives uniform 1/k on top-k ranks; s = 1 gives uniform weights", {
+  withr::local_seed(123L)
   # Case 1: s = n ⇒ subset is entire sample; i-th NN in subset is the global i-th NN deterministically.
   # Hence w_rank[j] = 1/k for j <= k, else 0.
   for (k in 1:4) {
@@ -95,6 +97,7 @@ test_that("[bf] brute-force enumeration over all subsets matches exact weights (
 })
 
 test_that("[inv] w_rank depends only on (n,k,s) and not on the particular permutation", {
+  withr::local_seed(123L)
   n <- 12L
   s <- 5L
   k <- 3L
@@ -133,6 +136,7 @@ test_that("[errors] input validation triggers appropriate errors", {
 })
 
 test_that("[meta] meta fields are correct", {
+  withr::local_seed(123L)
   n <- 9L
   s <- 4L
   k <- 2L

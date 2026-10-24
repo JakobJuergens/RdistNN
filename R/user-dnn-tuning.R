@@ -61,19 +61,25 @@
 
 .dnn_resolve_candidate_schema <- function(grid, default) {
   if (!is.list(grid) || !is.data.frame(grid$candidates)) {
-    .abort_bad_state("`tuning$grid$candidates` must be a data.frame.")
+    .dnn_abort("internal_invariant",
+      "`tuning$grid$candidates` must be a data.frame.",
+      hint = "Report a reproducible example of this internal inconsistency."
+    )
   }
   candidates <- as.data.frame(grid$candidates, stringsAsFactors = FALSE)
   if (nrow(candidates) < 1L) {
-    .abort_bad_state("`tuning$grid$candidates` must contain at least one row.")
+    .dnn_abort("internal_invariant",
+      "`tuning$grid$candidates` must contain at least one row.",
+      hint = "Report a reproducible example of this internal inconsistency."
+    )
   }
   required <- c("s", "feasible", "reason")
   missing <- setdiff(required, names(candidates))
   if (length(missing) > 0L) {
-    .abort_bad_state(sprintf(
+    .dnn_abort("internal_invariant", sprintf(
       "`tuning$grid$candidates` is missing required column(s): %s.",
       paste(missing, collapse = ", ")
-    ))
+    ), hint = "Report a reproducible example of this internal inconsistency.")
   }
 
   candidates$s <- as.integer(candidates$s)
@@ -197,7 +203,10 @@
   )
 
   if (!is.list(default$feasibility)) {
-    .abort_bad_state("`tuning_eval(..., mode='default')` must return `feasibility`.")
+    .dnn_abort("internal_invariant",
+      "`tuning_eval(..., mode='default')` must return `feasibility`.",
+      hint = "Report a reproducible example of this internal inconsistency."
+    )
   }
 
   s_out <- .validate_scalar_int(default$s, "s")
@@ -219,4 +228,59 @@
     grid = .dnn_resolve_candidate_schema(grid, default = default)
   )
   list(s = as.integer(s_out), tuning = payload, tuning_used = TRUE)
+}
+
+.dnn_validate_retained_tuning <- function(payload, fitted_s, field = "object$meta$tuning") {
+  invalid <- function(field, reason) {
+    .dnn_abort("state_invalid",
+      sprintf("Retained `%s` %s. Refit with the current estimator.", field, reason), argument = field)
+  }
+  record <- function(value, fields, path) {
+    if (!is.list(value)) invalid(path, "must retain the current tuning record")
+    for (field in fields) {
+      if (sum(names(value) == field, na.rm = TRUE) != 1L) {
+        invalid(paste0(path, "$", field), "must be retained exactly once")
+      }
+    }
+    value
+  }
+  integer <- function(value, path) {
+    if (!is.null(dim(value))) invalid(path, "must retain an integer scalar")
+    .dnn_validate_retained(.validate_scalar_int(value, path))
+  }
+  payload <- record(payload, c("source", "default", "grid"), field)
+  source <- payload[["source", exact = TRUE]]
+  if (!is.character(source) || !is.null(dim(source)) || length(source) != 1L ||
+      is.na(source) || !source %in% c("manual", "tuning", "paper_default")) {
+    invalid(paste0(field, "$source"), "must retain the tuning source")
+  }
+  default <- record(payload[["default", exact = TRUE]], c("s", "meta", "feasibility"),
+    paste0(field, "$default"))
+  if (integer(default[["s", exact = TRUE]], paste0(field, "$default$s")) !=
+      fitted_s) {
+    invalid(paste0(field, "$default$s"), "must match the fitted order")
+  }
+  grid <- record(payload[["grid", exact = TRUE]], c("candidates", "meta"), paste0(field, "$grid"))
+  for (location in c("default", "grid")) {
+    path <- paste0(field, "$", location, "$meta")
+    descriptor <- record(payload[[location]][["meta", exact = TRUE]], c("name", "n", "kx"), path)
+    name <- descriptor[["name", exact = TRUE]]
+    if (!is.character(name) || !is.null(dim(name)) || length(name) != 1L || is.na(name) || !nzchar(name)) {
+      invalid(paste0(path, "$name"), "must retain a non-empty name")
+    }
+    for (key in c("n", "kx")) integer(descriptor[[key, exact = TRUE]], paste0(path, "$", key))
+  }
+  feasibility_path <- paste0(field, "$default$feasibility")
+  feasible <- record(default[["feasibility", exact = TRUE]], c("k_le_s", "s_lt_n"), feasibility_path)
+  for (flag in c("k_le_s", "s_lt_n")) {
+    if (!identical(feasible[[flag, exact = TRUE]], TRUE)) {
+      invalid(paste0(feasibility_path, "$", flag), "must retain a feasible default")
+    }
+  }
+  candidates <- grid[["candidates", exact = TRUE]]
+  fields <- c("candidate_id", "computed_key", "is_default", "feasible", "reason", "status", "lambda", "s")
+  if (!is.data.frame(candidates) || !all(fields %in% names(candidates)) || nrow(candidates) < 1L) {
+    invalid(paste0(field, "$grid$candidates"), "must retain the current candidate schema")
+  }
+  payload
 }

@@ -86,7 +86,7 @@
 #'   `neighbors` is a `k x m` matrix of nearest training-observation indices,
 #'   one column per target. It is a rank summary, not the full DNN weight support.
 #'
-#' @return An object of class `np_result` with components:
+#' @return An object of class `rdistnn_np_result` with components:
 #'   - `mu`: estimated local mean values at target points;
 #'   - `se`: optional jackknife standard errors;
 #'   - `x0`: the `m x p` matrix of evaluation points, with covariate
@@ -99,7 +99,7 @@
 #'     by prediction and covariance methods, independently of optional extras;
 #'   - optional extras requested via `return`.
 #'
-#' @seealso [weights_dnn()], [np_demo_data()], [np_result] for summary,
+#' @seealso [weights_dnn()], [np_demo_data()], [rdistnn_np_result] for summary,
 #'   coefficient, joint covariance, confidence interval and prediction methods.
 #'
 #' @examples
@@ -135,9 +135,9 @@ np_dnn <- function(
   ctx = NULL,
   return = c("W")
 ) {
-  method <- match.arg(method)
-  jackknife <- match.arg(jackknife)
-  tuning_mode <- match.arg(tuning_mode)
+  method <- .dnn_match_arg(method)
+  jackknife <- .dnn_match_arg(jackknife)
+  tuning_mode <- .dnn_match_arg(tuning_mode)
   s_arg <- s
   k <- .validate_scalar_int(k, "k")
   normalize <- .validate_scalar_logical(normalize, "normalize")
@@ -162,35 +162,35 @@ np_dnn <- function(
       .abort_bad_arg("data", "must be a data.frame")
     }
     if (is.null(x_cols)) {
-      stop("With `data=`, `x_cols` is required.", call. = FALSE)
+      .dnn_abort("argument_invalid", "With `data=`, `x_cols` is required.", argument = "x_cols")
     }
     x_mat <- .dnn_col_mat(x_cols, data = data, arg = "x_cols", out_arg = "X")
     n <- nrow(x_mat)
     p <- ncol(x_mat)
 
     if (is.null(y_col) == is.null(y)) {
-      stop("With `data=`, provide exactly one of `y_col` or `y`.", call. = FALSE)
+      .dnn_abort("argument_invalid", "With `data=`, provide exactly one of `y_col` or `y`.", argument = "y_col")
     }
     if (!is.null(y_col)) {
-      y_vec <- .dnn_col_vec(y_col, data, n, arg = "y_col", ref = "X")
+      y_vec <- .dnn_col_vec(y_col, data, n, arg = "y_col", ref = "X", finite = TRUE)
     } else {
-      y_vec <- .validate_vector_nrow(y, n, arg = "y", ref = "X", strict = TRUE)
+      y_vec <- .validate_vector_nrow(y, n, arg = "y", ref = "X", strict = TRUE, finite = TRUE)
     }
   } else {
     if (is.null(X)) {
-      stop("Provide either `data` ... or matrix interface via `X`.", call. = FALSE)
+      .dnn_abort("argument_invalid", "Provide either `data` ... or matrix interface via `X`.", argument = "X")
     }
     x_mat <- .validate_matrix_nonempty(X, arg = "X")
     n <- nrow(x_mat)
     p <- ncol(x_mat)
 
     if (!is.null(y)) {
-      stop("Matrix API uses `Y`; `y` is only supported with `data=`.", call. = FALSE)
+      .dnn_abort("argument_invalid", "Matrix API uses `Y`; `y` is only supported with `data=`.", argument = "y")
     }
     if (is.null(Y)) {
-      stop("Matrix API requires `Y`.", call. = FALSE)
+      .dnn_abort("argument_invalid", "Matrix API requires `Y`.", argument = "Y")
     }
-    y_vec <- .validate_vector_nrow(Y, n, arg = "Y", ref = "X", strict = TRUE)
+    y_vec <- .validate_vector_nrow(Y, n, arg = "Y", ref = "X", strict = TRUE, finite = TRUE)
   }
 
   s_resolved <- .dnn_resolve_s(
@@ -297,6 +297,6 @@ np_dnn <- function(
     ranks = wt$ranks, groups = wt$groups, dx = wt$dx
   ), geometry)
 
-  class(out) <- "np_result"
+  class(out) <- "rdistnn_np_result"
   out
 }

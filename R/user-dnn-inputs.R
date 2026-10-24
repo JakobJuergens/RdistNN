@@ -35,12 +35,15 @@
     }
     missing <- setdiff(cols, data_names)
     if (length(missing) > 0L) {
-      stop(sprintf(
-        "Column(s) %s (specified by `%s`) not found in `data`.\nAvailable columns: %s",
-        paste(sprintf("'%s'", missing), collapse = ", "),
-        arg,
-        paste(data_names, collapse = ", ")
-      ), call. = FALSE)
+      .dnn_abort("argument_invalid", sprintf(
+        "Column(s) %s (specified by `%s`) not found in `data`. Available columns: %s.",
+        .dnn_message_examples(sprintf("'%s'", missing), width = 40L)$text,
+        .dnn_brief(arg),
+        .dnn_message_examples(data_names, width = 40L)$text
+      ), argument = arg,
+        expected = .dnn_message_examples(data_names)$text,
+        actual = .dnn_message_examples(missing)$text,
+        hint = "Check the selector against the available column names.")
     }
     resolved <- cols
   } else if (is.numeric(cols)) {
@@ -73,9 +76,9 @@
 }
 
 # Extract and validate a single data-frame column by name or index.
-.dnn_col_vec <- function(col, data, n, arg, ref = "data") {
+.dnn_col_vec <- function(col, data, n, arg, ref = "data", finite = FALSE) {
   col_name <- .dnn_resolve_data_cols(col, data = data, arg = arg, allow_multiple = FALSE)
-  .validate_vector_nrow(data[[col_name]], n, arg = arg, ref = ref, strict = TRUE)
+  .validate_vector_nrow(data[[col_name]], n, arg = arg, ref = ref, strict = TRUE, finite = finite)
 }
 
 # Extract and validate multiple data-frame columns by names/indices.

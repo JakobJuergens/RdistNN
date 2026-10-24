@@ -7,7 +7,7 @@
 plot_tdnn_scales(object, ...)
 }
 \arguments{
-\item{object}{A \code{tdnn_np_result} from \code{\link[=np_tdnn]{np_tdnn()}}.}
+\item{object}{A \code{rdistnn_tdnn_np_result} from \code{\link[=np_tdnn]{np_tdnn()}}.}
 
 \item{...}{Ignored; reserved for future options.}
 }

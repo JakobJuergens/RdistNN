@@ -43,9 +43,9 @@
 #' Reporting uses the common generics; overlap panels describe the instrument
 #' and influence panels retain both augmented signals.
 #'
-#' @return A clate_result inheriting affine_ratio_result. Component roles are
+#' @return A rdistnn_clate_result inheriting rdistnn_affine_ratio_result. Component roles are
 #'   reduced_form and first_stage. Optional nuisance output is the complete
-#'   iv_signals construction record, including raw/used propensity.
+#'   rdistnn_iv_signals construction record, including raw/used propensity.
 #' @examples
 #' d <- data.frame(
 #'   x = 1:6, Y = c(1, 2, 0, 3, 2, 1),
@@ -84,8 +84,8 @@ clate_dnn <- function(
 ) {
   one_sided <- .validate_scalar_logical(one_sided, "one_sided")
   method <- .affine_weight_method(method)
-  tuning_mode <- match.arg(tuning_mode)
-  jackknife <- match.arg(jackknife)
+  tuning_mode <- .dnn_match_arg(tuning_mode)
+  jackknife <- .dnn_match_arg(jackknife)
   valid <- c(
     "W", "ranks", "ord", "dx", "ess", "signals",
     "deletions", "pseudo_values", "neighbors", "tuning", "nuisance"
@@ -153,6 +153,6 @@ clate_dnn <- function(
     propensity = signals$propensity, one_sided = one_sided, training = training
   )
   if ("nuisance" %in% return) out$nuisance <- signals
-  class(out) <- c("clate_result", "affine_ratio_result")
+  class(out) <- c("rdistnn_clate_result", "rdistnn_affine_ratio_result")
   out
 }

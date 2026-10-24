@@ -82,7 +82,7 @@ test_that("influence plot data retain finite signed CATE and CLATE contributions
       m_y0 = rep(0, 12L), m_y1 = signal, m_d0 = rep(0, 12L), m_d1 = d1,
       s = 2L, se = FALSE, return = "W")
     for (fit in list(cate, clate)) {
-      center <- if (inherits(fit, "cate_result")) fit$tau else fit$theta
+      center <- if (inherits(fit, "rdistnn_cate_result")) fit$tau else fit$theta
       # Binary-normalized subtraction is an independent dimensional reference.
       expected <- as.numeric(fit$W) * (signal / 2^1022 - center / 2^1022) * 2^1022
       expected[12L] <- 0

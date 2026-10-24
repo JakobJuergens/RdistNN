@@ -39,7 +39,10 @@ summarise_iv_results <- function(raw) {
   )
   missing <- setdiff(required, names(raw))
   if (length(missing) > 0L) {
-    stop("raw is missing required columns: ", paste(missing, collapse = ", "), call. = FALSE)
+    .dnn_abort("argument_invalid",
+      paste0("raw is missing required columns: ", paste(missing, collapse = ", ")),
+      argument = "raw"
+    )
   }
 
   group_cols <- c("method", "design", "n", "kx", "q")

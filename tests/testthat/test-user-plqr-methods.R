@@ -1,4 +1,4 @@
-test_that("plqr_result methods report coefficient inference when direct sandwich is available", {
+test_that("rdistnn_plqr_result methods report coefficient inference when direct sandwich is available", {
   .test_rng_scope({
     d <- .make_plqr_inference_data(n = 85L, m = 2L)
     fit <- plqr_dnn(
@@ -12,7 +12,7 @@ test_that("plqr_result methods report coefficient inference when direct sandwich
     expect_equal(vcov(fit, target = 1L), fit$theta_vcov[[1L]])
 
     s <- summary(fit)
-    expect_s3_class(s, "summary.plqr_result")
+    expect_s3_class(s, "rdistnn_summary_plqr_result")
     expect_true(is.data.frame(s$coefficients))
     expect_equal(
       colnames(s$coefficients),
@@ -29,7 +29,7 @@ test_that("plqr_result methods report coefficient inference when direct sandwich
   }, seed = 818L)
 })
 
-test_that("plqr_result methods fail clearly when direct sandwich is unavailable", {
+test_that("rdistnn_plqr_result methods fail clearly when direct sandwich is unavailable", {
   .test_rng_scope({
     d <- .make_plqr_inference_data(n = 70L, m = 1L)
     fit <- plqr_dnn(

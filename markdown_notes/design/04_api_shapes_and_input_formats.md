@@ -37,6 +37,11 @@ when context is absent. Scalar scores return one finite numeric value per
 subset. Analytic batch gradients have exactly two dimensions, `K x p`; a
 length-`K` vector is accepted only for `p = 1` and canonicalized to a matrix.
 
+Batch score cardinality `K` may be zero: a numeric/integer `0 x s` subset
+matrix returns `numeric(0)`, and derivative batches preserve `0 x p` shapes.
+Subset order `s` stays positive. Empty batches still undergo type, column-count,
+parameter and callback-output validation; scalar empty subsets remain invalid.
+
 ## Results
 
 Successful high-level calls return classed objects with stable estimates,

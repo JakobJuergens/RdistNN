@@ -12,29 +12,30 @@
 
 .pbc_np_fit <- function(n = 80L, m = 6L, se = TRUE, return = c("W"),
                         seed = 61L, s = 12L) {
-  set.seed(seed)
-  x_mat <- matrix(rnorm(n * 2L), n, 2L,
-                  dimnames = list(NULL, c("X1", "X2")))
-  y_vec <- x_mat[, 1L] + rnorm(n, sd = 0.3)
-  X0 <- cbind(seq(-1, 1, length.out = m), 0)
-  np_dnn(X = x_mat, X0 = X0, Y = y_vec, k = 1L, s = s, se = se,
-         return = return)
+  .test_rng_scope({
+    x_mat <- matrix(rnorm(n * 2L), n, 2L,
+                    dimnames = list(NULL, c("X1", "X2")))
+    y_vec <- x_mat[, 1L] + rnorm(n, sd = 0.3)
+    X0 <- cbind(seq(-1, 1, length.out = m), 0)
+    np_dnn(X = x_mat, X0 = X0, Y = y_vec, k = 1L, s = s, se = se,
+           return = return)
+  }, seed = seed)
 }
 
 .pbc_cate_targets <- function(m, seed = 62L) {
   # Non-profile target sets: both coordinates vary.
-  set.seed(seed)
   cbind(seq(-1, 1, length.out = m), seq(1, -1, length.out = m))
 }
 
 .pbc_cate_fit <- function(n = 90L, m = 3L, se = TRUE, seed = 63L,
                           psi_scale = 1) {
-  set.seed(seed)
-  X <- matrix(rnorm(n * 2L), n, 2L,
-              dimnames = list(NULL, c("X1", "X2")))
-  psi <- rnorm(n, mean = psi_scale * X[, 1L])
-  cate_dnn(X = X, X0 = .pbc_cate_targets(m), pseudo_outcome = psi,
-           k = 1L, s = 12L, se = se)
+  .test_rng_scope({
+    X <- matrix(rnorm(n * 2L), n, 2L,
+                dimnames = list(NULL, c("X1", "X2")))
+    psi <- rnorm(n, mean = psi_scale * X[, 1L])
+    cate_dnn(X = X, X0 = .pbc_cate_targets(m), pseudo_outcome = psi,
+             k = 1L, s = 12L, se = se)
+  }, seed = seed)
 }
 
 test_that("every estimate mode and weight view survives ggplot_build", {
@@ -60,6 +61,43 @@ test_that("every estimate mode and weight view survives ggplot_build", {
     expect_s3_class(p, "ggplot")
     expect_no_error(ggplot2::ggplot_build(p))
   }
+})
+
+test_that("plot switches require explicit scalar logical values", {
+  skip_if_not_installed("ggplot2")
+  fit <- .pbc_np_fit(n = 20L, m = 2L, se = FALSE, s = 3L)
+  for (value in list(1, "TRUE", NA, logical(), c(TRUE, FALSE))) {
+    for (case in list(list(fn = plot_weights, field = "log_weights"),
+        list(fn = plot_estimates, field = "shade_significant"))) {
+      args <- c(list(object = fit), stats::setNames(list(value), case$field))
+      err <- tryCatch(do.call(case$fn, args), error = identity)
+      expect_s3_class(err, "rdistnn_input_error")
+      if (inherits(err, "condition")) expect_identical(err$argument, case$field)
+    }
+  }
+})
+
+test_that("weight plots prepare only selected target profiles", {
+  skip_if_not_installed("ggplot2")
+  fit <- .pbc_np_fit(n = 20L, m = 6L, se = FALSE, s = 3L, return = c("W", "dx"))
+  all_profiles <- plot_data_weights(fit)
+  columns <- integer()
+  original <- RdistNN:::.dnn_orders_from_ranks
+  local_mocked_bindings(.dnn_orders_from_ranks = function(ranks) {
+    columns <<- c(columns, ncol(ranks))
+    original(ranks)
+  }, .package = "RdistNN")
+  plot <- plot_weights(fit, targets = c(3L, 1L, 3L))
+  expect_identical(columns, c(6L, 2L))
+  expect_identical(unique(plot$data$target_id), c(3L, 1L))
+  for (j in c(3L, 1L)) {
+    expect_equal(plot$data$weight[plot$data$target_id == j],
+      all_profiles$weight[all_profiles$target_id == j], tolerance = 0)
+  }
+  fit$dx <- NULL
+  err <- tryCatch(plot_weights(fit, type = "kernel"), error = identity)
+  expect_s3_class(err, "rdistnn_extra_unavailable")
+  if (inherits(err, "condition")) expect_match(err$hint, 'return = "dx"', fixed = TRUE)
 })
 
 test_that("built ribbon and line layers reproduce the extractor values", {
@@ -165,31 +203,33 @@ test_that("multi-coefficient fits facet by coefficient with free scales", {
 })
 
 test_that("significance rug agrees with the extractor's intervals", {
-  skip_if_not_installed("ggplot2")
-  set.seed(64)
-  n <- 100L
-  X <- matrix(rnorm(n * 2L), n, 2L,
-              dimnames = list(NULL, c("X1", "X2")))
-  psi <- rnorm(n, mean = 4 * X[, 1L], sd = 0.5)
-  X0 <- cbind(seq(-1.5, 1.5, length.out = 8L), 0)
-  fit <- cate_dnn(X = X, X0 = X0, pseudo_outcome = psi, k = 1L, s = 15L,
-                  se = TRUE)
+  .test_rng_scope({
+    skip_if_not_installed("ggplot2")
+    set.seed(64)
+    n <- 100L
+    X <- matrix(rnorm(n * 2L), n, 2L,
+                dimnames = list(NULL, c("X1", "X2")))
+    psi <- rnorm(n, mean = 4 * X[, 1L], sd = 0.5)
+    X0 <- cbind(seq(-1.5, 1.5, length.out = 8L), 0)
+    fit <- cate_dnn(X = X, X0 = X0, pseudo_outcome = psi, k = 1L, s = 15L,
+                    se = TRUE)
 
-  df <- plot_data_estimates(fit)
-  sig <- df[!is.na(df$ci_lower) &
-              sign(df$ci_lower) == sign(df$ci_upper) &
-              df$ci_lower != 0, , drop = FALSE]
+    df <- plot_data_estimates(fit)
+    sig <- df[!is.na(df$ci_lower) &
+                sign(df$ci_lower) == sign(df$ci_upper) &
+                df$ci_lower != 0, , drop = FALSE]
 
-  p <- plot_estimates(fit, shade_significant = TRUE)
-  geoms <- vapply(p$layers, function(l) class(l$geom)[1L], character(1L))
-  if (nrow(sig) > 0L) {
-    expect_true("GeomRug" %in% geoms)
-    rug_idx <- which(geoms == "GeomRug")[1L]
-    built <- ggplot2::ggplot_build(p)
-    expect_equal(sort(built$data[[rug_idx]]$x), sort(sig$x0_1))
-  } else {
-    expect_false("GeomRug" %in% geoms)
-  }
+    p <- plot_estimates(fit, shade_significant = TRUE)
+    geoms <- vapply(p$layers, function(l) class(l$geom)[1L], character(1L))
+    if (nrow(sig) > 0L) {
+      expect_true("GeomRug" %in% geoms)
+      rug_idx <- which(geoms == "GeomRug")[1L]
+      built <- ggplot2::ggplot_build(p)
+      expect_equal(sort(built$data[[rug_idx]]$x), sort(sig$x0_1))
+    } else {
+      expect_false("GeomRug" %in% geoms)
+    }
+  })
 })
 
 test_that("built weight layers match the weights frame across views", {
@@ -228,19 +268,21 @@ test_that("built weight layers match the weights frame across views", {
 })
 
 test_that("weight panels are class-agnostic and honest about provenance", {
-  skip_if_not_installed("ggplot2")
-  fit_cate <- .pbc_cate_fit(m = 2L, se = FALSE)
-  p <- plot_weights(fit_cate, type = "profile")
-  expect_s3_class(p, "ggplot")
-  expect_match(p$labels$caption, "s = 12.*s/n =.*\\(manual\\)")
+  .test_rng_scope({
+    skip_if_not_installed("ggplot2")
+    fit_cate <- .pbc_cate_fit(m = 2L, se = FALSE)
+    p <- plot_weights(fit_cate, type = "profile")
+    expect_s3_class(p, "ggplot")
+    expect_match(p$labels$caption, "s = 12.*s/n =.*\\(manual\\)")
 
-  # Default-s fits report paper_default provenance in the caption.
-  set.seed(65)
-  n <- 60L
-  X <- matrix(rnorm(n * 2L), n, 2L)
-  fit_def <- np_dnn(X = X, x0 = c(0, 0), Y = rnorm(n), k = 1L, se = FALSE)
-  p_def <- plot_estimates(fit_def)
-  expect_match(p_def$labels$caption, "paper_default")
+    # Default-s fits report paper_default provenance in the caption.
+    set.seed(65)
+    n <- 60L
+    X <- matrix(rnorm(n * 2L), n, 2L)
+    fit_def <- np_dnn(X = X, x0 = c(0, 0), Y = rnorm(n), k = 1L, se = FALSE)
+    p_def <- plot_estimates(fit_def)
+    expect_match(p_def$labels$caption, "paper_default")
+  })
 })
 
 test_that("default weight subsetting uses first, median-n_eff, and last", {
@@ -273,23 +315,25 @@ test_that("the ggplot2 guard fires before the missing-W error", {
 })
 
 test_that("autoplot passes arguments through to plot_estimates", {
-  skip_if_not_installed("ggplot2")
-  fit <- .pbc_np_fit(m = 6L, se = TRUE)
-  p80 <- ggplot2::autoplot(fit, level = 0.8)
-  expect_identical(attr(p80$data, "level"), 0.8)
-  p_pr <- ggplot2::autoplot(fit, style = "pointrange")
-  geoms <- vapply(p_pr$layers, function(l) class(l$geom)[1L], character(1L))
-  expect_true("GeomSegment" %in% geoms)
+  .test_rng_scope({
+    skip_if_not_installed("ggplot2")
+    fit <- .pbc_np_fit(m = 6L, se = TRUE)
+    p80 <- ggplot2::autoplot(fit, level = 0.8)
+    expect_identical(attr(p80$data, "level"), 0.8)
+    p_pr <- ggplot2::autoplot(fit, style = "pointrange")
+    geoms <- vapply(p_pr$layers, function(l) class(l$geom)[1L], character(1L))
+    expect_true("GeomSegment" %in% geoms)
 
-  # TDNN fits dispatch through the np_result autoplot method.
-  set.seed(66)
-  n <- 60L
-  Xm <- matrix(rnorm(n * 2L), n, 2L)
-  fit_tdnn <- np_tdnn(X = Xm, x0 = c(0, 0), Y = rnorm(n),
-                      s1 = 4L, s2 = 8L, se = FALSE)
-  p_tdnn <- ggplot2::autoplot(fit_tdnn)
-  expect_s3_class(p_tdnn, "ggplot")
-  expect_match(p_tdnn$labels$caption, "s1 = 4.*s2 = 8")
+    # TDNN fits dispatch through the rdistnn_np_result autoplot method.
+    set.seed(66)
+    n <- 60L
+    Xm <- matrix(rnorm(n * 2L), n, 2L)
+    fit_tdnn <- np_tdnn(X = Xm, x0 = c(0, 0), Y = rnorm(n),
+                        s1 = 4L, s2 = 8L, se = FALSE)
+    p_tdnn <- ggplot2::autoplot(fit_tdnn)
+    expect_s3_class(p_tdnn, "ggplot")
+    expect_match(p_tdnn$labels$caption, "s1 = 4.*s2 = 8")
+  })
 })
 test_that("profile coordinate indices are validated before integer conversion", {
   skip_if_not_installed("ggplot2")

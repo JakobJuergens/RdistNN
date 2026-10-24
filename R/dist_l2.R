@@ -205,6 +205,10 @@ dist_l2_scaled <- function(X, x0, inv_s, squared = FALSE) {
 #' @param eps Small positive number to avoid division by zero in scaling.
 #' @param squared Logical; if `TRUE`, return squared distances.
 #'
+#' @details Configuration is evaluated when the specification is created.
+#' Rebinding a caller's configuration variables before first use does not alter
+#' it. Setup retains per-column inverse scales and does not retain a scaled copy
+#' of the training matrix.
 #' @return A list with `name`, `setup()`, `eval()`, and `eval_batch()`.
 #' @examples
 #' set.seed(1)
@@ -217,14 +221,16 @@ dist_l2_scaled <- function(X, x0, inv_s, squared = FALSE) {
 distance_l2_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
                                scale_vec = NULL, eps = 1e-12,
                                squared = FALSE) {
-  rule <- match.arg(rule)
+  rule <- .dnn_match_arg(rule)
+  force(scale_vec)
+  force(eps)
 
   list(
     name = paste0(if (isTRUE(squared)) "l2_scaled_sq[" else "l2_scaled[", rule, "]"),
     setup = function(X) {
       .assert_no_na(X)
       inv_s <- .compute_inv_scale(X, rule, scale_vec, eps)
-      list(inv_s = inv_s, Xs = .scale_cols(as.matrix(X), inv_s))
+      list(inv_s = inv_s)
     },
     eval = function(X, x0, ctx) {
       .assert_no_na(X, x0)
@@ -255,17 +261,20 @@ distance_l2_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
         ctx <- list(inv_s = inv_s)
       }
       if (!is.numeric(ctx$inv_s)) {
-        stop("inv_s must be numeric.", call. = FALSE)
+        .dnn_abort("argument_invalid", "`inv_s` must be numeric.", argument = "inv_s")
       }
       inv_s <- as.numeric(ctx$inv_s)
       if (.has_na_only(inv_s)) {
-        stop("inv_s cannot contain NA values.", call. = FALSE)
+        .dnn_abort("argument_invalid", "`inv_s` cannot contain NA values.", argument = "inv_s")
       }
       if (.has_nonfinite_non_na(inv_s)) {
-        stop("inv_s cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+        .dnn_abort("argument_invalid",
+          "`inv_s` cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).",
+          argument = "inv_s"
+        )
       }
       if (length(inv_s) != ncol(X)) {
-        stop("inv_s length must equal ncol(X).", call. = FALSE)
+        .dnn_abort("argument_invalid", "`inv_s` length must equal ncol(X).", argument = "inv_s")
       }
 
       cpp <- .rdistnn_compiled_fun("rustat_dist_l2_scaled_batch")
@@ -305,7 +314,7 @@ order_by_l2_scaled <- function(X, x0,
   .assert_no_na(X, x0)
   X <- as.matrix(X)
   x0 <- .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X", finite = TRUE)
-  rule <- match.arg(rule)
+  rule <- .dnn_match_arg(rule)
 
   inv_s <- if (rule == "custom") {
     .coerce_inv_s(scale_vec, ncol(X), eps)

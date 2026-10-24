@@ -36,12 +36,12 @@ test_that("NP methods expose means and joint common-deletion covariance", {
     expect_equal(unname(diag(vcov(f))), f$se^2, tolerance = 1e-12)
     expect_named(coef(f), paste0("target_", 1:3))
     sm <- summary(f, level = .9)
-    expect_s3_class(sm, "summary.np_result")
+    expect_s3_class(sm, "rdistnn_summary_np_result")
     expect_equal(sm$coefficients$estimate, ref)
     expect_equal(sm$coefficients$statistic, ref / sqrt(diag(V)))
     expect_equal(unname(confint(f, parm = 2, level = .9)),
       matrix(ref[2] + c(-1, 1) * qnorm(.95) * sqrt(V[2, 2]), 1), tolerance = 1e-12)
-    expect_output(print(sm), "summary.np_result")
+    expect_output(print(sm), "rdistnn_summary_np_result")
     expect_equal(predict(f, X0 = d$X0), ref)
     pr <- predict(f, newdata = d$X0, interval = "confidence", se.fit = TRUE, level = .9)
     expect_equal(pr$se.fit, sqrt(diag(V)))
@@ -122,7 +122,10 @@ test_that("NP methods validate public targets and inference controls", {
   expect_error(predict(f, X0 = d$X0, se.fit = NA), "se.fit")
   expect_error(predict(f, x0 = c(NA, 0)), "NA")
   f$.model <- NULL
-  expect_error(predict(f, X0 = d$X0), "localization model state.*[Rr]efit")
+  error <- expect_error(predict(f, X0 = d$X0), class = "rdistnn_state_error")
+  expect_identical(error$code, "state_invalid")
+  expect_match(error$argument, "object$.model", fixed = TRUE)
+  expect_match(conditionMessage(error), "[Rr]efit")
   })
 })
 
@@ -280,10 +283,14 @@ test_that("NP rejects corrupted saved model state before prediction", {
   expect_error(predict(bad, X0 = d$X0), "y_vec.*length")
   bad <- f
   bad$.model$x_mat[1, 1] <- Inf
-  expect_error(predict(bad, X0 = d$X0), "localization model state.*[Rr]efit")
+  error <- expect_error(predict(bad, X0 = d$X0), class = "rdistnn_state_error")
+  expect_identical(error$code, "state_invalid")
+  expect_match(conditionMessage(error), "[Rr]efit")
   bad <- f
   bad$.model$k <- 4
-  expect_error(predict(bad, X0 = d$X0), "k <= s")
+  error <- expect_error(predict(bad, X0 = d$X0), "k.*inconsistent.*[Rr]efit",
+    class = "rdistnn_state_error")
+  expect_identical(error$code, "state_invalid")
   bad <- f
   bad$.model$method <- "other"
   expect_error(predict(bad, X0 = d$X0), "method.*exact")
@@ -295,11 +302,12 @@ test_that("NP rejects corrupted saved model state before prediction", {
   expect_error(predict(bad, X0 = d$X0), "kind")
   td <- np_tdnn(X = d$X, X0 = d$X0, Y = d$y, s1 = 2, s2 = 4)
   td$.model$s2 <- td$.model$s1
-  expect_error(predict(td, X0 = d$X0), "s1 < s2")
+  expect_error(predict(td, X0 = d$X0), "s2.*inconsistent.*[Rr]efit",
+    class = "rdistnn_state_error")
   })
 })
 
-test_that("print.np_result runs without error", {
+test_that("print.rdistnn_np_result runs without error", {
   .with_localization_policy_warnings({
   .test_rng_scope({
     d <- .make_np_data(n = 16L, p = 2L, m = 2L)
@@ -308,21 +316,31 @@ test_that("print.np_result runs without error", {
       k = 1L, s = 2L, se = FALSE
     )
     txt <- capture.output(print(out))
-    expect_true(any(grepl("<np_result>", txt, fixed = TRUE)))
+    expect_true(any(grepl("<rdistnn_np_result>", txt, fixed = TRUE)))
   }, seed = 123L)
   })
 })
 
-test_that("print.tdnn_np_result runs and shows key fields", {
+test_that("print.rdistnn_tdnn_np_result runs and shows key fields", {
   .with_localization_policy_warnings({
   .test_rng_scope({
     d   <- .make_tdnn_data(n = 20L, m = 2L)
     out <- np_tdnn(X = d$X, X0 = d$X0, Y = d$y, s1 = 1L, s2 = 2L, se = FALSE)
     txt <- capture.output(print(out))
-    expect_true(any(grepl("<tdnn_np_result>", txt, fixed = TRUE)))
+    expect_true(any(grepl("<rdistnn_tdnn_np_result>", txt, fixed = TRUE)))
     expect_true(any(grepl("TDNN", txt)))
     expect_true(any(grepl("s1=", txt)))
     expect_true(any(grepl("s2=", txt)))
   }, seed = 123L)
   })
+})
+
+test_that("disabled NP uncertainty is an unavailable extra rather than corruption", {
+  fit <- np_dnn(X = matrix(1:8), Y = 1:8, x0 = 0, s = 3, se = FALSE)
+  for (fun in list(vcov, confint)) {
+    error <- tryCatch(fun(fit), error = identity)
+    expect_s3_class(error, "rdistnn_extra_unavailable")
+    expect_identical(error$code, "extra_unavailable")
+    expect_match(conditionMessage(error), "se = TRUE")
+  }
 })

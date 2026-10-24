@@ -1,11 +1,17 @@
 # Retained-state validation, provenance and CATE deletion adapter.
 
 .cate_result_meta <- function(meta) {
-  if (!is.list(meta) || !is.character(meta$signal_source) ||
-      length(meta$signal_source) != 1L || is.na(meta$signal_source) ||
-      !meta$signal_source %in% c("aipw", "supplied") ||
-      !is.character(meta$created_with_version) || length(meta$created_with_version) != 1L ||
-      is.na(meta$created_with_version) || !nzchar(meta$created_with_version)) {
+  required <- c("signal_source", "created_with_version")
+  complete <- is.list(meta) && all(vapply(required, function(field) {
+    sum(names(meta) == field, na.rm = TRUE) == 1L
+  }, logical(1L)))
+  signal_source <- if (complete) meta[["signal_source", exact = TRUE]] else NULL
+  created_with_version <- if (complete) meta[["created_with_version", exact = TRUE]] else NULL
+  if (!complete || !is.character(signal_source) ||
+      length(signal_source) != 1L || is.na(signal_source) ||
+      !signal_source %in% c("aipw", "supplied") ||
+      !is.character(created_with_version) || length(created_with_version) != 1L ||
+      is.na(created_with_version) || !nzchar(created_with_version)) {
     .dnn_abort("state_invalid", "This object lacks current CATE provenance metadata. Refit with cate_dnn().")
   }
   meta
@@ -82,7 +88,7 @@
   jackknife = c("fast", "loo"),
   precomputed_ranks = NULL, precomputed_groups = NULL
 ) {
-  jackknife <- match.arg(jackknife)
+  jackknife <- .dnn_match_arg(jackknife)
   as.numeric(
     .dnn_jackknife_se_loo_matrix(
       x_mat = x_mat,

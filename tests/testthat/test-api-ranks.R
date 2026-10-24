@@ -3,31 +3,34 @@
 
 # Small helper to build a random ranks matrix (each col a permutation 1..n)
 .rand_ranks_mat <- function(n, m) {
-  R <- matrix(NA_integer_, n, m)
-  set.seed(123)
-  for (j in seq_len(m)) R[, j] <- sample.int(n, n, replace = FALSE)
-  R
+  .test_rng_scope({
+    R <- matrix(NA_integer_, n, m)
+    for (j in seq_len(m)) R[, j] <- sample.int(n, n, replace = FALSE)
+    R
+  }, seed = 123)
 }
 
 test_that("is_rank_weight() and as_rank_weight() basics", {
+  .test_rng_scope({
 
-  # Simple harmonic rank weight w_i ∝ 1/r_i
-  rw <- as_rank_weight(function(r, ctx = NULL) {
-    w <- 1 / as.numeric(r)
-    w / sum(w)
-  }, name = "inv_rank")
+    # Simple harmonic rank weight w_i ∝ 1/r_i
+    rw <- as_rank_weight(function(r, ctx = NULL) {
+      w <- 1 / as.numeric(r)
+      w / sum(w)
+    }, name = "inv_rank")
 
-  expect_true(is_rank_weight(rw))
-  expect_equal(rw$name, "inv_rank")
+    expect_true(is_rank_weight(rw))
+    expect_equal(rw$name, "inv_rank")
 
-  # Single-column evaluation
-  n <- 7L
-  r <- sample.int(n)
-  w <- rw$eval(r)
-  expect_type(w, "double")
-  expect_length(w, n)
-  expect_true(all(is.finite(w)))
-  expect_equal(sum(w), 1, tolerance = 1e-12)
+    # Single-column evaluation
+    n <- 7L
+    r <- sample.int(n)
+    w <- rw$eval(r)
+    expect_type(w, "double")
+    expect_length(w, n)
+    expect_true(all(is.finite(w)))
+    expect_equal(sum(w), 1, tolerance = 1e-12)
+  }, seed = 123L)
 })
 
 test_that("new_rank_weight() builds validated specs", {
@@ -113,7 +116,7 @@ test_that("rank_weight_eval() falls back to eval_batch when eval is missing", {
     }
   )
   rw_batch_only$.__kind <- "rank_weight"
-  class(rw_batch_only) <- c("rank_weight", class(rw_batch_only))
+  class(rw_batch_only) <- c("rdistnn_rank_weight", class(rw_batch_only))
 
   n <- 9L
   m <- 4L
@@ -155,30 +158,32 @@ test_that("ctx is forwarded to eval / eval_batch", {
 })
 
 test_that("register_rank_weight(), get_rank_weight(), and rank_weight_names() work", {
+  .test_rng_scope({
 
-  # Register via (name, spec function)
-  nm_new <- paste0("rw_new_", as.integer(runif(1, 1e6, 2e6)))
-  spec_new <- function(r, ctx = NULL) {
-    w <- 1 / as.numeric(r)
-    w / sum(w)
-  }
-  register_rank_weight(nm_new, spec_new)
-  got_new <- get_rank_weight(nm_new)
-  expect_true(is_rank_weight(got_new))
-  expect_equal(got_new$name, nm_new)
-  expect_true(nm_new %in% rank_weight_names())
+    # Register via (name, spec function)
+    nm_new <- paste0("rw_new_", as.integer(runif(1, 1e6, 2e6)))
+    spec_new <- function(r, ctx = NULL) {
+      w <- 1 / as.numeric(r)
+      w / sum(w)
+    }
+    register_rank_weight(nm_new, spec_new)
+    got_new <- get_rank_weight(nm_new)
+    expect_true(is_rank_weight(got_new))
+    expect_equal(got_new$name, nm_new)
+    expect_true(nm_new %in% rank_weight_names())
 
-  # Unknown name errors list known entries
-  expect_error(get_rank_weight("__no_such_rank__"), "Unknown rank_weight")
-  msg <- tryCatch(
-    {
-      get_rank_weight("__no_such_rank__")
-      NA_character_
-    },
-    error = function(e) e$message
-  )
-  expect_match(msg, "Expected:", fixed = TRUE)
-  expect_match(msg, "Got:", fixed = TRUE)
+    # Unknown name errors list known entries
+    expect_error(get_rank_weight("__no_such_rank__"), "Unknown rdistnn_rank_weight")
+    msg <- tryCatch(
+      {
+        get_rank_weight("__no_such_rank__")
+        NA_character_
+      },
+      error = function(e) e$message
+    )
+    expect_match(msg, "Expected:", fixed = TRUE)
+    expect_match(msg, "Got:", fixed = TRUE)
+  }, seed = 123L)
 })
 
 test_that("input validation: bad ranks and bad specs produce clear errors", {
@@ -200,7 +205,7 @@ test_that("input validation: bad ranks and bad specs produce clear errors", {
   # Bad spec: neither eval nor eval_batch
   bad_spec <- list(name = "bad")
   bad_spec$.__kind <- "rank_weight"
-  class(bad_spec) <- c("rank_weight", class(bad_spec))
+  class(bad_spec) <- c("rdistnn_rank_weight", class(bad_spec))
   expect_error(rank_weight_eval(bad_spec, c(1L, 2L)), "neither eval nor eval_batch")
 
   # Bad returns: wrong length in eval
@@ -217,7 +222,7 @@ test_that("input validation: bad ranks and bad specs produce clear errors", {
     eval_batch = function(R, ctx = NULL) matrix(0, 1, 1)
   )
   rw_bad_batch_shape$.__kind <- "rank_weight"
-  class(rw_bad_batch_shape) <- c("rank_weight", class(rw_bad_batch_shape))
+  class(rw_bad_batch_shape) <- c("rdistnn_rank_weight", class(rw_bad_batch_shape))
   R <- .rand_ranks_mat(5L, 2L)
   expect_error(rank_weight_eval_batch(rw_bad_batch_shape, R), "finite numeric matrix of shape")
 
@@ -226,25 +231,27 @@ test_that("input validation: bad ranks and bad specs produce clear errors", {
     eval_batch = function(R, ctx = NULL) matrix("bad", nrow(R), ncol(R))
   )
   rw_bad_batch_type$.__kind <- "rank_weight"
-  class(rw_bad_batch_type) <- c("rank_weight", class(rw_bad_batch_type))
+  class(rw_bad_batch_type) <- c("rdistnn_rank_weight", class(rw_bad_batch_type))
   expect_error(rank_weight_eval_batch(rw_bad_batch_type, R), "finite numeric matrix of shape")
 })
 
 test_that("as_rank_weight handles functions without ctx (and ignores provided ctx)", {
+  .test_rng_scope({
 
-  # fun has signature fun(r) with no ctx
-  rw_nocontext <- as_rank_weight(function(r) {
-    w <- 1 / as.numeric(r)
-    w / sum(w)
-  }, name = "no_ctx")
+    # fun has signature fun(r) with no ctx
+    rw_nocontext <- as_rank_weight(function(r) {
+      w <- 1 / as.numeric(r)
+      w / sum(w)
+    }, name = "no_ctx")
 
-  n <- 7L
-  r <- sample.int(n)
-  # Providing ctx must not error and must be ignored by adapter
-  w <- rank_weight_eval(rw_nocontext, r, ctx = list(alpha = 99))
-  expect_length(w, n)
-  expect_true(all(is.finite(w)))
-  expect_equal(sum(w), 1, tolerance = 1e-12)
+    n <- 7L
+    r <- sample.int(n)
+    # Providing ctx must not error and must be ignored by adapter
+    w <- rank_weight_eval(rw_nocontext, r, ctx = list(alpha = 99))
+    expect_length(w, n)
+    expect_true(all(is.finite(w)))
+    expect_equal(sum(w), 1, tolerance = 1e-12)
+  }, seed = 123L)
 })
 
 test_that("batch fallback produces an n x 1 matrix when m == 1 (eval-only spec)", {
@@ -288,7 +295,7 @@ test_that("when both eval and eval_batch exist, eval_batch is preferred (single 
     }
   )
   spec$.__kind <- "rank_weight"
-  class(spec) <- c("rank_weight", class(spec))
+  class(spec) <- c("rdistnn_rank_weight", class(spec))
 
   n <- 6L
   m <- 3L
@@ -308,27 +315,29 @@ test_that("when both eval and eval_batch exist, eval_batch is preferred (single 
 })
 
 test_that("register_rank overwrite is idempotent and replaces behavior", {
+  .test_rng_scope({
 
-  nm <- paste0("rw_over_", as.integer(runif(1, 1e6, 2e6)))
-  spec1 <- function(r) {
-    w <- 1 / as.numeric(r)
-    w / sum(w)
-  }
-  spec2 <- function(r) {
-    w <- 1 / (as.numeric(r)^2)
-    w / sum(w)
-  }
+    nm <- paste0("rw_over_", as.integer(runif(1, 1e6, 2e6)))
+    spec1 <- function(r) {
+      w <- 1 / as.numeric(r)
+      w / sum(w)
+    }
+    spec2 <- function(r) {
+      w <- 1 / (as.numeric(r)^2)
+      w / sum(w)
+    }
 
-  register_rank_weight(nm, spec1)
-  r <- sample.int(8L)
-  w1 <- rank_weight_eval(get_rank_weight(nm), r)
+    register_rank_weight(nm, spec1)
+    r <- sample.int(8L)
+    w1 <- rank_weight_eval(get_rank_weight(nm), r)
 
-  # Overwrite with different behavior
-  register_rank_weight(nm, spec2)
-  w2 <- rank_weight_eval(get_rank_weight(nm), r)
+    # Overwrite with different behavior
+    register_rank_weight(nm, spec2)
+    w2 <- rank_weight_eval(get_rank_weight(nm), r)
 
-  expect_false(isTRUE(all.equal(w1, w2)))
-  expect_equal(sum(w2), 1, tolerance = 1e-12)
+    expect_false(isTRUE(all.equal(w1, w2)))
+    expect_equal(sum(w2), 1, tolerance = 1e-12)
+  }, seed = 123L)
 })
 
 test_that("rank_weight_eval_batch validates columns are permutations", {
@@ -390,7 +399,7 @@ test_that("n = 1 trivial case works (both eval and eval_batch paths)", {
     eval_batch = function(R, ctx = NULL) matrix(1, nrow = 1L, ncol = ncol(R))
   )
   rw_batch$.__kind <- "rank_weight"
-  class(rw_batch) <- c("rank_weight", class(rw_batch))
+  class(rw_batch) <- c("rdistnn_rank_weight", class(rw_batch))
   W <- rank_weight_eval_batch(rw_batch, matrix(1L, 1L, 1L))
   expect_equal(dim(W), c(1L, 1L))
   expect_equal(W[1, 1], 1)
@@ -410,43 +419,45 @@ test_that("is_rank_weight recognizes list specs flagged with __kind", {
 })
 
 test_that("register_rank validates malformed specs and normalizes named list specs", {
-  # malformed spec: missing eval and eval_batch
-  expect_error(
-    register_rank_weight("bad_rank_spec", list(name = "bad_rank_spec")),
-    "must provide at least one of `eval` or `eval_batch`"
-  )
-  expect_error(
-    register_rank_weight(
-      "bad_rank_name",
-      list(name = 1, eval = function(r, ctx = NULL) rep(1, length(r)))
-    ),
-    "name.*non-empty character scalar",
-    ignore.case = TRUE
-  )
-  expect_error(
-    register_rank_weight(
-      "bad_rank_table",
-      list(eval = function(r, ctx = NULL) rep(1, length(r)), table = 1)
-    ),
-    "spec\\$table.*function"
-  )
+  .test_rng_scope({
+    # malformed spec: missing eval and eval_batch
+    expect_error(
+      register_rank_weight("bad_rank_spec", list(name = "bad_rank_spec")),
+      "must provide at least one of `eval` or `eval_batch`"
+    )
+    expect_error(
+      register_rank_weight(
+        "bad_rank_name",
+        list(name = 1, eval = function(r, ctx = NULL) rep(1, length(r)))
+      ),
+      "name.*non-empty character scalar",
+      ignore.case = TRUE
+    )
+    expect_error(
+      register_rank_weight(
+        "bad_rank_table",
+        list(eval = function(r, ctx = NULL) rep(1, length(r)), table = 1)
+      ),
+      "spec\\$table.*function"
+    )
 
-  # malformed name in two-arg form
-  expect_error(
-    register_rank_weight("", list(eval = function(r, ctx = NULL) rep(1, length(r)))),
-    "non-empty character scalar"
-  )
+    # malformed name in two-arg form
+    expect_error(
+      register_rank_weight("", list(eval = function(r, ctx = NULL) rep(1, length(r)))),
+      "non-empty character scalar"
+    )
 
-  # named list spec in two-arg form should be normalized to rank_weight
-  nm <- paste0("rw_list_", as.integer(runif(1, 3e6, 4e6)))
-  spec <- list(
-    eval = function(r, ctx = NULL) {
-      w <- 1 / as.numeric(r)
-      w / sum(w)
-    }
-  )
-  register_rank_weight(nm, spec)
-  got <- get_rank_weight(nm)
-  expect_true(is_rank_weight(got))
-  expect_equal(got$name, nm)
+    # named list spec in two-arg form should be normalized to rdistnn_rank_weight
+    nm <- paste0("rw_list_", as.integer(runif(1, 3e6, 4e6)))
+    spec <- list(
+      eval = function(r, ctx = NULL) {
+        w <- 1 / as.numeric(r)
+        w / sum(w)
+      }
+    )
+    register_rank_weight(nm, spec)
+    got <- get_rank_weight(nm)
+    expect_true(is_rank_weight(got))
+    expect_equal(got$name, nm)
+  }, seed = 123L)
 })

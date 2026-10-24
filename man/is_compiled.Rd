@@ -7,7 +7,7 @@
 is_compiled(score)
 }
 \arguments{
-\item{score}{a \code{ustat_score}}
+\item{score}{a \code{rdistnn_ustat_score}}
 }
 \value{
 logical

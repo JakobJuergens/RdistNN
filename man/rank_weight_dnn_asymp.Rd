@@ -14,7 +14,7 @@ rank_weight_dnn_asymp(k, s, normalize = TRUE)
 \item{normalize}{logical; renormalize to sum 1 (default TRUE)}
 }
 \value{
-rank_weight spec (list)
+rdistnn_rank_weight spec (list)
 }
 \description{
 Rank-weight: DNN asymptotic (full U, WOR)

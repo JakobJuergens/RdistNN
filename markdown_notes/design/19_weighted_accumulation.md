@@ -133,6 +133,20 @@ Stata preserves the localization engine marker around this diagnostic call.
 The pure CATE subset score also uses the shared compensated reduction in scalar,
 native batch and R batch routes.
 
+Within-arm probability-weight ESS is `(sum(w))^2 / sum(w^2)`, independent of
+a positive common scaling of that arm's weights. Keep the established ordinary
+calculation when its squared mass is normal. If squared mass is subnormal or
+zero despite positive weight, scale the arm weights before squaring and apply
+the same concentration formula. An arm with exactly one positive weight has
+ESS one; a genuinely zero-mass arm has unavailable ESS. Share this calculation
+between arms and fresh or derived diagnostics wherever arm ESS is exposed;
+this does not add an ESS field to a result schema that lacks one.
+It changes no localization weights or estimator covariance. R's
+[machine constants](https://stat.ethz.ch/R-manual/R-patched/library/base/html/zMachine.html)
+and Mata's [numeric limits](https://www.stata.com/manuals/m-5mindouble.pdf)
+distinguish the normal threshold from smaller representable values. The
+exceptional scaling rule is the packages' application of that distinction.
+
 ## Exact rank-table generation and numerical origins
 
 `R/utils-rank-tables.R` owns exact rank tables; `src/rank_weights.cpp` is a thin

@@ -3,10 +3,10 @@
 \name{plot_tuning}
 \alias{plot_tuning}
 \alias{plot_tuning.default}
-\alias{plot_tuning.np_result}
-\alias{plot_tuning.cate_result}
-\alias{plot_tuning.affine_ratio_result}
-\alias{plot_tuning.plqr_result}
+\alias{plot_tuning.rdistnn_np_result}
+\alias{plot_tuning.rdistnn_cate_result}
+\alias{plot_tuning.rdistnn_affine_ratio_result}
+\alias{plot_tuning.rdistnn_plqr_result}
 \title{Plot estimate sensitivity to the kernel order}
 \usage{
 plot_tuning(
@@ -29,7 +29,7 @@ plot_tuning(
   ...
 )
 
-\method{plot_tuning}{np_result}(
+\method{plot_tuning}{rdistnn_np_result}(
   object,
   tuning = tuning_dnn_paper(),
   targets = NULL,
@@ -39,7 +39,7 @@ plot_tuning(
   ...
 )
 
-\method{plot_tuning}{cate_result}(
+\method{plot_tuning}{rdistnn_cate_result}(
   object,
   tuning = tuning_dnn_paper(),
   targets = NULL,
@@ -49,7 +49,7 @@ plot_tuning(
   ...
 )
 
-\method{plot_tuning}{affine_ratio_result}(
+\method{plot_tuning}{rdistnn_affine_ratio_result}(
   object,
   tuning = tuning_dnn_paper(),
   targets = NULL,
@@ -59,7 +59,7 @@ plot_tuning(
   ...
 )
 
-\method{plot_tuning}{plqr_result}(
+\method{plot_tuning}{rdistnn_plqr_result}(
   object,
   tuning = tuning_dnn_paper(),
   targets = NULL,
@@ -70,8 +70,8 @@ plot_tuning(
 )
 }
 \arguments{
-\item{object}{A fitted \code{np_result}, \code{cate_result}, \code{affine_ratio_result}
-(including \code{clate_result}), or \code{plqr_result}.}
+\item{object}{A fitted \code{rdistnn_np_result}, \code{rdistnn_cate_result}, \code{rdistnn_affine_ratio_result}
+(including \code{rdistnn_clate_result}), or \code{rdistnn_plqr_result}.}
 
 \item{tuning}{A tuning specification for the candidate grid. Scalar fits
 use their retained tuning specification when omitted. Fits with a manually
@@ -112,7 +112,7 @@ without the required fitted training state must be refitted first.
 }
 \section{Experimental methods}{
 
-Methods for \code{plqr_result} objects are experimental, as is all PLQR
+Methods for \code{rdistnn_plqr_result} objects are experimental, as is all PLQR
 functionality in this release; see \code{\link[=plqr_dnn]{plqr_dnn()}}.
 }
 

@@ -1,4 +1,4 @@
-test_that("predict.plqr_result returns coefficient surfaces at new targets", {
+test_that("predict.rdistnn_plqr_result returns coefficient surfaces at new targets", {
   .test_rng_scope({
     d <- .make_plqr_inference_data(n = 88L, m = 2L)
     new_X0 <- matrix(rnorm(3L * ncol(d$X)), 3L, ncol(d$X))
@@ -38,7 +38,7 @@ test_that("predict.plqr_result returns coefficient surfaces at new targets", {
   }, seed = 818L)
 })
 
-test_that("predict.plqr_result accepts single x0 and data-frame newdata", {
+test_that("predict.rdistnn_plqr_result accepts single x0 and data-frame newdata", {
   .test_rng_scope({
     d <- .make_plqr_inference_data(n = 82L, m = 2L)
     fit <- plqr_dnn(
@@ -73,7 +73,7 @@ test_that("predict.plqr_result accepts single x0 and data-frame newdata", {
   }, seed = 818L)
 })
 
-test_that("predict.plqr_result separates coefficient prediction from inference availability", {
+test_that("predict.rdistnn_plqr_result separates coefficient prediction from inference availability", {
   .test_rng_scope({
     d <- .make_plqr_inference_data(n = 75L, m = 2L)
     new_X0 <- matrix(rnorm(2L * ncol(d$X)), 2L, ncol(d$X))
@@ -104,7 +104,7 @@ test_that("predict.plqr_result separates coefficient prediction from inference a
   }, seed = 818L)
 })
 
-test_that("predict.plqr_result validates inputs and fitted model state", {
+test_that("predict.rdistnn_plqr_result validates inputs and fitted model state", {
   .test_rng_scope({
     d <- .make_plqr_inference_data(n = 78L, m = 2L)
     fit <- plqr_dnn(
@@ -141,15 +141,14 @@ test_that("predict.plqr_result validates inputs and fitted model state", {
 
     bad_state <- fit
     bad_state$.model <- NULL
-    expect_error(
-      predict(bad_state, X0 = d$X0),
-      "localization model state.*[Rr]efit",
-      ignore.case = TRUE
-    )
+    error <- expect_error(predict(bad_state, X0 = d$X0), class = "rdistnn_state_error")
+    expect_identical(error$code, "state_invalid")
+    expect_match(error$argument, "object$.model", fixed = TRUE)
+    expect_match(conditionMessage(error), "[Rr]efit")
   }, seed = 818L)
 })
 
-test_that("predict.plqr_result validates fitted model state before computing", {
+test_that("predict.rdistnn_plqr_result validates fitted model state before computing", {
   .test_rng_scope({
     d <- .make_plqr_inference_data(n = 60L, m = 2L)
     fit <- plqr_dnn(
@@ -160,10 +159,9 @@ test_that("predict.plqr_result validates fitted model state before computing", {
 
     bad_x <- fit
     bad_x$.model$x_mat[1L, 1L] <- Inf
-    expect_error(
-      predict(bad_x, X0 = d$X0),
-      "localization model state.*[Rr]efit"
-    )
+    error <- expect_error(predict(bad_x, X0 = d$X0), class = "rdistnn_state_error")
+    expect_identical(error$code, "state_invalid")
+    expect_match(conditionMessage(error), "[Rr]efit")
 
     bad_d <- fit
     bad_d$.model$d_mat <- bad_d$.model$d_mat[-1L, , drop = FALSE]
@@ -191,34 +189,35 @@ test_that("predict.plqr_result validates fitted model state before computing", {
 
     bad_k <- fit
     bad_k$.model$k <- bad_k$.model$s + 1L
-    expect_error(
+    error <- expect_error(
       predict(bad_k, X0 = d$X0),
-      "object$.model$k must satisfy k <= s",
-      fixed = TRUE
+      "meta\\$k/\\.model\\$k.*inconsistent.*[Rr]efit",
+      class = "rdistnn_state_error"
     )
+    expect_identical(error$code, "state_invalid")
 
     bad_s <- fit
     bad_s$.model$s <- nrow(bad_s$.model$x_mat) + 1L
     expect_error(
       predict(bad_s, X0 = d$X0),
-      "object$.model$s must satisfy s <= n",
-      fixed = TRUE
+      "meta\\$s/\\.model\\$s.*inconsistent.*[Rr]efit",
+      class = "rdistnn_state_error"
     )
 
     bad_method <- fit
     bad_method$.model$method <- "bogus"
     expect_error(
       predict(bad_method, X0 = d$X0),
-      "object$.model$method must be one of",
-      fixed = TRUE
+      "method.*exact.*asymp.*[Rr]efit",
+      class = "rdistnn_state_error"
     )
 
     bad_normalize <- fit
     bad_normalize$.model$normalize <- NA
     expect_error(
       predict(bad_normalize, X0 = d$X0),
-      "object$.model$normalize must be TRUE or FALSE",
-      fixed = TRUE
+      "normalize.*TRUE or FALSE.*[Rr]efit",
+      class = "rdistnn_state_error"
     )
     bad_names <- fit
     bad_names$.model$coef_names <- NULL

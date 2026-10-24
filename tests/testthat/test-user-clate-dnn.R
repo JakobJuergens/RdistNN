@@ -4,8 +4,8 @@ test_that("CLATE wrapper equals explicit augmented signals and ratio engine", {
   direct <- affine_ratio_dnn(X = a$X, X0 = a$X0,
                              numerator = sig$phi_y, denominator = sig$phi_d, s = a$s)
   fit <- do.call(clate_dnn, c(a, list(training = "full_sample")))
-  expect_s3_class(fit, "clate_result")
-  expect_s3_class(fit, "affine_ratio_result")
+  expect_s3_class(fit, "rdistnn_clate_result")
+  expect_s3_class(fit, "rdistnn_affine_ratio_result")
   expect_equal(fit$theta, direct$theta)
   expect_equal(fit$theta_vcov, direct$theta_vcov)
   expect_identical(fit$meta$component_roles, c(numerator = "reduced_form", denominator = "first_stage"))

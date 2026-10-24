@@ -16,10 +16,10 @@ ranking this is \code{ncol(X)}; for custom distances it should be set
 explicitly.}
 }
 \value{
-A \code{rank_weight} spec (list with class \code{"rank_weight"}).
+A \code{rdistnn_rank_weight} spec (list with class \code{"rdistnn_rank_weight"}).
 }
 \description{
-Returns a \code{rank_weight} spec whose \code{eval_batch} uses the exact TDNN rank
+Returns a \code{rdistnn_rank_weight} spec whose \code{eval_batch} uses the exact TDNN rank
 table from \code{tdnn_rank_table_exact()}.  The rank table is computed once per
 sample size \code{n} and cached inside the spec closure, so calling
 \code{\link[=rank_weight_eval_batch]{rank_weight_eval_batch()}} repeatedly on rank matrices of the same size

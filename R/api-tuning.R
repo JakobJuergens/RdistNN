@@ -8,7 +8,7 @@
 .tuning_has_eval_grid <- function(spec) !is.null(spec$eval_grid) && is.function(spec$eval_grid)
 
 .tuning_call_user <- function(fun, args) {
-  fmls <- tryCatch(names(formals(fun)), error = function(e) character())
+  fmls <- names(formals(fun))
   if ("..." %in% fmls) {
     return(do.call(fun, args))
   }
@@ -35,7 +35,7 @@
   if (!(.tuning_has_eval(spec) || .tuning_has_eval_grid(spec))) {
     .abort_bad_arg("spec", "must provide at least one of `eval` or `eval_grid`")
   }
-  class(spec) <- union("dnn_tuning", class(spec))
+  class(spec) <- union("rdistnn_tuning", class(spec))
   spec
 }
 
@@ -44,7 +44,7 @@
 }
 
 .tuning_round_int <- function(x, rounding = c("floor", "ceiling", "round")) {
-  rounding <- match.arg(rounding)
+  rounding <- .dnn_match_arg(rounding)
   if (identical(rounding, "floor")) return(as.integer(floor(x)))
   if (identical(rounding, "ceiling")) return(as.integer(ceiling(x)))
   as.integer(round(x))
@@ -59,10 +59,10 @@
       x < 1L ||
       x > .Machine$integer.max
   ) {
-    .abort_bad_arg(
-      arg,
-      "must return a positive finite integer-like numeric scalar",
-      quoted = FALSE
+    .dnn_abort("callback_invalid",
+      paste0(arg, " must return a positive finite integer-like numeric scalar."),
+      argument = arg,
+      hint = "Correct the callback to return the documented result."
     )
   }
   as.integer(x)
@@ -77,11 +77,9 @@
       any(x < 1L) ||
       any(x > .Machine$integer.max)
   ) {
-    .abort_bad_arg(
-      arg,
-      "column `s` must be positive finite integer-like numeric values",
-      quoted = FALSE
-    )
+    .dnn_abort("callback_invalid",
+      paste0(arg, " column `s` must be positive finite integer-like numeric values."),
+      argument = arg, hint = "Correct the tuning callback to return valid candidate orders.")
   }
   as.integer(x)
 }
@@ -98,12 +96,12 @@
     if (!is.character(meta_name) || length(meta_name) != 1L ||
       is.na(meta_name) || !nzchar(meta_name)) {
       .abort_bad_arg(
-        arg,
-        "field `name` must be a non-empty character scalar",
+        paste0(arg, "$name"),
+        "must be a non-empty character scalar",
         quoted = FALSE
       )
     }
-    meta$name <- meta_name
+    meta$name <- as.character(meta_name)
   }
 
   meta_n <- meta[["n", exact = TRUE]]
@@ -128,24 +126,26 @@
     out <- list(s = .tuning_validate_s_scalar_output(out, arg = "tuning$eval()"))
   }
   if (!is.list(out) || is.null(out$s)) {
-    .abort_bad_arg(
-      "tuning$eval()",
-      "must return a list with field `s` or a numeric scalar",
-      quoted = FALSE
+    .dnn_abort("callback_invalid",
+      "tuning$eval() must return a list with field `s` or a numeric scalar.",
+      argument = "tuning$eval()",
+      hint = "Correct the callback to return the documented result."
     )
   }
-  s <- .validate_scalar_int(out$s, arg = "s")
+  s <- .dnn_validate_callback(
+    .validate_scalar_int(out$s, arg = "tuning$eval()$s")
+  )
   needs_jk <- .tuning_needs_jackknife(se = se, jackknife = jackknife)
   feasible <- list(
     k_le_s = as.integer(k) <= as.integer(s),
     s_lt_n = if (needs_jk) as.integer(s) < as.integer(n) else TRUE
   )
-  meta <- .tuning_validate_meta(
+  meta <- .dnn_validate_callback(.tuning_validate_meta(
     meta = out$meta,
     name = name,
     n = n,
     kx = kx
-  )
+  ))
   list(
     s = as.integer(s),
     meta = meta,
@@ -157,7 +157,11 @@
   out, n, kx, k, se, jackknife, name
 ) {
   if (is.numeric(out) && length(out) == 0L) {
-    .abort_bad_arg("tuning$eval_grid()", "must return at least one candidate row", quoted = FALSE)
+    .dnn_abort("callback_invalid",
+      "tuning$eval_grid() must return at least one candidate row.",
+      argument = "tuning$eval_grid()",
+      hint = "Correct the callback to return the documented result."
+    )
   }
   if (is.numeric(out) && length(out) > 0L) {
     out <- data.frame(
@@ -167,21 +171,25 @@
     )
   }
   if (!is.data.frame(out)) {
-    .abort_bad_arg(
-      "tuning$eval_grid()",
-      "must return a data.frame with at least column `s`",
-      quoted = FALSE
+    .dnn_abort("callback_invalid",
+      "tuning$eval_grid() must return a data.frame with at least column `s`.",
+      argument = "tuning$eval_grid()",
+      hint = "Correct the callback to return the documented result."
     )
   }
   if (!("s" %in% names(out))) {
-    .abort_bad_arg(
-      "tuning$eval_grid()",
-      "must return a data.frame with column `s`",
-      quoted = FALSE
+    .dnn_abort("callback_invalid",
+      "tuning$eval_grid() must return a data.frame with column `s`.",
+      argument = "tuning$eval_grid()",
+      hint = "Correct the callback to return the documented result."
     )
   }
   if (nrow(out) < 1L) {
-    .abort_bad_arg("tuning$eval_grid()", "must return at least one candidate row", quoted = FALSE)
+    .dnn_abort("callback_invalid",
+      "tuning$eval_grid() must return at least one candidate row.",
+      argument = "tuning$eval_grid()",
+      hint = "Correct the callback to return the documented result."
+    )
   }
   out$s <- .tuning_validate_s_grid_output(out$s, arg = "tuning$eval_grid()")
   needs_jk <- .tuning_needs_jackknife(se = se, jackknife = jackknife)
@@ -228,7 +236,11 @@
       name = tuning$name
     )
     if (nrow(grid_ok$candidates) < 1L) {
-      .abort_bad_arg("tuning$eval_grid()", "must return at least one candidate row", quoted = FALSE)
+      .dnn_abort("callback_invalid",
+        "tuning$eval_grid() must return at least one candidate row.",
+        argument = "tuning$eval_grid()",
+        hint = "Correct the callback to return the documented result."
+      )
     }
     return(.tuning_validate_default_output(
       list(
@@ -310,7 +322,7 @@
 #' is_tuning(tuning_dnn_paper())
 #' @export
 is_tuning <- function(x) {
-  inherits(x, "dnn_tuning") ||
+  inherits(x, "rdistnn_tuning") ||
     (is.list(x) && (is.function(x$eval) || is.function(x$eval_grid)))
 }
 
@@ -320,7 +332,7 @@ is_tuning <- function(x) {
 #' @param eval Optional function `(n, kx, k, se, jackknife, ctx) -> list|numeric`.
 #' @param eval_grid Optional function `(n, kx, k, se, jackknife, ctx) -> data.frame`.
 #' @param setup Optional setup function for future use.
-#' @return A validated `dnn_tuning` spec.
+#' @return A validated `rdistnn_tuning` spec.
 #' @examples
 #' tun <- new_tuning(
 #'   name = "fixed_s",
@@ -341,7 +353,7 @@ new_tuning <- function(name, eval = NULL, eval_grid = NULL, setup = NULL) {
 #'
 #' @param fun Function that returns either a scalar `s` or a list with field `s`.
 #' @param name Character name for the spec.
-#' @return A `dnn_tuning` spec.
+#' @return A `rdistnn_tuning` spec.
 #' @examples
 #' tun <- as_tuning(function(n, kx, ...) floor(n^((kx + 1)/(kx + 2))))
 #' tuning_eval(tun, n = 200, kx = 2, k = 1)
@@ -393,7 +405,7 @@ register_tuning <- function(name, tuning) {
 get_tuning <- function(name) {
   name <- .validate_registry_name(name)
   if (!exists(name, envir = .tuning_registry, inherits = FALSE)) {
-    known <- ls(.tuning_registry, all.names = FALSE)
+    known <- .registry_names(.tuning_registry)
     .abort_bad_arg(
       "name",
       "Unknown tuning",
@@ -410,7 +422,7 @@ get_tuning <- function(name) {
 #' tuning_names()
 #' @export
 tuning_names <- function() {
-  sort(ls(.tuning_registry, all.names = FALSE))
+  .registry_names(.tuning_registry)
 }
 
 #' Evaluate a tuning spec
@@ -442,7 +454,7 @@ tuning_eval <- function(
   ctx = NULL,
   mode = c("default", "grid")
 ) {
-  mode <- match.arg(mode)
+  mode <- .dnn_match_arg(mode)
   n <- .validate_scalar_int(n, arg = "n")
   kx <- .validate_scalar_int(kx, arg = "kx")
   k <- .validate_scalar_int(k, arg = "k")
@@ -452,7 +464,7 @@ tuning_eval <- function(
   if (!is.character(jackknife) || length(jackknife) != 1L) {
     .abort_bad_arg("jackknife", "must be a character scalar")
   }
-  jackknife <- match.arg(jackknife, choices = c("fast", "loo", "none"))
+  jackknife <- .dnn_match_arg(jackknife, choices = c("fast", "loo", "none"))
 
   tun <- if (is.character(tuning)) {
     get_tuning(tuning)
@@ -498,7 +510,7 @@ tuning_eval <- function(
 #' @param lambda_grid Numeric vector of candidate constants for grid mode.
 #' @param rounding One of `"floor"`, `"ceiling"`, or `"round"`.
 #' @param kx_override Optional positive integer to override runtime `kx`.
-#' @return A `dnn_tuning` spec.
+#' @return A `rdistnn_tuning` spec.
 #' @examples
 #' tun <- tuning_dnn_paper()
 #' tuning_eval(tun, n = 1000, kx = 2, k = 1)
@@ -515,7 +527,7 @@ tuning_dnn_paper <- function(
   if (!is.numeric(lambda_grid) || length(lambda_grid) < 1L || any(!is.finite(lambda_grid)) || any(lambda_grid <= 0)) {
     .abort_bad_arg("lambda_grid", "must be a positive finite numeric vector")
   }
-  rounding <- match.arg(rounding, choices = c("floor", "ceiling", "round"))
+  rounding <- .dnn_match_arg(rounding, choices = c("floor", "ceiling", "round"))
   if (!is.null(kx_override)) {
     kx_override <- .validate_scalar_int(kx_override, arg = "kx_override")
   }

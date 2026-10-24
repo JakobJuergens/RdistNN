@@ -3,8 +3,10 @@
 This note records the reporting contract for implementation and maintenance.
 Shared argument validators, localization notices, retained-state boundaries,
 grid recovery and supported ratio summaries use the condition owners described
-below. One-off validation sites can retain their existing messages; changing
-them must follow this contract. The [testing policy](09_testing_and_regression_policy.md)
+below. Owned validation uses a semantic condition family, including one-off
+checks; an existing sentence does not justify bypassing that identity. Host
+errors, opaque callback exceptions and native failures retain their identities.
+The [testing policy](09_testing_and_regression_policy.md)
 defines the required behavioral evidence.
 
 ## Shared ownership and language conventions
@@ -98,15 +100,24 @@ the ordinary package/error condition classes.
 The shared vocabulary separates `argument_invalid`, `state_invalid`,
 `extra_unavailable`, `dependency_missing`, `engine_unavailable`,
 `numerical_range`, `candidate_failure`, `callback_invalid` and
-`internal_invariant`. One-off validation can use `validation_failed`. Warning
+`internal_invariant`. Classify by cause: omitted optional uncertainty is an
+extra, corrupted retained state is a state error, invalid callback output is a
+callback error, and freshly computed range failure is numerical. Do not use a
+generic bad-state helper for these different situations. Warning
 families include `distance_ties`, `weak_localization`, `unknown_return`,
-`infeasible_candidates`, `grid_single_value`, `partial_result` and `method_failed`.
+`infeasible_candidates`, `grid_single_value`, `partial_result`, `method_failed`
+and the developer score's `score_symmetry`.
 Keep the small mapping with the shared constructors; do not read a catalogue
 from disk on each signal or introduce a parallel public Stata numeric code space.
 
 Use `call. = FALSE` for ordinary string-based user errors/warnings unless the
 call adds useful context. For an owned condition object, set `call = NULL` in
-the object and pass it alone to `stop()` or `warning()`. Preserve base handling,
+the object and pass it alone to `stop()` or `warning()`. A bounded `operation`
+field and message prefix identify the outer public package function, including
+registered S3 methods, without retaining its argument expressions or frame.
+Resolve that name only on the signaling path. Shared choice validation preserves
+base R's default and partial-match semantics while naming the public argument.
+Preserve base handling,
 including `muffleWarning`, user handlers and `options(warn = -1/0/1/2)`; do not
 change global options to control package output.
 
@@ -117,6 +128,16 @@ may retain a declared failure row; the main/default candidate still fails.
 Warnings promoted to errors, interrupts, allocation failures and unexpected
 callback errors must not silently become dropped panels or failed-candidate
 rows. A numerical-range class alone does not authorize recovery everywhere.
+
+This rule also applies to descriptive plot captions and tuning-grid rebuilding.
+Captions consume validated retained localization facts without invoking full
+diagnostics just to format concentration text. This works without optional
+weights and across fitted classes with different diagnostic interfaces. Other
+optional panels can omit a recognized missing extra; corrupt state or unexpected
+errors propagate. Plotting preserves unrelated warnings, calling handlers and
+promotion rather than blanket-suppressing the calculation. Validation aggregators catch only owned input-validation conditions;
+they must not relabel resource errors as bad arguments. A solver's singularity
+precheck is a numerical fact, not permission to catch every solver exception.
 
 ## Call scope and grouping reuse
 
@@ -153,6 +174,16 @@ is revalidated. This relies on ordinary R copy-on-modify semantics, not on a
 persisted trust flag. Native extensions must not mutate shared retained arrays
 in place. Scope references disappear when the public operation exits.
 
+Fits and standalone weight results expose `meta$target_notices`, with original
+`target_id`, `distance_ties`, `weight_concentration` and `weak_localization`
+columns, and `meta$n_tied_targets` / `meta$n_weak_targets` totals. Concentration
+is the existing inverse sum of squared final weights; for signed TDNN it is
+not probability-weight ESS. These facts remain available without optional
+weight extras or visible warnings. Candidates update them for the chosen order.
+Retained-state validation checks target alignment, flags against validated
+groups and stored concentration, and aggregate counts. Missing current fields
+require refitting. These are diagnostic facts, never warning-history flags.
+
 Simulation runners recover only explicitly declared method failures or
 adapter-produced unavailable-result statuses. Opaque external learner, data
 generation and tuning errors propagate, since an unclassed error may represent
@@ -172,8 +203,11 @@ replace the original error. Native host signaling follows
 
 The design uses [base R conditions](https://stat.ethz.ch/R-manual/R-patched/library/base/html/conditions.html),
 [R warning semantics](https://stat.ethz.ch/R-manual/R-patched/library/base/html/warning.html),
-[message-writing guidance](https://style.tidyverse.org/errors.html) and
-[Stata display conventions](https://www.stata.com/manuals/pdisplay.pdf).
+[message-writing guidance](https://style.tidyverse.org/errors.html),
+[Advanced R's custom conditions](https://adv-r.hadley.nz/conditions.html#custom-conditions),
+[R Packages' condition tests](https://r-pkgs.org/testing-basics.html#testing-errors),
+[public error context](https://rlang.r-lib.org/reference/topic-error-call.html)
+and [Stata display conventions](https://www.stata.com/manuals/pdisplay.pdf).
 Condition identity, copy, recovery and cost are separate test contracts;
 see [the testing policy](09_testing_and_regression_policy.md). Validation order
 remains owned by [the input contract](03_input_validation_contract.md).

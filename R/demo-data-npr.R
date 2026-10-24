@@ -48,7 +48,7 @@ np_demo_data <- function(n = 200,
     .abort_bad_arg("sigma", "must be a non-negative finite numeric scalar")
   }
   sigma <- as.numeric(sigma)
-  design <- match.arg(design)
+  design <- .dnn_match_arg(design)
   if (is.null(x0)) {
     x0 <- rep(0, p)
   } else {

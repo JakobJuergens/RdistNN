@@ -16,7 +16,7 @@
 #'
 #' @section Lifecycle:
 #' **Experimental.** The PLQR API and inference interfaces may change.
-#' @param object A `plqr_result` with the weight matrix `W` stored (the
+#' @param object A `rdistnn_plqr_result` with the weight matrix `W` stored (the
 #'   default).
 #' @param level Confidence level of the reference band (default `0.95`).
 #'
@@ -41,11 +41,11 @@
 plot_calibration <- function(object, level = 0.95) {
   .dnn_reuse_scope(object)
   .plot_require_ggplot2("plot_calibration")
-  if (!inherits(object, "plqr_result")) {
+  if (!inherits(object, "rdistnn_plqr_result")) {
     .abort_bad_arg(
       "object",
       sprintf(
-        "plot_calibration() supports plqr_result fits; got class '%s'",
+        "plot_calibration() supports rdistnn_plqr_result fits; got class '%s'",
         class(object)[1L]
       ),
       quoted = FALSE
@@ -68,7 +68,7 @@ plot_calibration <- function(object, level = 0.95) {
   below <- model$below_threshold
   if (!is.numeric(below) || is.complex(below) || !is.null(dim(below)) ||
       length(below) != n || any(!is.finite(below)) || any(!below %in% c(0, 1))) {
-    .abort_bad_state(paste0(
+    .dnn_abort("state_invalid", paste0(
       "Retained `object$.model$below_threshold` must be a 0/1 numeric vector aligned with the observations. ",
       "Refit with plqr_dnn()."
     ))

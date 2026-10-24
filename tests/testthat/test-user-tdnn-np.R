@@ -10,8 +10,8 @@ test_that("np_tdnn returns valid shapes and weighted-mean identity", {
       return = c("W", "ess")
     )
 
-    expect_s3_class(out, "tdnn_np_result")
-    expect_s3_class(out, "np_result", exact = FALSE)
+    expect_s3_class(out, "rdistnn_tdnn_np_result")
+    expect_s3_class(out, "rdistnn_np_result", exact = FALSE)
     expect_true(is.numeric(out$mu))
     expect_length(out$mu, nrow(d$X0))
     expect_true(is.numeric(out$se))

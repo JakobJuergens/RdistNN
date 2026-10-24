@@ -47,12 +47,16 @@
 #' @noRd
 dnn_weights_asymp_full_from_ranks <- function(ranks, k, s, normalize = TRUE) {
   # ---- validate ranks ----
-  if (is.null(ranks)) stop("`ranks` must be provided.", call. = FALSE)
+  if (is.null(ranks)) .dnn_abort("argument_invalid", "`ranks` must be provided.", argument = "ranks")
   if (!is.integer(ranks)) ranks <- as.integer(ranks)
   n <- length(ranks)
-  if (n < 1L) stop("`ranks` must have positive length.", call. = FALSE)
-  if (anyNA(ranks)) stop("`ranks` cannot contain NA.", call. = FALSE)
-  if (!setequal(ranks, seq_len(n))) stop("`ranks` must be a permutation of 1..n.", call. = FALSE)
+  if (n < 1L) .dnn_abort("argument_invalid", "`ranks` must have positive length.", argument = "ranks")
+  if (anyNA(ranks)) .dnn_abort("argument_invalid", "`ranks` cannot contain NA.", argument = "ranks")
+  if (!setequal(ranks, seq_len(n))) .dnn_abort(
+    "argument_invalid",
+    "`ranks` must be a permutation of 1..n.",
+    argument = "ranks"
+  )
 
   # ---- validate k, s ----
   k <- .validate_scalar_int(k, "k")
@@ -82,7 +86,10 @@ dnn_weights_asymp_full_from_ranks <- function(ranks, k, s, normalize = TRUE) {
   # numerical guard: renormalize if requested
   if (normalize) {
     sw <- .compensated_sum(w_rank)
-    if (!is.finite(sw) || sw <= 0) stop("Internal error: nonpositive total weight.", call. = FALSE)
+    if (!is.finite(sw) || sw <= 0) .dnn_abort("numerical_range",
+      "Asymptotic DNN weights have a nonpositive or nonfinite computed total.",
+      hint = "Use less extreme feasible orders, or report a reproducible example if this persists."
+    )
     if (abs(sw - 1) > 1e-12) w_rank <- w_rank / sw
   }
 

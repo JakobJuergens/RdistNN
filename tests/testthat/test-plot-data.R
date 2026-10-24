@@ -3,15 +3,16 @@
 # See markdown_notes/design/13_estimator_and_result_architecture.md.
 
 .pd_np_fit <- function(n = 60L, se = TRUE, return = c("W"), X0 = NULL) {
-  set.seed(31)
-  x_mat <- matrix(rnorm(n * 2L), n, 2L,
-                  dimnames = list(NULL, c("X1", "X2")))
-  y_vec <- x_mat[, 1L] + rnorm(n, sd = 0.3)
-  if (is.null(X0)) X0 <- rbind(c(0, 0), c(1, 0), c(-1, 0))
-  np_dnn(
-    X = x_mat, X0 = X0, Y = y_vec,
-    k = 1L, s = 10L, se = se, return = return
-  )
+  .test_rng_scope({
+    x_mat <- matrix(rnorm(n * 2L), n, 2L,
+                    dimnames = list(NULL, c("X1", "X2")))
+    y_vec <- x_mat[, 1L] + rnorm(n, sd = 0.3)
+    if (is.null(X0)) X0 <- rbind(c(0, 0), c(1, 0), c(-1, 0))
+    np_dnn(
+      X = x_mat, X0 = X0, Y = y_vec,
+      k = 1L, s = 10L, se = se, return = return
+    )
+  }, seed = 31)
 }
 
 test_that("plot_data_estimates returns the documented frame for np fits", {
@@ -53,64 +54,66 @@ test_that("plot_data_estimates keeps disabled uncertainty and rejects incomplete
 })
 
 test_that("plot_data_estimates dispatches for cate, plqr, and gmm fits", {
-  set.seed(32)
-  n <- 60L
-  X <- matrix(rnorm(n * 2L), n, 2L)
-  psi <- rnorm(n, mean = X[, 1L])
-  fit_cate <- cate_dnn(
-    X = X, X0 = rbind(c(0, 0), c(1, 1)), pseudo_outcome = psi,
-    k = 1L, s = 10L, se = FALSE
-  )
-  df_cate <- plot_data_estimates(fit_cate)
-  expect_identical(unique(df_cate$coef), "tau")
-  expect_identical(nrow(df_cate), 2L)
+  .test_rng_scope({
+    set.seed(32)
+    n <- 60L
+    X <- matrix(rnorm(n * 2L), n, 2L)
+    psi <- rnorm(n, mean = X[, 1L])
+    fit_cate <- cate_dnn(
+      X = X, X0 = rbind(c(0, 0), c(1, 1)), pseudo_outcome = psi,
+      k = 1L, s = 10L, se = FALSE
+    )
+    df_cate <- plot_data_estimates(fit_cate)
+    expect_identical(unique(df_cate$coef), "tau")
+    expect_identical(nrow(df_cate), 2L)
 
-  demo <- plqr_demo_data(n = 80L, p = 2L, p_d = 2L, tau = 0.5, seed = 7)
-  df_p <- demo$data
-  fit_plqr <- plqr_dnn(
-    X = as.matrix(df_p[paste0("X", 1:2)]),
-    D = as.matrix(df_p[paste0("D", 1:2)]),
-    g = as.numeric(df_p$g_oracle),
-    mD = as.matrix(df_p[paste0("mD", 1:2)]),
-    Y = as.numeric(df_p$Y),
-    density = rep(2, nrow(df_p)),
-    theta_eval = demo$truth$theta_true, tau = 0.5,
-    X0 = matrix(0, 2L, 2L), k = 1L, s = 8L, se = TRUE
-  )
-  df_plqr <- plot_data_estimates(fit_plqr)
-  p_d <- nrow(as.matrix(fit_plqr$theta))
-  expect_identical(nrow(df_plqr), p_d * 2L)
-  expect_identical(length(unique(df_plqr$coef)), p_d)
-  expect_identical(df_plqr$target_id, rep(1:2, each = p_d))
-  # Default PLQR quantity is the localized moment (no root solver exists);
-  # this analytic-meat fit stores theta_se but no moment_se.
-  expect_identical(attr(df_plqr, "quantity"), "moment")
-  expect_equal(df_plqr$estimate, as.numeric(as.matrix(fit_plqr$moment)))
-  expect_true(all(is.na(df_plqr$se)))
+    demo <- plqr_demo_data(n = 80L, p = 2L, p_d = 2L, tau = 0.5, seed = 7)
+    df_p <- demo$data
+    fit_plqr <- plqr_dnn(
+      X = as.matrix(df_p[paste0("X", 1:2)]),
+      D = as.matrix(df_p[paste0("D", 1:2)]),
+      g = as.numeric(df_p$g_oracle),
+      mD = as.matrix(df_p[paste0("mD", 1:2)]),
+      Y = as.numeric(df_p$Y),
+      density = rep(2, nrow(df_p)),
+      theta_eval = demo$truth$theta_true, tau = 0.5,
+      X0 = matrix(0, 2L, 2L), k = 1L, s = 8L, se = TRUE
+    )
+    df_plqr <- plot_data_estimates(fit_plqr)
+    p_d <- nrow(as.matrix(fit_plqr$theta))
+    expect_identical(nrow(df_plqr), p_d * 2L)
+    expect_identical(length(unique(df_plqr$coef)), p_d)
+    expect_identical(df_plqr$target_id, rep(1:2, each = p_d))
+    # Default PLQR quantity is the localized moment (no root solver exists);
+    # this analytic-meat fit stores theta_se but no moment_se.
+    expect_identical(attr(df_plqr, "quantity"), "moment")
+    expect_equal(df_plqr$estimate, as.numeric(as.matrix(fit_plqr$moment)))
+    expect_true(all(is.na(df_plqr$se)))
 
-  df_plqr_theta <- plot_data_estimates(fit_plqr, quantity = "theta")
-  expect_identical(attr(df_plqr_theta, "quantity"), "theta")
-  expect_equal(df_plqr_theta$estimate, as.numeric(as.matrix(fit_plqr$theta)))
-  expect_false(anyNA(df_plqr_theta$se))
+    df_plqr_theta <- plot_data_estimates(fit_plqr, quantity = "theta")
+    expect_identical(attr(df_plqr_theta, "quantity"), "theta")
+    expect_equal(df_plqr_theta$estimate, as.numeric(as.matrix(fit_plqr$theta)))
+    expect_false(anyNA(df_plqr_theta$se))
 
-  dgp <- sim_iv_data("dgp2_iv_homog_overid", n = 100L, kx = 2L, q = 2L,
-                     seed = 8L)
-  model <- gmm_model_dr_iv(
-    z_cols = paste0("Z", seq_len(dgp$q)),
-    pi_cols = paste0("piZ", seq_len(dgp$q), "_oracle"),
-    muY_col = "muY_oracle",
-    muD_col = "muD_oracle"
-  )
-  fit_gmm <- gmm_dnn(
-    data = dgp$data, x_cols = c("X1", "X2"), x0 = dgp$x0,
-    model = model, k = 1L, s = 12L
-  )
-  df_gmm <- plot_data_estimates(fit_gmm)
-  expect_identical(unique(df_gmm$coef), fit_gmm$meta$coef_names)
-  expect_identical(nrow(df_gmm), length(fit_gmm$meta$coef_names))
+    dgp <- sim_iv_data("dgp2_iv_homog_overid", n = 100L, kx = 2L, q = 2L,
+                       seed = 8L)
+    model <- gmm_model_dr_iv(
+      z_cols = paste0("Z", seq_len(dgp$q)),
+      pi_cols = paste0("piZ", seq_len(dgp$q), "_oracle"),
+      muY_col = "muY_oracle",
+      muD_col = "muD_oracle"
+    )
+    fit_gmm <- gmm_dnn(
+      data = dgp$data, x_cols = c("X1", "X2"), x0 = dgp$x0,
+      model = model, k = 1L, s = 12L
+    )
+    df_gmm <- plot_data_estimates(fit_gmm)
+    expect_identical(unique(df_gmm$coef), fit_gmm$meta$coef_names)
+    expect_identical(nrow(df_gmm), length(fit_gmm$meta$coef_names))
 
-  expect_error(plot_data_estimates(lm(y ~ x, data = data.frame(y = 1:5, x = 1:5))),
-               "not implemented")
+    expect_error(plot_data_estimates(lm(y ~ x, data = data.frame(y = 1:5, x = 1:5))),
+                 "not implemented")
+  })
 })
 
 test_that("plot_data_weights orders ranks and computes cumulative shares", {

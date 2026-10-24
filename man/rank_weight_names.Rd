@@ -2,7 +2,7 @@
 % Please edit documentation in R/api-ranks.R
 \name{rank_weight_names}
 \alias{rank_weight_names}
-\title{List registered rank_weight names}
+\title{List registered rdistnn_rank_weight names}
 \usage{
 rank_weight_names()
 }
@@ -10,7 +10,7 @@ rank_weight_names()
 Character vector.
 }
 \description{
-List registered rank_weight names
+List registered rdistnn_rank_weight names
 }
 \examples{
 head(rank_weight_names(), 3)

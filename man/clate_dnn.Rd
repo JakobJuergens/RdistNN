@@ -127,9 +127,9 @@ complete \link[=iv_augmented_signals]{augmented-IV signal} construction record, 
 clipped instrument propensities. Unknown values warn and are ignored.}
 }
 \value{
-A clate_result inheriting affine_ratio_result. Component roles are
+A rdistnn_clate_result inheriting rdistnn_affine_ratio_result. Component roles are
 reduced_form and first_stage. Optional nuisance output is the complete
-iv_signals construction record, including raw/used propensity.
+rdistnn_iv_signals construction record, including raw/used propensity.
 }
 \description{
 An augmented binary-IV estimator with rich adjustment and

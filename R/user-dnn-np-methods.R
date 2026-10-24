@@ -1,14 +1,14 @@
-# Methods for np_result objects.
+# Methods for rdistnn_np_result objects.
 
-#' Print an `np_result` object
+#' Print an `rdistnn_np_result` object
 #'
 #' @param x An object returned by [np_dnn()].
 #' @param ... Not used.
 #' @return `x`, invisibly.
 #' @export
-print.np_result <- function(x, ...) {
+print.rdistnn_np_result <- function(x, ...) {
   .dnn_check_report_state(x)
-  cat("<np_result>\n", sep = "")
+  cat("<rdistnn_np_result>\n", sep = "")
   .dnn_print_localization(x$meta)
   cat("  data  : n=", x$meta$n, ", p=", x$meta$p, ", m=", x$meta$m, "\n", sep = "")
   cat("  DNN   : method=", x$meta$method, ", k=", x$meta$k,
@@ -44,7 +44,7 @@ print.np_result <- function(x, ...) {
 
 #' Reporting and prediction for nonparametric regression results
 #'
-#' Methods for `np_result`, including the `tdnn_np_result` subclass returned
+#' Methods for `rdistnn_np_result`, including the `rdistnn_tdnn_np_result` subclass returned
 #' by [np_tdnn()]. Estimates are conditional means, not CATE coefficients.
 #'
 #' @param object An object from [np_dnn()] or [np_tdnn()].
@@ -85,11 +85,11 @@ print.np_result <- function(x, ...) {
 #'
 #' @return `coef()` returns a named vector of local means; `vcov()` an `m x m`
 #'   covariance matrix in target order; `confint()` a two-column matrix.
-#'   `summary()` returns class `summary.np_result` with `coefficients`, `level`,
+#'   `summary()` returns class `rdistnn_summary_np_result` with `coefficients`, `level`,
 #'   `has_se` and `meta`. Prediction returns a vector, a `fit`/`se.fit` list,
 #'   or a `fit`/`lwr`/`upr` matrix (inside the list when `se.fit = TRUE`).
 #'   Printing returns its input invisibly.
-#' @name np_result
+#' @name rdistnn_np_result
 #' @examples
 #' fit <- np_dnn(X = matrix(1:7, ncol = 1), X0 = matrix(c(2, 5), ncol = 1),
 #'               Y = c(2, 1, 4, 3, 6, 5, 7), s = 3, return = character())
@@ -100,28 +100,28 @@ print.np_result <- function(x, ...) {
 #' predict(fit, x0 = 4, se.fit = TRUE)
 NULL
 
-#' @rdname np_result
+#' @rdname rdistnn_np_result
 #' @export
-coef.np_result <- function(object, ...) {
+coef.rdistnn_np_result <- function(object, ...) {
   .dnn_check_report_state(object)
   stats::setNames(as.numeric(object$mu), paste0("target_", seq_along(object$mu)))
 }
 
-#' @rdname np_result
+#' @rdname rdistnn_np_result
 #' @export
-vcov.np_result <- function(object, ...) {
+vcov.rdistnn_np_result <- function(object, ...) {
   .dnn_reuse_scope(object)
   if (is.null(object$se)) {
-    .abort_bad_state("Covariance is not available. Refit with `se = TRUE` and an active jackknife.")
+    .dnn_abort("extra_unavailable", "Covariance is not available. Refit with `se = TRUE` and an active jackknife.")
   }
   model <- .np_prediction_state(object)
   ranking <- if (identical(object$meta$jackknife, "fast")) .dnn_retained_ranking(object) else NULL
   .np_joint_covariance(model, object$x0, ranking$ranks, object$meta$jackknife, model$groups)
 }
 
-#' @rdname np_result
+#' @rdname rdistnn_np_result
 #' @export
-summary.np_result <- function(object, level = .95, ...) {
+summary.rdistnn_np_result <- function(object, level = .95, ...) {
   .dnn_check_report_state(object)
   level <- .validate_scalar_prob(level, "level")
   mu <- as.numeric(object$mu)
@@ -138,27 +138,29 @@ summary.np_result <- function(object, level = .95, ...) {
     statistic = z, p.value = p, conf.low = ci[, 1L], conf.high = ci[, 2L],
     row.names = rownames(ci))
   structure(list(coefficients = tab, level = level, has_se = !is.null(se), meta = object$meta),
-    class = "summary.np_result")
+    class = "rdistnn_summary_np_result")
 }
 
-#' @rdname np_result
+#' @rdname rdistnn_np_result
 #' @export
-print.summary.np_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
+print.rdistnn_summary_np_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
   .dnn_check_tie_policy(x$meta$tie_rule)
-  cat("<summary.np_result>\n")
+  cat("<rdistnn_summary_np_result>\n")
   .dnn_print_localization(x$meta)
   if (!isTRUE(x$has_se)) cat("  Standard errors are not available.\n")
   print(signif(x$coefficients, digits))
   invisible(x)
 }
 
-#' @rdname np_result
+#' @rdname rdistnn_np_result
 #' @export
-confint.np_result <- function(object, parm = NULL, level = .95, ...) {
+confint.rdistnn_np_result <- function(object, parm = NULL, level = .95, ...) {
   .dnn_check_report_state(object)
   level <- .validate_scalar_prob(level, "level")
   if (is.null(object$se)) {
-    .abort_bad_state("Standard errors are not available. Refit with `se = TRUE` and an active jackknife.")
+    .dnn_abort("extra_unavailable",
+      "Standard errors are not available. Refit with `se = TRUE` and an active jackknife."
+    )
   }
   idx <- if (is.null(parm)) {
     seq_along(object$mu)
@@ -168,12 +170,12 @@ confint.np_result <- function(object, parm = NULL, level = .95, ...) {
   .np_wald_bounds(object$mu, object$se, level)[idx, , drop = FALSE]
 }
 
-#' @rdname np_result
+#' @rdname rdistnn_np_result
 #' @export
-predict.np_result <- function(object, newdata = NULL, X0 = NULL, x0 = NULL,
+predict.rdistnn_np_result <- function(object, newdata = NULL, X0 = NULL, x0 = NULL,
     se.fit = FALSE, interval = c("none", "confidence"), level = .95, ...) {
   .dnn_reuse_scope(object, groups = NULL)
-  interval <- match.arg(interval)
+  interval <- .dnn_match_arg(interval)
   se.fit <- .validate_scalar_logical(se.fit, "se.fit")
   level <- .validate_scalar_prob(level, "level")
   model <- .np_prediction_state(object)

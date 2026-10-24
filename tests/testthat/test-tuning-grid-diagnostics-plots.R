@@ -1,21 +1,3 @@
-.grid_plot_count_traced_calls <- function(fun, expr) {
-  trace_env <- new.env(parent = emptyenv())
-  trace_env$calls <- 0L
-  assign(".grid_plot_trace_env", trace_env, envir = .GlobalEnv)
-  on.exit(rm(".grid_plot_trace_env", envir = .GlobalEnv), add = TRUE)
-  suppressMessages(invisible(trace(
-    fun,
-    tracer = quote({
-      .GlobalEnv$.grid_plot_trace_env$calls <- .GlobalEnv$.grid_plot_trace_env$calls + 1L
-    }),
-    where = asNamespace("RdistNN"),
-    print = FALSE
-  )))
-  on.exit(suppressMessages(untrace(fun, where = asNamespace("RdistNN"))), add = TRUE)
-  force(expr)
-  trace_env$calls
-}
-
 .grid_plot_tuning <- function(default_s = 5L, s_grid = c(1L, 3L, 5L, 7L)) {
   new_tuning(
     name = "layer10_grid",
@@ -31,40 +13,41 @@
 }
 
 .grid_plot_np_data <- function(n = 46L, m = 5L, seed = 1010L) {
-  set.seed(seed)
-  X <- matrix(rnorm(n * 2L), n, 2L,
-              dimnames = list(NULL, c("X1", "X2")))
-  X0 <- cbind(seq(-1, 1, length.out = m), 0)
-  y <- X[, 1L] - 0.25 * X[, 2L] + rnorm(n, sd = 0.2)
-  list(X = X, X0 = X0, y = y)
+  .test_rng_scope({
+    X <- matrix(rnorm(n * 2L), n, 2L,
+                dimnames = list(NULL, c("X1", "X2")))
+    X0 <- cbind(seq(-1, 1, length.out = m), 0)
+    y <- X[, 1L] - 0.25 * X[, 2L] + rnorm(n, sd = 0.2)
+    list(X = X, X0 = X0, y = y)
+  }, seed = seed)
 }
 
 .grid_plot_np_grid <- function(return = c("W", "ranks", "dx"),
                              se = TRUE, seed = 1010L) {
   d <- .grid_plot_np_data(seed = seed)
-  suppressWarnings(np_dnn(
+  .with_test_warning_families(np_dnn(
     X = d$X, X0 = d$X0, Y = d$y,
     method = "exact", k = 2L, tuning = .grid_plot_tuning(),
     tuning_mode = "grid", se = se, jackknife = "fast",
     return = return
-  ))
+  ), "infeasible_candidates")
 }
 
 .grid_plot_cate_grid <- function(seed = 1011L) {
   d <- .grid_plot_np_data(seed = seed)
   psi <- d$y - mean(d$y)
-  suppressWarnings(cate_dnn(
+  .with_test_warning_families(cate_dnn(
     X = d$X, X0 = d$X0, pseudo_outcome = psi,
     method = "exact", k = 2L, tuning = .grid_plot_tuning(),
     tuning_mode = "grid", se = TRUE, jackknife = "fast",
     return = c("W", "ranks", "dx", "psi")
-  ))
+  ), "infeasible_candidates")
 }
 
 .grid_plot_plqr_grid <- function(seed = 1012L) {
   demo <- plqr_demo_data(n = 50L, p = 2L, p_d = 2L, tau = 0.5, seed = seed)
   df <- demo$data
-  suppressWarnings(plqr_dnn(
+  .with_test_warning_families(plqr_dnn(
     X = as.matrix(df[paste0("X", 1:2)]),
     D = as.matrix(df[paste0("D", 1:2)]),
     g = as.numeric(df$g_oracle),
@@ -75,8 +58,31 @@
     method = "exact", k = 2L, tuning = .grid_plot_tuning(),
     tuning_mode = "grid", se = TRUE, jackknife = "fast",
     return = c("W", "ranks", "dx")
-  ))
+  ), "infeasible_candidates")
 }
+
+test_that("grid fixtures filter intended warning families and preserve unrelated warnings", {
+  for (case in list(
+    list(fixture = .grid_plot_np_grid, estimator = "np_dnn"),
+    list(fixture = .grid_plot_cate_grid, estimator = "cate_dnn"),
+    list(fixture = .grid_plot_plqr_grid, estimator = "plqr_dnn")
+  )) {
+    real_estimator <- get(case$estimator, mode = "function")
+    sentinel <- simpleWarning("unrelated fixture warning")
+    fixture <- case$fixture
+    environment(fixture) <- list2env(stats::setNames(list(function(...) {
+      warning(sentinel)
+      real_estimator(...)
+    }), case$estimator), parent = environment(fixture))
+    seen <- list()
+    withCallingHandlers(fixture(), warning = function(w) {
+      seen[[length(seen) + 1L]] <<- w
+      invokeRestart("muffleWarning")
+    })
+    expect_equal(length(seen), 1L, info = case$estimator)
+    if (length(seen)) expect_identical(seen[[1L]], sentinel, info = case$estimator)
+  }
+})
 
 test_that("diagnostics exposes candidate-level grid diagnostics on request", {
   skip_if_not_installed("ggplot2")
@@ -87,7 +93,7 @@ test_that("diagnostics exposes candidate-level grid diagnostics on request", {
   expect_equal(nrow(d_default), nrow(fit$x0))
 
   d_all <- diagnostics(fit, candidates = "all")
-  expect_s3_class(d_all, "dnn_diagnostics")
+  expect_s3_class(d_all, "rdistnn_diagnostics")
   expect_true(all(c(
     "candidate_id", "candidate_label", "is_default", "status", "reason",
     "n_eff", "max_weight", "top5_weight_share"
@@ -167,6 +173,43 @@ test_that("candidate weight plots compare rank profiles without stored W", {
   )
 })
 
+test_that("candidate weight plots materialize weights only for displayed targets", {
+  skip_if_not_installed("ggplot2")
+  untied <- .grid_plot_np_grid(return = "ranks", se = FALSE)
+  X <- matrix(c(-3, -2, -1, 1, 2, 3, 4, 5))
+  X0 <- matrix(c(0, .2, 1))
+  tuning <- new_tuning("display_groups", eval = function(...) list(s = 3L),
+    eval_grid = function(...) data.frame(s = c(2L, 3L, 5L)))
+  tied <- .with_distance_tie_warning(np_dnn(X = X, X0 = X0, Y = seq_len(8L),
+    tuning = tuning, tuning_mode = "grid", se = FALSE, return = "ranks"))
+  real_average <- RdistNN:::.dnn_average_distance_weights
+  weighted_columns <- integer()
+  local_mocked_bindings(.dnn_average_distance_weights = function(W, ...) {
+    weighted_columns <<- c(weighted_columns, ncol(W))
+    real_average(W, ...)
+  }, .dnn_compute_group_facts = function(...) stop("Prepared group facts must be reused."),
+    .package = "RdistNN")
+
+  single <- plot_weights(untied, candidates = "all")
+  expect_true(all(weighted_columns == 1L))
+  expect_length(weighted_columns, sum(untied$tuning_grid$candidates$status == "ok"))
+  expect_equal(nrow(single$data), untied$meta$n * sum(untied$tuning_grid$candidates$status == "ok"))
+  weighted_columns <- integer()
+  selected <- .with_distance_tie_warning(plot_weights(tied, candidates = "all", targets = c(3L, 1L)))
+  expect_true(all(weighted_columns == 2L))
+  expect_length(weighted_columns, 3L)
+  expect_setequal(selected$data$target_id, c(3L, 1L))
+  for (s in unique(selected$data$s)) {
+    expected <- .block_oracle_weights(X, X0, .block_exact_table(8L, 1L, s))
+    for (j in c(3L, 1L)) {
+      rows <- selected$data[selected$data$s == s & selected$data$target_id == j, ]
+      rows <- rows[order(rows$rank), ]
+      ord <- order(abs(X[, 1L] - X0[j, 1L]), seq_len(nrow(X)))
+      expect_equal(rows$weight, expected[ord, j], tolerance = 1e-14)
+    }
+  }
+})
+
 test_that("plot_tuning uses stored grids or internal engines without public refits", {
   skip_if_not_installed("ggplot2")
   d <- .grid_plot_np_data(seed = 1020L)
@@ -177,7 +220,7 @@ test_that("plot_tuning uses stored grids or internal engines without public refi
     se = FALSE, return = character(0)
   )
 
-  grid_calls <- .grid_plot_count_traced_calls("np_dnn", {
+  grid_calls <- .count_package_calls("np_dnn", {
     p_grid <- plot_tuning(grid, se = FALSE)
   })
   expect_identical(grid_calls, 0L)
@@ -185,13 +228,14 @@ test_that("plot_tuning uses stored grids or internal engines without public refi
   expect_true(all(c("candidate_id", "candidate_label", "selected") %in% names(p_grid$data)))
   expect_match(p_grid$labels$caption, "Dropped 1 unavailable candidate")
 
-  scalar_calls <- .grid_plot_count_traced_calls("np_dnn", {
-    p_scalar <- plot_tuning(scalar, se = FALSE)
+  scalar_calls <- .count_package_calls("np_dnn", {
+    expect_warning(p_scalar <- plot_tuning(scalar, se = FALSE),
+      class = "rdistnn_infeasible_candidates_warning")
   })
   expect_identical(scalar_calls, 0L)
   expect_equal(p_scalar$data$estimate, p_grid$data$estimate)
 
-  cate_calls <- .grid_plot_count_traced_calls("cate_dnn", {
+  cate_calls <- .count_package_calls("cate_dnn", {
     p_cate <- plot_tuning(.grid_plot_cate_grid(), se = FALSE)
   })
   expect_identical(cate_calls, 0L)
@@ -235,6 +279,21 @@ test_that("scalar PLQR tuning plots apply one requested uncertainty policy", {
     expect_identical(is.finite(stored_true$se), rep(fitted_se, nrow(stored_true)))
   }
   })
+})
+
+test_that("scalar tuning feasibility follows the requested grid uncertainty", {
+  skip_if_not_installed("ggplot2")
+  tuning <- new_tuning("plot_order_boundary", eval = function(...) list(s = 3L),
+    eval_grid = function(...) data.frame(s = c(2L, 3L, 8L)))
+  for (constructor in list(function(...) np_dnn(Y = (1:8)^2, ...),
+      function(...) cate_dnn(pseudo_outcome = (1:8)^2, ...))) {
+    fit <- constructor(X = matrix(1:8), x0 = .25, tuning = tuning, se = TRUE)
+    point <- plot_tuning(fit, se = FALSE)$data
+    expect_true(8L %in% point$s)
+    expect_true(all(is.na(point$se)))
+    expect_identical(fit$meta$jackknife, "fast")
+    expect_true(all(is.finite(fit$se)))
+  }
 })
 
 test_that("grid dashboards include a tuning panel while preserving default panels", {

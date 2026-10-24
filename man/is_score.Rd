@@ -2,7 +2,7 @@
 % Please edit documentation in R/api-scores.R
 \name{is_score}
 \alias{is_score}
-\title{Is object a \code{ustat_score}?}
+\title{Is object a \code{rdistnn_ustat_score}?}
 \usage{
 is_score(x)
 }
@@ -13,7 +13,7 @@ is_score(x)
 logical
 }
 \description{
-Is object a \code{ustat_score}?
+Is object a \code{rdistnn_ustat_score}?
 }
 \examples{
 sc <- as_score(function(idxs, data) sum(data[idxs]), s = 2L)

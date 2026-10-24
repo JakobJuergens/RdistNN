@@ -16,6 +16,7 @@
 # -------------------------------------------------------------------
 
 test_that("[shapes][baseline] theta0 and dims match the definition", {
+  withr::local_preserve_seed()
   set.seed(1)
   Tn <- 5L
   n_ref <- 7L
@@ -134,6 +135,7 @@ bf_jackknife_function <- function(ranks, a, phi, normalize = TRUE) {
 }
 
 test_that("[bf-mat] matches brute-force oracle for phi as matrix", {
+  withr::local_preserve_seed()
   set.seed(2)
   Tn <- 8L
   n_ref <- 20L
@@ -151,6 +153,7 @@ test_that("[bf-mat] matches brute-force oracle for phi as matrix", {
 })
 
 test_that("[bf-fun] matches brute-force oracle for phi as function", {
+  withr::local_preserve_seed()
   set.seed(3)
   Tn <- 6L
   n_ref <- 15L
@@ -168,6 +171,7 @@ test_that("[bf-fun] matches brute-force oracle for phi as function", {
 })
 
 test_that("[tdep] t-dependent path actually differs from t-independent", {
+  withr::local_preserve_seed()
   set.seed(4)
   Tn <- 5L
   n_ref <- 12L
@@ -186,6 +190,7 @@ test_that("[tdep] t-dependent path actually differs from t-independent", {
 })
 
 test_that("[s=1] edge case matches hand formula", {
+  withr::local_preserve_seed()
   set.seed(5)
   Tn <- 7L
   n_ref <- 18L
@@ -213,6 +218,7 @@ test_that("[s=1] edge case matches hand formula", {
 })
 
 test_that("[s+1only] if i only appears at s+1, deletion leaves theta unchanged", {
+  withr::local_preserve_seed()
   set.seed(6)
   Tn <- 5L
   n_ref <- 10L
@@ -232,6 +238,7 @@ test_that("[s+1only] if i only appears at s+1, deletion leaves theta unchanged",
 })
 
 test_that("[norm] normalize=FALSE is a pure rescaling by sum(a)", {
+  withr::local_preserve_seed()
   set.seed(7)
   Tn <- 6L
   n_ref <- 14L
@@ -248,6 +255,7 @@ test_that("[norm] normalize=FALSE is a pure rescaling by sum(a)", {
 })
 
 test_that("[errors] invalid inputs raise clear errors", {
+  withr::local_preserve_seed()
   set.seed(8)
   Tn <- 3L
   n_ref <- 6L
@@ -295,6 +303,7 @@ test_that("[errors] invalid inputs raise clear errors", {
 })
 
 test_that("[det] determinism", {
+  withr::local_preserve_seed()
   set.seed(9)
   Tn <- 5L
   n_ref <- 12L

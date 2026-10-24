@@ -120,7 +120,7 @@
 #'   `neighbors` is a `k x m` matrix of nearest training-observation indices,
 #'   one column per target. It is a rank summary, not the full DNN weight support.
 #'
-#' @return An object of class `cate_result` with components:
+#' @return An object of class `rdistnn_cate_result` with components:
 #'   - `tau`: estimated CATE values at target points;
 #'   - `se`: optional jackknife standard errors;
 #'   - `x0`: the `m x p` matrix of evaluation points, with covariate
@@ -135,7 +135,7 @@
 #'   - optional extras requested via `return`.
 #'
 #' @seealso [weights_dnn()], [weights_matrix()], [score_cate_rho()],
-#'   [cate_demo_data()], [vcov.cate_result()], [predict.cate_result()].
+#'   [cate_demo_data()], [vcov.rdistnn_cate_result()], [predict.rdistnn_cate_result()].
 #'
 #' @examples
 #' set.seed(1)
@@ -169,9 +169,9 @@ cate_dnn <- function(
   ctx = NULL,
   return = c("W")
 ) {
-  method <- match.arg(method)
-  jackknife <- match.arg(jackknife)
-  tuning_mode <- match.arg(tuning_mode)
+  method <- .dnn_match_arg(method)
+  jackknife <- .dnn_match_arg(jackknife)
+  tuning_mode <- .dnn_match_arg(tuning_mode)
   s_arg <- s
   k <- .validate_scalar_int(k, "k")
   normalize <- .validate_scalar_logical(normalize, "normalize")
@@ -206,7 +206,7 @@ cate_dnn <- function(
     p <- ncol(x_mat)
 
     if (!is.null(pseudo_outcome)) {
-      psi <- .validate_vector_nrow(pseudo_outcome, n, arg = "pseudo_outcome", ref = "X", strict = TRUE)
+      psi <- .validate_vector_nrow(pseudo_outcome, n, arg = "pseudo_outcome", ref = "X", strict = TRUE, finite = TRUE)
     } else {
       if (xor(is.null(m0_col), is.null(m1_col))) {
         .abort_bad_arg("m0_col/m1_col", "must be supplied together for full AIPW",
@@ -233,10 +233,10 @@ cate_dnn <- function(
         )
       }
 
-      y_vec <- .dnn_col_vec(y_col,  data, n, arg = "y_col",  ref = "data")
-      t_vec <- .dnn_col_vec(t_col,  data, n, arg = "t_col",  ref = "data")
+      y_vec <- .dnn_col_vec(y_col,  data, n, arg = "y_col",  ref = "data", finite = TRUE)
+      t_vec <- .dnn_col_vec(t_col,  data, n, arg = "t_col",  ref = "data", finite = TRUE)
       t_vec <- .validate_binary01(t_vec, arg = "t_col")
-      e_raw <- .dnn_col_vec(e_col, data, n, arg = "e_col", ref = "data")
+      e_raw <- .dnn_col_vec(e_col, data, n, arg = "e_col", ref = "data", finite = TRUE)
       e_used <- .cate_validate_and_clip_propensity(
         e_raw, n = n, clip = clip, arg = "e_col"
       )
@@ -245,8 +245,8 @@ cate_dnn <- function(
       # tau_hat_i = mu1_hat - mu0_hat
       #           + T_i (Y_i - mu1_hat) / pi_hat
       #           - (1-T_i) (Y_i - mu0_hat) / (1-pi_hat)
-      m0  <- .dnn_col_vec(m0_col, data, n, arg = "m0_col", ref = "data")
-      m1  <- .dnn_col_vec(m1_col, data, n, arg = "m1_col", ref = "data")
+      m0  <- .dnn_col_vec(m0_col, data, n, arg = "m0_col", ref = "data", finite = TRUE)
+      m1  <- .dnn_col_vec(m1_col, data, n, arg = "m1_col", ref = "data", finite = TRUE)
       psi <- cate_rho_aipw(
         y = y_vec,
         d = t_vec,
@@ -272,7 +272,7 @@ cate_dnn <- function(
     if (is.null(pseudo_outcome)) {
       .abort_bad_arg("pseudo_outcome", "is required for the matrix interface")
     }
-    psi <- .validate_vector_nrow(pseudo_outcome, n, arg = "pseudo_outcome", ref = "X", strict = TRUE)
+    psi <- .validate_vector_nrow(pseudo_outcome, n, arg = "pseudo_outcome", ref = "X", strict = TRUE, finite = TRUE)
   }
 
   s_resolved <- .dnn_resolve_s(
@@ -391,7 +391,7 @@ cate_dnn <- function(
     )
   }
 
-  # Internal fit state used by predict.cate_result().
+  # Internal fit state used by predict.rdistnn_cate_result().
   out$.model <- c(list(
     x_mat = x_mat,
     psi = psi,
@@ -407,6 +407,6 @@ cate_dnn <- function(
     ranks = wt$ranks, groups = wt$groups, dx = wt$dx
   ), geometry)
 
-  class(out) <- "cate_result"
+  class(out) <- "rdistnn_cate_result"
   out
 }

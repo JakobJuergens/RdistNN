@@ -7,10 +7,10 @@
 #' standard errors. Nuisance predictions for causal estimators are supplied
 #' externally; the documented inference conditions remain estimator-specific.
 #' The underlying toolkit combines:
-#' - distance specifications (`dnn_distance`) for ranking observations around a
+#' - distance specifications (`rdistnn_distance`) for ranking observations around a
 #'   target;
-#' - rank-weight specifications (`rank_weight`) for converting ranks to weights;
-#' - score objects (`ustat_score`) for flexible kernel-based moment evaluation.
+#' - rank-weight specifications (`rdistnn_rank_weight`) for converting ranks to weights;
+#' - score objects (`rdistnn_ustat_score`) for flexible kernel-based moment evaluation.
 #'
 #' @section Main User Workflows:
 #' - Compute DNN weights with [weights_dnn()], [weights_dnn_exact()], and
@@ -18,13 +18,13 @@
 #' - Resolve paper-default kernel orders with [tuning_dnn_paper()] and
 #'   [tuning_eval()].
 #' - Estimate local CATE targets with [cate_dnn()].
-#' - Report and reuse CATE fits with [summary.cate_result()],
-#'   [confint.cate_result()], [vcov.cate_result()] and [predict.cate_result()].
+#' - Report and reuse CATE fits with [summary.rdistnn_cate_result()],
+#'   [confint.rdistnn_cate_result()], [vcov.rdistnn_cate_result()] and [predict.rdistnn_cate_result()].
 #' - Estimate local nonparametric means with [np_dnn()].
 #' - Use two-scale signed-weight regression with [np_tdnn()]; see its help for
 #'   order constraints and additional smoothness requirements.
 #'   Both regression classes share reporting, joint covariance and prediction
-#'   methods documented in [np_result].
+#'   methods documented in [rdistnn_np_result].
 #' - Estimate conditional LATE from supplied nuisance predictions with
 #'   [clate_dnn()], or localize two supplied signals with [affine_ratio_dnn()].
 #'   [iv_augmented_signals()] constructs the augmented binary-IV signals.
@@ -58,12 +58,23 @@
 #'   [jackknife_slow_rank()].
 #'
 #' @section Random numbers:
+#' Built-in distance, rank-weight and accumulation routines preserve the caller's
+#' RNG state in both R and compiled execution, including leaving `.Random.seed`
+#' absent when it was absent. These deterministic calculations need no seed.
 #' Explicit demo and simulation seeds restore `.Random.seed` and [RNGkind()];
 #' `NULL` uses the current stream. R's saved state does not include the hidden
 #' Box-Muller normal cache; use the default normal generator for saved-state
 #' reproducibility.
 #'
 #' @section Native threads:
+#' Eligible built-in calculations use C++ automatically when the corresponding
+#' native routine is available. For engine comparisons or troubleshooting, set
+#' `options(RdistNN.use_compiled = FALSE)` to select the package's R paths;
+#' `TRUE` restores automatic native dispatch. Source installation still requires
+#' a C++17 compiler. Native execution errors propagate rather than triggering an
+#' automatic retry in R. During long native calculations, interruption can be
+#' delayed until control returns to R.
+#'
 #' Compiled routines use at most two OpenMP threads by default. Set
 #' `options(RdistNN.num_threads = 1L)` for one native thread, or supply a larger
 #' positive integer to opt into more threads. Lower OpenMP runtime limits are
@@ -94,7 +105,7 @@
 #' @name RdistNN-package
 #' @aliases RdistNN
 #' @seealso [weights_dnn()], [cate_dnn()], [np_dnn()], [plqr_dnn()],
-#'   [diagnostics()], [summary.cate_result()], [predict.cate_result()],
+#'   [diagnostics()], [summary.rdistnn_cate_result()], [predict.rdistnn_cate_result()],
 #'   [new_score()], [distance_l2()]
 #' @useDynLib RdistNN, .registration = TRUE
 #' @importFrom stats pbeta plogis rbinom rnorm runif setNames

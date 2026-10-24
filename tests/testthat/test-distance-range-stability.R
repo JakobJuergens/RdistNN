@@ -77,6 +77,7 @@ test_that("extreme L2 fitted geometry survives serialization and target reorderi
 })
 
 test_that("mixed ordinary and underflowing coordinates retain cross-engine arithmetic", {
+  withr::local_preserve_seed()
   old <- options(RdistNN.use_compiled = TRUE)
   on.exit(options(old), add = TRUE)
   # A tiny coordinate must not change how exceptional rows are selected in one

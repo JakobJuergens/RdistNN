@@ -154,3 +154,32 @@ test_that("replicate seeds determine stochastic tuning independently of caller s
     }
   })
 })
+
+test_that("deterministic public and native calls preserve present and absent seeds", {
+  old <- options(RdistNN.use_compiled = TRUE, RdistNN.num_threads = 2L)
+  on.exit(options(old), add = TRUE)
+  calls <- list(
+    public_distance = function() distance_eval(distance_l2(), matrix(1:3), 0),
+    native_distance = function() rustat_dist_l2(matrix(1:3), 0),
+    subsets = function() rustat_subset_row_sums_g(matrix(c(3L, 1L, 3L), 1L), c(.5, -1, 2)),
+    exact_table = function() rustat_exact_rank_table(3L, 1L, 2L),
+    accumulation = function() rustat_compensated_sum(c(2^100, 1, -2^100)),
+    plqr = function() {
+      ctx <- rustat_plqr_ctx_create(c(.5, 1.5, 2.5), matrix(c(1, 2, 3)),
+        rep(0, 3L), matrix(0, 3L, 1L), .5, .5, 1L)
+      rustat_plqr_g_all(ctx)
+    }
+  )
+  expected <- list(c(1, 2, 3), c(1, 2, 3), 4.5, c(2/3, 1/3, 0), 1, c(-.5, 1, 1.5))
+  .test_rng_scope({
+    for (i in seq_along(calls)) for (had_seed in c(TRUE, FALSE)) {
+      set.seed(271)
+      before <- .Random.seed
+      if (!had_seed) rm(".Random.seed", envir = .GlobalEnv)
+      value <- calls[[i]]()
+      expect_equal(as.numeric(value), expected[[i]], tolerance = 1e-15, info = names(calls)[i])
+      if (had_seed) expect_identical(.Random.seed, before)
+      else expect_false(exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE), info = names(calls)[i])
+    }
+  })
+})

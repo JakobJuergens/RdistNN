@@ -43,6 +43,28 @@ before computing a view; refit incomplete or inconsistent state. If a custom
 grid omits the resolved default, the resolver inserts an anchor row. Equal DNN
 orders have equal computation keys, while distinct user rows remain present.
 
+Current stored grids retain their complete candidate schema, including numeric
+`lambda` labels, and their required `meta$tuning/default/meta/grid` records.
+The sole default flag must agree with the fitted order. Validate scientific
+estimate/SE arrays before coercion and paired availability facts before using
+them as row selectors. Missing current tuning records require refitting;
+optional extras and the long grid table are not schema-repair sources.
+One call-local cache reuses unchanged grid-schema validation across candidate
+views and panels; changed tables are checked again.
+
+Validate consumed long-estimate and diagnostic fields, their types and their
+candidate identities/statuses before coercion or selection. An actual retained
+fit requires a feasible, successfully evaluated default. A transient scalar
+sensitivity grid can instead have an infeasible anchor under newly requested
+uncertainty; its table schema remains valid without becoming a retained fit.
+
+`R/user-dnn-tuning.R` owns `.dnn_validate_retained_tuning()`. Reporting checks
+every present exact `meta$tuning` record, including scalar fits, and requires it
+for stored grids. The shared diagnostics/plot selector validates an optional
+manual tuning payload at its actual field before using it. Fresh callback
+descriptors are canonicalized at the tuning API boundary; retained-state readers
+never recreate missing records or normalize an older schema.
+
 The long estimates table has candidate identity/labels, `target_id`,
 `component`, `estimate`, `se`, `status` and `reason`. Scalar NP/CATE/ratio
 components use `NA`; PLQR uses moment-component names. Missing SEs remain
@@ -198,6 +220,18 @@ requested SE policy; stored grid fits reuse their recorded uncertainty.
 An explicit scalar order's one-row bookkeeping payload is not a tuning sweep:
 use the paper grid unless a tuning specification was retained or supplied.
 Optional return fields cannot change these candidate orders.
+
+The newly computed sensitivity grid owns its requested jackknife policy and
+feasibility. A scalar fit with uncertainty can therefore display a point-only
+`s = n` candidate, while a point-only fit can request feasible grid uncertainty.
+Stored-grid displays retain their original policy. Constructing this fresh
+display is distinct from repairing missing metadata in a saved grid fit.
+
+Weight-profile consumers choose targets from validated concentration facts
+before materializing candidate weights or display frames. Slice the existing
+rank/group columns and prepared tie facts together, retaining original target
+IDs and requested order. Full retained-state validation still precedes slicing;
+selection does not justify bypassing it or rebuilding distance geometry.
 
 ## Simulation integration and verification
 

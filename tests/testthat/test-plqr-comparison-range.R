@@ -63,7 +63,10 @@ test_that("every PLQR constructor certifies decisive overflowing comparisons", {
         sc <- score_plqr_component(0, "x", paste0("D", seq_len(ncol(score))), "g",
           paste0("mD", seq_len(ncol(score))), "Y", a$theta, j = j, tau = .5, s = 2L)
         ctx <- score_setup(sc, d)
-        if (native) expect_identical(typeof(ctx$ptr_ctx), "externalptr") else expect_null(ctx$ptr_ctx)
+        expect_false("ptr_ctx" %in% names(ctx))
+        restored_ctx <- unserialize(serialize(ctx, NULL))
+        expect_identical(restored_ctx, ctx)
+        expect_identical(score_eval(sc, c(1L, 3L), d, restored_ctx), score_eval(sc, c(1L, 3L), d, ctx))
         expect_equal(ctx$score, score[, j], tolerance = 0)
         expect_equal(score_eval(sc, c(1L, 3L), d, ctx), sum(score[c(1L, 3L), j]), tolerance = 1e-14)
       }

@@ -93,32 +93,12 @@ rustat_exact_rank_table <- function(n, k, s) {
     .Call(`_RdistNN_rustat_exact_rank_table`, n, k, s)
 }
 
-rustat_cate_ctx_create <- function(rho) {
-    .Call(`_RdistNN_rustat_cate_ctx_create`, rho)
-}
-
-rustat_cate_g_all <- function(ctx_) {
-    .Call(`_RdistNN_rustat_cate_g_all`, ctx_)
-}
-
-rustat_cate_g_indexed <- function(idxs, ctx_) {
-    .Call(`_RdistNN_rustat_cate_g_indexed`, idxs, ctx_)
-}
-
 rustat_plqr_ctx_create <- function(Y, D, qx, mD, beta, tau, j) {
     .Call(`_RdistNN_rustat_plqr_ctx_create`, Y, D, qx, mD, beta, tau, j)
 }
 
-rustat_plqr_ctx_set_beta <- function(ctx_, beta) {
-    invisible(.Call(`_RdistNN_rustat_plqr_ctx_set_beta`, ctx_, beta))
-}
-
 rustat_plqr_g_all <- function(ctx_) {
     .Call(`_RdistNN_rustat_plqr_g_all`, ctx_)
-}
-
-rustat_plqr_g_indexed <- function(idxs, ctx_) {
-    .Call(`_RdistNN_rustat_plqr_g_indexed`, idxs, ctx_)
 }
 
 rustat_subset_row_sums_g <- function(subs, g) {

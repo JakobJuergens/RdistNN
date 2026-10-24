@@ -154,6 +154,7 @@ test_that("sim_cate_one_rep: dnn_fullsample matches direct full-sample AIPW fit"
 })
 
 test_that("sim_cate_one_rep: dnn_crossfit matches direct cross-fitted AIPW fit", {
+  withr::local_preserve_seed()
   n <- 120L
   kx <- 2L
   k <- 3L
@@ -302,51 +303,51 @@ test_that("simulation method rows require the current explicit status and schema
 })
 
 test_that("estimated CATE simulation signals honor a requested tiny clip", {
-  restore_rng <- .rdistnn_rng_restore()
-  on.exit(restore_rng(), add = TRUE)
-  RNGkind("Mersenne-Twister", "Inversion", "Rejection")
-  clip <- 1e-10
-  cases <- list(
-    list(method = "dnn_fullsample", n = 8L, seed = 1L, s = 3L),
-    list(method = "dnn_crossfit", n = 24L, seed = 3L, s = 4L)
-  )
-  for (case in cases) {
-    # Restart the actual data-then-fold stream. These small samples deliberately
-    # produce separated propensity fits, so suppress their expected GLM warnings.
-    set.seed(case$seed)
-    dgp <- sim_cate_data("dgp3_sparse_overlap", n = case$n, kx = 2L,
-      seed = NULL, clip = clip)
-    dat <- dgp$data
-    x_cols <- c("X1", "X2")
-    if (case$method == "dnn_fullsample") {
-      nuis <- suppressWarnings(.test_fit_aipw_nuisances(dat, x_cols, clip = clip))
-    } else {
-      fold_ids <- sample(rep_len(1:4, case$n))
-      nuis <- list(e_hat = numeric(case$n), m0_hat = numeric(case$n),
-        m1_hat = numeric(case$n))
-      for (fold in 1:4) {
-        test <- fold_ids == fold
-        trained <- suppressWarnings(.test_fit_aipw_nuisances(
-          dat, x_cols, train = !test, clip = clip))
-        for (name in names(nuis)) nuis[[name]][test] <- trained[[name]][test]
+  .test_rng_scope({
+    RNGkind("Mersenne-Twister", "Inversion", "Rejection")
+    clip <- 1e-10
+    cases <- list(
+      list(method = "dnn_fullsample", n = 8L, seed = 1L, s = 3L),
+      list(method = "dnn_crossfit", n = 24L, seed = 3L, s = 4L)
+    )
+    for (case in cases) {
+      # Restart the actual data-then-fold stream. These small samples deliberately
+      # produce separated propensity fits, so suppress their expected GLM warnings.
+      set.seed(case$seed)
+      dgp <- sim_cate_data("dgp3_sparse_overlap", n = case$n, kx = 2L,
+        seed = NULL, clip = clip)
+      dat <- dgp$data
+      x_cols <- c("X1", "X2")
+      if (case$method == "dnn_fullsample") {
+        nuis <- suppressWarnings(.test_fit_aipw_nuisances(dat, x_cols, clip = clip))
+      } else {
+        fold_ids <- sample(rep_len(1:4, case$n))
+        nuis <- list(e_hat = numeric(case$n), m0_hat = numeric(case$n),
+          m1_hat = numeric(case$n))
+        for (fold in 1:4) {
+          test <- fold_ids == fold
+          trained <- suppressWarnings(.test_fit_aipw_nuisances(
+            dat, x_cols, train = !test, clip = clip))
+          for (name in names(nuis)) nuis[[name]][test] <- trained[[name]][test]
+        }
       }
+      expect_true(any(nuis$e_hat < 1e-8 | nuis$e_hat > 1 - 1e-8))
+      # Independent score formula uses the requested-clipped predictions directly;
+      # the old generic test score helper imposes its own 1e-8 floor.
+      signal <- nuis$m1_hat - nuis$m0_hat +
+        dat$D * (dat$Y - nuis$m1_hat) / nuis$e_hat -
+        (1 - dat$D) * (dat$Y - nuis$m0_hat) / (1 - nuis$e_hat)
+      expected <- cate_dnn(X = as.matrix(dat[, x_cols]), x0 = dgp$x0,
+        pseudo_outcome = signal, k = 1L, s = case$s, se = TRUE)
+      actual <- suppressWarnings(sim_cate_one_rep(
+        n = case$n, kx = 2L, k = 1L, s = case$s,
+        design = "dgp3_sparse_overlap", methods = case$method,
+        seed = case$seed, clip = clip, n_folds = 4L))
+      expect_identical(actual$status, "ok")
+      expect_equal(actual$tau_hat, expected$tau, tolerance = 1e-12)
+      expect_equal(actual$se, expected$se, tolerance = 1e-12)
     }
-    expect_true(any(nuis$e_hat < 1e-8 | nuis$e_hat > 1 - 1e-8))
-    # Independent score formula uses the requested-clipped predictions directly;
-    # the old generic test score helper imposes its own 1e-8 floor.
-    signal <- nuis$m1_hat - nuis$m0_hat +
-      dat$D * (dat$Y - nuis$m1_hat) / nuis$e_hat -
-      (1 - dat$D) * (dat$Y - nuis$m0_hat) / (1 - nuis$e_hat)
-    expected <- cate_dnn(X = as.matrix(dat[, x_cols]), x0 = dgp$x0,
-      pseudo_outcome = signal, k = 1L, s = case$s, se = TRUE)
-    actual <- suppressWarnings(sim_cate_one_rep(
-      n = case$n, kx = 2L, k = 1L, s = case$s,
-      design = "dgp3_sparse_overlap", methods = case$method,
-      seed = case$seed, clip = clip, n_folds = 4L))
-    expect_identical(actual$status, "ok")
-    expect_equal(actual$tau_hat, expected$tau, tolerance = 1e-12)
-    expect_equal(actual$se, expected$se, tolerance = 1e-12)
-  }
+  })
 })
 
 test_that("invalid CATE cross-fit fold counts propagate argument errors", {

@@ -4,14 +4,15 @@
 # annotation.
 
 .plot_diag_cate_df <- function(n = 120L, seed = 71L) {
-  set.seed(seed)
-  df <- data.frame(X1 = rnorm(n), X2 = rnorm(n))
-  df$e <- plogis(0.5 * df$X1)
-  df$T <- as.integer(runif(n) < df$e)
-  df$m0 <- df$X1
-  df$m1 <- df$X1 + 1
-  df$Y <- ifelse(df$T == 1L, df$m1, df$m0) + rnorm(n, sd = 0.3)
-  df
+  .test_rng_scope({
+    df <- data.frame(X1 = rnorm(n), X2 = rnorm(n))
+    df$e <- plogis(0.5 * df$X1)
+    df$T <- as.integer(runif(n) < df$e)
+    df$m0 <- df$X1
+    df$m1 <- df$X1 + 1
+    df$Y <- ifelse(df$T == 1L, df$m1, df$m0) + rnorm(n, sd = 0.3)
+    df
+  }, seed = seed)
 }
 
 .plot_diag_cate_fit <- function(n = 120L, m = 5L, seed = 71L, se = FALSE) {
@@ -25,31 +26,34 @@
 }
 
 .plot_diag_matrix_cate_fit <- function(n = 100L, m = 5L, seed = 72L) {
-  set.seed(seed)
-  X <- matrix(rnorm(n * 2L), n, 2L)
-  cate_dnn(
-    X = X, X0 = cbind(seq(-1, 1, length.out = m), 0),
-    pseudo_outcome = rnorm(n, mean = X[, 1L]),
-    k = 1L, s = 15L, se = FALSE
-  )
+  .test_rng_scope({
+    X <- matrix(rnorm(n * 2L), n, 2L)
+    cate_dnn(
+      X = X, X0 = cbind(seq(-1, 1, length.out = m), 0),
+      pseudo_outcome = rnorm(n, mean = X[, 1L]),
+      k = 1L, s = 15L, se = FALSE
+    )
+  }, seed = seed)
 }
 
 test_that("meta stores the jackknife type across wrappers", {
-  fit_se <- .plot_diag_cate_fit(se = TRUE)
-  expect_identical(fit_se$meta$jackknife, "fast")
-  fit_nose <- .plot_diag_cate_fit(se = FALSE)
-  expect_identical(fit_nose$meta$jackknife, "none")
+  .test_rng_scope({
+    fit_se <- .plot_diag_cate_fit(se = TRUE)
+    expect_identical(fit_se$meta$jackknife, "fast")
+    fit_nose <- .plot_diag_cate_fit(se = FALSE)
+    expect_identical(fit_nose$meta$jackknife, "none")
 
-  set.seed(73)
-  n <- 50L
-  X <- matrix(rnorm(n * 2L), n, 2L)
-  y <- rnorm(n)
-  fit_np <- np_dnn(X = X, x0 = c(0, 0), Y = y, k = 1L, s = 8L,
-                   se = TRUE, jackknife = "loo")
-  expect_identical(fit_np$meta$jackknife, "loo")
-  fit_tdnn <- np_tdnn(X = X, x0 = c(0, 0), Y = y, s1 = 4L, s2 = 8L,
-                      se = FALSE)
-  expect_identical(fit_tdnn$meta$jackknife, "none")
+    set.seed(73)
+    n <- 50L
+    X <- matrix(rnorm(n * 2L), n, 2L)
+    y <- rnorm(n)
+    fit_np <- np_dnn(X = X, x0 = c(0, 0), Y = y, k = 1L, s = 8L,
+                     se = TRUE, jackknife = "loo")
+    expect_identical(fit_np$meta$jackknife, "loo")
+    fit_tdnn <- np_tdnn(X = X, x0 = c(0, 0), Y = y, s1 = 4L, s2 = 8L,
+                        se = FALSE)
+    expect_identical(fit_tdnn$meta$jackknife, "none")
+  })
 })
 
 test_that("overlap mass panel draws arms, guides, bands, and violations", {
@@ -86,45 +90,47 @@ test_that("overlap mass panel draws arms, guides, bands, and violations", {
 })
 
 test_that("overlap inputs follow the precedence chain", {
-  skip_if_not_installed("ggplot2")
-  fit_mat <- .plot_diag_matrix_cate_fit()
+  .test_rng_scope({
+    skip_if_not_installed("ggplot2")
+    fit_mat <- .plot_diag_matrix_cate_fit()
 
-  # No stored treatment: actionable error naming both remedies.
-  expect_error(plot_overlap(fit_mat, type = "mass"), "t_col")
-  expect_error(plot_overlap(fit_mat, type = "mass"), "treatment")
+    # No stored treatment: actionable error naming both remedies.
+    expect_error(plot_overlap(fit_mat, type = "mass"), "t_col")
+    expect_error(plot_overlap(fit_mat, type = "mass"), "treatment")
 
-  # User-supplied treatment vector unlocks the panel.
-  set.seed(72)
-  X <- matrix(rnorm(100L * 2L), 100L, 2L) # same draw as the fit helper
-  t_vec <- as.integer(runif(100L) < 0.5)
-  p <- plot_overlap(fit_mat, type = "mass", treatment = t_vec)
-  expect_s3_class(p, "ggplot")
-  expect_error(
-    plot_overlap(fit_mat, type = "mass", treatment = t_vec[-1L]),
-    "length"
-  )
+    # User-supplied treatment vector unlocks the panel.
+    set.seed(72)
+    X <- matrix(rnorm(100L * 2L), 100L, 2L) # same draw as the fit helper
+    t_vec <- as.integer(runif(100L) < 0.5)
+    p <- plot_overlap(fit_mat, type = "mass", treatment = t_vec)
+    expect_s3_class(p, "ggplot")
+    expect_error(
+      plot_overlap(fit_mat, type = "mass", treatment = t_vec[-1L]),
+      "length"
+    )
 
-  # Propensity view: stored e gives densities; matrix fit errors with the
-  # e_col remedy; a supplied propensity vector unlocks densities.
-  fit <- .plot_diag_cate_fit(m = 5L)
-  p_dens <- plot_overlap(fit, type = "propensity", targets = c(1L, 5L))
-  expect_true("GeomDensity" %in% .plot_layer_geoms(p_dens))
-  expect_identical(class(p_dens$facet)[1L], "FacetWrap")
+    # Propensity view: stored e gives densities; matrix fit errors with the
+    # e_col remedy; a supplied propensity vector unlocks densities.
+    fit <- .plot_diag_cate_fit(m = 5L)
+    p_dens <- plot_overlap(fit, type = "propensity", targets = c(1L, 5L))
+    expect_true("GeomDensity" %in% .plot_layer_geoms(p_dens))
+    expect_identical(class(p_dens$facet)[1L], "FacetWrap")
 
-  expect_error(plot_overlap(fit_mat, type = "propensity"), "e_col")
-  p_dens2 <- plot_overlap(fit_mat, type = "propensity",
-                          propensity = plogis(rnorm(100L)))
-  expect_true("GeomDensity" %in% .plot_layer_geoms(p_dens2))
-  expect_error(
-    plot_overlap(fit_mat, type = "propensity", propensity = rep(2, 100L)),
-    "in \\(0, 1\\)"
-  )
+    expect_error(plot_overlap(fit_mat, type = "propensity"), "e_col")
+    p_dens2 <- plot_overlap(fit_mat, type = "propensity",
+                            propensity = plogis(rnorm(100L)))
+    expect_true("GeomDensity" %in% .plot_layer_geoms(p_dens2))
+    expect_error(
+      plot_overlap(fit_mat, type = "propensity", propensity = rep(2, 100L)),
+      "in \\(0, 1\\)"
+    )
 
-  # Non-cate objects are rejected.
-  set.seed(75)
-  fit_np <- np_dnn(X = X, x0 = c(0, 0), Y = rnorm(100L), k = 1L, s = 8L,
-                   se = FALSE)
-  expect_error(plot_overlap(fit_np), "cate_result")
+    # Non-cate objects are rejected.
+    set.seed(75)
+    fit_np <- np_dnn(X = X, x0 = c(0, 0), Y = rnorm(100L), k = 1L, s = 8L,
+                     se = FALSE)
+    expect_error(plot_overlap(fit_np), "rdistnn_cate_result")
+  })
 })
 
 test_that("diagnostics autoplot facets three metrics with the 0.9n guide", {
@@ -172,30 +178,32 @@ test_that("cate dashboard composes with the metadata annotation contract", {
 })
 
 test_that("dashboards substitute and degrade per availability", {
-  skip_if_not_installed("ggplot2")
-  skip_if_not_installed("patchwork")
+  .test_rng_scope({
+    skip_if_not_installed("ggplot2")
+    skip_if_not_installed("patchwork")
 
-  # Matrix-interface cate fit: overlap unavailable, diagnostics facets
-  # substituted; the dashboard still composes.
-  fit_mat <- .plot_diag_matrix_cate_fit()
-  dash <- plot_dashboard(fit_mat)
-  expect_s3_class(dash, "patchwork")
+    # Matrix-interface cate fit: overlap unavailable, diagnostics facets
+    # substituted; the dashboard still composes.
+    fit_mat <- .plot_diag_matrix_cate_fit()
+    dash <- plot_dashboard(fit_mat)
+    expect_s3_class(dash, "patchwork")
 
-  # np dashboard composes from estimates, diagnostics, and weight views.
-  set.seed(76)
-  n <- 80L
-  X <- matrix(rnorm(n * 2L), n, 2L)
-  fit_np <- np_dnn(
-    X = X, X0 = cbind(seq(-1, 1, length.out = 5L), 0),
-    Y = X[, 1L] + rnorm(n, sd = 0.3), k = 1L, s = 12L,
-    return = c("W", "dx")
-  )
-  dash_np <- plot_dashboard(fit_np)
-  expect_s3_class(dash_np, "patchwork")
+    # np dashboard composes from estimates, diagnostics, and weight views.
+    set.seed(76)
+    n <- 80L
+    X <- matrix(rnorm(n * 2L), n, 2L)
+    fit_np <- np_dnn(
+      X = X, X0 = cbind(seq(-1, 1, length.out = 5L), 0),
+      Y = X[, 1L] + rnorm(n, sd = 0.3), k = 1L, s = 12L,
+      return = c("W", "dx")
+    )
+    dash_np <- plot_dashboard(fit_np)
+    expect_s3_class(dash_np, "patchwork")
 
-  # Unsupported classes are rejected.
-  expect_error(plot_dashboard(lm(y ~ x, data.frame(y = 1:4, x = 1:4))),
-               "not implemented")
+    # Unsupported classes are rejected.
+    expect_error(plot_dashboard(lm(y ~ x, data.frame(y = 1:4, x = 1:4))),
+                 "not implemented")
+  })
 })
 
 test_that("dashboard returns a named panel list when patchwork is absent", {

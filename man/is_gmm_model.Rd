@@ -10,7 +10,7 @@ is_gmm_model(x)
 \item{x}{Object to test.}
 }
 \value{
-\code{TRUE} when \code{x} inherits from class \code{gmm_model}.
+\code{TRUE} when \code{x} inherits from class \code{rdistnn_gmm_model}.
 }
 \description{
 Test whether an object is a GMM model

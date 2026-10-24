@@ -5,7 +5,7 @@
 # --- Minimal helper bootstrap (internal utils or inst/bench) ------------------
 if (!exists("rdistnn_bench_require", inherits = TRUE)) {
   cand <- c(system.file("bench", "utils-bench.R", package = "RdistNN"),
-            file.path("inst","bench","utils-bench.R"))
+            file.path("inst", "bench", "utils-bench.R"))
   cand <- cand[file.exists(cand)]
   for (f in cand) {
     try(suppressWarnings(source(f, local = TRUE)), silent = TRUE)
@@ -32,7 +32,7 @@ if (!exists("rdistnn_bench_require", inherits = TRUE)) {
   }
   if (!exists("rdistnn_bench_print", inherits = TRUE)) {
     rdistnn_bench_print <- function(b) {
-      print(b[, c("expression","min","median","itr/sec","mem_alloc","gc/sec")])
+      print(b[, c("expression", "min", "median", "itr/sec", "mem_alloc", "gc/sec")])
     }
   }
 }
@@ -69,6 +69,7 @@ rdistnn_bench_plqr <- function(
   # D | X: centered around m_D(X)
   D <- mD + matrix(rnorm(n * pD, sd = 0.5), n, pD,
                    dimnames = list(NULL, paste0("D", seq_len(pD))))
+  colnames(D) <- paste0("D", seq_len(pD))
 
   # beta and Y so that P(Y <= D^T beta + q) = tau in expectation
   if (is.null(beta)) beta <- rep(0, pD) else beta <- as.numeric(beta)
@@ -96,14 +97,14 @@ rdistnn_bench_plqr <- function(
 
   # --- Build pure-score -------------------------------------------------------
   sc <- score_plqr_component(
-    x0 = x0, x_cols = x_cols, D_cols = D_cols, q_col = q_col, mD_cols = mD_cols,
-    beta = beta, j = as.integer(j), tau = tau,
-    s = as.integer(s), k = 1L
+    x0 = x0, x_cols = x_cols, D_cols = D_cols, g_col = q_col, y_col = "Y", mD_cols = mD_cols,
+    theta = beta, j = as.integer(j), tau = tau,
+    s = as.integer(s)
   )
 
-  # setup() => ctx with g
+  # setup() => ctx with numeric score
   ctx <- sc$setup(df)
-  if (is.null(ctx$g) || length(ctx$g) != n) stop("ctx$g not set correctly by setup().")
+  if (is.null(ctx$score) || length(ctx$score) != n) stop("ctx$score not set correctly by setup().")
   if (n < s) stop(sprintf("n (%d) must be >= s (%d).", n, s), call. = FALSE)
 
   # Subset indices
@@ -113,65 +114,31 @@ rdistnn_bench_plqr <- function(
   eval_score_batch <- function() as.numeric(sc$eval_batch(idx, df, ctx, NULL))
   eval_score_loop  <- function() apply(idx, 1L, function(r) sc$eval(r, df, ctx, NULL))
   eval_baseline    <- function() {
-    gi <- ctx$g
+    gi <- ctx$score
     rowSums(matrix(gi[idx], nrow = nrow(idx)))
   }
 
-  # --- Optional C++ helpers (robust scalar detection; ctx rebuilt from df) ---
-  c_syms <- c("rustat_plqr_ctx_create",
-              "rustat_plqr_ctx_set_beta",
-              "rustat_plqr_g_all",
-              "rustat_plqr_g_indexed")
-
-  in_search <- all(vapply(c_syms, exists, logical(1), mode = "function"))
-  in_ns <- FALSE
-  ns <- NULL
-  if ("RdistNN" %in% loadedNamespaces()) {
-    ns <- asNamespace("RdistNN")
-    in_ns <- all(vapply(c_syms, exists, logical(1), envir = ns, inherits = FALSE))
-  }
-  have_cpp <- isTRUE(in_search || in_ns)
-
-  eval_cpp_indexed <- NULL
-  eval_cpp_all     <- NULL
-
+  # --- Native production score generation and subset reduction ---
+  ns <- asNamespace("RdistNN")
+  symbols <- c("rustat_plqr_ctx_create", "rustat_plqr_g_all", "rustat_subset_row_sums_g")
+  have_cpp <- all(vapply(symbols, exists, logical(1), envir = ns, inherits = FALSE))
   if (have_cpp) {
-    # Resolve helpers
-    res <- function(name) {
-      if (in_ns) get(name, envir = ns, inherits = FALSE) else get(name, inherits = TRUE)
-    }
-    plqr_ctx_create <- res("rustat_plqr_ctx_create")
-    plqr_g_all      <- res("rustat_plqr_g_all")
-    plqr_g_indexed  <- res("rustat_plqr_g_indexed")
-
-    # REBUILD inputs in EXACTLY the same order used by the score (handles pass_names=TRUE)
-    D_cpp  <- as.matrix(df[, D_cols,  drop = FALSE])
-    mD_cpp <- as.matrix(df[, mD_cols, drop = FALSE])
-    qx_cpp <- df[[q_col]]  # works for both numeric index and name
-    Y_cpp  <- df$Y
-
-    cpp_ctx <- plqr_ctx_create(Y_cpp, D_cpp, qx_cpp, mD_cpp, beta, tau, as.integer(j))
-
-    # Column-major flattening to match gi[idx] semantics
-    eval_cpp_indexed <- function() {
-      flat <- as.integer(idx)                # column-major
-      gi   <- plqr_g_indexed(flat, cpp_ctx)  # length K*s
-      rowSums(matrix(gi, nrow = nrow(idx)))  # default fill = column-major
-    }
-    eval_cpp_all <- function() {
-      gi <- plqr_g_all(cpp_ctx)               # length n
-      rowSums(matrix(gi[idx], nrow = nrow(idx)))
-    }
+    create <- get(symbols[1L], envir = ns, inherits = FALSE)
+    all <- get(symbols[2L], envir = ns, inherits = FALSE)
+    subset <- get(symbols[3L], envir = ns, inherits = FALSE)
+    cpp_ctx <- create(df$Y, as.matrix(df[, D_cols, drop = FALSE]), df[[q_col]],
+      as.matrix(df[, mD_cols, drop = FALSE]), beta, tau, as.integer(j))
+    eval_cpp_subset <- function() subset(idx, ctx$score)
+    eval_cpp_score_subset <- function() subset(idx, all(cpp_ctx))
   }
-
 
   # --- Parity checks (fail fast) ---------------------------------------------
   sb <- eval_score_batch()
   rdistnn_bench_parity(sb, eval_baseline(), 1e-12, "score vs baseline")
   rdistnn_bench_parity(sb, as.numeric(eval_score_loop()), 1e-12, "batch vs loop")
   if (have_cpp) {
-    rdistnn_bench_parity(sb, eval_cpp_indexed(), 1e-12, "score vs cpp_indexed")
-    rdistnn_bench_parity(sb, eval_cpp_all(),     1e-12, "score vs cpp_all")
+    rdistnn_bench_parity(sb, eval_cpp_subset(), 1e-12, "score vs native subset")
+    rdistnn_bench_parity(sb, eval_cpp_score_subset(), 1e-12, "score vs native score and subset")
   }
 
   # --- Benchmark --------------------------------------------------------------
@@ -180,8 +147,8 @@ rdistnn_bench_plqr <- function(
       PLQR_score_eval_batch = eval_score_batch(),
       PLQR_baseline_rowSums = eval_baseline(),
       PLQR_loop_eval        = eval_score_loop(),
-      PLQR_cpp_indexed      = eval_cpp_indexed(),
-      PLQR_cpp_all          = eval_cpp_all(),
+      PLQR_native_subset       = eval_cpp_subset(),
+      PLQR_native_score_subset = eval_cpp_score_subset(),
       iterations = reps,
       check = TRUE
     )

@@ -40,6 +40,7 @@ test_that("compiled dispatch can be disabled explicitly", {
 })
 
 test_that("rank jackknife compiled and R engines agree under the option", {
+  withr::local_preserve_seed()
   skip_if(
     is.null(.rdistnn_compiled_fun("rustat_jackknife_fast_rank")),
     "Compiled jackknife symbol is unavailable."
@@ -65,6 +66,7 @@ test_that("rank jackknife compiled and R engines agree under the option", {
 })
 
 test_that("np_dnn estimates and inference agree across engine modes", {
+  withr::local_preserve_seed()
   skip_if(
     is.null(.rdistnn_compiled_fun("rustat_dist_l2")),
     "Compiled RdistNN symbols are unavailable."

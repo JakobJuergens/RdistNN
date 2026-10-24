@@ -7,7 +7,7 @@
 plot_conditioning(object, cond_limits = c(1000, 1e+06), ...)
 }
 \arguments{
-\item{object}{A \code{plqr_result} from \code{\link[=plqr_dnn]{plqr_dnn()}}.}
+\item{object}{A \code{rdistnn_plqr_result} from \code{\link[=plqr_dnn]{plqr_dnn()}}.}
 
 \item{cond_limits}{Numeric length-2 vector (default \code{c(1e3, 1e6)});
 dashed guides drawn at these condition numbers.}

@@ -9,7 +9,11 @@
 ord_to_ranks <- function(ord) {
   ord <- as.integer(ord)
   n <- length(ord)
-  if (!setequal(ord, seq_len(n))) stop("`ord` must be a permutation of 1..n.", call. = FALSE)
+  if (!setequal(ord, seq_len(n))) .dnn_abort(
+    "argument_invalid",
+    "`ord` must be a permutation of 1..n.",
+    argument = "ord"
+  )
   r <- integer(n)
   r[ord] <- seq_len(n)
   r

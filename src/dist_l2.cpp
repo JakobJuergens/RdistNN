@@ -122,7 +122,7 @@ static inline void dist_l2_batch_impl(const double *Xp, int n, int p, const doub
 // Thin wrappers: un/scaled, single/batch, and order-by distance
 // =====================================================================
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 NumericVector rustat_dist_l2(NumericMatrix X, NumericVector x0, bool squared = false) {
   const int n = X.nrow(), p = X.ncol();
   if (x0.size() != p)
@@ -133,7 +133,7 @@ NumericVector rustat_dist_l2(NumericMatrix X, NumericVector x0, bool squared = f
   return out;
 }
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 NumericVector rustat_dist_l2_scaled(NumericMatrix X, NumericVector x0, NumericVector inv_s,
                                     bool squared = false) {
   const int n = X.nrow(), p = X.ncol();
@@ -148,7 +148,7 @@ NumericVector rustat_dist_l2_scaled(NumericMatrix X, NumericVector x0, NumericVe
 }
 
 // Optional convenience: unscaled batch
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 NumericMatrix rustat_dist_l2_batch(NumericMatrix X, NumericMatrix X0, bool squared = false) {
   const int n = X.nrow(), p = X.ncol(), m = X0.nrow();
   if (X0.ncol() != p)
@@ -160,7 +160,7 @@ NumericMatrix rustat_dist_l2_batch(NumericMatrix X, NumericMatrix X0, bool squar
   return out;
 }
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 NumericMatrix rustat_dist_l2_scaled_batch(NumericMatrix X, NumericMatrix X0, NumericVector inv_s,
                                           bool squared = false) {
   const int n = X.nrow(), p = X.ncol(), m = X0.nrow();
@@ -185,7 +185,7 @@ static inline IntegerVector order_by_dx(const std::vector<double> &dx) {
   return ord;
 }
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 Rcpp::List rustat_order_by_l2(NumericMatrix X, NumericVector x0, bool squared = false) {
   const int n = X.nrow(), p = X.ncol();
   if (x0.size() != p)
@@ -196,7 +196,7 @@ Rcpp::List rustat_order_by_l2(NumericMatrix X, NumericVector x0, bool squared = 
   return List::create(_["dx"] = NumericVector(dx.begin(), dx.end()), _["ord"] = order_by_dx(dx));
 }
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 Rcpp::List rustat_order_by_l2_scaled(NumericMatrix X, NumericVector x0, NumericVector inv_s,
                                      bool squared = false) {
   const int n = X.nrow(), p = X.ncol();

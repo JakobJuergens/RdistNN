@@ -1,8 +1,9 @@
 .rank_table_rank_matrix <- function(n, m, seed = 101L) {
-  set.seed(seed)
-  R <- replicate(m, sample.int(n))
-  storage.mode(R) <- "integer"
-  R
+  .test_rng_scope({
+    R <- replicate(m, sample.int(n))
+    storage.mode(R) <- "integer"
+    R
+  }, seed = seed)
 }
 
 .rank_table_reference_batch <- function(R, ref_one) {
@@ -133,7 +134,7 @@ test_that("rank_weight_eval_batch prefers table path when present", {
     },
     .__kind = "rank_weight"
   )
-  class(spec) <- c("rank_weight", class(spec))
+  class(spec) <- c("rdistnn_rank_weight", class(spec))
 
   R <- .rank_table_rank_matrix(n = 7L, m = 2L, seed = 404L)
   tab <- spec$table(nrow(R))
@@ -151,23 +152,25 @@ test_that("rank_weight_eval_batch prefers table path when present", {
 })
 
 test_that("rank-weight validation accepts table-only specs through the registry", {
-  nm <- paste0("table_only_", as.integer(runif(1, 1e6, 2e6)))
-  spec <- list(
-    name = nm,
-    table = function(n) {
-      w <- seq_len(n)
-      w / sum(w)
-    }
-  )
+  .test_rng_scope({
+    nm <- paste0("table_only_", as.integer(runif(1, 1e6, 2e6)))
+    spec <- list(
+      name = nm,
+      table = function(n) {
+        w <- seq_len(n)
+        w / sum(w)
+      }
+    )
 
-  register_rank_weight(nm, spec)
-  got <- get_rank_weight(nm)
-  expect_true(is_rank_weight(got))
+    register_rank_weight(nm, spec)
+    got <- get_rank_weight(nm)
+    expect_true(is_rank_weight(got))
 
-  R <- .rank_table_rank_matrix(n = 6L, m = 2L, seed = 454L)
-  tab <- got$table(nrow(R))
-  expect_equal(rank_weight_eval_batch(got, R), matrix(tab[R], nrow = nrow(R)), tolerance = 1e-12)
-  expect_equal(rank_weight_eval(got, R[, 1L]), tab[R[, 1L]], tolerance = 1e-12)
+    R <- .rank_table_rank_matrix(n = 6L, m = 2L, seed = 454L)
+    tab <- got$table(nrow(R))
+    expect_equal(rank_weight_eval_batch(got, R), matrix(tab[R], nrow = nrow(R)), tolerance = 1e-12)
+    expect_equal(rank_weight_eval(got, R[, 1L]), tab[R[, 1L]], tolerance = 1e-12)
+  }, seed = 123L)
 })
 
 test_that("custom rank weights without tables keep the old per-column fallback", {
@@ -191,7 +194,7 @@ test_that("custom rank weights without tables keep the old per-column fallback",
 test_that("rank-weight table accessor rejects malformed tables", {
   malformed <- function(table_fun) {
     spec <- list(name = "bad_table", table = table_fun, .__kind = "rank_weight")
-    class(spec) <- c("rank_weight", class(spec))
+    class(spec) <- c("rdistnn_rank_weight", class(spec))
     spec
   }
 
@@ -207,4 +210,14 @@ test_that("rank-weight table accessor rejects malformed tables", {
     RdistNN:::.rank_weight_table(malformed(function(n) rep(0, n)), 5L),
     "positive finite sum"
   )
+})
+
+test_that("rank table return defects carry callback identity", {
+  bad <- new_rank_weight("invalid_table", eval = function(ranks, ctx) rep(1, length(ranks)))
+  bad$table <- function(n) rep(NA_real_, n)
+  error <- tryCatch(.rank_weight_table(bad, 4L), error = identity)
+  expect_s3_class(error, "rdistnn_callback_error")
+  expect_identical(error$code, "callback_invalid")
+  expect_identical(error$argument, "rank_weight$table")
+  expect_match(conditionMessage(error), "Correct the callback")
 })

@@ -64,21 +64,33 @@
 
 .score_validate_scalar_numeric <- function(x, label) {
   if (!is.numeric(x) || length(x) != 1L || !is.finite(x)) {
-    stop(label, " must return a finite scalar numeric.", call. = FALSE)
+    .dnn_abort("callback_invalid",
+      paste0(label, " must return a finite scalar numeric."),
+      argument = label,
+      hint = "Correct the callback to return the documented type, dimensions and finite values."
+    )
   }
   as.numeric(x)
 }
 
 .score_validate_batch_numeric <- function(x, K, label) {
   if (!is.numeric(x) || length(x) != K || any(!is.finite(x))) {
-    stop(label, " must return numeric(K) with finite entries.", call. = FALSE)
+    .dnn_abort("callback_invalid",
+      paste0(label, " must return numeric(K) with finite entries."),
+      argument = label,
+      hint = "Correct the callback to return the documented type, dimensions and finite values."
+    )
   }
   as.numeric(x)
 }
 
 .score_validate_grad_scalar <- function(g, p, label) {
   if (!is.numeric(g) || length(g) != p || any(!is.finite(g))) {
-    stop(label, " must return finite numeric length(theta).", call. = FALSE)
+    .dnn_abort("callback_invalid",
+      paste0(label, " must return finite numeric length(theta)."),
+      argument = label,
+      hint = "Correct the callback to return the documented type, dimensions and finite values."
+    )
   }
   as.numeric(g)
 }
@@ -88,33 +100,39 @@
     if (p == 1L && is.numeric(G) && length(G) == K && all(is.finite(G))) {
       G <- matrix(as.numeric(G), nrow = K, ncol = 1L)
     } else {
-      stop(label, " must return a K x length(theta) finite matrix.", call. = FALSE)
+      .dnn_abort("callback_invalid",
+        paste0(label, " must return a K x length(theta) finite matrix."),
+        argument = label,
+        hint = "Correct the callback to return the documented type, dimensions and finite values."
+      )
     }
   }
   if (!is.matrix(G) || !is.numeric(G) || nrow(G) != K || ncol(G) != p || any(!is.finite(G))) {
-    stop(label, " must return a K x length(theta) finite matrix.", call. = FALSE)
+    .dnn_abort("callback_invalid",
+      paste0(label, " must return a K x length(theta) finite matrix."),
+      argument = label,
+      hint = "Correct the callback to return the documented type, dimensions and finite values."
+    )
   }
   matrix(as.numeric(G), nrow = K, ncol = p)
 }
 
 .score_fun_supports_theta <- function(fun) {
-  fmls <- tryCatch(names(formals(fun)), error = function(e) character())
+  fmls <- names(formals(fun))
   any(c("theta", "param", "...") %in% fmls)
 }
 
 .score_assert_theta_support <- function(fun, label) {
   if (!.score_fun_supports_theta(fun)) {
-    stop(
+    .dnn_abort("argument_invalid", paste0(
       label, " does not declare `theta`/`param` (or `...`); ",
-      "cannot use parameter-aware path.",
-      call. = FALSE
-    )
+      "cannot use parameter-aware path."), argument = label)
   }
 }
 
 # Internal low-level helper; user-facing entry is score_diff_path().
 score_eval_param <- function(score, idxs, data, theta, ctx = NULL, rng = NULL) {
-  if (!is_score(score)) .abort_bad_arg("score", "must be a `ustat_score`")
+  if (!is_score(score)) .abort_bad_arg("score", "must be a `rdistnn_ustat_score`")
   n <- .score_n(data)
   s <- score_order(score, n, data, ctx)
   idxs <- .score_check_idxs(idxs, n, s)
@@ -147,16 +165,14 @@ score_eval_param <- function(score, idxs, data, theta, ctx = NULL, rng = NULL) {
     return(.score_validate_scalar_numeric(out, "score$eval_batch"))
   }
 
-  stop(
+  .dnn_abort("argument_invalid", paste0(
     "No parameter-aware evaluator available. Provide `eval_param`/`eval_param_batch` ",
-    "or an `eval`/`eval_batch` that accepts `theta`.",
-    call. = FALSE
-  )
+    "or an `eval`/`eval_batch` that accepts `theta`."), argument = "score")
 }
 
 # Internal low-level helper; user-facing entry is score_diff_path().
 score_eval_param_batch <- function(score, subs, data, theta, ctx = NULL, rng = NULL) {
-  if (!is_score(score)) .abort_bad_arg("score", "must be a `ustat_score`")
+  if (!is_score(score)) .abort_bad_arg("score", "must be a `rdistnn_ustat_score`")
   n <- .score_n(data)
   s <- score_order(score, n, data, ctx)
   subs <- .score_check_subs(subs, n, s)
@@ -200,11 +216,9 @@ score_eval_param_batch <- function(score, subs, data, theta, ctx = NULL, rng = N
     return(.score_validate_batch_numeric(out, K, "score$eval"))
   }
 
-  stop(
+  .dnn_abort("argument_invalid", paste0(
     "No parameter-aware evaluator available. Provide `eval_param`/`eval_param_batch` ",
-    "or an `eval`/`eval_batch` that accepts `theta`.",
-    call. = FALSE
-  )
+    "or an `eval`/`eval_batch` that accepts `theta`."), argument = "score")
 }
 
 # Internal low-level helper; user-facing entry is score_diff_path().
@@ -213,13 +227,13 @@ score_grad <- function(
   method = c("auto", "analytic", "fd"),
   fd_step = NULL, fd_scheme = NULL
 ) {
-  if (!is_score(score)) .abort_bad_arg("score", "must be a `ustat_score`")
+  if (!is_score(score)) .abort_bad_arg("score", "must be a `rdistnn_ustat_score`")
   n <- .score_n(data)
   s <- score_order(score, n, data, ctx)
   idxs <- .score_check_idxs(idxs, n, s)
   theta <- .score_check_theta(theta)
   p <- length(theta)
-  method <- match.arg(method)
+  method <- .dnn_match_arg(method)
 
   args_scalar <- list(idxs = idxs, data = data, theta = theta, param = theta, ctx = ctx, rng = rng)
   args_batch1 <- list(
@@ -238,7 +252,10 @@ score_grad <- function(
       return(as.numeric(G[1L, ]))
     }
     if (method == "analytic") {
-      stop("No analytic derivative provided (`grad` or `grad_batch`).", call. = FALSE)
+      .dnn_abort("argument_invalid",
+        paste0("No analytic derivative provided (`grad` or `grad_batch`)."),
+        argument = "method"
+      )
     }
   }
 
@@ -273,14 +290,14 @@ score_grad_batch <- function(
   method = c("auto", "analytic", "fd"),
   fd_step = NULL, fd_scheme = NULL
 ) {
-  if (!is_score(score)) .abort_bad_arg("score", "must be a `ustat_score`")
+  if (!is_score(score)) .abort_bad_arg("score", "must be a `rdistnn_ustat_score`")
   n <- .score_n(data)
   s <- score_order(score, n, data, ctx)
   subs <- .score_check_subs(subs, n, s)
   K <- nrow(subs)
   theta <- .score_check_theta(theta)
   p <- length(theta)
-  method <- match.arg(method)
+  method <- .dnn_match_arg(method)
 
   args_batch <- list(subs = subs, data = data, theta = theta, param = theta, ctx = ctx, rng = rng)
 
@@ -301,7 +318,10 @@ score_grad_batch <- function(
       return(G)
     }
     if (method == "analytic") {
-      stop("No analytic derivative provided (`grad` or `grad_batch`).", call. = FALSE)
+      .dnn_abort("argument_invalid",
+        paste0("No analytic derivative provided (`grad` or `grad_batch`)."),
+        argument = "method"
+      )
     }
   }
 
@@ -336,7 +356,7 @@ score_grad_batch <- function(
 #' parameter vector `theta`, using analytic or finite-difference derivatives.
 #' The `data` argument is evaluated when the path is constructed.
 #'
-#' @param score A `ustat_score`.
+#' @param score A `rdistnn_ustat_score`.
 #' @param data Data object passed to score evaluators.
 #' @param ctx Optional context from [score_setup()]. If `NULL`, one is
 #'   created via [score_setup()].
@@ -371,9 +391,9 @@ score_diff_path <- function(
   fd_step = NULL, fd_scheme = NULL
 ) {
   if (!is_score(score)) {
-    .abort_bad_arg("score", "must be a `ustat_score`")
+    .abort_bad_arg("score", "must be a `rdistnn_ustat_score`")
   }
-  method <- match.arg(method)
+  method <- .dnn_match_arg(method)
   fd_step_eff <- if (is.null(fd_step)) score$fd_step else fd_step
   fd_step_eff <- .score_check_fd_step_base(fd_step_eff)
   fd_scheme_eff <- if (is.null(fd_scheme)) score$fd_scheme else fd_scheme
@@ -409,13 +429,13 @@ score_diff_path <- function(
       fd_scheme = fd_scheme_eff
     )
   )
-  class(out) <- "score_diff_path"
+  class(out) <- "rdistnn_score_diff_path"
   out
 }
 
-#' Print a `score_diff_path` object
+#' Print a `rdistnn_score_diff_path` object
 #'
-#' @param x A `score_diff_path` object created by [score_diff_path()].
+#' @param x A `rdistnn_score_diff_path` object created by [score_diff_path()].
 #' @param ... Not used.
 #' @return `x`, invisibly.
 #' @examples
@@ -426,8 +446,8 @@ score_diff_path <- function(
 #' )
 #' print(score_diff_path(sc, data = c(1, 2, 3)))
 #' @export
-print.score_diff_path <- function(x, ...) {
-  cat("<score_diff_path>\n", sep = "")
+print.rdistnn_score_diff_path <- function(x, ...) {
+  cat("<rdistnn_score_diff_path>\n", sep = "")
   cat("  score : ", x$meta$score_name, "\n", sep = "")
   cat("  grad  : ", x$meta$method, "\n", sep = "")
   cat("  fd    : step=", paste0(x$meta$fd_step, collapse = ","), ", scheme=", x$meta$fd_scheme, "\n", sep = "")

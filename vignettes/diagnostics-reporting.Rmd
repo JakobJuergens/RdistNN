@@ -49,6 +49,31 @@ Warnings inherit `rdistnn_warning` with a specific family such as
 use those identities when handling a recognized condition, rather than parsing
 English messages.
 
+Input errors inherit `rdistnn_input_error`; invalid extension return values
+inherit `rdistnn_callback_error`, and computed range failures inherit
+`rdistnn_numerical_error`. Owned conditions carry a semantic `code` and, when
+applicable, the public `argument`, expected/actual facts and a bounded
+`operation` name. The console prefix identifies that public function without
+storing the full call or its data. Catch the specific family you can handle;
+unexpected callback, native and resource errors retain their original identity.
+
+Localization notice facts do not require parsing or displaying a warning.
+Supported fits retain `fit$meta$target_notices`, with `target_id`, `distance_ties`,
+`weight_concentration` and `weak_localization`, plus totals
+`fit$meta$n_tied_targets` and `fit$meta$n_weak_targets`. These fields are available
+even with `return = character()` and survive current-fit serialization.
+Candidate views describe the selected candidate's weights. The concentration
+is `1 / sum(w^2)` from final observation weights; it is a descriptive signed
+concentration for TDNN. The existing weak-localization guide is at least
+`.9 * n` with `n >= 2`; it is not a validity test.
+
+Use normal R handlers or, for example,
+`suppressWarnings(fit_call, classes = "rdistnn_distance_ties_warning")` to silence
+only the tie advisory. A new independent call still warns. Unknown character
+`return` entries warn and are ignored; malformed selectors such as missing or
+noncharacter values are input errors. Earlier fits lacking current diagnostic
+metadata require refitting.
+
 The shared fields include:
 
 - `n_eff`, `max_weight`, and top-weight shares;
@@ -136,6 +161,13 @@ as.data.frame(d_cate)[, c(
 Overlap diagnostics are available when the fit was constructed from treatment
 and propensity inputs. If `cate_dnn()` was called with only a direct
 `pseudo_outcome`, overlap fields remain present but are marked unavailable.
+
+`treated_ess` and `control_ess` normalize weights within their treatment arm
+before measuring concentration. An arm with one positive-weight observation
+has ESS one even if that observation receives tiny total weight; an arm with
+zero weight has `NA` ESS. Read these fields alongside `treated_mass` and
+`control_mass`: arm ESS describes concentration within an arm, while arm mass
+is the total localization weight assigned to that arm.
 
 Printing summarizes available arm information, propensity quantiles and
 top-five absolute score-contribution shares; the data frame retains each

@@ -23,7 +23,7 @@
 #' by the CLATE fit. Treatment uptake D is not used as the instrument arm.
 #' Refit a CLATE model whose retained instrument record is missing or invalid.
 #'
-#' @param object A `cate_result` or `clate_result` with the weight matrix `W` stored (the
+#' @param object A `rdistnn_cate_result` or `rdistnn_clate_result` with the weight matrix `W` stored (the
 #'   default).
 #' @param type One of `"mass"` or `"propensity"`.
 #' @param share_limits Numeric length-2 vector (default `c(0.1, 0.9)`);
@@ -65,13 +65,13 @@ plot_overlap <- function(object,
                          targets = NULL) {
   .dnn_reuse_scope(object)
   .plot_require_ggplot2("plot_overlap")
-  type <- match.arg(type)
-  clate <- inherits(object, "clate_result")
-  if (!inherits(object, "cate_result") && !clate) {
+  type <- .dnn_match_arg(type)
+  clate <- inherits(object, "rdistnn_clate_result")
+  if (!inherits(object, "rdistnn_cate_result") && !clate) {
     .abort_bad_arg(
       "object",
       sprintf(
-        "plot_overlap() supports cate_result or clate_result fits; got class '%s'",
+        "plot_overlap() supports rdistnn_cate_result or rdistnn_clate_result fits; got class '%s'",
         class(object)[1L]
       ),
       quoted = FALSE

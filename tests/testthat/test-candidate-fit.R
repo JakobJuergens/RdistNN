@@ -13,11 +13,12 @@
 }
 
 .candidate_view_np_case <- function(n = 42L, p = 2L, m = 3L, seed = 7707L) {
-  set.seed(seed)
-  X <- matrix(rnorm(n * p), nrow = n, ncol = p)
-  X0 <- matrix(rnorm(m * p), nrow = m, ncol = p)
-  y <- X[, 1L] - 0.35 * X[, min(2L, p)] + rnorm(n, sd = 0.25)
-  list(X = X, X0 = X0, y = y)
+  .test_rng_scope({
+    X <- matrix(rnorm(n * p), nrow = n, ncol = p)
+    X0 <- matrix(rnorm(m * p), nrow = m, ncol = p)
+    y <- X[, 1L] - 0.35 * X[, min(2L, p)] + rnorm(n, sd = 0.25)
+    list(X = X, X0 = X0, y = y)
+  }, seed = seed)
 }
 
 .candidate_view_rank_matrix <- function(n, m) {
@@ -25,7 +26,7 @@
 }
 
 .candidate_view_compare_np <- function(view, ref) {
-  expect_s3_class(view, "np_result")
+  expect_s3_class(view, "rdistnn_np_result")
   expect_equal(view$mu, ref$mu, tolerance = 1e-12)
   expect_equal(view$se, ref$se, tolerance = 1e-12)
   expect_equal(view$W, ref$W, tolerance = 1e-12)
@@ -38,7 +39,7 @@
 }
 
 .candidate_view_compare_cate <- function(view, ref) {
-  expect_s3_class(view, "cate_result")
+  expect_s3_class(view, "rdistnn_cate_result")
   expect_equal(view$tau, ref$tau, tolerance = 1e-12)
   expect_equal(view$se, ref$se, tolerance = 1e-12)
   expect_equal(view$W, ref$W, tolerance = 1e-12)
@@ -329,13 +330,13 @@ test_that("candidate_fit rejects stale cached ranks inconsistent with result dim
     "object\\$x0.*object\\$meta\\$m"
   )
 
-  fallback_ranks <- fit
-  fallback_ranks$.model$ranks <- NULL
-  fallback_ranks$ranks <- .candidate_view_rank_matrix(nrow(d$X) - 1L, nrow(d$X0))
-  expect_error(
-    candidate_fit(fallback_ranks, "lambda_1p5"),
-    "cached rank permutations|distance groups"
-  )
+  missing_ranks <- fit
+  missing_ranks$.model$ranks <- NULL
+  missing_ranks$ranks <- .candidate_view_rank_matrix(nrow(d$X) - 1L, nrow(d$X0))
+  err <- tryCatch(candidate_fit(missing_ranks, "lambda_1p5"), error = identity)
+  expect_s3_class(err, "rdistnn_state_error")
+  expect_identical(err$argument, "object$.model$ranks")
+  expect_match(conditionMessage(err), "Refit", fixed = TRUE)
 })
 
 test_that("candidate_fit rejects stale candidate estimate rows", {
@@ -416,12 +417,12 @@ test_that("candidate_fit errors are actionable", {
   expect_error(candidate_fit(malformed, "lambda_1"), "tuning_grid.*malformed")
 
   bad_tun <- .candidate_view_tuning(default_s = 4L, s_grid = c(1L, 4L, 6L))
-  infeasible <- suppressWarnings(np_dnn(
+  infeasible <- .with_test_warning_families(np_dnn(
     X = d$X, X0 = d$X0, Y = d$y,
     method = "exact", k = 2L, tuning = bad_tun, tuning_mode = "grid",
     se = TRUE,
     return = "W"
-  ))
+  ), "infeasible_candidates")
   bad_id <- infeasible$tuning_grid$candidates$candidate_id[
     infeasible$tuning_grid$candidates$status == "infeasible"
   ][[1L]]
@@ -430,6 +431,12 @@ test_that("candidate_fit errors are actionable", {
   failed <- fit
   failed$tuning_grid$candidates$status[[1L]] <- "failed"
   failed$tuning_grid$candidates$reason[[1L]] <- "boom in candidate"
+  id <- failed$tuning_grid$candidates$candidate_id[[1L]]
+  for (field in c("estimates", "diagnostics")) {
+    selected <- failed$tuning_grid[[field]]$candidate_id == id
+    failed$tuning_grid[[field]]$status[selected] <- "failed"
+    failed$tuning_grid[[field]]$reason[selected] <- "boom in candidate"
+  }
   expect_error(candidate_fit(failed, 1L), "failed.*boom in candidate")
 })
 test_that("candidate views require current metadata and weight controls", {

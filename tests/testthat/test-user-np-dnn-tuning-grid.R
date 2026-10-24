@@ -1,9 +1,10 @@
 .np_grid_np_data <- function(n = 42L, p = 2L, m = 3L, seed = 5505L) {
-  set.seed(seed)
-  X <- matrix(rnorm(n * p), nrow = n, ncol = p)
-  X0 <- matrix(rnorm(m * p), nrow = m, ncol = p)
-  y <- 0.75 * X[, 1L] - 0.35 * X[, min(2L, p)] + rnorm(n, sd = 0.2)
-  list(X = X, X0 = X0, y = y)
+  .test_rng_scope({
+    X <- matrix(rnorm(n * p), nrow = n, ncol = p)
+    X0 <- matrix(rnorm(m * p), nrow = m, ncol = p)
+    y <- 0.75 * X[, 1L] - 0.35 * X[, min(2L, p)] + rnorm(n, sd = 0.2)
+    list(X = X, X0 = X0, y = y)
+  }, seed = seed)
 }
 
 .np_grid_np_tuning <- function(default_s = 4L, s_grid = c(2L, 4L, 4L, 6L)) {
@@ -78,7 +79,7 @@ test_that("np_dnn grid mode preserves default-candidate fields and extras", {
     return = c("W", "ranks", "ess", "tuning")
   )
 
-  expect_s3_class(grid, "np_result")
+  expect_s3_class(grid, "rdistnn_np_result")
   expect_equal(grid$mu, scalar$mu, tolerance = 0)
   expect_equal(grid$se, scalar$se, tolerance = 0)
   expect_equal(grid$W, scalar$W, tolerance = 0)

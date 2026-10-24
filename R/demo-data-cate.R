@@ -74,7 +74,7 @@ cate_demo_data <- function(n = 200,
     .abort_bad_arg("clip", "must be a finite numeric scalar in (0, 0.5)")
   }
   clip <- as.numeric(clip)
-  design <- match.arg(design)
+  design <- .dnn_match_arg(design)
   if (is.null(x0)) {
     x0 <- rep(0, p)
   } else {
@@ -154,10 +154,10 @@ cate_demo_data <- function(n = 200,
     }
     allowed_inject_cols <- c("Y", "aipw_oracle", "e_oracle", "m_oracle", "m0_oracle", "tau_oracle")
     if (!inject_col %in% allowed_inject_cols) {
-      stop(sprintf(
+      .dnn_abort("argument_invalid", sprintf(
         "Column '%s' (specified by `inject_col`) is not a valid injection target.\nValid options: %s",
         inject_col, paste(allowed_inject_cols, collapse = ", ")
-      ), call. = FALSE)
+      ), argument = "inject_col")
     }
     if (identical(inject, "na")) df[[inject_col]][idx_inject] <- NA_real_
     if (identical(inject, "inf")) df[[inject_col]][idx_inject] <- Inf

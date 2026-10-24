@@ -1,4 +1,4 @@
-test_that("diagnostics(cate_result) reports overlap when treatment state is available", {
+test_that("diagnostics(rdistnn_cate_result) reports overlap when treatment state is available", {
   .test_rng_scope({
     demo <- cate_demo_data(n = 70L, p = 2L, design = "hetero", sigma = 0.2, seed = 20L)
     fit <- cate_dnn(
@@ -17,7 +17,7 @@ test_that("diagnostics(cate_result) reports overlap when treatment state is avai
     )
     d <- diagnostics(fit)
 
-    expect_s3_class(d, "dnn_diagnostics")
+    expect_s3_class(d, "rdistnn_diagnostics")
     expect_true(all(d$overlap_available))
     expect_true(all(d$propensity_available))
 
@@ -44,7 +44,7 @@ test_that("diagnostics(cate_result) reports overlap when treatment state is avai
   }, seed = 777L)
 })
 
-test_that("diagnostics(cate_result) requires retained AIPW propensity state", {
+test_that("diagnostics(rdistnn_cate_result) requires retained AIPW propensity state", {
   .test_rng_scope({
     demo <- cate_demo_data(n = 60L, p = 2L, design = "hetero", sigma = 0.2, seed = 22L)
     fit <- cate_dnn(
@@ -68,7 +68,7 @@ test_that("diagnostics(cate_result) requires retained AIPW propensity state", {
   }, seed = 777L)
 })
 
-test_that("diagnostics(cate_result) validates retained treatment and propensity state", {
+test_that("diagnostics(rdistnn_cate_result) validates retained treatment and propensity state", {
   .test_rng_scope({
     demo <- cate_demo_data(n = 60L, p = 2L, design = "hetero", sigma = 0.2, seed = 23L)
     fit <- cate_dnn(
@@ -104,7 +104,7 @@ test_that("diagnostics(cate_result) validates retained treatment and propensity 
   }, seed = 777L)
 })
 
-test_that("diagnostics(cate_result) marks overlap unavailable on pseudo-outcome-only path", {
+test_that("diagnostics(rdistnn_cate_result) marks overlap unavailable on pseudo-outcome-only path", {
   .test_rng_scope({
     n <- 45L
     x_mat <- matrix(rnorm(n * 2L), n, 2L)

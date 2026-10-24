@@ -2,7 +2,7 @@
 % Please edit documentation in R/api-ranks.R
 \name{as_rank_weight}
 \alias{as_rank_weight}
-\title{Wrap a function as a rank_weight spec}
+\title{Wrap a function as a rdistnn_rank_weight spec}
 \usage{
 as_rank_weight(fun, name = "user_rank_weight")
 }
@@ -15,7 +15,7 @@ as_rank_weight(fun, name = "user_rank_weight")
 A rank-weight spec (list) with fields \code{name}, \code{eval}.
 }
 \description{
-Wrap a function as a rank_weight spec
+Wrap a function as a rdistnn_rank_weight spec
 }
 \examples{
 rw <- as_rank_weight(function(ranks) {

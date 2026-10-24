@@ -1,15 +1,18 @@
 # Independent explicit-deletion oracle: exact equality of computed distances,
 # ordinary canonical distance ordering and direct averaged rank-table weights.
+.with_test_warning_families <- function(code, families) {
+  classes <- paste0("rdistnn_", families, "_warning")
+  withCallingHandlers(code, warning = function(w) {
+    if (inherits(w, classes)) invokeRestart("muffleWarning")
+  })
+}
+
 .with_localization_policy_warnings <- function(code, near_uniform = TRUE) {
   # Only owned exact-distance and near-uniform condition classes are muffled.
   # Numerical, optimization, rescaling and other warnings remain visible.
   # Dedicated warning tests check the public message and its call scope.
-  withCallingHandlers(code, warning = function(w) {
-    if (inherits(w, "rdistnn_distance_ties_warning") ||
-        (near_uniform && inherits(w, "rdistnn_weak_localization_warning"))) {
-      invokeRestart("muffleWarning")
-    }
-  })
+  .with_test_warning_families(code, c("distance_ties",
+    if (near_uniform) "weak_localization"))
 }
 
 .with_distance_tie_warning <- function(code) {
@@ -20,9 +23,7 @@
 # numerical/status suites accept this one owned notice; multiplicity, contents
 # and warning promotion are tested by test-reporting-recovery.R.
 .with_partial_result_warning <- function(code) {
-  withCallingHandlers(code, warning = function(w) {
-    if (inherits(w, "rdistnn_partial_result_warning")) invokeRestart("muffleWarning")
-  })
+  .with_test_warning_families(code, "partial_result")
 }
 
 .block_oracle_average_weights <- function(W, dx) {

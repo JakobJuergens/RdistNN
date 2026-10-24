@@ -119,7 +119,7 @@ test_that("GMM reuses the first callback start after its dimension probe", {
   })
 })
 
-test_that("GMM keeps zero fallback and target-local start failures", {
+test_that("GMM keeps zero fallback and propagates target start failures", {
   .with_distance_tie_warning({
   evaluations <- numeric()
   model <- new_gmm_model("start_failure_control",
@@ -139,16 +139,14 @@ test_that("GMM keeps zero fallback and target-local start failures", {
     if (x0[1L] == 2) stop("first target start failed")
     1
   }
-  expect_warning(fit <- gmm_dnn(X = matrix(1:8), X0 = matrix(c(2, 6)),
+  expect_error(gmm_dnn(X = matrix(1:8), X0 = matrix(c(2, 6)),
     model_data = data.frame(y = 1:8), model = model, s = 3L, se = FALSE),
-    "target 1 failed: first target start failed")
-  expect_identical(calls, c(2, 6))
-  expect_true(is.na(coef(fit)[1L, 1L]))
-  expect_true(is.finite(coef(fit)[1L, 2L]))
+    "first target start failed")
+  expect_identical(calls, 2)
   })
 })
 
-test_that("GMM discovers positive-domain moments after an earlier callback failure", {
+test_that("GMM propagates later callback failures after a valid positive-domain probe", {
   .with_distance_tie_warning({
   calls <- numeric()
   model <- .audit_gmm_positive_domain_model(start = function(sample, ctx, w, x0) {
@@ -156,35 +154,32 @@ test_that("GMM discovers positive-domain moments after an earlier callback failu
     if (x0[1L] == 2) stop("first target start failed")
     1
   })
-  targets <- c(2, 6, 7)
+  targets <- c(6, 2, 7)
   y <- seq(.1, .8, length.out = 8L)
-  expect_warning(fit <- gmm_dnn(X = matrix(1:8), X0 = matrix(targets),
+  expect_error(gmm_dnn(X = matrix(1:8), X0 = matrix(targets),
     model_data = data.frame(y = y), model = model, s = 3L, se = FALSE),
-    "target 1 failed: first target start failed")
-  expect_identical(calls, targets)
-  expect_true(is.na(coef(fit)[1L, 1L]))
-  expect_equal(as.numeric(coef(fit)[1L, 2:3]),
-    as.numeric(exp(crossprod(y, fit$W[, 2:3]))), tolerance = 1e-5)
+    "first target start failed")
+  expect_identical(calls, c(6, 2))
   })
 })
 
-test_that("GMM keeps invalid-domain explicit starts local when a later probe succeeds", {
+test_that("GMM rejects invalid-domain explicit starts without trying later targets", {
   .with_distance_tie_warning({
   model <- .audit_gmm_positive_domain_model(start = function(...) {
     stop("Explicit starts must bypass the model callback.")
   })
   y <- seq(.1, .8, length.out = 8L)
-  expect_warning(fit <- gmm_dnn(X = matrix(1:8), X0 = matrix(c(2, 6)),
+  failure <- tryCatch(gmm_dnn(X = matrix(1:8), X0 = matrix(c(2, 6)),
     model_data = data.frame(y = y), model = model,
-    start = matrix(c(0, 1), nrow = 1L), s = 3L, se = FALSE),
-    "target 1 failed:.*non-finite")
-  expect_true(is.na(coef(fit)[1L, 1L]))
-  expect_equal(as.numeric(coef(fit)[1L, 2L]),
-    as.numeric(exp(crossprod(y, fit$W[, 2L]))), tolerance = 1e-5)
+    start = matrix(c(0, 1), nrow = 1L), s = 3L, se = FALSE), error = identity)
+  expect_s3_class(failure, "rdistnn_callback_error")
+  expect_identical(failure$code, "callback_invalid")
+  expect_identical(failure$argument, "model$moment_obs()")
+  expect_match(conditionMessage(failure), "non-finite")
   })
 })
 
-test_that("GMM retains all-target callback failures when zero identifies the moment shape", {
+test_that("GMM does not probe zero after the first callback start fails", {
   calls <- evaluations <- numeric()
   model <- new_gmm_model("all_start_failures",
     setup = function(sample, n, ...) list(y = sample$y),
@@ -196,17 +191,10 @@ test_that("GMM retains all-target callback failures when zero identifies the mom
       calls <<- c(calls, x0[1L])
       stop("target start failed")
     }, coef_names = "mean")
-  targets <- c(2, 6, 7)
-  seen <- character()
-  fit <- withCallingHandlers(gmm_dnn(X = matrix(1:8), X0 = matrix(targets),
+  targets <- c(2.25, 6.25, 7.25)
+  expect_error(gmm_dnn(X = matrix(1:8), X0 = matrix(targets),
     model_data = data.frame(y = 1:8), model = model, s = 3L, se = FALSE),
-    warning = function(w) {
-      message <- conditionMessage(w)
-      if (!startsWith(message, "Exact distance ties detected;")) seen <<- c(seen, message)
-      invokeRestart("muffleWarning")
-    })
-  expect_identical(calls, targets)
-  expect_identical(evaluations, 0)
-  expect_identical(seen, paste0("gmm_dnn: target ", 1:3, " failed: target start failed"))
-  expect_true(all(is.na(coef(fit))))
+    "target start failed")
+  expect_identical(calls, targets[1L])
+  expect_length(evaluations, 0L)
 })

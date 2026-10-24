@@ -8,7 +8,7 @@ test_that("plqr_dnn computes direct PLQR sandwich from supplied density", {
       se = TRUE, return = "W"
     )
 
-    expect_s3_class(fit, "plqr_result")
+    expect_s3_class(fit, "rdistnn_plqr_result")
     expect_equal(
       unname(fit$theta),
       matrix(d$theta_eval, nrow = length(d$theta_eval), ncol = nrow(d$X0))

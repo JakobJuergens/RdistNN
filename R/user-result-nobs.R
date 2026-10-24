@@ -9,14 +9,14 @@
 #' nobs(fit)
 #' @importFrom stats nobs
 #' @export
-nobs.np_result <- function(object, ...) {
+nobs.rdistnn_np_result <- function(object, ...) {
   .dnn_check_report_state(object)
   object$meta$n
 }
 
-#' @rdname nobs.np_result
+#' @rdname nobs.rdistnn_np_result
 #' @export
-nobs.cate_result <- function(object, ...) {
+nobs.rdistnn_cate_result <- function(object, ...) {
   .dnn_check_report_state(object)
   object$meta$n
 }

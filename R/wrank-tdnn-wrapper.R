@@ -1,6 +1,6 @@
 # Rank-weight spec constructors for TDNN (Demirkaya two-scale DNN, k = 1).
 #
-# These return rank_weight specs compatible with the rank API:
+# These return rdistnn_rank_weight specs compatible with the rank API:
 #   rank_weight_eval(), rank_weight_eval_batch(), weights_matrix(), etc.
 #
 # They use a table-based evaluation strategy: for a given n, the TDNN
@@ -17,7 +17,7 @@
 
 #' Rank-weight spec: TDNN exact (Demirkaya two-scale DNN, k = 1)
 #'
-#' Returns a `rank_weight` spec whose `eval_batch` uses the exact TDNN rank
+#' Returns a `rdistnn_rank_weight` spec whose `eval_batch` uses the exact TDNN rank
 #' table from `tdnn_rank_table_exact()`.  The rank table is computed once per
 #' sample size `n` and cached inside the spec closure, so calling
 #' [rank_weight_eval_batch()] repeatedly on rank matrices of the same size
@@ -34,7 +34,7 @@
 #'   ranking this is \code{ncol(X)}; for custom distances it should be set
 #'   explicitly.
 #'
-#' @return A \code{rank_weight} spec (list with class \code{"rank_weight"}).
+#' @return A \code{rdistnn_rank_weight} spec (list with class \code{"rdistnn_rank_weight"}).
 #'
 #' @seealso [rank_weight_tdnn_asymp()], `tdnn_rank_table_exact()`,
 #'   [weights_tdnn_exact()]
@@ -79,13 +79,13 @@ rank_weight_tdnn_exact <- function(s1, s2, dim) {
     eval_batch = eval_batch
   )
   spec$.__kind <- "rank_weight"
-  class(spec)  <- c("rank_weight", class(spec))
+  class(spec)  <- c("rdistnn_rank_weight", class(spec))
   spec
 }
 
 #' Rank-weight spec: TDNN asymptotic (Demirkaya two-scale DNN, k = 1)
 #'
-#' Returns a `rank_weight` spec whose `eval_batch` uses the asymptotic TDNN
+#' Returns a `rdistnn_rank_weight` spec whose `eval_batch` uses the asymptotic TDNN
 #' rank table from `tdnn_rank_table_asymp()`.  Structurally identical to
 #' [rank_weight_tdnn_exact()] but uses the Beta order-statistic approximation,
 #' evaluated across the full rank grid. Combined entries can be zero through
@@ -99,7 +99,7 @@ rank_weight_tdnn_exact <- function(s1, s2, dim) {
 #' @param normalize Logical; renormalize the rank table to sum 1
 #'   (default \code{TRUE}; guards floating-point drift).
 #'
-#' @return A \code{rank_weight} spec (list with class \code{"rank_weight"}).
+#' @return A \code{rdistnn_rank_weight} spec (list with class \code{"rdistnn_rank_weight"}).
 #'
 #' @seealso [rank_weight_tdnn_exact()], `tdnn_rank_table_asymp()`,
 #'   [weights_tdnn_asymp()]
@@ -145,6 +145,6 @@ rank_weight_tdnn_asymp <- function(s1, s2, dim, normalize = TRUE) {
     eval_batch = eval_batch
   )
   spec$.__kind <- "rank_weight"
-  class(spec)  <- c("rank_weight", class(spec))
+  class(spec)  <- c("rdistnn_rank_weight", class(spec))
   spec
 }

@@ -12,7 +12,10 @@
     .abort_bad_arg(arg, "must be numeric")
   }
   if (length(ehat) != n) {
-    stop(sprintf("`%s` must have length equal to `y` (%d); got %d.", arg, n, length(ehat)), call. = FALSE)
+    .dnn_abort("argument_invalid",
+      sprintf("`%s` must have length equal to `y` (%d); got %d.", arg, n, length(ehat)),
+      argument = arg
+    )
   }
   if (.has_na_only(ehat)) {
     .abort_bad_arg(arg, "must not contain missing values")
@@ -34,11 +37,20 @@
 cate_rho_aipw <- function(y, d, m1hat, m0hat, ehat, clip = 1e-8) {
   n <- length(y)
   if (length(d) != n)
-    stop(sprintf("`d` must have length equal to `y` (%d); got %d.", n, length(d)), call. = FALSE)
+    .dnn_abort("argument_invalid",
+      sprintf("`d` must have length equal to `y` (%d); got %d.", n, length(d)),
+      argument = "d"
+    )
   if (length(m1hat) != n)
-    stop(sprintf("`m1hat` must have length equal to `y` (%d); got %d.", n, length(m1hat)), call. = FALSE)
+    .dnn_abort("argument_invalid",
+      sprintf("`m1hat` must have length equal to `y` (%d); got %d.", n, length(m1hat)),
+      argument = "m1hat"
+    )
   if (length(m0hat) != n)
-    stop(sprintf("`m0hat` must have length equal to `y` (%d); got %d.", n, length(m0hat)), call. = FALSE)
+    .dnn_abort("argument_invalid",
+      sprintf("`m0hat` must have length equal to `y` (%d); got %d.", n, length(m0hat)),
+      argument = "m0hat"
+    )
   e_used <- .cate_validate_and_clip_propensity(ehat, n = n, clip = clip)
   m1hat - m0hat + d * (y - m1hat) / e_used -
     (1 - d) * (y - m0hat) / (1 - e_used)

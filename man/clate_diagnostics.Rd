@@ -2,16 +2,16 @@
 % Please edit documentation in R/user-dnn-clate-diagnostics.R
 \name{clate_diagnostics}
 \alias{clate_diagnostics}
-\alias{diagnostics.affine_ratio_result}
-\alias{diagnostics.clate_result}
+\alias{diagnostics.rdistnn_affine_ratio_result}
+\alias{diagnostics.rdistnn_clate_result}
 \title{Paired component and first-stage diagnostics}
 \usage{
-\method{diagnostics}{affine_ratio_result}(object, candidates = "default", ...)
+\method{diagnostics}{rdistnn_affine_ratio_result}(object, candidates = "default", ...)
 
-\method{diagnostics}{clate_result}(object, candidates = "default", ...)
+\method{diagnostics}{rdistnn_clate_result}(object, candidates = "default", ...)
 }
 \arguments{
-\item{object}{An affine_ratio_result or clate_result.}
+\item{object}{An rdistnn_affine_ratio_result or rdistnn_clate_result.}
 
 \item{candidates}{"default", "all", or candidate ids from a grid-mode fit.
 Candidate diagnostics do not provide candidate-selection inference.}
@@ -19,7 +19,7 @@ Candidate diagnostics do not provide candidate-selection inference.}
 \item{...}{Not used.}
 }
 \value{
-A dnn_diagnostics data frame. Component covariance is estimator-scale.
+A rdistnn_diagnostics data frame. Component covariance is estimator-scale.
 component_covariance reports the paired numerator-denominator covariance;
 geometry_rule and tie_rule identify the frozen geometry and tie convention.
 Zero denominator variance gives NA standardized magnitude/correlation.

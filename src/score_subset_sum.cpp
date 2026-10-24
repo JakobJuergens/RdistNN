@@ -7,13 +7,18 @@
 using namespace Rcpp;
 
 // Sum g[subs[r, ]] for each row r (subs is 1-based from R).
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 NumericVector rustat_subset_row_sums_g(IntegerMatrix subs, NumericVector g) {
   const int K = subs.nrow();
   const int s = subs.ncol();
   const int n = g.size();
   NumericVector out(K);
   int has_bad_index = 0;
+  // Materialize R buffers on the calling thread before entering workers.
+  const int *subsets = INTEGER(subs);
+  const double *contributions = REAL(g);
+  double *sums = REAL(out);
+  const double missing = NA_REAL;
 
 #ifdef _OPENMP
 #pragma omp parallel for num_threads(rustat::thread_limit()) schedule(static) if (K >= 256)
@@ -22,7 +27,7 @@ NumericVector rustat_subset_row_sums_g(IntegerMatrix subs, NumericVector g) {
     rdistnn_arithmetic::accumulator acc;
     bool valid = true;
     for (int c = 0; c < s; ++c) {
-      const int index = subs(r, c);
+      const int index = subsets[r + static_cast<R_xlen_t>(K) * c];
       if (index == NA_INTEGER || index < 1 || index > n) {
 #ifdef _OPENMP
 #pragma omp critical(rustat_subset_row_sums_g_error)
@@ -31,9 +36,9 @@ NumericVector rustat_subset_row_sums_g(IntegerMatrix subs, NumericVector g) {
         valid = false;
         break;
       }
-      acc.add(g[index - 1]);
+      acc.add(contributions[index - 1]);
     }
-    out[r] = valid ? acc.value() : NA_REAL;
+    sums[r] = valid ? acc.value() : missing;
   }
   if (has_bad_index) {
     Rcpp::stop("Index out of bounds in rustat_subset_row_sums_g.");

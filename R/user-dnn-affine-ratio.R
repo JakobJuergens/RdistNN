@@ -59,7 +59,7 @@
 #' Prediction retains the resolved distance specification and fitted context;
 #' re-registering the distance name does not change an existing fit.
 #'
-#' @return An affine_ratio_result with theta, se, m-by-2 components,
+#' @return An rdistnn_affine_ratio_result with theta, se, m-by-2 components,
 #'   lists component_vcov, theta_vcov and theta_omega (NULL without covariance),
 #'   x0, neff, per-target status, row_ids, meta and retained frozen model state.
 #'   Optional deletions/pseudo_values have dimensions n-by-2-by-m. Covariance
@@ -90,14 +90,14 @@ affine_ratio_dnn <- function(
   row_ids = NULL, ctx = NULL, return = c("W")
 ) {
   method <- .affine_weight_method(method)
-  tuning_mode <- match.arg(tuning_mode)
+  tuning_mode <- .dnn_match_arg(tuning_mode)
   if (tuning_mode == "grid" && !is.null(s)) {
     .abort_bad_arg("tuning_mode", "cannot be 'grid' with explicit s; omit s and use tuning")
   }
   k <- .affine_integer(k, "k")
   normalize <- .validate_scalar_logical(normalize, "normalize")
   se <- .validate_scalar_logical(se, "se")
-  jackknife <- match.arg(jackknife)
+  jackknife <- .dnn_match_arg(jackknife)
   denominator_tol <- .affine_nonnegative_scalar(denominator_tol, "denominator_tol")
   valid_returns <- c(
     "W", "ranks", "ord", "dx", "ess", "signals",
@@ -182,14 +182,13 @@ affine_ratio_dnn <- function(
     x_mat = x_mat, signal = signal, x_cols = resolved_x_cols,
     k = k, s = s, method = method, normalize = normalize,
     denominator_tol = denominator_tol, row_ids = ids,
-    ranks = wt$ranks, groups = wt$groups, dx = wt$dx,
-    geometry = list(ranks = wt$ranks, ord = wt$ord, dx = wt$dx)
+    ranks = wt$ranks, groups = wt$groups, dx = wt$dx
   ), geometry)
   if (tuning_mode == "grid") {
     out$tuning_grid <- .affine_ratio_tuning_grid(out, signal, wt$ranks, model_weights,
       active_covariance, jackknife, denominator_tol, resolved$tuning)
   }
-  class(out) <- "affine_ratio_result"
+  class(out) <- "rdistnn_affine_ratio_result"
   .affine_warn_partial(out$status, requested_covariance = active_covariance,
     grid = out$tuning_grid)
   out

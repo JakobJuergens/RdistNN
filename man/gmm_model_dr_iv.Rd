@@ -19,7 +19,7 @@ treatment.}
 \item{muD_col}{Column name or index for \eqn{E[D \mid X]}.}
 }
 \value{
-A \code{gmm_model} object for use with \code{\link[=gmm_dnn]{gmm_dnn()}}.
+A \code{rdistnn_gmm_model} object for use with \code{\link[=gmm_dnn]{gmm_dnn()}}.
 }
 \description{
 Creates the scalar local IV model used by the GMM IV simulation.  The

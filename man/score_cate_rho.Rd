@@ -25,7 +25,7 @@ pseudo-outcome \eqn{\rho}. If \code{NULL}, supply \code{rho}.}
 use when \code{rho_col} is \code{NULL}.}
 }
 \value{
-An \code{ustat_score} object with:
+An \code{rdistnn_ustat_score} object with:
 \itemize{
 \item \code{$name}: a descriptive name,
 \item \code{$order}: the kernel order \eqn{s},

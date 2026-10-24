@@ -25,6 +25,12 @@ A list with \code{name}, \code{setup()}, \code{eval()}, and \code{eval_batch()}.
 Builder that computes per-column scales once (\code{setup(X)}) and reuses them in
 \code{eval()} / \code{eval_batch()}. Uses a compiled fast path when available.
 }
+\details{
+Configuration is evaluated when the specification is created.
+Rebinding a caller's configuration variables before first use does not alter
+it. Setup retains per-column inverse scales and does not retain a scaled copy
+of the training matrix.
+}
 \examples{
 set.seed(1)
 X <- matrix(rnorm(12), 4, 3)

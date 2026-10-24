@@ -1,13 +1,5 @@
 # PLQR moment-grid callbacks; coefficient sandwich policy stays in the core.
 
-.plqr_dnn_rank_weight_spec <- function(method, k, s, normalize) {
-  if (identical(method, "exact")) {
-    rank_weight_dnn_exact(k = as.integer(k), s = as.integer(s))
-  } else {
-    rank_weight_dnn_asymp(k = as.integer(k), s = as.integer(s), normalize = normalize)
-  }
-}
-
 .plqr_dnn_grid_estimates <- function(moment, se) {
   component <- rownames(moment)
   if (is.null(component)) {
@@ -27,7 +19,7 @@
   candidates, moment_hat, se_hat, n, k, method, normalize
 ) {
   default_row <- candidates[candidates$is_default, , drop = FALSE]
-  spec <- .plqr_dnn_rank_weight_spec(
+  spec <- .dnn_rank_weight_spec(
     method = method,
     k = k,
     s = default_row$s[[1L]],
@@ -54,11 +46,12 @@
   force(normalize)
   force(ctx)
   force(jackknife)
+  force(groups)
 
   function(candidate_row, tab_jk) {
     s <- as.integer(candidate_row$s[[1L]])
     se <- if (identical(jackknife, "fast")) {
-      spec <- .plqr_dnn_rank_weight_spec(method = method, k = k, s = s, normalize = normalize)
+      spec <- .dnn_rank_weight_spec(method = method, k = k, s = s, normalize = normalize)
       loo <- if (is.null(tab_jk)) {
         .dnn_loo_loop(score_mat, ranks, spec, center = TRUE, groups = groups)
       } else {
@@ -102,16 +95,6 @@
   }
 }
 
-.plqr_dnn_warn_infeasible_grid <- function(candidates) {
-  .dnn_warn_infeasible_grid(candidates)
-}
-
-.plqr_dnn_grid_meta <- function(
-  tuning_payload, engine_meta, n, p, p_d, k, method, distance, se, jackknife
-) {
-  .dnn_estimator_grid_meta(tuning_payload, engine_meta, n, p, k, method, distance, se, jackknife, p_d = p_d)
-}
-
 .plqr_dnn_tuning_grid <- function(
   candidates,
   ranks,
@@ -130,7 +113,7 @@
   tuning_payload,
   reuse_default = TRUE, groups = NULL
 ) {
-  .plqr_dnn_warn_infeasible_grid(candidates)
+  .dnn_warn_infeasible_grid(candidates)
   se_fn <- if (isTRUE(se) && !identical(jackknife, "none")) {
     .plqr_dnn_grid_se_fn(
       ranks = ranks,
@@ -152,7 +135,7 @@
     candidates = candidates,
     ranks = ranks,
     weight_spec_fn = function(candidate_row) {
-      .plqr_dnn_rank_weight_spec(
+      .dnn_rank_weight_spec(
         method = method,
         k = k,
         s = candidate_row$s[[1L]],
@@ -177,7 +160,7 @@
       normalize = normalize
     ) else NULL
   )
-  grid$meta <- .plqr_dnn_grid_meta(
+  grid$meta <- .dnn_estimator_grid_meta(
     tuning_payload = tuning_payload,
     engine_meta = grid$meta,
     n = nrow(x_mat),

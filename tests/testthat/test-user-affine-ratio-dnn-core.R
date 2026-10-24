@@ -1,6 +1,6 @@
 test_that("hand fixture returns paired ratio covariance and exact array identities", {
   fit <- .ratio_fixture(return = c("W", "signals", "deletions", "pseudo_values", "ess", "tuning"))
-  expect_s3_class(fit, "affine_ratio_result")
+  expect_s3_class(fit, "rdistnn_affine_ratio_result")
   expect_equal(unname(fit$components), matrix(c(2, .5), 1L))
   expect_equal(fit$theta, 4)
   expect_equal(unname(fit$W[, 1L]), c(.5, 1 / 3, 1 / 6, 0))
@@ -115,4 +115,46 @@ test_that("one-observation point estimates and same-order boundary deletions wor
                            numerator = c(2, 4), denominator = c(1, 1), s = 1L), "uniform")
   expect_equal(fit2$theta, 3)
   expect_equal(fit2$se, 1)
+})
+
+
+test_that("relative denominator status matches the common extreme-signal fixture", {
+  # Shared with the Stata premerge suite: exact s=n selects only the first row,
+  # while every original denominator signal, including inactive row 6, sets scale.
+  X <- matrix(1:6, ncol = 1L)
+  denominator <- c(rep(1, 5L), -8e307 - 8e307)
+  small_relative <- (1 / 4) / 4e307
+  expect_true(small_relative > 0 && small_relative < 1e-8)
+  for (compiled in c(FALSE, TRUE)) {
+    withr::local_options(RdistNN.use_compiled = compiled)
+    for (common in c(1, 4)) {
+      fit <- affine_ratio_dnn(
+        X = X, x0 = 0, numerator = rep(1, 6L) / common,
+        denominator = denominator / common, s = 6L, se = FALSE,
+        denominator_tol = 1e-8
+      )
+      expect_identical(fit$theta, 1)
+      expect_equal(as.numeric(fit$components), c(1, 1) / common, tolerance = 0)
+      expect_identical(fit$status$near_zero_denominator, TRUE)
+      expect_identical(fit$status$ratio_status, "ok")
+      zero_tol <- affine_ratio_dnn(
+        X = X, x0 = 0, numerator = rep(1, 6L) / common,
+        denominator = denominator / common, s = 6L, se = FALSE,
+        denominator_tol = 0
+      )
+      expect_identical(zero_tol$status$near_zero_denominator, FALSE)
+      expect_identical(zero_tol$theta, fit$theta)
+      for (cutoff in c(.5, 1)) {
+        huge <- rep(denominator[6L] / common, 6L)
+        local <- affine_ratio_dnn(
+          X = X, x0 = 0, numerator = huge, denominator = huge,
+          s = 6L, se = FALSE, denominator_tol = cutoff
+        )
+        expect_identical(local$theta, 1)
+        expect_identical(local$status$negative_denominator, TRUE)
+        expect_identical(local$status$near_zero_denominator, cutoff == 1)
+        expect_identical(local$status$ratio_status, "ok")
+      }
+    }
+  }
 })

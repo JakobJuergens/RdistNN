@@ -18,23 +18,51 @@
   .validate_scalar_int(default, "default")
 }
 
-.dnn_grid_check_candidates <- function(candidates) {
+.dnn_grid_check_candidates <- function(candidates, retained = FALSE) {
+  invalid <- function(field, reason) {
+    prefix <- if (retained) "object$tuning_grid$candidates" else "candidates"
+    .dnn_abort(if (retained) "state_invalid" else "internal_invariant",
+      sprintf("`%s%s` %s.", prefix, field, reason),
+      hint = if (retained) "Refit with the current estimator before reusing this fit." else
+        "Report a reproducible example of this internal inconsistency.")
+  }
   if (!is.data.frame(candidates)) {
+    if (retained) invalid("", "must be a data.frame")
     .abort_bad_arg("candidates", "must be a data.frame")
   }
   required <- c(
     "candidate_id", "computed_key", "is_default", "feasible",
     "reason", "status"
   )
+  if (retained) required <- c(required, "s", "lambda")
   missing <- setdiff(required, names(candidates))
   if (length(missing) > 0L) {
-    .abort_bad_state(sprintf(
-      "`candidates` is missing required column(s): %s.",
-      paste(missing, collapse = ", ")
-    ))
+    invalid("", paste0("is missing required column(s): ", .dnn_message_examples(missing)$text))
   }
   if (nrow(candidates) < 1L) {
-    .abort_bad_state("`candidates` must contain at least one row.")
+    invalid("", "must contain at least one row")
+  }
+  if (retained) {
+    if (!is.numeric(candidates$lambda) || !is.null(dim(candidates$lambda))) {
+      invalid("$lambda", "must retain numeric tuning labels")
+    }
+    for (field in c("candidate_id", "computed_key", "reason", "status")) {
+      value <- candidates[[field]]
+      if (!is.character(value) || !is.null(dim(value)) || anyNA(value)) {
+        invalid(paste0("$", field), "must retain non-missing character values")
+      }
+    }
+    for (field in c("is_default", "feasible")) {
+      value <- candidates[[field]]
+      if (!is.logical(value) || !is.null(dim(value)) || anyNA(value)) {
+        invalid(paste0("$", field), "must retain non-missing logical values")
+      }
+    }
+    if (anyDuplicated(candidates$candidate_id)) invalid("$candidate_id", "must contain unique IDs")
+    if (any(!candidates$status %in% c("ok", "infeasible", "failed")) ||
+        any((candidates$status == "infeasible") != !candidates$feasible)) {
+      invalid("$status/feasible", "contains inconsistent candidate availability")
+    }
   }
 
   candidates <- as.data.frame(candidates, stringsAsFactors = FALSE)
@@ -46,19 +74,19 @@
   candidates$status <- as.character(candidates$status)
 
   if (anyNA(candidates$candidate_id) || any(!nzchar(candidates$candidate_id))) {
-    .abort_bad_state("`candidates$candidate_id` must contain non-empty strings.")
+    invalid("$candidate_id", "must contain non-empty strings")
   }
   if (anyNA(candidates$computed_key) || any(!nzchar(candidates$computed_key))) {
-    .abort_bad_state("`candidates$computed_key` must contain non-empty strings.")
+    invalid("$computed_key", "must contain non-empty strings")
   }
   if (anyNA(candidates$is_default) || sum(candidates$is_default) != 1L) {
-    .abort_bad_state("`candidates$is_default` must contain exactly one TRUE value.")
+    invalid("$is_default", "must contain exactly one TRUE value")
   }
   if (anyNA(candidates$feasible)) {
-    .abort_bad_state("`candidates$feasible` cannot contain missing values.")
+    invalid("$feasible", "cannot contain missing values")
   }
   if (anyNA(candidates$status) || any(!nzchar(candidates$status))) {
-    .abort_bad_state("`candidates$status` must contain non-empty strings.")
+    invalid("$status", "must contain non-empty strings")
   }
   candidates
 }
@@ -159,7 +187,7 @@
   n <- nrow(ranks)
   spec <- weight_spec_fn(candidate_row)
   if (!is_rank_weight(spec)) {
-    .dnn_abort("callback_invalid", "`weight_spec_fn()` must return a rank_weight.")
+    .dnn_abort("callback_invalid", "`weight_spec_fn()` must return a rdistnn_rank_weight.")
   }
 
   tab <- .rank_weight_table(spec, n)
@@ -364,9 +392,11 @@
   failed <- candidates$status == "failed"
   if (any(failed)) {
     .dnn_warn("partial_result",
-      sprintf(paste0("Evaluation failed for %d optional tuning candidate(s). ",
-        "Inspect `tuning_grid$candidates` for all candidate statuses and reasons."), sum(failed)),
-      affected = sum(failed), examples = candidates$candidate_id[failed])
+      sprintf(paste0(
+        "Evaluation failed for %d optional tuning candidate(s). ",
+        "Inspect `tuning_grid$candidates` for all candidate statuses and reasons."
+      ), sum(failed)),
+      affected = sum(failed), examples = candidates$candidate_id[failed], location = "candidate")
   }
 
   template <- .dnn_grid_estimate_template(results, m = ncol(ranks))
@@ -402,8 +432,10 @@
     return(invisible(NULL))
   }
   .dnn_warn("infeasible_candidates",
-    sprintf(paste0("Skipped infeasible tuning candidate(s): %d. ",
-      "Inspect `tuning_grid$candidates` for all candidate statuses and reasons."), nrow(skipped)),
+    sprintf(paste0(
+      "Skipped infeasible tuning candidate(s): %d. ",
+      "Inspect `tuning_grid$candidates` for all candidate statuses and reasons."
+    ), nrow(skipped)),
     affected = nrow(skipped), examples = skipped$candidate_id)
   invisible(NULL)
 }

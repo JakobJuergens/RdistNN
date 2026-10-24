@@ -18,6 +18,14 @@ Internal helpers may assume validated inputs only when they cannot be called
 externally and the call path makes those assumptions explicit. Reused helpers
 should remain robust at their own boundary.
 
+NP, TDNN and CATE validate supplied outcome/pseudo-outcome missingness and
+finiteness before fitted geometry setup or evaluation, including consumed CATE
+nuisance columns with a finite-value contract. Unused nuisance inputs on a
+supplied-pseudo branch remain ignored. A rejected signal
+must not invoke distance callbacks. Keep the direct or column-selecting
+argument in the condition. This public-boundary rule does not change score
+primitives that deliberately validate contributions at evaluation time.
+
 ## Columns and shapes
 
 Use shared single-/multi-column extractors. Check column existence before
@@ -50,8 +58,22 @@ expected and actual facts. At retained-state owners, reuse these validators
 through `.dnn_validate_retained()` so malformed cached arrays become
 `rdistnn_state_error` with refit guidance. Translate only owned input-validation
 conditions there; do not relabel arbitrary errors, interruptions or resource
-failures as bad input. Missing optional extras have their own identity and
+failures as bad input. Preserve the bounded argument, expected and actual facts
+when translating an owned input condition into a retained-state condition. Missing optional extras have their own identity and
 exact retention option, distinct from incomplete required scientific state.
+
+Retained field names are exact schema keys. Check required names before using
+`$`, or extract with `[[name, exact = TRUE]]`; a similarly prefixed field must
+not replace a missing current field. This applies
+[base R extraction semantics](https://stat.ethz.ch/R-manual/R-patched/library/base/html/Extract.html),
+where `$` permits partial matching. Current fitted distance specifications retain
+their `rdistnn_distance` identity; fit-time structural extension inputs do not
+authorize upgrading an older retained specification during reporting.
+
+The retained-matrix accessor owns optional `W`/`dx` shape and finite-value
+checks. Missing optional `dx` remains unavailable, while a malformed present
+matrix raises a state error with refit guidance. Raw numerical helper arguments
+still use ordinary input-validation errors.
 
 Each new public validation rule needs a valid case, an invalid case exercising
 the branch and relevant boundary cases. Reuse small named validators for

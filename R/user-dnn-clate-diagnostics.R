@@ -1,6 +1,6 @@
 #' Paired component and first-stage diagnostics
 #'
-#' @param object An affine_ratio_result or clate_result.
+#' @param object An rdistnn_affine_ratio_result or rdistnn_clate_result.
 #' @param candidates "default", "all", or candidate ids from a grid-mode fit.
 #'   Candidate diagnostics do not provide candidate-selection inference.
 #' @param ... Not used.
@@ -8,7 +8,7 @@
 #'   centered score pseudo-value concentration. Instrument and propensity fields
 #'   are available only from CLATE observations/predictions. Training declarations
 #'   are descriptive. Effective information is not a complier count.
-#' @return A dnn_diagnostics data frame. Component covariance is estimator-scale.
+#' @return A rdistnn_diagnostics data frame. Component covariance is estimator-scale.
 #'   component_covariance reports the paired numerator-denominator covariance;
 #'   geometry_rule and tie_rule identify the frozen geometry and tie convention.
 #'   Zero denominator variance gives NA standardized magnitude/correlation.
@@ -26,22 +26,18 @@ NULL
 
 #' @rdname clate_diagnostics
 #' @export
-diagnostics.affine_ratio_result <- function(object, candidates = "default", ...) {
+diagnostics.rdistnn_affine_ratio_result <- function(object, candidates = "default", ...) {
   .dnn_reuse_scope(object)
   if (!.plot_candidates_is_default(candidates)) {
     return(.dnn_candidate_diagnostics(object, candidates))
   }
   model <- .affine_prediction_state(object)
-  geometry <- model$geometry
-  if (is.null(geometry$ranks)) {
-    .abort_bad_arg("object$.model", "is missing the frozen geometry; refit the estimator")
-  }
-  ranks <- .validate_permutation_matrix(geometry$ranks, "object$.model$geometry$ranks")
+  ranks <- model$ranks
   rw <- .affine_rank_weight(model)
   W <- .dnn_average_distance_weights(rank_weight_eval_batch(rw, ranks),
                                        model$groups)
   m <- ncol(W)
-  out <- .dnn_weight_diagnostics(W, object$meta, geometry$dx, object$meta$tuning)
+  out <- .dnn_weight_diagnostics(W, object$meta, model$dx, object$meta$tuning)
   ns <- .affine_component_se(object, 1L)
   ds <- .affine_component_se(object, 2L)
   denom_stat <- correlation <- cross_covariance <- rep(NA_real_, m)
@@ -93,11 +89,7 @@ diagnostics.affine_ratio_result <- function(object, candidates = "default", ...)
     theta = object$theta, se = if (is.null(object$se)) rep(NA_real_, m) else object$se,
     neff = object$neff,
     physical_radius_90 = .dnn_physical_radius(W, model$x_mat, as.matrix(object$x0)),
-    radius_90 = if (is.null(geometry$dx)) {
-      rep(NA_real_, m)
-    } else {
-      vapply(seq_len(m), function(j) .dnn_weighted_quantile(geometry$dx[, j], W[, j], .9), numeric(1L))
-    },
+    radius_90 = vapply(seq_len(m), function(j) .dnn_weighted_quantile(model$dx[, j], W[, j], .9), numeric(1L)),
     jk_top1_sq_share = top1, jk_top5_sq_share = top5,
     score_concentration_available = is.finite(top1),
     instrument_available = rep(iv_available, m),
@@ -113,7 +105,7 @@ diagnostics.affine_ratio_result <- function(object, candidates = "default", ...)
 
 #' @rdname clate_diagnostics
 #' @export
-diagnostics.clate_result <- function(object, candidates = "default", ...) {
+diagnostics.rdistnn_clate_result <- function(object, candidates = "default", ...) {
   .dnn_reuse_scope(object)
-  diagnostics.affine_ratio_result(object, candidates = candidates, ...)
+  diagnostics.rdistnn_affine_ratio_result(object, candidates = candidates, ...)
 }

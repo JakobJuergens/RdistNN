@@ -4,7 +4,7 @@
 
 // Internal diagnostic: establish the actual native team and unchanged runtime
 // limit in tests, including builds without OpenMP support.
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 Rcpp::List rustat_thread_info() {
   const int limit = rustat::thread_limit();
   int team_size = 1;

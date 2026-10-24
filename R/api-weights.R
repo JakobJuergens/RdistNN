@@ -1,4 +1,4 @@
-# High-level API: from {X, X0/x0} + RANKING + rank_weight -> W
+# High-level API: from {X, X0/x0} + RANKING + rdistnn_rank_weight -> W
 # Modular, user-friendly, ranker-agnostic. Works with distances, custom rankers,
 # or precomputed ranks/orders/distances. DNN wrappers provided below.
 # -----------------------------------------------------------------------------
@@ -6,19 +6,19 @@
 # ---- resolvers ---------------------------------------------------------------
 
 # Use your existing distance stack
-.resolve_distance <- function(distance) {
+.resolve_distance <- function(distance, argument = "distance") {
   if (is_distance(distance)) {
     return(distance)
   }
   if (is.character(distance)) {
-    return(get_distance(distance))
+    return(.get_distance(distance, argument = argument))
   }
   if (is.function(distance)) {
     return(as_distance(distance, name = "user_distance"))
   }
   .abort_bad_arg(
-    "distance",
-    "must be a dnn_distance, a registered name, or a function(X, x0, ctx)->numeric(n)"
+    argument,
+    "must be a rdistnn_distance, a registered name, or a function(X, x0, ctx)->numeric(n)"
   )
 }
 
@@ -108,7 +108,7 @@
 
   # 1) Distance spec / name -> compute distances
   if (is_distance(ranking) || is.character(ranking)) {
-    dist_spec <- .resolve_distance(ranking)
+    dist_spec <- .resolve_distance(ranking, argument = "ranking")
     dist_matrix <- distance_eval_batch(dist_spec, x_mat, x0_mat, ctx) # n x m
     return(make_from_dx(dist_matrix))
   }
@@ -152,17 +152,17 @@
   )
 }
 
-# Accept a rank_weight (or a zero-arg factory returning one)
+# Accept a rdistnn_rank_weight (or a zero-arg factory returning one)
 .resolve_weight <- function(weight) {
-  # Accept a rank_weight spec
+  # Accept a rdistnn_rank_weight spec
   if (is_rank_weight(weight)) {
     return(list(kind = "rank", spec = weight))
   }
-  # Accept a zero-arg factory that returns a rank_weight
+  # Accept a zero-arg factory that returns a rdistnn_rank_weight
   if (is.function(weight)) {
     w <- weight()
     if (!is_rank_weight(w)) {
-      .abort_bad_arg("weight", "Zero-arg weight() factory must return a rank_weight")
+      .abort_bad_arg("weight", "Zero-arg weight() factory must return a rdistnn_rank_weight")
     }
     return(list(kind = "rank", spec = w))
   }
@@ -172,7 +172,7 @@
     .abort_bad_arg(
       "weight",
       paste0(
-        "must be a rank_weight; distance-style specs are not accepted here. ",
+        "must be a rdistnn_rank_weight; distance-style specs are not accepted here. ",
         "Build one with new_rank_weight() or as_rank_weight()"
       ),
       quoted = FALSE
@@ -181,7 +181,7 @@
 
   .abort_bad_arg(
     "weight",
-    "must be a rank_weight (or a zero-arg factory returning one)",
+    "must be a rdistnn_rank_weight (or a zero-arg factory returning one)",
     actual = paste(class(weight), collapse = "/")
   )
 }
@@ -193,7 +193,7 @@
 #'
 #' This is the general, ranker-agnostic top-layer. It consumes a *ranking provider*
 #' (distance, custom function, or precomputed ranks/orders/distances) and a weighting
-#' rule (`rank_weight`), then returns the weight matrix `W` (n x m).
+#' rule (`rdistnn_rank_weight`), then returns the weight matrix `W` (n x m).
 #'
 #' @section Exact distance ties:
 #' For each target, observations with exactly equal computed distance share
@@ -223,17 +223,17 @@
 #' @param X0 numeric matrix (m x p), target points (rows). If missing, use `x0`.
 #' @param x0 optional numeric length-p single target (convenience for m=1).
 #' @param ranking one of:
-#'   - a `dnn_distance` spec, a registered distance name (e.g., "l2","l1"),
+#'   - a `rdistnn_distance` spec, a registered distance name (e.g., "l2","l1"),
 #'   - a function `(X, X0, ctx) ->` list with `$ranks`/`$ord`/`$dx`, or an `n x m` ranks matrix,
 #'   - precomputed object: list with `$ranks`, `$ord`, or `$dx`, or a ranks matrix.
-#' @param weight a `rank_weight` spec (or zero-arg factory returning one).
+#' @param weight a `rdistnn_rank_weight` spec (or zero-arg factory returning one).
 #' @param ctx optional shared context passed to ranking and weight evaluators.
 #'   On the ranking side, if `ctx` is `NULL` and a distance spec defines
 #'   `setup(X)`, that setup path is used automatically.
 #'   It is evaluated once for the target batch, including scalar-only distance
 #'   specifications; singleton samples retain an `n x m` distance matrix.
 #' @param return which extras to include besides `W`: any of c("ord","ranks","dx").
-#' @return An object of class `weights_result` with components:
+#' @return An object of class `rdistnn_weights_result` with components:
 #'   - `W`   : numeric matrix n x m (columns typically sum to 1),
 #'   - optional: `ord`, `ranks`, `dx`,
 #'   - `meta`: list with `n, m, p, weight_kind, weight_name`.
@@ -288,7 +288,7 @@ weights_matrix <- function(
   weight_matrix <- {
     # rank-only path
     if (is.null(ranking_result$ranks)) {
-      .abort_bad_arg("ranking", "must provide ranks when `weight` is a rank_weight")
+      .abort_bad_arg("ranking", "must provide ranks when `weight` is a rdistnn_rank_weight")
     }
     rank_weight_eval_batch(wt_res$spec, ranking_result$ranks, ctx = ctx)
   }
@@ -308,16 +308,18 @@ weights_matrix <- function(
       tie_rule = if (is.null(groups)) "supplied_strict_order" else .dnn_tie_policy()
     )
   )
+  out$meta <- .dnn_attach_notice_facts(out$meta, groups,
+    1 / colSums(weight_matrix^2), facts = prepared)
   if ("ord" %in% return && !is.null(ranking_result$ord)) out$ord <- ranking_result$ord
   if ("ranks" %in% return && !is.null(ranking_result$ranks)) out$ranks <- ranking_result$ranks
   if ("dx" %in% return && !is.null(ranking_result$dx)) out$dx <- ranking_result$dx
-  class(out) <- "weights_result"
+  class(out) <- "rdistnn_weights_result"
   out
 }
 
-#' Print a `weights_result` object
+#' Print a `rdistnn_weights_result` object
 #'
-#' @param x A `weights_result` object created by [weights_matrix()].
+#' @param x A `rdistnn_weights_result` object created by [weights_matrix()].
 #' @param ... Not used.
 #' @return `x`, invisibly.
 #' @examples
@@ -326,18 +328,18 @@ weights_matrix <- function(
 #' out <- weights_dnn_exact(x_mat, x0 = c(0, 0), k = 1L, s = 1L)
 #' print(out)
 #' @export
-print.weights_result <- function(x, ...) {
+print.rdistnn_weights_result <- function(x, ...) {
   m <- x$meta$m
   n <- x$meta$n
   p <- x$meta$p
-  cat("<weights_result>\n", sep = "")
+  cat("<rdistnn_weights_result>\n", sep = "")
   cat("  data  : n=", n, ", p=", p, ", m=", m, "\n", sep = "")
   cat("  weight: ", x$meta$weight_kind, " (", x$meta$weight_name, ")\n", sep = "")
   invisible(x)
 }
 
 # ---- DNN convenience wrappers ------------------------------------------------
-# These are thin wrappers around weights_matrix() using your DNN rank_weight
+# These are thin wrappers around weights_matrix() using your DNN rdistnn_rank_weight
 # constructors and distance ranker. Users who want "just DNN" can call these.
 
 #' DNN weights (exact full-U), distance-based ranking
@@ -360,7 +362,7 @@ print.weights_result <- function(x, ...) {
 #' @param s integer; U-statistic order / subset size
 #' @param ctx optional context
 #' @param return character vector of extras to include; any of \code{c("W","ord","ranks","dx")}
-#' @return a \code{weights_result} with \code{W} and metadata
+#' @return a \code{rdistnn_weights_result} with \code{W} and metadata
 #' @examples
 #' set.seed(1)
 #' x_mat <- matrix(rnorm(20), 10, 2)
@@ -374,7 +376,7 @@ weights_dnn_exact <- function(
 ) {
   weights_matrix(
     X = X, X0 = X0, x0 = x0,
-    ranking = distance,
+    ranking = if (is.character(distance)) .get_distance(distance, argument = "distance") else distance,
     weight = rank_weight_dnn_exact(k = k, s = s),
     ctx = ctx,
     return = return
@@ -400,7 +402,7 @@ weights_dnn_exact <- function(
 #' @inheritSection weights_matrix Exact distance ties
 #' @inheritParams weights_dnn_exact
 #' @param normalize logical; renormalize columns to sum 1
-#' @return A `weights_result` object (same structure as [weights_dnn_exact()]).
+#' @return A `rdistnn_weights_result` object (same structure as [weights_dnn_exact()]).
 #' @examples
 #' set.seed(1)
 #' x_mat <- matrix(rnorm(20), 10, 2)
@@ -414,7 +416,7 @@ weights_dnn_asymp <- function(
 ) {
   weights_matrix(
     X = X, X0 = X0, x0 = x0,
-    ranking = distance,
+    ranking = if (is.character(distance)) .get_distance(distance, argument = "distance") else distance,
     weight = rank_weight_dnn_asymp(k = k, s = s, normalize = normalize),
     ctx = ctx,
     return = return
@@ -434,7 +436,7 @@ weights_dnn_asymp <- function(
 #' @inheritSection weights_matrix Exact distance ties
 #' @inheritParams weights_dnn_asymp
 #' @param method one of \code{"exact"} or \code{"asymp"}
-#' @return A `weights_result` object.
+#' @return A `rdistnn_weights_result` object.
 #' @examples
 #' set.seed(1)
 #' x_mat <- matrix(rnorm(20), 10, 2)
@@ -447,7 +449,7 @@ weights_dnn <- function(
   method = c("exact", "asymp"), normalize = TRUE, ctx = NULL,
   return = c("W")
 ) {
-  method <- match.arg(method)
+  method <- .dnn_match_arg(method)
   if (method == "exact") {
     weights_dnn_exact(
       X = X, X0 = X0, x0 = x0,
@@ -469,7 +471,7 @@ weights_dnn <- function(
 }
 
 # ---- TDNN convenience wrappers -----------------------------------------------
-# Thin wrappers around weights_matrix() using the TDNN rank_weight constructors.
+# Thin wrappers around weights_matrix() using the TDNN rdistnn_rank_weight constructors.
 # k is fixed to 1 (paper-faithful Demirkaya construction).
 
 #' TDNN weights (exact, k = 1), distance-based ranking
@@ -500,7 +502,7 @@ weights_dnn <- function(
 #' @param return Character vector of extras to include; any of
 #'   \code{c("W", "ord", "ranks", "dx")}.
 #'
-#' @return A \code{weights_result} object (same structure as
+#' @return A \code{rdistnn_weights_result} object (same structure as
 #'   [weights_dnn_exact()]).
 #'
 #' @seealso [weights_tdnn_asymp()], [weights_tdnn()], [rank_weight_tdnn_exact()]
@@ -523,7 +525,7 @@ weights_tdnn_exact <- function(
   }
   weights_matrix(
     X = X, X0 = X0, x0 = x0,
-    ranking = distance,
+    ranking = if (is.character(distance)) .get_distance(distance, argument = "distance") else distance,
     weight  = rank_weight_tdnn_exact(s1 = s1,
                                       s2 = s2,
                                       dim = dim),
@@ -544,7 +546,7 @@ weights_tdnn_exact <- function(
 #' @param normalize Logical; renormalize rank table columns to sum 1
 #'   (default \code{TRUE}).
 #'
-#' @return A \code{weights_result} object (same structure as
+#' @return A \code{rdistnn_weights_result} object (same structure as
 #'   [weights_dnn_asymp()]).
 #'
 #' @seealso [weights_tdnn_exact()], [weights_tdnn()], [rank_weight_tdnn_asymp()]
@@ -566,7 +568,7 @@ weights_tdnn_asymp <- function(
   }
   weights_matrix(
     X = X, X0 = X0, x0 = x0,
-    ranking = distance,
+    ranking = if (is.character(distance)) .get_distance(distance, argument = "distance") else distance,
     weight  = rank_weight_tdnn_asymp(s1 = s1,
                                       s2 = s2,
                                       dim = dim,
@@ -588,7 +590,7 @@ weights_tdnn_asymp <- function(
 #' @inheritParams weights_tdnn_asymp
 #' @param method One of \code{"exact"} or \code{"asymp"}.
 #'
-#' @return A \code{weights_result} object.
+#' @return A \code{rdistnn_weights_result} object.
 #'
 #' @seealso [weights_tdnn_exact()], [weights_tdnn_asymp()]
 #'
@@ -604,7 +606,7 @@ weights_tdnn <- function(
   method = c("exact", "asymp"), normalize = TRUE, ctx = NULL,
   return = c("W")
 ) {
-  method <- match.arg(method)
+  method <- .dnn_match_arg(method)
   if (method == "exact") {
     weights_tdnn_exact(
       X = X, X0 = X0, x0 = x0, distance = distance,

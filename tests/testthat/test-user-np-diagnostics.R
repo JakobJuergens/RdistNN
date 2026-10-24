@@ -1,4 +1,4 @@
-test_that("diagnostics(np_result) returns expected schema and identities", {
+test_that("diagnostics(rdistnn_np_result) returns expected schema and identities", {
   .test_rng_scope({
     n <- 45L
     p <- 2L
@@ -15,7 +15,7 @@ test_that("diagnostics(np_result) returns expected schema and identities", {
     )
     d <- diagnostics(fit)
 
-    expect_s3_class(d, "dnn_diagnostics")
+    expect_s3_class(d, "rdistnn_diagnostics")
     expect_equal(nrow(d), m)
     expect_true(all(c(
       "target_id", "n_eff", "max_weight",
@@ -91,7 +91,7 @@ test_that("diagnostics(np_result) returns expected schema and identities", {
   }, seed = 777L)
 })
 
-test_that("diagnostics(np_result) reports unavailable distance fields when dx is absent", {
+test_that("diagnostics(rdistnn_np_result) reports unavailable distance fields when dx is absent", {
   .test_rng_scope({
     n <- 40L
     x_mat <- matrix(rnorm(n * 2L), n, 2L)
@@ -112,7 +112,7 @@ test_that("diagnostics(np_result) reports unavailable distance fields when dx is
   }, seed = 777L)
 })
 
-test_that("diagnostics(np_result) errors clearly when W is not retained", {
+test_that("diagnostics(rdistnn_np_result) errors clearly when W is not retained", {
   .test_rng_scope({
     n <- 35L
     x_mat <- matrix(rnorm(n * 2L), n, 2L)
@@ -131,7 +131,7 @@ test_that("diagnostics(np_result) errors clearly when W is not retained", {
   }, seed = 777L)
 })
 
-test_that("diagnostics(np_result) requires current fitted outcome state", {
+test_that("diagnostics(rdistnn_np_result) requires current fitted outcome state", {
   .test_rng_scope({
     n <- 35L
     x_mat <- matrix(rnorm(n * 2L), n, 2L)
@@ -143,11 +143,15 @@ test_that("diagnostics(np_result) requires current fitted outcome state", {
       return = "W"
     )
     fit$.model <- NULL
-    expect_error(diagnostics(fit), "localization model state.*[Rr]efit")
+    err <- tryCatch(diagnostics(fit), error = identity)
+    expect_s3_class(err, "rdistnn_state_error")
+    expect_identical(err$code, "state_invalid")
+    expect_match(err$argument, "object$.model", fixed = TRUE)
+    expect_match(conditionMessage(err), "Refit", fixed = TRUE)
   }, seed = 777L)
 })
 
-test_that("diagnostics(np_result) validates retained outcome state", {
+test_that("diagnostics(rdistnn_np_result) validates retained outcome state", {
   .test_rng_scope({
     n <- 35L
     x_mat <- matrix(rnorm(n * 2L), n, 2L)
@@ -160,10 +164,15 @@ test_that("diagnostics(np_result) validates retained outcome state", {
 
     bad_length <- fit
     bad_length$.model$y_vec <- y_vec[-1L]
-    expect_error(diagnostics(bad_length), "length equal to nrow\\(object\\$W\\)")
-
     bad_na <- fit
     bad_na$.model$y_vec[1L] <- NA_real_
-    expect_error(diagnostics(bad_na), "object\\$\\.model\\$y_vec cannot contain `NA` values")
+    for (case in list(list(fit = bad_length, reason = "length"), list(fit = bad_na, reason = "NA"))) {
+      error <- tryCatch(diagnostics(case$fit), error = identity)
+      expect_s3_class(error, "rdistnn_state_error")
+      expect_identical(error$code, "state_invalid")
+      expect_identical(error$argument, "object$.model$y_vec")
+      expect_match(conditionMessage(error), case$reason, fixed = TRUE)
+      expect_match(conditionMessage(error), "[Rr]efit")
+    }
   }, seed = 777L)
 })

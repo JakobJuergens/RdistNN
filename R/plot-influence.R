@@ -17,7 +17,7 @@
 #' retained signals at the target's fitted ratio. These are weighted score
 #' residuals, not delete-one pseudo-values or estimated individual effects.
 #'
-#' @param object A `cate_result` or `clate_result` with the weight matrix `W` stored (the
+#' @param object A `rdistnn_cate_result` or `rdistnn_clate_result` with the weight matrix `W` stored (the
 #'   default).
 #' @param targets Optional integer vector of target ids (defaults to the
 #'   first/median-`n_eff`/last subset above eight targets).
@@ -44,12 +44,12 @@ plot_influence <- function(object,
                            n_label = 3L) {
   .dnn_reuse_scope(object)
   .plot_require_ggplot2("plot_influence")
-  clate <- inherits(object, "clate_result")
-  if (!inherits(object, "cate_result") && !clate) {
+  clate <- inherits(object, "rdistnn_clate_result")
+  if (!inherits(object, "rdistnn_cate_result") && !clate) {
     .abort_bad_arg(
       "object",
       sprintf(
-        "plot_influence() supports cate_result or clate_result fits; got class '%s'",
+        "plot_influence() supports rdistnn_cate_result or rdistnn_clate_result fits; got class '%s'",
         class(object)[1L]
       ),
       quoted = FALSE

@@ -34,7 +34,7 @@ test_that("ratio summaries retain undefined and degenerate targets without fabri
   expect_warning(f <- .ratio_fixture(X0 = matrix(c(0, 3, 5), ncol = 1L), x0 = NULL,
                        denominator = c(0, 0, -1, 2), s = 3L), class = "rdistnn_partial_result_warning")
   expect_warning(tab <- summary(f), class = "rdistnn_partial_result_warning")
-  expect_s3_class(tab, "summary.affine_ratio_result")
+  expect_s3_class(tab, "rdistnn_summary_affine_ratio_result")
   expect_type(tab, "list")
   expect_equal(tab$status$target_id, 1:3)
   expect_true(is.na(tab$coefficients$estimate[1L]))
@@ -58,6 +58,12 @@ test_that("ratio summaries retain undefined and degenerate targets without fabri
   expect_true(all(is.na(point_table$coefficients$std.error)))
   expect_error(vcov(no_cov), "covariance")
   expect_error(confint(no_cov), "covariance")
+  for (extract in list(stats::vcov, stats::confint)) {
+    err <- tryCatch(extract(no_cov), error = identity)
+    expect_s3_class(err, "rdistnn_extra_unavailable")
+    expect_identical(err$code, "extra_unavailable")
+    expect_match(conditionMessage(err), "se = TRUE", fixed = TRUE)
+  }
   })
 })
 

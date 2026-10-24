@@ -1,7 +1,7 @@
 # Rank-weight wrappers for DNN weights compatible with the new rank API.
-# These return a rank_weight spec (list) with fields:
+# These return a rdistnn_rank_weight spec (list) with fields:
 #   name, table(n), eval(ranks, ctx), eval_batch(R, ctx),
-#   and the marker: spec$.__kind <- "rank_weight"; class(spec) <- "rank_weight".
+#   and the marker: spec$.__kind <- "rank_weight"; class(spec) <- "rdistnn_rank_weight".
 #
 # They rely on:
 #   dnn_weights_exact_full_from_ranks(ranks, k, s)$w
@@ -10,7 +10,7 @@
 #' Rank-weight: DNN exact (full U, WOR)
 #' @param k Integer; 1 <= k <= s
 #' @param s Integer; U-statistic order
-#' @return rank_weight spec (list)
+#' @return rdistnn_rank_weight spec (list)
 #' @examples
 #' rw <- rank_weight_dnn_exact(k = 1, s = 3)
 #' rank_weight_eval(rw, c(2L, 1L, 3L, 4L))
@@ -43,7 +43,7 @@ rank_weight_dnn_exact <- function(k, s) {
     eval_batch = eval_many
   )
   spec$.__kind <- "rank_weight"
-  class(spec) <- c("rank_weight", class(spec))
+  class(spec) <- c("rdistnn_rank_weight", class(spec))
   spec
 }
 
@@ -51,7 +51,7 @@ rank_weight_dnn_exact <- function(k, s) {
 #' @inheritSection weights_dnn_asymp Numerical limits
 #' @inheritParams rank_weight_dnn_exact
 #' @param normalize logical; renormalize to sum 1 (default TRUE)
-#' @return rank_weight spec (list)
+#' @return rdistnn_rank_weight spec (list)
 #' @examples
 #' rw <- rank_weight_dnn_asymp(k = 1, s = 3, normalize = TRUE)
 #' rank_weight_eval(rw, c(2L, 1L, 3L, 4L))
@@ -67,7 +67,10 @@ rank_weight_dnn_asymp <- function(k, s, normalize = TRUE) {
     w <- dnn_weights_asymp_full_from_ranks(seq_len(n), k, s, normalize)$w_rank
     w <- as.numeric(w)
     sw <- .compensated_sum(w)
-    if (!is.finite(sw) || sw <= 0) stop("DNN asymp produced nonpositive/invalid sum.", call. = FALSE)
+    if (!is.finite(sw) || sw <= 0) .dnn_abort("numerical_range",
+      "Asymptotic DNN weights have a nonpositive or nonfinite computed total.",
+      hint = "Use less extreme feasible orders, or report a reproducible example if this persists."
+    )
     if (normalize) w / sw else w
   }
 
@@ -88,6 +91,6 @@ rank_weight_dnn_asymp <- function(k, s, normalize = TRUE) {
     eval_batch = eval_many
   )
   spec$.__kind <- "rank_weight"
-  class(spec) <- c("rank_weight", class(spec))
+  class(spec) <- c("rdistnn_rank_weight", class(spec))
   spec
 }

@@ -86,14 +86,17 @@ test_that("CLATE plot data survive serialization and candidate extraction", {
   on.exit(unlink(file))
   saveRDS(fit, file)
   saved <- readRDS(file)
-  sensitivity <- plot_tuning(saved, se = TRUE)
+  expect_warning(sensitivity <- plot_tuning(saved, se = TRUE),
+    class = "rdistnn_infeasible_candidates_warning")
   expect_true(all(is.finite(sensitivity$data$se)))
   expect_equal(sort(unique(sensitivity$data$s)), c(2L, 3L, 6L))
-  expect_warning(grid <- do.call(clate_dnn, c(a, list(tuning_mode = "grid"))), "infeasible")
+  expect_warning(grid <- do.call(clate_dnn, c(a, list(tuning_mode = "grid"))),
+    "infeasible", class = "rdistnn_infeasible_candidates_warning")
   view <- candidate_fit(grid, 1L)
   expect_equal(plot_estimates(view, style = "pointrange")$data$estimate, view$theta)
+  expect_warning(view_sensitivity <- plot_tuning(view), class = "rdistnn_infeasible_candidates_warning")
   for (p in list(plot_estimates(saved), plot_overlap(saved), plot_influence(saved),
-                  sensitivity, plot_tuning(view))) {
+                  sensitivity, view_sensitivity)) {
     expect_s3_class(ggplot2::ggplot_build(p), "ggplot_built")
   }
   bare <- fit
@@ -102,7 +105,10 @@ test_that("CLATE plot data survive serialization and candidate extraction", {
   expect_error(plot_influence(bare), "return.*W")
   bad <- .clate_plot_fit()
   bad$theta[1L] <- NA_real_
-  expect_error(plot_influence(bad, targets = 1L), "theta/status.*inconsistent unavailable ratios")
+  err <- tryCatch(plot_influence(bad, targets = 1L), error = identity)
+  expect_s3_class(err, "rdistnn_state_error")
+  expect_identical(err$argument, "object$status$ratio_status")
+  expect_match(conditionMessage(err), "[Rr]efit")
 })
 
 test_that("ratio plot bounds retain per-target Wald availability", {

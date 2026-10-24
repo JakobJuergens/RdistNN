@@ -1,4 +1,5 @@
 test_that("deterministic ties in distances lead to deterministic ordering and stable moment", {
+  withr::local_preserve_seed()
   set.seed(43)
   n <- 10L
   p <- 2L

@@ -15,9 +15,15 @@
 }
 
 .gmm_moment_matrix <- function(g, n, arg = "moment_obs") {
+  if (!is.numeric(g) || is.complex(g)) {
+    .abort_bad_arg(arg, "must be real numeric", quoted = FALSE)
+  }
   if (is.null(dim(g))) {
     g <- .validate_vector_nrow(g, n, arg = arg, ref = "X", finite = TRUE)
     return(matrix(g, ncol = 1L))
+  }
+  if (length(dim(g)) != 2L || ncol(g) < 1L) {
+    .abort_bad_arg(arg, "must return an n x q matrix with q >= 1", quoted = FALSE)
   }
   g_mat <- as.matrix(g)
   if (nrow(g_mat) != n) {
@@ -29,16 +35,13 @@
       quoted = FALSE
     )
   }
-  if (!is.numeric(g_mat)) {
-    .abort_bad_arg(arg, "must be numeric", quoted = FALSE)
-  }
   .abort_if_na_or_nonfinite(g_mat, arg = arg, quoted = FALSE)
   g_mat
 }
 
 .gmm_eval_moment <- function(model, sample, theta, ctx, n) {
   g <- model$moment_obs(sample = sample, theta = theta, ctx = ctx)
-  .gmm_moment_matrix(g, n = n, arg = "model$moment_obs()")
+  .dnn_validate_callback(.gmm_moment_matrix(g, n = n, arg = "model$moment_obs()"))
 }
 
 .gmm_gbar <- function(model, sample, theta, ctx, w, n) {
@@ -47,14 +50,11 @@
 }
 
 .gmm_objective <- function(theta, model, sample, ctx, w, n, omega_inv = NULL) {
-  val <- tryCatch({
-    gbar <- .gmm_gbar(model, sample, theta, ctx, w, n)
-    if (is.null(omega_inv)) {
-      sum(gbar^2)
-    } else {
-      as.numeric(t(gbar) %*% omega_inv %*% gbar)
-    }
-  }, error = function(e) Inf)
+  # Invalid callback returns and callback conditions propagate. Only range
+  # overflow in the quadratic arithmetic from validated moments is penalized.
+  gbar <- .gmm_gbar(model, sample, theta, ctx, w, n)
+  val <- if (is.null(omega_inv)) sum(gbar^2) else
+    as.numeric(t(gbar) %*% omega_inv %*% gbar)
   if (!is.finite(val)) .Machine$double.xmax else as.numeric(val)
 }
 
@@ -62,18 +62,15 @@
   if (any(!is.finite(A)) || (!is.null(b) && any(!is.finite(b)))) {
     return(NULL)
   }
-  tryCatch(
-    if (is.null(b)) solve(A) else solve(A, b),
-    error = function(e) NULL
-  )
+  # solve() rejects reciprocal condition numbers below its default tolerance.
+  # Detect that understood numerical case without swallowing host failures.
+  if (rcond(A) < .Machine$double.eps) return(NULL)
+  if (is.null(b)) solve(A) else solve(A, b)
 }
 
 .gmm_condition_number <- function(A) {
-  vals <- tryCatch(eigen(A, symmetric = TRUE, only.values = TRUE)$values,
-                   error = function(e) NA_real_)
-  if (length(vals) == 1L && is.na(vals)) {
-    return(NA_real_)
-  }
+  if (any(!is.finite(A))) return(NA_real_)
+  vals <- eigen(A, symmetric = TRUE, only.values = TRUE)$values
   vals <- abs(vals)
   vals <- vals[is.finite(vals)]
   if (length(vals) == 0L) {
@@ -92,58 +89,59 @@
   list(Omega = Omega, ridge = ridge, condition = .gmm_condition_number(Omega))
 }
 
+.gmm_average_jacobian <- function(jac, w, n, q, p) {
+  if (!is.numeric(jac) || is.complex(jac)) {
+    .abort_bad_arg("model$jacobian_obs()", "must be real numeric", quoted = FALSE)
+  }
+  if (p == 1L && is.null(dim(jac))) {
+    jac <- .validate_vector_nrow(jac, n, arg = "model$jacobian_obs()", ref = "X", finite = TRUE)
+    jac <- matrix(jac, ncol = 1L)
+  }
+  if (p == 1L && length(dim(jac)) == 2L) {
+    jac_mat <- as.matrix(jac)
+    if (nrow(jac_mat) != n || ncol(jac_mat) != q) {
+      .abort_bad_arg(
+        "model$jacobian_obs()",
+        "must return an n x q matrix for scalar theta",
+        expected = sprintf("%d x %d", n, q),
+        actual = sprintf("%d x %d", nrow(jac_mat), ncol(jac_mat)),
+        quoted = FALSE
+      )
+    }
+    .abort_if_na_or_nonfinite(jac_mat, arg = "model$jacobian_obs()", quoted = FALSE)
+    return(matrix(as.numeric(.compensated_crossprod(jac_mat, w)), nrow = q, ncol = 1L))
+  }
+  if (length(dim(jac)) != 3L) {
+    .abort_bad_arg(
+      "model$jacobian_obs()",
+      "must return an n x q x p array",
+      quoted = FALSE
+    )
+  }
+  if (dim(jac)[1L] != n || dim(jac)[2L] != q || dim(jac)[3L] != p) {
+    .abort_bad_arg(
+      "model$jacobian_obs()",
+      "must return an n x q x p array",
+      expected = sprintf("%d x %d x %d", n, q, p),
+      actual = paste(dim(jac), collapse = " x "),
+      quoted = FALSE
+    )
+  }
+  .abort_if_na_or_nonfinite(jac, arg = "model$jacobian_obs()", quoted = FALSE)
+  D <- matrix(NA_real_, nrow = q, ncol = p)
+  for (j in seq_len(p)) {
+    jac_j <- matrix(jac[, , j], nrow = n, ncol = q)
+    D[, j] <- as.numeric(.compensated_crossprod(jac_j, w))
+  }
+  D
+}
+
 .gmm_eval_jacobian <- function(model, sample, theta, ctx, w, n, q, p,
                                mode, fd_step) {
   use_analytic <- mode %in% c("auto", "analytic") && !is.null(model$jacobian_obs)
   if (use_analytic) {
     jac <- model$jacobian_obs(sample = sample, theta = theta, ctx = ctx)
-    if (p == 1L && is.null(dim(jac))) {
-      jac <- .validate_vector_nrow(jac, n, arg = "model$jacobian_obs()", ref = "X", finite = TRUE)
-      jac <- matrix(jac, ncol = 1L)
-    }
-    if (p == 1L && length(dim(jac)) == 2L) {
-      jac_mat <- as.matrix(jac)
-      if (nrow(jac_mat) != n || ncol(jac_mat) != q) {
-        .abort_bad_arg(
-          "model$jacobian_obs()",
-          "must return an n x q matrix for scalar theta",
-          expected = sprintf("%d x %d", n, q),
-          actual = sprintf("%d x %d", nrow(jac_mat), ncol(jac_mat)),
-          quoted = FALSE
-        )
-      }
-      if (!is.numeric(jac_mat)) {
-        .abort_bad_arg("model$jacobian_obs()", "must be numeric", quoted = FALSE)
-      }
-      .abort_if_na_or_nonfinite(jac_mat, arg = "model$jacobian_obs()", quoted = FALSE)
-      return(matrix(as.numeric(.compensated_crossprod(jac_mat, w)), nrow = q, ncol = 1L))
-    }
-    if (length(dim(jac)) != 3L) {
-      .abort_bad_arg(
-        "model$jacobian_obs()",
-        "must return an n x q x p array",
-        quoted = FALSE
-      )
-    }
-    if (dim(jac)[1L] != n || dim(jac)[2L] != q || dim(jac)[3L] != p) {
-      .abort_bad_arg(
-        "model$jacobian_obs()",
-        "must return an n x q x p array",
-        expected = sprintf("%d x %d x %d", n, q, p),
-        actual = paste(dim(jac), collapse = " x "),
-        quoted = FALSE
-      )
-    }
-    if (!is.numeric(jac)) {
-      .abort_bad_arg("model$jacobian_obs()", "must be numeric", quoted = FALSE)
-    }
-    .abort_if_na_or_nonfinite(jac, arg = "model$jacobian_obs()", quoted = FALSE)
-    D <- matrix(NA_real_, nrow = q, ncol = p)
-    for (j in seq_len(p)) {
-      jac_j <- matrix(jac[, , j], nrow = n, ncol = q)
-      D[, j] <- as.numeric(.compensated_crossprod(jac_j, w))
-    }
-    return(D)
+    return(.dnn_validate_callback(.gmm_average_jacobian(jac, w, n, q, p)))
   }
 
   if (identical(mode, "analytic")) {
@@ -165,8 +163,8 @@
 }
 
 .gmm_validate_start_vector <- function(start, p, arg = "start") {
-  if (!is.numeric(start)) {
-    .abort_bad_arg(arg, "must be numeric")
+  if (!is.numeric(start) || is.complex(start)) {
+    .abort_bad_arg(arg, "must be real numeric")
   }
   start_vec <- as.numeric(start)
   if (length(start_vec) != p || anyNA(start_vec) || any(!is.finite(start_vec))) {
@@ -187,7 +185,8 @@
   }
   if (!is.null(model$start)) {
     start <- model$start(sample = sample, ctx = ctx, w = w, x0 = x0)
-    return(.gmm_validate_start_vector(start, p = p, arg = "model$start()"))
+    return(.dnn_validate_callback(
+      .gmm_validate_start_vector(start, p = p, arg = "model$start()")))
   }
   rep(0, p)
 }
@@ -224,7 +223,7 @@
   rownames(Omega) <- colnames(Omega) <- moment_names
   Omega_inv <- .gmm_safe_solve(Omega)
   if (is.null(Omega_inv) || any(!is.finite(Omega_inv))) {
-    .abort_bad_state("Could not invert the local GMM moment covariance matrix.")
+    return(list(failure = "Could not invert the local GMM moment covariance matrix."))
   }
 
   opt2 <- stats::optim(
@@ -258,18 +257,14 @@
 
   vc <- NULL
   se_hat <- rep(NA_real_, p)
+  outside_range <- FALSE
   if (isTRUE(se)) {
     info <- t(D_hat) %*% Omega_inv %*% D_hat
     rownames(info) <- colnames(info) <- coef_names
     info_inv <- .gmm_safe_solve(info)
     outside_range <- any(!is.finite(info)) ||
       (!is.null(info_inv) && any(!is.finite(info_inv)))
-    if (outside_range) {
-      warning(paste0(
-        "gmm_dnn: local GMM information matrix or its inverse is outside the numeric range; ",
-        "coefficient SEs set to NA. Rescale model moments or the parameterization."
-      ), call. = FALSE)
-    } else if (!is.null(info_inv)) {
+    if (!outside_range && !is.null(info_inv)) {
       vc <- info_inv / neff
       rownames(vc) <- colnames(vc) <- coef_names
       se_hat <- sqrt(pmax(diag(vc), 0))
@@ -297,6 +292,7 @@
     df = df,
     pval_J = pval,
     neff = neff,
+    information_outside_range = outside_range,
     convergence = list(
       first = opt1$convergence,
       second = opt2$convergence,
@@ -360,8 +356,8 @@
 #'
 #' Two interfaces are supported.
 #'
-#' 1. Data-frame interface: pass `data`, `x_cols`, and a `gmm_model`.
-#' 2. Matrix interface: pass `X`, one of `X0` or `x0`, a `gmm_model`, and
+#' 1. Data-frame interface: pass `data`, `x_cols`, and a `rdistnn_gmm_model`.
+#' 2. Matrix interface: pass `X`, one of `X0` or `x0`, a `rdistnn_gmm_model`, and
 #'    `model_data` when the model needs observation-level variables.
 #'
 #' Nuisance quantities are not fit internally.  They must be supplied to the
@@ -371,6 +367,22 @@
 #' retained for weight reconstruction. Replacing a registered metric after
 #' fitting does not change the fit's geometry. Custom callbacks with mutable
 #' external state retain their own reproducibility obligations.
+#'
+#' Model callbacks must return their documented finite numeric values at the
+#' supplied starts and optimizer trial points. Callback errors, malformed
+#' returned values, interrupts and caller-promoted warnings stop the fit.
+#' Only nonfinite quadratic arithmetic from otherwise valid moments receives
+#' an optimizer penalty. A local moment covariance that cannot be inverted
+#' leaves that target unavailable, with its reason in `convergence` and one
+#' partial-result warning per call. Singular local information retains the
+#' coefficient estimate with unavailable uncertainty; information outside the
+#' numeric range also gives a rescaling warning. No callback-domain recovery
+#' interface or automatic retry at a different start is supplied.
+#'
+#' Requested Jacobian diagnostics can retain arithmetic nonfinite values from
+#' differencing finite callback evaluations when coefficient uncertainty is
+#' unavailable or deliberately disabled. This does not relax the finite-value
+#' contract for callback returns.
 #'
 #' Exact DNN localization uses the full rank permutation at each target rather
 #' than an `s`-nearest-neighbor truncation. For exact DNN fits, the
@@ -423,7 +435,7 @@
 #'   "neighbors", "tuning")`. `neighbors` is a `k x m` matrix of nearest
 #'   training-observation indices, not the full DNN weight support.
 #'
-#' @return A `gmm_result` object with estimates, diagnostics, metadata, the
+#' @return A `rdistnn_gmm_result` object with estimates, diagnostics, metadata, the
 #'   `m x p` evaluation-point matrix `x0` (with covariate column names
 #'   propagated from the training data when available), and requested extras.
 #' @examples
@@ -467,9 +479,9 @@ gmm_dnn <- function(
   ctx = NULL,
   return = c("W")
 ) {
-  method <- match.arg(method)
-  optimizer <- match.arg(optimizer)
-  jacobian <- match.arg(jacobian)
+  method <- .dnn_match_arg(method)
+  optimizer <- .dnn_match_arg(optimizer)
+  jacobian <- .dnn_match_arg(jacobian)
   s_arg <- s
   k <- .validate_scalar_int(k, "k")
   return <- .gmm_prepare_return(return)
@@ -574,33 +586,12 @@ gmm_dnn <- function(
   wt <- weight_fit$wt
   W <- weight_fit$W
 
-  # Find moment dimensions at an actual target start, including models whose
-  # moments are not defined at zero. Cache every attempted start or failure;
-  # an earlier target must not prevent a later valid target from supplying q.
-  cached_starts <- vector("list", m_out)
-  attempted_start <- rep(FALSE, m_out)
-  probe <- NULL
-  for (j in seq_len(m_out)) {
-    attempted_start[j] <- TRUE
-    start_j <- tryCatch(.gmm_start_for_target(
-      model, sample, model_ctx, as.numeric(W[, j]), x0_mat[j, ], p_theta,
-      if (is.null(start_mat)) NULL else start_mat[, j]), error = function(e) e)
-    cached_starts[j] <- list(start_j)
-    if (inherits(start_j, "error")) next
-    candidate_probe <- tryCatch(.gmm_probe_moments(
-      model, sample, model_ctx, n = n, theta = start_j), error = function(e) e)
-    if (inherits(candidate_probe, "error")) {
-      cached_starts[j] <- list(candidate_probe)
-    } else {
-      probe <- candidate_probe
-      break
-    }
-  }
-  # Preserve all-target warning/NA results when every start fails but the
-  # former zero probe can still establish the model's moment dimensions.
-  if (is.null(probe)) {
-    probe <- .gmm_probe_moments(model, sample, model_ctx, n = n, theta = rep(0, p_theta))
-  }
+  # Discover dimensions at the first actual target start, and reuse that start
+  # once. Callback failures are errors, rather than missing-target results.
+  first_start <- .gmm_start_for_target(
+    model, sample, model_ctx, as.numeric(W[, 1L]), x0_mat[1L, ], p_theta,
+    if (is.null(start_mat)) NULL else start_mat[, 1L])
+  probe <- .gmm_probe_moments(model, sample, model_ctx, n = n, theta = first_start)
   q <- ncol(probe)
   moment_names <- model$moment_names
   if (is.null(moment_names)) {
@@ -625,43 +616,34 @@ gmm_dnn <- function(
   jac_list <- vector("list", m_out)
   g_list <- vector("list", m_out)
   conv <- vector("list", m_out)
+  numerical_failures <- information_outside_range <- rep(FALSE, m_out)
 
   for (j in seq_len(m_out)) {
     w <- as.numeric(W[, j])
-    start_j <- if (attempted_start[j]) cached_starts[[j]] else if (!is.null(start_mat)) start_mat[, j] else NULL
+    start_j <- if (j == 1L) first_start else if (!is.null(start_mat)) start_mat[, j] else NULL
 
-    fit_j <- tryCatch({
-      if (inherits(start_j, "error")) stop(start_j)
-      .gmm_fit_one_target(
-        model = model,
-        sample = sample,
-        ctx = model_ctx,
-        w = w,
-        x0 = x0_mat[j, ],
-        n = n,
-        q = q,
-        p = p_theta,
-        start = start_j,
-        optimizer = optimizer,
-        jacobian = jacobian,
-        omega_ridge = omega_ridge,
-        fd_step = fd_step,
-        se = se,
-        need_jacobian = isTRUE(se) || "jacobian" %in% return,
-        moment_names = moment_names,
-        coef_names = model$coef_names
-      )
-    },
-      error = function(e) {
-        warning(sprintf(
-          "gmm_dnn: target %d failed: %s",
-          j, conditionMessage(e)
-        ), call. = FALSE)
-        NULL
-      }
+    fit_j <- .gmm_fit_one_target(
+      model = model,
+      sample = sample,
+      ctx = model_ctx,
+      w = w,
+      x0 = x0_mat[j, ],
+      n = n,
+      q = q,
+      p = p_theta,
+      start = start_j,
+      optimizer = optimizer,
+      jacobian = jacobian,
+      omega_ridge = omega_ridge,
+      fd_step = fd_step,
+      se = se,
+      need_jacobian = isTRUE(se) || "jacobian" %in% return,
+      moment_names = moment_names,
+      coef_names = model$coef_names
     )
 
-    if (is.null(fit_j)) {
+    if (!is.null(fit_j$failure)) {
+      numerical_failures[j] <- TRUE
       conv[[j]] <- list(
         first = NA_integer_,
         second = NA_integer_,
@@ -669,7 +651,7 @@ gmm_dnn <- function(
         value_second = NA_real_,
         omega_ridge = NA_real_,
         omega_condition = NA_real_,
-        message = "target failed"
+        message = paste0("target failed: ", fit_j$failure)
       )
       next
     }
@@ -686,6 +668,20 @@ gmm_dnn <- function(
     jac_list[j] <- list(fit_j$jacobian)
     g_list[j] <- list(fit_j$g_obs)
     conv[[j]] <- fit_j$convergence
+    information_outside_range[j] <- fit_j$information_outside_range
+  }
+
+  unavailable <- numerical_failures | information_outside_range
+  if (any(unavailable)) {
+    detail <- c(
+      if (any(numerical_failures)) paste0("Some local GMM moment covariance matrices could not be inverted; ",
+        "their target estimates are unavailable."),
+      if (any(information_outside_range)) paste0("Some local GMM information matrices or their inverses ",
+        "are outside the numeric range; coefficient SEs are set to NA."))
+    .dnn_warn("partial_result", paste(detail, collapse = " "),
+      affected = sum(unavailable), examples = which(unavailable),
+      hint = paste0("Rescale model moments or the parameterization, or increase `omega_ridge` ",
+        "for failed targets; inspect `convergence`."))
   }
 
   target_names <- paste0("target_", seq_len(m_out))
@@ -758,13 +754,13 @@ gmm_dnn <- function(
   )
   out$.model <- c(list(
     x_mat = x_mat,
-    x_cols = if (!is.null(data)) x_cols else NULL,
+    x_cols = if (!is.null(data)) .dnn_resolve_data_cols(x_cols, data, "x_cols") else NULL,
     method = method,
     k = k,
     s = s,
     normalize = normalize, ranks = wt$ranks, groups = wt$groups, dx = wt$dx
   ), geometry)
 
-  class(out) <- "gmm_result"
+  class(out) <- "rdistnn_gmm_result"
   out
 }

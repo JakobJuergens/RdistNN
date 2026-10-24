@@ -1,5 +1,5 @@
 # Estimate panels (plan panels NP-1, C-1, C-2) and the autoplot()/plot()
-# methods for np_result and cate_result. ggplot2 is guarded as a suggested
+# methods for rdistnn_np_result and rdistnn_cate_result. ggplot2 is guarded as a suggested
 # dependency; the data layer is plot_data_estimates().
 
 #' Plot estimates with confidence bounds across target points
@@ -8,7 +8,7 @@
 #' confidence bounds from the stored estimator-specific standard errors, drawn as a
 #' profile band when the targets vary along a single stored coordinate, as
 #' a forest layout for small non-profile target sets, and as pointranges
-#' otherwise. `autoplot()` and `plot()` on `np_result`, `cate_result` and `affine_ratio_result`
+#' otherwise. `autoplot()` and `plot()` on `rdistnn_np_result`, `rdistnn_cate_result` and `rdistnn_affine_ratio_result`
 #' objects delegate here.
 #'
 #' Every panel carries an honesty caption with the median effective sample
@@ -17,7 +17,7 @@
 #' CATE and CLATE panels draw a dashed zero reference line.
 #'
 #' @section Experimental methods:
-#' Methods for `plqr_result` objects are experimental, as is all PLQR
+#' Methods for `rdistnn_plqr_result` objects are experimental, as is all PLQR
 #' functionality in this release; see [plqr_dnn()].
 #'
 #' @param object A fitted result object accepted by
@@ -61,7 +61,8 @@ plot_estimates <- function(object, level = 0.95,
                            ...) {
   .dnn_reuse_scope(object)
   .plot_require_ggplot2("plot_estimates")
-  style <- match.arg(style)
+  style <- .dnn_match_arg(style)
+  shade_significant <- .validate_scalar_logical(shade_significant, "shade_significant")
   if (!.plot_candidates_is_default(candidates)) {
     return(.plot_estimates_candidates(
       object = object,
@@ -96,8 +97,8 @@ plot_estimates <- function(object, level = 0.95,
   # 3.0): treatment effects and PLQR moment coordinates. Supplied-theta
   # PLQR plots get no automatic zero line; zero is not a meaningful
   # reference for an arbitrary evaluation value.
-  zero_line <- inherits(object, "cate_result") || inherits(object, "clate_result") ||
-    (inherits(object, "plqr_result") && !identical(attr(df, "quantity"), "theta"))
+  zero_line <- inherits(object, "rdistnn_cate_result") || inherits(object, "rdistnn_clate_result") ||
+    (inherits(object, "rdistnn_plqr_result") && !identical(attr(df, "quantity"), "theta"))
 
   if (mode == "forest") {
     labs_map <- .plot_target_labels(df)
@@ -219,8 +220,8 @@ plot_estimates <- function(object, level = 0.95,
   if (!is.null(payload$drop_caption)) {
     captions <- c(captions, payload$drop_caption)
   }
-  zero_line <- inherits(object, "cate_result") || inherits(object, "clate_result") ||
-    (inherits(object, "plqr_result") && !identical(attr(df, "quantity"), "theta"))
+  zero_line <- inherits(object, "rdistnn_cate_result") || inherits(object, "rdistnn_clate_result") ||
+    (inherits(object, "rdistnn_plqr_result") && !identical(attr(df, "quantity"), "theta"))
   # All layers use positions from the complete candidate grid, so missing
   # intervals cannot change a candidate's offset relative to its point.
   candidate_index <- match(df$candidate_id, unique(df$candidate_id))
@@ -337,29 +338,29 @@ plot_estimates <- function(object, level = 0.95,
 }
 
 #' @rdname plot_estimates
-#' @exportS3Method ggplot2::autoplot np_result
-autoplot.np_result <- function(object, ...) {
+#' @exportS3Method ggplot2::autoplot rdistnn_np_result
+autoplot.rdistnn_np_result <- function(object, ...) {
   .dnn_reuse_scope(object)
   plot_estimates(object, ...)
 }
 
 #' @rdname plot_estimates
-#' @exportS3Method ggplot2::autoplot cate_result
-autoplot.cate_result <- function(object, ...) {
+#' @exportS3Method ggplot2::autoplot rdistnn_cate_result
+autoplot.rdistnn_cate_result <- function(object, ...) {
   .dnn_reuse_scope(object)
   plot_estimates(object, ...)
 }
 
 #' @rdname plot_estimates
-#' @exportS3Method ggplot2::autoplot affine_ratio_result
-autoplot.affine_ratio_result <- function(object, ...) {
+#' @exportS3Method ggplot2::autoplot rdistnn_affine_ratio_result
+autoplot.rdistnn_affine_ratio_result <- function(object, ...) {
   .dnn_reuse_scope(object)
   plot_estimates(object, ...)
 }
 
 #' @rdname plot_estimates
-#' @exportS3Method ggplot2::autoplot plqr_result
-autoplot.plqr_result <- function(object, ...) {
+#' @exportS3Method ggplot2::autoplot rdistnn_plqr_result
+autoplot.rdistnn_plqr_result <- function(object, ...) {
   .dnn_reuse_scope(object)
   p <- plot_estimates(object, ...)
   theta_txt <- paste(format(as.numeric(object$theta_eval), digits = 3),
@@ -372,8 +373,8 @@ autoplot.plqr_result <- function(object, ...) {
 }
 
 #' @rdname plot_estimates
-#' @exportS3Method ggplot2::autoplot gmm_result
-autoplot.gmm_result <- function(object, ...) {
+#' @exportS3Method ggplot2::autoplot rdistnn_gmm_result
+autoplot.rdistnn_gmm_result <- function(object, ...) {
   .dnn_reuse_scope(object)
   p <- plot_estimates(object, ...)
   if (!is.null(object$meta$model)) {
@@ -387,7 +388,7 @@ autoplot.gmm_result <- function(object, ...) {
 #' @rdname plot_estimates
 #' @param x A fitted result object (for the `plot()` methods).
 #' @export
-plot.np_result <- function(x, ...) {
+plot.rdistnn_np_result <- function(x, ...) {
   .dnn_reuse_scope(x)
   p <- plot_estimates(x, ...)
   print(p)
@@ -396,7 +397,7 @@ plot.np_result <- function(x, ...) {
 
 #' @rdname plot_estimates
 #' @export
-plot.cate_result <- function(x, ...) {
+plot.rdistnn_cate_result <- function(x, ...) {
   .dnn_reuse_scope(x)
   p <- plot_estimates(x, ...)
   print(p)
@@ -405,7 +406,7 @@ plot.cate_result <- function(x, ...) {
 
 #' @rdname plot_estimates
 #' @export
-plot.affine_ratio_result <- function(x, ...) {
+plot.rdistnn_affine_ratio_result <- function(x, ...) {
   .dnn_reuse_scope(x)
   p <- plot_estimates(x, ...)
   print(p)
@@ -414,18 +415,18 @@ plot.affine_ratio_result <- function(x, ...) {
 
 #' @rdname plot_estimates
 #' @export
-plot.plqr_result <- function(x, ...) {
+plot.rdistnn_plqr_result <- function(x, ...) {
   .dnn_reuse_scope(x)
-  p <- autoplot.plqr_result(x, ...)
+  p <- autoplot.rdistnn_plqr_result(x, ...)
   print(p)
   invisible(p)
 }
 
 #' @rdname plot_estimates
 #' @export
-plot.gmm_result <- function(x, ...) {
+plot.rdistnn_gmm_result <- function(x, ...) {
   .dnn_reuse_scope(x)
-  p <- autoplot.gmm_result(x, ...)
+  p <- autoplot.rdistnn_gmm_result(x, ...)
   print(p)
   invisible(p)
 }

@@ -2,14 +2,14 @@
 % Please edit documentation in R/api-ranks.R
 \name{register_rank_weight}
 \alias{register_rank_weight}
-\title{Register a rank_weight under a name}
+\title{Register a rdistnn_rank_weight under a name}
 \usage{
 register_rank_weight(name, spec)
 }
 \arguments{
 \item{name}{Character scalar registry key.}
 
-\item{spec}{A rank_weight spec or function \verb{(ranks, ctx) -> numeric(n)}.}
+\item{spec}{A rdistnn_rank_weight spec or function \verb{(ranks, ctx) -> numeric(n)}.}
 }
 \value{
 Invisibly, the registered spec.

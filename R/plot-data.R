@@ -13,10 +13,10 @@
   }
   se_mat <- if (is.matrix(se)) se else matrix(as.numeric(se), nrow = q, ncol = m)
   if (nrow(se_mat) != q || ncol(se_mat) != m) {
-    .abort_bad_state(sprintf(
+    .dnn_abort("state_invalid", sprintf(
       "stored `se` has dimensions %d x %d; expected %d x %d.",
       nrow(se_mat), ncol(se_mat), q, m
-    ))
+    ), hint = "Refit with the current estimator before reusing this fit.")
   }
   se_mat
 }
@@ -67,12 +67,13 @@
 #' these frames, and users can consume them directly for custom figures.
 #'
 #' @section Experimental methods:
-#' Methods for `plqr_result` objects are experimental, as is all PLQR
+#' Methods for `rdistnn_plqr_result` objects are experimental, as is all PLQR
 #' functionality in this release; see [plqr_dnn()].
 #'
-#' @param object A fitted result object (`np_result`, `cate_result`,
-#'   `affine_ratio_result`, `clate_result`, `plqr_result`, or `gmm_result`; `tdnn_np_result` dispatches through
-#'   `np_result`).
+#' @param object A fitted result object (`rdistnn_np_result`, `rdistnn_cate_result`,
+#'   `rdistnn_affine_ratio_result`, `rdistnn_clate_result`, `rdistnn_plqr_result`,
+#'   or `rdistnn_gmm_result`; `rdistnn_tdnn_np_result` dispatches through
+#'   `rdistnn_np_result`).
 #' @param level Confidence level for the normal bounds (default `0.95`).
 #' @param candidates For grid-aware methods, `"default"`, `"all"`, or a
 #'   character vector of stored candidate ids.
@@ -118,7 +119,7 @@ plot_data_estimates.default <- function(object, level = 0.95, ...) {
 
 #' @rdname plot_data_estimates
 #' @export
-plot_data_estimates.np_result <- function(object, level = 0.95, candidates = "default", ...) {
+plot_data_estimates.rdistnn_np_result <- function(object, level = 0.95, candidates = "default", ...) {
   .dnn_reuse_scope(object)
   if (!.plot_candidates_is_default(candidates)) {
     return(.plot_candidate_estimates_frame(object, candidates, level, "plot_data_estimates")$data)
@@ -132,7 +133,7 @@ plot_data_estimates.np_result <- function(object, level = 0.95, candidates = "de
 
 #' @rdname plot_data_estimates
 #' @export
-plot_data_estimates.cate_result <- function(object, level = 0.95, candidates = "default", ...) {
+plot_data_estimates.rdistnn_cate_result <- function(object, level = 0.95, candidates = "default", ...) {
   .dnn_reuse_scope(object)
   if (!.plot_candidates_is_default(candidates)) {
     return(.plot_candidate_estimates_frame(object, candidates, level, "plot_data_estimates")$data)
@@ -145,7 +146,7 @@ plot_data_estimates.cate_result <- function(object, level = 0.95, candidates = "
 }
 
 #' @rdname plot_data_estimates
-#' @param quantity For `plqr_result` fits, which quantity to extract:
+#' @param quantity For `rdistnn_plqr_result` fits, which quantity to extract:
 #'   `"moment"` (default) uses the localized PLQR moments and their
 #'   jackknife `moment_se`; `"theta"` uses the supplied coefficient values
 #'   (repeated `theta_eval`) and the direct-sandwich `theta_se`. While no
@@ -154,12 +155,12 @@ plot_data_estimates.cate_result <- function(object, level = 0.95, candidates = "
 #'   coefficients repeat across candidate orders without borrowing moment
 #'   standard errors. The choice is recorded in `attr(., "quantity")`.
 #' @export
-plot_data_estimates.plqr_result <- function(object, level = 0.95,
+plot_data_estimates.rdistnn_plqr_result <- function(object, level = 0.95,
                                             quantity = c("moment", "theta"),
                                             candidates = "default",
                                             ...) {
   .dnn_reuse_scope(object)
-  quantity <- match.arg(quantity)
+  quantity <- .dnn_match_arg(quantity)
   if (!.plot_candidates_is_default(candidates)) {
     return(.plot_candidate_estimates_frame(object, candidates, level,
       "plot_data_estimates", quantity = quantity)$data)
@@ -188,7 +189,7 @@ plot_data_estimates.plqr_result <- function(object, level = 0.95,
 
 #' @rdname plot_data_estimates
 #' @export
-plot_data_estimates.gmm_result <- function(object, level = 0.95, ...) {
+plot_data_estimates.rdistnn_gmm_result <- function(object, level = 0.95, ...) {
   .dnn_reuse_scope(object)
   est <- as.matrix(object$theta)
   coef_names <- object$meta$coef_names
@@ -237,22 +238,20 @@ plot_data_estimates.gmm_result <- function(object, level = 0.95, ...) {
 plot_data_weights <- function(object) {
   .dnn_reuse_scope(object)
   W <- .dnn_diag_require_W(object)
+  dx <- .dnn_retained_matrix(object, "dx")
+  .plot_weight_profiles(object, W, dx, seq_len(ncol(W)))
+}
+
+# Both the full data extractor and selected displays consume validated current
+# arrays. Invert only selected cached rank columns; never infer old ordering.
+.plot_weight_profiles <- function(object, W, dx, targets) {
   n <- nrow(W)
-  m <- ncol(W)
-  dx <- object$dx
-  if (!is.null(dx)) dx <- as.matrix(dx)
+  ord <- .dnn_retained_ranking(object, targets)$ord
 
-  ord <- .dnn_retained_ranking(object)$ord
-
-  frames <- vector("list", m)
-  for (j in seq_len(m)) {
-    order_j <- if (!is.null(ord)) {
-      ord[, j]
-    } else if (!is.null(dx)) {
-      order(dx[, j], seq_len(n))
-    } else {
-      order(W[, j], decreasing = TRUE)
-    }
+  frames <- vector("list", length(targets))
+  for (column in seq_along(targets)) {
+    j <- targets[[column]]
+    order_j <- ord[, column]
     w_j <- W[order_j, j]
     total <- sum(w_j)
     cum_share <- if (is.finite(total) && abs(total) > 0) {
@@ -260,7 +259,7 @@ plot_data_weights <- function(object) {
     } else {
       rep(NA_real_, n)
     }
-    frames[[j]] <- data.frame(
+    frames[[column]] <- data.frame(
       target_id = rep(j, n),
       rank = seq_len(n),
       obs_id = as.integer(order_j),

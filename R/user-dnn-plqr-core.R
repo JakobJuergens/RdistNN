@@ -8,7 +8,9 @@
   resid <- as.numeric(tau) - as.numeric(below_threshold)
   score <- (d_mat - mD_mat) * resid
   if (any(!is.finite(score))) {
-    .abort_bad_state("Computed PLQR score is outside the numeric range; rescale regressor and nuisance inputs.")
+    .dnn_abort("numerical_range",
+      "Computed PLQR score is outside the numeric range; rescale regressor and nuisance inputs."
+    )
   }
   score
 }
@@ -18,7 +20,7 @@
   jackknife = c("fast", "loo"),
   precomputed_ranks = NULL, precomputed_groups = NULL
 ) {
-  jackknife <- match.arg(jackknife)
+  jackknife <- .dnn_match_arg(jackknife)
   .dnn_jackknife_se_loo_matrix(
     x_mat = x_mat,
     x0_mat = x0_mat,
@@ -52,7 +54,85 @@
 }
 
 .plqr_safe_solve <- function(A) {
-  tryCatch(solve(A), error = function(e) NULL)
+  if (any(!is.finite(A)) || rcond(A) < .Machine$double.eps) return(NULL)
+  solve(A)
+}
+
+.plqr_check_report_model <- function(object, n, m, invalid, require_fields,
+                                    check_array, check_covariance) {
+  model <- object$.model
+  require_fields(c("d_mat", "mD_mat", "d_resid_mat", "below_threshold", "density",
+    "theta_eval", "tau", "coef_names"), model, ".model$")
+  .dnn_validate_retained(.plqr_validate_prediction_model(model))
+  if (!is.matrix(model$d_mat) || ncol(model$d_mat) < 1L) {
+    invalid(".model$d_mat", "must retain the canonical PLQR coefficient matrix")
+  }
+  q <- ncol(model$d_mat)
+  for (field in c("d_mat", "mD_mat", "d_resid_mat")) {
+    check_array(model[[field]], paste0(".model$", field), c(n, q))
+  }
+  check_array(model$theta_eval, ".model$theta_eval", q)
+  check_array(model$below_threshold, ".model$below_threshold", n)
+  if (any(!model$below_threshold %in% c(0, 1))) {
+    invalid(".model$below_threshold", "must retain the fitted binary threshold indicators")
+  }
+  if (any(model$d_resid_mat != model$d_mat - model$mD_mat)) {
+    invalid(".model$d_resid_mat", "is inconsistent with the retained regressor and nuisance matrices")
+  }
+  if (!is.null(dim(model$coef_names))) invalid(".model$coef_names", "must be a character vector")
+  meta <- object$meta
+  require_fields(c("p_d", "coef_names", "theta_source", "theta_se_method",
+    "theta_meat_method", "moment_se_method", "jackknife"), meta, "meta$")
+  if (!is.numeric(meta$p_d) || length(meta$p_d) != 1L || !is.finite(meta$p_d) || meta$p_d != q ||
+      !identical(meta$coef_names, model$coef_names) || !identical(meta$theta_source, "supplied")) {
+    invalid("meta", "must retain the fitted PLQR coefficient dimension, names and supplied evaluation source")
+  }
+  choices <- list(theta_se_method = c("none", "direct_sandwich"),
+    theta_meat_method = c("none", "analytic", "jackknife"),
+    moment_se_method = c("none", "jackknife"), jackknife = c("none", "fast", "loo"))
+  for (field in names(choices)) {
+    value <- meta[[field]]
+    if (!is.character(value) || length(value) != 1L || is.na(value) || !value %in% choices[[field]]) {
+      invalid(paste0("meta$", field), "must retain the fitted PLQR uncertainty method")
+    }
+  }
+  coefficient_se <- meta$theta_se_method == "direct_sandwich"
+  moment_se <- meta$moment_se_method == "jackknife"
+  inference_fields <- c("theta_vcov", "theta_omega", "jacobian", "neff",
+    "score_covariance", "moment_vcov")
+  if (coefficient_se != !is.null(object$theta_se) || moment_se != !is.null(object$moment_se) ||
+      (coefficient_se && (is.null(model$density) || meta$theta_meat_method == "none")) ||
+      (!coefficient_se && meta$theta_meat_method != "none") ||
+      (!coefficient_se && any(vapply(object[inference_fields], Negate(is.null), logical(1L)))) ||
+      (moment_se && meta$jackknife == "none")) {
+    invalid("meta/theta_se/moment_se", "contains inconsistent PLQR uncertainty availability")
+  }
+  require_fields("tau")
+  check_array(object$tau, "tau", 1L)
+  if (object$tau != model$tau || !identical(as.numeric(object$theta_eval), as.numeric(model$theta_eval))) {
+    invalid("tau/theta_eval", "is inconsistent with the retained PLQR evaluation values")
+  }
+  if (coefficient_se) {
+    require_fields(c("theta_vcov", "theta_omega", "jacobian", "neff"))
+    check_covariance(object$theta_omega, "theta_omega", q)
+    check_array(object$neff, "neff", m, nonnegative = TRUE)
+    if (any(object$neff <= 0)) invalid("neff", "must retain positive effective sample sizes")
+    if (!is.list(object$jacobian) || length(object$jacobian) != m) {
+      invalid("jacobian", "must retain one PLQR Jacobian matrix per target")
+    }
+    for (j in seq_len(m)) {
+      J <- object$jacobian[[j]]
+      if (!is.matrix(J) || !is.numeric(J) || is.complex(J) || !identical(dim(J), c(q, q)) ||
+          (any(!is.finite(J)) && any(!is.na(object$theta_se[, j])))) {
+        invalid("jacobian", paste0("must retain aligned numeric bread matrices, ",
+          "with unavailable uncertainty outside the numeric range"))
+      }
+    }
+    meat <- if (meta$theta_meat_method == "analytic") "score_covariance" else "moment_vcov"
+    require_fields(meat)
+    check_covariance(object[[meat]], meat, q)
+  }
+  invisible(NULL)
 }
 
 .plqr_dimnames_matrix <- function(x, coef_names, target_names) {
@@ -66,9 +146,9 @@
 .plqr_validate_normalized_weights <- function(W, tol = 1e-8) {
   col_sums <- colSums(as.matrix(W))
   if (any(!is.finite(col_sums)) || any(abs(col_sums - 1) > tol)) {
-    .abort_bad_state(
+    .dnn_abort("internal_invariant",
       "Direct PLQR sandwich requires normalized weight columns (each summing to 1)."
-    )
+    , hint = "Report a reproducible example of this internal inconsistency.")
   }
   invisible(NULL)
 }
@@ -110,17 +190,8 @@
     outside_range <- any(!is.finite(jacobian[[j]]))
     J_inv <- if (outside_range) NULL else .plqr_safe_solve(jacobian[[j]])
     outside_range <- outside_range || (!is.null(J_inv) && any(!is.finite(J_inv)))
-    if (outside_range || is.null(J_inv)) {
-      message <- if (outside_range) {
-        paste0("plqr_dnn: direct PLQR Jacobian or its inverse is outside the numeric range ",
-          "at target %d; coefficient SEs set to NA. Rescale regressor and density inputs.")
-      } else {
-        "plqr_dnn: direct PLQR Jacobian is singular at target %d; coefficient SEs set to NA."
-      }
-      warning(sprintf(message, j), call. = FALSE)
-      omega_j <- matrix(NA_real_, nrow = p_d, ncol = p_d)
-      vcov_j <- matrix(NA_real_, nrow = p_d, ncol = p_d)
-    } else {
+    covariance_outside_range <- FALSE
+    if (!outside_range && !is.null(J_inv)) {
       sandwiched <- J_inv %*% meat[[j]] %*% t(J_inv)
       sandwiched <- .covariance_symmetrize(sandwiched)
       if (isTRUE(meat_is_vcov)) {
@@ -130,6 +201,23 @@
         omega_j <- sandwiched
         vcov_j <- sandwiched / neff[[j]]
       }
+      covariance_outside_range <- any(!is.finite(omega_j)) || any(!is.finite(vcov_j))
+      outside_range <- covariance_outside_range
+    }
+    if (outside_range || is.null(J_inv)) {
+      message <- if (outside_range) {
+        component <- if (covariance_outside_range) "sandwich covariance" else "Jacobian or its inverse"
+        paste0(
+          "plqr_dnn: direct PLQR ", component, " is outside the numeric range ",
+          "at target %d; coefficient SEs set to NA. Rescale regressor and density inputs."
+        )
+      } else {
+        "plqr_dnn: direct PLQR Jacobian is singular at target %d; coefficient SEs set to NA."
+      }
+      warning(sprintf(message, j), call. = FALSE)
+      omega_j <- matrix(NA_real_, nrow = p_d, ncol = p_d)
+      vcov_j <- matrix(NA_real_, nrow = p_d, ncol = p_d)
+    } else {
       theta_se[, j] <- sqrt(pmax(diag(vcov_j), 0))
     }
     dimnames(omega_j) <- list(coef_names, coef_names)
@@ -269,7 +357,7 @@
   .dnn_check_tie_model(model)
   if (!is.list(model) || is.null(model$x_mat) || is.null(model$d_mat) ||
       is.null(model$mD_mat) || is.null(model$theta_eval) || is.null(model$tau)) {
-    .abort_bad_state(paste0(
+    .dnn_abort("state_invalid", paste0(
       "This object does not contain fitted model state for prediction. ",
       "Refit with the current plqr_dnn() implementation."
     ))

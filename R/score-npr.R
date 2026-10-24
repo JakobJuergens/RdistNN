@@ -23,7 +23,7 @@
 #' @param y Optional numeric vector (length \eqn{n}) of \eqn{Y} values to use when
 #'   \code{y_col} is \code{NULL}.
 #'
-#' @return An \code{ustat_score} object with:
+#' @return An \code{rdistnn_ustat_score} object with:
 #' \itemize{
 #'   \item \code{$name}: a descriptive name,
 #'   \item \code{$order}: always \code{1L},
@@ -53,13 +53,15 @@ score_np_y <- function(
   x0, x_cols, s = 1,
   y_col = NULL, y = NULL
 ) {
+  force(x0)
+  force(x_cols)
   # XOR: exactly one of y_col or y
   if (is.null(y_col) == is.null(y)) {
-    stop("Provide exactly one of 'y_col' or 'y' (mutually exclusive).", call. = FALSE)
+    .dnn_abort("argument_invalid", "Provide exactly one of 'y_col' or 'y' (mutually exclusive).", argument = "y_col")
   }
   # Enforce singleton score
   if (!is.numeric(s) || length(s) != 1L || s != 1L) {
-    stop("`score_np_y` is a singleton (order-1) score: require `s = 1`.", call. = FALSE)
+    .dnn_abort("argument_invalid", "`score_np_y` is a singleton (order-1) score: require `s = 1`.", argument = "s")
   }
 
   new_score(
@@ -82,16 +84,31 @@ score_np_y <- function(
 
     # Runtime guards: fail at evaluation if non-finite anywhere (as in cate score)
     eval = function(idxs, data, ctx, rng) {
-      if (.has_na_only(ctx$g)) stop("g contains `NA` values.", call. = FALSE)
-      if (.has_nonfinite_non_na(ctx$g)) stop("g contains non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
-      if (length(idxs) != 1L) stop("`score_np_y` expects a singleton subset in `eval()`.", call. = FALSE)
+      if (.has_na_only(ctx$g)) .dnn_abort("argument_invalid", "g contains `NA` values.", argument = "data")
+      if (.has_nonfinite_non_na(ctx$g)) .dnn_abort(
+        "argument_invalid",
+        "g contains non-finite values (`Inf`, `-Inf`, or `NaN`).",
+        argument = "data"
+      )
+      if (length(idxs) != 1L) .dnn_abort(
+        "argument_invalid",
+        "`score_np_y` expects a singleton subset in `eval()`.",
+        argument = "idxs"
+      )
       as.numeric(ctx$g[as.integer(idxs[1L])])
     },
     eval_batch = function(subs, data, ctx, rng) {
-      if (.has_na_only(ctx$g)) stop("g contains `NA` values.", call. = FALSE)
-      if (.has_nonfinite_non_na(ctx$g)) stop("g contains non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+      if (.has_na_only(ctx$g)) .dnn_abort("argument_invalid", "g contains `NA` values.", argument = "data")
+      if (.has_nonfinite_non_na(ctx$g)) .dnn_abort(
+        "argument_invalid",
+        "g contains non-finite values (`Inf`, `-Inf`, or `NaN`).",
+        argument = "data"
+      )
       if (!is.matrix(subs) || ncol(subs) != 1L) {
-        stop("`score_np_y` expects `subs` to be an n x 1 matrix (singleton subsets).", call. = FALSE)
+        .dnn_abort("argument_invalid",
+          "`score_np_y` expects `subs` to be an n x 1 matrix (singleton subsets).",
+          argument = "subs"
+        )
       }
       if (nrow(subs) == 0L) {
         return(numeric(0L))

@@ -39,7 +39,7 @@ weights_dnn(
 \item{return}{character vector of extras to include; any of \code{c("W","ord","ranks","dx")}}
 }
 \value{
-A \code{weights_result} object.
+A \code{rdistnn_weights_result} object.
 }
 \description{
 Use \code{method = "exact"} for the exact finite-population rank-weight rule and

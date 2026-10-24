@@ -55,6 +55,7 @@ test_that("nuisance return slot: AIPW path returns m0/m1/e", {
 })
 
 test_that("ESS equals 1/colSums(W^2) exactly", {
+  withr::local_preserve_seed()
   set.seed(99)
   n <- 30
   p <- 2
@@ -489,5 +490,82 @@ test_that("cate_dnn rejects invalid raw propensities before clipping", {
       ),
       "clip"
     )
+  }
+})
+
+test_that("CATE rejects nonfinite supplied signals before geometry on both routes", {
+  df <- data.frame(x = 1:8)
+  for (bad in c(NA_real_, NaN, Inf, -Inf)) {
+    signal <- 2 * (1:8)
+    signal[3L] <- bad
+    for (route in list(list(X = matrix(df$x)), list(data = df, x_cols = "x"))) {
+      probe <- .counted_l1_distance()
+      err <- expect_error(do.call(cate_dnn, c(route,
+        list(pseudo_outcome = signal, x0 = 0, s = 3L, se = FALSE,
+          distance = probe$metric))),
+        "cannot contain.*(NA|non-finite)", class = "rdistnn_input_error")
+      expect_identical(err$code, "argument_invalid")
+      expect_identical(err$argument, "pseudo_outcome")
+      expect_identical(err$operation, "cate_dnn")
+      expect_identical(probe$counts$setup, 0L)
+      expect_identical(probe$counts$eval, 0L)
+    }
+  }
+})
+
+test_that("CATE validates consumed nuisance columns with their selecting identities", {
+  df <- data.frame(x = 1:8, Y = 2 * (1:8), D = rep(0:1, 4L),
+    e = 0.5, m0 = 0, m1 = 1)
+  columns <- c(y_col = "Y", t_col = "D", e_col = "e",
+    m0_col = "m0", m1_col = "m1")
+  for (bad in c(NA_real_, NaN, Inf, -Inf)) {
+    for (arg in names(columns)) {
+      bad_df <- df
+      bad_df[[columns[[arg]]]][3L] <- bad
+      for (numeric_selectors in c(FALSE, TRUE)) {
+        selectors <- if (numeric_selectors) match(columns, names(df)) else columns
+        probe <- .counted_l1_distance()
+        err <- expect_error(do.call(cate_dnn, c(
+          list(data = bad_df, x_cols = "x", x0 = 0, s = 3L, se = FALSE,
+            distance = probe$metric), setNames(as.list(selectors), names(columns)))),
+          "cannot contain.*(NA|non-finite)", class = "rdistnn_input_error")
+        expect_identical(err$code, "argument_invalid")
+        expect_identical(err$argument, arg)
+        expect_identical(err$operation, "cate_dnn")
+        expect_identical(probe$counts$setup, 0L)
+        expect_identical(probe$counts$eval, 0L)
+      }
+    }
+  }
+})
+
+test_that("CATE preserves supplied-signal precedence and valid callback behavior", {
+  df <- data.frame(x = 1:8, Y = NA_real_, D = NaN, e = Inf, m0 = -Inf, m1 = NA_real_)
+  args <- list(data = df, x_cols = "x", pseudo_outcome = 2 * (1:8),
+    y_col = "Y", t_col = "D", e_col = "e", m0_col = "m0", m1_col = "m1",
+    x0 = 0, s = 3L, se = FALSE)
+  baseline <- cate_dnn(X = matrix(df$x), pseudo_outcome = args$pseudo_outcome,
+    x0 = 0, s = 3L, se = FALSE, distance = "l1")
+  probe <- .counted_l1_distance()
+  actual <- do.call(cate_dnn, c(args, list(distance = probe$metric)))
+  expect_equal(actual$tau, baseline$tau, tolerance = 1e-14)
+  expect_identical(probe$counts$setup, 1L)
+  expect_identical(probe$counts$eval, 1L)
+  expect_identical(actual$meta$signal_source, "supplied")
+
+  opaque <- structure(list(message = "opaque geometry failure", call = NULL),
+    class = c("opaque_geometry_error", "error", "condition"))
+  for (phase in c("on_setup", "on_eval")) {
+    probe <- do.call(.counted_l1_distance,
+      setNames(list(function() stop(opaque)), phase))
+    caught <- tryCatch(do.call(cate_dnn, c(args, list(distance = probe$metric))),
+      error = identity)
+    expect_identical(caught, opaque)
+    withr::local_options(warn = 2)
+    probe <- do.call(.counted_l1_distance,
+      setNames(list(function() warning("opaque geometry warning")), phase))
+    promoted <- expect_error(do.call(cate_dnn,
+      c(args, list(distance = probe$metric))), "opaque geometry warning")
+    expect_false(inherits(promoted, "rdistnn_input_error"))
   }
 })
