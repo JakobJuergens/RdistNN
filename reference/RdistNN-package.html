@@ -6,10 +6,10 @@ using distributional nearest-neighbor (DNN) weights and delete-1 jackknife
 standard errors. Nuisance predictions for causal estimators are supplied
 externally; the documented inference conditions remain estimator-specific.
 The underlying toolkit combines:
-distance specifications (dnn_distance) for ranking observations around a
+distance specifications (rdistnn_distance) for ranking observations around a
 target;
-rank-weight specifications (rank_weight) for converting ranks to weights;
-score objects (ustat_score) for flexible kernel-based moment evaluation.
+rank-weight specifications (rdistnn_rank_weight) for converting ranks to weights;
+score objects (rdistnn_ustat_score) for flexible kernel-based moment evaluation.
 
 "><meta property="og:description" content="Supported workflows include conditional average treatment effects with
 cate_dnn(), nonparametric regression with np_dnn(), conditional LATE with
@@ -18,10 +18,10 @@ using distributional nearest-neighbor (DNN) weights and delete-1 jackknife
 standard errors. Nuisance predictions for causal estimators are supplied
 externally; the documented inference conditions remain estimator-specific.
 The underlying toolkit combines:
-distance specifications (dnn_distance) for ranking observations around a
+distance specifications (rdistnn_distance) for ranking observations around a
 target;
-rank-weight specifications (rank_weight) for converting ranks to weights;
-score objects (ustat_score) for flexible kernel-based moment evaluation.
+rank-weight specifications (rdistnn_rank_weight) for converting ranks to weights;
+score objects (rdistnn_ustat_score) for flexible kernel-based moment evaluation.
 
 "></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -31,7 +31,7 @@ score objects (ustat_score) for flexible kernel-based moment evaluation.
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,7 +54,7 @@ score objects (ustat_score) for flexible kernel-based moment evaluation.
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>RdistNN: DNN Estimation for Conditional Effects and Regression</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/R/RdistNN-package.R" class="external-link"><code>R/RdistNN-package.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/R/RdistNN-package.R" class="external-link"><code>R/RdistNN-package.R</code></a></small>
       <div class="d-none name"><code>RdistNN-package.Rd</code></div>
     </div>
 
@@ -65,10 +65,10 @@ score objects (ustat_score) for flexible kernel-based moment evaluation.
 using distributional nearest-neighbor (DNN) weights and delete-1 jackknife
 standard errors. Nuisance predictions for causal estimators are supplied
 externally; the documented inference conditions remain estimator-specific.
-The underlying toolkit combines:</p><ul><li><p>distance specifications (<code>dnn_distance</code>) for ranking observations around a
+The underlying toolkit combines:</p><ul><li><p>distance specifications (<code>rdistnn_distance</code>) for ranking observations around a
 target;</p></li>
-<li><p>rank-weight specifications (<code>rank_weight</code>) for converting ranks to weights;</p></li>
-<li><p>score objects (<code>ustat_score</code>) for flexible kernel-based moment evaluation.</p></li>
+<li><p>rank-weight specifications (<code>rdistnn_rank_weight</code>) for converting ranks to weights;</p></li>
+<li><p>score objects (<code>rdistnn_ustat_score</code>) for flexible kernel-based moment evaluation.</p></li>
 </ul></div>
 
 
@@ -81,13 +81,13 @@ target;</p></li>
 <li><p>Resolve paper-default kernel orders with <code><a href="tuning_dnn_paper.html">tuning_dnn_paper()</a></code> and
 <code><a href="tuning_eval.html">tuning_eval()</a></code>.</p></li>
 <li><p>Estimate local CATE targets with <code><a href="cate_dnn.html">cate_dnn()</a></code>.</p></li>
-<li><p>Report and reuse CATE fits with <code><a href="summary.cate_result.html">summary.cate_result()</a></code>,
-<code><a href="confint.cate_result.html">confint.cate_result()</a></code>, <code><a href="vcov.cate_result.html">vcov.cate_result()</a></code> and <code><a href="predict.cate_result.html">predict.cate_result()</a></code>.</p></li>
+<li><p>Report and reuse CATE fits with <code><a href="summary.rdistnn_cate_result.html">summary.rdistnn_cate_result()</a></code>,
+<code><a href="confint.rdistnn_cate_result.html">confint.rdistnn_cate_result()</a></code>, <code><a href="vcov.rdistnn_cate_result.html">vcov.rdistnn_cate_result()</a></code> and <code><a href="predict.rdistnn_cate_result.html">predict.rdistnn_cate_result()</a></code>.</p></li>
 <li><p>Estimate local nonparametric means with <code><a href="np_dnn.html">np_dnn()</a></code>.</p></li>
 <li><p>Use two-scale signed-weight regression with <code><a href="np_tdnn.html">np_tdnn()</a></code>; see its help for
 order constraints and additional smoothness requirements.
 Both regression classes share reporting, joint covariance and prediction
-methods documented in <a href="np_result.html">np_result</a>.</p></li>
+methods documented in <a href="rdistnn_np_result.html">rdistnn_np_result</a>.</p></li>
 <li><p>Estimate conditional LATE from supplied nuisance predictions with
 <code><a href="clate_dnn.html">clate_dnn()</a></code>, or localize two supplied signals with <code><a href="affine_ratio_dnn.html">affine_ratio_dnn()</a></code>.
 <code><a href="iv_augmented_signals.html">iv_augmented_signals()</a></code> constructs the augmented binary-IV signals.
@@ -129,7 +129,10 @@ remains experimental and provides separate set-valued moment inversion.</p><ul><
     <h2 id="random-numbers">Random numbers<a class="anchor" aria-label="anchor" href="#random-numbers"></a></h2>
 
 
-<p>Explicit demo and simulation seeds restore <code>.Random.seed</code> and <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">RNGkind()</a></code>;
+<p>Built-in distance, rank-weight and accumulation routines preserve the caller's
+RNG state in both R and compiled execution, including leaving <code>.Random.seed</code>
+absent when it was absent. These deterministic calculations need no seed.
+Explicit demo and simulation seeds restore <code>.Random.seed</code> and <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">RNGkind()</a></code>;
 <code>NULL</code> uses the current stream. R's saved state does not include the hidden
 Box-Muller normal cache; use the default normal generator for saved-state
 reproducibility.</p>
@@ -138,6 +141,13 @@ reproducibility.</p>
     <h2 id="native-threads">Native threads<a class="anchor" aria-label="anchor" href="#native-threads"></a></h2>
 
 
+<p>Eligible built-in calculations use C++ automatically when the corresponding
+native routine is available. For engine comparisons or troubleshooting, set
+<code>options(RdistNN.use_compiled = FALSE)</code> to select the package's R paths;
+<code>TRUE</code> restores automatic native dispatch. Source installation still requires
+a C++17 compiler. Native execution errors propagate rather than triggering an
+automatic retry in R. During long native calculations, interruption can be
+delayed until control returns to R.</p>
 <p>Compiled routines use at most two OpenMP threads by default. Set
 <code>options(RdistNN.num_threads = 1L)</code> for one native thread, or supply a larger
 positive integer to opt into more threads. Lower OpenMP runtime limits are
@@ -170,7 +180,7 @@ the accompanying <a href="https://jakobjuergens.com/research/#orthogonal-inferen
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="weights_dnn.html">weights_dnn()</a></code>, <code><a href="cate_dnn.html">cate_dnn()</a></code>, <code><a href="np_dnn.html">np_dnn()</a></code>, <code><a href="plqr_dnn.html">plqr_dnn()</a></code>,
-<code><a href="diagnostics.html">diagnostics()</a></code>, <code><a href="summary.cate_result.html">summary.cate_result()</a></code>, <code><a href="predict.cate_result.html">predict.cate_result()</a></code>,
+<code><a href="diagnostics.html">diagnostics()</a></code>, <code><a href="summary.rdistnn_cate_result.html">summary.rdistnn_cate_result()</a></code>, <code><a href="predict.rdistnn_cate_result.html">predict.rdistnn_cate_result()</a></code>,
 <code><a href="new_score.html">new_score()</a></code>, <code><a href="distance_l2.html">distance_l2()</a></code></p></div>
     </div>
     <div class="section level2">

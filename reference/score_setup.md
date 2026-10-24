@@ -12,7 +12,7 @@ score_setup(score, data, ...)
 
 - score:
 
-  ustat_score
+  rdistnn_ustat_score
 
 - data:
 

@@ -9,7 +9,7 @@ DNN-based local weights."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,7 +32,7 @@ DNN-based local weights."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Nonparametric regression via DNN rank weights</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/R/user-dnn-npr.R" class="external-link"><code>R/user-dnn-npr.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/R/user-dnn-npr.R" class="external-link"><code>R/user-dnn-npr.R</code></a></small>
       <div class="d-none name"><code>np_dnn.Rd</code></div>
     </div>
 
@@ -168,7 +168,7 @@ one column per target. It is a rank summary, not the full DNN weight support.</p
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An object of class <code>np_result</code> with components:</p><ul><li><p><code>mu</code>: estimated local mean values at target points;</p></li>
+    <p>An object of class <code>rdistnn_np_result</code> with components:</p><ul><li><p><code>mu</code>: estimated local mean values at target points;</p></li>
 <li><p><code>se</code>: optional jackknife standard errors;</p></li>
 <li><p><code>x0</code>: the <code>m x p</code> matrix of evaluation points, with covariate
 column names propagated from the training data when available;</p></li>
@@ -217,7 +217,7 @@ per-candidate weight matrices are not stored. Candidate diagnostics include
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="weights_dnn.html">weights_dnn()</a></code>, <code><a href="np_demo_data.html">np_demo_data()</a></code>, <a href="np_result.html">np_result</a> for summary,
+    <div class="dont-index"><p><code><a href="weights_dnn.html">weights_dnn()</a></code>, <code><a href="np_demo_data.html">np_demo_data()</a></code>, <a href="rdistnn_np_result.html">rdistnn_np_result</a> for summary,
 coefficient, joint covariance, confidence interval and prediction methods.</p></div>
     </div>
 

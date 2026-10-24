@@ -5,8 +5,9 @@ confidence bounds from the stored estimator-specific standard errors,
 drawn as a profile band when the targets vary along a single stored
 coordinate, as a forest layout for small non-profile target sets, and as
 pointranges otherwise. `autoplot()` and
-[`plot()`](https://rdrr.io/r/graphics/plot.default.html) on `np_result`,
-`cate_result` and `affine_ratio_result` objects delegate here.
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) on
+`rdistnn_np_result`, `rdistnn_cate_result` and
+`rdistnn_affine_ratio_result` objects delegate here.
 
 ## Usage
 
@@ -21,29 +22,29 @@ plot_estimates(
   ...
 )
 
-autoplot.np_result(object, ...)
+autoplot.rdistnn_np_result(object, ...)
 
-autoplot.cate_result(object, ...)
+autoplot.rdistnn_cate_result(object, ...)
 
-autoplot.affine_ratio_result(object, ...)
+autoplot.rdistnn_affine_ratio_result(object, ...)
 
-autoplot.plqr_result(object, ...)
+autoplot.rdistnn_plqr_result(object, ...)
 
-autoplot.gmm_result(object, ...)
+autoplot.rdistnn_gmm_result(object, ...)
 
-# S3 method for class 'np_result'
+# S3 method for class 'rdistnn_np_result'
 plot(x, ...)
 
-# S3 method for class 'cate_result'
+# S3 method for class 'rdistnn_cate_result'
 plot(x, ...)
 
-# S3 method for class 'affine_ratio_result'
+# S3 method for class 'rdistnn_affine_ratio_result'
 plot(x, ...)
 
-# S3 method for class 'plqr_result'
+# S3 method for class 'rdistnn_plqr_result'
 plot(x, ...)
 
-# S3 method for class 'gmm_result'
+# S3 method for class 'rdistnn_gmm_result'
 plot(x, ...)
 ```
 
@@ -107,8 +108,8 @@ and CLATE panels draw a dashed zero reference line.
 
 ## Experimental methods
 
-Methods for `plqr_result` objects are experimental, as is all PLQR
-functionality in this release; see
+Methods for `rdistnn_plqr_result` objects are experimental, as is all
+PLQR functionality in this release; see
 [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md).
 
 ## Examples

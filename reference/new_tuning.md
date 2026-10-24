@@ -28,7 +28,7 @@ new_tuning(name, eval = NULL, eval_grid = NULL, setup = NULL)
 
 ## Value
 
-A validated `dnn_tuning` spec.
+A validated `rdistnn_tuning` spec.
 
 ## Examples
 

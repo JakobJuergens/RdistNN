@@ -62,7 +62,7 @@ weights_dnn_exact(
 
 ## Value
 
-a `weights_result` with `W` and metadata
+a `rdistnn_weights_result` with `W` and metadata
 
 ## Exact distance ties
 

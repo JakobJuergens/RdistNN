@@ -202,9 +202,10 @@ clate_dnn(
 
 ## Value
 
-A clate_result inheriting affine_ratio_result. Component roles are
-reduced_form and first_stage. Optional nuisance output is the complete
-iv_signals construction record, including raw/used propensity.
+A rdistnn_clate_result inheriting rdistnn_affine_ratio_result. Component
+roles are reduced_form and first_stage. Optional nuisance output is the
+complete rdistnn_iv_signals construction record, including raw/used
+propensity.
 
 ## Details
 
@@ -250,7 +251,7 @@ fit <- clate_dnn(
   e_col = "e", m_y0_col = "y0", m_y1_col = "y1", m_d1_col = "d1",
   one_sided = TRUE, x0 = 3, s = 2
 )
-#> Warning: Exact distance ties detected; weights are averaged within distance blocks, including jackknife deletions. The accompanying theory assumes a continuous distance distribution and does not establish inference under persistent ties.
+#> Warning: clate_dnn(): Exact distance ties detected; weights are averaged within distance blocks, including jackknife deletions. The accompanying theory assumes a continuous distance distribution and does not establish inference under persistent ties.
 fit$components
 #>        numerator denominator
 #> [1,] -0.06666667   0.5733333
@@ -261,6 +262,6 @@ clate_dnn(
   e = d$e, m_y0 = d$y0, m_y1 = d$y1, m_d1 = d$d1,
   one_sided = TRUE, x0 = 3, s = 2
 )$theta
-#> Warning: Exact distance ties detected; weights are averaged within distance blocks, including jackknife deletions. The accompanying theory assumes a continuous distance distribution and does not establish inference under persistent ties.
+#> Warning: clate_dnn(): Exact distance ties detected; weights are averaged within distance blocks, including jackknife deletions. The accompanying theory assumes a continuous distance distribution and does not establish inference under persistent ties.
 #> [1] -0.1162791
 ```

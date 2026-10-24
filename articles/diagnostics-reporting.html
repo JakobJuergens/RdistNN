@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,7 @@
       <h1>Diagnostics and Reporting</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/vignettes/diagnostics-reporting.Rmd" class="external-link"><code>vignettes/diagnostics-reporting.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/vignettes/diagnostics-reporting.Rmd" class="external-link"><code>vignettes/diagnostics-reporting.Rmd</code></a></small>
       <div class="d-none name"><code>diagnostics-reporting.Rmd</code></div>
     </div>
 
@@ -98,6 +98,34 @@ inherit <code>rdistnn_warning</code> with a specific family such as
 <code>rdistnn_partial_result_warning</code>. Code should use those
 identities when handling a recognized condition, rather than parsing
 English messages.</p>
+<p>Input errors inherit <code>rdistnn_input_error</code>; invalid
+extension return values inherit <code>rdistnn_callback_error</code>, and
+computed range failures inherit <code>rdistnn_numerical_error</code>.
+Owned conditions carry a semantic <code>code</code> and, when
+applicable, the public <code>argument</code>, expected/actual facts and
+a bounded <code>operation</code> name. The console prefix identifies
+that public function without storing the full call or its data. Catch
+the specific family you can handle; unexpected callback, native and
+resource errors retain their original identity.</p>
+<p>Localization notice facts do not require parsing or displaying a
+warning. Supported fits retain <code>fit$meta$target_notices</code>,
+with <code>target_id</code>, <code>distance_ties</code>,
+<code>weight_concentration</code> and <code>weak_localization</code>,
+plus totals <code>fit$meta$n_tied_targets</code> and
+<code>fit$meta$n_weak_targets</code>. These fields are available even
+with <code>return = character()</code> and survive current-fit
+serialization. Candidate views describe the selected candidate’s
+weights. The concentration is <code>1 / sum(w^2)</code> from final
+observation weights; it is a descriptive signed concentration for TDNN.
+The existing weak-localization guide is at least <code>.9 * n</code>
+with <code>n &gt;= 2</code>; it is not a validity test.</p>
+<p>Use normal R handlers or, for example,
+<code>suppressWarnings(fit_call, classes = "rdistnn_distance_ties_warning")</code>
+to silence only the tie advisory. A new independent call still warns.
+Unknown character <code>return</code> entries warn and are ignored;
+malformed selectors such as missing or noncharacter values are input
+errors. Earlier fits lacking current diagnostic metadata require
+refitting.</p>
 <p>The shared fields include:</p>
 <ul>
 <li>
@@ -198,6 +226,14 @@ estimate when the weights are normalized.</p>
 treatment and propensity inputs. If <code><a href="../reference/cate_dnn.html">cate_dnn()</a></code> was called
 with only a direct <code>pseudo_outcome</code>, overlap fields remain
 present but are marked unavailable.</p>
+<p><code>treated_ess</code> and <code>control_ess</code> normalize
+weights within their treatment arm before measuring concentration. An
+arm with one positive-weight observation has ESS one even if that
+observation receives tiny total weight; an arm with zero weight has
+<code>NA</code> ESS. Read these fields alongside
+<code>treated_mass</code> and <code>control_mass</code>: arm ESS
+describes concentration within an arm, while arm mass is the total
+localization weight assigned to that arm.</p>
 <p>Printing summarizes available arm information, propensity quantiles
 and top-five absolute score-contribution shares; the data frame retains
 each profile’s values. CLATE distinguishes instrument support, clipped

@@ -28,7 +28,7 @@ new_distance(name, eval = NULL, eval_batch = NULL, setup = NULL)
 
 ## Value
 
-A validated `dnn_distance` spec.
+A validated `rdistnn_distance` spec.
 
 ## Details
 

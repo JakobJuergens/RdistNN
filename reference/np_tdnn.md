@@ -120,7 +120,7 @@ np_tdnn(
 
 ## Value
 
-An object of class `tdnn_np_result` with components:
+An object of class `rdistnn_tdnn_np_result` with components:
 
 - `mu`: estimated local mean values at target points;
 
@@ -183,7 +183,7 @@ validation.
 [`weights_tdnn()`](https://JakobJuergens.github.io/RdistNN/reference/weights_tdnn.md),
 [`np_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_dnn.md),
 [`np_demo_data()`](https://JakobJuergens.github.io/RdistNN/reference/np_demo_data.md),
-[np_result](https://JakobJuergens.github.io/RdistNN/reference/np_result.md)
+[rdistnn_np_result](https://JakobJuergens.github.io/RdistNN/reference/rdistnn_np_result.md)
 for inherited summary, covariance, confidence interval and prediction
 methods.
 

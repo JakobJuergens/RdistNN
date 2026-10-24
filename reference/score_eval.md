@@ -14,7 +14,7 @@ score_eval(score, idxs, data, ctx = NULL, rng = NULL)
 
 - score:
 
-  ustat_score
+  rdistnn_ustat_score
 
 - idxs:
 

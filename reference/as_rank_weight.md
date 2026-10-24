@@ -1,6 +1,6 @@
-# Wrap a function as a rank_weight spec
+# Wrap a function as a rdistnn_rank_weight spec
 
-Wrap a function as a rank_weight spec
+Wrap a function as a rdistnn_rank_weight spec
 
 ## Usage
 

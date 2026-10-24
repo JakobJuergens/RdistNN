@@ -27,8 +27,8 @@ plot_overlap(
 
 - object:
 
-  A `cate_result` or `clate_result` with the weight matrix `W` stored
-  (the default).
+  A `rdistnn_cate_result` or `rdistnn_clate_result` with the weight
+  matrix `W` stored (the default).
 
 - type:
 

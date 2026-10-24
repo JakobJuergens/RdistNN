@@ -15,7 +15,7 @@ ratio_confidence_set(
   tol = 64 * .Machine$double.eps
 )
 
-# S3 method for class 'ratio_confidence_sets'
+# S3 method for class 'rdistnn_ratio_confidence_sets'
 print(x, digits = max(3L, getOption("digits") - 2L), ...)
 ```
 
@@ -42,7 +42,7 @@ print(x, digits = max(3L, getOption("digits") - 2L), ...)
 
 - x:
 
-  A ratio_confidence_sets object.
+  A rdistnn_ratio_confidence_sets object.
 
 - digits:
 
@@ -54,10 +54,10 @@ print(x, digits = max(3L, getOption("digits") - 2L), ...)
 
 ## Value
 
-A ratio_confidence_sets list with one record per target. Records contain
-target_id, type, intervals (r-by-2 lower/upper matrix), quadratic,
-discriminant, numerical_status, level and numerical scaling metadata.
-Printing returns its input invisibly.
+A rdistnn_ratio_confidence_sets list with one record per target. Records
+contain target_id, type, intervals (r-by-2 lower/upper matrix),
+quadratic, discriminant, numerical_status, level and numerical scaling
+metadata. Printing returns its input invisibly.
 
 ## Details
 

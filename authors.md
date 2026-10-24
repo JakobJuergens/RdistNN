@@ -11,17 +11,17 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/inst/CITATION)
+[`inst/CITATION`](https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/inst/CITATION)
 
 Juergens J (2026). *Distributional Nearest-Neighbor Inference for Local
-Conditional Moment Models*. R package version 0.1.3,
+Conditional Moment Models*. R package version 0.1.4,
 <https://jakobjuergens.github.io/RdistNN/>.
 
     @Manual{,
       title = {Distributional Nearest-Neighbor Inference for Local Conditional Moment Models},
       author = {Jakob R. Juergens},
       year = {2026},
-      note = {R package version 0.1.3},
+      note = {R package version 0.1.4},
       url = {https://jakobjuergens.github.io/RdistNN/},
     }
 

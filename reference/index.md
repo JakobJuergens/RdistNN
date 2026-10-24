@@ -36,78 +36,78 @@ diagnostics and candidate views.
   : Extract one candidate view from a grid fit
 
 - [`diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/diagnostics.md)
-  [`print(`*`<dnn_diagnostics>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/diagnostics.md)
+  [`print(`*`<rdistnn_diagnostics>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/diagnostics.md)
   : Compute diagnostics for fitted localized estimators
 
-- [`print(`*`<cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.cate_result.md)
+- [`print(`*`<rdistnn_cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.rdistnn_cate_result.md)
   :
 
-  Print a `cate_result` object
+  Print a `rdistnn_cate_result` object
 
-- [`print(`*`<np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.np_result.md)
+- [`print(`*`<rdistnn_np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.rdistnn_np_result.md)
   :
 
-  Print an `np_result` object
+  Print an `rdistnn_np_result` object
 
-- [`coef(`*`<np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/np_result.md)
-  [`vcov(`*`<np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/np_result.md)
-  [`summary(`*`<np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/np_result.md)
-  [`print(`*`<summary.np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/np_result.md)
-  [`confint(`*`<np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/np_result.md)
-  [`predict(`*`<np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/np_result.md)
+- [`coef(`*`<rdistnn_np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/rdistnn_np_result.md)
+  [`vcov(`*`<rdistnn_np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/rdistnn_np_result.md)
+  [`summary(`*`<rdistnn_np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/rdistnn_np_result.md)
+  [`print(`*`<rdistnn_summary_np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/rdistnn_np_result.md)
+  [`confint(`*`<rdistnn_np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/rdistnn_np_result.md)
+  [`predict(`*`<rdistnn_np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/rdistnn_np_result.md)
   : Reporting and prediction for nonparametric regression results
 
-- [`nobs(`*`<np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/nobs.np_result.md)
-  [`nobs(`*`<cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/nobs.np_result.md)
+- [`nobs(`*`<rdistnn_np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/nobs.rdistnn_np_result.md)
+  [`nobs(`*`<rdistnn_cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/nobs.rdistnn_np_result.md)
   : Number of training observations
 
-- [`print(`*`<score_diff_path>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.score_diff_path.md)
+- [`print(`*`<rdistnn_score_diff_path>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.rdistnn_score_diff_path.md)
   :
 
-  Print a `score_diff_path` object
+  Print a `rdistnn_score_diff_path` object
 
-- [`print(`*`<summary.cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.summary.cate_result.md)
+- [`print(`*`<rdistnn_summary_cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.rdistnn_summary_cate_result.md)
   :
 
-  Print a `summary.cate_result` object
+  Print a `rdistnn_summary_cate_result` object
 
-- [`print(`*`<tdnn_np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.tdnn_np_result.md)
+- [`print(`*`<rdistnn_tdnn_np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.rdistnn_tdnn_np_result.md)
   :
 
-  Print a `tdnn_np_result` object
+  Print a `rdistnn_tdnn_np_result` object
 
-- [`print(`*`<ustat_score>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.ustat_score.md)
+- [`print(`*`<rdistnn_ustat_score>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.rdistnn_ustat_score.md)
   :
 
-  Print a `ustat_score` object
+  Print a `rdistnn_ustat_score` object
 
-- [`print(`*`<weights_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.weights_result.md)
+- [`print(`*`<rdistnn_weights_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.rdistnn_weights_result.md)
   :
 
-  Print a `weights_result` object
+  Print a `rdistnn_weights_result` object
 
-- [`summary(`*`<cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/summary.cate_result.md)
+- [`summary(`*`<rdistnn_cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/summary.rdistnn_cate_result.md)
   :
 
-  Summarize a `cate_result` object
+  Summarize a `rdistnn_cate_result` object
 
-- [`confint(`*`<cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/confint.cate_result.md)
+- [`confint(`*`<rdistnn_cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/confint.rdistnn_cate_result.md)
   :
 
-  Confidence intervals for `cate_result`
+  Confidence intervals for `rdistnn_cate_result`
 
-- [`coef(`*`<cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/coef.cate_result.md)
+- [`coef(`*`<rdistnn_cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/coef.rdistnn_cate_result.md)
   :
 
-  Extract coefficients from a `cate_result`
+  Extract coefficients from a `rdistnn_cate_result`
 
-- [`vcov(`*`<cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/vcov.cate_result.md)
+- [`vcov(`*`<rdistnn_cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/vcov.rdistnn_cate_result.md)
   : Joint jackknife covariance across CATE reporting profiles
 
-- [`predict(`*`<cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/predict.cate_result.md)
+- [`predict(`*`<rdistnn_cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/predict.rdistnn_cate_result.md)
   :
 
-  Predict from a `cate_result` object at new targets
+  Predict from a `rdistnn_cate_result` object at new targets
 
 ## Plotting
 
@@ -116,16 +116,16 @@ dependency), and the tidy data extractors underneath them; see the
 visualization and diagnostics articles.
 
 - [`plot_estimates()`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
-  [`autoplot.np_result()`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
-  [`autoplot.cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
-  [`autoplot.affine_ratio_result()`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
-  [`autoplot.plqr_result()`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
-  [`autoplot.gmm_result()`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
-  [`plot(`*`<np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
-  [`plot(`*`<cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
-  [`plot(`*`<affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
-  [`plot(`*`<plqr_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
-  [`plot(`*`<gmm_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
+  [`autoplot.rdistnn_np_result()`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
+  [`autoplot.rdistnn_cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
+  [`autoplot.rdistnn_affine_ratio_result()`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
+  [`autoplot.rdistnn_plqr_result()`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
+  [`autoplot.rdistnn_gmm_result()`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
+  [`plot(`*`<rdistnn_np_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
+  [`plot(`*`<rdistnn_cate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
+  [`plot(`*`<rdistnn_affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
+  [`plot(`*`<rdistnn_plqr_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
+  [`plot(`*`<rdistnn_gmm_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/plot_estimates.md)
   : Plot estimates with confidence bounds across target points
 - [`plot_weights()`](https://JakobJuergens.github.io/RdistNN/reference/plot_weights.md)
   : Plot DNN weight profiles, concentration, and effective kernels
@@ -138,8 +138,8 @@ visualization and diagnostics articles.
   equation
 - [`plot_tuning()`](https://JakobJuergens.github.io/RdistNN/reference/plot_tuning.md)
   : Plot estimate sensitivity to the kernel order
-- [`autoplot.dnn_diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/autoplot.dnn_diagnostics.md)
-  [`plot(`*`<dnn_diagnostics>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/autoplot.dnn_diagnostics.md)
+- [`autoplot.rdistnn_diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/autoplot.rdistnn_diagnostics.md)
+  [`plot(`*`<rdistnn_diagnostics>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/autoplot.rdistnn_diagnostics.md)
   : Plot per-target weight diagnostics
 - [`plot_data_estimates()`](https://JakobJuergens.github.io/RdistNN/reference/plot_data_estimates.md)
   : Extract a tidy estimates frame from a fitted RdistNN object
@@ -210,16 +210,16 @@ pointwise inference conditions.
   : Construct augmented reduced-form and first-stage signals
 - [`affine_ratio_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_dnn.md)
   : DNN inference for a ratio of two supplied signal averages
-- [`coef(`*`<affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_result.md)
-  [`vcov(`*`<affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_result.md)
-  [`confint(`*`<affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_result.md)
-  [`summary(`*`<affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_result.md)
-  [`print(`*`<affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_result.md)
-  [`print(`*`<summary.affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_result.md)
-  [`predict(`*`<affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/affine_ratio_result.md)
+- [`coef(`*`<rdistnn_affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/rdistnn_affine_ratio_result.md)
+  [`vcov(`*`<rdistnn_affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/rdistnn_affine_ratio_result.md)
+  [`confint(`*`<rdistnn_affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/rdistnn_affine_ratio_result.md)
+  [`summary(`*`<rdistnn_affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/rdistnn_affine_ratio_result.md)
+  [`print(`*`<rdistnn_affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/rdistnn_affine_ratio_result.md)
+  [`print(`*`<rdistnn_summary_affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/rdistnn_affine_ratio_result.md)
+  [`predict(`*`<rdistnn_affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/rdistnn_affine_ratio_result.md)
   : Reporting and prediction for paired affine-ratio results
-- [`diagnostics(`*`<affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/clate_diagnostics.md)
-  [`diagnostics(`*`<clate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/clate_diagnostics.md)
+- [`diagnostics(`*`<rdistnn_affine_ratio_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/clate_diagnostics.md)
+  [`diagnostics(`*`<rdistnn_clate_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/clate_diagnostics.md)
   : Paired component and first-stage diagnostics
 - [`clate_demo_data()`](https://JakobJuergens.github.io/RdistNN/reference/clate_demo_data.md)
   : Bounded endogenous-treatment data for conditional LATE examples
@@ -231,7 +231,7 @@ inequalities. This helper does not establish weak-instrument-uniform
 coverage.
 
 - [`ratio_confidence_set()`](https://JakobJuergens.github.io/RdistNN/reference/ratio_confidence_set.md)
-  [`print(`*`<ratio_confidence_sets>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/ratio_confidence_set.md)
+  [`print(`*`<rdistnn_ratio_confidence_sets>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/ratio_confidence_set.md)
   : Confidence sets for a ratio of paired component estimates
 
 ## Experimental — PLQR
@@ -260,40 +260,41 @@ and inference interfaces may change.
   : Quick helper: sample a batch of subsets (for U-stat / localization
   experiments) (experimental)
 
-- [`print(`*`<plqr_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.plqr_result.md)
+- [`print(`*`<rdistnn_plqr_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.rdistnn_plqr_result.md)
   :
 
-  Print a `plqr_result` object (experimental)
+  Print a `rdistnn_plqr_result` object (experimental)
 
-- [`print(`*`<summary.plqr_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.summary.plqr_result.md)
+- [`print(`*`<rdistnn_summary_plqr_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.rdistnn_summary_plqr_result.md)
   :
 
-  Print a `summary.plqr_result` (experimental)
+  Print a `rdistnn_summary_plqr_result` (experimental)
 
-- [`summary(`*`<plqr_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/summary.plqr_result.md)
+- [`summary(`*`<rdistnn_plqr_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/summary.rdistnn_plqr_result.md)
   :
 
-  Summarize a `plqr_result` (experimental)
+  Summarize a `rdistnn_plqr_result` (experimental)
 
-- [`confint(`*`<plqr_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/confint.plqr_result.md)
+- [`confint(`*`<rdistnn_plqr_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/confint.rdistnn_plqr_result.md)
   :
 
-  Confidence intervals for `plqr_result` (experimental)
+  Confidence intervals for `rdistnn_plqr_result` (experimental)
 
-- [`coef(`*`<plqr_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/coef.plqr_result.md)
+- [`coef(`*`<rdistnn_plqr_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/coef.rdistnn_plqr_result.md)
   :
 
-  Extract coefficients from a `plqr_result` (experimental)
+  Extract coefficients from a `rdistnn_plqr_result` (experimental)
 
-- [`vcov(`*`<plqr_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/vcov.plqr_result.md)
+- [`vcov(`*`<rdistnn_plqr_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/vcov.rdistnn_plqr_result.md)
   :
 
-  Variance-covariance matrices for `plqr_result` (experimental)
+  Variance-covariance matrices for `rdistnn_plqr_result` (experimental)
 
-- [`predict(`*`<plqr_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/predict.plqr_result.md)
+- [`predict(`*`<rdistnn_plqr_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/predict.rdistnn_plqr_result.md)
   :
 
-  Predict from a `plqr_result` object at new targets (experimental)
+  Predict from a `rdistnn_plqr_result` object at new targets
+  (experimental)
 
 - [`plot_conditioning()`](https://JakobJuergens.github.io/RdistNN/reference/plot_conditioning.md)
   : Plot local design conditioning for PLQR fits (experimental)
@@ -336,35 +337,35 @@ alignment may change before that paper is released.
 - [`gmm_model_dr_iv()`](https://JakobJuergens.github.io/RdistNN/reference/gmm_model_dr_iv.md)
   : Doubly robust IV GMM model
 
-- [`print(`*`<gmm_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.gmm_result.md)
+- [`print(`*`<rdistnn_gmm_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.rdistnn_gmm_result.md)
   :
 
-  Print a `gmm_result` object
+  Print a `rdistnn_gmm_result` object
 
-- [`print(`*`<summary.gmm_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.summary.gmm_result.md)
+- [`print(`*`<rdistnn_summary_gmm_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/print.rdistnn_summary_gmm_result.md)
   :
 
-  Print a `summary.gmm_result`
+  Print a `rdistnn_summary_gmm_result`
 
-- [`summary(`*`<gmm_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/summary.gmm_result.md)
+- [`summary(`*`<rdistnn_gmm_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/summary.rdistnn_gmm_result.md)
   :
 
-  Summarize a `gmm_result`
+  Summarize a `rdistnn_gmm_result`
 
-- [`confint(`*`<gmm_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/confint.gmm_result.md)
+- [`confint(`*`<rdistnn_gmm_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/confint.rdistnn_gmm_result.md)
   :
 
-  Confidence intervals for `gmm_result`
+  Confidence intervals for `rdistnn_gmm_result`
 
-- [`coef(`*`<gmm_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/coef.gmm_result.md)
+- [`coef(`*`<rdistnn_gmm_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/coef.rdistnn_gmm_result.md)
   :
 
-  Extract coefficients from a `gmm_result`
+  Extract coefficients from a `rdistnn_gmm_result`
 
-- [`vcov(`*`<gmm_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/vcov.gmm_result.md)
+- [`vcov(`*`<rdistnn_gmm_result>`*`)`](https://JakobJuergens.github.io/RdistNN/reference/vcov.rdistnn_gmm_result.md)
   :
 
-  Variance-covariance matrices for `gmm_result`
+  Variance-covariance matrices for `rdistnn_gmm_result`
 
 ## Developer API — scores (U-stat kernels)
 
@@ -394,7 +395,7 @@ registries, and built-in score topics.
 - [`is_score()`](https://JakobJuergens.github.io/RdistNN/reference/is_score.md)
   :
 
-  Is object a `ustat_score`?
+  Is object a `rdistnn_ustat_score`?
 
 - [`is_compiled()`](https://JakobJuergens.github.io/RdistNN/reference/is_compiled.md)
   : Does a score carry compiled-score pointer metadata?
@@ -465,15 +466,15 @@ and the single-scale DNN rank-weight constructors.
 - [`rank_weight_eval_batch()`](https://JakobJuergens.github.io/RdistNN/reference/rank_weight_eval_batch.md)
   : Evaluate rank-weight for many targets (batch)
 - [`as_rank_weight()`](https://JakobJuergens.github.io/RdistNN/reference/as_rank_weight.md)
-  : Wrap a function as a rank_weight spec
+  : Wrap a function as a rdistnn_rank_weight spec
 - [`is_rank_weight()`](https://JakobJuergens.github.io/RdistNN/reference/is_rank_weight.md)
-  : Is this a rank_weight spec?
+  : Is this a rdistnn_rank_weight spec?
 - [`register_rank_weight()`](https://JakobJuergens.github.io/RdistNN/reference/register_rank_weight.md)
-  : Register a rank_weight under a name
+  : Register a rdistnn_rank_weight under a name
 - [`get_rank_weight()`](https://JakobJuergens.github.io/RdistNN/reference/get_rank_weight.md)
-  : Retrieve a registered rank_weight
+  : Retrieve a registered rdistnn_rank_weight
 - [`rank_weight_names()`](https://JakobJuergens.github.io/RdistNN/reference/rank_weight_names.md)
-  : List registered rank_weight names
+  : List registered rdistnn_rank_weight names
 - [`rank_weight_dnn_exact()`](https://JakobJuergens.github.io/RdistNN/reference/rank_weight_dnn_exact.md)
   : Rank-weight: DNN exact (full U, WOR)
 - [`rank_weight_dnn_asymp()`](https://JakobJuergens.github.io/RdistNN/reference/rank_weight_dnn_asymp.md)

@@ -33,7 +33,7 @@ plot_tuning(
   ...
 )
 
-# S3 method for class 'np_result'
+# S3 method for class 'rdistnn_np_result'
 plot_tuning(
   object,
   tuning = tuning_dnn_paper(),
@@ -44,7 +44,7 @@ plot_tuning(
   ...
 )
 
-# S3 method for class 'cate_result'
+# S3 method for class 'rdistnn_cate_result'
 plot_tuning(
   object,
   tuning = tuning_dnn_paper(),
@@ -55,7 +55,7 @@ plot_tuning(
   ...
 )
 
-# S3 method for class 'affine_ratio_result'
+# S3 method for class 'rdistnn_affine_ratio_result'
 plot_tuning(
   object,
   tuning = tuning_dnn_paper(),
@@ -66,7 +66,7 @@ plot_tuning(
   ...
 )
 
-# S3 method for class 'plqr_result'
+# S3 method for class 'rdistnn_plqr_result'
 plot_tuning(
   object,
   tuning = tuning_dnn_paper(),
@@ -82,8 +82,9 @@ plot_tuning(
 
 - object:
 
-  A fitted `np_result`, `cate_result`, `affine_ratio_result` (including
-  `clate_result`), or `plqr_result`.
+  A fitted `rdistnn_np_result`, `rdistnn_cate_result`,
+  `rdistnn_affine_ratio_result` (including `rdistnn_clate_result`), or
+  `rdistnn_plqr_result`.
 
 - tuning:
 
@@ -131,8 +132,8 @@ without the required fitted training state must be refitted first.
 
 ## Experimental methods
 
-Methods for `plqr_result` objects are experimental, as is all PLQR
-functionality in this release; see
+Methods for `rdistnn_plqr_result` objects are experimental, as is all
+PLQR functionality in this release; see
 [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md).
 
 ## Examples

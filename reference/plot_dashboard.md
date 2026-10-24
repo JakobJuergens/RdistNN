@@ -20,13 +20,13 @@ plot_dashboard(object, ...)
 # Default S3 method
 plot_dashboard(object, ...)
 
-# S3 method for class 'cate_result'
+# S3 method for class 'rdistnn_cate_result'
 plot_dashboard(object, ...)
 
-# S3 method for class 'clate_result'
+# S3 method for class 'rdistnn_clate_result'
 plot_dashboard(object, ...)
 
-# S3 method for class 'np_result'
+# S3 method for class 'rdistnn_np_result'
 plot_dashboard(object, ...)
 ```
 
@@ -34,7 +34,8 @@ plot_dashboard(object, ...)
 
 - object:
 
-  A fitted result object (`cate_result`, `clate_result` or `np_result`).
+  A fitted result object (`rdistnn_cate_result`, `rdistnn_clate_result`
+  or `rdistnn_np_result`).
 
 - ...:
 

@@ -67,9 +67,11 @@ tables:
 - `wnm1` should be the **same rule** evaluated at sample size \\n-1\\
   (i.e. for each leave-one-out sub-sample).
 
-When the package was compiled with C++ support, the C++ engine is used.
-Otherwise the function falls back silently to a pure-R implementation of
-the same algorithm.
+With compiled execution enabled and the native routine available, this
+uses the C++ engine. Otherwise it uses the same algorithm in R. See
+[RdistNN](https://JakobJuergens.github.io/RdistNN/reference/RdistNN-package.md)
+for engine controls. Native execution errors propagate without an
+automatic retry.
 
 ## See also
 

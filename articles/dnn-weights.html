@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,7 @@
       <h1>DNN weights and ranks</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/vignettes/dnn-weights.Rmd" class="external-link"><code>vignettes/dnn-weights.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/vignettes/dnn-weights.Rmd" class="external-link"><code>vignettes/dnn-weights.Rmd</code></a></small>
       <div class="d-none name"><code>dnn-weights.Rmd</code></div>
     </div>
 
@@ -163,10 +163,10 @@ observations have the same distance and receive
 <code class="sourceCode R"><span><span class="va">X_tied</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">y_tied</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">10</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span></span>
 <span><span class="va">wt_tied</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/weights_dnn.html">weights_dnn</a></span><span class="op">(</span>X <span class="op">=</span> <span class="va">X_tied</span>, x0 <span class="op">=</span> <span class="fl">0</span>, k <span class="op">=</span> <span class="fl">1L</span>, s <span class="op">=</span> <span class="fl">3L</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: Exact distance ties detected; weights are averaged within distance</span></span>
-<span><span class="co">#&gt; blocks, including jackknife deletions. The accompanying theory assumes a</span></span>
-<span><span class="co">#&gt; continuous distance distribution and does not establish inference under</span></span>
-<span><span class="co">#&gt; persistent ties.</span></span>
+<span><span class="co">#&gt; Warning: weights_dnn(): Exact distance ties detected; weights are averaged</span></span>
+<span><span class="co">#&gt; within distance blocks, including jackknife deletions. The accompanying theory</span></span>
+<span><span class="co">#&gt; assumes a continuous distance distribution and does not establish inference</span></span>
+<span><span class="co">#&gt; under persistent ties.</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/drop.html" class="external-link">drop</a></span><span class="op">(</span><span class="va">wt_tied</span><span class="op">$</span><span class="va">W</span><span class="op">)</span>  <span class="co"># 0.45, 0.45, 0.1, 0, 0</span></span>
 <span><span class="co">#&gt; [1] 0.45 0.45 0.10 0.00 0.00</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/drop.html" class="external-link">drop</a></span><span class="op">(</span><span class="va">wt_tied</span><span class="op">$</span><span class="va">W</span><span class="op">)</span> <span class="op">*</span> <span class="va">y_tied</span><span class="op">)</span>  <span class="co"># 4.5</span></span>

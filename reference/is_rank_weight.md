@@ -1,4 +1,4 @@
-# Is this a rank_weight spec?
+# Is this a rdistnn_rank_weight spec?
 
 A rank-weight spec is a list with `eval(ranks, ctx)` and/or
 `eval_batch(rank_matrix, ctx)`, where `rank_matrix` is an n x m rank

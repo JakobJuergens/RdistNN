@@ -15,7 +15,7 @@ This local IV-GMM interface is experimental and may change."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,7 +38,7 @@ This local IV-GMM interface is experimental and may change."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Local GMM estimation via DNN rank weights</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/R/user-dnn-gmm.R" class="external-link"><code>R/user-dnn-gmm.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/R/user-dnn-gmm.R" class="external-link"><code>R/user-dnn-gmm.R</code></a></small>
       <div class="d-none name"><code>gmm_dnn.Rd</code></div>
     </div>
 
@@ -187,7 +187,7 @@ training-observation indices, not the full DNN weight support.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <code>gmm_result</code> object with estimates, diagnostics, metadata, the
+    <p>A <code>rdistnn_gmm_result</code> object with estimates, diagnostics, metadata, the
 <code>m x p</code> evaluation-point matrix <code>x0</code> (with covariate column names
 propagated from the training data when available), and requested extras.</p>
     </div>
@@ -203,8 +203,8 @@ deletion averages the surviving blocks with the sample-size-n-1 rule.
 A warning is emitted once per public call with distance ties: the accompanying
 theory assumes a continuous distance distribution and does not establish
 inference under persistent ties. Earlier retained fit schemas require refitting.</p>
-<p>Two interfaces are supported.</p><ol><li><p>Data-frame interface: pass <code>data</code>, <code>x_cols</code>, and a <code>gmm_model</code>.</p></li>
-<li><p>Matrix interface: pass <code>X</code>, one of <code>X0</code> or <code>x0</code>, a <code>gmm_model</code>, and
+<p>Two interfaces are supported.</p><ol><li><p>Data-frame interface: pass <code>data</code>, <code>x_cols</code>, and a <code>rdistnn_gmm_model</code>.</p></li>
+<li><p>Matrix interface: pass <code>X</code>, one of <code>X0</code> or <code>x0</code>, a <code>rdistnn_gmm_model</code>, and
 <code>model_data</code> when the model needs observation-level variables.</p></li>
 </ol><p>Nuisance quantities are not fit internally.  They must be supplied to the
 model through <code>data</code> or <code>model_data</code>.</p>
@@ -212,6 +212,20 @@ model through <code>data</code> or <code>model_data</code>.</p>
 retained for weight reconstruction. Replacing a registered metric after
 fitting does not change the fit's geometry. Custom callbacks with mutable
 external state retain their own reproducibility obligations.</p>
+<p>Model callbacks must return their documented finite numeric values at the
+supplied starts and optimizer trial points. Callback errors, malformed
+returned values, interrupts and caller-promoted warnings stop the fit.
+Only nonfinite quadratic arithmetic from otherwise valid moments receives
+an optimizer penalty. A local moment covariance that cannot be inverted
+leaves that target unavailable, with its reason in <code>convergence</code> and one
+partial-result warning per call. Singular local information retains the
+coefficient estimate with unavailable uncertainty; information outside the
+numeric range also gives a rescaling warning. No callback-domain recovery
+interface or automatic retry at a different start is supplied.</p>
+<p>Requested Jacobian diagnostics can retain arithmetic nonfinite values from
+differencing finite callback evaluations when coefficient uncertainty is
+unavailable or deliberately disabled. This does not relax the finite-value
+contract for callback returns.</p>
 <p>Exact DNN localization uses the full rank permutation at each target rather
 than an <code>s</code>-nearest-neighbor truncation. For exact DNN fits, the
 unaveraged rank-table support edge is rank <code>n - s + k</code>, not rank <code>s</code>.</p>

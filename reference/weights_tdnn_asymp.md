@@ -69,7 +69,7 @@ weights_tdnn_asymp(
 
 ## Value
 
-A `weights_result` object (same structure as
+A `rdistnn_weights_result` object (same structure as
 [`weights_dnn_asymp()`](https://JakobJuergens.github.io/RdistNN/reference/weights_dnn_asymp.md)).
 
 ## Numerical limits

@@ -16,7 +16,7 @@ get_score(name)
 
 ## Value
 
-a `ustat_score`
+a `rdistnn_ustat_score`
 
 ## Examples
 

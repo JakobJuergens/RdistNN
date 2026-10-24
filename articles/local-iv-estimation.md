@@ -109,7 +109,7 @@ fitted object in reporting form:
 ``` r
 
 summary(fit_iv)
-#> <summary.gmm_result>
+#> <rdistnn_summary_gmm_result>
 #>   model  : dr_iv
 #>   targets: 1
 #>     target  term estimate std.error statistic p.value conf.low conf.high

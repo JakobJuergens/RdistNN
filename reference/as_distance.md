@@ -20,7 +20,7 @@ as_distance(fun, name = "user_distance")
 
 ## Value
 
-A distance spec with class `dnn_distance`.
+A distance spec with class `rdistnn_distance`.
 
 ## Examples
 

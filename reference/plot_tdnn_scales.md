@@ -15,7 +15,7 @@ plot_tdnn_scales(object, ...)
 
 - object:
 
-  A `tdnn_np_result` from
+  A `rdistnn_tdnn_np_result` from
   [`np_tdnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_tdnn.md).
 
 - ...:

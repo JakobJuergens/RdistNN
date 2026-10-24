@@ -33,7 +33,7 @@ supplied evaluation value (meta$theta_source = "supplied").'></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,7 +56,7 @@ supplied evaluation value (meta$theta_source = "supplied").'></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>PLQR local moment evaluation and direct coefficient inference via DNN rank weights (experimental)</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/R/user-dnn-plqr.R" class="external-link"><code>R/user-dnn-plqr.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/R/user-dnn-plqr.R" class="external-link"><code>R/user-dnn-plqr.R</code></a></small>
       <div class="d-none name"><code>plqr_dnn.Rd</code></div>
     </div>
 
@@ -278,7 +278,7 @@ one column per target. It is a rank summary, not the full DNN weight support.</p
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An object of class <code>plqr_result</code> with components:</p><ul><li><p><code>moment</code>: matrix (<code>p_d x m</code>) of localized PLQR moments;</p></li>
+    <p>An object of class <code>rdistnn_plqr_result</code> with components:</p><ul><li><p><code>moment</code>: matrix (<code>p_d x m</code>) of localized PLQR moments;</p></li>
 <li><p><code>theta</code>: matrix (<code>p_d x m</code>) of the supplied coefficient values, repeated
 across targets; no root solving is performed;</p></li>
 <li><p><code>theta_eval</code>: the supplied coefficient vector used in the moment map;</p></li>
@@ -335,6 +335,10 @@ Jacobian. <code>theta_meat</code> chooses analytic score covariance or the full
 jackknife covariance of the localized moment. <code>moment_se</code> alone is not a
 coefficient standard error. For statistical background and conditions,
 see the <a href="https://jakobjuergens.com/research/#orthogonal-inference-conditional-z" class="external-link">paper</a>.</p>
+<p>A Jacobian, its inverse, or the assembled sandwich covariance outside the
+numeric range leaves coefficient uncertainty unavailable with rescaling
+guidance. Supplied coefficients and evaluated moments remain available.
+Finite singular Jacobians also leave coefficient uncertainty unavailable.</p>
 <p>As in <code><a href="weights_dnn.html">weights_dnn()</a></code>, exact DNN localization uses the full rank permutation
 at each target rather than an <code>s</code>-nearest-neighbor truncation. The <code>"fast"</code>
 jackknife option reuses the full-sample rank matrix and updates ranks under
@@ -385,7 +389,7 @@ is independent of the estimator's <code>k</code>. Direct PLQR sandwich inference
 <span class="r-in"><span>  se <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">out</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;summary.plqr_result&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;rdistnn_summary_plqr_result&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   targets: 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   theta_source: supplied; no local PLQR root solving was performed</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     target term estimate std.error statistic p.value conf.low conf.high</span>

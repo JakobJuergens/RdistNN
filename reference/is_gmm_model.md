@@ -16,4 +16,4 @@ is_gmm_model(x)
 
 ## Value
 
-`TRUE` when `x` inherits from class `gmm_model`.
+`TRUE` when `x` inherits from class `rdistnn_gmm_model`.

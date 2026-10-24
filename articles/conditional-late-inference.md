@@ -72,7 +72,7 @@ confint(fit)
 #>           conf.low conf.high
 #> target_1 -7.428456  15.42846
 diagnostics(fit)
-#> <dnn_diagnostics>
+#> <rdistnn_diagnostics>
 #>   targets: 1
 #>   n_eff  : min=2.5714, median=2.5714, max=2.5714
 #>   weights: max(top5 share)=1, max(weight)=0.5

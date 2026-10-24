@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,12 +30,12 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>RdistNN website copy</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/WEBSITE.md" class="external-link"><code>WEBSITE.md</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/WEBSITE.md" class="external-link"><code>WEBSITE.md</code></a></small>
     </div>
 
 <div id="rdistnn-website-copy" class="section level1">
 
-<p>Prepared for a software entry or research-page addition on <a href="https://jakobjuergens.com/" class="external-link">jakobjuergens.com</a>. The text below describes the production source version <code>0.1.3</code>, published on 2026-10-22. The package documentation is live at its canonical pkgdown URL. The current version-pinned release is <a href="https://github.com/JakobJuergens/RdistNN/releases/tag/v0.1.3" class="external-link"><code>v0.1.3</code></a>, with a verified installable source archive and checksum file.</p>
+<p>Prepared for a software entry or research-page addition on <a href="https://jakobjuergens.com/" class="external-link">jakobjuergens.com</a>. The text below describes the production source version <code>0.1.4</code>, published on 2026-10-23. The package documentation is live at its canonical pkgdown URL. The current version-pinned release is <a href="https://github.com/JakobJuergens/RdistNN/releases/tag/v0.1.4" class="external-link"><code>v0.1.4</code></a>, with a verified installable source archive and checksum file.</p>
 <div class="section level2">
 <h2 id="software-entry">Software entry<a class="anchor" aria-label="anchor" href="#software-entry"></a></h2>
 <p><strong>RdistNN — local treatment effects and nonparametric regression in R</strong></p>
@@ -43,13 +43,13 @@
 <p><a href="https://github.com/JakobJuergens/RdistNN" class="external-link">Source and installation</a> · <a href="https://JakobJuergens.github.io/RdistNN/">Documentation</a> · <a href="https://JakobJuergens.github.io/RdistNN/articles/getting-started.html">Getting started</a> · <a href="https://jakobjuergens.com/research/#orthogonal-inference-conditional-z" class="external-link">Accompanying paper</a></p>
 </div>
 <div class="section level2">
-<h2 id="id_013-production-update-announcement-draft">0.1.3 production-update announcement draft<a class="anchor" aria-label="anchor" href="#id_013-production-update-announcement-draft"></a></h2>
-<p>RdistNN 0.1.3 averages localization weights over observations at exactly equal represented distance under the selected metric. The rule covers distinct covariate profiles at the same distance, preserves each group’s assigned mass, and recomputes survivor weights after every jackknife deletion. Shared R/C++ helpers apply it to fitting, prediction, candidates, diagnostics and weight plots. Refit saved objects from earlier tie policies.</p>
-<p>The paper assumes a continuous distance distribution, under which the old and new rules agree almost surely. Inference with persistent distance ties remains unestablished. Numerical symmetry does not establish the underlying inference conditions. Shared reporting now gives bounded, actionable errors and warnings while preserving unexpected failures and the caller’s warning policy.</p>
+<h2 id="id_014-production-update-announcement-draft">0.1.4 production-update announcement draft<a class="anchor" aria-label="anchor" href="#id_014-production-update-announcement-draft"></a></h2>
+<p>RdistNN 0.1.4 strengthens fitted-object validation, captures extension configuration at construction and reuses retained localization groups across supported workflows. Current reporting gives bounded, actionable conditions while preserving unexpected failures and the caller’s warning policy. The release also improves numerical behavior for very small treatment-arm mass and paired cross-covariances, and preserves RNG state in deterministic native calculations. Earlier saved objects must be refitted.</p>
+<p>Exact represented distance ties continue to receive averaged localization weights, including after jackknife deletion. The paper assumes a continuous distance distribution; inference with persistent distance ties remains unestablished.</p>
 <p>The <a href="https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.html#numerical-limits">weight guide</a> describes remaining numerical limits, including asymptotic-tail rounding and independently fitted Mahalanobis geometry.</p>
-<p>Task-oriented guides, runnable vignettes and focused function help support conditional-effect and regression workflows. Seeded demos and simulations preserve caller RNG state; native calculations use two threads by default with a configurable opt-in. Version 0.1.3 is available from production <code>master</code> and the version-pinned <code>v0.1.3</code> release.</p>
+<p>Task-oriented guides, runnable vignettes and focused function help support conditional-effect and regression workflows. Seeded demos and simulations preserve caller RNG state; native calculations use two threads by default with a configurable opt-in. Version 0.1.4 is available from production <code>master</code> and the version-pinned <code>v0.1.4</code> release.</p>
 <p><a href="https://github.com/JakobJuergens/RdistNN/blob/master/NEWS.md" class="external-link">Source updates</a> · <a href="https://github.com/JakobJuergens/RdistNN/releases" class="external-link">Tagged releases</a> · <a href="https://JakobJuergens.github.io/RdistNN/articles/getting-started.html">Getting started</a></p>
-<p>Use the <a href="https://github.com/JakobJuergens/RdistNN/releases/tag/v0.1.3" class="external-link">verified release URL</a> for version-pinned downloads. This repository copy is prepared text for the personal website; package-site deployment and personal-site publication are separate steps.</p>
+<p>Use the <a href="https://github.com/JakobJuergens/RdistNN/releases/tag/v0.1.4" class="external-link">verified release URL</a> for version-pinned downloads. This repository copy is prepared text for the personal website; package-site deployment and personal-site publication are separate steps.</p>
 </div>
 </div>
 

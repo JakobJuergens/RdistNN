@@ -12,7 +12,7 @@ score_order(score, n, data, ctx = NULL)
 
 - score:
 
-  ustat_score
+  rdistnn_ustat_score
 
 - n:
 

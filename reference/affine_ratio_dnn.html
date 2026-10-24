@@ -11,7 +11,7 @@ it never divides individual signals or deleted component averages."></head><body
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,7 +34,7 @@ it never divides individual signals or deleted component averages."></head><body
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>DNN inference for a ratio of two supplied signal averages</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/R/user-dnn-affine-ratio.R" class="external-link"><code>R/user-dnn-affine-ratio.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/R/user-dnn-affine-ratio.R" class="external-link"><code>R/user-dnn-affine-ratio.R</code></a></small>
       <div class="d-none name"><code>affine_ratio_dnn.Rd</code></div>
     </div>
 
@@ -171,7 +171,7 @@ pseudo_values, neighbors or tuning. Unknown values warn and are ignored.</p></dd
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An affine_ratio_result with theta, se, m-by-2 components,
+    <p>An rdistnn_affine_ratio_result with theta, se, m-by-2 components,
 lists component_vcov, theta_vcov and theta_omega (NULL without covariance),
 x0, neff, per-target status, row_ids, meta and retained frozen model state.
 Optional deletions/pseudo_values have dimensions n-by-2-by-m. Covariance

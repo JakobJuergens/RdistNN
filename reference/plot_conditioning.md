@@ -19,7 +19,7 @@ plot_conditioning(object, cond_limits = c(1000, 1e+06), ...)
 
 - object:
 
-  A `plqr_result` from
+  A `rdistnn_plqr_result` from
   [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md).
 
 - cond_limits:

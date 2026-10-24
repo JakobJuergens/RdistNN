@@ -9,7 +9,7 @@ theta_loo for generic rank-weighted L-stat rules with finite support s."></head>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,7 +32,7 @@ theta_loo for generic rank-weighted L-stat rules with finite support s."></head>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Fast delete-one jackknife for rank-weighted functionals (auto C++ when available, R fallback otherwise)</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/R/jackknife-rank.R" class="external-link"><code>R/jackknife-rank.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/R/jackknife-rank.R" class="external-link"><code>R/jackknife-rank.R</code></a></small>
       <div class="d-none name"><code>jackknife_fast_rank.Rd</code></div>
     </div>
 
@@ -87,8 +87,8 @@ For a scalar \(\phi\), use <code>cbind(y)</code> as the matrix case.</p></li>
 DNN wrappers (<code><a href="np_dnn.html">np_dnn()</a></code>, <code><a href="cate_dnn.html">cate_dnn()</a></code>, <code><a href="plqr_dnn.html">plqr_dnn()</a></code>) do <strong>not</strong> call this
 helper directly for exact DNN weights. Those wrappers keep the full rank
 matrix and reevaluate the DNN rank-weight rule after delete-one updates.</p><ul><li><p>If <code>phi</code> is a numeric <strong>matrix</strong> (n_ref x q) with rows <code>phi[j, ] = phi(j)</code> and
-the package was compiled with C++ support, this calls the <strong>C++ fast
-path</strong>.</p></li>
+compiled execution is enabled and the native routine is available, this
+calls the <strong>C++ fast path</strong>. See <a href="RdistNN-package.html">RdistNN</a> for engine controls.</p></li>
 <li><p>Otherwise, it uses a general <strong>R fallback</strong> that also supports target-dependent
 per-neighbor contributions via a function <code>phi(j, t)</code>.
 With matrix <code>phi</code>, <code>n_ref = nrow(phi)</code>. With function-valued <code>phi</code>, the

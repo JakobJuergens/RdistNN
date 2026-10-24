@@ -1,6 +1,6 @@
-# List registered rank_weight names
+# List registered rdistnn_rank_weight names
 
-List registered rank_weight names
+List registered rdistnn_rank_weight names
 
 ## Usage
 

@@ -159,7 +159,7 @@ cate_dnn(
 
 ## Value
 
-An object of class `cate_result` with components:
+An object of class `rdistnn_cate_result` with components:
 
 - `tau`: estimated CATE values at target points;
 
@@ -261,8 +261,8 @@ or pointwise inference.
 [`weights_matrix()`](https://JakobJuergens.github.io/RdistNN/reference/weights_matrix.md),
 [`score_cate_rho()`](https://JakobJuergens.github.io/RdistNN/reference/score_cate_rho.md),
 [`cate_demo_data()`](https://JakobJuergens.github.io/RdistNN/reference/cate_demo_data.md),
-[`vcov.cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/vcov.cate_result.md),
-[`predict.cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/predict.cate_result.md).
+[`vcov.rdistnn_cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/vcov.rdistnn_cate_result.md),
+[`predict.rdistnn_cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/predict.rdistnn_cate_result.md).
 
 ## Examples
 

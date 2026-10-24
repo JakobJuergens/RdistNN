@@ -1,6 +1,6 @@
-# Retrieve a registered rank_weight
+# Retrieve a registered rdistnn_rank_weight
 
-Retrieve a registered rank_weight
+Retrieve a registered rdistnn_rank_weight
 
 ## Usage
 
@@ -16,7 +16,7 @@ get_rank_weight(name)
 
 ## Value
 
-A rank_weight spec.
+A rdistnn_rank_weight spec.
 
 ## Examples
 

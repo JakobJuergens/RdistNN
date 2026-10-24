@@ -16,7 +16,7 @@ register_score(name, score)
 
 - score:
 
-  A `ustat_score` object.
+  A `rdistnn_ustat_score` object.
 
 ## Value
 

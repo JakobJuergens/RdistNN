@@ -67,8 +67,10 @@ wrappers keep the full rank matrix and reevaluate the DNN rank-weight
 rule after delete-one updates.
 
 - If `phi` is a numeric **matrix** (n_ref x q) with rows
-  `phi[j, ] = phi(j)` and the package was compiled with C++ support,
-  this calls the **C++ fast path**.
+  `phi[j, ] = phi(j)` and compiled execution is enabled and the native
+  routine is available, this calls the **C++ fast path**. See
+  [RdistNN](https://JakobJuergens.github.io/RdistNN/reference/RdistNN-package.md)
+  for engine controls.
 
 - Otherwise, it uses a general **R fallback** that also supports
   target-dependent per-neighbor contributions via a function

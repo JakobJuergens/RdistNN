@@ -105,10 +105,10 @@ each:
 X_tied <- matrix(c(-1, 1, 2, 3, 4), ncol = 1)
 y_tied <- c(0, 10, 0, 0, 0)
 wt_tied <- weights_dnn(X = X_tied, x0 = 0, k = 1L, s = 3L)
-#> Warning: Exact distance ties detected; weights are averaged within distance
-#> blocks, including jackknife deletions. The accompanying theory assumes a
-#> continuous distance distribution and does not establish inference under
-#> persistent ties.
+#> Warning: weights_dnn(): Exact distance ties detected; weights are averaged
+#> within distance blocks, including jackknife deletions. The accompanying theory
+#> assumes a continuous distance distribution and does not establish inference
+#> under persistent ties.
 drop(wt_tied$W)  # 0.45, 0.45, 0.1, 0, 0
 #> [1] 0.45 0.45 0.10 0.00 0.00
 sum(drop(wt_tied$W) * y_tied)  # 4.5

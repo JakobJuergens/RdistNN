@@ -2,8 +2,8 @@
 
 This is the general, ranker-agnostic top-layer. It consumes a *ranking
 provider* (distance, custom function, or precomputed
-ranks/orders/distances) and a weighting rule (`rank_weight`), then
-returns the weight matrix `W` (n x m).
+ranks/orders/distances) and a weighting rule (`rdistnn_rank_weight`),
+then returns the weight matrix `W` (n x m).
 
 ## Usage
 
@@ -37,7 +37,8 @@ weights_matrix(
 
   one of:
 
-  - a `dnn_distance` spec, a registered distance name (e.g., "l2","l1"),
+  - a `rdistnn_distance` spec, a registered distance name (e.g.,
+    "l2","l1"),
 
   - a function `(X, X0, ctx) ->` list with `$ranks`/`$ord`/`$dx`, or an
     `n x m` ranks matrix,
@@ -47,7 +48,7 @@ weights_matrix(
 
 - weight:
 
-  a `rank_weight` spec (or zero-arg factory returning one).
+  a `rdistnn_rank_weight` spec (or zero-arg factory returning one).
 
 - ctx:
 
@@ -63,7 +64,7 @@ weights_matrix(
 
 ## Value
 
-An object of class `weights_result` with components:
+An object of class `rdistnn_weights_result` with components:
 
 - `W` : numeric matrix n x m (columns typically sum to 1),
 

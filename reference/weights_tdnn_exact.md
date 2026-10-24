@@ -67,7 +67,7 @@ weights_tdnn_exact(
 
 ## Value
 
-A `weights_result` object (same structure as
+A `rdistnn_weights_result` object (same structure as
 [`weights_dnn_exact()`](https://JakobJuergens.github.io/RdistNN/reference/weights_dnn_exact.md)).
 
 ## Details

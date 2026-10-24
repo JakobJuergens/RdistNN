@@ -43,7 +43,7 @@ score_np_y(x0, x_cols, s = 1, y_col = NULL, y = NULL)
 
 ## Value
 
-An `ustat_score` object with:
+An `rdistnn_ustat_score` object with:
 
 - `$name`: a descriptive name,
 

@@ -17,7 +17,7 @@ is_compiled(score)
 
 - score:
 
-  a `ustat_score`
+  a `rdistnn_ustat_score`
 
 ## Value
 

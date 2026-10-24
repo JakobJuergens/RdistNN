@@ -35,7 +35,7 @@ fit_cate <- cate_dnn(
 )
 
 summary(fit_cate)
-#> <summary.cate_result>
+#> <rdistnn_summary_cate_result>
 #>   signal: aipw
 #>   localization: s = 19, s/n = 0.106
 #>   targets: 1
@@ -268,6 +268,11 @@ inference requires `s < n`. Set `se = FALSE` to omit standard errors.
 
 ## Seeds and native threads
 
+Built-in distance, rank-weight and accumulation calculations are
+deterministic: both R and C++ preserve an existing RNG state and leave
+`.Random.seed` absent when it was absent. These calculations need no
+seed.
+
 The demo helpers’ explicit `seed` arguments restore the caller’s saved
 RNG state. `seed = NULL` draws from the current stream. Simulation grids
 use `master_seed` to generate their replicate seeds. To reproduce a
@@ -278,6 +283,15 @@ See
 [`?sim_cate_run`](https://JakobJuergens.github.io/RdistNN/reference/sim_cate_run.md)
 for the reproducibility contract shared with
 [`sim_iv_run()`](https://JakobJuergens.github.io/RdistNN/reference/sim_iv_run.md).
+
+Eligible calculations use C++ automatically when their native routine is
+available. For engine comparisons or troubleshooting,
+`options(RdistNN.use_compiled = FALSE)` selects the package’s R paths;
+`options(RdistNN.use_compiled = TRUE)` restores automatic native
+dispatch. Source installation still requires a C++17 compiler. A native
+execution error stops the calculation rather than silently retrying it
+in R. During a long native calculation, interruption can be delayed
+until control returns to R.
 
 Native routines default to at most two OpenMP threads. Set
 `options(RdistNN.num_threads = 4L)` to request four, or `1L` for one

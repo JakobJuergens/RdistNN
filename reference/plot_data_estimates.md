@@ -16,13 +16,13 @@ plot_data_estimates(object, level = 0.95, ...)
 # Default S3 method
 plot_data_estimates(object, level = 0.95, ...)
 
-# S3 method for class 'np_result'
+# S3 method for class 'rdistnn_np_result'
 plot_data_estimates(object, level = 0.95, candidates = "default", ...)
 
-# S3 method for class 'cate_result'
+# S3 method for class 'rdistnn_cate_result'
 plot_data_estimates(object, level = 0.95, candidates = "default", ...)
 
-# S3 method for class 'plqr_result'
+# S3 method for class 'rdistnn_plqr_result'
 plot_data_estimates(
   object,
   level = 0.95,
@@ -31,10 +31,10 @@ plot_data_estimates(
   ...
 )
 
-# S3 method for class 'gmm_result'
+# S3 method for class 'rdistnn_gmm_result'
 plot_data_estimates(object, level = 0.95, ...)
 
-# S3 method for class 'affine_ratio_result'
+# S3 method for class 'rdistnn_affine_ratio_result'
 plot_data_estimates(object, level = 0.95, candidates = "default", ...)
 ```
 
@@ -42,9 +42,10 @@ plot_data_estimates(object, level = 0.95, candidates = "default", ...)
 
 - object:
 
-  A fitted result object (`np_result`, `cate_result`,
-  `affine_ratio_result`, `clate_result`, `plqr_result`, or `gmm_result`;
-  `tdnn_np_result` dispatches through `np_result`).
+  A fitted result object (`rdistnn_np_result`, `rdistnn_cate_result`,
+  `rdistnn_affine_ratio_result`, `rdistnn_clate_result`,
+  `rdistnn_plqr_result`, or `rdistnn_gmm_result`;
+  `rdistnn_tdnn_np_result` dispatches through `rdistnn_np_result`).
 
 - level:
 
@@ -61,7 +62,7 @@ plot_data_estimates(object, level = 0.95, candidates = "default", ...)
 
 - quantity:
 
-  For `plqr_result` fits, which quantity to extract: `"moment"`
+  For `rdistnn_plqr_result` fits, which quantity to extract: `"moment"`
   (default) uses the localized PLQR moments and their jackknife
   `moment_se`; `"theta"` uses the supplied coefficient values (repeated
   `theta_eval`) and the direct-sandwich `theta_se`. While no root solver
@@ -84,8 +85,8 @@ in `se` and the bound columns. The confidence level is recorded in
 
 ## Experimental methods
 
-Methods for `plqr_result` objects are experimental, as is all PLQR
-functionality in this release; see
+Methods for `rdistnn_plqr_result` objects are experimental, as is all
+PLQR functionality in this release; see
 [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md).
 
 ## Examples

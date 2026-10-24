@@ -13,13 +13,13 @@ jackknife standard errors. Nuisance predictions for causal estimators
 are supplied externally; the documented inference conditions remain
 estimator-specific. The underlying toolkit combines:
 
-- distance specifications (`dnn_distance`) for ranking observations
+- distance specifications (`rdistnn_distance`) for ranking observations
   around a target;
 
-- rank-weight specifications (`rank_weight`) for converting ranks to
-  weights;
+- rank-weight specifications (`rdistnn_rank_weight`) for converting
+  ranks to weights;
 
-- score objects (`ustat_score`) for flexible kernel-based moment
+- score objects (`rdistnn_ustat_score`) for flexible kernel-based moment
   evaluation.
 
 ## Main User Workflows
@@ -39,11 +39,11 @@ estimator-specific. The underlying toolkit combines:
   [`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md).
 
 - Report and reuse CATE fits with
-  [`summary.cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/summary.cate_result.md),
-  [`confint.cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/confint.cate_result.md),
-  [`vcov.cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/vcov.cate_result.md)
+  [`summary.rdistnn_cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/summary.rdistnn_cate_result.md),
+  [`confint.rdistnn_cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/confint.rdistnn_cate_result.md),
+  [`vcov.rdistnn_cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/vcov.rdistnn_cate_result.md)
   and
-  [`predict.cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/predict.cate_result.md).
+  [`predict.rdistnn_cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/predict.rdistnn_cate_result.md).
 
 - Estimate local nonparametric means with
   [`np_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_dnn.md).
@@ -53,7 +53,7 @@ estimator-specific. The underlying toolkit combines:
   see its help for order constraints and additional smoothness
   requirements. Both regression classes share reporting, joint
   covariance and prediction methods documented in
-  [np_result](https://JakobJuergens.github.io/RdistNN/reference/np_result.md).
+  [rdistnn_np_result](https://JakobJuergens.github.io/RdistNN/reference/rdistnn_np_result.md).
 
 - Estimate conditional LATE from supplied nuisance predictions with
   [`clate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/clate_dnn.md),
@@ -112,13 +112,25 @@ inversion.
 
 ## Random numbers
 
-Explicit demo and simulation seeds restore `.Random.seed` and
-[`RNGkind()`](https://rdrr.io/r/base/Random.html); `NULL` uses the
-current stream. R's saved state does not include the hidden Box-Muller
-normal cache; use the default normal generator for saved-state
-reproducibility.
+Built-in distance, rank-weight and accumulation routines preserve the
+caller's RNG state in both R and compiled execution, including leaving
+`.Random.seed` absent when it was absent. These deterministic
+calculations need no seed. Explicit demo and simulation seeds restore
+`.Random.seed` and [`RNGkind()`](https://rdrr.io/r/base/Random.html);
+`NULL` uses the current stream. R's saved state does not include the
+hidden Box-Muller normal cache; use the default normal generator for
+saved-state reproducibility.
 
 ## Native threads
+
+Eligible built-in calculations use C++ automatically when the
+corresponding native routine is available. For engine comparisons or
+troubleshooting, set `options(RdistNN.use_compiled = FALSE)` to select
+the package's R paths; `TRUE` restores automatic native dispatch. Source
+installation still requires a C++17 compiler. Native execution errors
+propagate rather than triggering an automatic retry in R. During long
+native calculations, interruption can be delayed until control returns
+to R.
 
 Compiled routines use at most two OpenMP threads by default. Set
 `options(RdistNN.num_threads = 1L)` for one native thread, or supply a
@@ -166,8 +178,8 @@ does not change other packages' thread settings.
 [`np_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_dnn.md),
 [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md),
 [`diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/diagnostics.md),
-[`summary.cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/summary.cate_result.md),
-[`predict.cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/predict.cate_result.md),
+[`summary.rdistnn_cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/summary.rdistnn_cate_result.md),
+[`predict.rdistnn_cate_result()`](https://JakobJuergens.github.io/RdistNN/reference/predict.rdistnn_cate_result.md),
 [`new_score()`](https://JakobJuergens.github.io/RdistNN/reference/new_score.md),
 [`distance_l2()`](https://JakobJuergens.github.io/RdistNN/reference/distance_l2.md)
 

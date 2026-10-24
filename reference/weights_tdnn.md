@@ -75,7 +75,7 @@ weights_tdnn(
 
 ## Value
 
-A `weights_result` object.
+A `rdistnn_weights_result` object.
 
 ## Numerical limits
 

@@ -19,7 +19,7 @@ these frames, and users can consume them directly for custom figures."></head><b
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,7 +42,7 @@ these frames, and users can consume them directly for custom figures."></head><b
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Extract a tidy estimates frame from a fitted RdistNN object</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/R/plot-data.R" class="external-link"><code>R/plot-data.R</code></a>, <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/R/user-dnn-affine-ratio-methods.R" class="external-link"><code>R/user-dnn-affine-ratio-methods.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/R/plot-data.R" class="external-link"><code>R/plot-data.R</code></a>, <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/R/user-dnn-affine-ratio-methods.R" class="external-link"><code>R/user-dnn-affine-ratio-methods.R</code></a></small>
       <div class="d-none name"><code>plot_data_estimates.Rd</code></div>
     </div>
 
@@ -63,13 +63,13 @@ these frames, and users can consume them directly for custom figures.</p>
 <span><span class="co"># Default S3 method</span></span>
 <span><span class="fu">plot_data_estimates</span><span class="op">(</span><span class="va">object</span>, level <span class="op">=</span> <span class="fl">0.95</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># S3 method for class 'np_result'</span></span>
+<span><span class="co"># S3 method for class 'rdistnn_np_result'</span></span>
 <span><span class="fu">plot_data_estimates</span><span class="op">(</span><span class="va">object</span>, level <span class="op">=</span> <span class="fl">0.95</span>, candidates <span class="op">=</span> <span class="st">"default"</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># S3 method for class 'cate_result'</span></span>
+<span><span class="co"># S3 method for class 'rdistnn_cate_result'</span></span>
 <span><span class="fu">plot_data_estimates</span><span class="op">(</span><span class="va">object</span>, level <span class="op">=</span> <span class="fl">0.95</span>, candidates <span class="op">=</span> <span class="st">"default"</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># S3 method for class 'plqr_result'</span></span>
+<span><span class="co"># S3 method for class 'rdistnn_plqr_result'</span></span>
 <span><span class="fu">plot_data_estimates</span><span class="op">(</span></span>
 <span>  <span class="va">object</span>,</span>
 <span>  level <span class="op">=</span> <span class="fl">0.95</span>,</span>
@@ -78,10 +78,10 @@ these frames, and users can consume them directly for custom figures.</p>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># S3 method for class 'gmm_result'</span></span>
+<span><span class="co"># S3 method for class 'rdistnn_gmm_result'</span></span>
 <span><span class="fu">plot_data_estimates</span><span class="op">(</span><span class="va">object</span>, level <span class="op">=</span> <span class="fl">0.95</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># S3 method for class 'affine_ratio_result'</span></span>
+<span><span class="co"># S3 method for class 'rdistnn_affine_ratio_result'</span></span>
 <span><span class="fu">plot_data_estimates</span><span class="op">(</span><span class="va">object</span>, level <span class="op">=</span> <span class="fl">0.95</span>, candidates <span class="op">=</span> <span class="st">"default"</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -90,9 +90,10 @@ these frames, and users can consume them directly for custom figures.</p>
 
 
 <dl><dt id="arg-object">object<a class="anchor" aria-label="anchor" href="#arg-object"></a></dt>
-<dd><p>A fitted result object (<code>np_result</code>, <code>cate_result</code>,
-<code>affine_ratio_result</code>, <code>clate_result</code>, <code>plqr_result</code>, or <code>gmm_result</code>; <code>tdnn_np_result</code> dispatches through
-<code>np_result</code>).</p></dd>
+<dd><p>A fitted result object (<code>rdistnn_np_result</code>, <code>rdistnn_cate_result</code>,
+<code>rdistnn_affine_ratio_result</code>, <code>rdistnn_clate_result</code>, <code>rdistnn_plqr_result</code>,
+or <code>rdistnn_gmm_result</code>; <code>rdistnn_tdnn_np_result</code> dispatches through
+<code>rdistnn_np_result</code>).</p></dd>
 
 
 <dt id="arg-level">level<a class="anchor" aria-label="anchor" href="#arg-level"></a></dt>
@@ -109,7 +110,7 @@ character vector of stored candidate ids.</p></dd>
 
 
 <dt id="arg-quantity">quantity<a class="anchor" aria-label="anchor" href="#arg-quantity"></a></dt>
-<dd><p>For <code>plqr_result</code> fits, which quantity to extract:
+<dd><p>For <code>rdistnn_plqr_result</code> fits, which quantity to extract:
 <code>"moment"</code> (default) uses the localized PLQR moments and their
 jackknife <code>moment_se</code>; <code>"theta"</code> uses the supplied coefficient values
 (repeated <code>theta_eval</code>) and the direct-sandwich <code>theta_se</code>. While no
@@ -135,7 +136,7 @@ in <code>se</code> and the bound columns. The confidence level is recorded in
     <h2 id="experimental-methods">Experimental methods<a class="anchor" aria-label="anchor" href="#experimental-methods"></a></h2>
 
 
-<p>Methods for <code>plqr_result</code> objects are experimental, as is all PLQR
+<p>Methods for <code>rdistnn_plqr_result</code> objects are experimental, as is all PLQR
 functionality in this release; see <code><a href="plqr_dnn.html">plqr_dnn()</a></code>.</p>
     </div>
 

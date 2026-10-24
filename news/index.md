@@ -1,5 +1,41 @@
 # Changelog
 
+## RdistNN 0.1.4 (2026-10-23)
+
+- Validate complete current fitted state before reporting, serialization
+  reuse, prediction and candidate extraction. Owned S3 classes use the
+  `rdistnn_` prefix; earlier objects require refitting. Retained
+  provenance and metric fields must have exact, unique names; incomplete
+  state produces refit guidance.
+- Capture distance, score and model configuration at construction. Reuse
+  one current rank/distance/group cache and validated localization facts
+  across tuning, diagnostics and reporting, preparing only selected
+  weight profiles.
+- Route owned failures through semantic R condition families with
+  bounded, argument-specific details. Preserve unexpected callback,
+  native, solver, resource and interrupt failures, along with the
+  caller’s warning controls. Retain per-target localization notice facts
+  without optional weight returns.
+- Preserve within-arm effective sample sizes for tiny positive
+  localization mass and small finite paired cross-covariances under
+  exceptional column scaling. Scalar sensitivity respects its requested
+  uncertainty policy, including point-only candidates with `s = n`.
+- Preserve RNG state, including its absence, in deterministic native
+  primitives; remove unused score contexts and keep host access outside
+  OpenMP worker loops. Document engine selection, native failure
+  propagation and interruption limits.
+- Support correctly shaped empty score and derivative batches while
+  retaining type, subset-order and callback checks. List all accepted
+  registry keys.
+- Add isolated native analysis, compiler caching, sanitizers,
+  installed-package coverage and script linting. Validate source and
+  compilation-database identity, and exclude generated site/distribution
+  outputs from analysis snapshots.
+- Isolate test RNG and tracing state, narrow warning filters and remove
+  adapters that substituted results or skipped unexpected failures.
+  Require testthat 3.2.0 for the test APIs in use. Ratio confidence-set
+  inversion, PLQR and IV-GMM remain experimental.
+
 ## RdistNN 0.1.3 (2026-10-22)
 
 - Remove the retired lexicographic tie-breaking implementation from
@@ -673,14 +709,11 @@ aliases for the old names are kept.
   density is supplied, matching the direct `J, S` sandwich this
   estimator’s source theory specifies (see
   `markdown_notes/design/15_plqr_variance_estimation_rationale.md`).
-  [`confint.plqr_result()`](https://JakobJuergens.github.io/RdistNN/reference/confint.plqr_result.md)
-  and
-  [`summary.plqr_result()`](https://JakobJuergens.github.io/RdistNN/reference/summary.plqr_result.md)
-  report coefficient inference only through this route.
-- Added
-  [`predict.plqr_result()`](https://JakobJuergens.github.io/RdistNN/reference/predict.plqr_result.md),
-  including coefficient-level `se.fit`/ `interval = "confidence"`
-  support gated on the same direct-sandwich requirement.
+  `confint.plqr_result()` and `summary.plqr_result()` report coefficient
+  inference only through this route.
+- Added `predict.plqr_result()`, including coefficient-level `se.fit`/
+  `interval = "confidence"` support gated on the same direct-sandwich
+  requirement.
 - Added `tuning_mode = c("default", "grid")` to
   [`cate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/cate_dnn.md),
   [`np_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/np_dnn.md),

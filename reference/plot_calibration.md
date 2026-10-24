@@ -18,7 +18,8 @@ plot_calibration(object, level = 0.95)
 
 - object:
 
-  A `plqr_result` with the weight matrix `W` stored (the default).
+  A `rdistnn_plqr_result` with the weight matrix `W` stored (the
+  default).
 
 - level:
 

@@ -98,7 +98,7 @@ new_score(
 
 ## Value
 
-An object of class `ustat_score`.
+An object of class `rdistnn_ustat_score`.
 
 ## Details
 

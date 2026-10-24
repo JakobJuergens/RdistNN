@@ -16,16 +16,16 @@ candidate_fit(object, candidate, ...)
 # Default S3 method
 candidate_fit(object, candidate, ...)
 
-# S3 method for class 'np_result'
+# S3 method for class 'rdistnn_np_result'
 candidate_fit(object, candidate, ...)
 
-# S3 method for class 'cate_result'
+# S3 method for class 'rdistnn_cate_result'
 candidate_fit(object, candidate, ...)
 
-# S3 method for class 'affine_ratio_result'
+# S3 method for class 'rdistnn_affine_ratio_result'
 candidate_fit(object, candidate, ...)
 
-# S3 method for class 'plqr_result'
+# S3 method for class 'rdistnn_plqr_result'
 candidate_fit(object, candidate, ...)
 
 candidate_fits(object, candidates = "all", ...)
@@ -33,16 +33,16 @@ candidate_fits(object, candidates = "all", ...)
 # Default S3 method
 candidate_fits(object, candidates = "all", ...)
 
-# S3 method for class 'np_result'
+# S3 method for class 'rdistnn_np_result'
 candidate_fits(object, candidates = "all", ...)
 
-# S3 method for class 'cate_result'
+# S3 method for class 'rdistnn_cate_result'
 candidate_fits(object, candidates = "all", ...)
 
-# S3 method for class 'affine_ratio_result'
+# S3 method for class 'rdistnn_affine_ratio_result'
 candidate_fits(object, candidates = "all", ...)
 
-# S3 method for class 'plqr_result'
+# S3 method for class 'rdistnn_plqr_result'
 candidate_fits(object, candidates = "all", ...)
 ```
 
@@ -101,8 +101,8 @@ refitted.
 
 ## Experimental methods
 
-Methods for `plqr_result` objects are experimental, as is all PLQR
-functionality in this release; see
+Methods for `rdistnn_plqr_result` objects are experimental, as is all
+PLQR functionality in this release; see
 [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md).
 
 ## Examples
@@ -116,7 +116,7 @@ fit <- np_dnn(
   tuning_mode = "grid", se = FALSE
 )
 candidate_fit(fit, fit$tuning_grid$candidates$candidate_id[[1L]])
-#> <np_result>
+#> <rdistnn_np_result>
 #>   localization: s = 4, s/n = 0.1
 #>   data  : n=40, p=2, m=1
 #>   DNN   : method=exact, k=1, distance=l2

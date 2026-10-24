@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,9 +30,20 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.1.4" id="rdistnn-014-2026-10-23">RdistNN 0.1.4 (2026-10-23)<a class="anchor" aria-label="anchor" href="#rdistnn-014-2026-10-23"></a></h2>
+<ul><li>Validate complete current fitted state before reporting, serialization reuse, prediction and candidate extraction. Owned S3 classes use the <code>rdistnn_</code> prefix; earlier objects require refitting. Retained provenance and metric fields must have exact, unique names; incomplete state produces refit guidance.</li>
+<li>Capture distance, score and model configuration at construction. Reuse one current rank/distance/group cache and validated localization facts across tuning, diagnostics and reporting, preparing only selected weight profiles.</li>
+<li>Route owned failures through semantic R condition families with bounded, argument-specific details. Preserve unexpected callback, native, solver, resource and interrupt failures, along with the caller’s warning controls. Retain per-target localization notice facts without optional weight returns.</li>
+<li>Preserve within-arm effective sample sizes for tiny positive localization mass and small finite paired cross-covariances under exceptional column scaling. Scalar sensitivity respects its requested uncertainty policy, including point-only candidates with <code>s = n</code>.</li>
+<li>Preserve RNG state, including its absence, in deterministic native primitives; remove unused score contexts and keep host access outside OpenMP worker loops. Document engine selection, native failure propagation and interruption limits.</li>
+<li>Support correctly shaped empty score and derivative batches while retaining type, subset-order and callback checks. List all accepted registry keys.</li>
+<li>Add isolated native analysis, compiler caching, sanitizers, installed-package coverage and script linting. Validate source and compilation-database identity, and exclude generated site/distribution outputs from analysis snapshots.</li>
+<li>Isolate test RNG and tracing state, narrow warning filters and remove adapters that substituted results or skipped unexpected failures. Require testthat 3.2.0 for the test APIs in use. Ratio confidence-set inversion, PLQR and IV-GMM remain experimental.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.3" id="rdistnn-013-2026-10-22">RdistNN 0.1.3 (2026-10-22)<a class="anchor" aria-label="anchor" href="#rdistnn-013-2026-10-22"></a></h2>
 <ul><li><p>Remove the retired lexicographic tie-breaking implementation from portable and native coordinate-order primitives; all distance rankings now use original row index within exact represented distance ties.</p></li>
@@ -231,8 +242,8 @@
 </ul></div>
 <div class="section level3">
 <h3 id="plqr-inference-prediction-and-tuning-grid-mode-0-1-0">PLQR inference, prediction, and tuning-grid mode<a class="anchor" aria-label="anchor" href="#plqr-inference-prediction-and-tuning-grid-mode-0-1-0"></a></h3>
-<ul><li>Added the direct PLQR coefficient sandwich (<code>density</code>/<code>density_col</code>): <code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code> now reports coefficient-level <code>theta_se</code>, <code>theta_vcov</code>, <code>theta_omega</code>, <code>jacobian</code>, <code>score_covariance</code>, and <code>neff</code> when a local conditional density is supplied, matching the direct <code>J, S</code> sandwich this estimator’s source theory specifies (see <code>markdown_notes/design/15_plqr_variance_estimation_rationale.md</code>). <code><a href="../reference/confint.plqr_result.html">confint.plqr_result()</a></code> and <code><a href="../reference/summary.plqr_result.html">summary.plqr_result()</a></code> report coefficient inference only through this route.</li>
-<li>Added <code><a href="../reference/predict.plqr_result.html">predict.plqr_result()</a></code>, including coefficient-level <code>se.fit</code>/ <code>interval = "confidence"</code> support gated on the same direct-sandwich requirement.</li>
+<ul><li>Added the direct PLQR coefficient sandwich (<code>density</code>/<code>density_col</code>): <code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code> now reports coefficient-level <code>theta_se</code>, <code>theta_vcov</code>, <code>theta_omega</code>, <code>jacobian</code>, <code>score_covariance</code>, and <code>neff</code> when a local conditional density is supplied, matching the direct <code>J, S</code> sandwich this estimator’s source theory specifies (see <code>markdown_notes/design/15_plqr_variance_estimation_rationale.md</code>). <code>confint.plqr_result()</code> and <code>summary.plqr_result()</code> report coefficient inference only through this route.</li>
+<li>Added <code>predict.plqr_result()</code>, including coefficient-level <code>se.fit</code>/ <code>interval = "confidence"</code> support gated on the same direct-sandwich requirement.</li>
 <li>Added <code>tuning_mode = c("default", "grid")</code> to <code><a href="../reference/cate_dnn.html">cate_dnn()</a></code>, <code><a href="../reference/np_dnn.html">np_dnn()</a></code>, and <code><a href="../reference/plqr_dnn.html">plqr_dnn()</a></code>: grid mode evaluates a tuning object’s feasible kernel- order candidates and attaches a tidy <code>tuning_grid</code> payload (<code>candidates</code>, <code>estimates</code>, <code>diagnostics</code>, <code>meta</code>), reusing cached ranks and rank-weight tables rather than refitting per candidate. See <code>markdown_notes/design/14_integrated_tuning_grid_reuse.md</code>.</li>
 <li>Recorded, but deliberately did not build, a PLQR analogue of the <code>sim-cate-*.R</code> paper-simulation harness: the Cond_Z_Estimation paper has no PLQR numerical study to mirror, so a simulation harness would require inventing a DGP and comparator methods from scratch. Left as an explicit, flagged future-work item rather than undertaken speculatively.</li>
 </ul></div>

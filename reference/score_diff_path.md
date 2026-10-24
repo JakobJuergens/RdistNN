@@ -22,7 +22,7 @@ score_diff_path(
 
 - score:
 
-  A `ustat_score`.
+  A `rdistnn_ustat_score`.
 
 - data:
 

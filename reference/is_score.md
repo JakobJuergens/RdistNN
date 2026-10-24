@@ -1,6 +1,6 @@
-# Is object a `ustat_score`?
+# Is object a `rdistnn_ustat_score`?
 
-Is object a `ustat_score`?
+Is object a `rdistnn_ustat_score`?
 
 ## Usage
 

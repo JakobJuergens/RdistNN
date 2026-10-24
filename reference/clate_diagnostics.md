@@ -5,10 +5,10 @@ Paired component and first-stage diagnostics
 ## Usage
 
 ``` r
-# S3 method for class 'affine_ratio_result'
+# S3 method for class 'rdistnn_affine_ratio_result'
 diagnostics(object, candidates = "default", ...)
 
-# S3 method for class 'clate_result'
+# S3 method for class 'rdistnn_clate_result'
 diagnostics(object, candidates = "default", ...)
 ```
 
@@ -16,7 +16,7 @@ diagnostics(object, candidates = "default", ...)
 
 - object:
 
-  An affine_ratio_result or clate_result.
+  An rdistnn_affine_ratio_result or rdistnn_clate_result.
 
 - candidates:
 
@@ -29,12 +29,12 @@ diagnostics(object, candidates = "default", ...)
 
 ## Value
 
-A dnn_diagnostics data frame. Component covariance is estimator-scale.
-component_covariance reports the paired numerator-denominator
-covariance; geometry_rule and tie_rule identify the frozen geometry and
-tie convention. Zero denominator variance gives NA standardized
-magnitude/correlation. Disabled covariance gives unavailable
-uncertainty/concentration fields. physical_radius_90 uses
+A rdistnn_diagnostics data frame. Component covariance is
+estimator-scale. component_covariance reports the paired
+numerator-denominator covariance; geometry_rule and tie_rule identify
+the frozen geometry and tie convention. Zero denominator variance gives
+NA standardized magnitude/correlation. Disabled covariance gives
+unavailable uncertainty/concentration fields. physical_radius_90 uses
 original-coordinate Euclidean distance; radius_90 uses the fitted
 localization metric. Both enclose 90 percent of weight.
 
@@ -54,7 +54,7 @@ f <- affine_ratio_dnn(
   numerator = c(2, 1, 4, 3), denominator = c(1, -1, 2, 1), s = 2
 )
 diagnostics(f)
-#> <dnn_diagnostics>
+#> <rdistnn_diagnostics>
 #>   targets: 1
 #>   n_eff  : min=2.5714, median=2.5714, max=2.5714
 #>   weights: max(top5 share)=1, max(weight)=0.5

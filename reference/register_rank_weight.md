@@ -1,4 +1,4 @@
-# Register a rank_weight under a name
+# Register a rdistnn_rank_weight under a name
 
 If `spec` is a function, it is wrapped with
 [`as_rank_weight()`](https://JakobJuergens.github.io/RdistNN/reference/as_rank_weight.md).
@@ -17,7 +17,7 @@ register_rank_weight(name, spec)
 
 - spec:
 
-  A rank_weight spec or function `(ranks, ctx) -> numeric(n)`.
+  A rdistnn_rank_weight spec or function `(ranks, ctx) -> numeric(n)`.
 
 ## Value
 

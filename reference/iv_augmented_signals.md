@@ -72,8 +72,8 @@ iv_augmented_signals(
 
 ## Value
 
-An iv_signals list with phi_y, phi_d, row_ids, propensity (raw, used,
-clipped), nuisance (m_y0, m_y1, m_d0, m_d1) and meta.
+An rdistnn_iv_signals list with phi_y, phi_d, row_ids, propensity (raw,
+used, clipped), nuisance (m_y0, m_y1, m_d0, m_d1) and meta.
 
 ## Details
 

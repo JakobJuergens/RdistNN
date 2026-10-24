@@ -34,7 +34,7 @@ gmm_model_dr_iv(y_col = "Y", d_col = "D", z_cols, pi_cols, muY_col, muD_col)
 
 ## Value
 
-A `gmm_model` object for use with
+A `rdistnn_gmm_model` object for use with
 [`gmm_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/gmm_dnn.md).
 
 ## Details

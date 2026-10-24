@@ -9,7 +9,7 @@ with DNN-based local weights."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,7 +32,7 @@ with DNN-based local weights."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>CATE via DNN rank-weighted pseudo-outcome averaging</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/R/user-dnn-cate.R" class="external-link"><code>R/user-dnn-cate.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/R/user-dnn-cate.R" class="external-link"><code>R/user-dnn-cate.R</code></a></small>
       <div class="d-none name"><code>cate_dnn.Rd</code></div>
     </div>
 
@@ -194,7 +194,7 @@ one column per target. It is a rank summary, not the full DNN weight support.</p
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An object of class <code>cate_result</code> with components:</p><ul><li><p><code>tau</code>: estimated CATE values at target points;</p></li>
+    <p>An object of class <code>rdistnn_cate_result</code> with components:</p><ul><li><p><code>tau</code>: estimated CATE values at target points;</p></li>
 <li><p><code>se</code>: optional jackknife standard errors;</p></li>
 <li><p><code>x0</code>: the <code>m x p</code> matrix of evaluation points, with covariate
 column names propagated from the training data when available;</p></li>
@@ -271,7 +271,7 @@ localization bias, or pointwise inference.</p>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="weights_dnn.html">weights_dnn()</a></code>, <code><a href="weights_matrix.html">weights_matrix()</a></code>, <code><a href="score_cate_rho.html">score_cate_rho()</a></code>,
-<code><a href="cate_demo_data.html">cate_demo_data()</a></code>, <code><a href="vcov.cate_result.html">vcov.cate_result()</a></code>, <code><a href="predict.cate_result.html">predict.cate_result()</a></code>.</p></div>
+<code><a href="cate_demo_data.html">cate_demo_data()</a></code>, <code><a href="vcov.rdistnn_cate_result.html">vcov.rdistnn_cate_result()</a></code>, <code><a href="predict.rdistnn_cate_result.html">predict.rdistnn_cate_result()</a></code>.</p></div>
     </div>
 
     <div class="section level2">

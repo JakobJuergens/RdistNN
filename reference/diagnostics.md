@@ -15,7 +15,7 @@ for the averaging rule and its theory warning.
 ## Usage
 
 ``` r
-# S3 method for class 'cate_result'
+# S3 method for class 'rdistnn_cate_result'
 diagnostics(object, candidates = "default", ...)
 
 diagnostics(object, candidates = "default", ...)
@@ -23,13 +23,13 @@ diagnostics(object, candidates = "default", ...)
 # Default S3 method
 diagnostics(object, candidates = "default", ...)
 
-# S3 method for class 'dnn_diagnostics'
+# S3 method for class 'rdistnn_diagnostics'
 print(x, ...)
 
-# S3 method for class 'np_result'
+# S3 method for class 'rdistnn_np_result'
 diagnostics(object, candidates = "default", ...)
 
-# S3 method for class 'plqr_result'
+# S3 method for class 'rdistnn_plqr_result'
 diagnostics(object, candidates = "default", ...)
 ```
 
@@ -67,15 +67,21 @@ diagnostics(object, candidates = "default", ...)
 
 - x:
 
-  A `dnn_diagnostics` object.
+  A `rdistnn_diagnostics` object.
 
 ## Value
 
-An object of class `dnn_diagnostics`.
+An object of class `rdistnn_diagnostics`.
 
 `x`, invisibly.
 
 ## Details
+
+CATE `treated_ess` and `control_ess` measure concentration after
+normalizing weights within each treatment arm. A single positive-weight
+observation gives arm ESS one, even when its arm's total weight is tiny.
+Zero arm weight gives `NA`. Inspect `treated_mass` and `control_mass`
+alongside arm ESS when judging local treatment support.
 
 PLQR fits additionally report residualized-design Gram conditioning
 (`gram_min_eig`, `gram_condition_number`) and, when direct-sandwich
@@ -91,8 +97,8 @@ block.
 
 ## Experimental methods
 
-Methods for `plqr_result` objects are experimental, as is all PLQR
-functionality in this release; see
+Methods for `rdistnn_plqr_result` objects are experimental, as is all
+PLQR functionality in this release; see
 [`plqr_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/plqr_dnn.md).
 
 ## Examples
@@ -103,7 +109,7 @@ x_mat <- matrix(rnorm(40 * 2), 40, 2)
 y_vec <- x_mat[, 1] + rnorm(40, sd = 0.2)
 fit_np <- np_dnn(X = x_mat, x0 = c(0, 0), Y = y_vec, se = FALSE)
 diagnostics(fit_np)
-#> <dnn_diagnostics>
+#> <rdistnn_diagnostics>
 #>   targets: 1
 #>   n_eff  : min=11.4527, median=11.4527, max=11.4527
 #>   weights: max(top5 share)=0.5771, max(weight)=0.15
@@ -122,7 +128,7 @@ fit_cate <- cate_dnn(
   se = FALSE
 )
 diagnostics(fit_cate)
-#> <dnn_diagnostics>
+#> <rdistnn_diagnostics>
 #>   targets: 1
 #>   n_eff  : min=12.4648, median=12.4648, max=12.4648
 #>   weights: max(top5 share)=0.5457, max(weight)=0.14
@@ -148,7 +154,7 @@ fit_plqr <- plqr_dnn(
   se = FALSE
 )
 diagnostics(fit_plqr)
-#> <dnn_diagnostics>
+#> <rdistnn_diagnostics>
 #>   targets: 1
 #>   n_eff  : min=13.2383, median=13.2383, max=13.2383
 #>   weights: max(top5 share)=0.5241, max(weight)=0.1333

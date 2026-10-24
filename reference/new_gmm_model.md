@@ -57,7 +57,7 @@ new_gmm_model(
 
 ## Value
 
-An object of class `gmm_model`.
+An object of class `rdistnn_gmm_model`.
 
 ## Details
 

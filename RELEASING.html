@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,17 +30,18 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Releasing RdistNN</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/RELEASING.md" class="external-link"><code>RELEASING.md</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/RELEASING.md" class="external-link"><code>RELEASING.md</code></a></small>
     </div>
 
 <div id="releasing-rdistnn" class="section level1">
 
 <p>Supported workflows include CATE, nonparametric regression, supplied-prediction CLATE and ordinary paired-signal ratios, with DNN weights, pointwise jackknife uncertainty, tuning, diagnostics and plots. Ratio confidence-set inversion, PLQR and local IV-GMM remain experimental.</p>
-<p>Version <code>0.1.3</code> replaces the 0.1.2 identical-covariate rule with target-specific exact represented distance averaging. Earlier saved fits require refitting. Preserve all historical tags, assets and scientific dependency pins when publishing this release.</p>
+<p>Production release <code>0.1.3</code> replaced the 0.1.2 identical-covariate rule with target-specific exact represented distance averaging. Earlier saved fits require refitting. Read the current <code>NEWS.md</code> heading for development changes and refit requirements. Preserve all historical tags, assets and scientific dependency pins when publishing a release.</p>
 <div class="section level2">
 <h2 id="version-progression">Version progression<a class="anchor" aria-label="anchor" href="#version-progression"></a></h2>
 <p>The first development commit after production <code>0.1.x</code> establishes <code>0.1.x.9000</code>. Increment its fourth component in each subsequent development commit, even a small documentation or implementation change. Drafting a version in uncommitted changes does not advance this sequence. Read the current version from <code>DESCRIPTION</code> and the current <code>NEWS.md</code> heading; keep them synchronized. For example, development after production <code>0.1.2</code> starts at <code>0.1.2.9000</code>, then <code>0.1.2.9001</code>.</p>
-<p>For each production merge, default to <code>0.1.(x+1)</code> unless the maintainer explicitly selects another version. Prepare that production version in the reviewed candidate before merging, then start the next development cycle by appending <code>.9000</code> to the selected production version. Thus the current default cycle leads to production <code>0.1.3</code>, followed by development <code>0.1.3.9000</code>. Production merging, tagging and asset publication remain separate authorized steps. Retain full commit and checked-archive identities alongside version numbers.</p>
+<p>For each production merge, default to <code>0.1.(x+1)</code> unless the maintainer explicitly selects another version. Prepare that production version in the reviewed candidate before merging, then start the next development cycle by appending <code>.9000</code> to the selected production version. For example, production <code>0.1.3</code> starts development at <code>0.1.3.9000</code>. Production merging, tagging and asset publication remain separate authorized steps. Retain full commit and checked-archive identities alongside version numbers.</p>
+<p><code>DESCRIPTION</code> owns the current package version. The first <code>NEWS.md</code> heading, <code>README.Rmd</code> and its generated <code>README.md</code> must agree; the repository-hygiene check enforces these declarations. Keep production installation pins, historical release records, scientific provenance and policy examples in their own roles when updating metadata.</p>
 </div>
 <div class="section level2">
 <h2 id="production-history">Production history<a class="anchor" aria-label="anchor" href="#production-history"></a></h2>
@@ -50,9 +51,9 @@
 </div>
 <div class="section level2">
 <h2 id="candidate-identity-and-scientific-reproduction">Candidate identity and scientific reproduction<a class="anchor" aria-label="anchor" href="#candidate-identity-and-scientific-reproduction"></a></h2>
-<p>The current version-pinned R release is <a href="https://github.com/JakobJuergens/RdistNN/releases/tag/v0.1.3" class="external-link"><code>v0.1.3</code></a>. The tag selects the verified production snapshot; its installable source package and checksum file are attached to the release. Install with:</p>
+<p>The current version-pinned R release is <a href="https://github.com/JakobJuergens/RdistNN/releases/tag/v0.1.4" class="external-link"><code>v0.1.4</code></a>. The tag selects the verified production snapshot; its installable source package and checksum file are attached to the release. Install with:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"JakobJuergens/RdistNN@v0.1.3"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"JakobJuergens/RdistNN@v0.1.4"</span><span class="op">)</span></span></code></pre></div>
 <p>The tag fixes the installation source at the released commit. Keep the ordinary README installation on production <code>master</code> and retain historical tags, assets and paper dependency pins. Record the paired final commits and asset checksums in the release-set manifest below.</p>
 <p>Commit candidates locally. Publish review branches/PRs, tags, downloadable assets and websites only when authorized; do not push directly to <code>master</code>. After both package commits are final, bind them in one external release-set manifest under ignored outputs. Include tested trees, artifact filenames, sizes and SHA-256, commands, runtime/compiler information, hosted run IDs/tested SHAs and explicit PASS/FAIL/BLOCKED/NOT_RUN gates. Do not create circular committed HEAD references or embed an archive’s own hash inside it.</p>
 <p>For a historical reference, install the previous immutable <code>0.1.0.9004</code> source with:</p>

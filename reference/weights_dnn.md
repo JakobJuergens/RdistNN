@@ -65,7 +65,7 @@ weights_dnn(
 
 ## Value
 
-A `weights_result` object.
+A `rdistnn_weights_result` object.
 
 ## Details
 

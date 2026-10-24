@@ -38,6 +38,13 @@ distance_l2_scaled(
 A list with `name`, `setup()`,
 [`eval()`](https://rdrr.io/r/base/eval.html), and `eval_batch()`.
 
+## Details
+
+Configuration is evaluated when the specification is created. Rebinding
+a caller's configuration variables before first use does not alter it.
+Setup retains per-column inverse scales and does not retain a scaled
+copy of the training matrix.
+
 ## Examples
 
 ``` r

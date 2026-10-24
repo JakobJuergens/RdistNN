@@ -17,8 +17,8 @@ plot_influence(object, targets = NULL, n_label = 3L)
 
 - object:
 
-  A `cate_result` or `clate_result` with the weight matrix `W` stored
-  (the default).
+  A `rdistnn_cate_result` or `rdistnn_clate_result` with the weight
+  matrix `W` stored (the default).
 
 - targets:
 

@@ -20,7 +20,7 @@ rank_weight_dnn_exact(k, s)
 
 ## Value
 
-rank_weight spec (list)
+rdistnn_rank_weight spec (list)
 
 ## Examples
 

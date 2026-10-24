@@ -148,9 +148,9 @@ gmm_dnn(
 
 ## Value
 
-A `gmm_result` object with estimates, diagnostics, metadata, the `m x p`
-evaluation-point matrix `x0` (with covariate column names propagated
-from the training data when available), and requested extras.
+A `rdistnn_gmm_result` object with estimates, diagnostics, metadata, the
+`m x p` evaluation-point matrix `x0` (with covariate column names
+propagated from the training data when available), and requested extras.
 
 ## Details
 
@@ -168,10 +168,12 @@ Earlier retained fit schemas require refitting.
 
 Two interfaces are supported.
 
-1.  Data-frame interface: pass `data`, `x_cols`, and a `gmm_model`.
+1.  Data-frame interface: pass `data`, `x_cols`, and a
+    `rdistnn_gmm_model`.
 
-2.  Matrix interface: pass `X`, one of `X0` or `x0`, a `gmm_model`, and
-    `model_data` when the model needs observation-level variables.
+2.  Matrix interface: pass `X`, one of `X0` or `x0`, a
+    `rdistnn_gmm_model`, and `model_data` when the model needs
+    observation-level variables.
 
 Nuisance quantities are not fit internally. They must be supplied to the
 model through `data` or `model_data`.
@@ -180,6 +182,23 @@ The resolved distance specification and its fitted training context are
 retained for weight reconstruction. Replacing a registered metric after
 fitting does not change the fit's geometry. Custom callbacks with
 mutable external state retain their own reproducibility obligations.
+
+Model callbacks must return their documented finite numeric values at
+the supplied starts and optimizer trial points. Callback errors,
+malformed returned values, interrupts and caller-promoted warnings stop
+the fit. Only nonfinite quadratic arithmetic from otherwise valid
+moments receives an optimizer penalty. A local moment covariance that
+cannot be inverted leaves that target unavailable, with its reason in
+`convergence` and one partial-result warning per call. Singular local
+information retains the coefficient estimate with unavailable
+uncertainty; information outside the numeric range also gives a
+rescaling warning. No callback-domain recovery interface or automatic
+retry at a different start is supplied.
+
+Requested Jacobian diagnostics can retain arithmetic nonfinite values
+from differencing finite callback evaluations when coefficient
+uncertainty is unavailable or deliberately disabled. This does not relax
+the finite-value contract for callback returns.
 
 Exact DNN localization uses the full rank permutation at each target
 rather than an `s`-nearest-neighbor truncation. For exact DNN fits, the

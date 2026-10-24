@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,7 +30,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Contributing to RdistNN</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/CONTRIBUTING.md" class="external-link"><code>CONTRIBUTING.md</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/CONTRIBUTING.md" class="external-link"><code>CONTRIBUTING.md</code></a></small>
     </div>
 
 <div id="contributing-to-rdistnn" class="section level1">
@@ -82,11 +82,32 @@
 <p>The generated-file gate regenerates namespace, Rd topics and Rcpp glue in an isolated tree using the declared roxygen2 version. Hygiene checks staged/new candidate files and duplicate top-level R function ownership; local closures may reuse names. Keep check output, archives and private session records under ignored <code>archives/</code>, excluded from source packages. Reuse successful checks while the verified content is unchanged. Reserve <code>build/</code> for R-generated package metadata, including the vignette index.</p>
 </div>
 <div class="section level2">
+<h2 id="developer-analysis-tools">Developer analysis tools<a class="anchor" aria-label="anchor" href="#developer-analysis-tools"></a></h2>
+<p>These optional checkout tools do not change package installation requirements. On Ubuntu/WSL, the native profiles use Clang 18 (<code>clang++-18</code>, <code>clang-tidy-18</code>, <code>llvm-symbolizer-18</code>), LLVM OpenMP, Bear, ccache and Make. They also need Rcpp and testthat in the selected R installation. Run from this repository root:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="ex">python3</span> tools/dev/cpp_tooling.py doctor</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="ex">python3</span> tools/dev/cpp_tooling.py build</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="ex">python3</span> tools/dev/cpp_tooling.py compdb</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="ex">python3</span> tools/dev/cpp_tooling.py tidy</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="ex">python3</span> tools/dev/cpp_tooling.py sanitize <span class="at">--sanitizer-smoke</span></span></code></pre></div>
+<p><code>build</code> installs a fresh private source copy and runs focused installed native and portable-parity tests. <code>compdb</code> repeats that build with caching disabled under Bear, then retains the source and <code>compile_commands.json</code> for <code>tidy</code>. Run <code>compdb</code> again after native inputs, tooling, compiler or R changes; an ordinary <code>build</code> invalidates the previous database. Analysis covers handwritten translation units and headers; generated Rcpp glue still enters the build and database. Use <code>--jobs 1</code> to reduce compiler concurrency; the maximum is two.</p>
+<p><code>tidy</code> also verifies the retained native/configuration bytes and database against their successful capture. A changed retained copy, edited database or incomplete receipt requires a fresh <code>compdb</code>; analysis never silently repairs that proof.</p>
+<p>The default <code>clang</code> profile uses LLVM OpenMP; <code>--profile clang-serial</code> explicitly disables it and <code>--profile gcc</code> selects the normal GCC comparison. Sanitizers require a Clang profile. These Linux profiles complement the release matrix.</p>
+<p>Logs, private installations, source hashes and command provenance stay under <code>archives/cpp-tooling/PROFILE/</code>. The project cache lives under <code>archives/cpp-tooling/cache/</code>, is bounded to 500 MB per compiler/R/profile key, and caches compilation only. Tests always rerun. No global Makevars or compiler settings are edited. AddressSanitizer and UndefinedBehaviorSanitizer instrument the package; the test process preloads the matching Clang runtime. The host R binary is not instrumented, and leak detection is disabled for that host. <code>--sanitizer-smoke</code> proves detection with an intentionally invalid private fixture; its failure must be recognized before package checks can succeed.</p>
+<p>Coverage uses a separate source copy because covr cleans and instruments its input. Install <code>covr</code> and <code>xml2</code>, then use the shared local/manual-CI runner:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="ex">Rscript</span> tools/ci/run_coverage.R</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="ex">Rscript</span> tools/ci/run_coverage.R <span class="at">--filter</span> <span class="st">'^(native-threads|compiled-fallback-parity)$'</span> <span class="at">--require-native</span></span></code></pre></div>
+<p>The default runs the full installed suite and requires actual R and owned C++ coverage. A filter runs installed testthat files matching that expression; add <code>--require-native</code> when the selection promises native execution. Pure R selections may omit it. Reports, source and instrumented installation remain under a fresh <code>archives/coverage/</code> directory. RDS, CSV, JSON and Cobertura XML include execution/source provenance. <code>--html</code> additionally requires DT and htmltools. <code>--output-dir</code>, <code>--workspace</code>, <code>--install-path</code> and <code>--cobertura</code> accept fresh destinations; existing outputs are rejected rather than replaced. Do not run a pkgload/devtools test helper inside coverage: it can replace the instrumented installed package. See the <a href="tests/README.html#coverage">coverage test guidance</a>.</p>
+<p>Python analysis requires Ruff 0.17.2; the configuration selects correctness rules rather than enforcing a repository-wide formatting conversion:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="ex">python3</span> tools/ci/check_scripts.py</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="ex">python3</span> tools/ci/check_scripts.py tools/dev/cpp_tooling.py</span></code></pre></div>
+<p>Install the pin with <code>python3 -m pip install ruff==0.17.2</code> in the Python environment you use for maintenance. Formatting is opt-in: <code>--format FILE.py</code> changes only explicitly selected files. Both formatting modes reject directories. Lint defaults to maintained <code>tools/</code> and <code>tests/</code> Python files. Generated, vendor, private output and frozen replication sources stay excluded, including explicit selections. The runner never installs tools, auto-fixes lint or uses cached test results. Existing static CI runs this lint; native profiles remain explicit commands and coverage retains its manual workflow.</p>
+</div>
+<div class="section level2">
 <h2 id="r-and-stata-parity">R and Stata parity<a class="anchor" aria-label="anchor" href="#r-and-stata-parity"></a></h2>
 <p>R is the numerical reference for shared methods. Compare identical inputs, row order, targets, fitted geometry, signals, weight controls and covariance definitions. Require exact discrete decisions and justified numeric tolerances; force and establish each engine, then test automatic fallback separately. High-level distance ties require exact represented selected-metric groups per target, rank-weight averaging over observations and actual-survivor deletion references. Bare supplied orders remain strict unless distances accompany them. Keep independent analytic/deletion references. Do not regenerate golden values merely to make a failure pass. The <a href="https://github.com/JakobJuergens/RdistNN/blob/master/markdown_notes/design/10_rcpp_and_compiled_code_policy.md" class="external-link">compiled-code policy</a> owns the arithmetic contract.</p>
 <p>The Stata checkout’s <code>tests/R_TEST_CROSSWALK.md</code> maps shared and R-only contracts. Its <code>tools/generate_r_*.R</code> scripts own cross-language fixtures, including reporting and saved-fit references. Run matching Stata regressions after an intentional shared-contract change. PLQR parity concerns supplied-coefficient moments; Stata has no density-backed coefficient inference.</p>
 <p>With both checkouts present, verify mirrored native headers from the R root:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="ex">python3</span> ../RdistNN_stata/tools/ci/package_hygiene.py <span class="at">--r-root</span> .</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="ex">python3</span> ../RdistNN_stata/tools/ci/package_hygiene.py <span class="at">--r-root</span> .</span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="reporting-problems">Reporting problems<a class="anchor" aria-label="anchor" href="#reporting-problems"></a></h2>

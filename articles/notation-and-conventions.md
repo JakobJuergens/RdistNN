@@ -191,7 +191,7 @@ an estimated root.
 ## Experimental GMM conventions
 
 [`gmm_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/gmm_dnn.md)
-uses a `gmm_model` to solve local moments and returns its own
+uses a `rdistnn_gmm_model` to solve local moments and returns its own
 coefficient covariance and convergence diagnostics. Its `J` is an
 overidentification statistic; PLQR’s `J`/`jacobian` is a derivative
 matrix. See [Local IV
@@ -204,11 +204,11 @@ Stored fields and available methods differ by estimator:
 
 | Class | Estimate fields | Uncertainty |
 |----|----|----|
-| `np_result` / `tdnn_np_result` | `mu` | `se`; joint target covariance from [`vcov()`](https://rdrr.io/r/stats/vcov.html) |
-| `cate_result` | `tau` | `se`; joint target covariance from [`vcov()`](https://rdrr.io/r/stats/vcov.html) |
-| `affine_ratio_result` / `clate_result` | `theta`, `components` | `se`, `component_vcov`, `theta_vcov` |
-| `plqr_result` | `moment`, supplied `theta_eval` | Moment- and coefficient-scale fields above |
-| `gmm_result` | Solved `theta` | `se`, `vcov` |
+| `rdistnn_np_result` / `rdistnn_tdnn_np_result` | `mu` | `se`; joint target covariance from [`vcov()`](https://rdrr.io/r/stats/vcov.html) |
+| `rdistnn_cate_result` | `tau` | `se`; joint target covariance from [`vcov()`](https://rdrr.io/r/stats/vcov.html) |
+| `rdistnn_affine_ratio_result` / `rdistnn_clate_result` | `theta`, `components` | `se`, `component_vcov`, `theta_vcov` |
+| `rdistnn_plqr_result` | `moment`, supplied `theta_eval` | Moment- and coefficient-scale fields above |
+| `rdistnn_gmm_result` | Solved `theta` | `se`, `vcov` |
 
 CATE and NP/TDNN covariance uses common deleted observations across
 targets and requires an active fitted jackknife. It is calculated from

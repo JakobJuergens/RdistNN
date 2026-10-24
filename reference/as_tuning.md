@@ -20,7 +20,7 @@ as_tuning(fun, name = "user_tuning")
 
 ## Value
 
-A `dnn_tuning` spec.
+A `rdistnn_tuning` spec.
 
 ## Examples
 

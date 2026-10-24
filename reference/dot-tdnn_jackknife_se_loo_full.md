@@ -84,5 +84,8 @@ Numeric matrix (q x m) of jackknife standard errors.
 
 ## Details
 
-The C++ engine is used automatically when the package has been compiled;
-otherwise the same centered calculation uses its R fallback.
+With compiled execution enabled and the native routine available, this
+uses the C++ engine; otherwise the same centered calculation uses its R
+path. See
+[RdistNN](https://JakobJuergens.github.io/RdistNN/reference/RdistNN-package.md)
+for engine controls.

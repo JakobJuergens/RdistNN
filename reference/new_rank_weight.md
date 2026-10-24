@@ -31,7 +31,7 @@ new_rank_weight(name, eval = NULL, eval_batch = NULL, setup = NULL)
 
 ## Value
 
-A validated `rank_weight` specification.
+A validated `rdistnn_rank_weight` specification.
 
 ## Examples
 

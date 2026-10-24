@@ -1,8 +1,9 @@
 # Rank-weight spec: TDNN exact (Demirkaya two-scale DNN, k = 1)
 
-Returns a `rank_weight` spec whose `eval_batch` uses the exact TDNN rank
-table from `tdnn_rank_table_exact()`. The rank table is computed once
-per sample size `n` and cached inside the spec closure, so calling
+Returns a `rdistnn_rank_weight` spec whose `eval_batch` uses the exact
+TDNN rank table from `tdnn_rank_table_exact()`. The rank table is
+computed once per sample size `n` and cached inside the spec closure, so
+calling
 [`rank_weight_eval_batch()`](https://JakobJuergens.github.io/RdistNN/reference/rank_weight_eval_batch.md)
 repeatedly on rank matrices of the same size does not recompute the
 table.
@@ -31,7 +32,7 @@ rank_weight_tdnn_exact(s1, s2, dim)
 
 ## Value
 
-A `rank_weight` spec (list with class `"rank_weight"`).
+A `rdistnn_rank_weight` spec (list with class `"rdistnn_rank_weight"`).
 
 ## Details
 

@@ -208,7 +208,7 @@ plqr_dnn(
 
 ## Value
 
-An object of class `plqr_result` with components:
+An object of class `rdistnn_plqr_result` with components:
 
 - `moment`: matrix (`p_d x m`) of localized PLQR moments;
 
@@ -288,6 +288,12 @@ coefficient standard error. For statistical background and conditions,
 see the
 [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
 
+A Jacobian, its inverse, or the assembled sandwich covariance outside
+the numeric range leaves coefficient uncertainty unavailable with
+rescaling guidance. Supplied coefficients and evaluated moments remain
+available. Finite singular Jacobians also leave coefficient uncertainty
+unavailable.
+
 As in
 [`weights_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/weights_dnn.md),
 exact DNN localization uses the full rank permutation at each target
@@ -344,7 +350,7 @@ out <- plqr_dnn(
   se = TRUE
 )
 summary(out)
-#> <summary.plqr_result>
+#> <rdistnn_summary_plqr_result>
 #>   targets: 1
 #>   theta_source: supplied; no local PLQR root solving was performed
 #>     target term estimate std.error statistic p.value conf.low conf.high

@@ -24,7 +24,7 @@ as_score(f, s, name = deparse(substitute(f)))
 
 ## Value
 
-A `ustat_score`
+A `rdistnn_ustat_score`
 
 ## See also
 

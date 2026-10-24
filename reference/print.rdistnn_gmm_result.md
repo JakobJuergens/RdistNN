@@ -1,0 +1,25 @@
+# Print a `rdistnn_gmm_result` object
+
+Print a `rdistnn_gmm_result` object
+
+## Usage
+
+``` r
+# S3 method for class 'rdistnn_gmm_result'
+print(x, ...)
+```
+
+## Arguments
+
+- x:
+
+  An object returned by
+  [`gmm_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/gmm_dnn.md).
+
+- ...:
+
+  Not used.
+
+## Value
+
+`x`, invisibly.

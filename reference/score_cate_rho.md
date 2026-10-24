@@ -44,7 +44,7 @@ score_cate_rho(x0, x_cols, s, rho_col = NULL, rho = NULL)
 
 ## Value
 
-An `ustat_score` object with:
+An `rdistnn_ustat_score` object with:
 
 - `$name`: a descriptive name,
 

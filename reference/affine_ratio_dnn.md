@@ -138,7 +138,7 @@ affine_ratio_dnn(
 
 ## Value
 
-An affine_ratio_result with theta, se, m-by-2 components, lists
+An rdistnn_affine_ratio_result with theta, se, m-by-2 components, lists
 component_vcov, theta_vcov and theta_omega (NULL without covariance),
 x0, neff, per-target status, row_ids, meta and retained frozen model
 state. Optional deletions/pseudo_values have dimensions n-by-2-by-m.

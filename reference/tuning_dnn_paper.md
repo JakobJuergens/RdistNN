@@ -35,7 +35,7 @@ tuning_dnn_paper(
 
 ## Value
 
-A `dnn_tuning` spec.
+A `rdistnn_tuning` spec.
 
 ## Examples
 

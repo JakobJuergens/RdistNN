@@ -12,11 +12,13 @@ score_eval_batch(score, subs, data, ctx = NULL, rng = NULL)
 
 - score:
 
-  ustat_score
+  rdistnn_ustat_score
 
 - subs:
 
-  integer matrix with nrow=K, ncol=s
+  Numeric or integer matrix with `nrow = K` and `ncol = s`, containing
+  integer-valued subset indices. A correctly shaped zero-row matrix is
+  supported and returns `numeric(0)`.
 
 - data:
 

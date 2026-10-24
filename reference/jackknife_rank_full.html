@@ -13,7 +13,7 @@ algorithm."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,7 +36,7 @@ algorithm."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Generic rank-order delete-one jackknife (prefix/suffix engine)</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.3/R/jackknife-rank-full.R" class="external-link"><code>R/jackknife-rank-full.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/R/jackknife-rank-full.R" class="external-link"><code>R/jackknife-rank-full.R</code></a></small>
       <div class="d-none name"><code>jackknife_rank_full.Rd</code></div>
     </div>
 
@@ -104,9 +104,9 @@ tables:</p><ul><li><p><code>wn</code> should be the rank-weight sequence evaluat
 \(n\) (i.e. for the full-sample estimator).</p></li>
 <li><p><code>wnm1</code> should be the <strong>same rule</strong> evaluated at sample size
 \(n-1\) (i.e. for each leave-one-out sub-sample).</p></li>
-</ul><p>When the package was compiled with C++ support, the C++ engine is used.
-Otherwise the function falls back silently to a pure-R implementation of
-the same algorithm.</p>
+</ul><p>With compiled execution enabled and the native routine available, this uses
+the C++ engine. Otherwise it uses the same algorithm in R. See <a href="RdistNN-package.html">RdistNN</a> for
+engine controls. Native execution errors propagate without an automatic retry.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

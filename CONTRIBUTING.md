@@ -102,6 +102,94 @@ packages. Reuse successful checks while the verified content is
 unchanged. Reserve `build/` for R-generated package metadata, including
 the vignette index.
 
+## Developer analysis tools
+
+These optional checkout tools do not change package installation
+requirements. On Ubuntu/WSL, the native profiles use Clang 18
+(`clang++-18`, `clang-tidy-18`, `llvm-symbolizer-18`), LLVM OpenMP,
+Bear, ccache and Make. They also need Rcpp and testthat in the selected
+R installation. Run from this repository root:
+
+``` sh
+python3 tools/dev/cpp_tooling.py doctor
+python3 tools/dev/cpp_tooling.py build
+python3 tools/dev/cpp_tooling.py compdb
+python3 tools/dev/cpp_tooling.py tidy
+python3 tools/dev/cpp_tooling.py sanitize --sanitizer-smoke
+```
+
+`build` installs a fresh private source copy and runs focused installed
+native and portable-parity tests. `compdb` repeats that build with
+caching disabled under Bear, then retains the source and
+`compile_commands.json` for `tidy`. Run `compdb` again after native
+inputs, tooling, compiler or R changes; an ordinary `build` invalidates
+the previous database. Analysis covers handwritten translation units and
+headers; generated Rcpp glue still enters the build and database. Use
+`--jobs 1` to reduce compiler concurrency; the maximum is two.
+
+`tidy` also verifies the retained native/configuration bytes and
+database against their successful capture. A changed retained copy,
+edited database or incomplete receipt requires a fresh `compdb`;
+analysis never silently repairs that proof.
+
+The default `clang` profile uses LLVM OpenMP; `--profile clang-serial`
+explicitly disables it and `--profile gcc` selects the normal GCC
+comparison. Sanitizers require a Clang profile. These Linux profiles
+complement the release matrix.
+
+Logs, private installations, source hashes and command provenance stay
+under `archives/cpp-tooling/PROFILE/`. The project cache lives under
+`archives/cpp-tooling/cache/`, is bounded to 500 MB per
+compiler/R/profile key, and caches compilation only. Tests always rerun.
+No global Makevars or compiler settings are edited. AddressSanitizer and
+UndefinedBehaviorSanitizer instrument the package; the test process
+preloads the matching Clang runtime. The host R binary is not
+instrumented, and leak detection is disabled for that host.
+`--sanitizer-smoke` proves detection with an intentionally invalid
+private fixture; its failure must be recognized before package checks
+can succeed.
+
+Coverage uses a separate source copy because covr cleans and instruments
+its input. Install `covr` and `xml2`, then use the shared
+local/manual-CI runner:
+
+``` sh
+Rscript tools/ci/run_coverage.R
+Rscript tools/ci/run_coverage.R --filter '^(native-threads|compiled-fallback-parity)$' --require-native
+```
+
+The default runs the full installed suite and requires actual R and
+owned C++ coverage. A filter runs installed testthat files matching that
+expression; add `--require-native` when the selection promises native
+execution. Pure R selections may omit it. Reports, source and
+instrumented installation remain under a fresh `archives/coverage/`
+directory. RDS, CSV, JSON and Cobertura XML include execution/source
+provenance. `--html` additionally requires DT and htmltools.
+`--output-dir`, `--workspace`, `--install-path` and `--cobertura` accept
+fresh destinations; existing outputs are rejected rather than replaced.
+Do not run a pkgload/devtools test helper inside coverage: it can
+replace the instrumented installed package. See the [coverage test
+guidance](https://JakobJuergens.github.io/RdistNN/tests/README.html#coverage).
+
+Python analysis requires Ruff 0.17.2; the configuration selects
+correctness rules rather than enforcing a repository-wide formatting
+conversion:
+
+``` sh
+python3 tools/ci/check_scripts.py
+python3 tools/ci/check_scripts.py tools/dev/cpp_tooling.py
+```
+
+Install the pin with `python3 -m pip install ruff==0.17.2` in the Python
+environment you use for maintenance. Formatting is opt-in:
+`--format FILE.py` changes only explicitly selected files. Both
+formatting modes reject directories. Lint defaults to maintained
+`tools/` and `tests/` Python files. Generated, vendor, private output
+and frozen replication sources stay excluded, including explicit
+selections. The runner never installs tools, auto-fixes lint or uses
+cached test results. Existing static CI runs this lint; native profiles
+remain explicit commands and coverage retains its manual workflow.
+
 ## R and Stata parity
 
 R is the numerical reference for shared methods. Compare identical

@@ -1,7 +1,8 @@
 # Rank-weight spec: TDNN asymptotic (Demirkaya two-scale DNN, k = 1)
 
-Returns a `rank_weight` spec whose `eval_batch` uses the asymptotic TDNN
-rank table from `tdnn_rank_table_asymp()`. Structurally identical to
+Returns a `rdistnn_rank_weight` spec whose `eval_batch` uses the
+asymptotic TDNN rank table from `tdnn_rank_table_asymp()`. Structurally
+identical to
 [`rank_weight_tdnn_exact()`](https://JakobJuergens.github.io/RdistNN/reference/rank_weight_tdnn_exact.md)
 but uses the Beta order-statistic approximation, evaluated across the
 full rank grid. Combined entries can be zero through signed cancellation
@@ -34,7 +35,7 @@ rank_weight_tdnn_asymp(s1, s2, dim, normalize = TRUE)
 
 ## Value
 
-A `rank_weight` spec (list with class `"rank_weight"`).
+A `rdistnn_rank_weight` spec (list with class `"rdistnn_rank_weight"`).
 
 ## Numerical limits
 
