@@ -140,7 +140,7 @@ density-backed in both routes. \code{"jackknife"} requires
 one column per target. It is a rank summary, not the full DNN weight support.}
 }
 \value{
-An object of class \code{plqr_result} with components:
+An object of class \code{rdistnn_plqr_result} with components:
 \itemize{
 \item \code{moment}: matrix (\verb{p_d x m}) of localized PLQR moments;
 \item \code{theta}: matrix (\verb{p_d x m}) of the supplied coefficient values, repeated
@@ -222,6 +222,11 @@ Jacobian. \code{theta_meat} chooses analytic score covariance or the full
 jackknife covariance of the localized moment. \code{moment_se} alone is not a
 coefficient standard error. For statistical background and conditions,
 see the \href{https://jakobjuergens.com/research/#orthogonal-inference-conditional-z}{paper}.
+
+A Jacobian, its inverse, or the assembled sandwich covariance outside the
+numeric range leaves coefficient uncertainty unavailable with rescaling
+guidance. Supplied coefficients and evaluated moments remain available.
+Finite singular Jacobians also leave coefficient uncertainty unavailable.
 
 As in \code{\link[=weights_dnn]{weights_dnn()}}, exact DNN localization uses the full rank permutation
 at each target rather than an \code{s}-nearest-neighbor truncation. The \code{"fast"}

@@ -81,9 +81,9 @@
 #'     \eqn{n-1} (i.e. for each leave-one-out sub-sample).
 #' }
 #'
-#' When the package was compiled with C++ support, the C++ engine is used.
-#' Otherwise the function falls back silently to a pure-R implementation of
-#' the same algorithm.
+#' With compiled execution enabled and the native routine available, this uses
+#' the C++ engine. Otherwise it uses the same algorithm in R. See [RdistNN] for
+#' engine controls. Native execution errors propagate without an automatic retry.
 #'
 #' @param ranks Integer matrix (\eqn{n \times m}); column \eqn{t} is a
 #'   permutation of \code{1:n} giving the rank of each observation for
@@ -139,11 +139,11 @@ jackknife_rank_full <- function(ranks, PHI, wn, wnm1) {
 
   n <- nrow(ranks)
   if (length(wn) != n)
-    stop("`wn` must have length nrow(ranks).", call. = FALSE)
+    .dnn_abort("argument_invalid", "`wn` must have length nrow(ranks).", argument = "wn")
   if (length(wnm1) != n - 1L)
-    stop("`wnm1` must have length nrow(ranks) - 1.", call. = FALSE)
+    .dnn_abort("argument_invalid", "`wnm1` must have length nrow(ranks) - 1.", argument = "wnm1")
   if (nrow(PHI) != n)
-    stop("`PHI` must have nrow(ranks) rows.", call. = FALSE)
+    .dnn_abort("argument_invalid", "`PHI` must have nrow(ranks) rows.", argument = "PHI")
 
   cpp <- .rdistnn_compiled_fun("rustat_jackknife_rank_full")
   if (!is.null(cpp)) {

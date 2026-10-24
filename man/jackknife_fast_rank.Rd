@@ -50,8 +50,8 @@ helper directly for exact DNN weights. Those wrappers keep the full rank
 matrix and reevaluate the DNN rank-weight rule after delete-one updates.
 \itemize{
 \item If \code{phi} is a numeric \strong{matrix} (n_ref x q) with rows \code{phi[j, ] = phi(j)} and
-the package was compiled with C++ support, this calls the \strong{C++ fast
-path}.
+compiled execution is enabled and the native routine is available, this
+calls the \strong{C++ fast path}. See \link{RdistNN} for engine controls.
 \item Otherwise, it uses a general \strong{R fallback} that also supports target-dependent
 per-neighbor contributions via a function \code{phi(j, t)}.
 With matrix \code{phi}, \code{n_ref = nrow(phi)}. With function-valued \code{phi}, the

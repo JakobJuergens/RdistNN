@@ -1,5 +1,5 @@
 # Lightweight score (kernel) API mirroring the rank/distance style,
-# while preserving the S3 class "ustat_score" and your current engine.
+# while preserving the S3 class "rdistnn_ustat_score" and your current engine.
 
 # --- tiny helpers -------------------------------------------------------------
 
@@ -7,7 +7,7 @@
 .is_scalar_int <- function(x) is.numeric(x) && length(x) == 1L && is.finite(x) && as.integer(x) == x
 .is_fun <- function(f, n = 0L) is.function(f) && (length(formals(f)) >= n)
 .call_with_supported_args <- function(fun, args) {
-  fmls <- tryCatch(names(formals(fun)), error = function(e) character())
+  fmls <- names(formals(fun))
   if ("..." %in% fmls) {
     return(do.call(fun, args))
   }
@@ -66,7 +66,7 @@
 #'   do not dispatch through this pointer; they require `eval` or `eval_batch`.
 #' @param randomized Logical: does the kernel draw randomness?
 #' @param symmetric Logical: permutation symmetry (engine assumes TRUE).
-#' @return An object of class `ustat_score`.
+#' @return An object of class `rdistnn_ustat_score`.
 #' @seealso [as_score()], [score_eval()], [score_eval_batch()], [score_diff_path()]
 #' @examples
 #' sc <- new_score(
@@ -92,7 +92,7 @@ new_score <- function(
   randomized = FALSE,
   symmetric = TRUE
 ) {
-  fd_scheme <- match.arg(fd_scheme, c("central", "forward"))
+  fd_scheme <- .dnn_match_arg(fd_scheme, c("central", "forward"))
   sc <- list(
     name = as.character(name),
     order = order,
@@ -109,7 +109,7 @@ new_score <- function(
     randomized = isTRUE(randomized),
     symmetric = isTRUE(symmetric)
   )
-  class(sc) <- "ustat_score"
+  class(sc) <- "rdistnn_ustat_score"
   validate_score(sc)
 }
 
@@ -118,7 +118,7 @@ new_score <- function(
 #' @param f function(idxs, data, ctx, rng) -> scalar
 #' @param s integer order
 #' @param name character scalar used as the score name (optional)
-#' @return A \code{ustat_score}
+#' @return A \code{rdistnn_ustat_score}
 #' @seealso [new_score()], [score_eval()]
 #' @examples
 #' sc <- as_score(function(idxs, data) prod(data[idxs]), s = 2L, name = "prod2")
@@ -143,21 +143,21 @@ as_score <- function(f, s, name = deparse(substitute(f))) {
   )
 }
 
-#' Is object a \code{ustat_score}?
+#' Is object a \code{rdistnn_ustat_score}?
 #' @param x any object
 #' @return logical
 #' @examples
 #' sc <- as_score(function(idxs, data) sum(data[idxs]), s = 2L)
 #' is_score(sc)
 #' @export
-is_score <- function(x) inherits(x, "ustat_score")
+is_score <- function(x) inherits(x, "rdistnn_ustat_score")
 
 #' Does a score carry compiled-score pointer metadata?
 #'
 #' Checks whether `ptr` is non-NULL. This does not validate the pointer or
 #' indicate which evaluator will run; [score_eval()] and [score_eval_batch()]
 #' use the R functions stored on the score.
-#' @param score a \code{ustat_score}
+#' @param score a \code{rdistnn_ustat_score}
 #' @return logical
 #' @examples
 #' is_compiled(new_score("r_only", order = 1L, eval = function(idxs, data, ctx, rng) data[idxs]))
@@ -166,8 +166,8 @@ is_compiled <- function(score) is_score(score) && !is.null(score$ptr)
 
 #' @noRd
 validate_score <- function(sc) {
-  if (!inherits(sc, "ustat_score")) {
-    .abort_bad_arg("sc", "must inherit from class 'ustat_score'")
+  if (!inherits(sc, "rdistnn_ustat_score")) {
+    .abort_bad_arg("sc", "must inherit from class 'rdistnn_ustat_score'")
   }
   if (!is.character(sc$name) || length(sc$name) != 1L || !nzchar(sc$name)) {
     .abort_bad_arg("name", "must be a non-empty character scalar", quoted = FALSE)
@@ -221,24 +221,24 @@ validate_score <- function(sc) {
     )
   }
   if (!isTRUE(sc$symmetric)) {
-    warning("Score marked non-symmetric; engine assumes symmetry.", call. = FALSE)
+    .dnn_warn("score_symmetry", "Score marked non-symmetric; engine assumes symmetry.")
   }
   sc
 }
 
 # --- pretty printing ----------------------------------------------------------
 
-#' Print a `ustat_score` object
+#' Print a `rdistnn_ustat_score` object
 #'
-#' @param x A `ustat_score` object.
+#' @param x A `rdistnn_ustat_score` object.
 #' @param ... Not used.
 #' @return `x`, invisibly.
 #' @examples
 #' sc <- as_score(function(idxs, data) sum(data[idxs]), s = 2L, name = "sum2")
 #' print(sc)
 #' @export
-print.ustat_score <- function(x, ...) {
-  cat("<ustat_score: ", x$name, ">\n", sep = "")
+print.rdistnn_ustat_score <- function(x, ...) {
+  cat("<rdistnn_ustat_score: ", x$name, ">\n", sep = "")
   cat("  order: ", if (is.function(x$order)) "function(n, data, ctx)" else x$order, "\n", sep = "")
   cat("  impl : ",
     if (!is.null(x$ptr)) {
@@ -270,7 +270,7 @@ print.ustat_score <- function(x, ...) {
 # --- setup & order ------------------------------------------------------------
 
 #' Set up score context (precomputation)
-#' @param score ustat_score
+#' @param score rdistnn_ustat_score
 #' @param data Data object understood by the score, such as a vector, matrix
 #'   or data frame.
 #' @param ... passed to score$setup
@@ -287,7 +287,7 @@ print.ustat_score <- function(x, ...) {
 #' @export
 score_setup <- function(score, data, ...) UseMethod("score_setup")
 #' @export
-score_setup.ustat_score <- function(score, data, ...) {
+score_setup.rdistnn_ustat_score <- function(score, data, ...) {
   if (is.null(score$setup)) {
     return(NULL)
   }
@@ -295,7 +295,7 @@ score_setup.ustat_score <- function(score, data, ...) {
 }
 
 #' Resolve kernel order \code{s}
-#' @param score ustat_score
+#' @param score rdistnn_ustat_score
 #' @param n integer sample size
 #' @param data data used by the score (for dynamic orders)
 #' @param ctx optional context
@@ -310,9 +310,9 @@ score_setup.ustat_score <- function(score, data, ...) {
 #' @export
 score_order <- function(score, n, data, ctx = NULL) UseMethod("score_order")
 #' @export
-score_order.ustat_score <- function(score, n, data, ctx = NULL) {
+score_order.rdistnn_ustat_score <- function(score, n, data, ctx = NULL) {
   if (!is_score(score)) {
-    .abort_bad_arg("score", "must be a `ustat_score` object")
+    .abort_bad_arg("score", "must be a `rdistnn_ustat_score` object")
   }
   n <- .validate_scalar_int(n, arg = "n", min = 1L)
   if (.is_scalar_int(score$order)) {
@@ -328,7 +328,7 @@ score_order.ustat_score <- function(score, n, data, ctx = NULL) {
 #' For maximum robustness, this prefers the scalar `eval()` path when available
 #' and otherwise falls back to `eval_batch()` for a single-row batch.
 #'
-#' @param score ustat_score
+#' @param score rdistnn_ustat_score
 #' @param idxs integer vector of length \code{s}
 #' @param data Data object understood by the score, such as a vector, matrix
 #'   or data frame.
@@ -342,9 +342,9 @@ score_order.ustat_score <- function(score, n, data, ctx = NULL) {
 #' @export
 score_eval <- function(score, idxs, data, ctx = NULL, rng = NULL) UseMethod("score_eval")
 #' @export
-score_eval.ustat_score <- function(score, idxs, data, ctx = NULL, rng = NULL) {
+score_eval.rdistnn_ustat_score <- function(score, idxs, data, ctx = NULL, rng = NULL) {
   if (!is_score(score)) {
-    .abort_bad_arg("score", "must be a `ustat_score` object")
+    .abort_bad_arg("score", "must be a `rdistnn_ustat_score` object")
   }
   n <- .score_n(data)
   s <- score_order(score, n, data, ctx)
@@ -353,12 +353,12 @@ score_eval.ustat_score <- function(score, idxs, data, ctx = NULL, rng = NULL) {
   if (is.function(score$eval)) {
     out <- score$eval(idxs, data, ctx, rng)
     if (!is.numeric(out) || length(out) != 1L || !is.finite(out)) {
-      .abort_bad_arg(
-        "score$eval",
-        "must return a finite scalar numeric",
+      .dnn_abort("callback_invalid",
+        "score$eval must return a finite scalar numeric.",
+        argument = "score$eval",
         expected = "finite numeric(1)",
         actual = sprintf("%s of length %d", class(out)[1L], length(out)),
-        quoted = FALSE
+        hint = "Correct the callback to return the documented result."
       )
     }
     return(out)
@@ -368,12 +368,12 @@ score_eval.ustat_score <- function(score, idxs, data, ctx = NULL, rng = NULL) {
     subs1 <- matrix(idxs, nrow = 1L)
     out <- score$eval_batch(subs1, data, ctx, rng)
     if (!is.numeric(out) || length(out) != 1L || !is.finite(out)) {
-      .abort_bad_arg(
-        "score$eval_batch",
-        "must return a finite scalar for a single subset",
+      .dnn_abort("callback_invalid",
+        "score$eval_batch must return a finite scalar for a single subset.",
+        argument = "score$eval_batch",
         expected = "finite numeric(1)",
         actual = sprintf("%s of length %d", class(out)[1L], length(out)),
-        quoted = FALSE
+        hint = "Correct the callback to return the documented result."
       )
     }
     return(as.numeric(out))
@@ -385,8 +385,10 @@ score_eval.ustat_score <- function(score, idxs, data, ctx = NULL, rng = NULL) {
 
 #' Evaluate kernel on many subsets (R fast-path)
 #'
-#' @param score ustat_score
-#' @param subs integer matrix with nrow=K, ncol=s
+#' @param score rdistnn_ustat_score
+#' @param subs Numeric or integer matrix with \code{nrow = K} and
+#'   \code{ncol = s}, containing integer-valued subset indices. A correctly
+#'   shaped zero-row matrix is supported and returns \code{numeric(0)}.
 #' @param data Data object understood by the score, such as a vector, matrix
 #'   or data frame.
 #' @param ctx optional context
@@ -400,9 +402,9 @@ score_eval.ustat_score <- function(score, idxs, data, ctx = NULL, rng = NULL) {
 #' @export
 score_eval_batch <- function(score, subs, data, ctx = NULL, rng = NULL) UseMethod("score_eval_batch")
 #' @export
-score_eval_batch.ustat_score <- function(score, subs, data, ctx = NULL, rng = NULL) {
+score_eval_batch.rdistnn_ustat_score <- function(score, subs, data, ctx = NULL, rng = NULL) {
   if (!is_score(score)) {
-    .abort_bad_arg("score", "must be a `ustat_score` object")
+    .abort_bad_arg("score", "must be a `rdistnn_ustat_score` object")
   }
 
   # Fail fast with batch-first wording to match test
@@ -418,12 +420,12 @@ score_eval_batch.ustat_score <- function(score, subs, data, ctx = NULL, rng = NU
   if (is.function(score$eval_batch)) {
     out <- score$eval_batch(subsets_matrix, data, ctx, rng)
     if (!is.numeric(out) || length(out) != n_subsets || any(!is.finite(out))) {
-      .abort_bad_arg(
-        "score$eval_batch",
-        "must return numeric(K) with finite entries",
+      .dnn_abort("callback_invalid",
+        "score$eval_batch must return numeric(K) with finite entries.",
+        argument = "score$eval_batch",
         expected = sprintf("finite numeric vector of length K=%d", n_subsets),
         actual = sprintf("%s of length %d", class(out)[1L], length(out)),
-        quoted = FALSE
+        hint = "Correct the callback to return the documented result."
       )
     }
     return(as.numeric(out))
@@ -444,7 +446,7 @@ score_eval_batch.ustat_score <- function(score, subs, data, ctx = NULL, rng = NU
 #' Register a score
 #'
 #' @param name Character scalar registry key.
-#' @param score A `ustat_score` object.
+#' @param score A `rdistnn_ustat_score` object.
 #' @return Invisibly, the registered name.
 #' @examples
 #' sc <- as_score(function(idxs, data) sum(data[idxs]), s = 2L, name = "tmp_score_demo")
@@ -454,7 +456,7 @@ score_eval_batch.ustat_score <- function(score, subs, data, ctx = NULL, rng = NU
 register_score <- function(name, score) {
   name <- .validate_registry_name(name)
   if (!is_score(score)) {
-    .abort_bad_arg("score", "must be a `ustat_score` object")
+    .abort_bad_arg("score", "must be a `rdistnn_ustat_score` object")
   }
   if (is.null(score$name) || !nzchar(score$name)) score$name <- name
   nm <- name
@@ -464,7 +466,7 @@ register_score <- function(name, score) {
 
 #' Retrieve a registered score
 #' @param name character scalar
-#' @return a \code{ustat_score}
+#' @return a \code{rdistnn_ustat_score}
 #' @examples
 #' sc0 <- as_score(function(idxs, data) sum(data[idxs]), s = 2L, name = "tmp_score_get")
 #' register_score("tmp_score_get", sc0)
@@ -474,7 +476,7 @@ register_score <- function(name, score) {
 get_score <- function(name) {
   name <- .validate_registry_name(name)
   if (!exists(name, envir = .score_registry, inherits = FALSE)) {
-    known <- ls(envir = .score_registry, all.names = FALSE)
+    known <- .registry_names(.score_registry)
     .abort_bad_arg(
       "name",
       "No score registered under requested name",
@@ -490,4 +492,4 @@ get_score <- function(name) {
 #' @examples
 #' head(list_scores(), 3)
 #' @export
-list_scores <- function() sort(ls(envir = .score_registry, all.names = FALSE))
+list_scores <- function() .registry_names(.score_registry)

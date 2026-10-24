@@ -3,22 +3,22 @@
 \name{plot_data_estimates}
 \alias{plot_data_estimates}
 \alias{plot_data_estimates.default}
-\alias{plot_data_estimates.np_result}
-\alias{plot_data_estimates.cate_result}
-\alias{plot_data_estimates.plqr_result}
-\alias{plot_data_estimates.gmm_result}
-\alias{plot_data_estimates.affine_ratio_result}
+\alias{plot_data_estimates.rdistnn_np_result}
+\alias{plot_data_estimates.rdistnn_cate_result}
+\alias{plot_data_estimates.rdistnn_plqr_result}
+\alias{plot_data_estimates.rdistnn_gmm_result}
+\alias{plot_data_estimates.rdistnn_affine_ratio_result}
 \title{Extract a tidy estimates frame from a fitted RdistNN object}
 \usage{
 plot_data_estimates(object, level = 0.95, ...)
 
 \method{plot_data_estimates}{default}(object, level = 0.95, ...)
 
-\method{plot_data_estimates}{np_result}(object, level = 0.95, candidates = "default", ...)
+\method{plot_data_estimates}{rdistnn_np_result}(object, level = 0.95, candidates = "default", ...)
 
-\method{plot_data_estimates}{cate_result}(object, level = 0.95, candidates = "default", ...)
+\method{plot_data_estimates}{rdistnn_cate_result}(object, level = 0.95, candidates = "default", ...)
 
-\method{plot_data_estimates}{plqr_result}(
+\method{plot_data_estimates}{rdistnn_plqr_result}(
   object,
   level = 0.95,
   quantity = c("moment", "theta"),
@@ -26,14 +26,15 @@ plot_data_estimates(object, level = 0.95, ...)
   ...
 )
 
-\method{plot_data_estimates}{gmm_result}(object, level = 0.95, ...)
+\method{plot_data_estimates}{rdistnn_gmm_result}(object, level = 0.95, ...)
 
-\method{plot_data_estimates}{affine_ratio_result}(object, level = 0.95, candidates = "default", ...)
+\method{plot_data_estimates}{rdistnn_affine_ratio_result}(object, level = 0.95, candidates = "default", ...)
 }
 \arguments{
-\item{object}{A fitted result object (\code{np_result}, \code{cate_result},
-\code{affine_ratio_result}, \code{clate_result}, \code{plqr_result}, or \code{gmm_result}; \code{tdnn_np_result} dispatches through
-\code{np_result}).}
+\item{object}{A fitted result object (\code{rdistnn_np_result}, \code{rdistnn_cate_result},
+\code{rdistnn_affine_ratio_result}, \code{rdistnn_clate_result}, \code{rdistnn_plqr_result},
+or \code{rdistnn_gmm_result}; \code{rdistnn_tdnn_np_result} dispatches through
+\code{rdistnn_np_result}).}
 
 \item{level}{Confidence level for the normal bounds (default \code{0.95}).}
 
@@ -42,7 +43,7 @@ plot_data_estimates(object, level = 0.95, ...)
 \item{candidates}{For grid-aware methods, \code{"default"}, \code{"all"}, or a
 character vector of stored candidate ids.}
 
-\item{quantity}{For \code{plqr_result} fits, which quantity to extract:
+\item{quantity}{For \code{rdistnn_plqr_result} fits, which quantity to extract:
 \code{"moment"} (default) uses the localized PLQR moments and their
 jackknife \code{moment_se}; \code{"theta"} uses the supplied coefficient values
 (repeated \code{theta_eval}) and the direct-sandwich \code{theta_se}. While no
@@ -73,7 +74,7 @@ these frames, and users can consume them directly for custom figures.
 }
 \section{Experimental methods}{
 
-Methods for \code{plqr_result} objects are experimental, as is all PLQR
+Methods for \code{rdistnn_plqr_result} objects are experimental, as is all PLQR
 functionality in this release; see \code{\link[=plqr_dnn]{plqr_dnn()}}.
 }
 

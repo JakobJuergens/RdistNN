@@ -18,7 +18,7 @@ new_rank_weight(name, eval = NULL, eval_batch = NULL, setup = NULL)
 evaluator, but it does not automatically call \code{setup()} for you.}
 }
 \value{
-A validated \code{rank_weight} specification.
+A validated \code{rdistnn_rank_weight} specification.
 }
 \description{
 Construct a rank-weight spec

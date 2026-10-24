@@ -43,15 +43,24 @@ weights rather than imposing frozen full-sample ranks.
 
 | Result | Main quantity | Uncertainty and interpretation |
 | --- | --- | --- |
-| `np_result` (including TDNN) | `mu` | Conditional mean, `se`, joint target covariance |
-| `cate_result` | `tau` | Conditional effect, `se` and on-demand joint target covariance |
-| `affine_ratio_result` / `clate_result` | `theta`, paired `components` | Component covariance, ratio variance and per-target computational status |
-| `plqr_result` | `moment`, supplied `theta_eval` | Moment diagnostics; coefficient inference requires the documented sandwich |
-| `gmm_result` | Solved `theta` | GMM covariance, convergence and identification diagnostics |
+| `rdistnn_np_result` (including TDNN) | `mu` | Conditional mean, `se`, joint target covariance |
+| `rdistnn_cate_result` | `tau` | Conditional effect, `se` and on-demand joint target covariance |
+| `rdistnn_affine_ratio_result` / `rdistnn_clate_result` | `theta`, paired `components` | Component covariance, ratio variance and per-target computational status |
+| `rdistnn_plqr_result` | `moment`, supplied `theta_eval` | Moment diagnostics; coefficient inference requires the documented sandwich |
+| `rdistnn_gmm_result` | Solved `theta` | GMM covariance, convergence and identification diagnostics |
 
-CLATE inherits from `affine_ratio_result`, not `cate_result`. A shared display
+CLATE inherits from `rdistnn_affine_ratio_result`, not `rdistnn_cate_result`. A shared display
 does not make distinct estimands or covariance calculations interchangeable.
 PLQR evaluated moments must remain distinguishable from solved coefficients.
+
+Preserve finite estimates when a documented partial-inference route encounters
+arithmetic range limits. GMM finite differences can overflow after valid finite
+callback evaluations; requested Jacobian diagnostics may retain that arithmetic
+state only with unavailable or disabled coefficient uncertainty. Callback
+returns remain strictly finite. PLQR checks the final assembled sandwich as
+well as its bread/inverse, retaining coefficients and moments with unavailable
+uncertainty and an accurate rescaling warning. A current fit returned by the
+constructor must remain reportable with or without optional diagnostics.
 
 Existing generics select the relevant adapter from the result class:
 `summary()`, `coef()`, `vcov()`, `confint()`, `predict()`, `diagnostics()`,
@@ -86,6 +95,12 @@ candidate adapters update the retained order; estimator adapters own the
 resulting means, effects or paired covariance/status quantities. Sharing the
 target boundary does not change these inference contracts.
 
+Keep one canonical model-level localization cache in `ranks`, `dx` and
+`groups`, including paired-ratio and CLATE fits. Diagnostics, tuning and
+candidate views consume those fields; derive order permutations from the
+validated ranks when needed. Do not retain or read an alternative nested
+geometry record, or rebuild missing current fields from an older layout.
+
 `R/user-dnn-geometry.R` owns `.dnn_fitted_geometry()` for NP/TDNN, CATE, PLQR,
 GMM and paired-ratio/CLATE fits. It resolves the specification and training context once,
 retains a setup-free specification for prediction, and separately retains the
@@ -98,14 +113,24 @@ own reproducibility obligations.
 GMM resolves optimizer starts independently for each target: an explicit
 vector or target-column matrix takes precedence over the model callback, then
 zero is the fallback. Do not introduce an implicit previous-target warm start.
-Discover moment dimensions at an available actual target start, caching each
-attempted start or failure so callbacks run once per target. A failed target
-must not force a zero probe before later valid starts have been tried.
+Discover moment dimensions at the first actual target start and reuse that
+start once. Invalid start/moment/Jacobian returns and unexpected callback errors
+stop immediately; do not retry at zero or search later targets to conceal a
+callback failure. Models must supply evaluators defined at the starts and trial
+values requested by their optimizer. A finite-moment quadratic calculation
+outside numeric range can receive the optimizer's finite penalty; an arbitrary
+callback exception or promoted warning cannot.
 Its retained fitted geometry also supplies later weight reconstruction.
 Nonfinite local information cannot produce a valid zero covariance through
 matrix inversion: retain fitted coefficients, warn about rescaling, and leave
 coefficient uncertainty unavailable. A finite singular information matrix keeps
 the existing unavailable-inference behavior.
+
+An explicitly detected unavailable local moment-covariance inversion can retain
+a failed target row and its numerical reason. This is a returned numerical
+fact, not recovery from an arbitrary condition. Summarize these rows once per
+public call. Nonfinite operands and the existing reciprocal-condition cutoff
+identify unavailable inversion; unexpected host solver/resource errors propagate.
 
 Tie policy is retained with the fitted state as
 `exact_distance_block_averaging_v1`. High-level rankings use exact represented
@@ -188,7 +213,7 @@ diagnostics summarize existing quantities without warning thresholds or schema c
 
 ## Nonparametric regression reporting and prediction
 
-DNN and TDNN regression share `np_result` methods for `summary()`, `coef()`,
+DNN and TDNN regression share `rdistnn_np_result` methods for `summary()`, `coef()`,
 `confint()`, `vcov()`, `nobs()` and `predict()`. For NP/TDNN and CATE, `nobs()`
 returns the training observation count, distinct from target count or local
 effective sample size. The adapter retains canonical training
@@ -204,7 +229,13 @@ cannot be frozen by the package.
 common deletion rows, preserving off-diagonal dependence. It calculates this
 on request instead of retaining an additional quadratic target-size matrix in
 every fit. Candidate views update the retained order, so covariance and
-prediction reconstruct the selected candidate. The fitted covariance matches
+prediction reconstruct the selected candidate.
+Required retained signals, nuisance arrays, provenance and inference declarations
+are validated at the common reporting/reuse boundary. Duplicated metadata/model
+controls must agree; a feasible order alone does not establish that both views
+use the same order. Compare actual duplicated controls, retaining legitimate
+registered aliases and single-owner settings. These checks validate schema and
+redundant declarations without recomputing estimates or invoking user callbacks. The fitted covariance matches
 the stored SE calculation: `fast` uses frozen ranks, while the explicit `loo`
 reference recomputes deletion geometry using the original context. Prediction
 uncertainty always uses frozen training geometry and fast rank deletions.

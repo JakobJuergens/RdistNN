@@ -30,7 +30,7 @@
 #' @param coef_names Non-empty character vector naming the parameter entries.
 #' @param moment_names Optional character vector naming the moment components.
 #'
-#' @return An object of class `gmm_model`.
+#' @return An object of class `rdistnn_gmm_model`.
 #' @examples
 #' mod <- new_gmm_model(
 #'   name = "mean_zero",
@@ -82,23 +82,23 @@ new_gmm_model <- function(name,
     moment_names = moment_names,
     p = length(coef_names)
   )
-  class(out) <- "gmm_model"
+  class(out) <- "rdistnn_gmm_model"
   out
 }
 
 #' Test whether an object is a GMM model
 #'
 #' @param x Object to test.
-#' @return `TRUE` when `x` inherits from class `gmm_model`.
+#' @return `TRUE` when `x` inherits from class `rdistnn_gmm_model`.
 #' @export
-is_gmm_model <- function(x) inherits(x, "gmm_model")
+is_gmm_model <- function(x) inherits(x, "rdistnn_gmm_model")
 
 .gmm_validate_model_object <- function(model, arg = "model") {
   if (!is_gmm_model(model)) {
-    .abort_bad_arg(arg, "must be a `gmm_model` object")
+    .abort_bad_arg(arg, "must be a `rdistnn_gmm_model` object")
   }
   if (!is.list(model)) {
-    .abort_bad_arg(arg, "must be a list-based `gmm_model` object")
+    .abort_bad_arg(arg, "must be a list-based `rdistnn_gmm_model` object")
   }
 
   name <- .gmm_validate_nonempty_chr(model$name, "model$name")
@@ -139,7 +139,7 @@ is_gmm_model <- function(x) inherits(x, "gmm_model")
   model$coef_names <- coef_names
   model$moment_names <- moment_names
   model$p <- length(coef_names)
-  class(model) <- union("gmm_model", class(model))
+  class(model) <- union("rdistnn_gmm_model", class(model))
   model
 }
 
@@ -182,7 +182,7 @@ is_gmm_model <- function(x) inherits(x, "gmm_model")
 #' @param muY_col Column name or index for \eqn{E[Y \mid X]}.
 #' @param muD_col Column name or index for \eqn{E[D \mid X]}.
 #'
-#' @return A `gmm_model` object for use with [gmm_dnn()].
+#' @return A `rdistnn_gmm_model` object for use with [gmm_dnn()].
 #' @examples
 #' dgp <- sim_iv_data("dgp2_iv_homog_overid", n = 80, kx = 2, q = 2, seed = 1)
 #' model <- gmm_model_dr_iv(
@@ -206,6 +206,11 @@ gmm_model_dr_iv <- function(y_col = "Y",
       quoted = FALSE
     )
   }
+  force(y_col)
+  force(d_col)
+  force(pi_cols)
+  force(muY_col)
+  force(muD_col)
   moment_names <- paste0("dr_iv_", seq_along(z_cols))
 
   setup <- function(sample, n, ...) {

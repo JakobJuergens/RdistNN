@@ -57,9 +57,8 @@ run_distance_battery(
   expect_sq = NULL
 )
 
-# If the dedicated C++ symbol exists, check C++ vs wrapper
-test_that("Scaled L1: C++ fast path equals wrapper path (if available)", {
-  skip_if_not(exists("rustat_dist_l1_scaled", mode = "function"))
+test_that("Scaled L1: native and forced R paths agree", {
+  withr::local_options(RdistNN.use_compiled = FALSE)
   X <- gen_X(seed = 11)
   x0 <- gen_x0(p = ncol(X), seed = 12)
   inv <- rep(2, ncol(X))

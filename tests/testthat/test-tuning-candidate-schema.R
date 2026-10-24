@@ -155,6 +155,7 @@ test_that("custom grids get a synthetic default row when the default s is absent
 })
 
 test_that("wrappers still evaluate only the default candidate", {
+  withr::local_preserve_seed()
   n_calls <- new.env(parent = emptyenv())
   n_calls$count <- 0L
   dist <- new_distance(

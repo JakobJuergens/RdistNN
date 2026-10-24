@@ -72,7 +72,7 @@ test_that("layer 0 reference locks np_dnn scalar estimates, SEs, and extras", {
     precomputed_ranks = out$ranks
   )
 
-  expect_s3_class(out, "np_result")
+  expect_s3_class(out, "rdistnn_np_result")
   expect_equal(out$mu, as.numeric(crossprod(d$y, out$W)), tolerance = 1e-12)
   expect_equal(out$se, as.numeric(ref_se[1L, ]), tolerance = 1e-12)
   expect_equal(dim(out$W), c(nrow(d$X), nrow(d$X0)))
@@ -116,7 +116,7 @@ test_that("layer 0 reference locks cate_dnn scalar estimates, SEs, and extras", 
     precomputed_ranks = out$ranks
   )
 
-  expect_s3_class(out, "cate_result")
+  expect_s3_class(out, "rdistnn_cate_result")
   expect_equal(out$tau, as.numeric(crossprod(psi, out$W)), tolerance = 1e-12)
   expect_equal(out$se, as.numeric(ref_se[1L, ]), tolerance = 1e-12)
   expect_equal(dim(out$W), c(nrow(d$X), nrow(d$X0)))
@@ -131,6 +131,7 @@ test_that("layer 0 reference locks cate_dnn scalar estimates, SEs, and extras", 
 })
 
 test_that("layer 0 reference locks plqr_dnn scalar moment, SE matrix, and extras", {
+  withr::local_preserve_seed()
   .with_localization_policy_warnings({
   set.seed(2105)
   n <- 28L
@@ -175,7 +176,7 @@ test_that("layer 0 reference locks plqr_dnn scalar moment, SE matrix, and extras
     precomputed_ranks = out$ranks
   )
 
-  expect_s3_class(out, "plqr_result")
+  expect_s3_class(out, "rdistnn_plqr_result")
   expect_equal(unname(out$moment), unname(crossprod(score_mat, out$W)), tolerance = 1e-12)
   expect_equal(unname(out$moment_se), unname(ref_se), tolerance = 1e-12)
   expect_equal(dim(out$moment), c(p_d, m))

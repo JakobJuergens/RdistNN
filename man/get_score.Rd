@@ -10,7 +10,7 @@ get_score(name)
 \item{name}{character scalar}
 }
 \value{
-a \code{ustat_score}
+a \code{rdistnn_ustat_score}
 }
 \description{
 Retrieve a registered score

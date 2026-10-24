@@ -80,7 +80,7 @@ static inline void dist_l1_batch_impl(const double *Xp, int n, int p, const doub
 // Exports: unscaled/scaled single & batch
 // =====================================================================
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 NumericVector rustat_dist_l1(NumericMatrix X, NumericVector x0) {
   const int n = X.nrow(), p = X.ncol();
   if (x0.size() != p)
@@ -91,7 +91,7 @@ NumericVector rustat_dist_l1(NumericMatrix X, NumericVector x0) {
   return out;
 }
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 NumericVector rustat_dist_l1_scaled(NumericMatrix X, NumericVector x0, NumericVector inv_s) {
   const int n = X.nrow(), p = X.ncol();
   if (x0.size() != p)
@@ -104,7 +104,7 @@ NumericVector rustat_dist_l1_scaled(NumericMatrix X, NumericVector x0, NumericVe
   return out;
 }
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 NumericMatrix rustat_dist_l1_batch(NumericMatrix X, NumericMatrix X0) {
   const int n = X.nrow(), p = X.ncol(), m = X0.nrow();
   if (X0.ncol() != p)
@@ -115,7 +115,7 @@ NumericMatrix rustat_dist_l1_batch(NumericMatrix X, NumericMatrix X0) {
   return out;
 }
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 NumericMatrix rustat_dist_l1_scaled_batch(NumericMatrix X, NumericMatrix X0, NumericVector inv_s) {
   const int n = X.nrow(), p = X.ncol(), m = X0.nrow();
   if (X0.ncol() != p)
@@ -141,7 +141,7 @@ static inline IntegerVector order_by_dx(const std::vector<double> &dx) {
   return ord;
 }
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 Rcpp::List rustat_order_by_l1(NumericMatrix X, NumericVector x0) {
   const int n = X.nrow(), p = X.ncol();
   if (x0.size() != p)
@@ -153,7 +153,7 @@ Rcpp::List rustat_order_by_l1(NumericMatrix X, NumericVector x0) {
   return List::create(_["dx"] = NumericVector(dx.begin(), dx.end()), _["ord"] = order_by_dx(dx));
 }
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 Rcpp::List rustat_order_by_l1_scaled(NumericMatrix X, NumericVector x0, NumericVector inv_s) {
   const int n = X.nrow(), p = X.ncol();
   if (x0.size() != p)

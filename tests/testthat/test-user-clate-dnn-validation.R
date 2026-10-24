@@ -29,7 +29,7 @@ test_that("one-sided CLATE checks both observed coding and supplied zero-arm mea
   expect_error(do.call(clate_dnn, c(a, list(one_sided = TRUE))), "m_d0")
   a$m_d0 <- NULL
   expect_error(do.call(clate_dnn, a), "m_d0")
-  expect_s3_class(do.call(clate_dnn, c(a, list(one_sided = TRUE))), "clate_result")
+  expect_s3_class(do.call(clate_dnn, c(a, list(one_sided = TRUE))), "rdistnn_clate_result")
 })
 
 test_that("CLATE unknown returns warn once while optional payloads remain additive", {
@@ -45,7 +45,7 @@ test_that("CLATE unknown returns warn once while optional payloads remain additi
   expect_match(warnings, "unknown")
   expect_equal(z$theta, baseline$theta)
   expect_equal(z$theta_vcov, baseline$theta_vcov)
-  expect_s3_class(z$nuisance, "iv_signals")
+  expect_s3_class(z$nuisance, "rdistnn_iv_signals")
 })
 
 test_that("CLATE default tuning is resolved once and recorded", {

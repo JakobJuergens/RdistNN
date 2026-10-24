@@ -1,9 +1,5 @@
 # CATE tuning-grid callbacks over frozen signals and fitted geometry.
 
-.cate_dnn_rank_weight_spec <- function(method, k, s, normalize) {
-  .dnn_rank_weight_spec(method, k, s, normalize)
-}
-
 .cate_dnn_grid_estimates <- function(tau, se) {
   out <- data.frame(
     target_id = seq_along(tau),
@@ -19,7 +15,7 @@
   candidates, tau_hat, se_hat, n, k, method, normalize
 ) {
   default_row <- candidates[candidates$is_default, , drop = FALSE]
-  spec <- .cate_dnn_rank_weight_spec(
+  spec <- .dnn_rank_weight_spec(
     method = method,
     k = k,
     s = default_row$s[[1L]],
@@ -46,11 +42,12 @@
   force(normalize)
   force(ctx)
   force(jackknife)
+  force(groups)
 
   function(candidate_row, tab_jk) {
     s <- as.integer(candidate_row$s[[1L]])
     se <- if (identical(jackknife, "fast")) {
-      spec <- .cate_dnn_rank_weight_spec(method = method, k = k, s = s, normalize = normalize)
+      spec <- .dnn_rank_weight_spec(method = method, k = k, s = s, normalize = normalize)
       loo <- if (is.null(tab_jk)) {
         .dnn_loo_loop(psi, ranks, spec, center = TRUE, groups = groups)
       } else {
@@ -93,14 +90,6 @@
   }
 }
 
-.cate_dnn_warn_infeasible_grid <- function(candidates) {
-  .dnn_warn_infeasible_grid(candidates)
-}
-
-.cate_dnn_grid_meta <- function(tuning_payload, engine_meta, n, p, k, method, distance, se, jackknife) {
-  .dnn_estimator_grid_meta(tuning_payload, engine_meta, n, p, k, method, distance, se, jackknife)
-}
-
 .cate_dnn_tuning_grid <- function(
   candidates,
   ranks,
@@ -119,7 +108,7 @@
   tuning_payload,
   reuse_default = TRUE, groups = NULL
 ) {
-  .cate_dnn_warn_infeasible_grid(candidates)
+  .dnn_warn_infeasible_grid(candidates)
   se_fn <- if (isTRUE(se) && !identical(jackknife, "none")) {
     .cate_dnn_grid_se_fn(
       ranks = ranks,
@@ -141,7 +130,7 @@
     candidates = candidates,
     ranks = ranks,
     weight_spec_fn = function(candidate_row) {
-      .cate_dnn_rank_weight_spec(
+      .dnn_rank_weight_spec(
         method = method,
         k = k,
         s = candidate_row$s[[1L]],
@@ -170,7 +159,7 @@
       normalize = normalize
     ) else NULL
   )
-  grid$meta <- .cate_dnn_grid_meta(
+  grid$meta <- .dnn_estimator_grid_meta(
     tuning_payload = tuning_payload,
     engine_meta = grid$meta,
     n = nrow(x_mat),

@@ -65,7 +65,7 @@ test_that("CATE LOO refits geometry and explicit contexts bypass setup", {
       denominator = rep(1, 7), distance = metric, ctx = ctx, s = 3))) {
     fit <- fun()
     expect_equal(predict(unserialize(serialize(fit, NULL)), X0 = targets),
-      if (inherits(fit, "cate_result")) fit$tau else fit$theta)
+      if (inherits(fit, "rdistnn_cate_result")) fit$tau else fit$theta)
   }
   })
 })
@@ -96,7 +96,10 @@ test_that("current fits distinguish missing geometry context fields from retaine
     for (field in c("ctx", "inference_ctx", "distance", "inference_distance")) {
       bad <- fit
       bad$.model[field] <- NULL
-      expect_error(predict(bad, X0 = X0, se.fit = TRUE), "geometry.*[Rr]efit")
+      error <- expect_error(predict(bad, X0 = X0, se.fit = TRUE), class = "rdistnn_state_error")
+      expect_identical(error$code, "state_invalid")
+      expect_identical(error$argument, paste0("object$.model$", field))
+      expect_match(conditionMessage(error), "[Rr]efit")
     }
     null_fit <- suppressWarnings(make(distance = metric, ctx = NULL))
     expect_true(all(c("ctx", "inference_ctx") %in% names(null_fit$.model)))
@@ -110,6 +113,9 @@ test_that("current fits distinguish missing geometry context fields from retaine
     expect_equal(unname(diag(suppressWarnings(vcov(fit)))), fit$se^2, tolerance = 1e-13)
     bad <- fit
     bad$.model["inference_ctx"] <- NULL
-    expect_error(vcov(bad), "geometry.*[Rr]efit")
+    error <- expect_error(vcov(bad), class = "rdistnn_state_error")
+    expect_identical(error$code, "state_invalid")
+    expect_identical(error$argument, "object$.model$inference_ctx")
+    expect_match(conditionMessage(error), "[Rr]efit")
   }
 })

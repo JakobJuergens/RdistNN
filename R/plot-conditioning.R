@@ -14,7 +14,7 @@
 #'
 #' @section Lifecycle:
 #' **Experimental.** The PLQR API and inference interfaces may change.
-#' @param object A `plqr_result` from [plqr_dnn()].
+#' @param object A `rdistnn_plqr_result` from [plqr_dnn()].
 #' @param cond_limits Numeric length-2 vector (default `c(1e3, 1e6)`);
 #'   dashed guides drawn at these condition numbers.
 #' @param ... Ignored; reserved for future options.
@@ -40,11 +40,11 @@
 plot_conditioning <- function(object, cond_limits = c(1e3, 1e6), ...) {
   .dnn_reuse_scope(object)
   .plot_require_ggplot2("plot_conditioning")
-  if (!inherits(object, "plqr_result")) {
+  if (!inherits(object, "rdistnn_plqr_result")) {
     .abort_bad_arg(
       "object",
       sprintf(
-        "plot_conditioning() supports plqr_result fits; got class '%s'",
+        "plot_conditioning() supports rdistnn_plqr_result fits; got class '%s'",
         class(object)[1L]
       ),
       quoted = FALSE
@@ -58,7 +58,7 @@ plot_conditioning <- function(object, cond_limits = c(1e3, 1e6), ...) {
 
   dd <- .plot_diag_frame(object)
   if (!"gram_available" %in% names(dd) || !any(dd$gram_available)) {
-    .abort_bad_state(
+    .dnn_abort("extra_unavailable",
       paste0(
         "no Gram conditioning diagnostics are available for this fit; ",
         "the weighted residualized design could not be formed."

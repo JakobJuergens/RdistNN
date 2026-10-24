@@ -2,8 +2,10 @@
   errs <- character()
 
   # scalar/basic
-  tryCatch(.validate_scalar_prob(tau, arg = "tau"), error = function(e) errs <<- c(errs, conditionMessage(e)))
-  tryCatch(.validate_scalar_int(s, arg = "s", min = 1L), error = function(e) errs <<- c(errs, conditionMessage(e)))
+  tryCatch(.validate_scalar_prob(tau, arg = "tau"),
+    rdistnn_input_error = function(e) errs <<- c(errs, conditionMessage(e)))
+  tryCatch(.validate_scalar_int(s, arg = "s", min = 1L),
+    rdistnn_input_error = function(e) errs <<- c(errs, conditionMessage(e)))
 
   # shapes by interface (no data needed)
   if (length(D_cols) < 1L) {
@@ -19,7 +21,7 @@
     ))
   } else {
     tryCatch(.abort_if_na_or_nonfinite(theta, arg = "theta", quoted = TRUE),
-      error = function(e) errs <<- c(errs, conditionMessage(e)))
+      rdistnn_input_error = function(e) errs <<- c(errs, conditionMessage(e)))
   }
   if (!is.numeric(j) || length(j) != 1L || !is.finite(j) || j != floor(j) ||
     j < 1L || j > max(1L, length(D_cols))) {
@@ -29,7 +31,11 @@
     ))
   }
 
-  if (length(errs)) stop(paste(errs, collapse = "  "), call. = FALSE)
+  if (length(errs)) .dnn_abort(
+    "argument_invalid",
+    paste(errs, collapse = "  "),
+    argument = "D_cols/mD_cols/theta/j/tau/s"
+  )
   invisible(TRUE)
 }
 
@@ -68,7 +74,7 @@
 #' @param s Integer kernel order (subset size). Recorded in the score metadata;
 #'   not used internally by this pure score.
 #'
-#' @return An \code{ustat_score} object whose \code{$setup} stores the vector
+#' @return An \code{rdistnn_ustat_score} object whose \code{$setup} stores the vector
 #'   \code{score} of contributions in the context, and whose
 #'   \code{$eval}/\code{$eval_batch} return subset sums of \code{score}
 #'   (no weights applied).
@@ -99,6 +105,10 @@ score_plqr_component <- function(
 ) {
   # ---- factory-time checks ----
   .validate_plqr_factory(D_cols, mD_cols, theta, j, tau, s)
+  force(x0)
+  force(x_cols)
+  force(g_col)
+  force(y_col)
 
   new_score(
     name = paste0("plqr_comp_j", as.integer(j), "_purescore"),
@@ -113,41 +123,51 @@ score_plqr_component <- function(
 
       # data-time checks
       .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X")
-      if (.has_na_only(X)) stop("X cannot contain `NA` values.", call. = FALSE)
+      if (.has_na_only(X)) .dnn_abort("argument_invalid", "X cannot contain `NA` values.", argument = "X")
       if (.has_nonfinite_non_na(X)) {
-        stop("X cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+        .dnn_abort("argument_invalid", "X cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", argument = "X")
       }
-      if (.has_na_only(D)) stop("D cannot contain `NA` values.", call. = FALSE)
+      if (.has_na_only(D)) .dnn_abort("argument_invalid", "D cannot contain `NA` values.", argument = "D")
       if (.has_nonfinite_non_na(D)) {
-        stop("D cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+        .dnn_abort("argument_invalid", "D cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", argument = "D")
       }
-      if (.has_na_only(mD)) stop("mD cannot contain `NA` values.", call. = FALSE)
+      if (.has_na_only(mD)) .dnn_abort("argument_invalid", "mD cannot contain `NA` values.", argument = "mD")
       if (.has_nonfinite_non_na(mD)) {
-        stop("mD cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+        .dnn_abort(
+          "argument_invalid",
+          "mD cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).",
+          argument = "mD"
+        )
       }
-      if (.has_na_only(gx)) stop("g cannot contain `NA` values.", call. = FALSE)
+      if (.has_na_only(gx)) .dnn_abort("argument_invalid", "g cannot contain `NA` values.", argument = "g")
       if (.has_nonfinite_non_na(gx)) {
-        stop("g cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+        .dnn_abort("argument_invalid", "g cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", argument = "g")
       }
-      if (.has_na_only(Y)) stop("Y cannot contain `NA` values.", call. = FALSE)
-      if (.has_nonfinite_non_na(Y)) stop("Y cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+      if (.has_na_only(Y)) .dnn_abort("argument_invalid", "Y cannot contain `NA` values.", argument = "Y")
+      if (.has_nonfinite_non_na(Y)) .dnn_abort(
+        "argument_invalid",
+        "Y cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).",
+        argument = "Y"
+      )
 
       if (any(c(nrow(D), nrow(mD)) != n) || length(gx) != n || length(Y) != n) {
-        stop("X, D, mD, g, and Y must share the same n.", call. = FALSE)
+        .dnn_abort("argument_invalid", "X, D, mD, g, and Y must share the same n.", argument = "data")
       }
       if (ncol(D) != ncol(mD)) {
-        stop("D and mD must have the same number of columns.", call. = FALSE)
+        .dnn_abort("argument_invalid", "D and mD must have the same number of columns.", argument = "mD")
       }
       if (length(theta) != ncol(D)) {
-        stop(sprintf("`theta` length (%d) must equal ncol(D) (%d).", length(theta), ncol(D)), call. = FALSE)
+        .dnn_abort("argument_invalid",
+          sprintf("`theta` length (%d) must equal ncol(D) (%d).", length(theta), ncol(D)),
+          argument = "theta"
+        )
       }
       if (!(j >= 1L && j <= ncol(D))) {
-        stop(sprintf("`j` must be in 1..ncol(D) (=%d).", ncol(D)), call. = FALSE)
+        .dnn_abort("argument_invalid", sprintf("`j` must be in 1..ncol(D) (=%d).", ncol(D)), argument = "j")
       }
 
       # ---- compute and stash the score contributions ----
       score <- NULL
-      ptr_ctx <- NULL
       ctx_create <- .rdistnn_compiled_fun("rustat_plqr_ctx_create")
       g_all <- .rdistnn_compiled_fun("rustat_plqr_g_all")
       if (!is.null(ctx_create) && !is.null(g_all)) {
@@ -170,32 +190,37 @@ score_plqr_component <- function(
       }
 
       if (.has_na_only(score)) {
-        stop("Computed score contains `NA` values; rescale regressors, coefficients and outcome inputs.", call. = FALSE)
+        .dnn_abort("numerical_range",
+          "Computed score contains `NA` values; rescale regressors, coefficients and outcome inputs."
+        )
       }
       if (.has_nonfinite_non_na(score)) {
-        stop(
-          "Computed score contains non-finite values (`Inf`, `-Inf`, or `NaN`); rescale regressor and nuisance inputs.",
-          call. = FALSE
-        )
+        .dnn_abort("numerical_range",
+          "Computed score contains non-finite values (`Inf`, `-Inf`, or `NaN`); rescale regressor and nuisance inputs.")
       }
 
       list(
         score = as.numeric(score),
         n = nrow(X), p = ncol(X),
-        s = as.integer(s), j = as.integer(j),
-        ptr_ctx = ptr_ctx
+        s = as.integer(s), j = as.integer(j)
       )
     },
     eval = function(idxs, data, ctx, rng) {
       psi <- ctx$score[idxs]
-      if (.has_na_only(psi)) stop("score contains `NA` values.", call. = FALSE)
-      if (.has_nonfinite_non_na(psi)) stop("score contains non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+      if (.has_na_only(psi)) .dnn_abort("numerical_range", "score contains `NA` values.")
+      if (.has_nonfinite_non_na(psi)) .dnn_abort(
+        "numerical_range",
+        "score contains non-finite values (`Inf`, `-Inf`, or `NaN`)."
+      )
       .compensated_sum(psi)
     },
     eval_batch = function(subs, data, ctx, rng) {
       psi <- ctx$score
-      if (.has_na_only(psi)) stop("score contains `NA` values.", call. = FALSE)
-      if (.has_nonfinite_non_na(psi)) stop("score contains non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+      if (.has_na_only(psi)) .dnn_abort("numerical_range", "score contains `NA` values.")
+      if (.has_nonfinite_non_na(psi)) .dnn_abort(
+        "numerical_range",
+        "score contains non-finite values (`Inf`, `-Inf`, or `NaN`)."
+      )
       if (!is.matrix(subs)) subs <- as.matrix(subs)
       if (nrow(subs) == 0L) {
         return(numeric(0L))

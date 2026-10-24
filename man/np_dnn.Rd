@@ -86,7 +86,7 @@ and \code{meta}. Allowed values:
 one column per target. It is a rank summary, not the full DNN weight support.}
 }
 \value{
-An object of class \code{np_result} with components:
+An object of class \code{rdistnn_np_result} with components:
 \itemize{
 \item \code{mu}: estimated local mean values at target points;
 \item \code{se}: optional jackknife standard errors;
@@ -160,6 +160,6 @@ out <- np_dnn(
 out$mu
 }
 \seealso{
-\code{\link[=weights_dnn]{weights_dnn()}}, \code{\link[=np_demo_data]{np_demo_data()}}, \link{np_result} for summary,
+\code{\link[=weights_dnn]{weights_dnn()}}, \code{\link[=np_demo_data]{np_demo_data()}}, \link{rdistnn_np_result} for summary,
 coefficient, joint covariance, confidence interval and prediction methods.
 }

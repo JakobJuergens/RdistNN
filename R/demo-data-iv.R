@@ -39,7 +39,7 @@ iv_demo_data <- function(n = 200,
                          inject = NULL,
                          inject_col = "Y",
                          idx_inject = 3L) {
-  design <- match.arg(design)
+  design <- .dnn_match_arg(design)
   dgp_name <- switch(design,
     homog = "dgp2_iv_homog_overid",
     heterog = "dgp3_iv_heterog_overid",
@@ -75,10 +75,10 @@ iv_demo_data <- function(n = 200,
       "muY_oracle", "muD_oracle", "theta_oracle"
     )
     if (!inject_col %in% allowed) {
-      stop(sprintf(
+      .dnn_abort("argument_invalid", sprintf(
         "Column '%s' (specified by `inject_col`) is not a valid injection target.\nValid options: %s",
         inject_col, paste(allowed, collapse = ", ")
-      ), call. = FALSE)
+      ), argument = "inject_col")
     }
     if (identical(inject, "na")) out$data[[inject_col]][idx_inject] <- NA_real_
     if (identical(inject, "inf")) out$data[[inject_col]][idx_inject] <- Inf

@@ -44,8 +44,10 @@
 .sim_warn_method_failures <- function(failures, destination) {
   if (is.null(failures) || !nrow(failures)) return(invisible(NULL))
   .dnn_warn("method_failed",
-    sprintf(paste0("%d simulation method evaluation(s) failed. Inspect %s for failed rows ",
-      "and the `method_failures` attribute for reasons."), nrow(failures), destination),
+    sprintf(paste0(
+      "%d simulation method evaluation(s) failed. Inspect %s for failed rows ",
+      "and the `method_failures` attribute for reasons."
+    ), nrow(failures), destination),
     affected = nrow(failures), examples = unique(failures$method))
   invisible(NULL)
 }
@@ -155,12 +157,15 @@
 
 .sim_cate_normalize_method_rows <- function(res) {
   if (!is.data.frame(res)) {
-    .abort_bad_state("Simulation method output must be a data.frame with the current row schema.")
+    .dnn_abort("internal_invariant",
+      "Simulation method output must be a data.frame with the current row schema.",
+      hint = "Report a reproducible example of this internal inconsistency."
+    )
   }
   missing <- setdiff(.sim_cate_row_names(), names(res))
   if (length(missing) > 0L) {
-    .abort_bad_state(paste0("Simulation method output is missing required column(s): ",
-      paste(missing, collapse = ", "), "."))
+    .dnn_abort("internal_invariant", paste0("Simulation method output is missing required column(s): ",
+      paste(missing, collapse = ", "), "."), hint = "Report a reproducible example of this internal inconsistency.")
   }
   res$method_variant <- as.character(res$method_variant)
   res$forest_nuisance <- as.character(res$forest_nuisance)
@@ -288,7 +293,7 @@ sim_cate_one_rep <- function(n, kx, k, s, design,
   if (s_missing) {
     s <- NULL
   }
-  tuning_mode <- match.arg(tuning_mode)
+  tuning_mode <- .dnn_match_arg(tuning_mode)
   if (identical(tuning_mode, "grid") && is.null(tuning)) {
     .abort_bad_arg(
       "tuning_mode",
@@ -493,7 +498,7 @@ sim_cate_run <- function(
     n_folds     = 5L,
     verbose     = TRUE
 ) {
-  tuning_mode <- match.arg(tuning_mode)
+  tuning_mode <- .dnn_match_arg(tuning_mode)
   s_fn_arg <- if (missing(s_fn)) NULL else s_fn
   if (!is.null(tuning) && !is.null(s_fn_arg)) {
     .abort_bad_arg(

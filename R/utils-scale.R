@@ -120,23 +120,29 @@
 .assert_no_na <- function(X, x0 = NULL) {
   X_check <- if (is.data.frame(X)) as.matrix(X) else X
   if (!is.numeric(X_check)) {
-    stop("`X` must be numeric.", call. = FALSE)
+    .dnn_abort("argument_invalid", "`X` must be numeric.", argument = "X")
   }
   if (.has_na_only(X_check)) {
-    stop("NA values are not supported: `X` contains NA.", call. = FALSE)
+    .dnn_abort("argument_invalid", "NA values are not supported: `X` contains NA.", argument = "X")
   }
   if (.has_nonfinite_non_na(X_check)) {
-    stop("Non-finite values are not supported: `X` contains Inf, -Inf, or NaN.", call. = FALSE)
+    .dnn_abort("argument_invalid",
+      "Non-finite values are not supported: `X` contains Inf, -Inf, or NaN.",
+      argument = "X"
+    )
   }
   if (!is.null(x0)) {
     if (!is.numeric(x0)) {
-      stop("`x0` must be numeric.", call. = FALSE)
+      .dnn_abort("argument_invalid", "`x0` must be numeric.", argument = "x0")
     }
     if (.has_na_only(x0)) {
-      stop("NA values are not supported: `x0` contains NA.", call. = FALSE)
+      .dnn_abort("argument_invalid", "NA values are not supported: `x0` contains NA.", argument = "x0")
     }
     if (.has_nonfinite_non_na(x0)) {
-      stop("Non-finite values are not supported: `x0` contains Inf, -Inf, or NaN.", call. = FALSE)
+      .dnn_abort("argument_invalid",
+        "Non-finite values are not supported: `x0` contains Inf, -Inf, or NaN.",
+        argument = "x0"
+      )
     }
   }
   invisible(NULL)
@@ -144,33 +150,40 @@
 
 .coerce_inv_s <- function(scale_vec, p, eps) {
   if (!is.numeric(scale_vec)) {
-    stop("scale_vec must be numeric when rule = 'custom'.", call. = FALSE)
+    .dnn_abort("argument_invalid", "`scale_vec` must be numeric when rule = 'custom'.", argument = "scale_vec")
   }
   if (!is.numeric(eps) || length(eps) != 1L || !is.finite(eps) || eps <= 0) {
-    stop("eps must be a positive finite numeric scalar.", call. = FALSE)
+    .dnn_abort("argument_invalid", "`eps` must be a positive finite numeric scalar.", argument = "eps")
   }
   inv_s <- as.numeric(scale_vec)
-  if (length(inv_s) != p) stop("scale_vec must be length p when rule = 'custom'.", call. = FALSE)
+  if (length(inv_s) != p) .dnn_abort(
+    "argument_invalid",
+    "`scale_vec` must be length p when rule = 'custom'.",
+    argument = "scale_vec"
+  )
   if (.has_na_only(inv_s)) {
-    stop("scale_vec cannot contain NA values.", call. = FALSE)
+    .dnn_abort("argument_invalid", "`scale_vec` cannot contain NA values.", argument = "scale_vec")
   }
   if (.has_nonfinite_non_na(inv_s)) {
-    stop("scale_vec cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).", call. = FALSE)
+    .dnn_abort("argument_invalid",
+      "`scale_vec` cannot contain non-finite values (`Inf`, `-Inf`, or `NaN`).",
+      argument = "scale_vec"
+    )
   }
   1 / pmax(abs(inv_s), eps)
 }
 
 .compute_inv_scale <- function(X, rule = c("sd", "mad", "iqr", "range", "custom"),
                                scale_vec = NULL, eps = 1e-12) {
-  rule <- match.arg(rule)
+  rule <- .dnn_match_arg(rule)
   if (!is.numeric(eps) || length(eps) != 1L || !is.finite(eps) || eps <= 0) {
-    stop("eps must be a positive finite numeric scalar.", call. = FALSE)
+    .dnn_abort("argument_invalid", "`eps` must be a positive finite numeric scalar.", argument = "eps")
   }
   if (identical(rule, "custom")) {
     return(.coerce_inv_s(scale_vec, ncol(X), eps))
   }
   if (identical(rule, "sd") && nrow(X) < 2L) {
-    stop("Scaling rule 'sd' requires at least two training observations.", call. = FALSE)
+    .dnn_abort("argument_invalid", "Scaling rule 'sd' requires at least two training observations.", argument = "X")
   }
 
   s <- switch(rule,
@@ -179,15 +192,13 @@
     iqr = .col_iqr(X),
     range = .col_rng(X)
   )
-  if (length(s) != ncol(X)) stop("Scale vector length must match ncol(X).", call. = FALSE)
+  if (length(s) != ncol(X)) .dnn_abort("internal_invariant",
+    "Scale vector length must match ncol(X).",
+    hint = "Report a reproducible example of this internal inconsistency."
+  )
   if (any(!is.finite(s))) {
-    stop("Fitted scales are nonfinite; rescale covariates.", call. = FALSE)
+    .dnn_abort("numerical_range", "Fitted scales are nonfinite; rescale covariates.")
   }
   s <- pmax(s, eps)
   1 / s
-}
-
-# Lightweight, readable column scaling (yes, it copies; that’s OK for simplicity)
-.scale_cols <- function(M, inv_s) {
-  sweep(M, 2L, as.numeric(inv_s), `*`)
 }

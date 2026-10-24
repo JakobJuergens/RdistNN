@@ -22,13 +22,13 @@ test_that("valid extreme confidence levels retain finite normal bounds across re
       expect_true(all(is.finite(as.matrix(ci))))
       tab <- summary(fit, level = level)$coefficients
       expect_true(all(is.finite(tab$conf.low) & is.finite(tab$conf.high)))
-      quantity <- if (inherits(fit, "plqr_result")) list(quantity = "theta") else list()
+      quantity <- if (inherits(fit, "rdistnn_plqr_result")) list(quantity = "theta") else list()
       frame <- do.call(plot_data_estimates, c(list(fit, level = level), quantity))
       expect_equal(frame$ci_lower, as.numeric(ci[, 1L]), tolerance = 1e-13)
       expect_equal(frame$ci_upper, as.numeric(ci[, 2L]), tolerance = 1e-13)
-      if (!inherits(fit, "gmm_result")) {
+      if (!inherits(fit, "rdistnn_gmm_result")) {
         pred <- predict(fit, X0 = X0, interval = "confidence", level = level)
-        if (inherits(fit, "plqr_result")) {
+        if (inherits(fit, "rdistnn_plqr_result")) {
           expect_true(all(is.finite(pred$lwr) & is.finite(pred$upr)))
         } else {
           expect_true(all(is.finite(pred[, "lwr"]) & is.finite(pred[, "upr"])))

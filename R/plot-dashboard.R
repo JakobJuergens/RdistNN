@@ -14,7 +14,7 @@
 
 .plot_dashboard_compose <- function(panels, object) {
   if (length(panels) == 0L) {
-    .abort_bad_state(
+    .dnn_abort("extra_unavailable",
       "no dashboard panel could be built for this fit; see the individual plot_* builders for the missing inputs."
     )
   }
@@ -48,7 +48,7 @@
 #' When patchwork is not installed the panels are returned as a named list
 #' of ggplot objects with a message.
 #'
-#' @param object A fitted result object (`cate_result`, `clate_result` or `np_result`).
+#' @param object A fitted result object (`rdistnn_cate_result`, `rdistnn_clate_result` or `rdistnn_np_result`).
 #' @param ... Passed on to [plot_estimates()] for the estimates panel.
 #'
 #' @return A patchwork object (or a named list of ggplots when patchwork
@@ -87,7 +87,7 @@ plot_dashboard.default <- function(object, ...) {
 
 #' @rdname plot_dashboard
 #' @export
-plot_dashboard.cate_result <- function(object, ...) {
+plot_dashboard.rdistnn_cate_result <- function(object, ...) {
   .dnn_reuse_scope(object)
   .plot_dashboard_effect(object, ...)
 }
@@ -102,7 +102,7 @@ plot_dashboard.cate_result <- function(object, ...) {
   )
   # Matrix/supplied-score CATE fits may deliberately omit these optional
   # inputs. Malformed retained inputs still reach their scientific validators.
-  if (!inherits(object, "clate_result")) {
+  if (!inherits(object, "rdistnn_clate_result")) {
     if (is.null(object$.model$t_vec)) specs$overlap <- NULL
     if (is.null(object$.model$e)) specs$propensity <- NULL
   }
@@ -126,14 +126,14 @@ plot_dashboard.cate_result <- function(object, ...) {
 
 #' @rdname plot_dashboard
 #' @export
-plot_dashboard.clate_result <- function(object, ...) {
+plot_dashboard.rdistnn_clate_result <- function(object, ...) {
   .dnn_reuse_scope(object)
   .plot_dashboard_effect(object, ...)
 }
 
 #' @rdname plot_dashboard
 #' @export
-plot_dashboard.np_result <- function(object, ...) {
+plot_dashboard.rdistnn_np_result <- function(object, ...) {
   .dnn_reuse_scope(object)
   .plot_require_ggplot2("plot_dashboard")
   specs <- list(

@@ -1,5 +1,5 @@
 # Diagnostics panel (plan panel NP-4): n_eff, maximum weight, and top-5
-# weight share across targets, drawn from a dnn_diagnostics frame. The
+# weight share across targets, drawn from a rdistnn_diagnostics frame. The
 # n_eff facet carries the degenerate-weights guide at 0.9 * n so the panel
 # and the runtime warning tell one story.
 
@@ -10,8 +10,8 @@
 #' `0.9 * n`, the degenerate-weights warning threshold), the maximum
 #' weight, and the top-5 weight share. `plot()` prints the same panel.
 #'
-#' @param object A `dnn_diagnostics` object from [diagnostics()].
-#' @param x A `dnn_diagnostics` object (for the `plot()` method).
+#' @param object A `rdistnn_diagnostics` object from [diagnostics()].
+#' @param x A `rdistnn_diagnostics` object (for the `plot()` method).
 #' @param ... Ignored; reserved for future options.
 #'
 #' @return A ggplot object.
@@ -28,7 +28,7 @@
 #'   )
 #'   ggplot2::autoplot(diagnostics(fit))
 #' }
-#' @name autoplot.dnn_diagnostics
+#' @name autoplot.rdistnn_diagnostics
 NULL
 
 .plot_autoplot_candidate_diagnostics <- function(dd) {
@@ -107,10 +107,10 @@ NULL
     .rdistnn_theme()
 }
 
-#' @rdname autoplot.dnn_diagnostics
-#' @exportS3Method ggplot2::autoplot dnn_diagnostics
-autoplot.dnn_diagnostics <- function(object, ...) {
-  .plot_require_ggplot2("autoplot.dnn_diagnostics")
+#' @rdname autoplot.rdistnn_diagnostics
+#' @exportS3Method ggplot2::autoplot rdistnn_diagnostics
+autoplot.rdistnn_diagnostics <- function(object, ...) {
+  .plot_require_ggplot2("autoplot.rdistnn_diagnostics")
 
   dd <- as.data.frame(object, stringsAsFactors = FALSE)
   class(dd) <- "data.frame"
@@ -160,10 +160,10 @@ autoplot.dnn_diagnostics <- function(object, ...) {
   p + .rdistnn_theme()
 }
 
-#' @rdname autoplot.dnn_diagnostics
+#' @rdname autoplot.rdistnn_diagnostics
 #' @export
-plot.dnn_diagnostics <- function(x, ...) {
-  p <- autoplot.dnn_diagnostics(x, ...)
+plot.rdistnn_diagnostics <- function(x, ...) {
+  p <- autoplot.rdistnn_diagnostics(x, ...)
   print(p)
   invisible(p)
 }

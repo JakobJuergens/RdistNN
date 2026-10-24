@@ -27,3 +27,31 @@ Avoid gratuitous API churn even during the experimental lifecycle; use
 [the lifecycle policy](07_lifecycle_and_deprecation_policy.md) for changes.
 Nontrivial code needs appropriate placement, explicit validation, actionable
 messages, deterministic valid/invalid/edge tests, and current user documentation.
+
+## Captured configuration and retained work
+
+Evaluate owned configuration arguments before a factory returns closures.
+Validation or insertion into a result may already evaluate an argument;
+otherwise use `force()` explicitly. Rebinding a caller's variable before first
+use must not change the created metric, score or model. Validate properties
+that need training data at setup. Arbitrary external state in a user callback
+remains the callback author's responsibility. See
+[Advanced R, function factories](https://adv-r.hadley.nz/function-factories.html).
+
+Retain only context used by later computation. Scaled L1/L2 contexts hold
+per-column inverse scales; evaluators operate on the supplied training matrix
+and do not retain an unused scaled copy. Remove orphaned helpers when their
+last consumer disappears. Use profiling and realistic allocation measurements
+before making performance claims; see
+[Advanced R, measuring performance](https://adv-r.hadley.nz/perf-measure.html)
+and [doing less work](https://adv-r.hadley.nz/perf-improve.html).
+
+## Maintaining this design reference
+
+Record adopted design principles and best practices in the existing note that
+owns the subject, with an authoritative source, the applicable boundary and
+the regression contract when relevant. Distinguish a source's recommendation
+from the package's chosen application of it. Keep notes synchronized when an
+implementation changes; an intended policy alone does not prove completion.
+Put session plans, execution logs and historical receipts in private working
+records rather than turning these reference notes into an audit diary.

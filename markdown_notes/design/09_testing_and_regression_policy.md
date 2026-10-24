@@ -23,6 +23,18 @@ generators use explicit scoped seeds, and test-only state guards stay independen
 of the production restoration code they help test. Keep future-plan/options
 cleanup with the backend tests that own those resources.
 
+This applies to suite-local generators and file loading as well as shared
+helpers. A file-level seed does not make individual tests independently
+reproducible. Use the existing independent test RNG scope for fixture seeds,
+including restoration after failure and restoration of an absent seed. See
+[R Packages, self-contained tests](https://r-pkgs.org/testing-design.html)
+and its [state-restoration guidance](https://r-pkgs.org/code.html).
+Ordinary test blocks that seed or consume the process RNG also restore the
+incoming state. Testthat's test environment does not do this automatically.
+Use standard [withr local seed preservation](https://withr.r-lib.org/reference/with_seed.html)
+at the owning block, preserving intentional draw sequences within it. Keep the
+independent test-only scope for direct restoration-contract checks.
+
 When splitting suites, preserve reference calculations, assertion strength,
 tolerances and native-engine requirements. Update the suite map and complete-family
 filters together, then run each moved suite independently. Cross-estimator suites
@@ -38,6 +50,14 @@ actionable remedy. Consumer tests should assert the condition class/code,
 relevant argument/location fields and meaningful remedy text. Do not repeat
 complete English snapshots across every estimator or make punctuation an
 accidental recovery protocol.
+
+Test common input routes and shared choice validators through public calls,
+including the actual selecting argument and bounded public `operation` context.
+Retained notice flags/counts must survive serialization and candidate selection,
+remain accessible without optional weights, and reject missing or inconsistent
+current state. Success-path instrumentation must reject eager message formatting.
+Keep opaque callback/native/resource failures distinct from invalid callback
+returns; broad error wrapping is not evidence of condition coverage.
 
 Test valid input, invalid input and relevant boundaries. Include missing
 optional extras separately from inconsistent retained state. Exercise malformed
@@ -97,6 +117,28 @@ every element. Exact values, types, dimensions and attributes remain checked;
 this changes diagnostics rather than accepting a numeric tolerance. Ordinary
 small assertions can retain testthat's detailed differences.
 
+Test helpers must not catch an evaluator error and substitute the expected
+answer, or skip a required compiled path after an unexpected failure. Such
+adapters can turn a broken implementation into an apparent reference match.
+Skip only a genuinely optional capability; test capability absence separately
+from an available engine failing. Use direct supported APIs and independent
+references for successful score and distance evaluations.
+
+Required native tests exercise the installed DLL even without local build
+tools. Do not skip them because a source file has a newer timestamp; timestamps
+do not establish executable identity. Force the portable comparator and count
+actual native execution so a native-labelled comparison cannot run the same
+engine twice. Preserve native-boundary assertions rather than adding a
+stale-install forgiveness adapter.
+
+Namespace call counters use the shared instrumentation helper, which captures
+a tracer closure and cleans up on success/error without fixed global bindings
+or replacement constructor environments. Its current consumers are non-nested;
+see [base R tracing](https://search.r-project.org/R/refmans/base/html/trace.html).
+Declare the test dependency floor needed by APIs in use: the existing
+`test_file(desc=)` lifecycle checks require testthat 3.2.0, as recorded in its
+[release notes](https://testthat.r-lib.org/news/index.html#testthat-320).
+
 Allocation-size regressions may filter `Rprofmem()` below the failure limit
 to avoid writing a stack trace for every small allocation. Keep the original
 input dimensions and rejection limit, require a nonempty trace, and retain
@@ -116,6 +158,14 @@ accumulator does. Preserve the original public regression while permitting
 valid accuracy improvements; do not encode an implementation defect as the
 desired answer. Integrate cases into their owning suites and shared helpers
 instead of accumulating copied fixtures and one-off exception tests.
+
+Concentration/status regressions distinguish zero mass from positive mass whose
+squares are subnormal or zero, and test safe common rescaling against an
+independent reference. Include ordinary-path compatibility and actual
+prediction/candidate reuse. Validation tests prove callback nonexecution for
+invalid public signals and preserve callback failure visibility for valid
+inputs. These are interaction contracts even when their individual source lines
+already have coverage; see [R Packages' testing guidance](https://r-pkgs.org/testing-design.html).
 
 ## Engine and cross-package parity
 
@@ -207,3 +257,32 @@ a pair of optimized implementations agreeing is not an independent oracle.
 Remaining defensive branches warrant tests when an observed defect, supported
 input or changed contract makes them consequential. Unused helper coverage
 and benchmark timing are not substitutes for user-facing regression tests.
+
+Coverage must exercise the instrumented installed package. Copy current source
+inputs before calling covr, because its cleaning/instrumentation modifies that
+tree. A focused run uses installed `testthat::test_package()`, not a development
+loader that can replace the instrumented namespace or DLL. Reject empty test
+selections and propagate test failures. Record positive R hits and positive
+handwritten C++ hits when the selection promises native execution, alongside
+the actual installed library/DLL identity and source hashes. Full coverage
+requires both kinds of execution; a deliberate pure R selection need not claim
+native coverage. Report percentages as diagnostics rather than correctness
+thresholds. The [covr API](https://covr.r-lib.org/reference/package_coverage.html)
+defines the instrumentation lifecycle; commands belong in
+[CONTRIBUTING.md](../../CONTRIBUTING.md#developer-analysis-tools).
+
+Developer-tool regressions use isolated temporary fixtures. Cover real nonzero
+tool diagnostics, missing tools, empty selections and scope exclusions, with
+positive controls proving eligible work actually ran. Keep a small real
+instrumentation/failure control in addition to argument and path tests; mocked
+command construction alone does not establish a working coverage or sanitizer
+pipeline. Optional-tool absence may skip infrastructure integration tests;
+an explicitly requested developer command must fail actionably instead.
+
+Native boundary regressions include null/deserialized contexts and wrong context
+identity where an external-pointer interface is retained. Run a potentially
+terminating case in an isolated R process and require both normal process
+completion and the intended caught condition; an in-process error assertion
+cannot diagnose a process abort. Include actual serial and OpenMP configurations,
+not only requested thread counts. Deterministic native calls also need controls
+for both an existing RNG state and an absent `.Random.seed`.

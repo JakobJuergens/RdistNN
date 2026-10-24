@@ -84,7 +84,7 @@
 #'   The `neighbors` extra returns the nearest observation for each target; it
 #'   is not the TDNN signed weight support.
 #'
-#' @return An object of class `tdnn_np_result` with components:
+#' @return An object of class `rdistnn_tdnn_np_result` with components:
 #'   - `mu`: estimated local mean values at target points;
 #'   - `se`: optional jackknife standard errors;
 #'   - `x0`: the `m x p` matrix of evaluation points, with covariate
@@ -95,7 +95,7 @@
 #'     by the inherited prediction and covariance methods;
 #'   - optional extras requested via `return`.
 #'
-#' @seealso [weights_tdnn()], [np_dnn()], [np_demo_data()], [np_result] for
+#' @seealso [weights_tdnn()], [np_dnn()], [np_demo_data()], [rdistnn_np_result] for
 #'   inherited summary, covariance, confidence interval and prediction methods.
 #'
 #' @examples
@@ -133,8 +133,8 @@ np_tdnn <- function(
   # ------------------------------------------------------------------
   # Block 1: option validation (before any data is touched)
   # ------------------------------------------------------------------
-  method    <- match.arg(method)
-  jackknife <- match.arg(jackknife)
+  method    <- .dnn_match_arg(method)
+  jackknife <- .dnn_match_arg(jackknife)
   s1 <- .validate_scalar_int(s1, "s1")
   s2 <- .validate_scalar_int(s2, "s2")
   if (s1 >= s2) {
@@ -169,9 +169,9 @@ np_tdnn <- function(
       )
     }
     if (!is.null(y_col)) {
-      y_vec <- .dnn_col_vec(y_col, data, n, arg = "y_col", ref = "X")
+      y_vec <- .dnn_col_vec(y_col, data, n, arg = "y_col", ref = "X", finite = TRUE)
     } else {
-      y_vec <- .validate_vector_nrow(y, n, arg = "y", ref = "X", strict = TRUE)
+      y_vec <- .validate_vector_nrow(y, n, arg = "y", ref = "X", strict = TRUE, finite = TRUE)
     }
   } else {
     if (is.null(X)) {
@@ -191,7 +191,7 @@ np_tdnn <- function(
     if (is.null(Y)) {
       .abort_bad_arg("Y", "is required for the matrix interface")
     }
-    y_vec <- .validate_vector_nrow(Y, n, arg = "Y", ref = "X", strict = TRUE)
+    y_vec <- .validate_vector_nrow(Y, n, arg = "Y", ref = "X", strict = TRUE, finite = TRUE)
   }
 
   # ------------------------------------------------------------------
@@ -299,7 +299,7 @@ np_tdnn <- function(
     normalize = normalize, ranks = wt$ranks, groups = wt$groups, dx = wt$dx
   ), geometry)
 
-  class(out) <- c("tdnn_np_result", "np_result")
+  class(out) <- c("rdistnn_tdnn_np_result", "rdistnn_np_result")
   out
 }
 
@@ -312,7 +312,7 @@ np_tdnn <- function(
   jackknife         = c("fast", "loo"),
   precomputed_ranks = NULL, precomputed_groups = NULL
 ) {
-  jackknife <- match.arg(jackknife)
+  jackknife <- .dnn_match_arg(jackknife)
 
   if (identical(jackknife, "fast")) {
     # Prefix/suffix engine: precomputes rank tables at n and n-1 once,

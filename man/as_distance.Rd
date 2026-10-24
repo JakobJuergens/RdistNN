@@ -12,7 +12,7 @@ as_distance(fun, name = "user_distance")
 \item{name}{Character name for the spec.}
 }
 \value{
-A distance spec with class \code{dnn_distance}.
+A distance spec with class \code{rdistnn_distance}.
 }
 \description{
 Wrap a function as a distance spec

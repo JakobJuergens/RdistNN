@@ -33,7 +33,7 @@ weights_dnn_exact(
 \item{return}{character vector of extras to include; any of \code{c("W","ord","ranks","dx")}}
 }
 \value{
-a \code{weights_result} with \code{W} and metadata
+a \code{rdistnn_weights_result} with \code{W} and metadata
 }
 \description{
 Exact DNN weights are derived from the full rank permutation for each target.

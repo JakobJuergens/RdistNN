@@ -39,6 +39,9 @@ the first place to look, then the relevant integration or numerical suite.
 | Exact-table represented parity and near-full support | `test-exact-table-portability.R` |
 | Weighted CDF boundary indices, physical radius and outcome SD ranges | `test-weighted-distribution-range.R`, `fixtures/weighted-cdf.csv` |
 | Component contracts | `test-api-*`, `test-distance-*`, `test-order-*`, `test-score-*`, `test-utils-validate.R` |
+| Captured factory configuration, group callbacks and package-owned S3 identities | `test-distance-factory-state.R`, `test-score-factory-state.R`, `test-gmm-factory-state.R`, `test-class-names.R` |
+| Experimental GMM callback recovery and current result arrays | `test-gmm-recovery-state.R` |
+| Plot warning controls and reuse of retained caption facts | `test-plot-recovery-contract.R` |
 | Singleton rank-weight batches and scalar score callback validation/data binding | `test-api-ranks-singleton-batch.R`, `test-api-scores-scalar-batch-validation.R` |
 | Scalar-only distance batches, singleton weight/estimator consumers and shared setup/context | `test-distance-scalar-batch-consumers.R` |
 | Compensated weighted sums, native/R parity, retained deletion corrections and buffer boundaries | `test-compensated-accumulation.R` |
@@ -130,7 +133,7 @@ does not depend on earlier files. Single-suite fixtures stay beside their tests.
 `helper-dnn-reference.R` supplies explicit scalar deletions,
 `helper-sim-cate.R` independent AIPW calculations, `helper-user-dnn-gmm.R`
 custom models, and `helper-clate-reference.R` complete-subset enumeration.
-CLATE tests retain independent dense ridge solves, one-/two-deleted fits and
+CLATE tests retain complete-subset, explicit-deletion covariance and
 confidence-set geometry references. Small simulations check execution, not
 coverage or manuscript claims.
 
@@ -169,6 +172,23 @@ RDISTNN_VDIFFR=true Rscript -e 'devtools::test(filter = "^plot-vdiffr$")'
 
 Inspect changed SVGs in `tests/testthat/_snaps/plot-vdiffr/`. Ordinary runs
 retain numerical plot-data checks without platform-dependent visual snapshots.
+
+## Coverage
+
+Use `Rscript tools/ci/run_coverage.R` for full installed-package coverage. It
+copies current package inputs into a private workspace before covr instruments
+them and requires both R and handwritten C++ execution. Reports and provenance
+remain under ignored `archives/coverage/`; the existing manual coverage workflow
+uses the same runner.
+
+For a focused installed suite, pass a testthat filename filter, for example
+`--filter '^(native-threads|compiled-fallback-parity)$' --require-native`.
+Pure R selections can omit `--require-native`. An empty selection, failed test
+or missing required native hit fails the run. Do not substitute `test_local()`
+or `devtools::test()` inside covr: those helpers can reload uninstrumented code.
+See [developer tools](../CONTRIBUTING.md#developer-analysis-tools) for dependencies,
+report destinations and optional HTML output. Coverage identifies gaps;
+independent references and actual engine assertions establish correctness.
 
 ## Package-maintenance checks
 

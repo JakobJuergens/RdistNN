@@ -2,12 +2,13 @@
 # ------------------------------------------------------------------------------
 
 test_that("as_distance() wraps a function and is_distance() recognizes it", {
+  withr::local_preserve_seed()
   f <- function(X, x0, ctx) {
     rowSums((X - matrix(x0, nrow(X), ncol(X), byrow = TRUE))^2)
   }
   spec <- as_distance(f, name = "quad")
   expect_true(is_distance(spec))
-  expect_s3_class(spec, "dnn_distance")
+  expect_s3_class(spec, "rdistnn_distance")
 
   # single eval
   set.seed(1)
@@ -75,6 +76,7 @@ test_that("new_distance() rejects malformed names and optional slots", {
 })
 
 test_that("register_distance()/get_distance()/distance_names() work", {
+  withr::local_seed(123L)
   # Register a simple absolute-distance spec under a fresh name
   nm <- paste0("abs_", sample.int(1e6, 1))
   spec <- as_distance(function(X, x0, ctx) rowSums(abs(X - matrix(x0, nrow(X), ncol(X), TRUE))), name = nm)
@@ -94,7 +96,7 @@ test_that("register_distance()/get_distance()/distance_names() work", {
   expect_equal(got2$name, nm2)
 
   # Unknown name errors
-  expect_error(get_distance("__definitely_missing__"), "Unknown distance")
+  expect_error(get_distance("__definitely_missing__"), class = "rdistnn_input_error")
   msg <- tryCatch(
     {
       get_distance("__definitely_missing__")
@@ -119,6 +121,7 @@ test_that("as_distance() accepts user functions with or without ctx argument", {
 })
 
 test_that("distance_eval_batch() calls setup() exactly once (eval-only fallback)", {
+  withr::local_preserve_seed()
   # spec with setup counter; only eval provided (so batch uses fallback loop)
   env <- new.env(parent = emptyenv())
   env$count <- 0L
@@ -134,7 +137,7 @@ test_that("distance_eval_batch() calls setup() exactly once (eval-only fallback)
       rowSums((X - matrix(x0, nrow(X), ncol(X), TRUE))^2) * ctx$scale
     }
   )
-  class(spec) <- "dnn_distance"
+  class(spec) <- "rdistnn_distance"
 
   set.seed(2)
   X <- matrix(rnorm(20), 10, 2)
@@ -155,7 +158,7 @@ test_that("distance_eval() falls back to eval_batch when only eval_batch exists"
       }, numeric(nrow(X)))
     }
   )
-  class(spec) <- "dnn_distance"
+  class(spec) <- "rdistnn_distance"
 
   X <- matrix(1:12, 4, 3)
   x0 <- c(0, 1, 2)
@@ -181,7 +184,7 @@ test_that("distance_eval honors provided ctx (no auto-setup)", {
       rowSums((X - matrix(x0, nrow(X), ncol(X), TRUE))^2) * ctx$scale
     }
   )
-  class(spec) <- "dnn_distance"
+  class(spec) <- "rdistnn_distance"
 
   X <- matrix(1, 5, 2)
   x0 <- c(0, 0)
@@ -272,6 +275,7 @@ test_that("distance evaluators validate targets before calling custom functions"
 })
 
 test_that("registry specs actually evaluate after registration", {
+  withr::local_seed(123L)
   nm <- paste0("toy_", sample.int(1e6, 1))
   fun <- function(X, x0, ctx) rowSums(abs(X - matrix(x0, nrow(X), ncol(X), TRUE)))
   register_distance(nm, fun)
@@ -313,7 +317,7 @@ test_that("distance_eval_batch respects provided ctx (no setup) in eval-only fal
       rowSums((X - matrix(x0, nrow(X), ncol(X), TRUE))^2) * ctx$scale
     }
   )
-  class(spec) <- "dnn_distance"
+  class(spec) <- "rdistnn_distance"
 
   X <- matrix(1:12, 4, 3)
   X0 <- matrix(c(0, 0, 0, 1, 1, 1), 2, 3, byrow = TRUE)
@@ -326,6 +330,7 @@ test_that("distance_eval_batch respects provided ctx (no setup) in eval-only fal
 })
 
 test_that("distance_names() returns sorted registry names", {
+  withr::local_seed(123L)
   nmA <- paste0("zA_", sample.int(1e6, 1))
   nmB <- paste0("aB_", sample.int(1e6, 1))
   register_distance(nmA, function(X, x0, ctx) rowSums(abs(X - matrix(x0, nrow(X), ncol(X), TRUE))))
@@ -343,7 +348,7 @@ test_that("distance eval_batch path validates shape and finiteness", {
     name = "bad_shape",
     eval_batch = function(X, X0, ctx) rep(0, nrow(X) * nrow(X0))
   )
-  class(bad_shape) <- "dnn_distance"
+  class(bad_shape) <- "rdistnn_distance"
   expect_error(
     distance_eval_batch(bad_shape, X, X0),
     "must return a finite numeric matrix of shape"
@@ -357,7 +362,7 @@ test_that("distance eval_batch path validates shape and finiteness", {
       out
     }
   )
-  class(bad_finite) <- "dnn_distance"
+  class(bad_finite) <- "rdistnn_distance"
   expect_error(
     distance_eval_batch(bad_finite, X, X0),
     "must return a finite numeric matrix of shape"
@@ -365,6 +370,7 @@ test_that("distance eval_batch path validates shape and finiteness", {
 })
 
 test_that("register_distance validates malformed specs and named list specs", {
+  withr::local_seed(123L)
   # malformed: no eval and no eval_batch
   expect_error(
     register_distance("bad_no_eval", list(name = "bad_no_eval")),
@@ -393,7 +399,7 @@ test_that("register_distance validates malformed specs and named list specs", {
   )
   register_distance(nm, spec)
   got <- get_distance(nm)
-  expect_true(inherits(got, "dnn_distance"))
+  expect_true(inherits(got, "rdistnn_distance"))
   expect_equal(got$name, nm)
 })
 
@@ -418,9 +424,45 @@ test_that("distance_eval_batch errors when eval looks like batch but eval_batch 
     name = "ambiguous_eval",
     eval = function(X, X0, ctx = NULL) matrix(0, nrow(X), nrow(X0))
   )
-  class(spec) <- "dnn_distance"
+  class(spec) <- "rdistnn_distance"
 
   X <- matrix(1:12, nrow = 4)
   X0 <- matrix(c(0, 0, 0, 1, 1, 1), nrow = 2, byrow = TRUE)
   expect_error(distance_eval_batch(spec, X, X0), "No R `eval_batch` or `eval` provided")
+})
+
+test_that("distance callback return contracts and thrown failures stay distinct", {
+  X <- matrix(1:4, ncol = 1)
+  bad <- new_distance("bad_result", eval = function(X, x0, ctx) "bad")
+  error <- tryCatch(distance_eval(bad, X, 0), error = identity)
+  expect_s3_class(error, "rdistnn_callback_error")
+  expect_identical(error$code, "callback_invalid")
+  expect_identical(error$argument, "distance")
+  sentinel <- structure(list(message = "callback sentinel", call = NULL),
+    class = c("callback_sentinel", "error", "condition"))
+  thrown <- new_distance("thrown", eval = function(X, x0, ctx) stop(sentinel))
+  expect_identical(tryCatch(distance_eval(thrown, X, 0), error = identity), sentinel)
+})
+
+test_that("distance lookup errors preserve the calling argument", {
+  X <- matrix(1:4, ncol = 1)
+  calls <- list(name = function() get_distance("l2_scaled_typo"),
+    distance = function() np_dnn(X = X, Y = 1:4, x0 = 0, s = 2,
+      distance = "l2_scaled_typo", se = FALSE))
+  for (argument in names(calls)) {
+    error <- tryCatch(calls[[argument]](), error = identity)
+    expect_s3_class(error, "rdistnn_input_error")
+    expect_identical(error$argument, argument)
+    expect_match(conditionMessage(error), "registered distance", fixed = TRUE)
+  }
+})
+
+
+test_that("weight wrappers retain their public distance argument in lookup errors", {
+  for (fun in list(weights_dnn_exact, weights_dnn_asymp)) {
+    error <- tryCatch(fun(matrix(1:4), x0 = 0, k = 1, s = 2,
+      distance = "l2_scaled_typo"), error = identity)
+    expect_s3_class(error, "rdistnn_input_error")
+    expect_identical(error$argument, "distance")
+  }
 })

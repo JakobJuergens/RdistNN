@@ -14,7 +14,7 @@ inline std::size_t idx3(int t, int k, int q, int T, int S, int Q) {
 }
 
 // Fast delete-one jackknife for rank-weighted functionals (matrix phi)
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 Rcpp::List rustat_jackknife_fast_rank(const IntegerMatrix &ranks, const NumericVector &a,
                                       const NumericMatrix &PHI, const bool normalize = true) {
   const int T = ranks.nrow();
@@ -63,6 +63,9 @@ Rcpp::List rustat_jackknife_fast_rank(const IntegerMatrix &ranks, const NumericV
   }
   NumericVector theta0(q);
   NumericMatrix theta_loo(n_ref, q);
+  // Workers only read/write plain R buffers captured on this thread.
+  const double *baseline_values = REAL(baseline);
+  double *loo_values = REAL(theta_loo);
   for (int component = 0; component < q; ++component)
     theta0[component] = totals[component].value() / T;
 #ifdef _OPENMP
@@ -75,10 +78,10 @@ Rcpp::List rustat_jackknife_fast_rank(const IntegerMatrix &ranks, const NumericV
       total.add(totals[component].low);
       for (const auto &location : affected[i]) {
         const int t = location.first, k = location.second;
-        total.add(-baseline(t, component));
+        total.add(-baseline_values[t + static_cast<R_xlen_t>(T) * component]);
         total.add(local[idx3(t, k, component, T, s + 1, q)]);
       }
-      theta_loo(i, component) = total.value() / T;
+      loo_values[i + static_cast<R_xlen_t>(n_ref) * component] = total.value() / T;
     }
   }
   return List::create(

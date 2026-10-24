@@ -10,7 +10,7 @@
 #' stored training data. The comparison shows what the two-scale
 #' bias-cancelling combination does relative to its components.
 #'
-#' @param object A `tdnn_np_result` from [np_tdnn()].
+#' @param object A `rdistnn_tdnn_np_result` from [np_tdnn()].
 #' @param ... Ignored; reserved for future options.
 #'
 #' @return A ggplot object.
@@ -32,11 +32,11 @@
 plot_tdnn_scales <- function(object, ...) {
   .dnn_reuse_scope(object)
   .plot_require_ggplot2("plot_tdnn_scales")
-  if (!inherits(object, "tdnn_np_result")) {
+  if (!inherits(object, "rdistnn_tdnn_np_result")) {
     .abort_bad_arg(
       "object",
       sprintf(
-        "plot_tdnn_scales() supports tdnn_np_result fits; got class '%s'",
+        "plot_tdnn_scales() supports rdistnn_tdnn_np_result fits; got class '%s'",
         class(object)[1L]
       ),
       quoted = FALSE

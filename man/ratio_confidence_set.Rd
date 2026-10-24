@@ -2,7 +2,7 @@
 % Please edit documentation in R/clate-confidence-sets.R
 \name{ratio_confidence_set}
 \alias{ratio_confidence_set}
-\alias{print.ratio_confidence_sets}
+\alias{print.rdistnn_ratio_confidence_sets}
 \title{Confidence sets for a ratio of paired component estimates}
 \usage{
 ratio_confidence_set(
@@ -12,7 +12,7 @@ ratio_confidence_set(
   tol = 64 * .Machine$double.eps
 )
 
-\method{print}{ratio_confidence_sets}(x, digits = max(3L, getOption("digits") - 2L), ...)
+\method{print}{rdistnn_ratio_confidence_sets}(x, digits = max(3L, getOption("digits") - 2L), ...)
 }
 \arguments{
 \item{components}{Finite numeric m-by-2 matrix, with numerator in the first
@@ -26,14 +26,14 @@ covariance matrices on the estimator scale. Singular matrices are allowed.}
 \item{tol}{Finite nonnegative relative numerical tolerance. It controls
 covariance symmetry/PSD checks and near-zero discriminant diagnostics.}
 
-\item{x}{A ratio_confidence_sets object.}
+\item{x}{A rdistnn_ratio_confidence_sets object.}
 
 \item{digits}{Printing precision.}
 
 \item{...}{Not used.}
 }
 \value{
-A ratio_confidence_sets list with one record per target. Records
+A rdistnn_ratio_confidence_sets list with one record per target. Records
 contain target_id, type, intervals (r-by-2 lower/upper matrix), quadratic,
 discriminant, numerical_status, level and numerical scaling metadata.
 Printing returns its input invisibly.

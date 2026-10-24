@@ -1,43 +1,29 @@
-test_that("native indexed scores reject represented invalid indices", {
+test_that("native production subset scores reject invalid indices at serial and parallel sizes", {
   old <- options(RdistNN.use_compiled = TRUE, RdistNN.num_threads = 2L)
   on.exit(options(old), add = TRUE)
-  native <- function(name) {
-    out <- RdistNN:::.rdistnn_compiled_fun(name)
-    expect_true(is.function(out))
-    out
-  }
-  cate_create <- native("rustat_cate_ctx_create")
-  plqr_create <- native("rustat_plqr_ctx_create")
-  cases <- list(
-    list(eval = native("rustat_cate_g_indexed"), ctx = cate_create(c(.5, -1, 2))),
-    list(eval = native("rustat_plqr_g_indexed"), ctx = plqr_create(
-      c(.5, 1.5, 2.5), matrix(c(1, 2, 3)), rep(0, 3L),
-      matrix(0, 3L, 1L), .5, .5, 1L))
-  )
-  for (case in cases) for (size in c(4L, 1100L)) {
+  native <- RdistNN:::.rdistnn_compiled_fun("rustat_subset_row_sums_g")
+  expect_true(is.function(native))
+  for (size in c(4L, 1100L)) for (column in 1:3) {
     for (bad in c(-1L, NA_integer_, 0L, 4L, .Machine$integer.max)) {
-      indices <- rep(c(3L, 1L, 3L, 2L), length.out = size)
-      indices[size] <- bad
-      expect_error(case$eval(indices, case$ctx), "Index out of bounds")
+      subsets <- matrix(rep(c(3L, 1L, 3L), each = size), size, 3L)
+      subsets[size, column] <- bad
+      expect_error(native(subsets, c(.5, -1, 2)), "Index out of bounds")
     }
   }
 })
 
-test_that("native indexed scores preserve repeated and reordered requests", {
+test_that("native production subset scores preserve repeated and reordered requests", {
   old <- options(RdistNN.use_compiled = TRUE, RdistNN.num_threads = 1L)
   on.exit(options(old), add = TRUE)
-  cate <- RdistNN:::rustat_cate_ctx_create(c(.5, -1, 2))
-  plqr <- RdistNN:::rustat_plqr_ctx_create(
-    c(.5, 1.5, 2.5), matrix(c(1, 2, 3)), rep(0, 3L),
-    matrix(0, 3L, 1L), .5, .5, 1L)
+  native <- RdistNN:::.rdistnn_compiled_fun("rustat_subset_row_sums_g")
+  expect_true(is.function(native))
   for (threads in c(1L, 2L)) {
     options(RdistNN.num_threads = threads)
     for (size in c(4L, 1100L)) {
       indices <- rep(c(3L, 1L, 3L, 2L), length.out = size)
-      expect_identical(RdistNN:::rustat_cate_g_indexed(indices, cate),
-        c(.5, -1, 2)[indices])
-      expect_identical(RdistNN:::rustat_plqr_g_indexed(indices, plqr),
-        c(-.5, 1, 1.5)[indices])
+      expect_identical(native(matrix(indices, ncol = 1L), c(.5, -1, 2)), c(.5, -1, 2)[indices])
+      subsets <- cbind(indices, rep(3L, size), rep(1L, size))
+      expect_identical(native(subsets, c(.5, -1, 2)), c(.5, -1, 2)[indices] + 2.5)
     }
   }
 })

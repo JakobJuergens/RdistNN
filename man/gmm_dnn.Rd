@@ -92,7 +92,7 @@ the returned object.}
 training-observation indices, not the full DNN weight support.}
 }
 \value{
-A \code{gmm_result} object with estimates, diagnostics, metadata, the
+A \code{rdistnn_gmm_result} object with estimates, diagnostics, metadata, the
 \verb{m x p} evaluation-point matrix \code{x0} (with covariate column names
 propagated from the training data when available), and requested extras.
 }
@@ -117,8 +117,8 @@ inference under persistent ties. Earlier retained fit schemas require refitting.
 
 Two interfaces are supported.
 \enumerate{
-\item Data-frame interface: pass \code{data}, \code{x_cols}, and a \code{gmm_model}.
-\item Matrix interface: pass \code{X}, one of \code{X0} or \code{x0}, a \code{gmm_model}, and
+\item Data-frame interface: pass \code{data}, \code{x_cols}, and a \code{rdistnn_gmm_model}.
+\item Matrix interface: pass \code{X}, one of \code{X0} or \code{x0}, a \code{rdistnn_gmm_model}, and
 \code{model_data} when the model needs observation-level variables.
 }
 
@@ -129,6 +129,22 @@ The resolved distance specification and its fitted training context are
 retained for weight reconstruction. Replacing a registered metric after
 fitting does not change the fit's geometry. Custom callbacks with mutable
 external state retain their own reproducibility obligations.
+
+Model callbacks must return their documented finite numeric values at the
+supplied starts and optimizer trial points. Callback errors, malformed
+returned values, interrupts and caller-promoted warnings stop the fit.
+Only nonfinite quadratic arithmetic from otherwise valid moments receives
+an optimizer penalty. A local moment covariance that cannot be inverted
+leaves that target unavailable, with its reason in \code{convergence} and one
+partial-result warning per call. Singular local information retains the
+coefficient estimate with unavailable uncertainty; information outside the
+numeric range also gives a rescaling warning. No callback-domain recovery
+interface or automatic retry at a different start is supplied.
+
+Requested Jacobian diagnostics can retain arithmetic nonfinite values from
+differencing finite callback evaluations when coefficient uncertainty is
+unavailable or deliberately disabled. This does not relax the finite-value
+contract for callback returns.
 
 Exact DNN localization uses the full rank permutation at each target rather
 than an \code{s}-nearest-neighbor truncation. For exact DNN fits, the

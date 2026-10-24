@@ -7,9 +7,11 @@
 score_eval_batch(score, subs, data, ctx = NULL, rng = NULL)
 }
 \arguments{
-\item{score}{ustat_score}
+\item{score}{rdistnn_ustat_score}
 
-\item{subs}{integer matrix with nrow=K, ncol=s}
+\item{subs}{Numeric or integer matrix with \code{nrow = K} and
+\code{ncol = s}, containing integer-valued subset indices. A correctly
+shaped zero-row matrix is supported and returns \code{numeric(0)}.}
 
 \item{data}{Data object understood by the score, such as a vector, matrix
 or data frame.}

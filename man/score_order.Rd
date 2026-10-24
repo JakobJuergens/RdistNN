@@ -7,7 +7,7 @@
 score_order(score, n, data, ctx = NULL)
 }
 \arguments{
-\item{score}{ustat_score}
+\item{score}{rdistnn_ustat_score}
 
 \item{n}{integer sample size}
 

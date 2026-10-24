@@ -94,7 +94,7 @@
     },
     .__kind = "rank_weight"
   )
-  class(spec) <- c("rank_weight", class(spec))
+  class(spec) <- c("rdistnn_rank_weight", class(spec))
   spec
 }
 

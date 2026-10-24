@@ -8,12 +8,12 @@
 .distance_has_eval <- function(spec) !is.null(spec$eval) && is.function(spec$eval)
 .distance_has_eval_batch <- function(spec) !is.null(spec$eval_batch) && is.function(spec$eval_batch)
 .distance_eval_is_single <- function(fun) {
-  fmls <- tryCatch(names(formals(fun)), error = function(e) character())
+  fmls <- names(formals(fun))
   length(fmls) > 0L && ("x0" %in% fmls) && !("X0" %in% fmls)
 }
 .distance_call_user <- function(fun, X, x0, ctx) {
   args <- list(X = X, x0 = x0, ctx = ctx)
-  fmls <- tryCatch(names(formals(fun)), error = function(e) character())
+  fmls <- names(formals(fun))
   if ("..." %in% fmls) {
     return(do.call(fun, args))
   }
@@ -21,11 +21,16 @@
 }
 .distance_validate_output_vec <- function(d, n, src = "Distance function") {
   if (!is.numeric(d) || length(d) != n || any(!is.finite(d))) {
-    stop(sprintf(
+    .dnn_abort(
+      "callback_invalid",
+      sprintf(
       "%s must return a finite numeric vector of length n=%d; got %s of length %d%s.",
       src, n, class(d)[1L], length(d),
       if (is.numeric(d) && length(d) == n) " (contains non-finite values)" else ""
-    ), call. = FALSE)
+    ),
+      argument = "distance",
+      hint = "Correct the callback to return the documented type, dimensions and finite values."
+    )
   }
   as.numeric(d)
 }
@@ -36,12 +41,17 @@
     } else {
       sprintf("non-matrix (%s)", class(d_mat)[1L])
     }
-    stop(sprintf(
+    .dnn_abort(
+      "callback_invalid",
+      sprintf(
       "%s must return a finite numeric matrix of shape %d x %d; got %s%s.",
       src, n, m, got_dim,
       if (is.matrix(d_mat) && is.numeric(d_mat) && nrow(d_mat) == n && ncol(d_mat) == m)
         " (contains non-finite values)" else ""
-    ), call. = FALSE)
+    ),
+      argument = "distance",
+      hint = "Correct the callback to return the documented type, dimensions and finite values."
+    )
   }
   d_mat
 }
@@ -77,7 +87,7 @@
   if (is.null(spec$name) || !nzchar(as.character(spec$name))) {
     spec$name <- "unnamed_distance"
   }
-  class(spec) <- union("dnn_distance", class(spec))
+  class(spec) <- union("rdistnn_distance", class(spec))
   spec
 }
 
@@ -94,7 +104,7 @@
 #' is_distance(list(eval = function(X, x0, ctx) rep(0, nrow(X))))
 #' @export
 is_distance <- function(x) {
-  inherits(x, "dnn_distance") ||
+  inherits(x, "rdistnn_distance") ||
     (is.list(x) && (is.function(x$eval) || is.function(x$eval_batch)))
 }
 
@@ -109,7 +119,7 @@ is_distance <- function(x) {
 #' evaluator assembles those dimensions for you and validates each result.
 #' When `ctx` is `NULL`, `setup(X)` runs once per evaluation call, not once
 #' per target in a batch. [weights_matrix()] uses this same evaluator.
-#' @return A validated `dnn_distance` spec.
+#' @return A validated `rdistnn_distance` spec.
 #' @examples
 #' spec <- new_distance(
 #'   name = "sq_l2",
@@ -130,7 +140,7 @@ new_distance <- function(name, eval = NULL, eval_batch = NULL, setup = NULL) {
 #'
 #' @param fun Function `(X, x0, ctx) -> numeric(n)`.
 #' @param name Character name for the spec.
-#' @return A distance spec with class `dnn_distance`.
+#' @return A distance spec with class `rdistnn_distance`.
 #' @examples
 #' spec <- as_distance(
 #'   function(X, x0, ctx = NULL) {
@@ -195,13 +205,17 @@ register_distance <- function(name, spec) {
 #' is_distance(d)
 #' @export
 get_distance <- function(name) {
-  name <- .validate_registry_name(name)
+  .get_distance(name, argument = "name")
+}
+
+.get_distance <- function(name, argument) {
+  name <- .validate_registry_name(name, argument = argument)
   if (!exists(name, envir = .dist_registry, inherits = FALSE)) {
-    known <- ls(.dist_registry, all.names = FALSE)
+    known <- .registry_names(.dist_registry)
     .abort_bad_arg(
-      "name",
-      "Unknown distance",
-      expected = if (length(known) > 0L) paste(known, collapse = ", ") else "<none registered>",
+      argument,
+      "must name a registered distance",
+      expected = if (length(known) > 0L) .dnn_message_examples(known)$text else "<none registered>",
       actual = as.character(name)
     )
   }
@@ -214,7 +228,7 @@ get_distance <- function(name) {
 #' head(distance_names(), 3)
 #' @export
 distance_names <- function() {
-  sort(ls(.dist_registry, all.names = FALSE))
+  .registry_names(.dist_registry)
 }
 
 # --- evaluators ---------------------------------------------------------------

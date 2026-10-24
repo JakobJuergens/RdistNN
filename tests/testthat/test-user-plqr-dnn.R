@@ -1,5 +1,3 @@
-set.seed(321)
-
 test_that("plqr_dnn matrix API matches direct g-weighted moment identity", {
   d <- .make_plqr_data()
   out <- plqr_dnn(
@@ -13,7 +11,7 @@ test_that("plqr_dnn matrix API matches direct g-weighted moment identity", {
   score <- (d$tau - as.numeric(d$Y <= as.vector(d$D %*% d$theta_eval) + d$g)) * (d$D - d$mD)
   manual <- crossprod(score, out$W)
 
-  expect_s3_class(out, "plqr_result")
+  expect_s3_class(out, "rdistnn_plqr_result")
   expect_equal(dim(out$moment), c(ncol(d$D), nrow(d$X0)))
   expect_equal(unname(out$moment), unname(manual), tolerance = 1e-12)
 })
@@ -123,7 +121,7 @@ test_that("x0 path matches corresponding single target from X0", {
   )
 })
 
-test_that("print.plqr_result runs without error", {
+test_that("print.rdistnn_plqr_result runs without error", {
   d <- .make_plqr_data(n = 35L, p = 2L, p_d = 2L, m = 1L, tau = 0.5)
   out <- plqr_dnn(
     X = d$X, D = d$D, g = d$g, mD = d$mD, Y = d$Y,
@@ -131,7 +129,7 @@ test_that("print.plqr_result runs without error", {
     k = 1L, s = 2L, se = FALSE
   )
   txt <- capture.output(print(out))
-  expect_true(any(grepl("<plqr_result>", txt, fixed = TRUE)))
+  expect_true(any(grepl("<rdistnn_plqr_result>", txt, fixed = TRUE)))
 })
 
 test_that("se = FALSE bypasses delete-1 jackknife feasibility check for plqr_dnn", {

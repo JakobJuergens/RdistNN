@@ -21,6 +21,21 @@ OpenMP worker loops. Signal R errors/warnings on the main thread after workers
 join. Keep native invariant and direct-call guards, and contain every exception
 at the Stata plugin ABI with allocation-safe failure handling.
 
+For native changes, resolve and validate external-pointer identity and address
+on the calling thread, then capture plain data pointers and scalar metadata
+before OpenMP begins. Repeated checked `XPtr` access inside workers can call the
+R API or throw. An OpenMP region serialized by an `if` clause still needs this
+exception boundary. Keep unused native contexts out of retained score state;
+remove native helpers whose last production consumer has disappeared rather
+than retaining them solely for capability probes or tests. These requirements
+also guide remaining hardening of existing native paths.
+
+Review parallel regions with the dedicated
+[OpenMP exception checker](https://clang.llvm.org/extra/clang-tidy/checks/openmp/exception-escape.html).
+A clean core-analyzer result does not establish this property. The
+[R extension manual](https://stat.ethz.ch/R-manual/R-patched/doc/manual/R-exts.html#OpenMP-support)
+requires host API calls and error signaling to remain on the main R thread.
+
 Distinguish unavailable acceleration from actual execution failure. Automatic
 fallback needs a known unavailable capability or a specifically documented
 equivalent recovery route. Unexpected invariants, allocation failures and
@@ -161,6 +176,20 @@ and remains bounded by runtime limits. Resolve the option on the calling R
 thread. Do not change the global OpenMP runtime defaults. Serial builds retain
 the same calculations. Tests establish actual native teams and unchanged results.
 
+Long native computations need bounded opportunities for interruption on the
+calling thread between work chunks. Never insert `R_CheckUserInterrupt()` into
+an OpenMP worker loop. Test an interrupt delivered during actual computation;
+an injected error only proves propagation after an error already exists. Follow
+[the R interrupt guidance](https://stat.ethz.ch/R-manual/R-patched/doc/manual/R-exts.html#Allowing-interrupts)
+while preserving arithmetic order, owned-buffer cleanup and caller state.
+
+Deterministic native primitives should preserve both an existing RNG state and
+the absence of `.Random.seed`. Rcpp attributes establish an RNG scope by default;
+when a routine uses no RNG, review the `rng = false` export setting and regenerate
+bindings from the source attributes. Keep genuine randomized routines scoped as
+required by their own contract; see
+[Rcpp's attribute documentation](https://www.rcpp.org/pdf/Rcpp-attributes.pdf).
+
 Every new native path needs reference comparisons covering ordinary/edge
 inputs, shapes, exact discrete decisions, justified continuous tolerances and
 unavailable-fast-path behavior. Native/fallback suites run on Linux x86-64,
@@ -179,3 +208,53 @@ zero signed mass alone retains centering. Reuse table summaries rather than
 adding pure-R table scans to compiled paths. Finite-support native flattening
 uses `size_t` before multiplication so valid long-vector buffers do not overflow
 an intermediate `int` index.
+
+## Developer analysis profiles
+
+Developer Clang/sanitizer profiles build current source in private workspaces;
+they do not replace release Makevars, install over a user's package or change
+global compiler defaults. Preserve decision-sensitive floating-point flags and
+the existing arithmetic guards. Change compiler and linker settings together:
+GNU LTO options from R's Makeconf cannot simply be inherited by a Clang link.
+Probe the selected OpenMP runtime and retain an explicit serial comparison.
+Compiler concurrency remains at most two, independently of runtime thread caps.
+
+Capture compilation databases from real uncached builds. Include generated
+glue in compile coverage while restricting owned-code findings to maintained
+sources/headers. Retain the captured source tree and reject analysis when
+native inputs, configuration, compiler or R identity changed. A compiler cache
+may reuse objects only with strict compiler identity/settings and separate
+profile keys; it must never cache test results or relax correctness checks.
+Protect private output paths from symbolic-link traversal before writes.
+
+Bind a successful capture to both retained native/configuration bytes and the
+compilation database. Verify live/captured agreement around source copying,
+then verify retained hashes and database identity before accepting analysis.
+An incomplete, failed or changed capture requires a fresh `compdb`; never
+repair a receipt silently. Clang's
+[database specification](https://clang.llvm.org/docs/JSONCompilationDatabase.html)
+defines the commands, paths and flags used for parsing; the package's content
+checks additionally establish which current project bytes those commands cover.
+
+AddressSanitizer and UndefinedBehaviorSanitizer require compile and link
+instrumentation, readable symbolization and nonzero failure propagation. Test
+the detector with a deliberately invalid private fixture. For an unsanitized R
+host, preload the matching Clang runtime only for installed test execution and
+state the host/leak-check limitation. Standalone companion tests retain leak
+checking where process inspection is permitted. These checks complement exact
+parity regressions and the supported-platform release matrix.
+
+Inspect line, function and branch evidence separately. A completely visited
+source file can still lack an important invalid-state or exception case. When
+combining native profiles from multiple executables, check known executed inline
+header functions against their individual executable reports before trusting
+the combined totals. This applies the
+[Clang coverage distinctions](https://clang.llvm.org/docs/SourceBasedCodeCoverage.html#interpreting-reports)
+to the package's shared-header builds. An analyzer that cannot preprocess or
+parse a dependency has incomplete coverage; report that limitation instead of
+suppressing its configuration/parser failure to obtain a passing result.
+
+References: [clang-tidy](https://clang.llvm.org/extra/clang-tidy/),
+[AddressSanitizer](https://clang.llvm.org/docs/AddressSanitizer.html),
+[UndefinedBehaviorSanitizer](https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html)
+and the [ccache 4.9 manual](https://ccache.dev/manual/4.9.html).

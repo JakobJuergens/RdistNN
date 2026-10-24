@@ -5,10 +5,11 @@ CLATE and ordinary paired-signal ratios, with DNN weights, pointwise jackknife
 uncertainty, tuning, diagnostics and plots. Ratio confidence-set inversion,
 PLQR and local IV-GMM remain experimental.
 
-Version `0.1.3` replaces the 0.1.2 identical-covariate rule with
+Production release `0.1.3` replaced the 0.1.2 identical-covariate rule with
 target-specific exact represented distance averaging. Earlier saved fits
-require refitting. Preserve all historical tags, assets and scientific
-dependency pins when publishing this release.
+require refitting. Read the current `NEWS.md` heading for development changes
+and refit requirements. Preserve all historical tags, assets and scientific
+dependency pins when publishing a release.
 
 ## Version progression
 
@@ -23,10 +24,16 @@ For example, development after production `0.1.2` starts at `0.1.2.9000`, then
 For each production merge, default to `0.1.(x+1)` unless the maintainer
 explicitly selects another version. Prepare that production version in the
 reviewed candidate before merging, then start the next development cycle by
-appending `.9000` to the selected production version. Thus the current default
-cycle leads to production `0.1.3`, followed by development `0.1.3.9000`.
+appending `.9000` to the selected production version. For example, production
+`0.1.3` starts development at `0.1.3.9000`.
 Production merging, tagging and asset publication remain separate authorized
 steps. Retain full commit and checked-archive identities alongside version numbers.
+
+`DESCRIPTION` owns the current package version. The first `NEWS.md` heading,
+`README.Rmd` and its generated `README.md` must agree; the repository-hygiene
+check enforces these declarations. Keep production installation pins,
+historical release records, scientific provenance and policy examples in their
+own roles when updating metadata.
 
 ## Production history
 
@@ -65,12 +72,12 @@ excluded from the source package.
 ## Candidate identity and scientific reproduction
 
 The current version-pinned R release is
-[`v0.1.3`](https://github.com/JakobJuergens/RdistNN/releases/tag/v0.1.3).
+[`v0.1.4`](https://github.com/JakobJuergens/RdistNN/releases/tag/v0.1.4).
 The tag selects the verified production snapshot; its installable source
 package and checksum file are attached to the release. Install with:
 
 ```r
-pak::pak("JakobJuergens/RdistNN@v0.1.3")
+pak::pak("JakobJuergens/RdistNN@v0.1.4")
 ```
 
 The tag fixes the installation source at the released commit. Keep the ordinary

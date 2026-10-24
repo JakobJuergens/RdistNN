@@ -15,6 +15,7 @@
 # -------------------------------------------------------------------
 
 test_that("[parity] argsort matches base::order(method='radix') on finite, nonnegative", {
+  withr::local_preserve_seed()
   set.seed(123)
   n <- 5000L
   x <- runif(n) * 10
@@ -39,6 +40,7 @@ test_that("[ties] stability: equal keys keep increasing original index", {
 })
 
 test_that("[inverse] ranks and argsort are inverses", {
+  withr::local_preserve_seed()
   set.seed(1)
   x <- runif(1000)
   ord <- rustat_argsort_dist(x)
@@ -51,6 +53,7 @@ test_that("[inverse] ranks and argsort are inverses", {
 })
 
 test_that("[topk] top-k equals head(order, k) (with deterministic tiebreak)", {
+  withr::local_preserve_seed()
   set.seed(99)
   n <- 3000L
   x <- sample(0:1000, n, replace = TRUE) / 10 # many ties
@@ -104,6 +107,7 @@ test_that("[nf] non-finite policy: finite first; then -Inf < +Inf < NaN; ties by
 })
 
 test_that("[mono] monotone transforms preserve order (add & positive scale)", {
+  withr::local_preserve_seed()
   set.seed(777)
   x <- abs(rnorm(5000)) # nonnegative
   ord <- rustat_argsort_dist(x)
@@ -115,6 +119,7 @@ test_that("[mono] monotone transforms preserve order (add & positive scale)", {
 })
 
 test_that("[det] determinism across repeated runs", {
+  withr::local_preserve_seed()
   set.seed(2024)
   x <- runif(10000)
   o1 <- rustat_argsort_dist(x)

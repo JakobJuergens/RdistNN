@@ -464,11 +464,9 @@
 .get_sim_iv_method <- function(name) {
   fn <- .SIM_IV_METHODS[[name]]
   if (is.null(fn)) {
-    stop(
+    .dnn_abort("argument_invalid", paste0(
       "Unknown IV simulation method: '", name, "'. Valid options: ",
-      paste(names(.SIM_IV_METHODS), collapse = ", "), ".",
-      call. = FALSE
-    )
+      paste(names(.SIM_IV_METHODS), collapse = ", "), "."), argument = "name")
   }
   fn
 }

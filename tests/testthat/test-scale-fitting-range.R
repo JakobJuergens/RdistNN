@@ -62,3 +62,16 @@ test_that("SD recovery preserves the independently checked near-tie neighbor", {
     expect_equal(f$mu, 100, tolerance = 0)
   }
 })
+
+test_that("scale validation distinguishes invalid input and fitted numeric range", {
+  error <- tryCatch(distance_l2_scaled("custom", scale_vec = "bad")$setup(matrix(1:4)),
+    error = identity)
+  expect_s3_class(error, "rdistnn_input_error")
+  expect_identical(error$code, "argument_invalid")
+  expect_identical(error$argument, "scale_vec")
+  error <- tryCatch(distance_l2_scaled("range")$setup(matrix(c(-1, 1) * 2^1023)),
+    error = identity)
+  expect_s3_class(error, "rdistnn_numerical_error")
+  expect_identical(error$code, "numerical_range")
+  expect_match(conditionMessage(error), "rescale")
+})

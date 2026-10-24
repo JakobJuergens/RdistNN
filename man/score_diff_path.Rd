@@ -14,7 +14,7 @@ score_diff_path(
 )
 }
 \arguments{
-\item{score}{A \code{ustat_score}.}
+\item{score}{A \code{rdistnn_ustat_score}.}
 
 \item{data}{Data object passed to score evaluators.}
 

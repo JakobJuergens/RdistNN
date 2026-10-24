@@ -2,18 +2,18 @@
 #include <Rcpp.h>
 #include "compensated_arithmetic.hpp"
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 double rustat_compensated_sum(const Rcpp::NumericVector &x) {
   return rdistnn_arithmetic::sum(x.begin(), x.size());
 }
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 int rustat_weighted_cdf_index(const Rcpp::NumericVector &w, double prob) {
   const int index = rdistnn_arithmetic::weighted_cdf_index(w.begin(), w.size(), prob);
   return index == 0 ? NA_INTEGER : index;
 }
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 Rcpp::NumericMatrix rustat_compensated_crossprod(const Rcpp::NumericMatrix &x,
                                                  const Rcpp::NumericMatrix &y) {
   if (x.nrow() != y.nrow())

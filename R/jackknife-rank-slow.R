@@ -79,7 +79,10 @@ jackknife_slow_rank <- function(ranks, a, phi, normalize = TRUE) {
       }
     }
   } else {
-    stop("`phi` must be either a numeric matrix (n_ref x q) or a function(j, t).", call. = FALSE)
+    .dnn_abort("argument_invalid",
+      "`phi` must be either a numeric matrix (n_ref x q) or a function(j, t).",
+      argument = "phi"
+    )
   }
 
   Z <- if (normalize) .compensated_sum_R(a) else 1

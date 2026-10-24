@@ -10,7 +10,7 @@ test_that("np_dnn basic matrix API returns valid shapes and weighted mean identi
       return = c("W", "ess")
     )
 
-    expect_s3_class(out, "np_result")
+    expect_s3_class(out, "rdistnn_np_result")
     expect_true(is.numeric(out$mu))
     expect_length(out$mu, nrow(d$X0))
     expect_true(is.numeric(out$se))

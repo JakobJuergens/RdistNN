@@ -57,7 +57,7 @@
 
 .dnn_loo_loop <- function(sig, ranks, rw, center = FALSE, groups = NULL) {
   if (!is_rank_weight(rw)) {
-    .abort_bad_arg("rw", "must be a rank_weight", quoted = FALSE)
+    .abort_bad_arg("rw", "must be a rdistnn_rank_weight", quoted = FALSE)
   }
   ranks <- .rank_check_mat(ranks)
   n <- nrow(ranks)
@@ -115,7 +115,7 @@
   jackknife = c("fast", "loo"),
   precomputed_ranks = NULL, precomputed_groups = NULL
 ) {
-  jackknife <- match.arg(jackknife)
+  jackknife <- .dnn_match_arg(jackknife)
   n <- nrow(x_mat)
   if (as.integer(s) >= n) {
     .dnn_abort("argument_invalid", sprintf(
@@ -148,7 +148,10 @@
 
     ranks_full <- as.matrix(ranks_full)
     if (nrow(ranks_full) != n || ncol(ranks_full) != m) {
-      .abort_bad_state("`precomputed_ranks` must be an n x m ranks matrix.")
+      .dnn_abort("argument_invalid",
+        "`precomputed_ranks` must be an n x m ranks matrix.",
+        argument = "precomputed_ranks"
+      )
     }
     if (!is.integer(ranks_full)) storage.mode(ranks_full) <- "integer"
 
@@ -188,7 +191,7 @@
   jackknife = c("fast", "loo"),
   precomputed_ranks = NULL, precomputed_groups = NULL
 ) {
-  jackknife <- match.arg(jackknife)
+  jackknife <- .dnn_match_arg(jackknife)
   n <- nrow(x_mat)
   sig <- .dnn_signal_matrix(signal, n = n, arg = signal_arg)
   loo <- .dnn_jackknife_loo_array(

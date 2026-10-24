@@ -24,7 +24,7 @@ is thrown.}
 \code{y_col} is \code{NULL}.}
 }
 \value{
-An \code{ustat_score} object with:
+An \code{rdistnn_ustat_score} object with:
 \itemize{
 \item \code{$name}: a descriptive name,
 \item \code{$order}: always \code{1L},

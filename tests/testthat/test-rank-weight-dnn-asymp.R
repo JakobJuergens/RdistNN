@@ -12,6 +12,7 @@
 # -------------------------------------------------------------------
 
 test_that("[smoke] returns weights of length n that are nonnegative and sum to 1", {
+  withr::local_preserve_seed()
   set.seed(1)
   n <- 60L
   s <- 12L
@@ -32,6 +33,7 @@ test_that("[smoke] returns weights of length n that are nonnegative and sum to 1
 })
 
 test_that("[edge] s = 1, k = 1 yields uniform weights exactly", {
+  withr::local_seed(123L)
   n <- 31L
   s <- 1L
   k <- 1L
@@ -42,6 +44,7 @@ test_that("[edge] s = 1, k = 1 yields uniform weights exactly", {
 })
 
 test_that("[edge] k = s yields uniform asymptotic DNN weights", {
+  withr::local_seed(123L)
   n <- 37L
   for (s in c(2L, 5L, 11L)) {
     ranks <- sample.int(n)
@@ -73,6 +76,7 @@ test_that("[edge] k = 1 produces (near) monotone nonincreasing weights in rank",
 })
 
 test_that("[approx] asymptotic weights are close to exact weights for moderate n", {
+  withr::local_preserve_seed()
   set.seed(2)
   n <- 120L
   s <- 10L
@@ -88,6 +92,7 @@ test_that("[approx] asymptotic weights are close to exact weights for moderate n
 })
 
 test_that("[inv] w_rank depends only on (n,k,s) and not on permutation; mapping to data order changes accordingly", {
+  withr::local_preserve_seed()
   set.seed(3)
   n <- 80L
   s <- 12L
@@ -110,6 +115,7 @@ test_that("[inv] w_rank depends only on (n,k,s) and not on permutation; mapping 
 })
 
 test_that("[opts] normalize=FALSE is already ~normalized and equals TRUE within tight tolerance", {
+  withr::local_preserve_seed()
   set.seed(4)
   n <- 90L
   s <- 9L
@@ -154,6 +160,7 @@ test_that("[errors] input validation triggers appropriate errors", {
 })
 
 test_that("[meta] meta fields are correct", {
+  withr::local_seed(123L)
   n <- 55L
   s <- 11L
   k <- 4L

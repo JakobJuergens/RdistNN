@@ -39,6 +39,12 @@ jobs:
       - name: Check test dependency declarations
         run: Rscript tools/ci/check_tests_declared_deps.R
 
+      - name: Install pinned Python analyzer
+        run: python3 -m pip install ruff==0.17.2
+
+      - name: Check maintained Python scripts
+        run: python3 tools/ci/check_scripts.py
+
       - name: Check repository hygiene
         run: Rscript tools/ci/check_repository_hygiene.R
 

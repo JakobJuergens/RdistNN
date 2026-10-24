@@ -9,38 +9,23 @@ testthat::local_edition(3)
 
 # --- local helpers ---------------------------------------------------
 
-# robust batch evaluator that survives partially-linked compiled helpers
-.eval_batch_safe <- function(sc, subs, df, ctx) {
-  out_try <- try(score_eval_batch(sc, subs, df, ctx), silent = TRUE)
-  if (!inherits(out_try, "try-error")) {
-    return(out_try)
-  }
-  # If compiled path blows up (e.g. symbol exists but .Call not loaded),
-  # compute in pure R using ctx$g as the ground truth definition.
-  subs <- if (!is.matrix(subs)) as.matrix(subs) else subs
-  if (nrow(subs) == 0L) {
-    return(numeric(0L))
-  }
-  gi <- ctx$g
-  rowSums(matrix(gi[subs], nrow = nrow(subs), ncol = ncol(subs)))
-}
-
 # Fallback mini generator if cate_demo_sets() is not present
 .cate_minigen <- function(n = 60L, p = 2L, seed = 1L) {
-  set.seed(seed)
-  X <- matrix(rnorm(n * p), n, p, dimnames = list(NULL, paste0("X", 1:p)))
-  rho <- rnorm(n)
-  df <- data.frame(X, aipw_oracle = rho)
-  list(
-    data = df,
-    x0 = rep(0, p),
-    x_cols = colnames(X),
-    s = 1L,
-    subs_all = matrix(seq_len(n), ncol = 1L),
-    subs_empty = matrix(integer(0), ncol = 1L),
-    subs_2col = cbind(seq_len(n), rev(seq_len(n))),
-    cols = list(rho = "aipw_oracle")
-  )
+  .test_rng_scope({
+    X <- matrix(rnorm(n * p), n, p, dimnames = list(NULL, paste0("X", 1:p)))
+    rho <- rnorm(n)
+    df <- data.frame(X, aipw_oracle = rho)
+    list(
+      data = df,
+      x0 = rep(0, p),
+      x_cols = colnames(X),
+      s = 1L,
+      subs_all = matrix(seq_len(n), ncol = 1L),
+      subs_empty = matrix(integer(0), ncol = 1L),
+      subs_2col = cbind(seq_len(n), rev(seq_len(n))),
+      cols = list(rho = "aipw_oracle")
+    )
+  }, seed = seed)
 }
 
 .get_cate_fx <- function(...) {
@@ -117,7 +102,7 @@ test_that("[order] reported order equals chosen s (test s = 1 and s = 5)", {
   }
 })
 
-test_that("[eval] singletons return exactly rho_i (rho_col path) with robust batch fallback", {
+test_that("[eval] singletons return exactly rho_i (rho_col path)", {
   fx <- .get_cate_fx(n = 55, p = 2)
   scn <- fx[[1L]]
   rho_col <- scn$cols$rho
@@ -126,7 +111,7 @@ test_that("[eval] singletons return exactly rho_i (rho_col path) with robust bat
   ctx <- score_setup(sc, scn$data)
 
   subs1 <- matrix(seq_len(nrow(scn$data)), ncol = 1L)
-  vals <- .eval_batch_safe(sc, subs1, scn$data, ctx)
+  vals <- score_eval_batch(sc, subs1, scn$data, ctx)
   expect_equal(vals, scn$data[[rho_col]], tolerance = 1e-12)
 
   for (i in c(1L, 17L, nrow(scn$data))) {
@@ -134,7 +119,7 @@ test_that("[eval] singletons return exactly rho_i (rho_col path) with robust bat
   }
 
   # empty batch
-  expect_identical(.eval_batch_safe(sc, scn$subs_empty, scn$data, ctx), numeric(0L))
+  expect_identical(score_eval_batch(sc, scn$subs_empty, scn$data, ctx), numeric(0L))
 })
 
 test_that("[eval] general subsets (multi-column) sum per-row rho", {
@@ -142,22 +127,28 @@ test_that("[eval] general subsets (multi-column) sum per-row rho", {
   scn <- fx[[1L]]
   rho_col <- scn$cols$rho
 
-  # Use s=2 behavior (but eval/eval_batch just sum over provided columns)
+  # Each subset has the declared order s = 2.
   sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 2L, rho_col = rho_col)
   ctx <- score_setup(sc, scn$data)
 
   subs2 <- if (!is.null(scn$subs_2col)) scn$subs_2col else cbind(seq_len(nrow(scn$data)), rev(seq_len(nrow(scn$data))))
-  vals <- .eval_batch_safe(sc, subs2, scn$data, ctx)
+  vals <- score_eval_batch(sc, subs2, scn$data, ctx)
 
   # direct R row sums of rho over those columns
   rho <- scn$data[[rho_col]]
   gR <- rowSums(matrix(rho[subs2], nrow = nrow(subs2), ncol = ncol(subs2)))
   expect_equal(vals, gR, tolerance = 1e-12)
 
-  # Also check that passing a vector (coerced to matrix) works
-  idx <- seq_len(nrow(scn$data))
-  out1 <- .eval_batch_safe(sc, idx, scn$data, ctx) # treated as 1-col matrix
-  expect_equal(out1, rho[idx], tolerance = 1e-12)
+  # A length-s vector represents one subset, as in the scalar evaluator.
+  idx <- c(1L, 17L)
+  out1 <- score_eval_batch(sc, idx, scn$data, ctx)
+  expect_equal(out1, sum(rho[idx]), tolerance = 1e-12)
+  shape_error <- expect_error(
+    score_eval_batch(sc, seq_len(nrow(scn$data)), scn$data, ctx),
+    "must have 2 elements", class = "rdistnn_input_error"
+  )
+  expect_identical(shape_error$code, "argument_invalid")
+  expect_identical(shape_error$argument, "idxs")
 })
 
 test_that("[inputs] integer x_cols indexing works", {
@@ -169,7 +160,7 @@ test_that("[inputs] integer x_cols indexing works", {
   ctx <- score_setup(sc, scn$data)
 
   subs1 <- matrix(seq_len(nrow(scn$data)), ncol = 1L)
-  vals <- .eval_batch_safe(sc, subs1, scn$data, ctx)
+  vals <- score_eval_batch(sc, subs1, scn$data, ctx)
   expect_equal(vals, scn$data[[rho_col]], tolerance = 1e-12)
 })
 
@@ -217,33 +208,45 @@ test_that("[object] basic shape/flags", {
   rho <- scn$data[[scn$cols$rho]]
 
   sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 4L, rho = rho)
-  expect_true(inherits(sc, "ustat_score"))
+  expect_true(inherits(sc, "rdistnn_ustat_score"))
   expect_type(sc$eval, "closure")
   expect_type(sc$eval_batch, "closure")
   expect_false(isTRUE(sc$randomized))
   expect_true(isTRUE(sc$symmetric))
 })
 
-test_that("[parity] compiled batch (if actually callable) equals direct row sums", {
-  fx <- .get_cate_fx(n = 50, p = 2)
-  scn <- fx[[1L]]
-  rho_col <- scn$cols$rho
+test_that("[parity] compiled batch equals direct row sums", {
+  .test_rng_scope({
+    fx <- .get_cate_fx(n = 50, p = 2)
+    scn <- fx[[1L]]
+    rho_col <- scn$cols$rho
 
-  sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 3L, rho_col = rho_col)
-  ctx <- score_setup(sc, scn$data)
+    sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 3L, rho_col = rho_col)
+    ctx <- score_setup(sc, scn$data)
 
-  # try compiled; if the shared object isn't actually loaded, skip
-  subs <- cbind(
-    seq_len(nrow(scn$data)),
-    rev(seq_len(nrow(scn$data))),
-    sample(seq_len(nrow(scn$data)))
-  )
-  out_try <- try(score_eval_batch(sc, subs, scn$data, ctx), silent = TRUE)
-  if (inherits(out_try, "try-error")) {
-    testthat::skip("Compiled helper not available at runtime; skipping parity check.")
-  } else {
+    subs <- cbind(
+      seq_len(nrow(scn$data)),
+      rev(seq_len(nrow(scn$data))),
+      sample(seq_len(nrow(scn$data)))
+    )
+    withr::local_options(RdistNN.use_compiled = TRUE)
+    resolver <- RdistNN:::.rdistnn_compiled_fun
+    cpp <- resolver("rustat_subset_row_sums_g")
+    expect_true(is.function(cpp))
+    calls <- 0L
+    testthat::local_mocked_bindings(
+      .rdistnn_compiled_fun = function(name) {
+        if (!identical(name, "rustat_subset_row_sums_g")) return(resolver(name))
+        function(...) {
+          calls <<- calls + 1L
+          cpp(...)
+        }
+      }, .package = "RdistNN"
+    )
+    out_compiled <- score_eval_batch(sc, subs, scn$data, ctx)
+    expect_identical(calls, 1L)
     rho <- scn$data[[rho_col]]
     gR <- rowSums(matrix(rho[subs], nrow = nrow(subs), ncol = ncol(subs)))
-    expect_equal(out_try, gR, tolerance = 1e-12)
-  }
+    expect_equal(out_compiled, gR, tolerance = 1e-12)
+  }, seed = 123L)
 })

@@ -12,6 +12,7 @@
 .paper_s <- function(n, kx) as.integer(floor(0.4 * n^((kx + 1) / (kx + 2))))
 
 test_that("np_dnn default s follows the paper rule and records provenance", {
+  withr::local_preserve_seed()
   set.seed(11)
   n <- 120L
   kx <- 2L
@@ -26,6 +27,7 @@ test_that("np_dnn default s follows the paper rule and records provenance", {
 })
 
 test_that("cate_dnn default s follows the paper rule and is localized", {
+  withr::local_preserve_seed()
   set.seed(12)
   n <- 150L
   kx <- 2L
@@ -74,6 +76,7 @@ test_that("plqr_dnn and gmm_dnn default s follows the paper rule", {
 })
 
 test_that("explicit s is respected and marked manual", {
+  withr::local_preserve_seed()
   set.seed(13)
   n <- 80L
   X <- matrix(rnorm(n * 2L), n, 2L)
@@ -86,6 +89,7 @@ test_that("explicit s is respected and marked manual", {
 })
 
 test_that("degenerate (near-uniform) weights trigger a warning", {
+  withr::local_preserve_seed()
   set.seed(14)
   n <- 60L
   X <- matrix(rnorm(n * 2L), n, 2L)

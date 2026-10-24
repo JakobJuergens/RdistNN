@@ -11,70 +11,48 @@ testthat::local_edition(3)
 
 # --- helpers ---------------------------------------------------------
 
-# Safe setup that skips tests if a compiled PLQR ctx is present but not callable.
-.setup_safe <- function(sc, df) {
-  ctx_try <- try(score_setup(sc, df), silent = TRUE)
-  if (inherits(ctx_try, "try-error")) {
-    testthat::skip("Compiled PLQR context not callable in this session; skipping.")
-  }
-  ctx_try
-}
-
-# Robust batch evaluator that survives partially-linked compiled helpers.
-.eval_batch_safe <- function(sc, subs, df, ctx) {
-  out_try <- try(score_eval_batch(sc, subs, df, ctx), silent = TRUE)
-  if (!inherits(out_try, "try-error")) {
-    return(out_try)
-  }
-  subs <- if (!is.matrix(subs)) as.matrix(subs) else subs
-  if (nrow(subs) == 0L) {
-    return(numeric(0L))
-  }
-  gi <- ctx$score
-  rowSums(matrix(gi[subs], nrow = nrow(subs), ncol = ncol(subs)))
-}
-
 # Fallback mini generator in case plqr_demo_sets() is not present.
 .plqr_minigen <- function(n = 120L, p = 2L, p_d = 2L, tau = 0.5, seed = 1L) {
-  set.seed(seed)
-  X <- matrix(rnorm(n * p), n, p, dimnames = list(NULL, paste0("X", seq_len(p))))
-  colnames(X) <- paste0("X", seq_len(p))
-  # Oracle mD(X): linear in X with different loads per D-column
-  Gamma <- cbind(
-    0.6 * c(1, -1, rep(0, max(0, p - 2))),
-    0.3 * c(1, 1, rep(0, max(0, p - 2)))
-  )
-  Gamma <- Gamma[seq_len(p), seq_len(p_d), drop = FALSE]
-  mD <- X %*% Gamma
-  colnames(mD) <- paste0("mD", seq_len(p_d))
-  # D = mD + noise
-  D <- mD + matrix(rnorm(n * p_d, sd = 0.7), n, p_d)
-  colnames(D) <- paste0("D", seq_len(p_d))
-  # g_0(X)
-  g_oracle <- 0.5 * sin(X[, 1]) + if (p >= 2) 0.25 * X[, 2]^2 else 0
-  # theta and Y
-  theta_true <- rep(0.5, p_d)
-  Y <- as.vector(D %*% theta_true) + g_oracle + rnorm(n, sd = 0.6)
-  df <- data.frame(X, D, Y = Y, g_oracle = g_oracle, check.names = FALSE)
-  # Also include residual rD columns (useful in some checks)
-  for (j in seq_len(p_d)) df[[paste0("rD", j)]] <- df[[paste0("D", j)]] - mD[, j]
-  list(
-    data = df,
-    x0 = rep(0, p),
-    x_cols = paste0("X", seq_len(p)),
-    d_cols = paste0("D", seq_len(p_d)),
-    theta_true = theta_true,
-    tau = tau,
-    cols = list(
-      Y = "Y",
-      g = "g_oracle",
-      mD = paste0("mD", seq_len(p_d)),
-      rD = paste0("rD", seq_len(p_d))
-    ),
-    subs_all = matrix(seq_len(n), ncol = 1L),
-    subs_empty = matrix(integer(0), ncol = 1L),
-    subs_2col = cbind(seq_len(n), rev(seq_len(n)))
-  )
+  .test_rng_scope({
+    X <- matrix(rnorm(n * p), n, p, dimnames = list(NULL, paste0("X", seq_len(p))))
+    colnames(X) <- paste0("X", seq_len(p))
+    # Oracle mD(X): linear in X with different loads per D-column
+    Gamma <- cbind(
+      0.6 * c(1, -1, rep(0, max(0, p - 2))),
+      0.3 * c(1, 1, rep(0, max(0, p - 2)))
+    )
+    Gamma <- Gamma[seq_len(p), seq_len(p_d), drop = FALSE]
+    mD <- X %*% Gamma
+    colnames(mD) <- paste0("mD", seq_len(p_d))
+    # D = mD + noise
+    D <- mD + matrix(rnorm(n * p_d, sd = 0.7), n, p_d)
+    colnames(D) <- paste0("D", seq_len(p_d))
+    # g_0(X)
+    g_oracle <- 0.5 * sin(X[, 1]) + if (p >= 2) 0.25 * X[, 2]^2 else 0
+    # theta and Y
+    theta_true <- rep(0.5, p_d)
+    Y <- as.vector(D %*% theta_true) + g_oracle + rnorm(n, sd = 0.6)
+    df <- data.frame(X, D, Y = Y, g_oracle = g_oracle, check.names = FALSE)
+    # Also include residual rD columns (useful in some checks)
+    for (j in seq_len(p_d)) df[[paste0("rD", j)]] <- df[[paste0("D", j)]] - mD[, j]
+    list(
+      data = df,
+      x0 = rep(0, p),
+      x_cols = paste0("X", seq_len(p)),
+      d_cols = paste0("D", seq_len(p_d)),
+      theta_true = theta_true,
+      tau = tau,
+      cols = list(
+        Y = "Y",
+        g = "g_oracle",
+        mD = paste0("mD", seq_len(p_d)),
+        rD = paste0("rD", seq_len(p_d))
+      ),
+      subs_all = matrix(seq_len(n), ncol = 1L),
+      subs_empty = matrix(integer(0), ncol = 1L),
+      subs_2col = cbind(seq_len(n), rev(seq_len(n)))
+    )
+  }, seed = seed)
 }
 
 # tests/testthat/test-score-plqr.R  (replace the whole helper)
@@ -188,7 +166,7 @@ test_that("[order] reported order equals chosen s", {
     sc <- score_plqr_component(scn$x0, scn$x_cols, scn$d_cols, scn$cols$g, scn$cols$mD,
       y_col = scn$cols$Y, theta = scn$theta_true, j = 1L, tau = scn$tau, s = ss
     )
-    ctx <- .setup_safe(sc, scn$data)
+    ctx <- score_setup(sc, scn$data)
     expect_identical(sc$order(nrow(scn$data), scn$data, ctx), as.integer(ss))
   }
 })
@@ -201,10 +179,10 @@ test_that("[eval] matches direct formula for singletons (character x_cols)", {
   sc <- score_plqr_component(scn$x0, scn$x_cols, scn$d_cols, scn$cols$g, scn$cols$mD,
     y_col = scn$cols$Y, theta = scn$theta_true, j = 1L, tau = scn$tau, s = 1
   )
-  ctx <- .setup_safe(sc, df)
+  ctx <- score_setup(sc, df)
 
   subs1 <- matrix(seq_len(nrow(df)), ncol = 1L)
-  vals <- .eval_batch_safe(sc, subs1, df, ctx)
+  vals <- score_eval_batch(sc, subs1, df, ctx)
 
   Dmat <- as.matrix(df[scn$d_cols])
   thr <- as.vector(Dmat %*% scn$theta_true) + df[[scn$cols$g]]
@@ -216,7 +194,7 @@ test_that("[eval] matches direct formula for singletons (character x_cols)", {
   expect_equal(score_eval(sc, 17L, df, ctx), gR[17], tolerance = 1e-12)
 
   # Empty batch
-  expect_identical(.eval_batch_safe(sc, scn$subs_empty, df, ctx), numeric(0L))
+  expect_identical(score_eval_batch(sc, scn$subs_empty, df, ctx), numeric(0L))
 })
 
 test_that("[eval] multi-column subsets sum g across subset rows", {
@@ -227,10 +205,10 @@ test_that("[eval] multi-column subsets sum g across subset rows", {
   sc <- score_plqr_component(scn$x0, seq_along(scn$x_cols), scn$d_cols, scn$cols$g, scn$cols$mD,
     y_col = scn$cols$Y, theta = rep(0.1, length(scn$d_cols)), j = 2L, tau = scn$tau, s = 2
   )
-  ctx <- .setup_safe(sc, df)
+  ctx <- score_setup(sc, df)
 
   subs <- if (!is.null(scn$subs_2col)) scn$subs_2col else cbind(seq_len(nrow(df)), rev(seq_len(nrow(df))))
-  vals <- .eval_batch_safe(sc, subs, df, ctx)
+  vals <- score_eval_batch(sc, subs, df, ctx)
 
   # Direct row sums using the g-definition
   Dmat <- as.matrix(df[scn$d_cols])
@@ -294,8 +272,8 @@ test_that("[ratio] where rD_ij != 0, psi_i / rD_ij ∈ {tau - 1, tau}", {
   sc <- score_plqr_component(scn$x0, scn$x_cols, scn$d_cols, scn$cols$g, scn$cols$mD,
     y_col = scn$cols$Y, theta = scn$theta_true, j = 1L, tau = scn$tau, s = 1
   )
-  ctx <- .setup_safe(sc, df)
-  vals <- .eval_batch_safe(sc, matrix(seq_len(nrow(df)), ncol = 1L), df, ctx)
+  ctx <- score_setup(sc, df)
+  vals <- score_eval_batch(sc, matrix(seq_len(nrow(df)), ncol = 1L), df, ctx)
 
   rDj <- df[[scn$cols$rD[1]]]
   mask <- rDj != 0
@@ -311,34 +289,47 @@ test_that("[object] score object shape and flags", {
   sc <- score_plqr_component(scn$x0, scn$x_cols, scn$d_cols, scn$cols$g, scn$cols$mD,
     y_col = scn$cols$Y, theta = scn$theta_true, j = 1L, tau = scn$tau, s = 5L
   )
-  expect_true(inherits(sc, "ustat_score"))
+  expect_true(inherits(sc, "rdistnn_ustat_score"))
   expect_type(sc$eval, "closure")
   expect_type(sc$eval_batch, "closure")
   expect_false(isTRUE(sc$randomized))
   expect_true(isTRUE(sc$symmetric))
 })
 
-test_that("[parity] compiled batch (if actually callable) equals direct row sums", {
-  fx <- .get_plqr_fx(n = 70, p = 2, p_d = 2)
-  scn <- fx$ok_linear
+test_that("[parity] compiled batch equals direct row sums", {
+  .test_rng_scope({
+    fx <- .get_plqr_fx(n = 70, p = 2, p_d = 2)
+    scn <- fx$ok_linear
 
-  df <- scn$data
-  sc <- score_plqr_component(scn$x0, scn$x_cols, scn$d_cols, scn$cols$g, scn$cols$mD,
-    y_col = scn$cols$Y, theta = scn$theta_true, j = 2L, tau = scn$tau, s = 3
-  )
-  ctx <- .setup_safe(sc, df)
+    df <- scn$data
+    sc <- score_plqr_component(scn$x0, scn$x_cols, scn$d_cols, scn$cols$g, scn$cols$mD,
+      y_col = scn$cols$Y, theta = scn$theta_true, j = 2L, tau = scn$tau, s = 3
+    )
+    ctx <- score_setup(sc, df)
 
-  subs <- cbind(
-    seq_len(nrow(df)),
-    rev(seq_len(nrow(df))),
-    sample(seq_len(nrow(df)))
-  )
-  out_try <- try(score_eval_batch(sc, subs, df, ctx), silent = TRUE)
-  if (inherits(out_try, "try-error")) {
-    testthat::skip("Compiled helper not available at runtime; skipping parity check.")
-  } else {
+    subs <- cbind(
+      seq_len(nrow(df)),
+      rev(seq_len(nrow(df))),
+      sample(seq_len(nrow(df)))
+    )
+    withr::local_options(RdistNN.use_compiled = TRUE)
+    resolver <- RdistNN:::.rdistnn_compiled_fun
+    cpp <- resolver("rustat_subset_row_sums_g")
+    expect_true(is.function(cpp))
+    calls <- 0L
+    testthat::local_mocked_bindings(
+      .rdistnn_compiled_fun = function(name) {
+        if (!identical(name, "rustat_subset_row_sums_g")) return(resolver(name))
+        function(...) {
+          calls <<- calls + 1L
+          cpp(...)
+        }
+      }, .package = "RdistNN"
+    )
+    out_compiled <- score_eval_batch(sc, subs, df, ctx)
+    expect_identical(calls, 1L)
     # Direct row sums of the score using ctx$score (already computed by setup)
     gR <- rowSums(matrix(ctx$score[subs], nrow = nrow(subs), ncol = ncol(subs)))
-    expect_equal(out_try, gR, tolerance = 1e-12)
-  }
+    expect_equal(out_compiled, gR, tolerance = 1e-12)
+  }, seed = 123L)
 })

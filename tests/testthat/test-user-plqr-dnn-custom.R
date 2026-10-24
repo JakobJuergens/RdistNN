@@ -1,4 +1,5 @@
 test_that("custom distance works in plqr_dnn; custom rank weights evaluate in batches", {
+  withr::local_preserve_seed()
 
   set.seed(124)
   d <- .make_plqr_data(n = 40L, p = 3L, p_d = 2L, m = 4L, tau = 0.5)

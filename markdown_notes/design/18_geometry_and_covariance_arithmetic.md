@@ -80,6 +80,30 @@ formed first. Full and marginal requests use the same diagonal reduction;
 marginal prediction allocates no quadratic target matrix. Symmetrization
 preserves the diagonal and uses a guarded midpoint without doubling entries.
 
+Range protection and small cross-covariance accuracy need separate checks.
+Column normalization can erase an original small entry or product before
+restoration. For sensitive off-diagonals involving a normalized column, retain
+original-scale data and reuse the observed-origin/two-difference centering
+policy. Cache each recovered column once, then compensate its separately
+rounded products. Use that result only when the direct products, their sum
+and final scaled value are finite and every nonzero-operand product remains
+normal. Separately rounded nonzero subnormal products can cancel to a false
+zero even when the normalized cross-entry remains representable; zero-only
+underflow checks are insufficient. The normal-range boundary uses
+[R's `double.xmin`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/zMachine.html).
+Otherwise retain the normalized calculation, including aggregate subnormal
+recovery. Ordinary and marginal-only calls retain no original-data matrix or
+second product pass; exceptional full covariance uses O(n*q) extra scratch.
+
+This is an adaptive range repair, not an exact dot-product algorithm or a
+correct-rounding guarantee. [LAPACK DLASSQ](https://netlib.org/lapack/explore-html/d8/d76/group__lassq_gae8f40b0a34771b4f2d9c863de3af7be5.html)
+documents safe scaling for sums of squares; that norm contract does not certify
+every small signed covariance entry. [Ogita, Rump and Oishi (2005)](https://ogilab.w.waseda.jp/ogita/math/doc/2005_OgRuOi.pdf),
+Sections 2 and 5, separate overflow assumptions and multiplication underflow
+from accurate accumulation. The package applies that distinction through
+independent binary fixtures for erased inputs/products, centering residuals,
+exact cancellation and protected overflow, including public paired covariance.
+
 A genuinely constant column has zero variance. Nonzero variation whose final
 variance is zero, nonfinite or negative is unavailable. Ordinary covariance
 requests raise an actionable rescaling error; point-only fits remain possible.

@@ -1,6 +1,7 @@
 # tests/testthat/test-user-cate-dnn-custom.R
 
 test_that("custom distance works in cate_dnn; custom rank weights evaluate in batches", {
+  withr::local_preserve_seed()
 
   set.seed(123)
 

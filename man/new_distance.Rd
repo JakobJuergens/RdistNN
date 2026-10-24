@@ -16,7 +16,7 @@ new_distance(name, eval = NULL, eval_batch = NULL, setup = NULL)
 \item{setup}{Optional function \code{(X) -> ctx}.}
 }
 \value{
-A validated \code{dnn_distance} spec.
+A validated \code{rdistnn_distance} spec.
 }
 \description{
 Construct a distance spec

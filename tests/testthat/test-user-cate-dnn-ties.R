@@ -1,6 +1,7 @@
 # tests/testthat/test-user-cate-dnn-ties.R
 
 test_that("deterministic ties in distances lead to deterministic ordering and stable tau", {
+  withr::local_preserve_seed()
   set.seed(42)
   n <- 10L
   p <- 2L

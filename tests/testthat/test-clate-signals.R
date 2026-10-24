@@ -5,7 +5,7 @@ test_that("augmented responses match explicit formulas and share propensity", {
     (1 - a$A) / (1 - a$e) * (a$Y - a$m_y0)
   want_d <- a$m_d1 - a$m_d0 + a$A / a$e * (a$D - a$m_d1) -
     (1 - a$A) / (1 - a$e) * (a$D - a$m_d0)
-  expect_s3_class(z, "iv_signals")
+  expect_s3_class(z, "rdistnn_iv_signals")
   expect_equal(z$phi_y, want_y)
   expect_equal(z$phi_d, want_d)
   expect_identical(z$row_ids, seq_len(8L))

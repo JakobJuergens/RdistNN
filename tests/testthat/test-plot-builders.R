@@ -5,22 +5,24 @@
 .pb_np_profile_fit <- function(n = 80L, m = 6L, se = TRUE,
                                return = c("W"), seed = 51L,
                                k = 1L, s = 12L) {
-  set.seed(seed)
-  x_mat <- matrix(rnorm(n * 2L), n, 2L,
-                  dimnames = list(NULL, c("X1", "X2")))
-  y_vec <- x_mat[, 1L] + rnorm(n, sd = 0.3)
-  X0 <- cbind(seq(-1, 1, length.out = m), 0)
-  np_dnn(X = x_mat, X0 = X0, Y = y_vec, k = k, s = s,
-         se = se, return = return)
+  .test_rng_scope({
+    x_mat <- matrix(rnorm(n * 2L), n, 2L,
+                    dimnames = list(NULL, c("X1", "X2")))
+    y_vec <- x_mat[, 1L] + rnorm(n, sd = 0.3)
+    X0 <- cbind(seq(-1, 1, length.out = m), 0)
+    np_dnn(X = x_mat, X0 = X0, Y = y_vec, k = k, s = s,
+           se = se, return = return)
+  }, seed = seed)
 }
 
 .pb_cate_fit <- function(n = 80L, X0 = rbind(c(0, 0), c(1, 1), c(-1, 2)),
                          se = TRUE, seed = 52L) {
-  set.seed(seed)
-  X <- matrix(rnorm(n * 2L), n, 2L,
-              dimnames = list(NULL, c("X1", "X2")))
-  psi <- rnorm(n, mean = X[, 1L])
-  cate_dnn(X = X, X0 = X0, pseudo_outcome = psi, k = 1L, s = 12L, se = se)
+  .test_rng_scope({
+    X <- matrix(rnorm(n * 2L), n, 2L,
+                dimnames = list(NULL, c("X1", "X2")))
+    psi <- rnorm(n, mean = X[, 1L])
+    cate_dnn(X = X, X0 = X0, pseudo_outcome = psi, k = 1L, s = 12L, se = se)
+  }, seed = seed)
 }
 
 test_that("missing ggplot2 produces an actionable guard error", {
@@ -86,26 +88,28 @@ test_that("cate panels draw the zero line; small target sets go forest", {
 })
 
 test_that("shade_significant adds a rug only where CIs exclude zero", {
-  skip_if_not_installed("ggplot2")
-  set.seed(53)
-  n <- 100L
-  X <- matrix(rnorm(n * 2L), n, 2L)
-  psi <- rnorm(n, mean = 4 * X[, 1L], sd = 0.5)
-  X0 <- cbind(seq(-1.5, 1.5, length.out = 8L), 0)
-  fit <- cate_dnn(X = X, X0 = X0, pseudo_outcome = psi, k = 1L, s = 15L,
-                  se = TRUE)
+  .test_rng_scope({
+    skip_if_not_installed("ggplot2")
+    set.seed(53)
+    n <- 100L
+    X <- matrix(rnorm(n * 2L), n, 2L)
+    psi <- rnorm(n, mean = 4 * X[, 1L], sd = 0.5)
+    X0 <- cbind(seq(-1.5, 1.5, length.out = 8L), 0)
+    fit <- cate_dnn(X = X, X0 = X0, pseudo_outcome = psi, k = 1L, s = 15L,
+                    se = TRUE)
 
-  p0 <- plot_estimates(fit)
-  expect_false("GeomRug" %in% .plot_layer_geoms(p0))
-  p1 <- plot_estimates(fit, shade_significant = TRUE)
-  geoms <- .plot_layer_geoms(p1)
-  if ("GeomRug" %in% geoms) {
-    rug_layer <- p1$layers[[which(geoms == "GeomRug")[1L]]]
-    sig <- rug_layer$data
-    expect_true(all(sign(sig$ci_lower) == sign(sig$ci_upper)))
-  }
-  # Zero hline present in profile mode for cate.
-  expect_true("GeomHline" %in% geoms)
+    p0 <- plot_estimates(fit)
+    expect_false("GeomRug" %in% .plot_layer_geoms(p0))
+    p1 <- plot_estimates(fit, shade_significant = TRUE)
+    geoms <- .plot_layer_geoms(p1)
+    if ("GeomRug" %in% geoms) {
+      rug_layer <- p1$layers[[which(geoms == "GeomRug")[1L]]]
+      sig <- rug_layer$data
+      expect_true(all(sign(sig$ci_lower) == sign(sig$ci_upper)))
+    }
+    # Zero hline present in profile mode for cate.
+    expect_true("GeomHline" %in% geoms)
+  })
 })
 
 test_that("autoplot and plot methods delegate to plot_estimates", {
@@ -182,22 +186,24 @@ test_that("kernel view requires distances and marks the rank-s radius", {
 })
 
 test_that("TDNN weight panels add the zero line; many targets are subset", {
-  skip_if_not_installed("ggplot2")
-  set.seed(54)
-  n <- 70L
-  Xm <- matrix(rnorm(n * 2L), n, 2L)
-  fit_tdnn <- np_tdnn(X = Xm, x0 = c(0, 0), Y = rnorm(n),
-                      s1 = 4L, s2 = 8L, se = FALSE,
-                      return = c("W", "dx"))
-  p <- plot_weights(fit_tdnn, type = "kernel")
-  geoms <- .plot_layer_geoms(p)
-  expect_true("GeomHline" %in% geoms)
-  expect_match(p$labels$caption, "signed")
+  .test_rng_scope({
+    skip_if_not_installed("ggplot2")
+    set.seed(54)
+    n <- 70L
+    Xm <- matrix(rnorm(n * 2L), n, 2L)
+    fit_tdnn <- np_tdnn(X = Xm, x0 = c(0, 0), Y = rnorm(n),
+                        s1 = 4L, s2 = 8L, se = FALSE,
+                        return = c("W", "dx"))
+    p <- plot_weights(fit_tdnn, type = "kernel")
+    geoms <- .plot_layer_geoms(p)
+    expect_true("GeomHline" %in% geoms)
+    expect_match(p$labels$caption, "signed")
 
-  fit_many <- .pb_np_profile_fit(m = 10L, se = FALSE, return = c("W"))
-  p_many <- plot_weights(fit_many, type = "profile")
-  expect_lte(length(unique(p_many$data$target_id)), 3L)
-  p_pick <- plot_weights(fit_many, type = "profile", targets = c(2L, 4L))
-  expect_identical(sort(unique(p_pick$data$target_id)), c(2L, 4L))
-  expect_error(plot_weights(fit_many, targets = 99L), "target ids")
+    fit_many <- .pb_np_profile_fit(m = 10L, se = FALSE, return = c("W"))
+    p_many <- plot_weights(fit_many, type = "profile")
+    expect_lte(length(unique(p_many$data$target_id)), 3L)
+    p_pick <- plot_weights(fit_many, type = "profile", targets = c(2L, 4L))
+    expect_identical(sort(unique(p_pick$data$target_id)), c(2L, 4L))
+    expect_error(plot_weights(fit_many, targets = 99L), "target ids")
+  })
 })

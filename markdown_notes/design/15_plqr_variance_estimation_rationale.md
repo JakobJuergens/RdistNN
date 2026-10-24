@@ -36,8 +36,8 @@ J(bx) = sum_i w_i * q_i * tilde_D_i * D_i'        (q_i estimates the local condi
 bread/meat/bread calculation. Preserve the distinction between its
 limit-covariance scale and the estimator covariance after division by `neff`.
 
-**Consequence for the package's public API:** `confint.plqr_result()` and
-`predict.plqr_result(..., se.fit = TRUE)` only produce coefficient SEs/CIs
+**Consequence for the package's public API:** `confint.rdistnn_plqr_result()` and
+`predict.rdistnn_plqr_result(..., se.fit = TRUE)` only produce coefficient SEs/CIs
 when `density`/`density_col` was supplied at fit time, because every valid
 coefficient route needs the density-backed bread. Two meat estimators are
 supported through `plqr_dnn(theta_meat = )`:

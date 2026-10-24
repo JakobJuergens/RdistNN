@@ -1,4 +1,4 @@
-# CATE-specific diagnostics for cate_result objects.
+# CATE-specific diagnostics for rdistnn_cate_result objects.
 
 .cate_paper_diagnostics <- function(
   W, x_mat, x0_mat, signal, tau_hat, t_vec = NULL, radius_mass = 0.90
@@ -12,18 +12,27 @@
   m <- ncol(w_mat)
 
   if (nrow(x_mat) != n || ncol(x_mat) != ncol(x0_mat)) {
-    .abort_bad_state("CATE paper diagnostics require conformable X, X0, and W.")
+    .dnn_abort("internal_invariant",
+      "CATE paper diagnostics require conformable X, X0, and W.",
+      hint = "Report a reproducible example of this internal inconsistency."
+    )
   }
   if (nrow(x0_mat) == 1L && m > 1L) {
     x0_mat <- x0_mat[rep(1L, m), , drop = FALSE]
   }
   if (nrow(x0_mat) != m) {
-    .abort_bad_state("CATE paper diagnostics require one target per W column.")
+    .dnn_abort("internal_invariant",
+      "CATE paper diagnostics require one target per W column.",
+      hint = "Report a reproducible example of this internal inconsistency."
+    )
   }
   score_available <- length(signal) == n && length(tau_hat) == m
   col_sums <- colSums(w_mat)
   if (any(!is.finite(w_mat)) || any(!is.finite(col_sums)) || any(col_sums <= 0)) {
-    .abort_bad_state("CATE paper diagnostic weights must be finite with positive column sums.")
+    .dnn_abort("internal_invariant",
+      "CATE paper diagnostic weights must be finite with positive column sums.",
+      hint = "Report a reproducible example of this internal inconsistency."
+    )
   }
   physical_radius_90 <- .dnn_physical_radius(w_mat, x_mat, x0_mat, radius_mass)
   w_mat <- sweep(w_mat, 2L, col_sums, FUN = "/")
@@ -32,8 +41,7 @@
     if (is.null(t_vec)) return(rep(NA_real_, m))
     idx <- as.numeric(t_vec) == arm
     vapply(seq_len(m), function(j) {
-      w <- w_mat[idx, j]
-      if (length(w) == 0L || sum(w^2) <= 0) NA_real_ else sum(w)^2 / sum(w^2)
+      .probability_weight_ess(w_mat[idx, j])
     }, numeric(1L))
   }
 
@@ -148,7 +156,7 @@
 
 #' @name diagnostics
 #' @export
-diagnostics.cate_result <- function(object, candidates = "default", ...) {
+diagnostics.rdistnn_cate_result <- function(object, candidates = "default", ...) {
   .dnn_reuse_scope(object)
   if (!.plot_candidates_is_default(candidates)) {
     return(.dnn_candidate_diagnostics(object, candidates = candidates))
@@ -156,7 +164,7 @@ diagnostics.cate_result <- function(object, candidates = "default", ...) {
   out <- .dnn_weight_diagnostics(
     W = .dnn_diag_require_W(object),
     meta = object$meta,
-    dx = object$dx,
+    dx = .dnn_retained_matrix(object, "dx"),
     tuning_payload = .dnn_diag_tuning_payload(object)
   )
   model <- object$.model

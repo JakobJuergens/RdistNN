@@ -454,8 +454,8 @@ sim_cate_data <- function(design, n, kx = 2L, sigma = 0.5, clip = 1e-3,
     dgp6_nuisance_efficiency = .sim_dgp6(n, kx, sigma, clip, seed,
                             x0 = if (is.null(x0)) c(1, rep(0, max(0L, kx - 1L))) else x0,
                             ...),
-    stop("Unknown design: '", design,
+    .dnn_abort("argument_invalid", paste0("Unknown design: '", design,
          "'. Choose from: dgp1_linear, dgp2_nonlinear, dgp3_sparse_overlap, ",
-         "dgp4_clustered, dgp5_correlated, dgp6_nuisance_efficiency.", call. = FALSE)
+         "dgp4_clustered, dgp5_correlated, dgp6_nuisance_efficiency."), argument = "design")
   )
 }

@@ -23,7 +23,7 @@ test_that("gmm_dnn DR-IV data-frame and matrix interfaces agree", {
     return = "ess"
   )
 
-  expect_s3_class(fit_df, "gmm_result")
+  expect_s3_class(fit_df, "rdistnn_gmm_result")
   expect_equal(fit_df$theta, fit_mat$theta, tolerance = 1e-8)
   expect_equal(fit_df$se, fit_mat$se, tolerance = 1e-8)
   expect_true(is.finite(fit_df$neff[1L]))

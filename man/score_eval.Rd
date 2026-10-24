@@ -7,7 +7,7 @@
 score_eval(score, idxs, data, ctx = NULL, rng = NULL)
 }
 \arguments{
-\item{score}{ustat_score}
+\item{score}{rdistnn_ustat_score}
 
 \item{idxs}{integer vector of length \code{s}}
 

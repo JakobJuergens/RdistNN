@@ -28,7 +28,7 @@ test_that("CLATE grid mode aligns candidate schemas and retains the default resu
     skipped <- payload$estimates$status == "infeasible"
     expect_true(all(is.na(payload$estimates$estimate[skipped])))
     expect_true(all(is.na(payload$estimates$se[skipped])))
-    expect_s3_class(diagnostics(grid, candidates = "all"), "dnn_diagnostics")
+    expect_s3_class(diagnostics(grid, candidates = "all"), "rdistnn_diagnostics")
     expect_s3_class(plot_data_estimates(grid, candidates = "all"), "data.frame")
   }
 })

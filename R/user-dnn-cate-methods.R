@@ -1,8 +1,8 @@
-# Methods for cate_result objects.
+# Methods for rdistnn_cate_result objects.
 
 #' Joint jackknife covariance across CATE reporting profiles
 #'
-#' @param object A fitted `cate_result` from [cate_dnn()].
+#' @param object A fitted `rdistnn_cate_result` from [cate_dnn()].
 #' @param ... Not used.
 #' @return An `m` by `m` covariance matrix, with axes in `coef(object)` order.
 #' @details Uses common deleted observations with frozen supplied signals.
@@ -21,12 +21,12 @@
 #'   return = character())
 #' vcov(fit)
 #' @export
-vcov.cate_result <- function(object, ...) {
+vcov.rdistnn_cate_result <- function(object, ...) {
   .dnn_reuse_scope(object)
   jackknife <- object$meta$jackknife
   if (is.null(object$se) || is.null(jackknife) ||
       !(jackknife %in% c("fast", "loo"))) {
-    .abort_bad_state("Covariance is not available. Refit with `se = TRUE` and an active jackknife.")
+    .dnn_abort("extra_unavailable", "Covariance is not available. Refit with `se = TRUE` and an active jackknife.")
   }
   model <- .cate_validate_prediction_model(object$.model)
   required <- if (identical(jackknife, "loo")) {
@@ -35,7 +35,7 @@ vcov.cate_result <- function(object, ...) {
     c("distance", "ctx")
   }
   if (!all(required %in% names(model))) {
-    .abort_bad_state("This object lacks fitted geometry for covariance. Refit with the current cate_dnn().")
+    .dnn_abort("state_invalid", "This object lacks fitted geometry for covariance. Refit with the current cate_dnn().")
   }
   x0_mat <- .dnn_resolve_targets(model$x_mat, X0 = object$x0)
   loo <- .dnn_jackknife_loo_array(
@@ -53,13 +53,13 @@ vcov.cate_result <- function(object, ...) {
   V
 }
 
-#' Summarize a `cate_result` object
+#' Summarize a `rdistnn_cate_result` object
 #'
-#' @param object A `cate_result` object from [cate_dnn()].
+#' @param object A `rdistnn_cate_result` object from [cate_dnn()].
 #' @param level Confidence level used for interval columns.
 #' @param ... Not used.
 #'
-#' @return An object of class `summary.cate_result` with a coefficient table
+#' @return An object of class `rdistnn_summary_cate_result` with a coefficient table
 #'   and `meta`, including the original fit's signal provenance and creation
 #'   version.
 #' @examples
@@ -69,7 +69,7 @@ vcov.cate_result <- function(object, ...) {
 #' out <- cate_dnn(X = x_mat, x0 = c(0, 0), pseudo_outcome = rnorm(n))
 #' summary(out)
 #' @export
-summary.cate_result <- function(object, level = 0.95, ...) {
+summary.rdistnn_cate_result <- function(object, level = 0.95, ...) {
   .dnn_check_report_state(object)
   if (!is.numeric(level) || length(level) != 1L || !is.finite(level) || level <= 0 || level >= 1) {
     .abort_bad_arg("level", "must be a numeric scalar in (0,1)")
@@ -107,22 +107,22 @@ summary.cate_result <- function(object, level = 0.95, ...) {
     has_se = has_se,
     meta = .cate_result_meta(object$meta)
   )
-  class(out) <- "summary.cate_result"
+  class(out) <- "rdistnn_summary_cate_result"
   out
 }
 
-#' Print a `summary.cate_result` object
+#' Print a `rdistnn_summary_cate_result` object
 #'
-#' @param x A `summary.cate_result` object.
+#' @param x A `rdistnn_summary_cate_result` object.
 #' @param digits Number of significant digits for printing.
 #' @param ... Not used.
 #'
 #' @return `x`, invisibly.
 #' @export
-print.summary.cate_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
+print.rdistnn_summary_cate_result <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
   .dnn_check_tie_policy(x$meta$tie_rule)
   meta <- .cate_result_meta(x$meta)
-  cat("<summary.cate_result>\n", sep = "")
+  cat("<rdistnn_summary_cate_result>\n", sep = "")
   cat("  signal: ", meta$signal_source, "\n", sep = "")
   .dnn_print_localization(x$meta)
   cat("  targets: ", nrow(x$coefficients), "\n", sep = "")
@@ -133,9 +133,9 @@ print.summary.cate_result <- function(x, digits = max(3L, getOption("digits") - 
   invisible(x)
 }
 
-#' Confidence intervals for `cate_result`
+#' Confidence intervals for `rdistnn_cate_result`
 #'
-#' @param object A `cate_result` object from [cate_dnn()].
+#' @param object A `rdistnn_cate_result` object from [cate_dnn()].
 #' @param parm Optional integer vector selecting target indices.
 #' @param level Confidence level.
 #' @param ... Not used.
@@ -148,13 +148,13 @@ print.summary.cate_result <- function(x, digits = max(3L, getOption("digits") - 
 #' out <- cate_dnn(X = x_mat, x0 = c(0, 0), pseudo_outcome = rnorm(n), se = TRUE)
 #' confint(out)
 #' @export
-confint.cate_result <- function(object, parm = NULL, level = 0.95, ...) {
+confint.rdistnn_cate_result <- function(object, parm = NULL, level = 0.95, ...) {
   .dnn_check_report_state(object)
   if (!is.numeric(level) || length(level) != 1L || !is.finite(level) || level <= 0 || level >= 1) {
     .abort_bad_arg("level", "must be a numeric scalar in (0,1)")
   }
   if (is.null(object$se)) {
-    .abort_bad_state("Standard errors are not available. Refit with `se = TRUE`.")
+    .dnn_abort("extra_unavailable", "Standard errors are not available. Refit with `se = TRUE`.")
   }
 
   m <- length(object$tau)
@@ -180,7 +180,7 @@ confint.cate_result <- function(object, parm = NULL, level = 0.95, ...) {
   ci
 }
 
-#' Predict from a `cate_result` object at new targets
+#' Predict from a `rdistnn_cate_result` object at new targets
 #'
 #' Uses retained observations, supplied signals and fitted geometry, including
 #' after serialization and without optional `return` extras. Prediction
@@ -190,7 +190,7 @@ confint.cate_result <- function(object, parm = NULL, level = 0.95, ...) {
 #' Prediction localizes the retained signal without establishing new
 #' inferential guarantees.
 #'
-#' @param object A `cate_result` object from [cate_dnn()].
+#' @param object A `rdistnn_cate_result` object from [cate_dnn()].
 #' @param newdata Optional matrix/data frame of target covariates.
 #' @param X0 Optional numeric matrix of targets (rows).
 #' @param x0 Optional numeric vector for a single target.
@@ -210,7 +210,7 @@ confint.cate_result <- function(object, parm = NULL, level = 0.95, ...) {
 #' fit <- cate_dnn(X = x_mat, x0 = c(0, 0), pseudo_outcome = rnorm(n), se = TRUE)
 #' predict(fit, x0 = c(0.2, -0.1))
 #' @export
-predict.cate_result <- function(
+predict.rdistnn_cate_result <- function(
     object,
     newdata = NULL,
     X0 = NULL,
@@ -220,7 +220,7 @@ predict.cate_result <- function(
     level = 0.95,
     ...) {
   .dnn_reuse_scope(object, groups = NULL)
-  interval <- match.arg(interval)
+  interval <- .dnn_match_arg(interval)
   if (!is.numeric(level) || length(level) != 1L || !is.finite(level) || level <= 0 || level >= 1) {
     .abort_bad_arg("level", "must be a numeric scalar in (0,1)")
   }
@@ -294,19 +294,19 @@ predict.cate_result <- function(
   list(fit = pred_mat, se.fit = se_hat)
 }
 
-#' Extract coefficients from a `cate_result`
+#' Extract coefficients from a `rdistnn_cate_result`
 #'
-#' @param object A `cate_result` object.
+#' @param object A `rdistnn_cate_result` object.
 #' @param ... Not used.
 #' @return Named numeric vector of point estimates (`object$tau`), one entry
 #'   per target point.
 #' @export
-coef.cate_result <- function(object, ...) {
+coef.rdistnn_cate_result <- function(object, ...) {
   .dnn_check_report_state(object)
   stats::setNames(as.numeric(object$tau), paste0("target_", seq_along(object$tau)))
 }
 
-#' Print a `cate_result` object
+#' Print a `rdistnn_cate_result` object
 #'
 #' @param x An object returned by [cate_dnn()].
 #' @param ... Not used.
@@ -323,10 +323,10 @@ coef.cate_result <- function(object, ...) {
 #' )
 #' print(out)
 #' @export
-print.cate_result <- function(x, ...) {
+print.rdistnn_cate_result <- function(x, ...) {
   .dnn_check_report_state(x)
   meta <- .cate_result_meta(x$meta)
-  cat("<cate_result>\n", sep = "")
+  cat("<rdistnn_cate_result>\n", sep = "")
   cat("  signal: ", meta$signal_source, "\n", sep = "")
   .dnn_print_localization(x$meta)
   cat("  data  : n=", x$meta$n, ", p=", x$meta$p, ", m=", x$meta$m, "\n", sep = "")

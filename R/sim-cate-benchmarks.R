@@ -133,17 +133,17 @@
     }
     unknown <- setdiff(names(diagnostics), diagnostic_names)
     if (length(unknown) > 0L) {
-      .abort_bad_state(sprintf(
+      .dnn_abort("internal_invariant", sprintf(
         "Simulation diagnostics contain unknown column(s): %s.",
         paste(unknown, collapse = ", ")
-      ))
+      ), hint = "Report a reproducible example of this internal inconsistency.")
     }
     if (!nrow(diagnostics) %in% c(1L, n_out)) {
-      .abort_bad_state(sprintf(
+      .dnn_abort("internal_invariant", sprintf(
         "Simulation diagnostics must have one row or %d rows; got %d.",
         n_out,
         nrow(diagnostics)
-      ))
+      ), hint = "Report a reproducible example of this internal inconsistency.")
     }
     for (name in names(diagnostics)) {
       out[[name]] <- as.numeric(.sim_recycle(diagnostics[[name]], n_out))
@@ -167,14 +167,20 @@
   n <- nrow(W)
   m <- ncol(W)
   if (length(signal) != n || nrow(dgp$data) != n) {
-    .abort_bad_state("Simulation diagnostic inputs must share the DGP row count.")
+    .dnn_abort("internal_invariant",
+      "Simulation diagnostic inputs must share the DGP row count.",
+      hint = "Report a reproducible example of this internal inconsistency."
+    )
   }
   tau_hat <- .sim_recycle(tau_hat, m)
   se_hat <- .sim_recycle(se_hat, m)
   neff <- .sim_recycle(neff, m)
   col_sums <- colSums(W)
   if (any(!is.finite(W)) || any(!is.finite(col_sums)) || any(col_sums <= 0)) {
-    .abort_bad_state("Simulation diagnostic weights must be finite with positive column sums.")
+    .dnn_abort("internal_invariant",
+      "Simulation diagnostic weights must be finite with positive column sums.",
+      hint = "Report a reproducible example of this internal inconsistency."
+    )
   }
   W <- sweep(W, 2L, col_sums, FUN = "/")
 
@@ -361,10 +367,10 @@
   m_fmla <- stats::as.formula(paste("Y ~", paste(x_cols, collapse = " + ")))
   train_dat <- dat[train & dat$D == arm, , drop = FALSE]
   if (nrow(train_dat) == 0L) {
-    .abort_bad_state(sprintf(
+    .dnn_abort("argument_invalid", sprintf(
       "Cannot fit AIPW outcome nuisance: no D=%d observations in training sample.",
       arm
-    ))
+    ), argument = "data")
   }
   fit <- stats::lm(m_fmla, data = train_dat)
   as.numeric(stats::predict(fit, newdata = dat))
@@ -782,8 +788,8 @@
 .get_sim_method <- function(name) {
   fn <- .SIM_CATE_METHODS[[name]]
   if (is.null(fn))
-    stop("Unknown simulation method: '", name, "'.  ",
-         "Use sim_cate_methods() to see available methods.", call. = FALSE)
+    .dnn_abort("argument_invalid", paste0("Unknown simulation method: '", name, "'.  ",
+         "Use sim_cate_methods() to see available methods."), argument = "name")
   fn
 }
 

@@ -4,24 +4,24 @@
 %   R/user-dnn-plqr-diagnostics.R
 \name{diagnostics}
 \alias{diagnostics}
-\alias{diagnostics.cate_result}
+\alias{diagnostics.rdistnn_cate_result}
 \alias{diagnostics.default}
-\alias{print.dnn_diagnostics}
-\alias{diagnostics.np_result}
-\alias{diagnostics.plqr_result}
+\alias{print.rdistnn_diagnostics}
+\alias{diagnostics.rdistnn_np_result}
+\alias{diagnostics.rdistnn_plqr_result}
 \title{Compute diagnostics for fitted localized estimators}
 \usage{
-\method{diagnostics}{cate_result}(object, candidates = "default", ...)
+\method{diagnostics}{rdistnn_cate_result}(object, candidates = "default", ...)
 
 diagnostics(object, candidates = "default", ...)
 
 \method{diagnostics}{default}(object, candidates = "default", ...)
 
-\method{print}{dnn_diagnostics}(x, ...)
+\method{print}{rdistnn_diagnostics}(x, ...)
 
-\method{diagnostics}{np_result}(object, candidates = "default", ...)
+\method{diagnostics}{rdistnn_np_result}(object, candidates = "default", ...)
 
-\method{diagnostics}{plqr_result}(object, candidates = "default", ...)
+\method{diagnostics}{rdistnn_plqr_result}(object, candidates = "default", ...)
 }
 \arguments{
 \item{object}{A fitted object from \code{\link[=np_dnn]{np_dnn()}}, \code{\link[=np_tdnn]{np_tdnn()}}, \code{\link[=cate_dnn]{cate_dnn()}},
@@ -41,10 +41,10 @@ across targets; \code{degenerate} is true if any target reaches
 
 \item{...}{Not used.}
 
-\item{x}{A \code{dnn_diagnostics} object.}
+\item{x}{A \code{rdistnn_diagnostics} object.}
 }
 \value{
-An object of class \code{dnn_diagnostics}.
+An object of class \code{rdistnn_diagnostics}.
 
 \code{x}, invisibly.
 }
@@ -60,6 +60,12 @@ and concentration use the final averaged weights and can vary by target.
 See \code{\link[=weights_matrix]{weights_matrix()}} for the averaging rule and its theory warning.
 }
 \details{
+CATE \code{treated_ess} and \code{control_ess} measure concentration after normalizing
+weights within each treatment arm. A single positive-weight observation gives
+arm ESS one, even when its arm's total weight is tiny. Zero arm weight gives
+\code{NA}. Inspect \code{treated_mass} and \code{control_mass} alongside arm ESS when judging
+local treatment support.
+
 PLQR fits additionally report residualized-design Gram conditioning
 (\code{gram_min_eig}, \code{gram_condition_number}) and, when direct-sandwich
 coefficient inference is available, target-level Jacobian conditioning:
@@ -74,7 +80,7 @@ Jacobian block.
 }
 \section{Experimental methods}{
 
-Methods for \code{plqr_result} objects are experimental, as is all PLQR
+Methods for \code{rdistnn_plqr_result} objects are experimental, as is all PLQR
 functionality in this release; see \code{\link[=plqr_dnn]{plqr_dnn()}}.
 }
 

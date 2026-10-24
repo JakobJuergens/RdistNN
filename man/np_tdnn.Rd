@@ -77,7 +77,7 @@ The \code{neighbors} extra returns the nearest observation for each target; it
 is not the TDNN signed weight support.}
 }
 \value{
-An object of class \code{tdnn_np_result} with components:
+An object of class \code{rdistnn_tdnn_np_result} with components:
 \itemize{
 \item \code{mu}: estimated local mean values at target points;
 \item \code{se}: optional jackknife standard errors;
@@ -147,6 +147,6 @@ out <- np_tdnn(
 out$mu
 }
 \seealso{
-\code{\link[=weights_tdnn]{weights_tdnn()}}, \code{\link[=np_dnn]{np_dnn()}}, \code{\link[=np_demo_data]{np_demo_data()}}, \link{np_result} for
+\code{\link[=weights_tdnn]{weights_tdnn()}}, \code{\link[=np_dnn]{np_dnn()}}, \code{\link[=np_demo_data]{np_demo_data()}}, \link{rdistnn_np_result} for
 inherited summary, covariance, confidence interval and prediction methods.
 }

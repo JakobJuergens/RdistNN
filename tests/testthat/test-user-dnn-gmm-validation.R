@@ -52,6 +52,7 @@ test_that("gmm_dnn validates user-facing interface controls", {
 })
 
 test_that("gmm_dnn validates malformed model moment outputs before target fitting", {
+  withr::local_preserve_seed()
   set.seed(32L)
   n <- 35L
   df <- data.frame(
@@ -148,143 +149,51 @@ test_that("gmm_dnn validates malformed model moment outputs before target fittin
   )
 })
 
-test_that("gmm_dnn reports malformed analytic Jacobian outputs per target", {
-  set.seed(33L)
-  n <- 36L
-  df <- data.frame(
-    X1 = rnorm(n),
-    X2 = rnorm(n),
-    Y = rnorm(n)
-  )
+test_that("gmm_dnn rejects malformed analytic Jacobians with callback conditions", {
+  n <- 8L
+  df <- data.frame(X = seq_len(n), Y = c(1, 3, 2, 5, 4, 7, 6, 8))
+  model <- new_gmm_model("jacobian_contract",
+    setup = function(sample, n, ...) list(y = sample$Y),
+    moment_obs = function(sample, theta, ctx) ctx$y - theta[1L],
+    coef_names = "theta", moment_names = "mean")
+  fit_model <- function(model) gmm_dnn(data = df, x_cols = "X", x0 = 1.25,
+    model = model, s = 3L, se = FALSE, jacobian = "analytic", return = "jacobian")
 
-  make_model <- function(jacobian_obs = NULL) {
-    new_gmm_model(
-      name = "jacobian_contract",
-      setup = function(sample, n, ...) list(y = sample$Y),
-      moment_obs = function(sample, theta, ctx) matrix(ctx$y - theta[1L], ncol = 1L),
-      jacobian_obs = jacobian_obs,
-      start = function(sample, ctx, w, x0) sum(w * ctx$y),
-      coef_names = "theta",
-      moment_names = "mean"
-    )
+  failure <- tryCatch(fit_model(model), error = identity)
+  expect_s3_class(failure, "rdistnn_input_error")
+  expect_identical(failure$argument, "jacobian")
+  expect_match(conditionMessage(failure), "analytic.*jacobian_obs")
+
+  callbacks <- list(
+    shape = function(sample, theta, ctx) matrix(-1, nrow(sample), 2L),
+    type = function(sample, theta, ctx) matrix("bad", nrow(sample), 1L),
+    values = function(sample, theta, ctx) c(NaN, rep(-1, nrow(sample) - 1L)))
+  messages <- c(shape = "n x q matrix", type = "numeric", values = "non-finite")
+  for (name in names(callbacks)) {
+    model$jacobian_obs <- callbacks[[name]]
+    failure <- tryCatch(fit_model(model), error = identity)
+    expect_s3_class(failure, "rdistnn_callback_error")
+    expect_identical(failure$code, "callback_invalid")
+    expect_identical(failure$argument, "model$jacobian_obs()")
+    expect_match(conditionMessage(failure), messages[[name]])
   }
-
-  fit_missing <- NULL
-  expect_warning(
-    fit_missing <- gmm_dnn(
-      data = df,
-      x_cols = c("X1", "X2"),
-      x0 = c(0, 0),
-      model = make_model(),
-      k = 1L,
-      s = 6L,
-      se = FALSE,
-      jacobian = "analytic",
-      return = "jacobian"
-    ),
-    "analytic.*jacobian_obs",
-    ignore.case = TRUE
-  )
-  expect_equal(fit_missing$convergence$message, "target failed")
-  expect_true(all(is.na(fit_missing$theta)))
-
-  fit_bad_shape <- NULL
-  expect_warning(
-    fit_bad_shape <- gmm_dnn(
-      data = df,
-      x_cols = c("X1", "X2"),
-      x0 = c(0, 0),
-      model = make_model(function(sample, theta, ctx) matrix(-1, nrow = nrow(sample), ncol = 2L)),
-      k = 1L,
-      s = 6L,
-      se = FALSE,
-      jacobian = "analytic",
-      return = "jacobian"
-    ),
-    "n x q matrix",
-    ignore.case = TRUE
-  )
-  expect_equal(fit_bad_shape$convergence$message, "target failed")
-  expect_true(all(is.na(fit_bad_shape$theta)))
-
-  fit_bad_type <- NULL
-  expect_warning(
-    fit_bad_type <- gmm_dnn(
-      data = df,
-      x_cols = c("X1", "X2"),
-      x0 = c(0, 0),
-      model = make_model(function(sample, theta, ctx) matrix("bad", nrow = nrow(sample), ncol = 1L)),
-      k = 1L,
-      s = 6L,
-      se = FALSE,
-      jacobian = "analytic",
-      return = "jacobian"
-    ),
-    "model\\$jacobian_obs\\(\\).*numeric",
-    ignore.case = TRUE
-  )
-  expect_equal(fit_bad_type$convergence$message, "target failed")
-  expect_true(all(is.na(fit_bad_type$theta)))
-
-  fit_bad_values <- NULL
-  expect_warning(
-    fit_bad_values <- gmm_dnn(
-      data = df,
-      x_cols = c("X1", "X2"),
-      x0 = c(0, 0),
-      model = make_model(function(sample, theta, ctx) {
-        out <- matrix(-1, nrow = nrow(sample), ncol = 1L)
-        out[1L, 1L] <- NaN
-        out
-      }),
-      k = 1L,
-      s = 6L,
-      se = FALSE,
-      jacobian = "analytic",
-      return = "jacobian"
-    ),
-    "model\\$jacobian_obs\\(\\).*non-finite",
-    ignore.case = TRUE
-  )
-  expect_equal(fit_bad_values$convergence$message, "target failed")
-  expect_true(all(is.na(fit_bad_values$theta)))
 })
 
-test_that("gmm_dnn reports invalid model-generated starts per target", {
-  set.seed(29L)
-  n <- 40L
-  df <- data.frame(
-    X1 = rnorm(n),
-    X2 = rnorm(n),
-    Y = rnorm(n)
-  )
-  bad_start_model <- new_gmm_model(
-    name = "bad_start",
-    setup = function(sample, n, ...) list(y = sample$Y),
-    moment_obs = function(sample, theta, ctx) matrix(ctx$y - theta[1L], ncol = 1L),
-    start = function(sample, ctx, w, x0) "0",
-    coef_names = "theta",
-    moment_names = "mean"
-  )
-
-  fit <- NULL
-  expect_warning(
-    fit <- gmm_dnn(
-      data = df,
-      x_cols = c("X1", "X2"),
-      x0 = c(0, 0),
-      model = bad_start_model,
-      k = 1L,
-      s = 6L,
-      se = FALSE
-    ),
-    "model\\$start\\(\\).*numeric"
-  )
-  expect_true(all(is.na(fit$theta)))
-  expect_equal(fit$convergence$message, "target failed")
+test_that("gmm_dnn rejects invalid model-generated starts as callback failures", {
+  model <- new_gmm_model("bad_start",
+    setup = function(sample, n, ...) list(),
+    moment_obs = function(sample, theta, ctx) rep(theta[1L], nrow(sample)),
+    start = function(sample, ctx, w, x0) "0", coef_names = "theta")
+  failure <- tryCatch(gmm_dnn(X = matrix(seq_len(8L)), x0 = 1.25,
+    model = model, s = 3L, se = FALSE), error = identity)
+  expect_s3_class(failure, "rdistnn_callback_error")
+  expect_identical(failure$code, "callback_invalid")
+  expect_identical(failure$argument, "model$start()")
+  expect_match(conditionMessage(failure), "numeric")
 })
 
 test_that("gmm_dnn detects model moment-name mismatches", {
+  withr::local_seed(123L)
   bad_model <- new_gmm_model(
     name = "bad_names",
     setup = function(sample, n, ...) list(y = sample$Y),

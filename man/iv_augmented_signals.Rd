@@ -47,7 +47,7 @@ misordered prediction arrays.}
 full_sample, oob or cross_fit. It is not verified from predictions.}
 }
 \value{
-An iv_signals list with phi_y, phi_d, row_ids,
+An rdistnn_iv_signals list with phi_y, phi_d, row_ids,
 propensity (raw, used, clipped), nuisance
 (m_y0, m_y1, m_d0, m_d1) and meta.
 }

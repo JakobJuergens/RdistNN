@@ -12,7 +12,7 @@
   )
 }
 
-test_that("diagnostics(np_result) includes tuning metadata summary", {
+test_that("diagnostics(rdistnn_np_result) includes tuning metadata summary", {
   .test_rng_scope({
     demo <- np_demo_data(n = 80L, p = 2L, seed = 19L)
     x_mat <- as.matrix(demo$data[, c("X1", "X2")])
@@ -44,14 +44,14 @@ test_that("candidate grid diagnostics are available without retained default W",
     x0_mat <- matrix(rnorm(m * p), m, p)
     y_vec <- x_mat[, 1L] - 0.25 * x_mat[, 2L] + rnorm(n, sd = 0.2)
 
-    fit <- suppressWarnings(np_dnn(
+    fit <- .with_test_warning_families(np_dnn(
       X = x_mat, X0 = x0_mat, Y = y_vec,
       method = "exact", k = 2L,
       tuning = .diag_grid_tuning(default_s = 4L, s_grid = c(1L, 4L, 6L)),
       tuning_mode = "grid",
       se = TRUE, jackknife = "fast",
       return = character(0)
-    ))
+    ), "infeasible_candidates")
 
     expect_false("W" %in% names(fit))
     expect_error(
@@ -60,7 +60,7 @@ test_that("candidate grid diagnostics are available without retained default W",
     )
 
     d_all <- diagnostics(fit, candidates = "all")
-    expect_s3_class(d_all, "dnn_diagnostics")
+    expect_s3_class(d_all, "rdistnn_diagnostics")
     expect_equal(d_all$candidate_id, fit$tuning_grid$candidates$candidate_id)
     expect_equal(d_all$status, fit$tuning_grid$candidates$status)
     expect_true(all(c("candidate_id", "n_eff", "max_weight", "top5_weight_share") %in% names(d_all)))
@@ -78,14 +78,14 @@ test_that("candidate grid diagnostics validate selections and stale grid rows", 
     x0_mat <- matrix(rnorm(m * p), m, p)
     y_vec <- x_mat[, 1L] - 0.25 * x_mat[, 2L] + rnorm(n, sd = 0.2)
 
-    fit <- suppressWarnings(np_dnn(
+    fit <- .with_test_warning_families(np_dnn(
       X = x_mat, X0 = x0_mat, Y = y_vec,
       method = "exact", k = 2L,
       tuning = .diag_grid_tuning(default_s = 4L, s_grid = c(1L, 4L, 6L)),
       tuning_mode = "grid",
       se = TRUE, jackknife = "fast",
       return = character(0)
-    ))
+    ), "infeasible_candidates")
     ok_id <- fit$tuning_grid$candidates$candidate_id[
       fit$tuning_grid$candidates$status == "ok"
     ][[1L]]
@@ -109,11 +109,6 @@ test_that("candidate grid diagnostics validate selections and stale grid rows", 
       ,
       drop = FALSE
     ]
-    expect_error(
-      diagnostics(missing_row, candidates = ok_id),
-      "missing row\\(s\\) for selected candidate"
-    )
-
     duplicate_row <- fit
     duplicate_row$tuning_grid$diagnostics <- rbind(
       duplicate_row$tuning_grid$diagnostics,
@@ -123,16 +118,13 @@ test_that("candidate grid diagnostics validate selections and stale grid rows", 
         drop = FALSE
       ]
     )
-    expect_error(
-      diagnostics(duplicate_row, candidates = ok_id),
-      "duplicate candidate row"
-    )
-
     missing_top_share <- fit
     missing_top_share$tuning_grid$diagnostics$top5_weight_share <- NULL
-    expect_error(
-      diagnostics(missing_top_share, candidates = ok_id),
-      "top5_weight_share"
-    )
+    for (bad in list(missing_row, duplicate_row, missing_top_share)) {
+      err <- tryCatch(diagnostics(bad, candidates = ok_id), error = identity)
+      expect_s3_class(err, "rdistnn_state_error")
+      expect_identical(err$code, "state_invalid")
+      if (inherits(err, "condition")) expect_match(conditionMessage(err), "[Rr]efit")
+    }
   }, seed = 777L)
 })

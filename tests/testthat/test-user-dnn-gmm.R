@@ -1,5 +1,6 @@
 # GMM estimator identities, Jacobian equivalence, and return shapes.
 test_that("gmm_dnn handles multi-parameter models and 3D analytic Jacobians", {
+  withr::local_preserve_seed()
   set.seed(25L)
   n <- 90L
   X <- matrix(rnorm(n * 2L), n, 2L)

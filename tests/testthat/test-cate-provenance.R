@@ -118,8 +118,12 @@ test_that("current CATE fits preserve prediction shapes and serialized state", {
     }
     .expect_identical_fast(restored, before)
     restored$.model <- NULL
-    expect_error(predict(restored, x0 = 0), "localization model state.*[Rr]efit")
-    expect_error(vcov(restored), "localization model state.*[Rr]efit")
+    for (consume in list(function(x) predict(x, x0 = 0), vcov)) {
+      error <- expect_error(consume(restored), class = "rdistnn_state_error")
+      expect_identical(error$code, "state_invalid")
+      expect_match(error$argument, "object$.model", fixed = TRUE)
+      expect_match(conditionMessage(error), "[Rr]efit")
+    }
   }
 })
 
@@ -139,4 +143,33 @@ test_that("CATE reporting requires current provenance metadata", {
     expect_error(print(bad), "metadata.*[Rr]efit")
   }
   })
+})
+
+test_that("CATE provenance requires exact and unique current metadata keys", {
+  d <- .cate_provenance_case()
+  tuning <- new_tuning("exact_provenance", eval = function(...) list(s = 3L),
+    eval_grid = function(...) data.frame(s = c(2L, 3L)))
+  for (source in c("aipw", "supplied")) {
+    fit <- .cate_provenance_fit(d, X0 = matrix(c(-.3, .4), ncol = 1L),
+      tuning = tuning, tuning_mode = "grid",
+      pseudo_outcome = if (source == "supplied") d$y else NULL)
+    for (field in c("signal_source", "created_with_version")) {
+      for (corruption in c("prefix", "duplicate")) {
+        bad <- unserialize(serialize(fit, NULL))
+        if (corruption == "prefix") {
+          names(bad$meta)[names(bad$meta) == field] <- paste0(field, "_backup")
+        } else {
+          bad$meta <- c(bad$meta, stats::setNames(list(bad$meta[[field]]), field))
+        }
+        for (consume in list(coef, summary, function(x) capture.output(print(x)),
+            function(x) predict(x, x0 = .2), function(x) candidate_fit(x, 1L))) {
+          error <- expect_error(consume(bad), class = "rdistnn_state_error")
+          if (inherits(error, "condition")) {
+            expect_identical(error$code, "state_invalid")
+            expect_match(conditionMessage(error), "metadata.*[Rr]efit")
+          }
+        }
+      }
+    }
+  }
 })

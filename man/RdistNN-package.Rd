@@ -14,10 +14,10 @@ standard errors. Nuisance predictions for causal estimators are supplied
 externally; the documented inference conditions remain estimator-specific.
 The underlying toolkit combines:
 \itemize{
-\item distance specifications (\code{dnn_distance}) for ranking observations around a
+\item distance specifications (\code{rdistnn_distance}) for ranking observations around a
 target;
-\item rank-weight specifications (\code{rank_weight}) for converting ranks to weights;
-\item score objects (\code{ustat_score}) for flexible kernel-based moment evaluation.
+\item rank-weight specifications (\code{rdistnn_rank_weight}) for converting ranks to weights;
+\item score objects (\code{rdistnn_ustat_score}) for flexible kernel-based moment evaluation.
 }
 }
 \section{Main User Workflows}{
@@ -28,13 +28,13 @@ target;
 \item Resolve paper-default kernel orders with \code{\link[=tuning_dnn_paper]{tuning_dnn_paper()}} and
 \code{\link[=tuning_eval]{tuning_eval()}}.
 \item Estimate local CATE targets with \code{\link[=cate_dnn]{cate_dnn()}}.
-\item Report and reuse CATE fits with \code{\link[=summary.cate_result]{summary.cate_result()}},
-\code{\link[=confint.cate_result]{confint.cate_result()}}, \code{\link[=vcov.cate_result]{vcov.cate_result()}} and \code{\link[=predict.cate_result]{predict.cate_result()}}.
+\item Report and reuse CATE fits with \code{\link[=summary.rdistnn_cate_result]{summary.rdistnn_cate_result()}},
+\code{\link[=confint.rdistnn_cate_result]{confint.rdistnn_cate_result()}}, \code{\link[=vcov.rdistnn_cate_result]{vcov.rdistnn_cate_result()}} and \code{\link[=predict.rdistnn_cate_result]{predict.rdistnn_cate_result()}}.
 \item Estimate local nonparametric means with \code{\link[=np_dnn]{np_dnn()}}.
 \item Use two-scale signed-weight regression with \code{\link[=np_tdnn]{np_tdnn()}}; see its help for
 order constraints and additional smoothness requirements.
 Both regression classes share reporting, joint covariance and prediction
-methods documented in \link{np_result}.
+methods documented in \link{rdistnn_np_result}.
 \item Estimate conditional LATE from supplied nuisance predictions with
 \code{\link[=clate_dnn]{clate_dnn()}}, or localize two supplied signals with \code{\link[=affine_ratio_dnn]{affine_ratio_dnn()}}.
 \code{\link[=iv_augmented_signals]{iv_augmented_signals()}} constructs the augmented binary-IV signals.
@@ -77,6 +77,9 @@ remains experimental and provides separate set-valued moment inversion.
 
 \section{Random numbers}{
 
+Built-in distance, rank-weight and accumulation routines preserve the caller's
+RNG state in both R and compiled execution, including leaving \code{.Random.seed}
+absent when it was absent. These deterministic calculations need no seed.
 Explicit demo and simulation seeds restore \code{.Random.seed} and \code{\link[=RNGkind]{RNGkind()}};
 \code{NULL} uses the current stream. R's saved state does not include the hidden
 Box-Muller normal cache; use the default normal generator for saved-state
@@ -84,6 +87,14 @@ reproducibility.
 }
 
 \section{Native threads}{
+
+Eligible built-in calculations use C++ automatically when the corresponding
+native routine is available. For engine comparisons or troubleshooting, set
+\code{options(RdistNN.use_compiled = FALSE)} to select the package's R paths;
+\code{TRUE} restores automatic native dispatch. Source installation still requires
+a C++17 compiler. Native execution errors propagate rather than triggering an
+automatic retry in R. During long native calculations, interruption can be
+delayed until control returns to R.
 
 Compiled routines use at most two OpenMP threads by default. Set
 \code{options(RdistNN.num_threads = 1L)} for one native thread, or supply a larger
@@ -118,7 +129,7 @@ the accompanying \href{https://jakobjuergens.com/research/#orthogonal-inference-
 
 \seealso{
 \code{\link[=weights_dnn]{weights_dnn()}}, \code{\link[=cate_dnn]{cate_dnn()}}, \code{\link[=np_dnn]{np_dnn()}}, \code{\link[=plqr_dnn]{plqr_dnn()}},
-\code{\link[=diagnostics]{diagnostics()}}, \code{\link[=summary.cate_result]{summary.cate_result()}}, \code{\link[=predict.cate_result]{predict.cate_result()}},
+\code{\link[=diagnostics]{diagnostics()}}, \code{\link[=summary.rdistnn_cate_result]{summary.rdistnn_cate_result()}}, \code{\link[=predict.rdistnn_cate_result]{predict.rdistnn_cate_result()}},
 \code{\link[=new_score]{new_score()}}, \code{\link[=distance_l2]{distance_l2()}}
 }
 \author{

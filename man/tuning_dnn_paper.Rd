@@ -21,7 +21,7 @@ tuning_dnn_paper(
 \item{kx_override}{Optional positive integer to override runtime \code{kx}.}
 }
 \value{
-A \code{dnn_tuning} spec.
+A \code{rdistnn_tuning} spec.
 }
 \description{
 Builds a tuning spec implementing

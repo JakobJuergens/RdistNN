@@ -42,7 +42,10 @@
 .compensated_crossprod <- function(x, y) {
   x <- as.matrix(x)
   y <- as.matrix(y)
-  if (nrow(x) != nrow(y)) .abort_bad_state("Weighted signals require aligned rows.")
+  if (nrow(x) != nrow(y)) .dnn_abort("internal_invariant",
+    "Weighted signals require aligned rows.",
+    hint = "Report a reproducible example of this internal inconsistency."
+  )
   cpp <- .rdistnn_compiled_fun("rustat_compensated_crossprod")
   out <- if (is.null(cpp)) .compensated_crossprod_R(x, y) else cpp(x, y)
   if (!is.null(colnames(x)) || !is.null(colnames(y))) {
@@ -56,7 +59,10 @@
 .compensated_matprod <- function(x, y) {
   x <- as.matrix(x)
   y <- as.matrix(y)
-  if (ncol(x) != nrow(y)) .abort_bad_state("Matrix products require aligned inner dimensions.")
+  if (ncol(x) != nrow(y)) .dnn_abort("internal_invariant",
+    "Matrix products require aligned inner dimensions.",
+    hint = "Report a reproducible example of this internal inconsistency."
+  )
   cpp <- .rdistnn_compiled_fun("rustat_compensated_crossprod")
   if (!is.null(cpp)) {
     out <- cpp(t(x), y)

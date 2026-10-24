@@ -39,7 +39,7 @@ evaluators.}
 \code{c("W", "ord", "ranks", "dx")}.}
 }
 \value{
-A \code{weights_result} object (same structure as
+A \code{rdistnn_weights_result} object (same structure as
 \code{\link[=weights_dnn_exact]{weights_dnn_exact()}}).
 }
 \description{

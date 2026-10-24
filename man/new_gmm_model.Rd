@@ -34,7 +34,7 @@ An explicit \code{start} passed to \code{\link[=gmm_dnn]{gmm_dnn()}} takes prece
 \item{moment_names}{Optional character vector naming the moment components.}
 }
 \value{
-An object of class \code{gmm_model}.
+An object of class \code{rdistnn_gmm_model}.
 }
 \description{
 Defines a vector-moment model for use with \code{\link[=gmm_dnn]{gmm_dnn()}}.  A model supplies

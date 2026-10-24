@@ -189,76 +189,135 @@
   if (!is.null(tuning_payload$grid$candidates) && is.data.frame(tuning_payload$grid$candidates)) {
     attr(out, "tuning_grid") <- tuning_payload$grid$candidates
   }
-  class(out) <- c("dnn_diagnostics", "data.frame")
+  class(out) <- c("rdistnn_diagnostics", "data.frame")
   out
 }
 
-.dnn_diag_require_W <- function(object) {
-  if (is.null(object$W)) {
+# Public consumers validate scientific model state before accessing extras.
+# Optional names are exact: a similarly named old field is not retained input.
+.dnn_retained_matrix <- function(object, field, required = FALSE) {
+  value <- object[[field, exact = TRUE]]
+  argument <- paste0("object$", field)
+  if (is.null(value)) {
+    if (!required) return(NULL)
+    label <- switch(field, W = "weights", dx = "distances", paste0("`", field, "`"))
     .dnn_abort("extra_unavailable",
-      "This fit did not retain the weights required for diagnostics.",
-      argument = "object$W", hint = 'Refit with `return = "W"`.')
+      sprintf("This fit did not retain the %s required for this operation.", label),
+      argument = argument, hint = sprintf('Refit with `return = "%s"`.', field))
   }
-  W <- object$W
-  shape <- c(nrow(object$.model$x_mat), ncol(object$.model$groups))
-  if (!is.matrix(W) || !is.numeric(W) || is.complex(W) ||
-      !identical(dim(W), as.integer(shape)) || any(!is.finite(W))) {
-    .dnn_abort("state_invalid", paste0(
-      "Retained `object$W` must be a finite real weight matrix aligned with the fitted observations and targets. ",
-      "Refit with the current estimator."
-    ))
-  }
-  W
+  model <- object[[".model", exact = TRUE]]
+  shape <- as.integer(c(nrow(model$x_mat), ncol(model$groups)))
+  .dnn_validate_retained({
+    value <- .validate_matrix(value, argument, numeric = TRUE, finite = TRUE, strict = TRUE)
+    if (!identical(dim(value), shape)) {
+      .abort_bad_arg(argument, "must align with the fitted observations and targets",
+        expected = sprintf("%d by %d", shape[1L], shape[2L]),
+        actual = sprintf("%d by %d", nrow(value), ncol(value)))
+    }
+    value
+  })
+}
+
+.dnn_diag_require_W <- function(object) {
+  .dnn_retained_matrix(object, "W", required = TRUE)
 }
 
 .dnn_diag_tuning_payload <- function(object) {
-  if (!is.null(object$meta$tuning)) {
-    object$meta$tuning
-  } else {
-    object$tuning
+  payload <- object$meta[["tuning", exact = TRUE]]
+  if (!is.null(payload)) return(payload)
+  optional <- object[["tuning", exact = TRUE]]
+  if (!is.null(optional) && (!is.list(optional) ||
+      !identical(optional[["source", exact = TRUE]], "manual"))) {
+    .dnn_abort("state_invalid", "This fit lacks its current tuning metadata. Refit with the current estimator.")
   }
+  if (!is.null(optional)) {
+    .dnn_validate_retained_tuning(optional, object$meta$s, field = "object$tuning")
+  }
+  optional
 }
 
 .dnn_diag_append <- function(out, extra) {
   for (nm in names(extra)) {
     out[[nm]] <- extra[[nm]]
   }
-  class(out) <- c("dnn_diagnostics", "data.frame")
+  class(out) <- c("rdistnn_diagnostics", "data.frame")
   out
 }
 
-.dnn_candidate_diag_frame <- function(grid, selected) {
+.dnn_candidate_diag_frame <- function(grid, selected = NULL) {
   diag <- grid$diagnostics
   required <- c(
     "candidate_id", "computed_key", "status", "reason", "s", "lambda",
-    "ess", "max_weight", "top5_weight_share", "degenerate"
+    "ess", "max_weight", "top_n", "top5_weight_share", "degenerate"
   )
   missing <- setdiff(required, names(diag))
   if (length(missing) > 0L) {
-    .abort_bad_state(sprintf(
+    .dnn_abort("state_invalid", sprintf(
       "`object$tuning_grid$diagnostics` is missing required column(s): %s.",
       paste(missing, collapse = ", ")
-    ))
+    ), hint = "Refit with the current estimator before reusing this fit.")
   }
-  diag$candidate_id <- as.character(diag$candidate_id)
-  if (anyNA(diag$candidate_id) || any(!nzchar(diag$candidate_id))) {
-    .abort_bad_state("`object$tuning_grid$diagnostics$candidate_id` must contain non-empty strings.")
+  invalid <- function(field, reason) {
+    .dnn_abort("state_invalid", sprintf(
+      "Stored candidate diagnostics `%s` %s. Refit with the current estimator.", field, reason))
+  }
+  for (field in c("candidate_id", "computed_key", "status", "reason")) {
+    if (!is.character(diag[[field]]) || !is.null(dim(diag[[field]])) || anyNA(diag[[field]])) {
+      invalid(field, "must retain non-missing character values")
+    }
+  }
+  for (field in c("lambda", "s", "ess", "max_weight", "top_n", "top5_weight_share")) {
+    value <- diag[[field]]
+    if (!is.numeric(value) || is.complex(value) || !is.null(dim(value))) {
+      invalid(field, "must retain real numeric values")
+    }
+    if (field %in% c("ess", "max_weight", "top5_weight_share") &&
+        (any(!is.finite(value) & !(is.na(value) & !is.nan(value))) || any(value < 0, na.rm = TRUE))) {
+      invalid(field, "contains invalid concentration values")
+    }
+  }
+  if (any(diag$top5_weight_share > 1 + 8 * .Machine$double.eps, na.rm = TRUE)) {
+    invalid("top5_weight_share", "must lie between zero and one when available")
+  }
+  if (any(!is.finite(diag$top_n)) || any(diag$top_n < 1 | diag$top_n != trunc(diag$top_n))) {
+    invalid("top_n", "must retain positive integer cutoffs")
+  }
+  if (!is.logical(diag$degenerate) || !is.null(dim(diag$degenerate))) {
+    invalid("degenerate", "must retain logical availability flags")
+  }
+  if (any(!nzchar(diag$candidate_id))) {
+    .dnn_abort("state_invalid",
+      "`object$tuning_grid$diagnostics$candidate_id` must contain non-empty strings.",
+      hint = "Refit with the current estimator before reusing this fit."
+    )
   }
   duplicated_id <- unique(diag$candidate_id[duplicated(diag$candidate_id)])
   if (length(duplicated_id) > 0L) {
-    .abort_bad_state(sprintf(
+    .dnn_abort("state_invalid", sprintf(
       "`object$tuning_grid$diagnostics` contains duplicate candidate row(s): %s.",
       paste(duplicated_id, collapse = ", ")
-    ))
+    ), hint = "Refit with the current estimator before reusing this fit.")
   }
+
+  index <- match(diag$candidate_id, grid$candidates$candidate_id)
+  if (anyNA(index)) invalid("candidate_id", "contains unknown candidate identities")
+  if (!setequal(diag$candidate_id, grid$candidates$candidate_id)) {
+    invalid("candidate_id", "must retain one row per candidate")
+  }
+  for (field in c("status", "reason")) {
+    if (!identical(diag[[field]], grid$candidates[[field]][index])) {
+      invalid(field, "is inconsistent with the candidate table")
+    }
+  }
+  if (is.null(selected)) return(invisible(TRUE))
 
   selected_id <- as.character(selected$candidate_id)
   missing_row <- setdiff(selected_id, diag$candidate_id)
   if (length(missing_row) > 0L) {
-    .abort_bad_state(sprintf(
+    .dnn_abort("state_invalid", sprintf(
       "`object$tuning_grid$diagnostics` is missing row(s) for selected candidate(s): %s.",
       paste(missing_row, collapse = ", ")
-    ))
+    ), hint = "Refit with the current estimator before reusing this fit.")
   }
 
   diag <- diag[diag$candidate_id %in% selected_id, , drop = FALSE]
@@ -277,7 +336,7 @@
   diag <- .dnn_candidate_diag_frame(grid = grid, selected = selected)
   diag$.candidate_order <- NULL
   idx <- match(diag$candidate_id, selected$candidate_id)
-  top5 <- as.numeric(diag$top5_weight_share)
+  top5 <- diag$top5_weight_share
 
   meta <- object$meta
   out <- data.frame(
@@ -291,11 +350,11 @@
     p = rep(if (!is.null(meta$p)) as.integer(meta$p) else NA_integer_, nrow(diag)),
     k = rep(if (!is.null(meta$k)) as.integer(meta$k) else NA_integer_, nrow(diag)),
     s = as.integer(diag$s),
-    lambda = suppressWarnings(as.numeric(diag$lambda)),
+    lambda = diag$lambda,
     method = rep(if (!is.null(meta$method)) as.character(meta$method) else NA_character_, nrow(diag)),
     distance = rep(if (!is.null(meta$distance)) as.character(meta$distance) else NA_character_, nrow(diag)),
-    n_eff = as.numeric(diag$ess),
-    max_weight = as.numeric(diag$max_weight),
+    n_eff = diag$ess,
+    max_weight = diag$max_weight,
     top1_weight_share = rep(NA_real_, nrow(diag)),
     top5_weight_share = top5,
     top10_weight_share = rep(NA_real_, nrow(diag)),
@@ -305,11 +364,11 @@
     radius_rank_s = rep(NA_real_, nrow(diag)),
     weighted_mean_distance = rep(NA_real_, nrow(diag)),
     weighted_median_distance = rep(NA_real_, nrow(diag)),
-    degenerate = as.logical(diag$degenerate),
+    degenerate = diag$degenerate,
     stringsAsFactors = FALSE
   )
   rownames(out) <- out$candidate_id
-  class(out) <- c("dnn_diagnostics", "data.frame")
+  class(out) <- c("rdistnn_diagnostics", "data.frame")
   out
 }
 
@@ -325,6 +384,12 @@
 #' and concentration use the final averaged weights and can vary by target.
 #' See [weights_matrix()] for the averaging rule and its theory warning.
 #'
+#' CATE `treated_ess` and `control_ess` measure concentration after normalizing
+#' weights within each treatment arm. A single positive-weight observation gives
+#' arm ESS one, even when its arm's total weight is tiny. Zero arm weight gives
+#' `NA`. Inspect `treated_mass` and `control_mass` alongside arm ESS when judging
+#' local treatment support.
+#'
 #' PLQR fits additionally report residualized-design Gram conditioning
 #' (`gram_min_eig`, `gram_condition_number`) and, when direct-sandwich
 #' coefficient inference is available, target-level Jacobian conditioning:
@@ -338,7 +403,7 @@
 #' Jacobian block.
 #'
 #' @section Experimental methods:
-#' Methods for `plqr_result` objects are experimental, as is all PLQR
+#' Methods for `rdistnn_plqr_result` objects are experimental, as is all PLQR
 #' functionality in this release; see [plqr_dnn()].
 #'
 #' @param object A fitted object from [np_dnn()], [np_tdnn()], [cate_dnn()],
@@ -355,7 +420,7 @@
 #'   across targets; `degenerate` is true if any target reaches
 #'   `0.9 * n` ESS. Use target diagnostics for individual profiles.
 #' @param ... Not used.
-#' @return An object of class `dnn_diagnostics`.
+#' @return An object of class `rdistnn_diagnostics`.
 #' @name diagnostics
 #' @examples
 #' set.seed(1)
@@ -406,12 +471,12 @@ diagnostics.default <- function(object, candidates = "default", ...) {
 }
 
 #' @rdname diagnostics
-#' @param x A `dnn_diagnostics` object.
+#' @param x A `rdistnn_diagnostics` object.
 #' @param ... Not used.
 #' @return `x`, invisibly.
 #' @export
-print.dnn_diagnostics <- function(x, ...) {
-  cat("<dnn_diagnostics>\n", sep = "")
+print.rdistnn_diagnostics <- function(x, ...) {
+  cat("<rdistnn_diagnostics>\n", sep = "")
   if ("candidate_id" %in% names(x)) {
     ok <- as.character(x$status) == "ok"
     cat("  candidates: ", nrow(x), " (available: ", sum(ok), ")\n", sep = "")

@@ -1,7 +1,7 @@
 test_that("ratio summaries expose the existing coefficient-table schema", {
   fit <- .ratio_fixture()
   out <- summary(fit)
-  expect_s3_class(out, "summary.affine_ratio_result")
+  expect_s3_class(out, "rdistnn_summary_affine_ratio_result")
   expect_type(out, "list")
   expect_true(all(c("coefficients", "level", "has_se", "meta", "components", "status") %in% names(out)))
   tab <- out$coefficients

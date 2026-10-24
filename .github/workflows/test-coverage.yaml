@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      MAKEFLAGS: -j2
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -32,15 +33,13 @@ jobs:
             any::xml2
 
       - name: Compute test coverage (Cobertura)
-        shell: Rscript {0}
+        shell: bash
         run: |
-          cov <- covr::package_coverage(
-            quiet = FALSE,
-            clean = FALSE,
-            install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package")
-          )
-          print(cov)
-          covr::to_cobertura(cov, filename = "cobertura.xml")
+          Rscript tools/ci/run_coverage.R \
+            --output-dir "$RUNNER_TEMP/coverage-reports" \
+            --workspace "$RUNNER_TEMP/coverage-source" \
+            --install-path "$RUNNER_TEMP/package" \
+            --cobertura "$GITHUB_WORKSPACE/cobertura.xml"
 
       - name: Ensure CODECOV_TOKEN is present on default-branch runs
         if: ${{ github.ref_name == 'main' || github.ref_name == 'master' }}
@@ -51,7 +50,7 @@ jobs:
           fi
 
       - name: Upload coverage to Codecov
-        if: ${{ always() && hashFiles('cobertura.xml') != '' }}
+        if: ${{ success() && hashFiles('cobertura.xml') != '' }}
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           files: ./cobertura.xml
@@ -74,6 +73,8 @@ jobs:
           name: debug-test-coverage-workspace
           path: |
             ${{ runner.temp }}/package
+            ${{ runner.temp }}/coverage-source
+            ${{ runner.temp }}/coverage-reports
             cobertura.xml
           if-no-files-found: warn
           retention-days: 14

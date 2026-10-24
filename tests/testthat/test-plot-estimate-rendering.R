@@ -6,10 +6,11 @@
   sum(vapply(children, .render_count_points, integer(1L)))
 }
 
-.render_ratio_fit <- function(grid = FALSE, profile = FALSE) {
+.render_ratio_fit <- function(grid = FALSE, profile = FALSE,
+                              numerator = c(2, 2, 2, 2, 3, 6, 4, 9)) {
   args <- list(X = matrix(1:8, ncol = 1L),
     X0 = matrix(if (profile) c(0, 2, 4, 6, 8) else c(0, 8), ncol = 1L),
-    numerator = c(2, 2, 2, 2, 3, 6, 4, 9), denominator = rep(1, 8L),
+    numerator = numerator, denominator = rep(1, 8L),
     s = 7L, return = character())
   if (grid) {
     args$s <- NULL
@@ -77,8 +78,8 @@ test_that("profile ribbons do not bridge an unavailable interior interval", {
   .with_partial_result_warning({
   .with_distance_tie_warning({
   skip_if_not_installed("ggplot2")
-  f <- .render_ratio_fit(profile = TRUE)
-  f$status$wald_available[4L] <- FALSE
+  f <- .render_ratio_fit(profile = TRUE, numerator = c(2, 2, 2, 2, 4, 4, 4, 9))
+  expect_identical(f$status$wald_available[c(3L, 4L, 5L)], c(TRUE, FALSE, TRUE))
   p <- plot_estimates(f, style = "profile")
   ribbon <- p$layers[[which(.plot_layer_geoms(p) == "GeomRibbon")]]$data
   for (group in unique(ribbon$interval_group)) {

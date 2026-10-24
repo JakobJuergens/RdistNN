@@ -2,7 +2,7 @@
 % Please edit documentation in R/api-ranks.R
 \name{get_rank_weight}
 \alias{get_rank_weight}
-\title{Retrieve a registered rank_weight}
+\title{Retrieve a registered rdistnn_rank_weight}
 \usage{
 get_rank_weight(name)
 }
@@ -10,10 +10,10 @@ get_rank_weight(name)
 \item{name}{Character scalar.}
 }
 \value{
-A rank_weight spec.
+A rdistnn_rank_weight spec.
 }
 \description{
-Retrieve a registered rank_weight
+Retrieve a registered rdistnn_rank_weight
 }
 \examples{
 register_rank_weight("tmp_rank_get", function(ranks) rep(1 / length(ranks), length(ranks)))

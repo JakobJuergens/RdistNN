@@ -4,7 +4,7 @@
 
 # ---- predicates & adapters ---------------------------------------------------
 
-#' Is this a rank_weight spec?
+#' Is this a rdistnn_rank_weight spec?
 #'
 #' A rank-weight spec is a list with `eval(ranks, ctx)` and/or
 #' `eval_batch(rank_matrix, ctx)`, where `rank_matrix` is an n x m rank matrix
@@ -18,7 +18,7 @@
 #' is_rank_weight(rank_weight_dnn_exact(k = 1, s = 1))
 #' @export
 is_rank_weight <- function(x) {
-  inherits(x, "rank_weight") ||
+  inherits(x, "rdistnn_rank_weight") ||
     (is.list(x) && identical(x$.__kind, "rank_weight"))
 }
 
@@ -30,7 +30,7 @@ is_rank_weight <- function(x) {
 #' @param setup Optional function to build context. At the top level,
 #'   [weights_matrix()] passes any supplied `ctx` through to the rank-weight
 #'   evaluator, but it does not automatically call `setup()` for you.
-#' @return A validated `rank_weight` specification.
+#' @return A validated `rdistnn_rank_weight` specification.
 #' @examples
 #' rw <- new_rank_weight(
 #'   name = "inv_rank",
@@ -80,30 +80,30 @@ new_rank_weight <- function(name, eval = NULL, eval_batch = NULL, setup = NULL) 
     spec$name <- "unnamed_rank_weight"
   }
   spec$.__kind <- "rank_weight"
-  class(spec) <- c("rank_weight", class(spec))
+  class(spec) <- union("rdistnn_rank_weight", class(spec))
   spec
 }
 .rank_validate_output_vec <- function(w, n) {
   if (!is.numeric(w) || length(w) != n || any(!is.finite(w))) {
-    .abort_bad_arg(
-      "rank_weight$eval()",
-      "must return finite numeric length(ranks)",
+    .dnn_abort("callback_invalid",
+      "rank_weight$eval() must return finite numeric length(ranks).",
+      argument = "rank_weight$eval()",
       expected = sprintf("finite numeric vector of length %d", n),
       actual = sprintf("%s of length %d", class(w)[1L], length(w)),
-      quoted = FALSE
+      hint = "Correct the callback to return the documented result."
     )
   }
   as.numeric(w)
 }
 
 .rank_weight_table <- function(spec, n) {
-  if (!is_rank_weight(spec)) .abort_bad_arg("spec", "must be a rank_weight")
+  if (!is_rank_weight(spec)) .abort_bad_arg("spec", "must be a rdistnn_rank_weight")
   n <- .validate_scalar_int(n, "n")
   if (is.null(spec$table)) {
     return(NULL)
   }
   if (!is.function(spec$table)) {
-    .abort_bad_state("`rank_weight$table` must be a function.")
+    .dnn_abort("argument_invalid", "`rank_weight$table` must be a function.", argument = "rank_weight$table")
   }
 
   tab <- spec$table(n)
@@ -113,10 +113,10 @@ new_rank_weight <- function(name, eval = NULL, eval_batch = NULL, setup = NULL) 
     } else {
       sprintf("%s of length %d", class(tab)[1L], length(tab))
     }
-    .abort_bad_state(sprintf(
+    .dnn_abort("callback_invalid", sprintf(
       "`rank_weight$table(n)` must return a finite numeric vector of length %d; got %s.",
       n, actual
-    ))
+    ), argument = "rank_weight$table", hint = "Correct the callback to return the documented finite rank-weight table.")
   }
 
   tab <- as.numeric(tab)
@@ -133,7 +133,11 @@ new_rank_weight <- function(name, eval = NULL, eval_batch = NULL, setup = NULL) 
       .compensated_sum(tab[!large])))
   }
   if (!is.finite(tab_sum) || tab_sum <= 0) {
-    .abort_bad_state("`rank_weight$table(n)` must have positive finite sum.")
+    .dnn_abort("callback_invalid",
+      "`rank_weight$table(n)` must have positive finite sum.",
+      argument = "rank_weight$table",
+      hint = "Correct the callback to return the documented finite rank-weight table."
+    )
   }
   tab
 }
@@ -148,7 +152,7 @@ new_rank_weight <- function(name, eval = NULL, eval_batch = NULL, setup = NULL) 
   "ctx" %in% names(fmls) || length(fmls) >= 2L
 }
 
-#' Wrap a function as a rank_weight spec
+#' Wrap a function as a rdistnn_rank_weight spec
 #'
 #' @param fun Function `(ranks, ctx) -> numeric(n)` OR just `(ranks) -> numeric(n)`.
 #' @param name Character name.
@@ -178,12 +182,12 @@ as_rank_weight <- function(fun, name = "user_rank_weight") {
 
 # ---- registry ---------------------------------------------------------------
 
-#' Register a rank_weight under a name
+#' Register a rdistnn_rank_weight under a name
 #'
 #' If `spec` is a function, it is wrapped with [as_rank_weight()].
 #'
 #' @param name Character scalar registry key.
-#' @param spec A rank_weight spec or function `(ranks, ctx) -> numeric(n)`.
+#' @param spec A rdistnn_rank_weight spec or function `(ranks, ctx) -> numeric(n)`.
 #' @return Invisibly, the registered spec.
 #' @examples
 #' nm <- "tmp_rank_demo"
@@ -202,14 +206,14 @@ register_rank_weight <- function(name, spec) {
     }
   }
   if (is.list(spec)) spec <- .rank_validate_spec(spec)
-  if (!is_rank_weight(spec)) .abort_bad_arg("spec", "is not a rank_weight")
+  if (!is_rank_weight(spec)) .abort_bad_arg("spec", "is not a rdistnn_rank_weight")
   assign(name, spec, envir = .rank_registry)
   invisible(spec)
 }
 
-#' Retrieve a registered rank_weight
+#' Retrieve a registered rdistnn_rank_weight
 #' @param name Character scalar.
-#' @return A rank_weight spec.
+#' @return A rdistnn_rank_weight spec.
 #' @examples
 #' register_rank_weight("tmp_rank_get", function(ranks) rep(1 / length(ranks), length(ranks)))
 #' is_rank_weight(get_rank_weight("tmp_rank_get"))
@@ -217,10 +221,10 @@ register_rank_weight <- function(name, spec) {
 get_rank_weight <- function(name) {
   name <- .validate_registry_name(name)
   if (!exists(name, envir = .rank_registry, inherits = FALSE)) {
-    known <- ls(.rank_registry, all.names = FALSE)
+    known <- .registry_names(.rank_registry)
     .abort_bad_arg(
       "name",
-      "Unknown rank_weight",
+      "Unknown rdistnn_rank_weight",
       expected = if (length(known) > 0L) paste(known, collapse = ", ") else "<none registered>",
       actual = as.character(name)
     )
@@ -228,13 +232,13 @@ get_rank_weight <- function(name) {
   get(name, envir = .rank_registry, inherits = FALSE)
 }
 
-#' List registered rank_weight names
+#' List registered rdistnn_rank_weight names
 #' @return Character vector.
 #' @examples
 #' head(rank_weight_names(), 3)
 #' @export
 rank_weight_names <- function() {
-  sort(ls(.rank_registry, all.names = FALSE))
+  .registry_names(.rank_registry)
 }
 
 # ---- evaluators -------------------------------------------------------------
@@ -258,7 +262,7 @@ rank_weight_names <- function() {
 #' rank_weight_eval(rw, c(2L, 1L, 3L))
 #' @export
 rank_weight_eval <- function(spec, ranks, ctx = NULL) {
-  if (!is_rank_weight(spec)) .abort_bad_arg("spec", "must be a rank_weight")
+  if (!is_rank_weight(spec)) .abort_bad_arg("spec", "must be a rdistnn_rank_weight")
   r <- .rank_check_vec(ranks)
 
   if (is.function(spec$table) || is.function(spec$eval_batch)) {
@@ -269,16 +273,16 @@ rank_weight_eval <- function(spec, ranks, ctx = NULL) {
   } else if (is.function(spec$eval)) {
     w <- spec$eval(r, ctx)
   } else {
-    .abort_bad_arg("spec", "rank_weight spec has neither eval nor eval_batch nor table")
+    .abort_bad_arg("spec", "rdistnn_rank_weight spec has neither eval nor eval_batch nor table")
   }
 
   if (!is.numeric(w) || length(w) != length(r) || any(!is.finite(w))) {
-    .abort_bad_arg(
-      "rank_weight$eval()",
-      "must return finite numeric of length(ranks)",
+    .dnn_abort("callback_invalid",
+      "rank_weight$eval() must return finite numeric of length(ranks).",
+      argument = "rank_weight$eval()",
       expected = sprintf("finite numeric vector of length %d", length(r)),
       actual = sprintf("%s of length %d", class(w)[1L], length(w)),
-      quoted = FALSE
+      hint = "Correct the callback to return the documented result."
     )
   }
   as.numeric(w)
@@ -301,7 +305,7 @@ rank_weight_eval <- function(spec, ranks, ctx = NULL) {
 #' dim(rank_weight_eval_batch(rw, matrix(1L, nrow = 1L, ncol = 2L)))
 #' @export
 rank_weight_eval_batch <- function(spec, R, ctx = NULL) {
-  if (!is_rank_weight(spec)) .abort_bad_arg("spec", "must be a rank_weight")
+  if (!is_rank_weight(spec)) .abort_bad_arg("spec", "must be a rdistnn_rank_weight")
   rank_matrix <- .rank_check_mat(R)
 
   tab <- .rank_weight_table(spec, nrow(rank_matrix))
@@ -318,7 +322,7 @@ rank_weight_eval_batch <- function(spec, R, ctx = NULL) {
       weight_matrix <- matrix(weight_matrix, nrow = nrow(rank_matrix), ncol = ncol(rank_matrix))
     }
   } else {
-    .abort_bad_arg("spec", "rank_weight spec has neither eval nor eval_batch nor table")
+    .abort_bad_arg("spec", "rdistnn_rank_weight spec has neither eval nor eval_batch nor table")
   }
 
   if (!is.matrix(weight_matrix) || !is.numeric(weight_matrix) ||
@@ -329,12 +333,17 @@ rank_weight_eval_batch <- function(spec, R, ctx = NULL) {
     } else {
       sprintf("non-matrix (%s)", class(weight_matrix)[1L])
     }
-    stop(sprintf(
+    .dnn_abort(
+      "callback_invalid",
+      sprintf(
       "rank_weight$eval_batch must return a finite numeric matrix of shape %d x %d; got %s%s.",
       nrow(rank_matrix), ncol(rank_matrix), got_dim,
       if (is.matrix(weight_matrix) && nrow(weight_matrix) == nrow(rank_matrix) &&
           ncol(weight_matrix) == ncol(rank_matrix)) " (contains non-finite values)" else ""
-    ), call. = FALSE)
+    ),
+      argument = "rank_weight",
+      hint = "Correct the callback to return the documented type, dimensions and finite values."
+    )
   }
   weight_matrix
 }

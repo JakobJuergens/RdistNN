@@ -31,6 +31,57 @@
   V
 }
 
+# Binary range normalization can erase a small cross-product even when the
+# original product and final covariance are finite. Revisit only sensitive
+# entries of exceptional full-covariance requests, using original-scale data.
+# Retain the normalized answer when direct products need range protection.
+.covariance_recover <- function(V, scaled, original, exponent, factor) {
+  if (is.null(original)) return(V)
+  norm <- sqrt(diag(scaled))
+  columns <- new.env(parent = emptyenv())
+  column <- function(j) {
+    key <- as.character(j)
+    cached <- columns[[key]]
+    if (!is.null(cached)) return(if (cached$available) cached else NULL)
+    z <- original$x[, j]
+    low <- if (is.null(original$low)) numeric(length(z)) else original$low[, j]
+    if (original$center) {
+      z <- z - .numeric_signal_level(matrix(z, ncol = 1L))
+      mean <- .compensated_sum(z) / length(z)
+      if (!is.finite(mean)) {
+        columns[[key]] <- list(available = FALSE)
+        return(NULL)
+      }
+      difference <- z - mean
+      back <- difference - z
+      low <- (z - (difference - back)) - (mean + back)
+      z <- difference
+    }
+    columns[[key]] <- list(high = z, low = low, available = TRUE)
+    columns[[key]]
+  }
+  for (j in seq_len(ncol(V) - 1L)) for (k in seq.int(j + 1L, ncol(V))) {
+    if ((exponent[j] == 0 && exponent[k] == 0) ||
+        !is.finite(V[j, j]) || !is.finite(V[k, k]) ||
+        abs(scaled[j, k]) > sqrt(.Machine$double.eps) * norm[j] * norm[k]) next
+    left <- column(j)
+    right <- column(k)
+    if (is.null(left) || is.null(right)) next
+    a <- c(left$high, left$high, left$low, left$low)
+    b <- c(right$high, right$low, right$high, right$low)
+    value <- a * b
+    # Nonzero subnormal products can lose a finite cross-entry through their
+    # separate rounding even when none becomes zero. Keep normalized recovery.
+    if (any(!is.finite(value)) ||
+        any(a != 0 & b != 0 & abs(value) < .Machine$double.xmin)) next
+    value <- .compensated_sum(value)
+    if (is.finite(value) && is.finite(factor * value)) {
+      V[j, k] <- V[k, j] <- factor * value
+    }
+  }
+  V
+}
+
 .covariance_matrix <- function(x, factor = 1, center = TRUE,
                                diagonal = FALSE, allow_failure = FALSE) {
   x <- as.matrix(x)
@@ -43,10 +94,17 @@
   # require exact binary normalization before centering or squaring. The gate
   # is shared with Mata, whose finite range ends below IEEE double's maximum.
   limit <- sqrt(2^1020 / n / max(1, factor))
+  amplitude <- vapply(seq_len(q), function(j) max(abs(x[, j])), numeric(1L))
+  needs_scale <- amplitude >= limit |
+    (amplitude > 0 & amplitude < sqrt(.Machine$double.xmin))
+  original <- if (!diagonal && q > 1L && any(needs_scale)) {
+    list(x = x, low = NULL, center = center)
+  } else {
+    NULL
+  }
   for (j in seq_len(q)) {
-    amplitude <- max(abs(x[, j]))
-    if (amplitude >= limit || (amplitude > 0 && amplitude < sqrt(.Machine$double.xmin))) {
-      exponent[j] <- max(-1074, min(1022, floor(log(amplitude) / log(2))))
+    if (needs_scale[j]) {
+      exponent[j] <- max(-1074, min(1022, floor(log(amplitude[j]) / log(2))))
       x[, j] <- x[, j] / 2^exponent[j]
     }
     if (center) x[, j] <- x[, j] - .numeric_signal_level(x[, j, drop = FALSE])
@@ -70,6 +128,9 @@
   for (j in seq_len(q)) {
     spread <- max(abs(x[, j]))
     if (spread > 0 && spread < sqrt(.Machine$double.xmin)) {
+      if (!diagonal && q > 1L && is.null(original)) {
+        original <- list(x = x, low = low, center = FALSE)
+      }
       extra <- max(-1074, min(1022, floor(log(spread) / log(2))))
       x[, j] <- x[, j] / 2^extra
       if (!is.null(low)) low[, j] <- low[, j] / 2^extra
@@ -85,14 +146,16 @@
   variance <- restore(variance, 2 * exponent)
   invalid <- invalid | !is.finite(variance) | variance < 0 | (varying & variance == 0)
   if (any(invalid) && !allow_failure) {
-    stop("Covariance is outside the numeric range; rescale the signals or request point estimates only.", call. = FALSE)
+    .dnn_abort("numerical_range",
+      "Covariance is outside the numeric range; rescale the signals or request point estimates only."
+    )
   }
   variance[invalid] <- NA_real_
   if (diagonal) return(unname(variance))
-  V <- factor * .covariance_crossprod(x, low)
-  V <- restore(V, outer(exponent, exponent, "+"))
+  scaled <- .covariance_crossprod(x, low)
+  V <- restore(factor * scaled, outer(exponent, exponent, "+"))
   diag(V) <- variance
   V[invalid, ] <- NA_real_
   V[, invalid] <- NA_real_
-  V
+  .covariance_recover(V, scaled, original, exponent, factor)
 }

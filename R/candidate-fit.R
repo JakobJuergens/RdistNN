@@ -1,27 +1,40 @@
 # Per-candidate views over grid fits.
 
 .candidate_grid_payload <- function(object) {
-  grid <- object$tuning_grid
+  grid <- object[["tuning_grid", exact = TRUE]]
   if (is.null(grid)) {
     .dnn_abort("extra_unavailable",
       paste0("This fit does not contain a `tuning_grid` payload; ",
         "refit with `tuning_mode = \"grid\"` before calling candidate_fit()."))
   }
-  if (!is.list(grid) || !is.data.frame(grid$candidates) ||
-      !is.data.frame(grid$estimates) || !is.data.frame(grid$diagnostics)) {
-    .dnn_abort("state_invalid", "`object$tuning_grid` is malformed.")
+  scope <- .dnn_reporting_scope()
+  cached <- if (!is.null(scope)) scope$validated_grid else NULL
+  if (!is.null(cached) && identical(grid, cached$grid) &&
+      identical(object$meta$s, cached$fitted_s)) return(grid)
+  if (!is.list(grid) || !all(c("candidates", "estimates", "diagnostics", "meta") %in% names(grid)) ||
+      !is.data.frame(grid$candidates) ||
+      !is.data.frame(grid$estimates) || !is.data.frame(grid$diagnostics) || !is.list(grid$meta)) {
+    .dnn_abort("state_invalid", "`object$tuning_grid` is malformed.",
+      hint = "Refit with the current estimator before reusing this fit.")
   }
-  ids <- grid$candidates$candidate_id
-  if (!is.character(ids) || length(ids) < 1L ||
-      length(ids) != nrow(grid$candidates) || anyNA(ids) || any(!nzchar(ids))) {
+  .dnn_grid_check_candidates(grid$candidates, retained = TRUE)
+  jackknife <- grid$meta[["jackknife", exact = TRUE]]
+  if (!is.character(jackknife) || !is.null(dim(jackknife)) || length(jackknife) != 1L ||
+      is.na(jackknife) || !jackknife %in% c("none", "fast", "loo")) {
+    .dnn_abort("state_invalid", "`object$tuning_grid$meta$jackknife` is missing or invalid.",
+      hint = "Refit with the current estimator before reusing this fit.")
+  }
+  default_s <- grid$candidates$s[grid$candidates$is_default]
+  if (!is.numeric(default_s) || !is.null(dim(default_s)) || length(default_s) != 1L ||
+      !is.finite(default_s) || default_s < 1 || default_s != trunc(default_s) ||
+      !is.numeric(object$meta$s) || length(object$meta$s) != 1L || default_s != object$meta$s) {
     .dnn_abort("state_invalid", paste0(
-      "`object$tuning_grid$candidates$candidate_id` must contain ",
-      "one non-empty character ID per candidate."
-    ))
+      "`object$tuning_grid$candidates$s` for the default candidate must be a positive integer ",
+      "matching the fitted order. Refit with the current estimator."))
   }
-  if (anyDuplicated(ids)) {
-    .dnn_abort("state_invalid", "`object$tuning_grid$candidates$candidate_id` must contain unique IDs.")
-  }
+  .candidate_validate_estimate_rows(object, grid$estimates)
+  .dnn_candidate_diag_frame(grid)
+  if (!is.null(scope)) scope$validated_grid <- list(grid = grid, fitted_s = object$meta$s)
   grid
 }
 
@@ -160,14 +173,10 @@
       .dnn_abort("state_invalid",
         "Retained candidate controls must satisfy 1 <= k <= s <= n. Refit the current estimator.")
     }
-    has_uncertainty <- !is.null(object$se) || !is.null(object$moment_se)
-    jackknife <- object$meta$jackknife
-    if (has_uncertainty && (!is.character(jackknife) || length(jackknife) != 1L ||
-        is.na(jackknife) || !jackknife %in% c("fast", "loo", "none"))) {
-      .dnn_abort("state_invalid",
-        "Retained candidate jackknife controls are missing or inconsistent. Refit the current estimator.")
-    }
-    if (has_uncertainty && jackknife %in% c("fast", "loo") && s >= n) {
+    # A scalar tuning display can request a new uncertainty policy. Its grid
+    # owns candidate feasibility; the original fit's policy stays unchanged.
+    jackknife <- object$tuning_grid$meta$jackknife
+    if (jackknife %in% c("fast", "loo") && s >= n) {
       .dnn_abort("state_invalid",
         "Retained candidate jackknife controls must satisfy s < n. Refit the current estimator.")
     }
@@ -208,14 +217,75 @@
   invisible(NULL)
 }
 
-.candidate_validate_estimate_rows <- function(object, rows, id) {
-  required <- c("target_id", "component", "estimate", "se")
+.candidate_validate_estimate_rows <- function(object, rows, id = NULL) {
+  required <- c("candidate_id", "computed_key", "lambda", "s", "target_id", "component",
+    "estimate", "se", "status", "reason")
   missing <- setdiff(required, names(rows))
   if (length(missing) > 0L) {
     .dnn_abort("state_invalid", sprintf(
       "`object$tuning_grid$estimates` is missing required column(s): %s.",
       paste(missing, collapse = ", ")
-    ))
+    ), hint = "Refit with the current estimator before reusing this fit.")
+  }
+  invalid <- function(field, reason) {
+    .dnn_abort("state_invalid", sprintf(
+      "Stored candidate estimates `%s` %s. Refit with the current estimator.", field, reason))
+  }
+  for (field in c("candidate_id", "computed_key", "status", "reason")) {
+    value <- rows[[field]]
+    if (!is.character(value) || !is.null(dim(value)) || anyNA(value)) {
+      invalid(field, "must retain non-missing character values")
+    }
+  }
+  for (field in c("lambda", "s", "estimate", "se", "target_id")) {
+    value <- rows[[field]]
+    if (!is.numeric(value) || is.complex(value) || !is.null(dim(value))) {
+      invalid(field, "must retain real numeric values")
+    }
+  }
+  if (!is.character(rows$component) || !is.null(dim(rows$component))) {
+    invalid("component", "must retain character values")
+  }
+  candidates <- object$tuning_grid$candidates
+  index <- match(rows$candidate_id, candidates$candidate_id)
+  if (anyNA(index)) invalid("candidate_id", "contains unknown candidate identities")
+  for (field in c("status", "reason")) {
+    if (!identical(rows[[field]], candidates[[field]][index])) {
+      invalid(field, "is inconsistent with the candidate table")
+    }
+  }
+  # The full retained table is checked before selection. Scientific availability
+  # below belongs to a selected successful candidate, including partial ratios.
+  if (is.null(id)) return(invisible(TRUE))
+
+  paired <- inherits(object, "rdistnn_affine_ratio_result")
+  for (field in c("estimate", "se")) {
+    value <- rows[[field]]
+    optional <- paired || (field == "se" && identical(object$tuning_grid$meta$jackknife, "none"))
+    if (!is.numeric(value) || !is.null(dim(value)) ||
+        any(!is.finite(value) & !(optional & is.na(value) & !is.nan(value))) ||
+        (field == "se" && (any(value < 0, na.rm = TRUE) ||
+          (!paired && optional && any(!is.na(value)))))) {
+      .dnn_abort("state_invalid", sprintf(
+        paste0("Stored candidate `%s` values have invalid type, range or availability. ",
+          "Refit with the current estimator."), field))
+    }
+  }
+  component <- rows$component
+  scalar <- inherits(object, c("rdistnn_np_result", "rdistnn_cate_result"))
+  if (!is.character(component) || !is.null(dim(component)) ||
+      ((scalar || paired) && any(!is.na(component)))) {
+    .dnn_abort("state_invalid", paste0(
+      "Stored candidate `component` values are inconsistent with the fitted estimator. ",
+      "Refit with the current estimator."))
+  }
+  if (paired) {
+    invalid <- function(field, reason) {
+      .dnn_abort("state_invalid",
+        sprintf("Stored candidate `%s` %s. Refit with the current estimator.", field, reason))
+    }
+    .affine_validate_retained_status(rows, rows$estimate, rows$se,
+      !identical(object$tuning_grid$meta$jackknife, "none"), invalid, "tuning_grid$estimates")
   }
 
   expected_m <- .candidate_expected_m(object)
@@ -246,7 +316,7 @@
     }
   }
 
-  if (inherits(object, c("np_result", "cate_result", "affine_ratio_result"))) {
+  if (inherits(object, c("rdistnn_np_result", "rdistnn_cate_result", "rdistnn_affine_ratio_result"))) {
     duplicated_target <- unique(target_id[duplicated(target_id)])
     if (length(duplicated_target) > 0L) {
       .dnn_abort("state_invalid", sprintf(
@@ -257,7 +327,7 @@
     }
   }
 
-  if (inherits(object, "plqr_result") && !is.null(object$moment)) {
+  if (inherits(object, "rdistnn_plqr_result") && !is.null(object$moment)) {
     expected_components <- rownames(as.matrix(object$moment))
     if (!is.null(expected_components)) {
       component <- as.character(rows$component)
@@ -296,12 +366,11 @@
   grid <- .candidate_grid_payload(object)
   id <- as.character(candidate_row$candidate_id[[1L]])
   rows <- grid$estimates[grid$estimates$candidate_id == id, , drop = FALSE]
-  rows <- rows[order(rows$target_id, rows$component), , drop = FALSE]
   if (nrow(rows) < 1L) {
     .dnn_abort("state_invalid", sprintf("No estimates recorded for candidate '%s'.", id))
   }
   .candidate_validate_estimate_rows(object, rows, id)
-  rows
+  rows[order(rows$target_id, rows$component), , drop = FALSE]
 }
 
 .candidate_rank_weight_spec <- function(object, candidate_row) {
@@ -355,62 +424,66 @@
 }
 
 .candidate_tuning_payload <- function(object, candidate_row) {
-  payload <- if (!is.null(object$meta$tuning)) {
-    object$meta$tuning
-  } else {
-    object$tuning
-  }
-  if (is.null(payload) || !is.list(payload)) {
-    return(NULL)
-  }
+  # The fitted-state owner validates required tuning once in this operation.
+  # Fresh scalar sensitivity grids do not transform a fitted candidate view.
+  .dnn_check_report_state(object)
+  payload <- object$meta[["tuning", exact = TRUE]]
   payload$default$s <- as.integer(candidate_row$s[[1L]])
-  if (is.null(payload$default$meta) || !is.list(payload$default$meta)) {
-    payload$default$meta <- list()
+  lambda <- candidate_row[["lambda", exact = TRUE]]
+  if (!is.numeric(lambda) || !is.null(dim(lambda)) || length(lambda) != 1L) {
+    .dnn_abort("state_invalid", paste0(
+      "The selected candidate must retain its numeric `lambda` label. ",
+      "Refit with the current estimator."))
   }
-  payload$default$meta$lambda <- if ("lambda" %in% names(candidate_row)) {
-    suppressWarnings(as.numeric(candidate_row$lambda[[1L]]))
-  } else {
-    NA_real_
-  }
+  payload$default$meta$lambda <- as.numeric(lambda)
   payload$default$meta$candidate_id <- as.character(candidate_row$candidate_id[[1L]])
   payload$default$feasibility <- list(
     k_le_s = as.integer(object$meta$k) <= as.integer(candidate_row$s[[1L]]),
-    s_lt_n = as.integer(candidate_row$s[[1L]]) < as.integer(object$meta$n)
+    s_lt_n = identical(object$meta$jackknife, "none") ||
+      as.integer(candidate_row$s[[1L]]) < as.integer(object$meta$n)
   )
   payload
 }
 
 .candidate_update_model <- function(object, candidate_row) {
   model <- object$.model
-  if (!is.list(model)) {
-    return(model)
-  }
   model$s <- as.integer(candidate_row$s[[1L]])
   model$ranks <- .candidate_cached_ranks(object)
   model
 }
 
-.candidate_attach_common_view_fields <- function(out, object, candidate_row) {
+.candidate_attach_common_view_fields <- function(out, object, candidate_row, W = NULL) {
   id <- as.character(candidate_row$candidate_id[[1L]])
   out$tuning_grid <- NULL
   out$meta$s <- as.integer(candidate_row$s[[1L]])
   out$meta$candidate_id <- id
   tuning_payload <- .candidate_tuning_payload(object, candidate_row)
-  if (!is.null(tuning_payload)) {
-    out$meta$tuning <- tuning_payload
-  }
-  if ("tuning" %in% names(out) && !is.null(tuning_payload)) {
+  out$meta$tuning <- tuning_payload
+  if ("tuning" %in% names(out)) {
     out$tuning <- tuning_payload
   }
   out$.model <- .candidate_update_model(object, candidate_row)
 
-  if (any(c("W", "ess", "neighbors") %in% names(object))) {
-    W <- .candidate_weights_from_ranks(object, candidate_row)
+  keep_weights <- any(c("W", "ess", "neighbors") %in% names(object))
+  facts <- .dnn_group_facts(object$.model$groups)
+  # Untied table-based candidates need only a scalar table norm. Tied targets
+  # require their actual averaged weights; reuse W if the adapter already has it.
+  concentration <- NULL
+  if (is.null(W) && !keep_weights && !any(facts$tied_targets)) {
+    tab <- .rank_weight_table(.candidate_rank_weight_spec(object, candidate_row), object$meta$n)
+    if (!is.null(tab)) concentration <- rep(1 / sum(tab^2), object$meta$m)
+  }
+  if (is.null(concentration)) {
+    if (is.null(W)) W <- .candidate_weights_from_ranks(object, candidate_row)
+    concentration <- 1 / colSums(W^2)
+  }
+  out$meta <- .dnn_attach_notice_facts(out$meta, object$.model$groups, concentration, facts)
+  if (keep_weights) {
     if ("W" %in% names(object)) {
       out$W <- W
     }
     if ("ess" %in% names(object)) {
-      out$ess <- 1 / colSums(W^2)
+      out$ess <- concentration
     }
     if ("neighbors" %in% names(object)) {
       k_eff <- max(1L, min(nrow(W), as.integer(out$meta$k)))
@@ -491,7 +564,7 @@
     }
     out$pseudo_values <- pv
   }
-  .candidate_attach_common_view_fields(out, object, row)
+  .candidate_attach_common_view_fields(out, object, row, W = W)
 }
 
 .candidate_plqr_view <- function(object, candidate) {
@@ -529,8 +602,8 @@
         "candidates",
         sprintf(
           "unknown candidate id(s): %s; use one of: %s",
-          paste(unknown, collapse = ", "),
-          paste(ids, collapse = ", ")
+          .dnn_message_examples(unknown)$text,
+          .dnn_message_examples(ids)$text
         ),
         quoted = FALSE
       )
@@ -582,7 +655,7 @@
 #' incomplete or inconsistent saved object must be refitted.
 #'
 #' @section Experimental methods:
-#' Methods for `plqr_result` objects are experimental, as is all PLQR
+#' Methods for `rdistnn_plqr_result` objects are experimental, as is all PLQR
 #' functionality in this release; see [plqr_dnn()].
 #'
 #' @param object A grid fit returned by [np_dnn()], [cate_dnn()], or
@@ -624,28 +697,28 @@ candidate_fit.default <- function(object, candidate, ...) {
 
 #' @rdname candidate_fit
 #' @export
-candidate_fit.np_result <- function(object, candidate, ...) {
+candidate_fit.rdistnn_np_result <- function(object, candidate, ...) {
   .dnn_reuse_scope(object)
   .candidate_np_view(object, candidate)
 }
 
 #' @rdname candidate_fit
 #' @export
-candidate_fit.cate_result <- function(object, candidate, ...) {
+candidate_fit.rdistnn_cate_result <- function(object, candidate, ...) {
   .dnn_reuse_scope(object)
   .candidate_cate_view(object, candidate)
 }
 
 #' @rdname candidate_fit
 #' @export
-candidate_fit.affine_ratio_result <- function(object, candidate, ...) {
+candidate_fit.rdistnn_affine_ratio_result <- function(object, candidate, ...) {
   .dnn_reuse_scope(object)
   .candidate_affine_view(object, candidate)
 }
 
 #' @rdname candidate_fit
 #' @export
-candidate_fit.plqr_result <- function(object, candidate, ...) {
+candidate_fit.rdistnn_plqr_result <- function(object, candidate, ...) {
   .dnn_reuse_scope(object)
   .candidate_plqr_view(object, candidate)
 }
@@ -682,28 +755,28 @@ candidate_fits.default <- function(object, candidates = "all", ...) {
 
 #' @rdname candidate_fit
 #' @export
-candidate_fits.np_result <- function(object, candidates = "all", ...) {
+candidate_fits.rdistnn_np_result <- function(object, candidates = "all", ...) {
   .dnn_reuse_scope(object)
   .candidate_fits_impl(object, candidates = candidates, ...)
 }
 
 #' @rdname candidate_fit
 #' @export
-candidate_fits.cate_result <- function(object, candidates = "all", ...) {
+candidate_fits.rdistnn_cate_result <- function(object, candidates = "all", ...) {
   .dnn_reuse_scope(object)
   .candidate_fits_impl(object, candidates = candidates, ...)
 }
 
 #' @rdname candidate_fit
 #' @export
-candidate_fits.affine_ratio_result <- function(object, candidates = "all", ...) {
+candidate_fits.rdistnn_affine_ratio_result <- function(object, candidates = "all", ...) {
   .dnn_reuse_scope(object)
   .candidate_fits_impl(object, candidates = candidates, ...)
 }
 
 #' @rdname candidate_fit
 #' @export
-candidate_fits.plqr_result <- function(object, candidates = "all", ...) {
+candidate_fits.rdistnn_plqr_result <- function(object, candidates = "all", ...) {
   .dnn_reuse_scope(object)
   .candidate_fits_impl(object, candidates = candidates, ...)
 }

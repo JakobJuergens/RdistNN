@@ -114,6 +114,13 @@ are `NULL`. Summary coefficient columns follow CATE; component and status
 tables remain separate. The [result architecture](13_estimator_and_result_architecture.md)
 specifies generic dispatch and common plotting semantics.
 
+Fitted and candidate tables share the paired-status validator. Availability
+flags are non-missing logical vectors, agree with finite ratios/positive SEs
+and the requested covariance mode, and remain separate from candidate success.
+Validate those facts before interval indexing; numeric or character selectors
+must not silently hide target intervals. A deliberately absent covariance is
+an unavailable extra, while malformed retained status is a refit error.
+
 ## Numerical statuses and confidence sets
 
 Retain every target, including a finite negative denominator or an undefined
@@ -121,6 +128,23 @@ ratio. `ratio_status` distinguishes `ok`, `zero_denominator`,
 `component_overflow` and `ratio_overflow`. Near-zero and negative-denominator
 flags do not replace or filter estimates. `covariance_status` separately
 identifies unavailable, failed or zero-score covariance calculations.
+
+The descriptive near-zero flag compares the absolute fitted denominator with
+the maximum absolute original denominator signal, including zero-weight rows,
+at the existing relative tolerance. Nonzero finite denominators and positive
+tolerance are required. Preserve ordinary arithmetic and exact cutoff
+decisions. Where a finite negative Mata signal has an unrepresentable positive
+magnitude, evaluate that same relative criterion on a safe common binary scale;
+do not silently replace its scale by missing or discard the observation.
+Mata's [numeric limits](https://www.stata.com/manuals/m-5mindouble.pdf) document
+the asymmetric nonmissing range. This numerical recovery adds no identification
+threshold or estimator filtering rule.
+
+Check the original signed range before taking exceptional magnitudes:
+Mata's [minimum/maximum functions](https://www.stata.com/manuals/m-5minmax.pdf)
+ignore missing elements, so a missing absolute value can otherwise disappear
+from the scale without making the resulting maximum missing.
+
 Nonfinite computed component averages are returned as `NA` with
 `component_overflow`; finite components and the original retained signals stay
 available. Status and covariance are computed before this reporting conversion.
@@ -188,11 +212,10 @@ gives CLATE minus CATE equal to `3/1024`. Latent variables are optional audit
 output, not default learner covariates. Core oracle variance constants must
 not be reused for the heterogeneous model.
 
-The internal ridge-series reference adapter fixes its dictionary, ambient
-normalizer, penalty and clipping across deletions. It is tested against dense
-normal equations and explicit one-/two-deleted fits, including empty cells.
-These checks validate computation, not arbitrary learner rates. Small generated
-examples are not repeated-sampling coverage studies or manuscript evidence.
+Independent complete-subset and explicit-deletion references verify the
+supplied-signal estimator and covariance calculations. Nuisance learning belongs
+to the application or a specific replication workflow. Small generated examples
+are not repeated-sampling coverage studies or manuscript evidence.
 
 See [the test-suite map](../../tests/README.md) for independent fixtures,
 engine parity, numerical geometry, interfaces, serialization and rendering.

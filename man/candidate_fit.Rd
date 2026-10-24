@@ -3,41 +3,41 @@
 \name{candidate_fit}
 \alias{candidate_fit}
 \alias{candidate_fit.default}
-\alias{candidate_fit.np_result}
-\alias{candidate_fit.cate_result}
-\alias{candidate_fit.affine_ratio_result}
-\alias{candidate_fit.plqr_result}
+\alias{candidate_fit.rdistnn_np_result}
+\alias{candidate_fit.rdistnn_cate_result}
+\alias{candidate_fit.rdistnn_affine_ratio_result}
+\alias{candidate_fit.rdistnn_plqr_result}
 \alias{candidate_fits}
 \alias{candidate_fits.default}
-\alias{candidate_fits.np_result}
-\alias{candidate_fits.cate_result}
-\alias{candidate_fits.affine_ratio_result}
-\alias{candidate_fits.plqr_result}
+\alias{candidate_fits.rdistnn_np_result}
+\alias{candidate_fits.rdistnn_cate_result}
+\alias{candidate_fits.rdistnn_affine_ratio_result}
+\alias{candidate_fits.rdistnn_plqr_result}
 \title{Extract one candidate view from a grid fit}
 \usage{
 candidate_fit(object, candidate, ...)
 
 \method{candidate_fit}{default}(object, candidate, ...)
 
-\method{candidate_fit}{np_result}(object, candidate, ...)
+\method{candidate_fit}{rdistnn_np_result}(object, candidate, ...)
 
-\method{candidate_fit}{cate_result}(object, candidate, ...)
+\method{candidate_fit}{rdistnn_cate_result}(object, candidate, ...)
 
-\method{candidate_fit}{affine_ratio_result}(object, candidate, ...)
+\method{candidate_fit}{rdistnn_affine_ratio_result}(object, candidate, ...)
 
-\method{candidate_fit}{plqr_result}(object, candidate, ...)
+\method{candidate_fit}{rdistnn_plqr_result}(object, candidate, ...)
 
 candidate_fits(object, candidates = "all", ...)
 
 \method{candidate_fits}{default}(object, candidates = "all", ...)
 
-\method{candidate_fits}{np_result}(object, candidates = "all", ...)
+\method{candidate_fits}{rdistnn_np_result}(object, candidates = "all", ...)
 
-\method{candidate_fits}{cate_result}(object, candidates = "all", ...)
+\method{candidate_fits}{rdistnn_cate_result}(object, candidates = "all", ...)
 
-\method{candidate_fits}{affine_ratio_result}(object, candidates = "all", ...)
+\method{candidate_fits}{rdistnn_affine_ratio_result}(object, candidates = "all", ...)
 
-\method{candidate_fits}{plqr_result}(object, candidates = "all", ...)
+\method{candidate_fits}{rdistnn_plqr_result}(object, candidates = "all", ...)
 }
 \arguments{
 \item{object}{A grid fit returned by \code{\link[=np_dnn]{np_dnn()}}, \code{\link[=cate_dnn]{cate_dnn()}}, or
@@ -84,7 +84,7 @@ incomplete or inconsistent saved object must be refitted.
 }
 \section{Experimental methods}{
 
-Methods for \code{plqr_result} objects are experimental, as is all PLQR
+Methods for \code{rdistnn_plqr_result} objects are experimental, as is all PLQR
 functionality in this release; see \code{\link[=plqr_dnn]{plqr_dnn()}}.
 }
 

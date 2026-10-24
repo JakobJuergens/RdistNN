@@ -47,7 +47,7 @@ coefficient vector \eqn{\theta}.}
 not used internally by this pure score.}
 }
 \value{
-An \code{ustat_score} object whose \code{$setup} stores the vector
+An \code{rdistnn_ustat_score} object whose \code{$setup} stores the vector
 \code{score} of contributions in the context, and whose
 \code{$eval}/\code{$eval_batch} return subset sums of \code{score}
 (no weights applied).

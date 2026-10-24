@@ -7,7 +7,7 @@
 plot_calibration(object, level = 0.95)
 }
 \arguments{
-\item{object}{A \code{plqr_result} with the weight matrix \code{W} stored (the
+\item{object}{A \code{rdistnn_plqr_result} with the weight matrix \code{W} stored (the
 default).}
 
 \item{level}{Confidence level of the reference band (default \code{0.95}).}

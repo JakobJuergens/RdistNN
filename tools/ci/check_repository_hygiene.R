@@ -17,6 +17,48 @@ add_error <- function(message) {
   errors <<- c(errors, message)
 }
 
+# DESCRIPTION owns the current version; history and installation pins do not.
+description <- if (file.exists("DESCRIPTION")) readLines("DESCRIPTION", warn = FALSE) else character()
+declarations <- trimws(sub("^Version:", "", grep("^Version:", description, value = TRUE)))
+if (length(declarations) != 1L ||
+    !grepl("^[0-9]+[.][0-9]+[.][0-9]+([.][0-9]+)?$", declarations)) {
+  add_error("DESCRIPTION: declare exactly one three- or four-component package Version")
+} else {
+  version <- declarations[[1L]]
+  patterns <- c(
+    "NEWS.md" = "^# RdistNN ([0-9]+([.][0-9]+){2,3})( \\(([0-9]{4}-[0-9]{2}-[0-9]{2})\\))?[[:space:]]*$",
+    "README.Rmd" = "^Version \\*\\*([0-9]+([.][0-9]+){2,3})\\*\\*",
+    "README.md" = "^Version \\*\\*([0-9]+([.][0-9]+){2,3})\\*\\*"
+  )
+  for (path in names(patterns)) {
+    if (!file.exists(path)) {
+      add_error(sprintf("%s: missing current package version owner", path))
+      next
+    }
+    lines <- readLines(path, warn = FALSE)
+    if (identical(path, "NEWS.md")) {
+      lines <- head(grep("^# ", lines, value = TRUE), 1L)
+    }
+    matches <- regmatches(lines, regexec(patterns[[path]], lines))
+    matches <- matches[lengths(matches) > 0L]
+    if (length(matches) != 1L) {
+      add_error(sprintf("%s: declare one current package version (%s)", path, version))
+    } else if (matches[[1L]][[2L]] != version) {
+      add_error(sprintf("%s: current package version %s differs from DESCRIPTION %s",
+                        path, matches[[1L]][[2L]], version))
+    }
+    if (identical(path, "NEWS.md") && length(matches) == 1L) {
+      date <- matches[[1L]][[5L]]
+      if (nzchar(date)) {
+        parsed_date <- as.Date(date, format = "%Y-%m-%d")
+        if (is.na(parsed_date) || format(parsed_date, "%Y-%m-%d") != date) {
+          add_error("NEWS.md: date suffix must be a valid ISO date (YYYY-MM-DD)")
+        }
+      }
+    }
+  }
+}
+
 # Direct namespace definitions have one owner; function-local closures may use
 # the same names because they do not replace package-level bindings.
 function_owners <- list()

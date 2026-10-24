@@ -10,23 +10,14 @@ testthat::local_edition(3)
 # --- local helpers ---------------------------------------------------
 
 reg_demo <- function(n = 120, p = 2, seed = 1L) {
-  set.seed(seed)
-  X <- matrix(rnorm(n * p), n, p, dimnames = list(NULL, paste0("X", 1:p)))
-  Y <- rnorm(n)
-  data.frame(X, Y = Y)
+  .test_rng_scope({
+    X <- matrix(rnorm(n * p), n, p, dimnames = list(NULL, paste0("X", 1:p)))
+    Y <- rnorm(n)
+    data.frame(X, Y = Y)
+  }, seed = seed)
 }
 
 .singletons <- function(n) matrix(seq_len(n), ncol = 1L)
-
-# Use compiled batch path if it actually works; otherwise R fallback via eval().
-.eval_batch_safe <- function(sc, subs, df, ctx) {
-  out_try <- try(score_eval_batch(sc, subs, df, ctx), silent = TRUE)
-  if (!inherits(out_try, "try-error")) {
-    return(out_try)
-  }
-  # Fallback: per-row eval (R path)
-  vapply(seq_len(nrow(subs)), function(r) score_eval(sc, subs[r, 1L], df, ctx), numeric(1))
-}
 
 # --- tests -----------------------------------------------------------
 
@@ -88,7 +79,7 @@ test_that("[order] reported order is 1", {
   expect_identical(sc$order(nrow(df), df, ctx), 1L)
 })
 
-test_that("[eval] singleton returns exactly Y_i (y_col path) with robust batch fallback", {
+test_that("[eval] singleton returns exactly Y_i (y_col path)", {
   df <- reg_demo(n = 50, p = 2, seed = 3)
   x0 <- colMeans(df[, 1:2, drop = FALSE])
 
@@ -96,7 +87,7 @@ test_that("[eval] singleton returns exactly Y_i (y_col path) with robust batch f
   ctx <- score_setup(sc, df)
 
   subs <- .singletons(nrow(df))
-  vals <- .eval_batch_safe(sc, subs, df, ctx)
+  vals <- score_eval_batch(sc, subs, df, ctx)
   expect_equal(vals, df$Y, tolerance = 1e-12)
 
   for (i in c(1L, 17L, 50L)) {
@@ -104,7 +95,7 @@ test_that("[eval] singleton returns exactly Y_i (y_col path) with robust batch f
   }
 
   # Empty batch should return numeric(0)
-  expect_identical(.eval_batch_safe(sc, matrix(integer(0), ncol = 1L), df, ctx), numeric(0L))
+  expect_identical(score_eval_batch(sc, matrix(integer(0), ncol = 1L), df, ctx), numeric(0L))
 })
 
 test_that("[eval] singleton returns exactly Y_i (external y path)", {
@@ -115,7 +106,7 @@ test_that("[eval] singleton returns exactly Y_i (external y path)", {
   ctx <- score_setup(sc, df)
 
   subs <- .singletons(nrow(df))
-  out <- .eval_batch_safe(sc, subs, df, ctx)
+  out <- score_eval_batch(sc, subs, df, ctx)
   expect_equal(out, df$Y, tolerance = 1e-12)
 })
 
@@ -127,7 +118,7 @@ test_that("[inputs] integer x_cols indexing works", {
   ctx <- score_setup(sc, df)
 
   subs <- .singletons(nrow(df))
-  out <- .eval_batch_safe(sc, subs, df, ctx)
+  out <- score_eval_batch(sc, subs, df, ctx)
   expect_equal(out, df$Y, tolerance = 1e-12)
 })
 
@@ -191,33 +182,35 @@ test_that("[inputs] non-finite Y triggers non-finite-specific error on evaluatio
 })
 
 test_that("[sanity] singleton: constant and linear Y return exactly Y_i", {
-  # constant Y
-  n <- 20
-  p <- 2
-  c0 <- 3.25
-  set.seed(101)
-  X <- matrix(rnorm(n * p), n, p, dimnames = list(NULL, paste0("X", 1:p)))
-  df <- data.frame(X, Y = rep(c0, n))
-  x0 <- colMeans(df[, 1:2, drop = FALSE])
+  .test_rng_scope({
+    # constant Y
+    n <- 20
+    p <- 2
+    c0 <- 3.25
+    set.seed(101)
+    X <- matrix(rnorm(n * p), n, p, dimnames = list(NULL, paste0("X", 1:p)))
+    df <- data.frame(X, Y = rep(c0, n))
+    x0 <- colMeans(df[, 1:2, drop = FALSE])
 
-  sc <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, y_col = "Y")
-  ctx <- score_setup(sc, df)
-  subs <- .singletons(n)
-  expect_equal(.eval_batch_safe(sc, subs, df, ctx), df$Y, tolerance = 1e-12)
+    sc <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, y_col = "Y")
+    ctx <- score_setup(sc, df)
+    subs <- .singletons(n)
+    expect_equal(score_eval_batch(sc, subs, df, ctx), df$Y, tolerance = 1e-12)
 
-  # linear Y in index
-  n <- 25
-  a <- -1.0
-  b <- 0.75
-  set.seed(202)
-  X2 <- matrix(rnorm(n * p), n, p, dimnames = list(NULL, paste0("X", 1:p)))
-  df2 <- data.frame(X2, Y = a + b * seq_len(n))
-  x02 <- colMeans(df2[, 1:2, drop = FALSE])
+    # linear Y in index
+    n <- 25
+    a <- -1.0
+    b <- 0.75
+    set.seed(202)
+    X2 <- matrix(rnorm(n * p), n, p, dimnames = list(NULL, paste0("X", 1:p)))
+    df2 <- data.frame(X2, Y = a + b * seq_len(n))
+    x02 <- colMeans(df2[, 1:2, drop = FALSE])
 
-  sc2 <- score_np_y(x0 = x02, x_cols = 1:2, s = 1L, y_col = "Y")
-  ctx2 <- score_setup(sc2, df2)
-  subs2 <- .singletons(n)
-  expect_equal(.eval_batch_safe(sc2, subs2, df2, ctx2), df2$Y, tolerance = 1e-12)
+    sc2 <- score_np_y(x0 = x02, x_cols = 1:2, s = 1L, y_col = "Y")
+    ctx2 <- score_setup(sc2, df2)
+    subs2 <- .singletons(n)
+    expect_equal(score_eval_batch(sc2, subs2, df2, ctx2), df2$Y, tolerance = 1e-12)
+  })
 })
 
 test_that("[object] basic shape of score object", {
@@ -225,14 +218,14 @@ test_that("[object] basic shape of score object", {
   x0 <- colMeans(df[, 1:2, drop = FALSE])
 
   sc <- score_np_y(x0 = x0, x_cols = 1:2, s = 1L, y = df$Y)
-  expect_true(inherits(sc, "ustat_score"))
+  expect_true(inherits(sc, "rdistnn_ustat_score"))
   expect_type(sc$eval, "closure")
   expect_type(sc$eval_batch, "closure")
   expect_false(isTRUE(sc$randomized))
   expect_true(isTRUE(sc$symmetric))
 })
 
-test_that("[parity] compiled batch (if actually callable) equals direct R indexing", {
+test_that("[parity] compiled batch equals direct R indexing", {
   df <- reg_demo(n = 45, p = 2, seed = 9)
   x0 <- colMeans(df[, 1:2, drop = FALSE])
 
@@ -240,12 +233,22 @@ test_that("[parity] compiled batch (if actually callable) equals direct R indexi
   ctx <- score_setup(sc, df)
   subs <- .singletons(nrow(df))
 
-  # Try the compiled path; skip if the shared object isn't loaded.
-  out_compiled_try <- try(score_eval_batch(sc, subs, df, ctx), silent = TRUE)
-  if (inherits(out_compiled_try, "try-error")) {
-    testthat::skip("Compiled helper not available at runtime; skipping parity check.")
-  } else {
-    out_R <- df$Y # direct R indexing is the ground truth for singleton score
-    expect_equal(out_compiled_try, out_R, tolerance = 1e-12)
-  }
+  withr::local_options(RdistNN.use_compiled = TRUE)
+  resolver <- RdistNN:::.rdistnn_compiled_fun
+  cpp <- resolver("rustat_subset_row_sums_g")
+  expect_true(is.function(cpp))
+  calls <- 0L
+  testthat::local_mocked_bindings(
+    .rdistnn_compiled_fun = function(name) {
+      if (!identical(name, "rustat_subset_row_sums_g")) return(resolver(name))
+      function(...) {
+        calls <<- calls + 1L
+        cpp(...)
+      }
+    }, .package = "RdistNN"
+  )
+  out_compiled <- score_eval_batch(sc, subs, df, ctx)
+  expect_identical(calls, 1L)
+  out_R <- df$Y # direct R indexing is the ground truth for singleton score
+  expect_equal(out_compiled, out_R, tolerance = 1e-12)
 })

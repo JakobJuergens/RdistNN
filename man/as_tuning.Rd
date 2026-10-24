@@ -12,7 +12,7 @@ as_tuning(fun, name = "user_tuning")
 \item{name}{Character name for the spec.}
 }
 \value{
-A \code{dnn_tuning} spec.
+A \code{rdistnn_tuning} spec.
 }
 \description{
 Wrap a function as a tuning spec

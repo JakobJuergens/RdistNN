@@ -104,7 +104,7 @@ and \code{meta}. Allowed values:
 one column per target. It is a rank summary, not the full DNN weight support.}
 }
 \value{
-An object of class \code{cate_result} with components:
+An object of class \code{rdistnn_cate_result} with components:
 \itemize{
 \item \code{tau}: estimated CATE values at target points;
 \item \code{se}: optional jackknife standard errors;
@@ -207,5 +207,5 @@ out$tau
 }
 \seealso{
 \code{\link[=weights_dnn]{weights_dnn()}}, \code{\link[=weights_matrix]{weights_matrix()}}, \code{\link[=score_cate_rho]{score_cate_rho()}},
-\code{\link[=cate_demo_data]{cate_demo_data()}}, \code{\link[=vcov.cate_result]{vcov.cate_result()}}, \code{\link[=predict.cate_result]{predict.cate_result()}}.
+\code{\link[=cate_demo_data]{cate_demo_data()}}, \code{\link[=vcov.rdistnn_cate_result]{vcov.rdistnn_cate_result()}}, \code{\link[=predict.rdistnn_cate_result]{predict.rdistnn_cate_result()}}.
 }

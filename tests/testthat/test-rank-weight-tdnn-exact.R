@@ -37,6 +37,7 @@ test_that("[smoke] tdnn_rank_table_exact returns length-n numeric summing to 1",
 })
 
 test_that("[smoke] dnn_weights_tdnn_exact_full_from_ranks returns correct structure", {
+  withr::local_preserve_seed()
   set.seed(1)
   n <- 15L; s1 <- 3L; s2 <- 6L; d <- 2L
   ranks <- sample.int(n)
@@ -91,6 +92,7 @@ test_that("[signed] TDNN exact weights can be negative (bias-correction)", {
 })
 
 test_that("[signed] dnn_weights_tdnn_exact_full_from_ranks w has negative entries", {
+  withr::local_preserve_seed()
   set.seed(2)
   n <- 20L; s1 <- 4L; s2 <- 8L; d <- 2L
   out <- dnn_weights_tdnn_exact_full_from_ranks(sample.int(n), s1, s2, d)
@@ -118,6 +120,7 @@ test_that("[golden] tdnn_rank_table_exact matches hand-computed values for small
 # ---- [from_ranks] ----------------------------------------------------
 
 test_that("[from_ranks] w = w_rank[ranks] (data-order mapping)", {
+  withr::local_preserve_seed()
   set.seed(3)
   n <- 18L; s1 <- 3L; s2 <- 6L; d <- 2L
   ranks <- sample.int(n)
@@ -126,6 +129,7 @@ test_that("[from_ranks] w = w_rank[ranks] (data-order mapping)", {
 })
 
 test_that("[from_ranks] meta fields are correct", {
+  withr::local_seed(123L)
   n <- 14L; s1 <- 2L; s2 <- 5L; d <- 3L
   ranks <- sample.int(n)
   out <- dnn_weights_tdnn_exact_full_from_ranks(ranks, s1, s2, d)
@@ -140,6 +144,7 @@ test_that("[from_ranks] meta fields are correct", {
 # ---- [inv] -----------------------------------------------------------
 
 test_that("[inv] w_rank depends only on (n, s1, s2, dim), not the permutation", {
+  withr::local_preserve_seed()
   n <- 20L; s1 <- 3L; s2 <- 7L; d <- 2L
   r1 <- seq_len(n)
   r2 <- rev(r1)
@@ -154,15 +159,16 @@ test_that("[inv] w_rank depends only on (n, s1, s2, dim), not the permutation", 
 
 # ---- [spec] ----------------------------------------------------------
 
-test_that("[spec] rank_weight_tdnn_exact returns a valid rank_weight spec", {
+test_that("[spec] rank_weight_tdnn_exact returns a valid rdistnn_rank_weight spec", {
   rw <- rank_weight_tdnn_exact(s1 = 3L, s2 = 6L, dim = 2L)
   expect_true(is_rank_weight(rw))
-  expect_true(inherits(rw, "rank_weight"))
+  expect_true(inherits(rw, "rdistnn_rank_weight"))
   expect_match(rw$name, "tdnn_exact")
   expect_true(is.function(rw$eval_batch))
 })
 
 test_that("[spec] eval_batch produces correct shape and column sums", {
+  withr::local_preserve_seed()
   set.seed(5)
   n <- 12L; m <- 4L; s1 <- 2L; s2 <- 5L; d <- 2L
   R <- apply(replicate(m, sample.int(n)), 2L, identity)
@@ -174,6 +180,7 @@ test_that("[spec] eval_batch produces correct shape and column sums", {
 })
 
 test_that("[spec] eval_batch agrees with dnn_weights_tdnn_exact_full_from_ranks", {
+  withr::local_preserve_seed()
   set.seed(6)
   n <- 14L; m <- 3L; s1 <- 2L; s2 <- 5L; d <- 2L
   R <- apply(replicate(m, sample.int(n)), 2L, identity)

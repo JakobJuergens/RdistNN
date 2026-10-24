@@ -48,7 +48,7 @@ test_that("iv_demo_data: aliases and x0 are forwarded to IV DGPs", {
   expect_equal(demo$truth$instrument_type, rep("binary", 3L))
 
   expect_error(iv_demo_data(n = 60L, p = 2L, q = 2L, design = "bad"),
-               "should be one of")
+               class = "rdistnn_input_error")
 })
 
 test_that("iv_demo_data: rejects invalid injection requests", {

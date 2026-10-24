@@ -1,4 +1,4 @@
-test_that("diagnostics(plqr_result) reports residual-regressor Gram diagnostics", {
+test_that("diagnostics(rdistnn_plqr_result) reports residual-regressor Gram diagnostics", {
   .test_rng_scope({
     demo <- plqr_demo_data(n = 75L, p = 2L, p_d = 1L, tau = 0.5, seed = 21L)
     fit <- plqr_dnn(
@@ -22,7 +22,7 @@ test_that("diagnostics(plqr_result) reports residual-regressor Gram diagnostics"
     d_resid <- demo$data$D1 - demo$data$mD1
     expected_gram <- as.numeric(crossprod(d_resid^2, fit$W))
 
-    expect_s3_class(d, "dnn_diagnostics")
+    expect_s3_class(d, "rdistnn_diagnostics")
     expect_true(all(d$gram_available))
     expect_equal(d$gram_min_eig, expected_gram, tolerance = 1e-12)
     expect_equal(d$gram_max_eig, expected_gram, tolerance = 1e-12)
@@ -30,11 +30,15 @@ test_that("diagnostics(plqr_result) reports residual-regressor Gram diagnostics"
 
     bad_state <- fit
     bad_state$.model <- NULL
-    expect_error(diagnostics(bad_state), "localization model state.*[Rr]efit")
+    err <- tryCatch(diagnostics(bad_state), error = identity)
+    expect_s3_class(err, "rdistnn_state_error")
+    expect_identical(err$code, "state_invalid")
+    expect_match(err$argument, "object$.model", fixed = TRUE)
+    expect_match(conditionMessage(err), "Refit", fixed = TRUE)
   }, seed = 777L)
 })
 
-test_that("diagnostics(plqr_result) reports multi-column and singular Gram diagnostics", {
+test_that("diagnostics(rdistnn_plqr_result) reports multi-column and singular Gram diagnostics", {
   .test_rng_scope({
     demo <- plqr_demo_data(n = 85L, p = 2L, p_d = 2L, tau = 0.5, seed = 24L)
     fit <- plqr_dnn(
@@ -65,15 +69,19 @@ test_that("diagnostics(plqr_result) reports multi-column and singular Gram diagn
     expect_equal(d$gram_max_eig, vapply(expected, max, numeric(1L)), tolerance = 1e-12)
     expect_true(all(is.finite(d$gram_condition_number)))
 
-    singular <- fit
-    singular$.model$d_resid_mat[, 2L] <- singular$.model$d_resid_mat[, 1L]
+    singular <- plqr_dnn(
+      X = fit$.model$x_mat, X0 = fit$x0, Y = demo$data$Y,
+      D = fit$.model$d_mat[, c(1L, 1L)],
+      mD = fit$.model$mD_mat[, c(1L, 1L)], g = demo$data$g_oracle,
+      theta_eval = demo$truth$theta_true, tau = .5, k = 2L, s = 4L,
+      se = FALSE, return = "W")
     d_singular <- diagnostics(singular)
     expect_true(all(d_singular$gram_min_eig <= d_singular$gram_rank_tol))
     expect_true(all(is.infinite(d_singular$gram_condition_number)))
   }, seed = 777L)
 })
 
-test_that("diagnostics(plqr_result) validates retained residual-regressor state", {
+test_that("diagnostics(rdistnn_plqr_result) validates retained residual-regressor state", {
   .test_rng_scope({
     demo <- plqr_demo_data(n = 70L, p = 2L, p_d = 2L, tau = 0.5, seed = 25L)
     fit <- plqr_dnn(
@@ -95,11 +103,18 @@ test_that("diagnostics(plqr_result) validates retained residual-regressor state"
 
     bad_rows <- fit
     bad_rows$.model$d_resid_mat <- bad_rows$.model$d_resid_mat[-1L, , drop = FALSE]
-    expect_error(diagnostics(bad_rows), "row count equal to nrow\\(object\\$W\\)")
+    error <- tryCatch(diagnostics(bad_rows), error = identity)
+    expect_s3_class(error, "rdistnn_state_error")
+    expect_identical(error$code, "state_invalid")
+    expect_identical(error$argument, "object$.model$d_resid_mat")
+    expect_match(conditionMessage(error), "70 by 2.*[Rr]efit")
 
     bad_value <- fit
     bad_value$.model$d_resid_mat[1L, 1L] <- NaN
-    expect_error(diagnostics(bad_value), "object\\$\\.model\\$d_resid_mat cannot contain non-finite values")
+    error <- tryCatch(diagnostics(bad_value), error = identity)
+    expect_s3_class(error, "rdistnn_state_error")
+    expect_identical(error$argument, "object$.model$d_resid_mat")
+    expect_match(conditionMessage(error), "nonfinite.*[Rr]efit")
   }, seed = 777L)
 })
 

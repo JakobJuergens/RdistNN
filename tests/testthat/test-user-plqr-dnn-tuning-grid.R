@@ -131,7 +131,7 @@ test_that("plqr_dnn grid mode preserves default-candidate fields and long-form r
     return = c("W", "ranks", "ess", "score", "tuning")
   )
 
-  expect_s3_class(grid, "plqr_result")
+  expect_s3_class(grid, "rdistnn_plqr_result")
   expect_equal(grid$moment, scalar$moment, tolerance = 0)
   expect_equal(grid$moment_se, scalar$moment_se, tolerance = 0)
   expect_equal(grid$W, scalar$W, tolerance = 0)
@@ -226,7 +226,7 @@ test_that("candidate_fit reconstructs PLQR candidate views", {
     return = c("W", "ranks", "ord", "dx", "ess", "score")
   )
 
-  expect_s3_class(view, "plqr_result")
+  expect_s3_class(view, "rdistnn_plqr_result")
   expect_equal(view$moment, ref$moment, tolerance = 1e-12)
   expect_equal(view$moment_se, ref$moment_se, tolerance = 1e-12)
   expect_equal(view$W, ref$W, tolerance = 1e-12)

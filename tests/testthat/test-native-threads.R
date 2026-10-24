@@ -35,15 +35,15 @@ test_that("invalid native thread options fail before a parallel calculation", {
 test_that("native parallel kernels retain their one-thread results", {
   old <- options(RdistNN.num_threads = 1L, RdistNN.use_compiled = TRUE)
   on.exit(options(old), add = TRUE)
-  required <- c("rustat_dist_l1", "rustat_dist_l2", "rustat_cate_g_indexed",
-    "rustat_plqr_g_all", "rustat_plqr_g_indexed", "rustat_subset_row_sums_g",
+  required <- c("rustat_dist_l1", "rustat_dist_l2", "rustat_exact_rank_table",
+    "rustat_compensated_sum", "rustat_block_rank_loo",
+    "rustat_plqr_g_all", "rustat_subset_row_sums_g",
     "rustat_jackknife_fast_rank")
   for (name in required) expect_type(.rdistnn_compiled_fun(name), "closure")
   n <- 1100L
   X <- cbind(seq_len(n) / n, sin(seq_len(n)))
   X0 <- X[seq_len(8L), , drop = FALSE]
   rho <- cos(seq_len(n))
-  cate <- rustat_cate_ctx_create(rho)
   plqr <- rustat_plqr_ctx_create(rho, X, rep(0, n), X / 2, c(0.2, -0.1), 0.5, 1L)
   ranks <- cbind(seq_len(n), c(seq.int(2L, n), 1L))
   calculate <- function() {
@@ -51,9 +51,7 @@ test_that("native parallel kernels retain their one-thread results", {
       l1 = dist_l1(X, X0[1L, ]), l2 = dist_l2(X, X0[1L, ]),
       l1_batch = distance_l1()$eval_batch(X, X0),
       l2_batch = distance_l2()$eval_batch(X, X0),
-      cate = rustat_cate_g_indexed(seq_len(n), cate),
       plqr = rustat_plqr_g_all(plqr),
-      plqr_indexed = rustat_plqr_g_indexed(seq_len(n), plqr),
       subset = rustat_subset_row_sums_g(ranks, rho),
       jackknife = rustat_jackknife_fast_rank(ranks, 1, matrix(rho, ncol = 1L))
     )

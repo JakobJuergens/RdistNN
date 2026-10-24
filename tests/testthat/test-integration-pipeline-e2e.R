@@ -31,7 +31,7 @@
       pmax(D, 0)
     }
   )
-  class(cosine_spec) <- c("dnn_distance", "list")
+  class(cosine_spec) <- c("rdistnn_distance", "list")
   ctx_dist <- cosine_spec$setup(X)
 
   make_rw <- function(lambda) {
@@ -67,7 +67,7 @@
       pmax(D, 0)
     }
   )
-  class(cosine_spec) <- c("dnn_distance", "list")
+  class(cosine_spec) <- c("rdistnn_distance", "list")
 
   rw <- as_rank_weight(function(r, ctx = NULL) {
     w <- 0.9^(r - 1L)
@@ -87,7 +87,7 @@
       }, numeric(nrow(X)))
     }
   )
-  class(dist_batch_only) <- c("dnn_distance", "list")
+  class(dist_batch_only) <- c("rdistnn_distance", "list")
 
   dist_batch_only
 }
@@ -104,7 +104,7 @@
     W
   }
   structure(list(name = "rw_batch_only", eval_batch = eval_batch, .__kind = "rank_weight"),
-    class = c("rank_weight", "list")
+    class = c("rdistnn_rank_weight", "list")
   )
 }
 
@@ -142,7 +142,7 @@ test_that("end-to-end: custom distance + custom rank-weight + weights + score", 
       pmax(D, 0)
     }
   )
-  class(cosine_spec) <- c("dnn_distance", "list") # optional, helps registry
+  class(cosine_spec) <- c("rdistnn_distance", "list") # optional, helps registry
 
   # No distance_setup() generic in this API; when ctx=NULL the evaluators call spec$setup(X).
   ctx_dist <- cosine_spec$setup(X)

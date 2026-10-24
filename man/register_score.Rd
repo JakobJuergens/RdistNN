@@ -9,7 +9,7 @@ register_score(name, score)
 \arguments{
 \item{name}{Character scalar registry key.}
 
-\item{score}{A \code{ustat_score} object.}
+\item{score}{A \code{rdistnn_ustat_score} object.}
 }
 \value{
 Invisibly, the registered name.

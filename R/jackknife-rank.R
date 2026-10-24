@@ -15,8 +15,8 @@
 #' matrix and reevaluate the DNN rank-weight rule after delete-one updates.
 #'
 #' - If `phi` is a numeric **matrix** (n_ref x q) with rows `phi[j, ] = phi(j)` and
-#'   the package was compiled with C++ support, this calls the **C++ fast
-#'   path**.
+#'   compiled execution is enabled and the native routine is available, this
+#'   calls the **C++ fast path**. See [RdistNN] for engine controls.
 #' - Otherwise, it uses a general **R fallback** that also supports target-dependent
 #'   per-neighbor contributions via a function `phi(j, t)`.
 #' With matrix `phi`, `n_ref = nrow(phi)`. With function-valued `phi`, the
@@ -165,7 +165,10 @@ jackknife_fast_rank <- function(ranks, a, phi, normalize = TRUE) {
       }
     }
   } else {
-    stop("`phi` must be either a numeric matrix (n_ref x q) or a function(j, t).", call. = FALSE)
+    .dnn_abort("argument_invalid",
+      "`phi` must be either a numeric matrix (n_ref x q) or a function(j, t).",
+      argument = "phi"
+    )
   }
 
   .jackknife_finite_accumulation_R(ranks, a, y_tk, n_ref, normalize)

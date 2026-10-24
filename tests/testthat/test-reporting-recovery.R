@@ -113,6 +113,7 @@ test_that("grid does not recover generic numerical, resource, interrupt or inter
 })
 
 test_that("grid callbacks do not change options or RNG while preserving warning handling", {
+  withr::local_preserve_seed()
   set.seed(551)
   rng <- .Random.seed
   opts <- options()
@@ -194,6 +195,7 @@ test_that("simulation promoted warnings propagate and outer calling handlers ret
 })
 
 test_that("simulation batch propagates DGP errors and preserves caller RNG", {
+  withr::local_preserve_seed()
   set.seed(556)
   before <- .Random.seed
   expect_error(sim_cate_run(designs = "bad_design", n_vals = 30L, kx_vals = 2L,
@@ -222,6 +224,7 @@ test_that("tuning callback errors in simulation metadata propagate", {
 })
 
 test_that("simulation batches aggregate declared failures and retain reasons", {
+  withr::local_preserve_seed()
   original <- RdistNN:::.get_sim_method
   local_mocked_bindings(.get_sim_method = function(name) {
     if (name == "causal_forest") return(function(...) .reporting_method_failure("declared method failure"))

@@ -1,4 +1,4 @@
-# PLQR-specific diagnostics for plqr_result objects.
+# PLQR-specific diagnostics for rdistnn_plqr_result objects.
 
 .plqr_gram_diagnostics <- function(W, d_resid_mat, rank_tol = sqrt(.Machine$double.eps)) {
   w_mat <- as.matrix(W)
@@ -123,19 +123,19 @@
 
 #' @name diagnostics
 #' @export
-diagnostics.plqr_result <- function(object, candidates = "default", ...) {
+diagnostics.rdistnn_plqr_result <- function(object, candidates = "default", ...) {
   .dnn_reuse_scope(object)
   if (!.plot_candidates_is_default(candidates)) {
     return(.dnn_candidate_diagnostics(object, candidates = candidates))
   }
   model <- object$.model
   if (!is.list(model) || is.null(model$d_resid_mat)) {
-    .abort_bad_state("This object lacks residualized design state. Refit with plqr_dnn().")
+    .dnn_abort("state_invalid", "This object lacks residualized design state. Refit with plqr_dnn().")
   }
   out <- .dnn_weight_diagnostics(
     W = .dnn_diag_require_W(object),
     meta = object$meta,
-    dx = object$dx,
+    dx = .dnn_retained_matrix(object, "dx"),
     tuning_payload = .dnn_diag_tuning_payload(object)
   )
   out <- .dnn_diag_append(out, .plqr_gram_diagnostics(object$W, d_resid_mat = model$d_resid_mat))

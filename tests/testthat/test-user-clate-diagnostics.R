@@ -1,7 +1,7 @@
 test_that("ratio diagnostics reconstruct paired uncertainty and score concentration", {
   f <- .ratio_fixture()
   z <- diagnostics(f)
-  expect_s3_class(z, "dnn_diagnostics")
+  expect_s3_class(z, "rdistnn_diagnostics")
   expect_equal(z$numerator, 2)
   expect_equal(z$denominator, .5)
   expect_equal(z$numerator_se, sqrt(.5))
@@ -65,5 +65,5 @@ test_that("paired diagnostics work without utils attached to the search path", {
     }
     force(code)
   }
-  expect_s3_class(without_utils(diagnostics(fit)), "dnn_diagnostics")
+  expect_s3_class(without_utils(diagnostics(fit)), "rdistnn_diagnostics")
 })

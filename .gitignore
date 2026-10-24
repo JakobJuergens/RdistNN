@@ -39,3 +39,6 @@ README.html
 # Paper drafts are maintained in the paper repositories, not the R package.
 /Jackknife-GenUStat_JJuergens.pdf
 /Local_Z_Est_JJuergens.pdf
+
+# Developer analysis cache
+.ruff_cache/

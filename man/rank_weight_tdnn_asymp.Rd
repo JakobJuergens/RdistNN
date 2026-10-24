@@ -17,10 +17,10 @@ rank_weight_tdnn_asymp(s1, s2, dim, normalize = TRUE)
 (default \code{TRUE}; guards floating-point drift).}
 }
 \value{
-A \code{rank_weight} spec (list with class \code{"rank_weight"}).
+A \code{rdistnn_rank_weight} spec (list with class \code{"rdistnn_rank_weight"}).
 }
 \description{
-Returns a \code{rank_weight} spec whose \code{eval_batch} uses the asymptotic TDNN
+Returns a \code{rdistnn_rank_weight} spec whose \code{eval_batch} uses the asymptotic TDNN
 rank table from \code{tdnn_rank_table_asymp()}.  Structurally identical to
 \code{\link[=rank_weight_tdnn_exact]{rank_weight_tdnn_exact()}} but uses the Beta order-statistic approximation,
 evaluated across the full rank grid. Combined entries can be zero through

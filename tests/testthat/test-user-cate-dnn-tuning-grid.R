@@ -110,24 +110,6 @@
   invisible(grid)
 }
 
-.cate_grid_count_traced_calls <- function(fun, expr) {
-  trace_env <- new.env(parent = emptyenv())
-  trace_env$calls <- 0L
-  assign(".cate_grid_trace_env", trace_env, envir = .GlobalEnv)
-  on.exit(rm(".cate_grid_trace_env", envir = .GlobalEnv), add = TRUE)
-  suppressMessages(invisible(trace(
-    fun,
-    tracer = quote({
-      .GlobalEnv$.cate_grid_trace_env$calls <- .GlobalEnv$.cate_grid_trace_env$calls + 1L
-    }),
-    where = asNamespace("RdistNN"),
-    print = FALSE
-  )))
-  on.exit(suppressMessages(untrace(fun, where = asNamespace("RdistNN"))), add = TRUE)
-  force(expr)
-  trace_env$calls
-}
-
 test_that("cate_dnn grid mode preserves default-candidate fields and extras", {
   case <- .cate_grid_cate_case("direct", seed = 6610L)
   tun <- .cate_grid_cate_tuning()
@@ -145,7 +127,7 @@ test_that("cate_dnn grid mode preserves default-candidate fields and extras", {
     return = c("W", "ranks", "ess", "psi", "tuning")
   )
 
-  expect_s3_class(grid, "cate_result")
+  expect_s3_class(grid, "rdistnn_cate_result")
   expect_equal(grid$tau, scalar$tau, tolerance = 0)
   expect_equal(grid$se, scalar$se, tolerance = 0)
   expect_equal(grid$W, scalar$W, tolerance = 0)
@@ -235,7 +217,7 @@ test_that("cate_dnn grid mode constructs nuisance pseudo-outcomes once per fit",
   aipw_case <- .cate_grid_cate_case("aipw", n = 40L, m = 2L, seed = 6615L)
   tun <- .cate_grid_cate_tuning()
 
-  aipw_calls <- .cate_grid_count_traced_calls("cate_rho_aipw", {
+  aipw_calls <- .count_package_calls("cate_rho_aipw", {
     grid <- .cate_grid_do_cate(
       aipw_case$grid_args,
       method = "exact", k = 1L, tuning = tun, tuning_mode = "grid",

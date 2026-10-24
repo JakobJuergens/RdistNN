@@ -409,11 +409,9 @@ sim_iv_data <- function(design, n, kx = 2L, q = 2L, sigma = 0.5,
     "dgp6_iv_nonlinear_firststage"
   )
   if (!is.character(design) || length(design) != 1L || !design %in% valid) {
-    stop(
+    .dnn_abort("argument_invalid", paste0(
       "Unknown IV design: '", design, "'. Choose from: ",
-      paste(valid, collapse = ", "), ".",
-      call. = FALSE
-    )
+      paste(valid, collapse = ", "), "."), argument = "design")
   }
   if (is.null(x0)) {
     x0 <- .sim_iv_default_x0(design, kx)
