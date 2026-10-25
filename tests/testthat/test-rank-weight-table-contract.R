@@ -87,7 +87,7 @@ test_that("TDNN rank-weight specs expose validated tables matching existing eval
     n = n,
     R = R,
     ref_table = tdnn_rank_table_exact(n, s1 = 3L, s2 = 7L, dim = 2L),
-    ref_one = function(r) dnn_weights_tdnn_exact_full_from_ranks(r, s1 = 3L, s2 = 7L, dim = 2L)$w
+    ref_one = function(r) tdnn_rank_table_exact(n, 3L, 7L, 2L)[r]
   )
 
   .rank_table_expect_table_contract(
@@ -96,7 +96,7 @@ test_that("TDNN rank-weight specs expose validated tables matching existing eval
     R = R,
     ref_table = tdnn_rank_table_asymp(n, s1 = 3L, s2 = 7L, dim = 2L, normalize = TRUE),
     ref_one = function(r) {
-      dnn_weights_tdnn_asymp_full_from_ranks(r, s1 = 3L, s2 = 7L, dim = 2L, normalize = TRUE)$w
+      tdnn_rank_table_asymp(n, 3L, 7L, 2L, normalize = TRUE)[r]
     }
   )
 
@@ -106,7 +106,7 @@ test_that("TDNN rank-weight specs expose validated tables matching existing eval
     R = R,
     ref_table = tdnn_rank_table_asymp(n, s1 = 3L, s2 = 7L, dim = 2L, normalize = FALSE),
     ref_one = function(r) {
-      dnn_weights_tdnn_asymp_full_from_ranks(r, s1 = 3L, s2 = 7L, dim = 2L, normalize = FALSE)$w
+      tdnn_rank_table_asymp(n, 3L, 7L, 2L, normalize = FALSE)[r]
     }
   )
 })

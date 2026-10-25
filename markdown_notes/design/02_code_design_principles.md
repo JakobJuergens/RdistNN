@@ -46,6 +46,36 @@ before making performance claims; see
 [Advanced R, measuring performance](https://adv-r.hadley.nz/perf-measure.html)
 and [doing less work](https://adv-r.hadley.nz/perf-improve.html).
 
+## Removing unused code
+
+Establish consumers before deleting an internal function. Follow public exports,
+S3 dispatch, registry callbacks, generated native bindings and checkout tools;
+a text reference count alone does not establish reachability. When a private
+path loses its last supported consumer, remove its adapters, native registration,
+private headers and implementation-only tests together. Preserve public
+constructors, actual engine paths and independently derived numerical references.
+Regenerate owned files rather than editing generated glue.
+
+Keep test scenarios in tests and developer benchmark scaffolding under
+`tools/bench/`; installed `R/` contains package behavior. This applies the
+[R Extensions package-subdirectory conventions](https://stat.ethz.ch/R-manual/R-patched/doc/manual/R-exts.html#Package-subdirectories)
+to this package. Public demo generators and registered simulation scenarios
+remain package features. A test-only scenario builder is not such a feature.
+
+## Useful consolidation
+
+Share repeated code when it implements the same invariant, input contract and
+side effects. Keep public wrappers when they own distinct names or defaults;
+the demo-subset exports use one private sampler in `utils-rng.R`, with unchanged
+validation order, seeded draws and caller RNG behavior. Move duplicate tests
+into their existing behavior owner while retaining independent references.
+
+Similar-looking estimator orchestration can differ in validation timing,
+scientific statuses, saved-state transactions or labels. Those differences
+need an explicit design before consolidation. Independent numerical oracles,
+R/Mata/C++ implementations, generated help and frozen evidence have separate
+roles; their repeated material is not by itself a pruning opportunity.
+
 ## Maintaining this design reference
 
 Record adopted design principles and best practices in the existing note that

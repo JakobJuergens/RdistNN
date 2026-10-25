@@ -213,3 +213,42 @@ test_that("unrepresentable component covariance cannot feed a deterministic set"
   expect_error(ratio_confidence_set(tiny$components, tiny$component_vcov), "component_vcov")
   })
 })
+
+test_that("zero numerator identities retain coefficient formation uncertainty", {
+  denominator <- 0x1.4p-6
+  variance <- 0x1.a08228c528f05p-14
+  x <- ratio_confidence_set(matrix(c(0, denominator), 1L), list(diag(c(0, variance))))[[1L]]
+  expect_identical(x$type, "unresolved")
+  expect_identical(x$numerical_status, "coefficient_rounding")
+  for (factor in c(.5, 2)) {
+    control <- ratio_confidence_set(matrix(c(0, denominator), 1L),
+      list(diag(c(0, variance * factor))))[[1L]]
+    expect_identical(control$type, if (factor < 1) "singleton" else "all_real")
+    expect_identical(control$numerical_status, "ok")
+  }
+})
+
+test_that("underflowed critical squares cannot certify a ratio set topology", {
+  for (denominator in c(1e-180, 1e-220)) {
+    x <- ratio_confidence_set(matrix(c(0, denominator), 1L),
+      list(diag(c(0, 1))), level = 1e-200)[[1L]]
+    expect_identical(x$type, "unresolved")
+    expect_identical(x$numerical_status, "confidence_level_precision")
+  }
+  small_level <- 2e-162
+  critical <- sqrt(pi / 2) * small_level
+  denominator <- critical * sqrt(3) * .99
+  subnormal <- ratio_confidence_set(matrix(c(0, denominator), 1L),
+    list(diag(c(0, 3))), level = small_level)[[1L]]
+  expect_gt(critical^2, 0)
+  expect_lt(critical^2, .Machine$double.xmin)
+  expect_lt(denominator / critical, sqrt(3))
+  expect_identical(subnormal$type, "unresolved")
+  expect_identical(subnormal$numerical_status, "confidence_level_precision")
+  direct <- ratio_confidence_set(matrix(c(0, 1), 1L),
+    list(diag(c(1, 0))), level = 1e-200)[[1L]]
+  critical <- sqrt(pi / 2) * 1e-200
+  expect_identical(direct$type, "bounded")
+  expect_identical(direct$numerical_status, "ok")
+  expect_equal(as.numeric(direct$intervals) / critical, c(-1, 1), tolerance = 1e-14)
+})

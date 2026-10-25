@@ -38,7 +38,10 @@ main <- function(args = commandArgs(TRUE)) {
     "optional <- c('ggplot2', 'patchwork', 'grf', 'hdm', 'future.apply', 'tibble')",
     "if (any(vapply(optional, requireNamespace, logical(1), quietly = TRUE)))",
     "  stop('Optional feature dependencies must be absent from the isolated library.')",
-    "testthat::test_package('RdistNN', reporter = 'summary', stop_on_failure = TRUE)"
+    "results <- testthat::test_package('RdistNN', reporter = 'summary', stop_on_failure = TRUE)",
+    "if (!length(results)) stop('Minimal-dependency check executed no installed tests.')",
+    "if (sum(as.data.frame(results)$passed) < 1L)",
+    "  stop('Minimal-dependency check executed no passing assertions.')"
   ), runner)
   run(file.path(R.home("bin"), "Rscript"),
     c("--vanilla", shQuote(runner), shQuote(library)))

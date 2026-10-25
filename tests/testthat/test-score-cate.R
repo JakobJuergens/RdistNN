@@ -2,45 +2,26 @@
 # -------------------------------------------------------------------
 # CATE score tests — PURE per-observation score; no weights/USTAT layer
 # The kernel stores g_i = rho_i and returns sum_{i in S} g_i for any subset S.
-# This suite uses the extended generator cate_demo_sets() if available.
 # -------------------------------------------------------------------
 
 testthat::local_edition(3)
 
-# --- local helpers ---------------------------------------------------
-
-# Fallback mini generator if cate_demo_sets() is not present
-.cate_minigen <- function(n = 60L, p = 2L, seed = 1L) {
-  .test_rng_scope({
-    X <- matrix(rnorm(n * p), n, p, dimnames = list(NULL, paste0("X", 1:p)))
-    rho <- rnorm(n)
-    df <- data.frame(X, aipw_oracle = rho)
-    list(
-      data = df,
-      x0 = rep(0, p),
-      x_cols = colnames(X),
-      s = 1L,
-      subs_all = matrix(seq_len(n), ncol = 1L),
-      subs_empty = matrix(integer(0), ncol = 1L),
-      subs_2col = cbind(seq_len(n), rev(seq_len(n))),
-      cols = list(rho = "aipw_oracle")
-    )
-  }, seed = seed)
-}
-
-.get_cate_fx <- function(...) {
-  if (exists("cate_demo_sets", mode = "function")) {
-    cate_demo_sets(...)
-  } else {
-    list(ok_simple = .cate_minigen(...))
-  }
+# This fixture uses the public generator and the same original simple design.
+# The other former scenario-builder outputs had no score-test consumers.
+.get_cate_fx <- function(n = 80L, p = 2L) {
+  demo <- cate_demo_data(n = n, p = p, design = "simple",
+                         sigma = 0.4, clip = 0.001, seed = 1L)
+  list(ok_simple = list(data = demo$data, x0 = rep(0, p),
+    x_cols = paste0("X", seq_len(p)), cols = list(rho = "aipw_oracle"),
+    subs_empty = matrix(integer(), ncol = 1L),
+    subs_2col = cbind(seq_len(n), rev(seq_len(n)))))
 }
 
 # --- tests -----------------------------------------------------------
 
-test_that("[factory] XOR (rho vs rho_col), positive s and k, and setup dimension checks", {
+test_that("[factory] XOR (rho vs rho_col), positive s, and setup dimension checks", {
   fx <- .get_cate_fx(n = 50, p = 3)
-  scn <- fx[[1L]] # either ok_simple or the first scenario
+  scn <- fx[[1L]]
   rho_col <- scn$cols$rho
 
   # Must supply exactly one of rho or rho_col
@@ -65,11 +46,7 @@ test_that("[factory] XOR (rho vs rho_col), positive s and k, and setup dimension
     ignore.case = FALSE
   )
 
-  # `k` was a compatibility-only argument and has been removed
-  expect_error(
-    score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 1L, k = 1L, rho_col = rho_col),
-    "unused argument"
-  )
+
 
   # x0 length mismatch (setup-time)
   sc_badx0 <- score_cate_rho(
@@ -131,7 +108,7 @@ test_that("[eval] general subsets (multi-column) sum per-row rho", {
   sc <- score_cate_rho(x0 = scn$x0, x_cols = scn$x_cols, s = 2L, rho_col = rho_col)
   ctx <- score_setup(sc, scn$data)
 
-  subs2 <- if (!is.null(scn$subs_2col)) scn$subs_2col else cbind(seq_len(nrow(scn$data)), rev(seq_len(nrow(scn$data))))
+  subs2 <- scn$subs_2col
   vals <- score_eval_batch(sc, subs2, scn$data, ctx)
 
   # direct R row sums of rho over those columns

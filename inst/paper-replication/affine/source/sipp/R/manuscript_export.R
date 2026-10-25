@@ -35,6 +35,9 @@ render_sipp_401k_manuscript <- function(input_dir,historical_dir,output_dir,tabl
   sensitivity <- json(file.path(evidence,"sensitivity.json"))
   accepted <- json(file.path(evidence,"acceptance_verification.json"))
   fit <- json(file.path(evidence,"fit_manifest.json"))
+  averaged_ties <- identical(accepted$localization_policy,"exact_distance_block_averaging_v1")
+  if(averaged_ties)stopifnot(isTRUE(accepted$averaged_weights_reconstructed),
+    isTRUE(accepted$deletions_reconstructed),isTRUE(accepted$represented_distances_verified))
   if(selection$purpose!="empirical"||sensitivity$purpose!="empirical")
     stop("Manuscript publication requires empirical evidence; validation is refused.",call.=FALSE)
   stopifnot(identical(selection$fit_fingerprint,sensitivity$fit_fingerprint),
@@ -82,7 +85,7 @@ render_sipp_401k_manuscript <- function(input_dir,historical_dir,output_dir,tabl
     close(sum(c$covariance),e$se^2);close(sum(u$mean),e$tau)
     close(z$tau,e$tau);close(z$se,e$se)
     for(s in grid)one(orders,id,m,s)
-    if(m!="dnn_fullsample") {
+    if(m!="dnn_fullsample"&&!averaged_ties) {
       old_method <- if(m=="dnn_oob")"dnn_fullsample" else m
       h <- one(old[old$outcome_scale=="raw_dollars",],id,old_method)
       close(e$tau,h$tau);close(e$se,h$se)
@@ -147,7 +150,7 @@ render_sipp_401k_manuscript <- function(input_dir,historical_dir,output_dir,tabl
     v <- c(at(1,1),at(2,2),at(3,3),at(1,2)+at(2,1),at(1,3)+at(3,1),at(2,3)+at(3,2),sum(c$covariance))
     covrows[[length(covrows)+1L]] <- line(c(plabel(id),labels[m],vapply(v/1e6,function(x)number(x,1),character(1))))
   }
-  add("component_means",c("Income","Prediction","Contrast","Eligible residual","Control residual","Total"),
+  add("component_means",c("Income","Prediction","Contrast","Eligible correction","Control correction","Total"),
       unlist(rows),63L,columns="@{}llrrrr@{}")
   add("component_covariance",c("Income","Prediction","$V_r$","$V_u$","$V_v$","$2C_{ru}$","$2C_{rv}$","$2C_{uv}$","Total"),
       unlist(covrows),189L,columns="@{}llrrrrrrr@{}")
@@ -157,14 +160,15 @@ render_sipp_401k_manuscript <- function(input_dir,historical_dir,output_dir,tabl
     line(c(labels[m],number(z$e_hat,3),number(z$m0_hat/1000),number(z$m1_hat/1000),
       number(z$contrast/1000),number(z$ineligible_residual/1000),number(z$phi/1000)))
   },character(1))
-  add("upper_case",c("Prediction","Propensity","Control mean","Eligible mean","Contrast","Control residual","Signal"),
+  add("upper_case",c("Prediction","Propensity","Control mean","Eligible mean","Contrast","Control correction","Signal"),
       rows,3L,columns="@{}lrrrrrr@{}")
   for(part in seq_len(3L)) {
     ids <- list(profiles[1:3],profiles[4:5],profiles[6:7])[[part]]
     rows <- list()
     for(id in ids)for(s in grid) {
       a <- lapply(methods,function(m)one(orders,id,m,s)); z <- a[[2L]]
-      close(z$nearest_weight,s/accepted$n)
+      if(averaged_ties)stopifnot(z$nearest_weight>0,z$nearest_weight<=s/accepted$n+1e-12) else
+        close(z$nearest_weight,s/accepted$n)
       rows[[length(rows)+1L]] <- line(c(plabel(id),number(s,0),number(z$ess,1),
         vapply(a,function(r)estimate(r$tau,r$se),character(1)),number(z$radius_90_z,4),number(100*z$jk_top1_sq_share,1)))
     }
@@ -193,7 +197,8 @@ render_sipp_401k_manuscript <- function(input_dir,historical_dir,output_dir,tabl
   rows <- list()
   for(id in display)for(s in c(397L,99L)) {
     z <- one(core_orders,id,"dnn_oob",s)
-    close(z$nearest_weight,s/accepted$n)
+    if(averaged_ties)stopifnot(z$nearest_weight>0,z$nearest_weight<=s/accepted$n+1e-12) else
+      close(z$nearest_weight,s/accepted$n)
     rows[[length(rows)+1L]] <- line(c(plabel(id),number(s,0),number(z$tau/1000),
       number(z$se/1000),number(z$ess,1),number(z$radius_90_z,4),
       number(100*z$jk_top1_sq_share,1)))

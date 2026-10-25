@@ -416,24 +416,6 @@
   x_vec
 }
 
-.validate_same_n <- function(..., n, args = NULL, ref = "n") {
-  vals <- list(...)
-  if (is.null(args)) {
-    args <- names(vals)
-  }
-  if (is.null(args) || any(!nzchar(args))) {
-    args <- paste0("arg", seq_along(vals))
-  }
-  if (length(args) != length(vals)) {
-    .abort_bad_arg("args", "length must match number of vectors")
-  }
-  for (i in seq_along(vals)) {
-    if (length(vals[[i]]) != n) {
-      .abort_bad_arg(args[[i]], sprintf("length must equal %s (%d)", ref, n), quoted = FALSE)
-    }
-  }
-  invisible(TRUE)
-}
 
 .validate_subset_indices <- function(idxs_or_subs, n, s, unique_within_subset = TRUE, allow_empty = FALSE) {
   n <- .validate_scalar_int(n, arg = "n", min = 1L)

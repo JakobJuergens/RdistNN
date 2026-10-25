@@ -72,29 +72,3 @@ test_that("one-coordinate NP bumps match scalar truth and restore seeded RNG", {
     }
   })
 })
-
-test_that("public demo subset helpers return deterministic valid subsets", {
-  helpers <- list(
-    np = np_demo_subsets,
-    cate = cate_demo_subsets,
-    plqr = plqr_demo_subsets
-  )
-
-  for (helper in helpers) {
-    first <- helper(n = 12L, K = 7L, s = 4L, seed = 74L)
-    second <- helper(n = 12L, K = 7L, s = 4L, seed = 74L)
-
-    expect_equal(dim(first), c(7L, 4L))
-    expect_equal(first, second)
-    expect_true(all(first >= 1L & first <= 12L))
-    expect_true(all(apply(
-      first, 1L,
-      function(idx) length(unique(idx)) == 4L
-    )))
-    expect_true(all(apply(
-      first, 1L,
-      function(idx) identical(idx, sort(idx))
-    )))
-    expect_error(helper(n = 3L, K = 2L, s = 4L), "s")
-  }
-})

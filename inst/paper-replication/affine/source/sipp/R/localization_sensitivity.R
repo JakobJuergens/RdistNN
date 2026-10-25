@@ -13,17 +13,19 @@ sipp_401k_localization_sensitivity <- function(fit, orders, profile_ids = NULL) 
   d <- fit$analysis_data; cols <- fit$specification$metric$columns
   if (is.null(cols)) cols <- c("age_z","asinh_inc_z")
   X <- as.matrix(d[,cols,drop=FALSE])
+  X0 <- as.matrix(fit$profiles[,cols,drop=FALSE])
+  geometry <- sipp_401k_saved_geometry(fit,X,X0)
   output <- list()
   for (scale in names(fit$dnn_weights)) for (id in profile_ids) {
     j <- match(id,fit$profiles$profile_id)
-    x0 <- as.numeric(fit$profiles[j,cols,drop=FALSE])
-    distance <- sqrt(rowSums(sweep(X,2L,x0,"-")^2)); ord <- order(distance,seq_len(n))
+    distance <- geometry$distances[,j]
+    ord <- order(distance,seq_len(n)); tied_distance <- distance[ord]
     payload <- fit$dnn_weights[[scale]]
     mechanisms <- names(payload)[!startsWith(names(payload),"pseudo_outcome_")]
     for (mechanism in mechanisms) for (s in sort(orders)) {
       method <- paste0("dnn_",mechanism); phi <- payload[[paste0("pseudo_outcome_",mechanism)]]
       e <- fit$nuisances[[mechanism]]$e_hat
-      z <- sipp_401k_frozen_rank(phi[ord],s); w <- numeric(n); w[ord] <- z$weights
+      z <- sipp_401k_frozen_rank(phi[ord],s,tied_distance); w <- numeric(n); w[ord] <- z$weights
       pc <- z$centered[,1L]; square <- sum(pc^2); h <- if(square>0)pc^2/square else rep(NA_real_,n)
       top <- if(square>0)which.max(h) else 1L
       base <- baseline[baseline$outcome_scale==scale & baseline$profile_id==id &

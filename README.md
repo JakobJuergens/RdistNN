@@ -11,7 +11,7 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 [![test-coverage](https://github.com/JakobJuergens/RdistNN/actions/workflows/test-coverage.yaml/badge.svg)](https://github.com/JakobJuergens/RdistNN/actions/workflows/test-coverage.yaml)
 <!-- badges: end -->
 
-Version **0.1.4**. See [NEWS](NEWS.md) for changes.
+Version **0.1.5**. See [NEWS](NEWS.md) for changes.
 
 **RdistNN** estimates conditional treatment effects and regression
 functions using distributional nearest-neighbor (DNN) weights. Choose
@@ -39,14 +39,11 @@ macOS, or an R-compatible compiler on Linux. For plots, also install
 `ggplot2`; dashboards can use `patchwork`.
 
 For the version-pinned release, use
-`pak::pak("JakobJuergens/RdistNN@v0.1.4")`.
+`pak::pak("JakobJuergens/RdistNN@v0.1.5")`.
 
 For reproducible installation, retain the full source commit or checked
-archive identity;
-[RELEASING.md](https://github.com/JakobJuergens/RdistNN/blob/master/RELEASING.md)
-explains candidate installation and historical pins. The historical
-`v0.1.0` tag predates CLATE and the current shared reporting interface.
-Retain the source commit or archive identity alongside your results.
+archive identity; see
+[RELEASING.md](https://github.com/JakobJuergens/RdistNN/blob/master/RELEASING.md).
 
 ## Choose a workflow
 
@@ -117,14 +114,8 @@ plot(fit_cate)
 The [getting-started
 guide](https://JakobJuergens.github.io/RdistNN/articles/getting-started.html)
 shows matrix inputs, supplied signals and covariance between
-prespecified profiles. Earlier `m_col` calls should use both arm means
-for AIPW or a supplied `pseudo_outcome`; a pooled outcome mean is not a
-substitute. The [migration
-guide](https://JakobJuergens.github.io/RdistNN/articles/getting-started.html#migrating-earlier-cate-inputs)
-describes the current signal inputs and refitting older development
-objects. Fits report `meta$signal_source` and retain their original
-`meta$created_with_version`; these describe the fit rather than certify
-its inference assumptions.
+prespecified profiles. During active experimental development, refit
+saved models after package updates.
 
 ## Regression and conditional LATE
 
@@ -176,30 +167,22 @@ explains the default rule and candidate fits.
 
 ## Interpreting inference
 
-Intervals are **pointwise**. The framework assumes independent
-observations; cluster and survey-design inference are not supplied. At
-each target, observations with exactly equal represented distance under
-the selected metric share the average of their assigned rank weights,
-including every deletion’s surviving group. Nearby distances are not
-merged. This includes different covariate profiles at equal distance;
-individual weights, support and effective sample size can change.
-Aligned row permutations preserve estimates and covariance up to
-numerical precision. Refit saved objects created under an earlier tie
-policy.
+Intervals are pointwise. The sampling framework assumes independent
+observations; cluster and survey-design inference are not supplied.
+Supply aligned nuisance predictions and inspect localization and arm
+support. Clipping and diagnostics do not establish identification or
+valid inference.
 
-The paper assumes a continuous distance distribution, under which the
-earlier and current rules agree almost surely. The package warns when
-distance ties occur: inference for persistent distance ties is not
-established. Averaging does not supply a uniform mean-squared-error
-improvement.
+Observations at exactly equal computed distance under the selected
+metric share the average of their rank weights. Inference with
+persistent distance ties is not established. The [weight
+guide](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.html#exact-distance-ties)
+explains tie handling, survivor weights and realized support.
 
-Nuisance predictions must be aligned with the estimation observations.
-Propensity clipping is numerical protection, not a remedy for poor
-overlap. Diagnostics describe local support; they do not establish
-validity. For the identification, nuisance-learning and localization
-conditions and theoretical results, see the accompanying
-[paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
-The package guides explain the corresponding inputs and outputs.
+The [accompanying
+paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
+states the identification, nuisance-learning, localization and bias
+conditions for inference.
 
 ## Numerical behavior and engines
 

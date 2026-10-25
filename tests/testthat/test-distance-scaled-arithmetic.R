@@ -22,12 +22,10 @@ check_scaled_arithmetic <- function(X, X0, metric, rule, scale_vec = NULL,
   prefix <- paste0("rustat_dist_", metric, "_scaled")
   cpp <- .rdistnn_compiled_fun(prefix)
   cpp_batch <- .rdistnn_compiled_fun(paste0(prefix, "_batch"))
-  cpp_order <- .rdistnn_compiled_fun(paste0("rustat_order_by_", metric, "_scaled"))
   # Missing native code must fail this suite instead of silently testing R twice.
   expect_true(is.function(cpp))
   expect_true(is.function(cpp_batch))
-  expect_true(is.function(cpp_order))
-  if (!is.function(cpp) || !is.function(cpp_batch) || !is.function(cpp_order)) {
+  if (!is.function(cpp) || !is.function(cpp_batch)) {
     stop("Scaled-distance regression requires the compiled package.")
   }
   flags <- if (metric == "l2") list(squared = squared) else list()
@@ -40,15 +38,12 @@ check_scaled_arithmetic <- function(X, X0, metric, rule, scale_vec = NULL,
   expect_equal(native, literal, tolerance = 1e-15)
   if (!is.null(hand)) expect_equal(native[, 1L], hand, tolerance = 1e-15)
   rank_columns <- function(D) apply(D, 2L, rank, ties.method = "first")
-  direct <- get(paste0("dist_", metric, "_scaled"))
-  orderer <- get(paste0("order_by_", metric, "_scaled"))
 
   for (compiled in c(TRUE, FALSE)) {
     options(RdistNN.use_compiled = compiled)
     if (!compiled) {
       expect_null(.rdistnn_compiled_fun(prefix))
       expect_null(.rdistnn_compiled_fun(paste0(prefix, "_batch")))
-      expect_null(.rdistnn_compiled_fun(paste0("rustat_order_by_", metric, "_scaled")))
     }
     for (context in list(ctx, list(inv_s = inv_s), NULL)) {
       batch <- spec$eval_batch(X, X0, context)
@@ -61,14 +56,11 @@ check_scaled_arithmetic <- function(X, X0, metric, rule, scale_vec = NULL,
       expect_identical(rank_columns(scalar), rank_columns(native))
     }
     for (q in seq_len(nrow(X0))) {
-      dx <- do.call(direct, c(list(X, X0[q, ], inv_s), flags))
-      native_order <- do.call(cpp_order, c(list(X, X0[q, ], inv_s), flags))
-      ordered <- do.call(orderer, c(list(X, X0[q, ], rule = rule,
-                                       scale_vec = scale_vec, eps = 1e-8), flags))
+      dx <- spec$eval(X, X0[q, ], list(inv_s = inv_s))
+      ordered <- .distance_ranking(X, X0[q, ], spec)
       expect_equal(dx, native[, q], tolerance = 1e-14)
-      expect_identical(.tie_reference_order(dx), native_order$ord)
+      expect_identical(.tie_reference_order(dx), ordered$ord)
       expect_equal(ordered$dx, native[, q], tolerance = 1e-14)
-      expect_identical(ordered$ord, native_order$ord)
     }
     # Reuse fitted scales on a new training subset; the cached scaled X cannot
     # replace the caller's X, and the subset must not refit the scales.
@@ -116,8 +108,7 @@ test_that("unscaled ranks use the same coordinate accumulation as native code", 
     for (squared in if (metric == "l2") c(FALSE, TRUE) else FALSE) {
       options(RdistNN.use_compiled = TRUE)
       symbols <- paste0("rustat_", c(paste0("dist_", metric),
-                                      paste0("dist_", metric, "_batch"),
-                                      paste0("order_by_", metric)))
+                                      paste0("dist_", metric, "_batch")))
       native_funs <- lapply(symbols, .rdistnn_compiled_fun)
       expect_true(all(vapply(native_funs, is.function, logical(1))))
       if (!all(vapply(native_funs, is.function, logical(1)))) {
@@ -138,8 +129,7 @@ test_that("unscaled ranks use the same coordinate accumulation as native code", 
         dx <- spec$eval(X, X0[1L, ])
         expect_equal(dx, native[, 1L], tolerance = 1e-15)
         expect_identical(order(dx, seq_along(dx)), 1:2)
-        ordered <- do.call(get(paste0("order_by_", metric)),
-                           c(list(X, X0[1L, ]), flags))
+        ordered <- .distance_ranking(X, X0[1L, ], spec)
         expect_identical(ordered$ord, 1:2)
       }
     }
@@ -165,8 +155,7 @@ test_that("L2 rounds each square before addition even when FMA is available", {
     for (squared in c(FALSE, TRUE)) {
       options(RdistNN.use_compiled = TRUE)
       symbols <- paste0("rustat_", c(paste0("dist_l2", suffix),
-                                      paste0("dist_l2", suffix, "_batch"),
-                                      paste0("order_by_l2", suffix)))
+                                      paste0("dist_l2", suffix, "_batch")))
       native_funs <- lapply(symbols, .rdistnn_compiled_fun)
       expect_true(all(vapply(native_funs, is.function, logical(1))))
       if (!all(vapply(native_funs, is.function, logical(1)))) {
@@ -186,11 +175,9 @@ test_that("L2 rounds each square before addition even when FMA is available", {
       }
       native <- do.call(native_funs[[1L]], c(args, list(squared)))
       native_batch <- do.call(native_funs[[2L]], c(batch_args, list(squared)))
-      ordered <- do.call(native_funs[[3L]], c(args, list(squared)))
       hand <- if (squared) hand_sq else sqrt(hand_sq)
       expect_equal(native, rep(hand, 2L), tolerance = 0)
       expect_equal(native_batch, matrix(hand, 2L, 2L), tolerance = 0)
-      expect_identical(ordered$ord, 1:2)
       for (compiled in c(TRUE, FALSE)) {
         options(RdistNN.use_compiled = compiled)
         if (!compiled) {
@@ -202,9 +189,9 @@ test_that("L2 rounds each square before addition even when FMA is available", {
         expect_equal(batch, matrix(hand, 2L, 2L), tolerance = 0)
         expect_identical(order(dx, seq_along(dx)), 1:2)
         public_order <- if (scaled) {
-          order_by_l2_scaled(X, X0[1L, ], "custom", c(2, 4), squared = squared)
+          .distance_ranking(X, X0[1L, ], distance_l2_scaled(rule = "custom", scale_vec = c(2, 4), squared = squared))
         } else {
-          order_by_l2(X, X0[1L, ], squared)
+          .distance_ranking(X, X0[1L, ], distance_l2(squared = squared))
         }
         expect_identical(public_order$ord, 1:2)
       }

@@ -226,6 +226,13 @@ test_that("accepted evidence regenerates all current manuscript tables", {
   output <- tempfile("affine [evidence] (test) ")
   on.exit(unlink(output, recursive = TRUE), add = TRUE)
   expect_true(bundle$env$replication_render(bundle$path, output))
+  receipt <- jsonlite::read_json(file.path(output, "replication.json"), simplifyVector = TRUE)
+  expect_identical(receipt$status, "verified")
+  expect_equal(receipt$tables_matched, 21L)
+  expect_false(receipt$estimation_performed)
+  expect_false(receipt$simulation_performed)
+  manifest <- bundle$env$replication_manifest(bundle$path)
+  expect_identical(manifest$application$run_id, "rdistnn-0.1.4-20261024")
   tables <- list.files(file.path(output, "Tables"), pattern = "\\.tex$", recursive = TRUE)
   expect_length(tables, 21L)
   for (file in tables) expect_identical(readLines(file.path(output, "Tables", file)), readLines(file.path(output, "reference", "Tables", file)))
@@ -252,10 +259,100 @@ test_that("SIPP smoke replication retains three distinct prediction mechanisms",
   expect_setequal(fit$estimates$method, c("dnn_fullsample", "dnn_oob", "dnn_crossfit"))
   expect_true(all(is.finite(fit$estimates$tau)))
   expect_true(isTRUE(fit$run_info$smoke))
+  terminal <- jsonlite::read_json(file.path(output, "replication.json"), simplifyVector = TRUE)
+  expect_identical(terminal$status, "completed")
+  expect_identical(terminal$mode, "smoke")
+  expect_identical(terminal$purpose, "validation_only")
+  expect_identical(fit$localization$policy, "exact_distance_block_averaging_v1")
+  expect_identical(fit$specification$metric$tie_rule, fit$localization$policy)
+  expect_equal(dim(fit$localization$distances), c(300L, 7L))
+  provenance <- jsonlite::read_json(file.path(output, "runs", "paper-current", "manifest.json"),
+    simplifyVector = TRUE)$provenance$packages$RdistNN
+  expect_identical(provenance$version, as.character(utils::packageVersion("RdistNN")))
+  expect_identical(provenance$installed_path, normalizePath(find.package("RdistNN"), winslash = "/"))
   expect_gt(max(abs(fit$nuisances$fullsample$e_hat - fit$nuisances$oob$e_hat)), 0)
   localization <- read.csv(file.path(output, "runs", "paper-current", "localization", "localization_all.csv"))
   expect_equal(nrow(localization), 168L)
   expect_true(file.exists(file.path(output, "runs", "paper-current", "affine_export", "information.csv")))
+  env <- new.env(parent = globalenv())
+  source(file.path(bundle$path, "source", "sipp", "R", "estimation_helpers.R"), local = env)
+  original <- env$sipp_401k_fit_fingerprint(fit)
+  for (field in c("policy", "distances")) {
+    bad <- fit
+    bad$localization[[field]] <- NULL
+    expect_error(env$analyze_sipp_401k_frozen(bad), "localization.*refit")
+    expect_false(identical(env$sipp_401k_fit_fingerprint(bad), original))
+  }
+  bad <- fit
+  bad$localization <- NULL
+  expect_error(env$analyze_sipp_401k_frozen(bad), "localization.*refit")
+  bad <- fit
+  bad$localization$distances[1, 1] <- bad$localization$distances[1, 1] + 1
+  expect_error(env$analyze_sipp_401k_frozen(bad), "geometry.*refit")
+  bad <- fit
+  bad$dnn_weights$raw_dollars$fullsample[1, 1] <- 1
+  expect_error(env$analyze_sipp_401k_frozen(bad), "weights.*geometry")
+})
+
+test_that("vendored SIPP diagnostics match independent exact-distance survivors", {
+  bundle <- .affine_bundle()
+  env <- new.env(parent = globalenv())
+  sys.source(file.path(bundle, "source", "sipp", "R", "frozen_diagnostics.R"), envir = env)
+  X <- c(-1, 1, 2, -3, 3, 4)
+  distance <- abs(X)
+  s <- 3L
+  components <- cbind(c(4, -8, 2, 9, 1, 3), c(-2, 7, 5, 1, -4, 6), c(3, 2, -1, 4, 8, -5))
+  paired <- cbind(rowSums(components), c(-4, 2, 8, -1, 6, 3))
+  # Independent choose formula, regrouped on actual survivors, including zeros.
+  weights <- function(d, average = TRUE) {
+    n <- length(d)
+    ranks <- seq_len(n)
+    w <- vapply(ranks, function(r) if (n - r >= s - 1L) {
+      choose(n - r, s - 1L) / choose(n, s)
+    } else 0, numeric(1))
+    if (average) w <- vapply(d, function(x) mean(w[d == x]), numeric(1))
+    w
+  }
+  check <- function(phi, d) {
+    n <- nrow(phi)
+    w <- weights(d)
+    tau <- colSums(w * phi)
+    loo <- t(matrix(vapply(seq_len(n), function(i) {
+      colSums(weights(d[-i]) * phi[-i, , drop = FALSE])
+    }, numeric(ncol(phi))), nrow = ncol(phi)))
+    pv <- sweep(-(n - 1L) * loo, 2L, n * tau, "+")
+    centered <- sweep(pv, 2L, colMeans(pv), "-")
+    z <- env$sipp_401k_frozen_rank(phi, s, d)
+    expect_equal(z$weights, w, tolerance = 1e-14)
+    expect_equal(z$tau, tau, tolerance = 1e-13)
+    expect_equal(z$loo, loo, tolerance = 1e-13)
+    expect_equal(z$pseudo_values, pv, tolerance = 1e-12)
+    expect_equal(z$centered, centered, tolerance = 1e-12)
+    expect_equal(z$covariance, crossprod(centered) / (n * (n - 1L)), tolerance = 1e-12)
+    z
+  }
+  z <- check(components, distance)
+  p <- check(paired, distance)
+  scalar <- check(matrix(paired[, 1], ncol = 1), distance)
+  expect_equal(sum(z$covariance), scalar$covariance[1, 1], tolerance = 1e-12)
+  expect_equal(sum(p$centered[, 1] * p$centered[, 2]) / 30, p$covariance[1, 2], tolerance = 1e-12)
+  # Ranks 4:5 cross positive support: the assigned zero stays in the average.
+  expect_equal(z$weights[4:5], rep(1 / 40, 2), tolerance = 1e-14)
+  permutation <- c(2L, 1L, 3L, 5L, 4L, 6L)
+  reordered <- check(components[permutation, ], distance[permutation])
+  expect_equal(reordered$tau, z$tau, tolerance = 1e-13)
+  expect_equal(reordered$covariance, z$covariance, tolerance = 1e-12)
+  expect_equal(reordered$loo, z$loo[permutation, ], tolerance = 1e-13)
+  expect_equal(reordered$centered, z$centered[permutation, ], tolerance = 1e-12)
+  tied <- check(components, rep(1, 6))
+  expect_equal(tied$weights, rep(1 / 6, 6), tolerance = 1e-14)
+  expect_equal(weights(rep(1, 5)), rep(1 / 5, 5), tolerance = 1e-14)
+  for (d in list(seq_len(6), c(1, 1 + 2^-50, 2, 3, 3 + 2^-48, 4))) {
+    distinct <- check(components, d)
+    strict <- env$sipp_401k_frozen_rank(components, s)
+    expect_identical(distinct$weights, strict$weights)
+    expect_equal(distinct$loo, strict$loo, tolerance = 1e-13)
+  }
 })
 
 test_that("audit adapter preserves settings while restoring frozen serialization bytes", {

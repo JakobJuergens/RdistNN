@@ -1,167 +1,19 @@
-# inst/bench/bench_plqr.R
-# Benchmark for the PLQR component *pure-score* (score_plqr_component)
-# with optional C++ helpers if available.
-
-# --- Minimal helper bootstrap (internal utils or inst/bench) ------------------
-if (!exists("rdistnn_bench_require", inherits = TRUE)) {
-  cand <- c(system.file("bench", "utils-bench.R", package = "RdistNN"),
-            file.path("inst", "bench", "utils-bench.R"))
-  cand <- cand[file.exists(cand)]
-  for (f in cand) {
-    try(suppressWarnings(source(f, local = TRUE)), silent = TRUE)
-    if (exists("rdistnn_bench_require", inherits = TRUE)) break
-  }
-  if (!exists("rdistnn_bench_require", inherits = TRUE)) {
-    rdistnn_bench_require <- function() {
-      if (!requireNamespace("bench", quietly = TRUE))
-        stop("Please install the 'bench' package (install.packages('bench')).")
-      invisible(TRUE)
-    }
-  }
-  if (!exists("%||%", inherits = TRUE)) `%||%` <- function(a, b) if (is.null(a)) b else a
-  if (!exists("rdistnn_bench_make_idx", inherits = TRUE)) {
-    rdistnn_bench_make_idx <- function(n, n_subsets, subset_size) {
-      t(replicate(n_subsets, sample.int(n, subset_size, replace = FALSE)))
-    }
-  }
-  if (!exists("rdistnn_bench_parity", inherits = TRUE)) {
-    rdistnn_bench_parity <- function(a, b, tol, label) {
-      if (!isTRUE(all.equal(a, b, tolerance = tol)))
-        stop(sprintf("%s: mismatch beyond tol=%g.", label, tol))
-    }
-  }
-  if (!exists("rdistnn_bench_print", inherits = TRUE)) {
-    rdistnn_bench_print <- function(b) {
-      print(b[, c("expression", "min", "median", "itr/sec", "mem_alloc", "gc/sec")])
-    }
-  }
-}
-
-# --- Benchmark function -------------------------------------------------------
-rdistnn_bench_plqr <- function(
-    n = 2000L,
-    pX = 5L,
-    pD = 3L,
-    s  = 32L,               # kernel order (explicit in pure-score API)
-    tau = 0.5,
-    j   = 1L,
-    beta = NULL,            # defaults to rep(0, pD) if NULL
-    n_subsets = 512L,
-    reps = 5L,
-    seed = 1L,
-    pass_names = FALSE      # TRUE: pass names; FALSE: pass numeric indices
-) {
+# Supplied-coefficient PLQR moment scores; no coefficient fitting or inference.
+rdistnn_bench_plqr <- function(n = 2000L, p = 5L, p_d = 2L, s = 32L,
+                                tau = 0.5, j = 1L, n_subsets = 512L,
+                                reps = 5L, seed = 1L, include_cpp_direct = TRUE) {
   rdistnn_bench_require()
   set.seed(seed)
-
-  # --- Oracle-friendly synthetic data ----------------------------------------
-  # X
-  X <- matrix(rnorm(n * pX), n, pX, dimnames = list(NULL, paste0("X", seq_len(pX))))
-
-  # q_tau(X): smooth scalar of X
-  qx <- drop(0.3 * X[, 1L]) + 0.15 * rowSums(X[, 1:min(3L, pX), drop = FALSE])
-
-  # m_D(X): n x pD (simple dense map of X)
-  B  <- matrix(0.2, nrow = pD, ncol = pX)
-  mD <- X %*% t(B)
-  colnames(mD) <- paste0("mD", seq_len(pD))
-
-  # D | X: centered around m_D(X)
-  D <- mD + matrix(rnorm(n * pD, sd = 0.5), n, pD,
-                   dimnames = list(NULL, paste0("D", seq_len(pD))))
-  colnames(D) <- paste0("D", seq_len(pD))
-
-  # beta and Y so that P(Y <= D^T beta + q) = tau in expectation
-  if (is.null(beta)) beta <- rep(0, pD) else beta <- as.numeric(beta)
-  e <- rlogis(n) - qlogis(tau)                  # ensures P(e <= 0) = tau
-  Y <- as.numeric(D %*% beta + qx + e)
-
-  # Assemble df in a *known* order: [ Y | X | D | q | mD ]
-  df <- data.frame(Y = Y, X, D, q = qx, mD, check.names = FALSE)
-
-  # Numeric column positions (robust to name munging)
-  i_Y  <- 1L
-  i_X  <- seq.int(2L, 1L + pX)
-  i_D  <- seq.int(2L + pX, 1L + pX + pD)
-  i_q  <- 2L + pX + pD
-  i_mD <- seq.int(i_q + 1L, i_q + pD)
-
-  # Or names if requested
-  x_cols  <- if (pass_names) names(df)[i_X]  else i_X
-  D_cols  <- if (pass_names) names(df)[i_D]  else i_D
-  q_col   <- if (pass_names) names(df)[i_q]  else i_q
-  mD_cols <- if (pass_names) names(df)[i_mD] else i_mD
-
-  # Target point x0 (dimension check only for the pure score)
-  x0 <- colMeans(X)
-
-  # --- Build pure-score -------------------------------------------------------
-  sc <- score_plqr_component(
-    x0 = x0, x_cols = x_cols, D_cols = D_cols, g_col = q_col, y_col = "Y", mD_cols = mD_cols,
-    theta = beta, j = as.integer(j), tau = tau,
-    s = as.integer(s)
-  )
-
-  # setup() => ctx with numeric score
-  ctx <- sc$setup(df)
-  if (is.null(ctx$score) || length(ctx$score) != n) stop("ctx$score not set correctly by setup().")
-  if (n < s) stop(sprintf("n (%d) must be >= s (%d).", n, s), call. = FALSE)
-
-  # Subset indices
+  demo <- plqr_demo_data(n, p, p_d, tau = tau, seed = seed)
+  d <- demo$data
+  D_cols <- paste0("D", seq_len(p_d))
+  mD_cols <- paste0("mD", seq_len(p_d))
+  theta <- demo$truth$theta_true
+  score <- score_plqr_component(demo$x0, paste0("X", seq_len(p)), D_cols,
+    g_col = "g_oracle", mD_cols = mD_cols, y_col = "Y", theta = theta,
+    j = j, tau = tau, s = s)
+  threshold <- as.vector(as.matrix(d[D_cols]) %*% theta) + d$g_oracle
+  signal <- (tau - as.numeric(d$Y <= threshold)) * (d[[D_cols[j]]] - d[[mD_cols[j]]])
   idx <- rdistnn_bench_make_idx(n, n_subsets, s)
-
-  # --- R evaluators -----------------------------------------------------------
-  eval_score_batch <- function() as.numeric(sc$eval_batch(idx, df, ctx, NULL))
-  eval_score_loop  <- function() apply(idx, 1L, function(r) sc$eval(r, df, ctx, NULL))
-  eval_baseline    <- function() {
-    gi <- ctx$score
-    rowSums(matrix(gi[idx], nrow = nrow(idx)))
-  }
-
-  # --- Native production score generation and subset reduction ---
-  ns <- asNamespace("RdistNN")
-  symbols <- c("rustat_plqr_ctx_create", "rustat_plqr_g_all", "rustat_subset_row_sums_g")
-  have_cpp <- all(vapply(symbols, exists, logical(1), envir = ns, inherits = FALSE))
-  if (have_cpp) {
-    create <- get(symbols[1L], envir = ns, inherits = FALSE)
-    all <- get(symbols[2L], envir = ns, inherits = FALSE)
-    subset <- get(symbols[3L], envir = ns, inherits = FALSE)
-    cpp_ctx <- create(df$Y, as.matrix(df[, D_cols, drop = FALSE]), df[[q_col]],
-      as.matrix(df[, mD_cols, drop = FALSE]), beta, tau, as.integer(j))
-    eval_cpp_subset <- function() subset(idx, ctx$score)
-    eval_cpp_score_subset <- function() subset(idx, all(cpp_ctx))
-  }
-
-  # --- Parity checks (fail fast) ---------------------------------------------
-  sb <- eval_score_batch()
-  rdistnn_bench_parity(sb, eval_baseline(), 1e-12, "score vs baseline")
-  rdistnn_bench_parity(sb, as.numeric(eval_score_loop()), 1e-12, "batch vs loop")
-  if (have_cpp) {
-    rdistnn_bench_parity(sb, eval_cpp_subset(), 1e-12, "score vs native subset")
-    rdistnn_bench_parity(sb, eval_cpp_score_subset(), 1e-12, "score vs native score and subset")
-  }
-
-  # --- Benchmark --------------------------------------------------------------
-  if (have_cpp) {
-    b <- bench::mark(
-      PLQR_score_eval_batch = eval_score_batch(),
-      PLQR_baseline_rowSums = eval_baseline(),
-      PLQR_loop_eval        = eval_score_loop(),
-      PLQR_native_subset       = eval_cpp_subset(),
-      PLQR_native_score_subset = eval_cpp_score_subset(),
-      iterations = reps,
-      check = TRUE
-    )
-  } else {
-    b <- bench::mark(
-      PLQR_score_eval_batch = eval_score_batch(),
-      PLQR_baseline_rowSums = eval_baseline(),
-      PLQR_loop_eval        = eval_score_loop(),
-      iterations = reps,
-      check = TRUE
-    )
-  }
-
-  rdistnn_bench_print(b)
-  invisible(b)
+  rdistnn_bench_score(score, d, idx, signal, reps, include_cpp_direct)
 }

@@ -92,30 +92,6 @@ dist_l2 <- function(X, x0, squared = FALSE) {
 }
 
 # -----------------------------------------------------------------------------
-#' Order rows by L2 distance to a point (stable ties)
-#'
-#' @inheritParams dist_l2
-#' @return A list with `dx` and `ord`.
-#' @examples
-#' set.seed(1)
-#' X <- matrix(rnorm(10), 5, 2)
-#' order_by_l2(X, c(0, 0))
-#' @keywords internal
-#' @noRd
-order_by_l2 <- function(X, x0, squared = FALSE) {
-  .assert_no_na(X, x0)
-  X <- as.matrix(X)
-  x0 <- .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X", finite = TRUE)
-
-  cpp <- .rdistnn_compiled_fun("rustat_order_by_l2")
-  if (!is.null(cpp)) {
-    return(cpp(X, x0, isTRUE(squared)))
-  }
-
-  dx <- dist_l2(X, x0, squared)
-  ord <- .order_with_ties(dx)
-  list(dx = dx, ord = as.integer(ord))
-}
 
 # -----------------------------------------------------------------------------
 #' L2 distance spec (single and batched evaluation)
@@ -165,33 +141,6 @@ distance_l2 <- function(squared = FALSE) {
 }
 
 # -----------------------------------------------------------------------------
-#' Scaled L2 distance (per-coordinate scaling)
-#'
-#' Computes \eqn{\|(X_{i,\cdot} - x_0) \odot \mathrm{inv\_s}\|_2} (or squared).
-#'
-#' @inheritParams dist_l2
-#' @param inv_s Numeric vector of length \eqn{p} with elementwise scales.
-#' @return Numeric vector of length \eqn{n}.
-#' @examples
-#' set.seed(1)
-#' X <- matrix(rnorm(12), 4, 3)
-#' dist_l2_scaled(X, c(0, 0, 0), inv_s = c(1, 2, 0.5))
-#' @keywords internal
-#' @noRd
-dist_l2_scaled <- function(X, x0, inv_s, squared = FALSE) {
-  .assert_no_na(X, x0)
-  X <- as.matrix(X)
-  validated <- .validate_x0_inv_s(x0, inv_s, ncol(X), x_arg = "X", strict = TRUE, finite = TRUE)
-  x0 <- validated$x0
-  inv_s <- validated$inv_s
-
-  cpp <- .rdistnn_compiled_fun("rustat_dist_l2_scaled")
-  if (!is.null(cpp)) {
-    return(cpp(X, x0, inv_s, isTRUE(squared)))
-  }
-
-  .dist_l2_R(X, x0, squared, inv_s)
-}
 
 # -----------------------------------------------------------------------------
 #' Scaled L2 distance spec (one-time setup + eval/batch)
@@ -290,44 +239,3 @@ distance_l2_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
 }
 
 # -----------------------------------------------------------------------------
-#' Order rows by scaled L2 (stable ties)
-#'
-#' Computes per-column scales (or uses `scale_vec` for `"custom"`), then
-#' prefers a compiled fast path if available. Otherwise computes distances
-#' via `dist_l2_scaled()` and orders deterministically.
-#'
-#' @param X Numeric matrix \eqn{n \times p}.
-#' @param x0 Numeric vector of length \eqn{p}.
-#' @inheritParams distance_l2_scaled
-#'
-#' @return A list with `dx` and `ord`.
-#' @examples
-#' set.seed(1)
-#' X <- matrix(rnorm(10), 5, 2)
-#' order_by_l2_scaled(X, c(0, 0), rule = "sd")
-#' @keywords internal
-#' @noRd
-order_by_l2_scaled <- function(X, x0,
-                               rule = c("sd", "mad", "iqr", "range", "custom"),
-                               scale_vec = NULL, eps = 1e-12,
-                               squared = FALSE) {
-  .assert_no_na(X, x0)
-  X <- as.matrix(X)
-  x0 <- .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X", finite = TRUE)
-  rule <- .dnn_match_arg(rule)
-
-  inv_s <- if (rule == "custom") {
-    .coerce_inv_s(scale_vec, ncol(X), eps)
-  } else {
-    .compute_inv_scale(X, rule, scale_vec, eps)
-  }
-
-  cpp <- .rdistnn_compiled_fun("rustat_order_by_l2_scaled")
-  if (!is.null(cpp)) {
-    return(cpp(X, x0, as.numeric(inv_s), isTRUE(squared)))
-  }
-
-  dx <- dist_l2_scaled(X, x0, inv_s, squared)
-  ord <- .order_with_ties(dx)
-  list(dx = dx, ord = as.integer(ord))
-}

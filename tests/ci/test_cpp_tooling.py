@@ -255,9 +255,6 @@ class NativeToolingTests(unittest.TestCase):
                          'rustat_block_rank_loo', 'rustat_jackknife_fast_rank',
                          'rustat_jackknife_rank_full', 'rustat_plqr_ctx_create', 'rustat_plqr_g_all'):
                 self.assertIn('"' + name + '"', script)
-            for retired in ('rustat_cate_ctx_create', 'rustat_cate_g_all',
-                            'rustat_cate_g_indexed', 'rustat_plqr_ctx_set_beta', 'rustat_plqr_g_indexed'):
-                self.assertNotIn(retired, script)
             self.assertIn('getLoadedDLLs()[["RdistNN"]][["path"]]', script)
             self.assertIn('normalizePath(file.path(args[[1]], "RdistNN", "libs"', script)
             self.assertIn('expectation_skip', script)

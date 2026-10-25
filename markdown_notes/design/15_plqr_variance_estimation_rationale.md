@@ -59,12 +59,20 @@ aligned so that under `theta_meat = "jackknife"`,
 `theta_omega[[j]] = theta_vcov[[j]] * neff[[j]]`.
 
 The coefficient sandwich requires a finite represented Jacobian and inverse.
-If either is outside the numeric range, retain the moment calculation but
-return unavailable coefficient uncertainty with an actionable rescaling
-warning. A nonfinite Jacobian must never yield zero uncertainty through an
+Power-of-two normalization protects condition checks and inversion when a
+finite matrix norm overflows, preserving the existing singularity cutoff.
+If the Jacobian or its inverse is outside the numeric range, retain the moment
+calculation but return unavailable coefficient uncertainty with an actionable
+rescaling warning. A nonfinite Jacobian must never yield zero uncertainty through an
 apparently finite inverse. This check does not recover every mathematically
 representable coefficient covariance whose unscaled Jacobian overflows;
 that would require a separate scaled bread-and-meat implementation.
+
+The residual-design Gram is a separate diagnostic. If its entries or spectrum
+exceed the numeric range, report its eigenvalues and condition number as
+unavailable while retaining valid Jacobian and coefficient covariance diagnostics.
+Jacobian rank and conditioning use the normalized spectrum; an unrepresentable
+minimum singular value is unavailable without discarding those diagnostics.
 
 ## 2. Nuisance notation mapping
 

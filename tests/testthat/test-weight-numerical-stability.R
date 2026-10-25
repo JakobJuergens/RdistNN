@@ -123,21 +123,22 @@ test_that("TDNN exact and asymptotic tables use stable coefficients and signed t
   sc <- -1500.2499305902563162827243569130
   # For n=s2=s1+1 only the first two exact ranks have mass.
   want <- c(1 - sc / 1001, sc / 1001, rep(0, 999))
-  exact <- dnn_weights_tdnn_exact_full_from_ranks(1:1001, 1000L, 1001L, 3L)
-  expect_equal(exact$w_rank, want, tolerance = 2e-9)
-  expect_equal(unname(exact$meta$scalars[1]) / sc, 1, tolerance = 5e-15)
+  exact <- rank_weight_eval(rank_weight_tdnn_exact(1000L, 1001L, 3L), 1:1001)
+  expect_equal(exact, want, tolerance = 2e-9)
+  expect_equal(unname(RdistNN:::.tdnn_scalars(1000L, 1001L, 3L)[1]) / sc, 1, tolerance = 5e-15)
   # dim=2, s2=2*s1 gives coefficients (-1,2). The tail is negative:
   # -(.21^50-.2^50) + 2*(.21^100-.2^100).
   tail <- -1.1785244443664566263864564756466283356941e-34
   for (normalize in c(FALSE, TRUE)) {
-    out <- dnn_weights_tdnn_asymp_full_from_ranks(100:1, 50L, 100L, 2L, normalize)
-    expect_lt(out$w_rank[80], 0)
-    expect_equal(out$w_rank[80] / tail, 1, tolerance = 5e-14)
-    expect_identical(out$w, out$w_rank[100:1])
+    out <- rank_weight_eval(rank_weight_tdnn_asymp(50L, 100L, 2L, normalize = normalize), 100:1)
+    table <- tdnn_rank_table_asymp(100L, 50L, 100L, 2L, normalize)
+    expect_lt(table[80], 0)
+    expect_equal(table[80] / tail, 1, tolerance = 5e-14)
+    expect_identical(out, table[100:1])
     rw <- rank_weight_tdnn_asymp(50L, 100L, 2L, normalize)
     W <- rank_weight_eval_batch(rw, cbind(1:100, 100:1))
-    expect_equal(W[, 1], out$w_rank, tolerance = 0)
-    expect_equal(W[, 2], out$w, tolerance = 0)
+    expect_equal(W[, 1], table, tolerance = 0)
+    expect_equal(W[, 2], out, tolerance = 0)
     expect_equal(colSums(W), c(1, 1), tolerance = 2e-15)
   }
   # An ordinary small table has the independent polynomial reference.

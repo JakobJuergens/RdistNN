@@ -7,8 +7,6 @@
 #   [table]    tdnn_rank_table_exact is w1*·DNN(s1) + w2*·DNN(s2)
 #   [signed]   Negative weights exist for reasonable params
 #   [golden]   Hand-computed small case
-#   [from_ranks] dnn_weights_tdnn_exact_full_from_ranks: mapping & meta
-#   [inv]      w_rank invariant to rank permutation
 #   [spec]     rank_weight_tdnn_exact spec: class, caching, batch eval
 #   [errors]   Input validation
 # -------------------------------------------------------------------
@@ -36,19 +34,6 @@ test_that("[smoke] tdnn_rank_table_exact returns length-n numeric summing to 1",
   expect_equal(sum(w), 1, tolerance = 1e-10)
 })
 
-test_that("[smoke] dnn_weights_tdnn_exact_full_from_ranks returns correct structure", {
-  withr::local_preserve_seed()
-  set.seed(1)
-  n <- 15L; s1 <- 3L; s2 <- 6L; d <- 2L
-  ranks <- sample.int(n)
-  out <- dnn_weights_tdnn_exact_full_from_ranks(ranks, s1, s2, d)
-  expect_type(out, "list")
-  expect_named(out, c("w", "w_rank", "meta"))
-  expect_length(out$w, n)
-  expect_length(out$w_rank, n)
-  expect_equal(sum(out$w), 1, tolerance = 1e-10)
-  expect_equal(sum(out$w_rank), 1, tolerance = 1e-10)
-})
 
 # ---- [scalars] -------------------------------------------------------
 
@@ -91,14 +76,6 @@ test_that("[signed] TDNN exact weights can be negative (bias-correction)", {
   expect_equal(sum(w), 1, tolerance = 1e-10)
 })
 
-test_that("[signed] dnn_weights_tdnn_exact_full_from_ranks w has negative entries", {
-  withr::local_preserve_seed()
-  set.seed(2)
-  n <- 20L; s1 <- 4L; s2 <- 8L; d <- 2L
-  out <- dnn_weights_tdnn_exact_full_from_ranks(sample.int(n), s1, s2, d)
-  expect_true(any(out$w < 0))
-  expect_true(any(out$w_rank < 0))
-})
 
 # ---- [golden] --------------------------------------------------------
 
@@ -119,43 +96,10 @@ test_that("[golden] tdnn_rank_table_exact matches hand-computed values for small
 
 # ---- [from_ranks] ----------------------------------------------------
 
-test_that("[from_ranks] w = w_rank[ranks] (data-order mapping)", {
-  withr::local_preserve_seed()
-  set.seed(3)
-  n <- 18L; s1 <- 3L; s2 <- 6L; d <- 2L
-  ranks <- sample.int(n)
-  out <- dnn_weights_tdnn_exact_full_from_ranks(ranks, s1, s2, d)
-  expect_equal(out$w, out$w_rank[ranks], tolerance = 0)
-})
 
-test_that("[from_ranks] meta fields are correct", {
-  withr::local_seed(123L)
-  n <- 14L; s1 <- 2L; s2 <- 5L; d <- 3L
-  ranks <- sample.int(n)
-  out <- dnn_weights_tdnn_exact_full_from_ranks(ranks, s1, s2, d)
-  expect_identical(out$meta$n, n)
-  expect_identical(out$meta$s1, as.integer(s1))
-  expect_identical(out$meta$s2, as.integer(s2))
-  expect_identical(out$meta$dim, as.integer(d))
-  expect_named(out$meta$scalars, c("w1", "w2"))
-  expect_equal(out$meta$scalars[["w1"]] + out$meta$scalars[["w2"]], 1, tolerance = 1e-14)
-})
 
 # ---- [inv] -----------------------------------------------------------
 
-test_that("[inv] w_rank depends only on (n, s1, s2, dim), not the permutation", {
-  withr::local_preserve_seed()
-  n <- 20L; s1 <- 3L; s2 <- 7L; d <- 2L
-  r1 <- seq_len(n)
-  r2 <- rev(r1)
-  set.seed(4)
-  r3 <- sample.int(n)
-  w1 <- dnn_weights_tdnn_exact_full_from_ranks(r1, s1, s2, d)$w_rank
-  w2 <- dnn_weights_tdnn_exact_full_from_ranks(r2, s1, s2, d)$w_rank
-  w3 <- dnn_weights_tdnn_exact_full_from_ranks(r3, s1, s2, d)$w_rank
-  expect_equal(w2, w1, tolerance = 0)
-  expect_equal(w3, w1, tolerance = 0)
-})
 
 # ---- [spec] ----------------------------------------------------------
 
@@ -179,7 +123,7 @@ test_that("[spec] eval_batch produces correct shape and column sums", {
   expect_equal(colSums(W), rep(1, m), tolerance = 1e-10)
 })
 
-test_that("[spec] eval_batch agrees with dnn_weights_tdnn_exact_full_from_ranks", {
+test_that("[spec] eval_batch agrees with rank tables at the requested ranks", {
   withr::local_preserve_seed()
   set.seed(6)
   n <- 14L; m <- 3L; s1 <- 2L; s2 <- 5L; d <- 2L
@@ -188,7 +132,7 @@ test_that("[spec] eval_batch agrees with dnn_weights_tdnn_exact_full_from_ranks"
   rw <- rank_weight_tdnn_exact(s1, s2, d)
   W_spec <- rank_weight_eval_batch(rw, R)
   W_ref  <- sapply(seq_len(m), function(j)
-    dnn_weights_tdnn_exact_full_from_ranks(R[, j], s1, s2, d)$w)
+    tdnn_rank_table_exact(n, s1, s2, d)[R[, j]])
   expect_equal(W_spec, W_ref, tolerance = 1e-12)
 })
 
@@ -219,20 +163,4 @@ test_that("[errors] tdnn_rank_table_exact validates inputs", {
   expect_error(tdnn_rank_table_exact(10L, 5L, 4L, 2L), "s1 < s2")
   expect_error(tdnn_rank_table_exact(10L, 2L, 11L, 2L), "s2 <= n")
   expect_error(tdnn_rank_table_exact(10L, 2L, 4L, 0L), "positive integer")
-})
-
-test_that("[errors] dnn_weights_tdnn_exact_full_from_ranks validates inputs", {
-  n <- 8L
-  expect_error(dnn_weights_tdnn_exact_full_from_ranks(NULL, 2L, 4L, 2L),
-               "`ranks` must be provided")
-  expect_error(dnn_weights_tdnn_exact_full_from_ranks(integer(0), 2L, 4L, 2L),
-               "positive length")
-  expect_error(dnn_weights_tdnn_exact_full_from_ranks(c(1L, NA, 3L), 1L, 2L, 2L),
-               "cannot contain NA")
-  expect_error(dnn_weights_tdnn_exact_full_from_ranks(c(1L, 1L, 2L, 3L), 1L, 2L, 2L),
-               "permutation of 1..n")
-  ranks <- seq_len(n)
-  expect_error(dnn_weights_tdnn_exact_full_from_ranks(ranks, 4L, 4L, 2L), "s1 < s2")
-  expect_error(dnn_weights_tdnn_exact_full_from_ranks(ranks, 2L, n + 1L, 2L), "s2 <= n")
-  expect_error(dnn_weights_tdnn_exact_full_from_ranks(ranks, 2L, 5L, 0L), "positive integer")
 })

@@ -20,11 +20,15 @@
   }
   .abort_if_na_or_nonfinite(d_resid, arg = "object$.model$d_resid_mat", quoted = FALSE)
 
+  gram_available <- rep(FALSE, m)
   gram_min_eig <- gram_max_eig <- gram_condition_number <- rep(NA_real_, m)
   for (j in seq_len(m)) {
     G <- crossprod(d_resid, d_resid * as.numeric(w_mat[, j]))
-    G <- (G + t(G)) / 2
+    if (any(!is.finite(G))) next
+    G <- .covariance_symmetrize(G)
     eig <- eigen(G, symmetric = TRUE, only.values = TRUE)$values
+    if (any(!is.finite(eig))) next
+    gram_available[j] <- TRUE
     gram_min_eig[j] <- min(eig)
     gram_max_eig[j] <- max(eig)
     if (gram_min_eig[j] <= rank_tol) {
@@ -35,7 +39,7 @@
   }
 
   data.frame(
-    gram_available = rep(TRUE, m),
+    gram_available = gram_available,
     gram_min_eig = gram_min_eig,
     gram_max_eig = gram_max_eig,
     gram_condition_number = gram_condition_number,
@@ -66,10 +70,15 @@
         next
       }
       jacobian_available[j] <- TRUE
-      sv <- svd(J, nu = 0L, nv = 0L)$d
-      jacobian_min_singular_value[j] <- min(sv)
-      jacobian_rank[j] <- sum(sv > rank_tol * max(sv, 1))
-      jacobian_condition_number[j] <- if (min(sv) <= rank_tol) {
+      scale <- 1
+      if (max(abs(J)) > .Machine$double.xmax / max(dim(J))) {
+        scale <- 2^(.numeric_binary_parts(max(abs(J)))$power)
+      }
+      sv <- svd(if (scale == 1) J else J / scale, nu = 0L, nv = 0L)$d
+      minimum <- min(sv) * scale
+      jacobian_min_singular_value[j] <- if (is.finite(minimum)) minimum else NA_real_
+      jacobian_rank[j] <- sum(sv > rank_tol * max(sv, 1 / scale))
+      jacobian_condition_number[j] <- if (minimum <= rank_tol) {
         Inf
       } else {
         max(sv) / min(sv)

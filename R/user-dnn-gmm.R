@@ -62,21 +62,46 @@
   if (any(!is.finite(A)) || (!is.null(b) && any(!is.finite(b)))) {
     return(NULL)
   }
+  power <- 0
+  if (!is.finite(norm(A, type = "1"))) {
+    power <- .numeric_binary_parts(max(abs(A)))$power
+    A <- A / 2^power
+  }
   # solve() rejects reciprocal condition numbers below its default tolerance.
   # Detect that understood numerical case without swallowing host failures.
   if (rcond(A) < .Machine$double.eps) return(NULL)
-  if (is.null(b)) solve(A) else solve(A, b)
+  if (power == 0) return(if (is.null(b)) solve(A) else solve(A, b))
+  if (is.null(b)) return(solve(A) / 2^power)
+  # Only private RHS calls need this additional restoration. Normalize each
+  # RHS independently so large and small columns cannot erase one another.
+  rhs_power <- .numeric_binary_parts(if (is.null(dim(b))) max(abs(b)) else
+    apply(abs(b), 2L, max))$power
+  rhs <- if (is.null(dim(b))) b / 2^rhs_power else
+    sweep(b, 2L, 2^rhs_power, "/")
+  # An erased nonzero RHS entry makes this exceptional solve unavailable.
+  if (any(b != 0 & rhs == 0)) return(NULL)
+  answer <- solve(A, rhs)
+  difference <- rhs_power - power
+  half <- trunc(difference / 2)
+  if (is.null(dim(answer))) {
+    (answer * 2^half) * 2^(difference - half)
+  } else {
+    sweep(sweep(answer, 2L, 2^half, "*"), 2L, 2^(difference - half), "*")
+  }
 }
 
 .gmm_condition_number <- function(A) {
   if (any(!is.finite(A))) return(NA_real_)
-  vals <- eigen(A, symmetric = TRUE, only.values = TRUE)$values
+  scale <- max(abs(A))
+  if (scale == 0) return(Inf)
+  vals <- eigen(A / scale, symmetric = TRUE, only.values = TRUE)$values
   vals <- abs(vals)
   vals <- vals[is.finite(vals)]
   if (length(vals) == 0L) {
     return(NA_real_)
   }
-  max(vals) / max(min(vals), .Machine$double.eps)
+  if (min(vals) == 0) return(Inf)
+  max(vals) / min(vals)
 }
 
 .gmm_regularize_omega <- function(Omega, omega_ridge) {
@@ -352,7 +377,7 @@
 #' deletion averages the surviving blocks with the sample-size-n-1 rule.
 #' A warning is emitted once per public call with distance ties: the accompanying
 #' theory assumes a continuous distance distribution and does not establish
-#' inference under persistent ties. Earlier retained fit schemas require refitting.
+#' inference under persistent ties. Refit saved models after package updates during experimental development.
 #'
 #' Two interfaces are supported.
 #'

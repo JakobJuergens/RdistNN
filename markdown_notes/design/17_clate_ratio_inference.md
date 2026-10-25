@@ -163,6 +163,13 @@ components/covariance; rounded polynomial coefficients cannot certify a false
 singleton. This helper does not replace `confint()` or establish uniform
 weak-instrument coverage.
 
+A structurally zero numerator does not certify the sign of a denominator
+coefficient formed by nearly cancelling squared terms. Report that boundary,
+or an underflowed critical-value square, as unresolved; retain the direct
+deterministic-denominator calculation when its interval remains representable.
+This applies the distinction between coefficient formation and stable root
+evaluation in [Goldberg's cancellation analysis](https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html).
+
 Covariance validation uses the correlation calculation away from its PSD
 boundary and the exact sign of the represented two-by-two determinant near
 absolute correlation one. Rounded square roots can otherwise hide a negative

@@ -18,8 +18,9 @@ that label. [Package scope](../rdistnn_roadmap.md) records extension boundaries.
 
 Version 0.1.1 records the shared interface baseline. Version 0.1.2 entered
 production `master` on 2026-10-22. Version 0.1.3 replaces its identical-covariate
-averaging with exact-distance averaging and becomes the current version-pinned
-release. Earlier tagged releases remain immutable.
+averaging with exact-distance averaging. The README installation section and
+release tooling own the current version-pinned release; earlier tagged releases
+remain immutable.
 Refit saved objects from earlier tie policies; no optional legacy policy is
 provided. See [RELEASING.md](../../RELEASING.md) for tag and asset publication
 gates. The first development commit after production `0.1.x` establishes

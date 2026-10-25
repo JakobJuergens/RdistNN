@@ -20,8 +20,8 @@ test_that("compiled dispatch can be disabled explicitly", {
     l2 = dist_l2(X, X0[1, ]),
     l1_batch = distance_l1()$eval_batch(X, X0),
     l2_batch = distance_l2()$eval_batch(X, X0),
-    l1_order = order_by_l1(X, X0[1, ]),
-    l2_order = order_by_l2(X, X0[1, ])
+    l1_order = .distance_ranking(X, X0[1, ], distance_l1()),
+    l2_order = .distance_ranking(X, X0[1, ], distance_l2())
   )
 
   options(RdistNN.use_compiled = FALSE)
@@ -32,8 +32,8 @@ test_that("compiled dispatch can be disabled explicitly", {
     l2 = dist_l2(X, X0[1, ]),
     l1_batch = distance_l1()$eval_batch(X, X0),
     l2_batch = distance_l2()$eval_batch(X, X0),
-    l1_order = order_by_l1(X, X0[1, ]),
-    l2_order = order_by_l2(X, X0[1, ])
+    l1_order = .distance_ranking(X, X0[1, ], distance_l1()),
+    l2_order = .distance_ranking(X, X0[1, ], distance_l2())
   )
 
   expect_equal(fallback, compiled, tolerance = 1e-12)

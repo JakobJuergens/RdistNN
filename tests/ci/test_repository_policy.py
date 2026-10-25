@@ -13,10 +13,6 @@ LINT = ROOT / ".github" / "workflows" / "lint-style.yaml"
 
 
 class RepositoryPolicyTests(unittest.TestCase):
-    def test_standard_policy_replaces_minimal_policy(self):
-        self.assertTrue(POLICY.is_file())
-        self.assertFalse((POLICY.parent / "action-policy.yml").exists())
-
     def test_policy_enforces_shared_core(self):
         text = POLICY.read_text(encoding="utf-8")
         self.assertIn("Reject mutable external action references", text)

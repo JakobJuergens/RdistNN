@@ -3,7 +3,11 @@
 This bundle accompanies [*Orthogonal Inference for Conditional Z-Estimation
 without Cross-Fitting: A Distributional Nearest-Neighbor Approach*](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
 Its `manifest.json` identifies the accepted paper snapshot, configurations,
-source hashes and saved evidence, refreshed October 14, 2026.
+source hashes and saved evidence. The October 25, 2026 synchronization vendors
+paper snapshot `122ad9c` and the accepted SIPP packet
+`rdistnn-0.1.4-20261024` (fingerprint
+`5f7203f70e52646d134089a09564a91a2aea45391df8bf1ef2dc8b93bfc836a2`).
+The manifest separately records the manuscript-content snapshot.
 
 Choose the task before launching a run:
 
@@ -86,13 +90,16 @@ Production uses 9,915 complete households and raw net financial assets in
 1991 dollars. It compares full-fit, own-arm OOB and held-out predictions at
 seven age-40 income profiles, using common final DNN weights and an eight-order
 sensitivity grid. Smoke uses 300 households, 50 trees and two folds and labels
-its exports as validation. Fits, predictions, diagnostics, paired covariance
-and exports are saved under `runs/paper-current/`, with a log for each stage.
+its exports as validation. Exact represented distance groups average all
+assigned rank weights, including zeros; every deletion recomputes that average
+over its surviving groups. Nearby unequal distances stay separate.
+Fits, predictions, diagnostics, paired covariance and exports are saved under `runs/paper-current/`, with a log for each stage.
 
 These forests, outcomes and selected profiles lie outside the paper's
 bounded-series primitive theorem. Frozen deletions do not refit learners;
 order sensitivity does not estimate spatial bias or select an optimal order.
-Full-fit/OOB agreement does not verify a stability rate. Saved fits and nuisance
+Full-fit/OOB agreement does not verify a stability rate. Inference under
+persistent distance ties is not established. Saved fits and nuisance
 arrays contain observation-level data, inherit their sharing restrictions and
 are excluded from the public evidence bundle.
 
@@ -102,8 +109,14 @@ Saved-evidence PDF rendering requires Cairo support in R (`capabilities("cairo")
 The three SIPP manuscript figures are redrawn from portable summaries with embedded fonts; accepted historical evidence remains unchanged.
 
 Re-rendering saved evidence and recomputing an estimator are different tasks.
-The accepted simulations and SIPP run have distinct historical executable
-identities. A current installation records its own identity; matching version
+The accepted simulations retain their original executable and configuration
+identities. The October 24 raw-dollar SIPP evidence used released RdistNN
+0.1.4 (`4acade538f7ac8a88fe7f837b1673ebc17daa17a`); older 0.1.0 executable
+records belong to historical SIPP evidence. The accepted packet's preparatory
+`input row order` label is stale: its acceptance and derivation receipts verify
+actual `exact_distance_block_averaging_v1`. The separate dated clarification
+preserves the accepted objects, fingerprint and receipt chain.
+Newly vendored source requires complete retained geometry for current fits. A current installation records its own identity; matching version
 labels or a clean source checkout do not establish that it generated the
 accepted evidence. A historical-source rebuild is a rebuild unless its
 executable identity also matches. Review new results before manuscript promotion.

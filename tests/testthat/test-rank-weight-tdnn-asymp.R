@@ -4,7 +4,6 @@
 # Coverage targets:
 #   [table]       tdnn_rank_table_asymp: length, sum, signed, full support
 #   [vs-exact]    asymp converges to exact as n grows
-#   [from_ranks]  dnn_weights_tdnn_asymp_full_from_ranks: structure, mapping, meta
 #   [spec]        rank_weight_tdnn_asymp: class, caching, eval_batch, colSums
 #   [parity]      asymp spec agrees with from_ranks
 #   [errors]      input validation for table and from_ranks
@@ -95,109 +94,12 @@ test_that("[vs-exact] asymp converges to exact as n grows", {
 
 # ── [from_ranks] ──────────────────────────────────────────────────────────────
 
-test_that("[from_ranks] dnn_weights_tdnn_asymp_full_from_ranks: structure and sum", {
-  .test_rng_scope({
-    set.seed(1)
-    n <- 18L; s1 <- 3L; s2 <- 6L; d <- 2L
-    ranks <- sample.int(n)
-    out <- dnn_weights_tdnn_asymp_full_from_ranks(ranks, s1, s2, d)
-    expect_type(out, "list")
-    expect_named(out, c("w", "w_rank", "meta"))
-    expect_length(out$w, n)
-    expect_length(out$w_rank, n)
-    expect_equal(sum(out$w), 1, tolerance = 1e-10)
-    expect_equal(sum(out$w_rank), 1, tolerance = 1e-10)
-  })
-})
 
-test_that("[from_ranks] w = w_rank[ranks] (data-order mapping)", {
-  .test_rng_scope({
-    set.seed(2)
-    n <- 20L; s1 <- 3L; s2 <- 7L; d <- 2L
-    ranks <- sample.int(n)
-    out <- dnn_weights_tdnn_asymp_full_from_ranks(ranks, s1, s2, d)
-    expect_equal(out$w, out$w_rank[ranks], tolerance = 0)
-  })
-})
 
-test_that("[from_ranks] w has negative entries (signed weights)", {
-  .test_rng_scope({
-    set.seed(3)
-    n <- 20L; s1 <- 4L; s2 <- 8L; d <- 2L
-    out <- dnn_weights_tdnn_asymp_full_from_ranks(sample.int(n), s1, s2, d)
-    expect_true(any(out$w < 0))
-    expect_true(any(out$w_rank < 0))
-  })
-})
 
-test_that("[from_ranks] meta fields are correct", {
-  .test_rng_scope({
-    n <- 15L; s1 <- 2L; s2 <- 6L; d <- 3L
-    ranks <- sample.int(n)
-    out <- dnn_weights_tdnn_asymp_full_from_ranks(ranks, s1, s2, d)
-    expect_identical(out$meta$n, n)
-    expect_identical(out$meta$s1, as.integer(s1))
-    expect_identical(out$meta$s2, as.integer(s2))
-    expect_identical(out$meta$dim, as.integer(d))
-    expect_true(out$meta$normalize)
-    expect_named(out$meta$scalars, c("w1", "w2"))
-    expect_equal(out$meta$scalars[["w1"]] + out$meta$scalars[["w2"]], 1, tolerance = 1e-14)
-  }, seed = 123L)
-})
 
-test_that("[from_ranks] w_rank invariant to rank permutation", {
-  .test_rng_scope({
-    n <- 22L; s1 <- 3L; s2 <- 8L; d <- 2L
-    r1 <- seq_len(n)
-    r2 <- rev(r1)
-    set.seed(7)
-    r3 <- sample.int(n)
-    w1 <- dnn_weights_tdnn_asymp_full_from_ranks(r1, s1, s2, d)$w_rank
-    w2 <- dnn_weights_tdnn_asymp_full_from_ranks(r2, s1, s2, d)$w_rank
-    w3 <- dnn_weights_tdnn_asymp_full_from_ranks(r3, s1, s2, d)$w_rank
-    expect_equal(w2, w1, tolerance = 0)
-    expect_equal(w3, w1, tolerance = 0)
-  })
-})
 
-test_that("[from_ranks] asymp from_ranks agrees with asymp table at same ranks", {
-  .test_rng_scope({
-    set.seed(4)
-    n <- 16L; s1 <- 2L; s2 <- 5L; d <- 2L
-    ranks <- sample.int(n)
-    out   <- dnn_weights_tdnn_asymp_full_from_ranks(ranks, s1, s2, d)
-    w_tab <- tdnn_rank_table_asymp(n, s1, s2, d)
-    expect_equal(out$w_rank, w_tab, tolerance = 1e-12)
-  })
-})
 
-test_that("[from_ranks] dnn_weights_tdnn_asymp_full_from_ranks validates inputs", {
-  n <- 8L
-  expect_error(dnn_weights_tdnn_asymp_full_from_ranks(NULL, 2L, 4L, 2L),
-               "`ranks` must be provided")
-  expect_error(dnn_weights_tdnn_asymp_full_from_ranks(integer(0), 2L, 4L, 2L),
-               "positive length")
-  expect_error(dnn_weights_tdnn_asymp_full_from_ranks(c(1L, NA, 3L), 1L, 2L, 2L),
-               "cannot contain NA")
-  expect_error(dnn_weights_tdnn_asymp_full_from_ranks(c(1L, 1L, 2L, 3L), 1L, 2L, 2L),
-               "permutation of 1..n")
-  ranks <- seq_len(n)
-  expect_error(dnn_weights_tdnn_asymp_full_from_ranks(ranks, 4L, 4L, 2L), "s1 < s2")
-  expect_error(dnn_weights_tdnn_asymp_full_from_ranks(ranks, 2L, n + 1L, 2L), "s2 <= n")
-  expect_error(dnn_weights_tdnn_asymp_full_from_ranks(ranks, 2L, 5L, 0L), "positive integer")
-  expect_error(
-    dnn_weights_tdnn_asymp_full_from_ranks(ranks, 2L, 5L, 2L, normalize = NA),
-    "normalize.*TRUE or FALSE"
-  )
-  expect_error(
-    dnn_weights_tdnn_asymp_full_from_ranks(ranks, 2L, 5L, 2L, normalize = "yes"),
-    "normalize.*TRUE or FALSE"
-  )
-  expect_error(
-    dnn_weights_tdnn_asymp_full_from_ranks(ranks, 2L, 5L, 2L, normalize = c(TRUE, FALSE)),
-    "normalize.*TRUE or FALSE"
-  )
-})
 
 # ── [spec-errors] rank_weight_tdnn_asymp constructor ─────────────────────────
 
@@ -275,7 +177,7 @@ test_that("[spec] normalize=FALSE spec: colSums may deviate slightly from 1", {
 
 # ── [parity] ──────────────────────────────────────────────────────────────────
 
-test_that("[parity] asymp spec eval_batch agrees with dnn_weights_tdnn_asymp_full_from_ranks", {
+test_that("[parity] asymp spec eval_batch agrees with rank tables at the requested ranks", {
   .test_rng_scope({
     set.seed(10)
     n <- 14L; m <- 3L; s1 <- 2L; s2 <- 5L; d <- 2L
@@ -283,7 +185,7 @@ test_that("[parity] asymp spec eval_batch agrees with dnn_weights_tdnn_asymp_ful
     rw <- rank_weight_tdnn_asymp(s1, s2, d)
     W_spec <- rank_weight_eval_batch(rw, R)
     W_ref  <- sapply(seq_len(m), function(j)
-      dnn_weights_tdnn_asymp_full_from_ranks(R[, j], s1, s2, d)$w)
+      tdnn_rank_table_asymp(n, s1, s2, d)[R[, j]])
     expect_equal(W_spec, W_ref, tolerance = 1e-12)
   })
 })

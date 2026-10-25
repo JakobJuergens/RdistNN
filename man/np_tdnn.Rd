@@ -107,7 +107,7 @@ row index; outcomes and nuisances do not define groups. Every jackknife
 deletion averages the surviving blocks with the sample-size-n-1 rule.
 A warning is emitted once per public call with distance ties: the accompanying
 theory assumes a continuous distance distribution and does not establish
-inference under persistent ties. Earlier retained fit schemas require refitting.
+inference under persistent ties. Refit saved models after package updates during experimental development.
 
 Two interfaces are supported.
 \enumerate{

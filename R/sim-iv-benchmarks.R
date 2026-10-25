@@ -34,9 +34,6 @@
   )
 }
 
-.sim_iv_colnames <- function(dgp, prefix) {
-  grep(paste0("^", prefix, "[0-9]+"), names(dgp$data), value = TRUE)
-}
 
 .sim_iv_na_metric <- function(theta0, alpha, reason) {
   out <- .sim_metric_iv(NA_real_, NA_real_, theta0, alpha)

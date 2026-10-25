@@ -198,7 +198,7 @@ the pooled-mean normalized Robinson constructor remains removed. Supported
 retained-state operations reuse the current fitted signal. Source labels describe entry routes;
 neither provenance nor numerical reuse establishes identification, nuisance
 accuracy/stability, localization bias or pointwise inference. The detailed
-[migration guide](https://JakobJuergens.github.io/RdistNN/articles/getting-started.html#migrating-earlier-cate-inputs)
+[CATE input guide](https://JakobJuergens.github.io/RdistNN/articles/getting-started.html#conditional-average-treatment-effects)
 owns user guidance.
 
 CATE also exposes `vcov()` from retained frozen signals, without requiring

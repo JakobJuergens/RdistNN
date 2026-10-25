@@ -49,11 +49,7 @@ test_that("[factory] XOR (y vs y_col), enforce s = 1, k > 0, and setup dimension
     ignore.case = TRUE
   )
 
-  # `k` was a compatibility-only argument and has been removed
-  expect_error(
-    score_np_y(x0 = x0, x_cols = 1:3, s = 1, k = 1, y = df$Y),
-    "unused argument"
-  )
+
 
   # x0 length mismatch (setup-time)
   expect_error(

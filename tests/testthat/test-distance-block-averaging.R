@@ -1,3 +1,6 @@
+# Averaged rank mass and actual-observation deletions against independent oracles
+# in helper-distance-blocks.R, including duplicate rows, signed tables and engines.
+# This is a distance-group contract; duplicate covariates are a special case.
 test_that("duplicate raw covariates share block mass and permutation-invariant inference", {
   X <- matrix(c(0, 0, 0, 1, 2, 2, 3, 4), ncol = 1L)
   y <- c(1, 7, -3, 4, 10, -2, 5, 11)
@@ -44,7 +47,7 @@ test_that("block means preserve represented subnormals and recover finite overfl
   expect_equal(as.numeric(W) / 1e308, rep(1, 3L), tolerance = 1e-15)
 })
 
-test_that("scalar paired-ratio tuning reconstruction derives groups from retained raw X", {
+test_that("scalar paired-ratio tuning reconstruction preserves retained distance groups", {
   X <- matrix(c(0, 0, 0, 1, 2, 2, 3, 4), ncol = 1L)
   y <- c(1, 7, -3, 4, 10, -2, 5, 11)
   tuning <- new_tuning("duplicate_scalar_sensitivity", eval = function(...) list(s = 3L),
@@ -158,7 +161,7 @@ test_that("bare supplied rank APIs stay strict and explicit distance metadata de
   expect_equal(W, .block_oracle_weights(X, X0, .block_exact_table(6L, 1L, 3L), ranks), tolerance = 1e-14)
   signal <- c(1, 7, -3, 4, 10, -2)
   jk <- RdistNN:::.dnn_loo_centered(signal, ranks, .block_exact_table(5L, 1L, 3L),
-    .block_exact_table(6L, 1L, 3L), groups = RdistNN:::.dnn_distance_groups(dx))
+    .block_exact_table(6L, 1L, 3L), groups = RdistNN:::.dnn_prepare_distance_groups(dx)$groups)
   ref <- .block_oracle_loo(X, X0, signal, .block_exact_table(5L, 1L, 3L), ranks)
   expect_equal(as.numeric(RdistNN:::.dnn_restore_loo(jk$loo, jk$offset)), as.numeric(ref), tolerance = 1e-13)
   d <- suppressWarnings(weights_dnn(matrix(c(-1, 1, -1)), x0 = 0, k = 1L, s = 2L))
@@ -278,7 +281,7 @@ test_that("both actual original-signal block engines average each deletion", {
   X <- cbind(c(0, 0, 0, 1, 2, 2, 3, 4), 0)
   X0 <- rbind(c(0, 0), c(1.5, 0), c(4, 0))
   signal <- cbind(c(1, 7, -3, 4, 10, -2, 5, 11), c(-2, 3, 9, 1, 5, -7, 4, 8))
-  groups <- RdistNN:::.dnn_distance_groups(distance_eval_batch(get_distance("l2"), X, X0))
+  groups <- RdistNN:::.dnn_prepare_distance_groups(distance_eval_batch(get_distance("l2"), X, X0))$groups
   ranks <- suppressWarnings(weights_dnn(X, X0, k = 1, s = 5, return = "ranks"))$ranks
   old <- options(RdistNN.use_compiled = TRUE)
   on.exit(options(old), add = TRUE)
@@ -341,7 +344,7 @@ test_that("all-identical raw rows give sample and usual deletion means", {
   }
 })
 
-test_that("warning scopes avoid deletion and candidate floods and reject old tied fits", {
+test_that("warning scopes avoid deletion and candidate floods and reject missing current tie policy", {
   X <- matrix(c(0, 0, 0, 1, 2, 2, 3, 4), ncol = 1L)
   y <- c(1, 7, -3, 4, 10, -2, 5, 11)
   tuning <- new_tuning("duplicate_grid", eval = function(...) list(s = 3L),
@@ -361,11 +364,11 @@ test_that("warning scopes avoid deletion and candidate floods and reject old tie
   })
   expect_length(seen, 1L)
   expect_length(views, 3L)
-  old <- fit
-  old$.model$tie_policy <- NULL
+  incomplete <- fit
+  incomplete$.model$tie_policy <- NULL
   for (consume in list(function(x) predict(x, x0 = 0),
       function(x) candidate_fit(x, 1L), vcov, diagnostics, plot_data_weights)) {
-    err <- tryCatch(consume(old), error = identity)
+    err <- tryCatch(consume(incomplete), error = identity)
     expect_s3_class(err, "rdistnn_state_error")
     expect_identical(err$code, "state_invalid")
     expect_identical(err$argument, "object$.model$tie_policy")

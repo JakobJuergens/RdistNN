@@ -65,16 +65,3 @@ test_that("iv_demo_data: rejects invalid injection requests", {
     "idx_inject"
   )
 })
-
-test_that("iv_demo_sets: returns expected named fixtures", {
-  sets <- iv_demo_sets(n = 40L, p = 2L, q = 2L)
-  expect_named(
-    sets,
-    c("ok_homog", "ok_heterog", "ok_weak", "nonfinite_y_na", "nonfinite_z_inf")
-  )
-  expect_equal(sets$ok_homog$q, 2L)
-  expect_equal(sets$ok_homog$x_cols, c("X1", "X2"))
-  expect_equal(sets$ok_homog$z_cols, c("Z1", "Z2"))
-  expect_true(is.na(sets$nonfinite_y_na$data$Y[3L]))
-  expect_true(is.infinite(sets$nonfinite_z_inf$data$Z1[3L]))
-})

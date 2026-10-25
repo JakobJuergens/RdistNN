@@ -28,8 +28,8 @@ test_that("scaled norms retain collectively representable subnormal products", {
     # Restoration must round only once at the subnormal boundary. Sequential
     # large power chunks can erase the residual just above half of eta.
     above_half <- .5 + .Machine$double.eps / 2
-    expect_identical(dist_l1_scaled(matrix(eta), 0, above_half), eta)
-    expect_identical(dist_l2_scaled(matrix(eta), 0, above_half), eta)
+    expect_identical(distance_l1_scaled()$eval(matrix(eta), 0, list(inv_s = above_half)), eta)
+    expect_identical(distance_l2_scaled()$eval(matrix(eta), 0, list(inv_s = above_half)), eta)
     # Correct rounded L2 distances are (0,eta,eta), so rows two and three
     # share the second rank's 1/3 mass rather than forming a zero-distance block.
     fit <- .with_localization_policy_warnings(np_dnn(X = X[1:3, , drop = FALSE], Y = c(0, 0, 1),
@@ -55,9 +55,9 @@ test_that("scaled norm recovery preserves ordinary coordinate arithmetic", {
   on.exit(options(old), add = TRUE)
   for (compiled in c(FALSE, TRUE)) {
     options(RdistNN.use_compiled = compiled)
-    expect_identical(dist_l1_scaled(X, x0, inverse), l1)
-    expect_identical(dist_l2_scaled(X, x0, inverse), sqrt(l2_squared))
-    expect_identical(dist_l2_scaled(X, x0, inverse, squared = TRUE), l2_squared)
+    expect_identical(distance_l1_scaled()$eval(X, x0, list(inv_s = inverse)), l1)
+    expect_identical(distance_l2_scaled()$eval(X, x0, list(inv_s = inverse)), sqrt(l2_squared))
+    expect_identical(distance_l2_scaled(squared=TRUE)$eval(X, x0, list(inv_s = inverse)), l2_squared)
   }
 })
 
@@ -73,7 +73,7 @@ test_that("negative raw differences select the common exceptional range", {
   on.exit(options(old), add = TRUE)
   for (compiled in c(FALSE, TRUE)) {
     options(RdistNN.use_compiled = compiled)
-    expect_identical(dist_l2_scaled(X, rep(0, 3L), inverse), want)
+    expect_identical(distance_l2_scaled()$eval(X, rep(0, 3L), list(inv_s = inverse)), want)
   }
 })
 
@@ -95,14 +95,14 @@ test_that("one active scaled coordinate keeps direct product and square rounding
       inverse <- if (padded) c(1, case$inverse, 1) else case$inverse
       x0 <- rep(0, ncol(x))
       product <- abs(case$raw * case$inverse)
-      expect_identical(dist_l1_scaled(x, x0, inverse), product)
-      expect_identical(dist_l2_scaled(x, x0, inverse), product)
-      expect_identical(dist_l2_scaled(x, x0, inverse, squared = TRUE), product * product)
+      expect_identical(distance_l1_scaled()$eval(x, x0, list(inv_s = inverse)), product)
+      expect_identical(distance_l2_scaled()$eval(x, x0, list(inv_s = inverse)), product)
+      expect_identical(distance_l2_scaled(squared=TRUE)$eval(x, x0, list(inv_s = inverse)), product * product)
     }
     huge <- matrix(c(0, 1.6e308, 0), nrow = 1L)
     target <- c(0, -1.6e308, 0)
-    expect_identical(dist_l1_scaled(huge, target, c(1, .25, 1)), 8e307)
-    expect_identical(dist_l2_scaled(huge, target, c(1, .25, 1)), 8e307)
+    expect_identical(distance_l1_scaled()$eval(huge, target, list(inv_s = c(1, .25, 1))), 8e307)
+    expect_identical(distance_l2_scaled()$eval(huge, target, list(inv_s = c(1, .25, 1))), 8e307)
   }
 })
 
@@ -114,7 +114,7 @@ test_that("exceptional norms stay above each rounded coordinate magnitude", {
   on.exit(options(old), add = TRUE)
   for (compiled in c(FALSE, TRUE)) {
     options(RdistNN.use_compiled = compiled)
-    expect_identical(dist_l1_scaled(X, c(0, 0), inverse), eta)
-    expect_identical(dist_l2_scaled(X, c(0, 0), inverse), eta)
+    expect_identical(distance_l1_scaled()$eval(X, c(0, 0), list(inv_s = inverse)), eta)
+    expect_identical(distance_l2_scaled()$eval(X, c(0, 0), list(inv_s = inverse)), eta)
   }
 })

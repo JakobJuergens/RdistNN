@@ -1,9 +1,9 @@
-# inst/bench/bench_jackknife.R
+# tools/bench/bench_jackknife.R
 # -------------------------------------------------------------------
 # Benchmarks for jackknife_slow_rank() vs jackknife_fast_rank()
 # Usage:
-#   source("inst/bench/run_bench.R"); rdistnn_bench("jackknife", n = 2000)
-#   Rscript inst/bench/run_bench.R jackknife n=2000 s=15 q=4 reps=10 phi_dep=TRUE
+#   source("tools/bench/run_bench.R"); rdistnn_bench("jackknife", n = 2000)
+#   Rscript tools/bench/run_bench.R jackknife n=2000 s=15 q=4 reps=10 phi_dep=TRUE
 
 rdistnn_bench_jackknife <- function(n = 2000, p = 5, s = 10, q = 1,
                                     reps = 10, seed = 1,
@@ -63,7 +63,8 @@ rdistnn_bench_jackknife <- function(n = 2000, p = 5, s = 10, q = 1,
     }
   }
 
-  compiled <- exists("rustat_jackknife_fast_rank", mode = "function")
+  compiled <- is.matrix(phi_obj) && is.numeric(phi_obj) &&
+    is.function(.rdistnn_compiled_fun("rustat_jackknife_fast_rank"))
   if (verbose) {
     message(sprintf("jackknife benchmark — n=%d, p=%d, s=%d, q=%d, reps=%d, phi_dep=%s, compiled=%s",
                     n, p, s, q, reps, phi_dep, compiled))
@@ -73,7 +74,7 @@ rdistnn_bench_jackknife <- function(n = 2000, p = 5, s = 10, q = 1,
   ref <- jackknife_slow_rank(ranks, a, phi_obj, normalize = normalize)
   fast <- jackknife_fast_rank(ranks, a, phi_obj, normalize = normalize)
   err <- max(abs(fast$theta0 - ref$theta0), abs(fast$theta_loo - ref$theta_loo))
-  if (err > 1e-10 && verbose) warning(sprintf("fast vs slow mismatch = %.3e", err))
+  if (!is.finite(err) || err > 1e-10) stop(sprintf("fast vs slow mismatch = %.3e", err), call. = FALSE)
 
   # --- benchmark ------------------------------------------------------------
   bm <- bench::mark(
@@ -82,17 +83,13 @@ rdistnn_bench_jackknife <- function(n = 2000, p = 5, s = 10, q = 1,
     iterations = reps,
     check = FALSE
   )
-  df <- as.data.frame(bm)
-  df$n <- n; df$p <- p; df$s <- s; df$q <- q
-  df$reps <- reps
-  df$phi_dep <- phi_dep
-  df$compiled_fast <- compiled
-  rownames(df) <- NULL
-
-  if (verbose) {
-    keep <- c("expression", "n", "s", "q", "median", "itr.sec", "mem_alloc")
-    print(df[keep])
-  }
+  df <- data.frame(expression = as.character(bm$expression), n, p, s, q, reps,
+    phi_dep, compiled_fast = compiled, min_seconds = as.numeric(bm$min),
+    median_seconds = as.numeric(bm$median),
+    iterations_per_second = as.numeric(bm[["itr/sec"]]),
+    allocated_bytes = as.numeric(bm$mem_alloc),
+    collections_per_second = as.numeric(bm[["gc/sec"]]))
+  if (verbose) print(df)
   if (!is.null(csv)) {
     utils::write.csv(df, file = csv, row.names = FALSE)
     if (verbose) message("Wrote: ", csv)

@@ -33,14 +33,6 @@ rustat_dist_l1_scaled_batch <- function(X, X0, inv_s) {
     .Call(`_RdistNN_rustat_dist_l1_scaled_batch`, X, X0, inv_s)
 }
 
-rustat_order_by_l1 <- function(X, x0) {
-    .Call(`_RdistNN_rustat_order_by_l1`, X, x0)
-}
-
-rustat_order_by_l1_scaled <- function(X, x0, inv_s) {
-    .Call(`_RdistNN_rustat_order_by_l1_scaled`, X, x0, inv_s)
-}
-
 rustat_dist_l2 <- function(X, x0, squared = FALSE) {
     .Call(`_RdistNN_rustat_dist_l2`, X, x0, squared)
 }
@@ -55,26 +47,6 @@ rustat_dist_l2_batch <- function(X, X0, squared = FALSE) {
 
 rustat_dist_l2_scaled_batch <- function(X, X0, inv_s, squared = FALSE) {
     .Call(`_RdistNN_rustat_dist_l2_scaled_batch`, X, X0, inv_s, squared)
-}
-
-rustat_order_by_l2 <- function(X, x0, squared = FALSE) {
-    .Call(`_RdistNN_rustat_order_by_l2`, X, x0, squared)
-}
-
-rustat_order_by_l2_scaled <- function(X, x0, inv_s, squared = FALSE) {
-    .Call(`_RdistNN_rustat_order_by_l2_scaled`, X, x0, inv_s, squared)
-}
-
-rustat_argsort_dist <- function(d) {
-    .Call(`_RdistNN_rustat_argsort_dist`, d)
-}
-
-rustat_ranks_from_dist <- function(d) {
-    .Call(`_RdistNN_rustat_ranks_from_dist`, d)
-}
-
-rustat_topk_dist <- function(d, k) {
-    .Call(`_RdistNN_rustat_topk_dist`, d, k)
 }
 
 rustat_jackknife_fast_rank <- function(ranks, a, PHI, normalize = TRUE) {
