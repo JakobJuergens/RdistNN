@@ -27,7 +27,8 @@ A list with:
 ## See also
 
 [`distance_l1_scaled()`](https://JakobJuergens.github.io/RdistNN/reference/distance_l1_scaled.md),
-`dist_l1()`, `dist_l1_scaled()`
+[`distance_eval()`](https://JakobJuergens.github.io/RdistNN/reference/distance_eval.md),
+[`weights_matrix()`](https://JakobJuergens.github.io/RdistNN/reference/weights_matrix.md)
 
 ## Examples
 

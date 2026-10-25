@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,7 @@
       <h1>Notation and Package Conventions</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/vignettes/notation-and-conventions.Rmd" class="external-link"><code>vignettes/notation-and-conventions.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.5/vignettes/notation-and-conventions.Rmd" class="external-link"><code>vignettes/notation-and-conventions.Rmd</code></a></small>
       <div class="d-none name"><code>notation-and-conventions.Rmd</code></div>
     </div>
 
@@ -125,11 +125,10 @@ groups nearby distances, and signals/nuisances do not define groups.</p>
 and averages the <code>n-1</code> table over every surviving group using
 its remaining size. Aligned row permutations preserve estimates and
 covariance up to numerical precision. The paper assumes a continuous
-distance distribution, under which old and new policies agree almost
-surely. Commands warn because inference for persistent distance ties is
-not established; no uniform MSE improvement is claimed. Refit objects
-created under earlier tie policies. Bare rank/order utilities use strict
-orders unless supplied distances define the groups.</p>
+distance distribution. Commands warn because inference for persistent
+distance ties is not established; no uniform MSE improvement is claimed.
+Bare rank/order utilities use strict orders unless supplied distances
+define the groups.</p>
 <p>Saved prediction reuses the fitted training geometry. Fast jackknife
 calculations also freeze it; NP/TDNN/CATE/PLQR
 <code>jackknife = "loo"</code> refits sample-dependent geometry for each
@@ -291,10 +290,9 @@ are fitted outside the package.</p>
 <p>Propensities must be finite and in <code>[0, 1]</code>. The AIPW
 route clips them to <code>[clip, 1 - clip]</code>, with default
 <code>clip = 1e-8</code>; clipping does not establish overlap. A
-supplied signal alone cannot supply treatment-overlap diagnostics.
-Earlier pooled-mean <code>m_col</code> inputs have been removed; both
-arm means are required for AIPW. See the <a href="getting-started.html#migrating-earlier-cate-inputs">migration
-guidance</a>.</p>
+supplied signal alone cannot supply treatment-overlap diagnostics. See
+the <a href="getting-started.html#conditional-average-treatment-effects">CATE
+input example</a> for the two supported routes.</p>
 </div>
 <div class="section level2">
 <h2 id="clate-conventions">CLATE conventions<a class="anchor" aria-label="anchor" href="#clate-conventions"></a>

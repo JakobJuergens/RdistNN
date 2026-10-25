@@ -7,8 +7,7 @@ dashboard also uses patchwork.
 Plots consume complete current fitted state. Influence panels use the
 retained fitted signal, calibration uses the retained below-threshold
 indicator, and CLATE overlap uses retained instrument information.
-Missing or inconsistent required state needs a refit; plotting does not
-reconstruct an older object.
+Missing or inconsistent required state needs a refit.
 
 The running example is a CATE fit with oracle nuisance columns,
 evaluated along a profile in the first covariate.

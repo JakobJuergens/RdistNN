@@ -84,8 +84,8 @@ unnormalized rules. Equality uses represented values without a
 tolerance. Bare ranks/orders remain strict; adding `dx` metadata enables
 averaging while preserving supplied permutations. Calls with ties warn
 once: the accompanying theory assumes a continuous distance distribution
-and does not establish inference under persistent ties. Earlier retained
-fit schemas require refitting before reporting or reuse.
+and does not establish inference under persistent ties. During
+experimental development, refit saved models after package updates.
 
 ## Experimental and Advanced Workflows
 

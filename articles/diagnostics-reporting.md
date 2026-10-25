@@ -1,98 +1,12 @@
 # Diagnostics and Reporting
 
-## Overview
-
 [`diagnostics()`](https://JakobJuergens.github.io/RdistNN/reference/diagnostics.md)
-reports localization and estimator-specific information from a fitted
-object. NP/TDNN, CATE and PLQR use retained weights and model state;
-paired-ratio/CLATE diagnostics reconstruct weights from cached ranks and
-can evaluate deletion-score concentration. No nuisance models are
-refitted. Target-specific exact-distance groups use their averaged rank
-weights, including deletion-based concentration. These weights can
-change ESS and support. Candidate summaries take minimum ESS and maximum
-weight/concentration over targets; inspect target diagnostics for the
-individual profiles. A warning identifies block averaging as a rule for
-which persistent distance-tie inference is not established. For NP/TDNN
-and CATE, [`nobs()`](https://rdrr.io/r/stats/nobs.html) reports training
-rows; `n_eff` below describes local weight concentration.
-
-Warnings summarize one issue family per call. Exact-distance ties retain
-their inference qualification; near-uniform DNN weights and high
-effective sample size for signed TDNN weights have different
-interpretations. A later independent report or plot can warn again. Base
-R warning controls and calling handlers apply, including
-`options(warn = 2)`.
-
-Paired-ratio and CLATE calls retain every target, including targets
-whose ratio or requested interval is unavailable. One warning points to
-`status` and `components`; inspect those tables before interpreting the
-other targets. Negative denominators alone are descriptive, and
-intentionally disabled uncertainty does not produce an
-unavailable-interval warning. Ordinary mean fits instead stop if their
-computed estimates are nonfinite and request rescaling.
-
-Dashboard panels can omit genuinely absent optional extras. Invalid
-plotting options, inconsistent retained state and unexpected rendering
-failures stop. Errors for absent optional extras have class
-`rdistnn_extra_unavailable`; invalid current state has class
-`rdistnn_state_error` and requires refitting. Warnings inherit
-`rdistnn_warning` with a specific family such as
-`rdistnn_distance_ties_warning` or `rdistnn_partial_result_warning`.
-Code should use those identities when handling a recognized condition,
-rather than parsing English messages.
-
-Input errors inherit `rdistnn_input_error`; invalid extension return
-values inherit `rdistnn_callback_error`, and computed range failures
-inherit `rdistnn_numerical_error`. Owned conditions carry a semantic
-`code` and, when applicable, the public `argument`, expected/actual
-facts and a bounded `operation` name. The console prefix identifies that
-public function without storing the full call or its data. Catch the
-specific family you can handle; unexpected callback, native and resource
-errors retain their original identity.
-
-Localization notice facts do not require parsing or displaying a
-warning. Supported fits retain `fit$meta$target_notices`, with
-`target_id`, `distance_ties`, `weight_concentration` and
-`weak_localization`, plus totals `fit$meta$n_tied_targets` and
-`fit$meta$n_weak_targets`. These fields are available even with
-`return = character()` and survive current-fit serialization. Candidate
-views describe the selected candidate’s weights. The concentration is
-`1 / sum(w^2)` from final observation weights; it is a descriptive
-signed concentration for TDNN. The existing weak-localization guide is
-at least `.9 * n` with `n >= 2`; it is not a validity test.
-
-Use normal R handlers or, for example,
-`suppressWarnings(fit_call, classes = "rdistnn_distance_ties_warning")`
-to silence only the tie advisory. A new independent call still warns.
-Unknown character `return` entries warn and are ignored; malformed
-selectors such as missing or noncharacter values are input errors.
-Earlier fits lacking current diagnostic metadata require refitting.
-
-The shared fields include:
-
-- `n_eff`, `max_weight`, and top-weight shares;
-- realized rank radii and weighted distance summaries when `dx` is
-  retained;
-- tuning metadata when a tuning spec was used.
-
-Estimator-specific fields are added by the corresponding method:
-
-- NP: weighted outcome mean, standard deviation, and outcome quantiles;
-  signed TDNN weights do not define a probability distribution, so
-  weighted SD and quantiles are `NA` when weights are negative. Weight
-  concentration summaries then describe signed weights rather than
-  probability mass.
-- CATE: treated/control mass and propensity summaries;
-- CLATE/paired ratios: component uncertainty, first-stage statuses,
-  physical radii and squared deletion-score concentration; CLATE adds
-  instrument support;
-- PLQR: residual-regressor Gram eigenvalues and condition number.
-
-NP/TDNN, CATE and PLQR target diagnostics require `W`, retained by
-default. Use `return` including `"W"` for those fits. Paired-ratio/CLATE
-diagnostics also work without optional weight or distance extras; see
-[their
-guide](https://JakobJuergens.github.io/RdistNN/articles/conditional-late-inference.md).
+describes localization and estimator-specific support from a fitted
+object without refitting nuisance models. The examples below show the
+returned tables and how to interpret them. Diagnostics do not verify the
+paper’s inference conditions; distance-tie averaging can change support
+and concentration, and inference with persistent distance ties is not
+established.
 
 ## Nonparametric Regression
 
@@ -126,6 +40,19 @@ as.data.frame(d_np)[, c(
 
 For NP fits, `weighted_mean_y` equals the local mean estimate when the
 weights are normalized.
+
+| Question | Fields to inspect | Interpretation |
+|----|----|----|
+| Is weight concentrated? | `n_eff`, `max_weight`, top-weight shares | Concentration, not a count of neighbors; signed TDNN concentration is not probability-weight ESS. |
+| How far does localization reach? | Rank radii and weighted distance summaries | Depend on the selected metric; CATE/CLATE physical radii use original Euclidean coordinates. |
+| Are both binary arms represented? | Arm mass and within-arm ESS | CATE uses treatment arms; CLATE uses instrument arms. Read mass and concentration together. |
+| How dispersed is the local outcome? | `weighted_sd_y` and outcome quantiles | Outcome spread, not uncertainty about the estimated mean. Negative TDNN weights do not define these probability summaries. |
+| Is ratio inference available? | CLATE components, first stage and statuses | Inspect these alongside the ratio; see the [paired-inference guide](https://JakobJuergens.github.io/RdistNN/articles/conditional-late-inference.md). |
+
+For NP/TDNN and CATE, [`nobs()`](https://rdrr.io/r/stats/nobs.html)
+counts training observations. Candidate summaries use minimum ESS and
+maximum weight/concentration over targets; target rows retain each
+profile’s values.
 
 ## CATE Overlap
 
@@ -301,6 +228,50 @@ The
 [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
 states the conditions for inference. These diagnostics do not check all
 of them.
+
+## Using diagnostics in scripts
+
+Warnings summarize one issue family per public call. Independent reports
+or plots can warn again. Base R warning controls and calling handlers
+apply, including `options(warn = 2)`. To silence only the tie advisory,
+use
+`suppressWarnings(fit_call, classes = "rdistnn_distance_ties_warning")`.
+
+Paired-ratio/CLATE calls retain every target, including unavailable
+ratios or intervals, and point to `status` and `components`. Negative
+denominators alone are descriptive; deliberately disabled uncertainty
+does not warn. Ordinary mean fits instead stop on nonfinite computed
+estimates and request rescaling. Dashboards may omit absent optional
+extras; invalid options, inconsistent state and unexpected rendering
+failures stop.
+
+| Cause | Condition identity |
+|----|----|
+| Invalid input | `rdistnn_input_error` |
+| Invalid extension return value | `rdistnn_callback_error` |
+| Computed numerical-range failure | `rdistnn_numerical_error` |
+| Missing optional extra | `rdistnn_extra_unavailable` |
+| Invalid retained state, requiring refitting | `rdistnn_state_error` |
+| Package warning | `rdistnn_warning`, with a family such as `rdistnn_distance_ties_warning` or `rdistnn_partial_result_warning` |
+
+Owned conditions carry a semantic `code` and applicable public
+`argument`, expected/actual facts and bounded `operation` name, without
+storing the full call or its data. Handle recognized identities rather
+than parsing English messages. Unexpected callback, native and resource
+errors retain their identities. Unknown character `return` entries warn
+and are ignored; missing or noncharacter selectors are input errors.
+
+### Read notice facts without displaying warnings
+
+`fit$meta$target_notices` retains `target_id`, `distance_ties`,
+`weight_concentration` and `weak_localization`; `meta$n_tied_targets`
+and `meta$n_weak_targets` retain totals. These fields are available even
+with `return = character()` and survive serialization. Candidates
+describe their selected weights. Concentration is `1 / sum(w^2)` from
+final observation weights; for signed TDNN it is descriptive rather than
+probability-weight ESS. The weak-localization guide is at least `.9 * n`
+with `n >= 2`, not a validity test. Complete current fitted state is
+required before reuse.
 
 ## Related Articles
 

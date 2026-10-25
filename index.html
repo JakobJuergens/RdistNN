@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,7 +51,7 @@
 </h1></div>
 <!-- badges: start -->
 
-<p>Version <strong>0.1.4</strong>. See <a href="NEWS.html">NEWS</a> for changes.</p>
+<p>Version <strong>0.1.5</strong>. See <a href="NEWS.html">NEWS</a> for changes.</p>
 <p><strong>RdistNN</strong> estimates conditional treatment effects and regression functions using distributional nearest-neighbor (DNN) weights. Choose covariate profiles, fit local estimates, and inspect jackknife standard errors, local support and tuning sensitivity. For causal estimation, you supply nuisance predictions; the package constructs the adjusted signals and performs local estimation.</p>
 <p><a href="https://JakobJuergens.github.io/RdistNN/articles/getting-started.html">Get started</a> · <a href="https://JakobJuergens.github.io/RdistNN/reference/index.html">Function reference</a> · <a href="https://github.com/JakobJuergens/RdistNN_stata" class="external-link">Stata companion</a></p>
 <div class="section level2">
@@ -61,8 +61,8 @@
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"pak"</span><span class="op">)</span>  <span class="co"># once</span></span>
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"JakobJuergens/RdistNN"</span><span class="op">)</span></span></code></pre></div>
 <p>This installs production <code>master</code>. R 4.1.0 or newer, Rcpp and a C++17 compiler are required: Rtools on Windows, Xcode command line tools on macOS, or an R-compatible compiler on Linux. For plots, also install <code>ggplot2</code>; dashboards can use <code>patchwork</code>.</p>
-<p>For the version-pinned release, use <code>pak::pak("JakobJuergens/RdistNN@v0.1.4")</code>.</p>
-<p>For reproducible installation, retain the full source commit or checked archive identity; <a href="https://github.com/JakobJuergens/RdistNN/blob/master/RELEASING.md" class="external-link">RELEASING.md</a> explains candidate installation and historical pins. The historical <code>v0.1.0</code> tag predates CLATE and the current shared reporting interface. Retain the source commit or archive identity alongside your results.</p>
+<p>For the version-pinned release, use <code>pak::pak("JakobJuergens/RdistNN@v0.1.5")</code>.</p>
+<p>For reproducible installation, retain the full source commit or checked archive identity; see <a href="https://github.com/JakobJuergens/RdistNN/blob/master/RELEASING.md" class="external-link">RELEASING.md</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="choose-a-workflow">Choose a workflow<a class="anchor" aria-label="anchor" href="#choose-a-workflow"></a>
@@ -150,7 +150,7 @@
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit_cate</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-cate-profile-1.png" alt="CATE estimates at five X1 profiles with X2 fixed at zero, with pointwise confidence intervals." width="100%"></p>
-<p>The <a href="https://JakobJuergens.github.io/RdistNN/articles/getting-started.html">getting-started guide</a> shows matrix inputs, supplied signals and covariance between prespecified profiles. Earlier <code>m_col</code> calls should use both arm means for AIPW or a supplied <code>pseudo_outcome</code>; a pooled outcome mean is not a substitute. The <a href="https://JakobJuergens.github.io/RdistNN/articles/getting-started.html#migrating-earlier-cate-inputs">migration guide</a> describes the current signal inputs and refitting older development objects. Fits report <code>meta$signal_source</code> and retain their original <code>meta$created_with_version</code>; these describe the fit rather than certify its inference assumptions.</p>
+<p>The <a href="https://JakobJuergens.github.io/RdistNN/articles/getting-started.html">getting-started guide</a> shows matrix inputs, supplied signals and covariance between prespecified profiles. During active experimental development, refit saved models after package updates.</p>
 </div>
 <div class="section level2">
 <h2 id="regression-and-conditional-late">Regression and conditional LATE<a class="anchor" aria-label="anchor" href="#regression-and-conditional-late"></a>
@@ -177,9 +177,9 @@
 <div class="section level2">
 <h2 id="interpreting-inference">Interpreting inference<a class="anchor" aria-label="anchor" href="#interpreting-inference"></a>
 </h2>
-<p>Intervals are <strong>pointwise</strong>. The framework assumes independent observations; cluster and survey-design inference are not supplied. At each target, observations with exactly equal represented distance under the selected metric share the average of their assigned rank weights, including every deletion’s surviving group. Nearby distances are not merged. This includes different covariate profiles at equal distance; individual weights, support and effective sample size can change. Aligned row permutations preserve estimates and covariance up to numerical precision. Refit saved objects created under an earlier tie policy.</p>
-<p>The paper assumes a continuous distance distribution, under which the earlier and current rules agree almost surely. The package warns when distance ties occur: inference for persistent distance ties is not established. Averaging does not supply a uniform mean-squared-error improvement.</p>
-<p>Nuisance predictions must be aligned with the estimation observations. Propensity clipping is numerical protection, not a remedy for poor overlap. Diagnostics describe local support; they do not establish validity. For the identification, nuisance-learning and localization conditions and theoretical results, see the accompanying <a href="https://jakobjuergens.com/research/#orthogonal-inference-conditional-z" class="external-link">paper</a>. The package guides explain the corresponding inputs and outputs.</p>
+<p>Intervals are pointwise. The sampling framework assumes independent observations; cluster and survey-design inference are not supplied. Supply aligned nuisance predictions and inspect localization and arm support. Clipping and diagnostics do not establish identification or valid inference.</p>
+<p>Observations at exactly equal computed distance under the selected metric share the average of their rank weights. Inference with persistent distance ties is not established. The <a href="https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.html#exact-distance-ties">weight guide</a> explains tie handling, survivor weights and realized support.</p>
+<p>The <a href="https://jakobjuergens.com/research/#orthogonal-inference-conditional-z" class="external-link">accompanying paper</a> states the identification, nuisance-learning, localization and bias conditions for inference.</p>
 </div>
 <div class="section level2">
 <h2 id="numerical-behavior-and-engines">Numerical behavior and engines<a class="anchor" aria-label="anchor" href="#numerical-behavior-and-engines"></a>

@@ -19,7 +19,7 @@ full DNN weight support."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,7 +42,7 @@ full DNN weight support."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Extract one candidate view from a grid fit</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/R/candidate-fit.R" class="external-link"><code>R/candidate-fit.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.5/R/candidate-fit.R" class="external-link"><code>R/candidate-fit.R</code></a></small>
       <div class="d-none name"><code>candidate_fit.Rd</code></div>
     </div>
 
@@ -131,8 +131,8 @@ averaging within exact-distance blocks as in <code><a href="weights_matrix.html"
 Candidate uncertainty redistributes each deleted member's block mass over
 the survivors using the <code>n-1</code> rank table. Calls with ties warn once: the
 accompanying theory assumes a continuous distance distribution and does not
-establish inference under persistent ties. Earlier retained fit schemas
-require refitting before candidate extraction.</p>
+establish inference under persistent ties. During experimental development,
+refit saved models after package updates.</p>
 <p>Candidate IDs identify grid rows, not unique values of <code>s</code>. Repeated resolved
 orders remain separate candidates, and plots distinguish their IDs in labels.
 Extraction validates retained controls, target IDs and cached ranks; an

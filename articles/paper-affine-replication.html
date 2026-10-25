@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,7 @@
       <h1>Reproduce the affine paper results</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/vignettes/paper-affine-replication.Rmd" class="external-link"><code>vignettes/paper-affine-replication.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.5/vignettes/paper-affine-replication.Rmd" class="external-link"><code>vignettes/paper-affine-replication.Rmd</code></a></small>
       <div class="d-none name"><code>paper-affine-replication.Rmd</code></div>
     </div>
 
@@ -98,7 +98,11 @@ and six PDF figures</strong>, and compares tables with the accepted
 references. It performs no simulation or estimation. Output manifests
 record provenance and comparison results. Historical transformed SIPP
 estimates remain saved evidence because the supplement reports that
-distinct target; the current fitting workflow uses raw dollars.</p>
+distinct target; the current fitting workflow uses raw dollars. The
+synchronized accepted run is <code>rdistnn-0.1.4-20261024</code>,
+computed with released RdistNN 0.1.4. Its executable identity, the newly
+vendored paper source and the package executing a fresh validation are
+recorded separately.</p>
 <p>Rendering uses Cairo PDF. CRAN R on macOS may require <a href="https://www.xquartz.org/" class="external-link">XQuartz</a>, as explained in the <a href="https://mac.r-project.org/bin/macosx/" class="external-link">R for macOS notes</a>.</p>
 </div>
 <div class="section level2">
@@ -139,12 +143,18 @@ specification, profiles, orders, seed and export layout.</p>
 <span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>Smoke uses a small sample and validation-labelled outputs. Use
 <code>--mode=production</code> with a new directory for the full
-application. Output directories are not silently overwritten.</p>
+application. Output directories are not silently overwritten. The
+workflow completes fitting, independent diagnostics, affine export and
+localization sensitivity. Current fits retain represented distances and
+<code>exact_distance_block_averaging_v1</code>: rank weights are
+averaged across exactly equal distances, including assigned zeros, and
+recomputed within surviving groups after each deletion.</p>
 <p>These practical forests, unbounded outcomes and data-selected
 profiles/scales are outside the bounded-series primitive theorem. Frozen
-deletions do not refit nuisance learners. Order sensitivity does not
-estimate localization bias or select an optimal order; full-fit/OOB
-agreement does not verify a stability rate.</p>
+deletions do not refit nuisance learners. Inference with persistent
+distance ties is not established. Order sensitivity does not estimate
+localization bias or select an optimal order; full-fit/OOB agreement
+does not verify a stability rate.</p>
 <p>For package-wide argument and covariance conventions, see <a href="notation-and-conventions.html">Notation and conventions</a>.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

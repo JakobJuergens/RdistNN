@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,7 +30,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Contributing to RdistNN</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/CONTRIBUTING.md" class="external-link"><code>CONTRIBUTING.md</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.5/CONTRIBUTING.md" class="external-link"><code>CONTRIBUTING.md</code></a></small>
     </div>
 
 <div id="contributing-to-rdistnn" class="section level1">
@@ -113,6 +113,15 @@
 <h2 id="reporting-problems">Reporting problems<a class="anchor" aria-label="anchor" href="#reporting-problems"></a></h2>
 <p>Open a <a href="https://github.com/JakobJuergens/RdistNN/issues" class="external-link">GitHub issue</a> with a minimal example, expected/actual results and <code><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo()</a></code>. For numerical discrepancies, report whether they persist with <code>options(RdistNN.use_compiled = FALSE)</code>. This selects R algorithms; source installation still requires compilation.</p>
 <p>PRs should describe the final behavior, scope and verification. Maintainer documentation records current contracts and procedures; keep personal paths, session instructions, completed task lists, generated logs and execution receipts in private working records.</p>
+</div>
+<div class="section level2">
+<h2 id="checkout-benchmarks">Checkout benchmarks<a class="anchor" aria-label="anchor" href="#checkout-benchmarks"></a></h2>
+<p>Install the development-only <code>bench</code> package and the current RdistNN, then run from the repository root:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="ex">Rscript</span> tools/bench/run_bench.R l1 n=5000L reps=3L</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="ex">Rscript</span> tools/bench/run_bench.R l2 n=5000L reps=3L</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="ex">Rscript</span> tools/bench/run_bench.R cate n=1000L s=8L n_subsets=128L reps=3L</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="ex">Rscript</span> tools/bench/run_bench.R jackknife n=200L s=8L reps=3L</span></code></pre></div>
+<p>The same runner accepts the experimental <code>plqr</code> score benchmark. Shared scaffolding belongs under <code>tools/bench/</code>, outside installed code. Score runs compare current batch/scalar APIs and native reductions with explicit subset sums. Distance runs compare current public providers, R and native distances. Reporting benchmarks use <code>tools/bench/bench_reporting.R</code>; counters include a positive control before measurement. Timings are review evidence.</p>
 </div>
 </div>
 

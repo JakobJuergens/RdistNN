@@ -9,7 +9,7 @@ with DNN-based local weights."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,7 +32,7 @@ with DNN-based local weights."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>CATE via DNN rank-weighted pseudo-outcome averaging</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/R/user-dnn-cate.R" class="external-link"><code>R/user-dnn-cate.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.5/R/user-dnn-cate.R" class="external-link"><code>R/user-dnn-cate.R</code></a></small>
       <div class="d-none name"><code>cate_dnn.Rd</code></div>
     </div>
 
@@ -218,7 +218,7 @@ row index; outcomes and nuisances do not define groups. Every jackknife
 deletion averages the surviving blocks with the sample-size-n-1 rule.
 A warning is emitted once per public call with distance ties: the accompanying
 theory assumes a continuous distance distribution and does not establish
-inference under persistent ties. Earlier retained fit schemas require refitting.</p>
+inference under persistent ties. Refit saved models after package updates during experimental development.</p>
 <p>Two interfaces are supported.</p><ol><li><p>Data-frame interface (recommended): pass <code>data</code> and <code>x_cols</code>, then provide
 either <code>pseudo_outcome</code> directly or nuisance columns used to construct it.
 For AIPW nuisance construction, use <code>y_col</code>, <code>t_col</code>, <code>e_col</code>,
@@ -248,9 +248,8 @@ diagnostics include <code>ess</code>, <code>max_weight</code>, <code>top_n</code
 nuisance accuracy and deletion stability, see the accompanying
 <a href="https://jakobjuergens.com/research/#orthogonal-inference-conditional-z" class="external-link">paper</a>.
 This function accepts supplied oracle, out-of-fold or full-sample predictions;
-it does not verify those conditions for a learner. The normalized Robinson
-construction is not implemented; use AIPW inputs or a justified supplied signal.
-A pooled outcome mean cannot replace the two arm-specific means.</p>
+it does not verify those conditions for a learner. AIPW requires both
+arm-specific outcome means; a supplied signal is used unchanged.</p>
 <p>With <code>data</code>, omit <code>X</code>; a direct <code>pseudo_outcome</code> vector remains supported.
 Column selectors require <code>data</code>. Prediction retains the fitted metric and
 context even if a registered distance name is subsequently replaced.</p>

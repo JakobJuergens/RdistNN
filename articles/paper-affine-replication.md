@@ -53,7 +53,10 @@ PDF figures**, and compares tables with the accepted references. It
 performs no simulation or estimation. Output manifests record provenance
 and comparison results. Historical transformed SIPP estimates remain
 saved evidence because the supplement reports that distinct target; the
-current fitting workflow uses raw dollars.
+current fitting workflow uses raw dollars. The synchronized accepted run
+is `rdistnn-0.1.4-20261024`, computed with released RdistNN 0.1.4. Its
+executable identity, the newly vendored paper source and the package
+executing a fresh validation are recorded separately.
 
 Rendering uses Cairo PDF. CRAN R on macOS may require
 [XQuartz](https://www.xquartz.org/), as explained in the [R for macOS
@@ -108,13 +111,19 @@ system2(file.path(R.home("bin"), "Rscript"), c(
 
 Smoke uses a small sample and validation-labelled outputs. Use
 `--mode=production` with a new directory for the full application.
-Output directories are not silently overwritten.
+Output directories are not silently overwritten. The workflow completes
+fitting, independent diagnostics, affine export and localization
+sensitivity. Current fits retain represented distances and
+`exact_distance_block_averaging_v1`: rank weights are averaged across
+exactly equal distances, including assigned zeros, and recomputed within
+surviving groups after each deletion.
 
 These practical forests, unbounded outcomes and data-selected
 profiles/scales are outside the bounded-series primitive theorem. Frozen
-deletions do not refit nuisance learners. Order sensitivity does not
-estimate localization bias or select an optimal order; full-fit/OOB
-agreement does not verify a stability rate.
+deletions do not refit nuisance learners. Inference with persistent
+distance ties is not established. Order sensitivity does not estimate
+localization bias or select an optimal order; full-fit/OOB agreement
+does not verify a stability rate.
 
 For package-wide argument and covariance conventions, see [Notation and
 conventions](https://JakobJuergens.github.io/RdistNN/articles/notation-and-conventions.md).

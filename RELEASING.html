@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,7 +30,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Releasing RdistNN</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/RELEASING.md" class="external-link"><code>RELEASING.md</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.5/RELEASING.md" class="external-link"><code>RELEASING.md</code></a></small>
     </div>
 
 <div id="releasing-rdistnn" class="section level1">
@@ -51,9 +51,9 @@
 </div>
 <div class="section level2">
 <h2 id="candidate-identity-and-scientific-reproduction">Candidate identity and scientific reproduction<a class="anchor" aria-label="anchor" href="#candidate-identity-and-scientific-reproduction"></a></h2>
-<p>The current version-pinned R release is <a href="https://github.com/JakobJuergens/RdistNN/releases/tag/v0.1.4" class="external-link"><code>v0.1.4</code></a>. The tag selects the verified production snapshot; its installable source package and checksum file are attached to the release. Install with:</p>
+<p>The current version-pinned R release is <a href="https://github.com/JakobJuergens/RdistNN/releases/tag/v0.1.5" class="external-link"><code>v0.1.5</code></a>. The tag selects the verified production snapshot; its installable source package and checksum file are attached to the release. Install with:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"JakobJuergens/RdistNN@v0.1.4"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"JakobJuergens/RdistNN@v0.1.5"</span><span class="op">)</span></span></code></pre></div>
 <p>The tag fixes the installation source at the released commit. Keep the ordinary README installation on production <code>master</code> and retain historical tags, assets and paper dependency pins. Record the paired final commits and asset checksums in the release-set manifest below.</p>
 <p>Commit candidates locally. Publish review branches/PRs, tags, downloadable assets and websites only when authorized; do not push directly to <code>master</code>. After both package commits are final, bind them in one external release-set manifest under ignored outputs. Include tested trees, artifact filenames, sizes and SHA-256, commands, runtime/compiler information, hosted run IDs/tested SHAs and explicit PASS/FAIL/BLOCKED/NOT_RUN gates. Do not create circular committed HEAD references or embed an archive’s own hash inside it.</p>
 <p>For a historical reference, install the previous immutable <code>0.1.0.9004</code> source with:</p>

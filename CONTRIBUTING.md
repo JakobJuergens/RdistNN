@@ -232,3 +232,23 @@ PRs should describe the final behavior, scope and verification.
 Maintainer documentation records current contracts and procedures; keep
 personal paths, session instructions, completed task lists, generated
 logs and execution receipts in private working records.
+
+## Checkout benchmarks
+
+Install the development-only `bench` package and the current RdistNN,
+then run from the repository root:
+
+``` sh
+Rscript tools/bench/run_bench.R l1 n=5000L reps=3L
+Rscript tools/bench/run_bench.R l2 n=5000L reps=3L
+Rscript tools/bench/run_bench.R cate n=1000L s=8L n_subsets=128L reps=3L
+Rscript tools/bench/run_bench.R jackknife n=200L s=8L reps=3L
+```
+
+The same runner accepts the experimental `plqr` score benchmark. Shared
+scaffolding belongs under `tools/bench/`, outside installed code. Score
+runs compare current batch/scalar APIs and native reductions with
+explicit subset sums. Distance runs compare current public providers, R
+and native distances. Reporting benchmarks use
+`tools/bench/bench_reporting.R`; counters include a positive control
+before measurement. Timings are review evidence.

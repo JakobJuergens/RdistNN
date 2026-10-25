@@ -61,11 +61,10 @@ Each jackknife deletion removes the actual observation, updates ranks
 and averages the `n-1` table over every surviving group using its
 remaining size. Aligned row permutations preserve estimates and
 covariance up to numerical precision. The paper assumes a continuous
-distance distribution, under which old and new policies agree almost
-surely. Commands warn because inference for persistent distance ties is
-not established; no uniform MSE improvement is claimed. Refit objects
-created under earlier tie policies. Bare rank/order utilities use strict
-orders unless supplied distances define the groups.
+distance distribution. Commands warn because inference for persistent
+distance ties is not established; no uniform MSE improvement is claimed.
+Bare rank/order utilities use strict orders unless supplied distances
+define the groups.
 
 Saved prediction reuses the fitted training geometry. Fast jackknife
 calculations also freeze it; NP/TDNN/CATE/PLQR `jackknife = "loo"`
@@ -128,9 +127,9 @@ fitted outside the package.
 Propensities must be finite and in `[0, 1]`. The AIPW route clips them
 to `[clip, 1 - clip]`, with default `clip = 1e-8`; clipping does not
 establish overlap. A supplied signal alone cannot supply
-treatment-overlap diagnostics. Earlier pooled-mean `m_col` inputs have
-been removed; both arm means are required for AIPW. See the [migration
-guidance](https://JakobJuergens.github.io/RdistNN/articles/getting-started.html#migrating-earlier-cate-inputs).
+treatment-overlap diagnostics. See the [CATE input
+example](https://JakobJuergens.github.io/RdistNN/articles/getting-started.html#conditional-average-treatment-effects)
+for the two supported routes.
 
 ## CLATE conventions
 

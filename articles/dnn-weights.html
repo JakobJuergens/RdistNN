@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,7 @@
       <h1>DNN weights and ranks</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/vignettes/dnn-weights.Rmd" class="external-link"><code>vignettes/dnn-weights.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.5/vignettes/dnn-weights.Rmd" class="external-link"><code>vignettes/dnn-weights.Rmd</code></a></small>
       <div class="d-none name"><code>dnn-weights.Rmd</code></div>
     </div>
 
@@ -206,9 +206,8 @@ are normalized, each observation receives <code>1/n</code>. With frozen
 geometry, each survivor receives <code>1/(n-1)</code> after a deletion.
 Increasing <code>s</code> cannot distinguish observations within such a
 group. Groups can differ at other targets and under another metric.</p>
-<p>The paper assumes a continuous distance distribution, under which the
-earlier and current rules agree almost surely. Calls warn when exact
-distance ties occur because inference with persistent ties is not
+<p>The paper assumes a continuous distance distribution. Calls warn when
+exact distance ties occur because inference with persistent ties is not
 established. Averaging does not establish a uniform mean-squared-error
 improvement.</p>
 <p>A rank table alone cannot reconstruct these weights without the
@@ -216,8 +215,8 @@ per-target groups. Bare supplied <code>ranks</code> or <code>ord</code>
 retain strict-order semantics; a list that also retains <code>dx</code>
 uses those distances for grouping while preserving the supplied
 permutation. Fits cache and validate the selected policy and groups for
-prediction, candidate views, covariance, diagnostics and plots. Refit
-objects created under earlier tie policies, including version 0.1.2.</p>
+prediction, candidate views, covariance, diagnostics and plots. During
+experimental development, refit saved models after package updates.</p>
 </div>
 <div class="section level2">
 <h2 id="working-with-returned-diagnostics">Working with Returned Diagnostics<a class="anchor" aria-label="anchor" href="#working-with-returned-diagnostics"></a>

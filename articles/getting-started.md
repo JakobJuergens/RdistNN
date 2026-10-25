@@ -9,6 +9,9 @@ using the
 gives the statistical assumptions and results; this guide covers the
 calls and how to read their outputs.
 
+During active experimental development, refit saved models after package
+updates.
+
 Use `x0` for one profile or `X0` for a matrix with one profile per row.
 Covariates and supplied predictions must be finite, complete and aligned
 in the same observation order. Data-frame targets follow the `x_cols`
@@ -76,42 +79,6 @@ The data-frame pathway also accepts `pseudo_outcome`. See
 for the complete input contract. Preserve the same observation order for
 every nuisance or pseudo-outcome vector.
 
-### Migrating earlier CATE inputs
-
-The normalized Robinson construction has been removed. Replace earlier
-`m_col` calls with propensity and both arm-specific outcome means for
-AIPW, or supply an externally justified signal through `pseudo_outcome`.
-A pooled outcome mean is not a substitute for the two arm means. Demo
-data now include `m1_oracle` and `aipw_oracle`; the former `rho_oracle`
-used a different signal, so this is not a numerically equivalent column
-rename.
-
-Fresh nuisance-based fitting constructs
-`mu1 - mu0 + D*(Y-mu1)/e - (1-D)*(Y-mu0)/(1-e)`, with validated and
-clipped propensities. The retired `m_col` argument remains rejected. A
-directly supplied `pseudo_outcome` takes precedence over accompanying
-nuisance selectors and is localized unchanged; its construction, causal
-interpretation and inferential justification remain the caller’s
-responsibility. The paper’s residualized-slope estimating equation is
-distinct from the removed normalized pseudo-outcome.
-
-Each new fit records `meta$signal_source`: `"aipw"` means the package
-constructed the signal through its nuisance-input branch, and
-`"supplied"` means the caller provided it. A supplied vector remains
-`"supplied"` even when it equals AIPW or comes from a column named
-`aipw_oracle`. `meta$created_with_version` records the version of the
-package actually loaded when the original fit was created. Candidate
-views and summaries preserve that version. Neither field certifies
-identification, same-sample nuisance accuracy or stability, localization
-bias, or the conditions for pointwise inference.
-
-Refit objects created by older development versions. Both packages reuse
-current fitted state for prediction, covariance, candidates and
-diagnostics; they do not reconstruct retired object schemas or score
-methods. Prediction returns ordinary numeric vectors, matrices or
-`list(fit, se.fit)`. See the companion’s [saved-fit
-guide](https://github.com/JakobJuergens/RdistNN_stata/blob/master/docs/reusing-fits.md).
-
 ### Covariance between prespecified profiles
 
 ``` r
@@ -140,9 +107,9 @@ deletion’s surviving group. No tolerance merges nearby distances, and
 signals/nuisances do not define groups. Aligned row permutations
 preserve estimates and covariance up to numerical precision. Individual
 weights, support and ESS can change. The paper assumes a continuous
-distance distribution, under which old and new policies agree almost
-surely; inference with persistent distance ties is not established. The
-reported `s/n` is descriptive, not a calibrated inference threshold.
+distance distribution; inference with persistent distance ties is not
+established. The reported `s/n` is descriptive, not a calibrated
+inference threshold.
 
 ### Check local support
 
@@ -268,36 +235,15 @@ inference requires `s < n`. Set `se = FALSE` to omit standard errors.
 
 ## Seeds and native threads
 
-Built-in distance, rank-weight and accumulation calculations are
-deterministic: both R and C++ preserve an existing RNG state and leave
-`.Random.seed` absent when it was absent. These calculations need no
-seed.
-
-The demo helpers’ explicit `seed` arguments restore the caller’s saved
-RNG state. `seed = NULL` draws from the current stream. Simulation grids
-use `master_seed` to generate their replicate seeds. To reproduce a
-grid, also retain the RNG kind, dependency versions and availability,
-future plan and tuning configuration; equal integer seeds alone do not
-guarantee agreement between the `future.apply` route and its fallback.
-See
-[`?sim_cate_run`](https://JakobJuergens.github.io/RdistNN/reference/sim_cate_run.md)
-for the reproducibility contract shared with
-[`sim_iv_run()`](https://JakobJuergens.github.io/RdistNN/reference/sim_iv_run.md).
-
-Eligible calculations use C++ automatically when their native routine is
-available. For engine comparisons or troubleshooting,
-`options(RdistNN.use_compiled = FALSE)` selects the package’s R paths;
-`options(RdistNN.use_compiled = TRUE)` restores automatic native
-dispatch. Source installation still requires a C++17 compiler. A native
-execution error stops the calculation rather than silently retrying it
-in R. During a long native calculation, interruption can be delayed
-until control returns to R.
-
-Native routines default to at most two OpenMP threads. Set
-`options(RdistNN.num_threads = 4L)` to request four, or `1L` for one
-native thread. Lower OpenMP runtime limits still apply. See
+Demo helpers restore the caller’s RNG state when `seed` is supplied;
+`seed = NULL` draws from the current stream. Deterministic fitting and
+native kernels need no seed. Native routines use at most two OpenMP
+threads by default. See
 [`?RdistNN`](https://JakobJuergens.github.io/RdistNN/reference/RdistNN-package.md)
-for the controls and saved-RNG-state limitations.
+for engine/thread controls and
+[`?sim_cate_run`](https://JakobJuergens.github.io/RdistNN/reference/sim_cate_run.md)
+for simulation reproducibility across RNG kinds, dependencies and future
+plans.
 
 ## Plots and reusable weights
 

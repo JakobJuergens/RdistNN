@@ -33,7 +33,7 @@ supplied evaluation value (meta$theta_source = "supplied").'></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,7 +56,7 @@ supplied evaluation value (meta$theta_source = "supplied").'></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>PLQR local moment evaluation and direct coefficient inference via DNN rank weights (experimental)</h1>
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/R/user-dnn-plqr.R" class="external-link"><code>R/user-dnn-plqr.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.5/R/user-dnn-plqr.R" class="external-link"><code>R/user-dnn-plqr.R</code></a></small>
       <div class="d-none name"><code>plqr_dnn.Rd</code></div>
     </div>
 
@@ -319,7 +319,7 @@ row index; outcomes and nuisances do not define groups. Every jackknife
 deletion averages the surviving blocks with the sample-size-n-1 rule.
 A warning is emitted once per public call with distance ties: the accompanying
 theory assumes a continuous distance distribution and does not establish
-inference under persistent ties. Earlier retained fit schemas require refitting.</p>
+inference under persistent ties. Refit saved models after package updates during experimental development.</p>
 <p>Two interfaces are supported.</p><ol><li><p>Data-frame interface (recommended): pass <code>data</code> with <code>x_cols</code>, <code>D_cols</code>,
 <code>g_col</code>, <code>mD_cols</code>, and <code>y_col</code>.</p></li>
 <li><p>Matrix interface: pass <code>X</code>, <code>D</code>, <code>g</code>, <code>mD</code>, and <code>Y</code>.</p></li>

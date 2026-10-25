@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RdistNN</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,7 @@
       <h1>Getting started: CATE and regression</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.4/vignettes/getting-started.Rmd" class="external-link"><code>vignettes/getting-started.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/JakobJuergens/RdistNN/blob/v0.1.5/vignettes/getting-started.Rmd" class="external-link"><code>vignettes/getting-started.Rmd</code></a></small>
       <div class="d-none name"><code>getting-started.Rmd</code></div>
     </div>
 
@@ -66,6 +66,8 @@ Use <code>browseVignettes("RdistNN")</code> to open the installed guide
 collection. The <a href="https://jakobjuergens.com/research/#orthogonal-inference-conditional-z" class="external-link">paper</a>
 gives the statistical assumptions and results; this guide covers the
 calls and how to read their outputs.</p>
+<p>During active experimental development, refit saved models after
+package updates.</p>
 <p>Use <code>x0</code> for one profile or <code>X0</code> for a matrix
 with one profile per row. Covariates and supplied predictions must be
 finite, complete and aligned in the same observation order. Data-frame
@@ -125,43 +127,6 @@ data:</p>
 <code><a href="../reference/cate_dnn.html">?cate_dnn</a></code> for the complete input contract. Preserve the
 same observation order for every nuisance or pseudo-outcome vector.</p>
 <div class="section level3">
-<h3 id="migrating-earlier-cate-inputs">Migrating earlier CATE inputs<a class="anchor" aria-label="anchor" href="#migrating-earlier-cate-inputs"></a>
-</h3>
-<p>The normalized Robinson construction has been removed. Replace
-earlier <code>m_col</code> calls with propensity and both arm-specific
-outcome means for AIPW, or supply an externally justified signal through
-<code>pseudo_outcome</code>. A pooled outcome mean is not a substitute
-for the two arm means. Demo data now include <code>m1_oracle</code> and
-<code>aipw_oracle</code>; the former <code>rho_oracle</code> used a
-different signal, so this is not a numerically equivalent column
-rename.</p>
-<p>Fresh nuisance-based fitting constructs
-<code>mu1 - mu0 + D*(Y-mu1)/e - (1-D)*(Y-mu0)/(1-e)</code>, with
-validated and clipped propensities. The retired <code>m_col</code>
-argument remains rejected. A directly supplied
-<code>pseudo_outcome</code> takes precedence over accompanying nuisance
-selectors and is localized unchanged; its construction, causal
-interpretation and inferential justification remain the caller’s
-responsibility. The paper’s residualized-slope estimating equation is
-distinct from the removed normalized pseudo-outcome.</p>
-<p>Each new fit records <code>meta$signal_source</code>:
-<code>"aipw"</code> means the package constructed the signal through its
-nuisance-input branch, and <code>"supplied"</code> means the caller
-provided it. A supplied vector remains <code>"supplied"</code> even when
-it equals AIPW or comes from a column named <code>aipw_oracle</code>.
-<code>meta$created_with_version</code> records the version of the
-package actually loaded when the original fit was created. Candidate
-views and summaries preserve that version. Neither field certifies
-identification, same-sample nuisance accuracy or stability, localization
-bias, or the conditions for pointwise inference.</p>
-<p>Refit objects created by older development versions. Both packages
-reuse current fitted state for prediction, covariance, candidates and
-diagnostics; they do not reconstruct retired object schemas or score
-methods. Prediction returns ordinary numeric vectors, matrices or
-<code>list(fit, se.fit)</code>. See the companion’s <a href="https://github.com/JakobJuergens/RdistNN_stata/blob/master/docs/reusing-fits.md" class="external-link">saved-fit
-guide</a>.</p>
-</div>
-<div class="section level3">
 <h3 id="covariance-between-prespecified-profiles">Covariance between prespecified profiles<a class="anchor" aria-label="anchor" href="#covariance-between-prespecified-profiles"></a>
 </h3>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
@@ -186,10 +151,9 @@ deletion’s surviving group. No tolerance merges nearby distances, and
 signals/nuisances do not define groups. Aligned row permutations
 preserve estimates and covariance up to numerical precision. Individual
 weights, support and ESS can change. The paper assumes a continuous
-distance distribution, under which old and new policies agree almost
-surely; inference with persistent distance ties is not established. The
-reported <code>s/n</code> is descriptive, not a calibrated inference
-threshold.</p>
+distance distribution; inference with persistent distance ties is not
+established. The reported <code>s/n</code> is descriptive, not a
+calibrated inference threshold.</p>
 </div>
 <div class="section level3">
 <h3 id="check-local-support">Check local support<a class="anchor" aria-label="anchor" href="#check-local-support"></a>
@@ -299,32 +263,12 @@ weights. Delete-1 inference requires <code>s &lt; n</code>. Set
 <div class="section level2">
 <h2 id="seeds-and-native-threads">Seeds and native threads<a class="anchor" aria-label="anchor" href="#seeds-and-native-threads"></a>
 </h2>
-<p>Built-in distance, rank-weight and accumulation calculations are
-deterministic: both R and C++ preserve an existing RNG state and leave
-<code>.Random.seed</code> absent when it was absent. These calculations
-need no seed.</p>
-<p>The demo helpers’ explicit <code>seed</code> arguments restore the
-caller’s saved RNG state. <code>seed = NULL</code> draws from the
-current stream. Simulation grids use <code>master_seed</code> to
-generate their replicate seeds. To reproduce a grid, also retain the RNG
-kind, dependency versions and availability, future plan and tuning
-configuration; equal integer seeds alone do not guarantee agreement
-between the <code>future.apply</code> route and its fallback. See
-<code><a href="../reference/sim_cate_run.html">?sim_cate_run</a></code> for the reproducibility contract shared with
-<code><a href="../reference/sim_iv_run.html">sim_iv_run()</a></code>.</p>
-<p>Eligible calculations use C++ automatically when their native routine
-is available. For engine comparisons or troubleshooting,
-<code>options(RdistNN.use_compiled = FALSE)</code> selects the package’s
-R paths; <code>options(RdistNN.use_compiled = TRUE)</code> restores
-automatic native dispatch. Source installation still requires a C++17
-compiler. A native execution error stops the calculation rather than
-silently retrying it in R. During a long native calculation,
-interruption can be delayed until control returns to R.</p>
-<p>Native routines default to at most two OpenMP threads. Set
-<code>options(RdistNN.num_threads = 4L)</code> to request four, or
-<code>1L</code> for one native thread. Lower OpenMP runtime limits still
-apply. See <code><a href="../reference/RdistNN-package.html">?RdistNN</a></code> for the controls and saved-RNG-state
-limitations.</p>
+<p>Demo helpers restore the caller’s RNG state when <code>seed</code> is
+supplied; <code>seed = NULL</code> draws from the current stream.
+Deterministic fitting and native kernels need no seed. Native routines
+use at most two OpenMP threads by default. See <code><a href="../reference/RdistNN-package.html">?RdistNN</a></code> for
+engine/thread controls and <code><a href="../reference/sim_cate_run.html">?sim_cate_run</a></code> for simulation
+reproducibility across RNG kinds, dependencies and future plans.</p>
 </div>
 <div class="section level2">
 <h2 id="plots-and-reusable-weights">Plots and reusable weights<a class="anchor" aria-label="anchor" href="#plots-and-reusable-weights"></a>
