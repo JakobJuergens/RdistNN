@@ -95,6 +95,15 @@ ratio_confidence_set <- function(
       !(delta[1L] == 0 && V[1L, 1L] == 0)) {
       reason <- "coefficient_rounding"
     }
+    # A structural zero numerator makes b=c=0, but does not certify the sign
+    # of a when its two nonzero terms nearly cancel during formation.
+    if (delta[1L] == 0 && V[1L, 1L] == 0 && normalized[2L] != 0 && v[2L, 2L] > 0 &&
+        abs(abc["a"]) <= tol * (normalized[2L]^2 + critical^2 * v[2L, 2L])) {
+      reason <- "coefficient_rounding"
+    }
+    if (critical > 0 && critical^2 < .Machine$double.xmin && any(V != 0)) {
+      reason <- "confidence_level_precision"
+    }
     if (delta[2L] != 0 && V[2L, 2L] == 0 && V[1L, 1L] > 0 && critical > 0) {
       # Expansion can absorb z^2 V_YY into Delta_Y^2 even when the interval
       # width is representable. Compute that width before forming the square.

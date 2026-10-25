@@ -1,6 +1,16 @@
 # Helper utilities shared by all distance tests
 # --------------------------------------------
 
+# Exercise the supported localization boundary instead of retired fused
+# distance/order primitives. Return a single target's numeric view for fixtures.
+.distance_ranking <- function(X, x0, spec, ctx = NULL) {
+  spec <- do.call(new_distance, spec)
+  out <- .with_localization_policy_warnings(weights_matrix(
+    X, x0 = x0, ranking = spec, weight = rank_weight_dnn_exact(1L, 1L),
+    ctx = ctx, return = c("dx", "ord")))
+  list(dx = out$dx[, 1L], ord = out$ord[, 1L])
+}
+
 gen_X <- function(n = 20L, p = 6L, seed = 1L) {
   .test_rng_scope({
     matrix(rnorm(n * p), n, p)
@@ -34,12 +44,11 @@ make_tiecase <- function() {
   list(X = X, x0 = x0)
 }
 
-# Battery for a given spec factory & orderer
+# Battery for a distance spec factory and its public localization consumer
 #   mk_spec: function(...) -> list(name, setup, eval, eval_batch)
-#   orderer: function(X, x0, ...)
 #   args:    named list forwarded to mk_spec
 #   expect_sq: NULL (no check), TRUE (name should have 'sq'), or FALSE (should not)
-run_distance_battery <- function(metric_name, mk_spec, orderer, args = list(),
+run_distance_battery <- function(metric_name, mk_spec, args = list(),
                                  expect_sq = NULL) {
   test_that(paste0(metric_name, ": spec name is a scalar string (and squared flag if requested)"), {
     sp <- do.call(mk_spec, args)
@@ -62,10 +71,10 @@ run_distance_battery <- function(metric_name, mk_spec, orderer, args = list(),
     expect_equal(D1, as.matrix(D2))
   })
 
-  test_that(paste0(metric_name, ": orderer is deterministic on ties"), {
+  test_that(paste0(metric_name, ": localization ordering is deterministic on ties"), {
     tc <- make_tiecase()
-    ob <- do.call(orderer, c(list(tc$X, tc$x0), args))
-    expect_true(is.list(ob) && all(c("dx", "ord") %in% names(ob)))
+    sp <- do.call(mk_spec, args)
+    ob <- .distance_ranking(tc$X, tc$x0, sp)
     i1 <- which(ob$ord == 1L)
     i2 <- which(ob$ord == 2L)
     expect_lt(i1, i2)
@@ -95,12 +104,12 @@ run_distance_battery <- function(metric_name, mk_spec, orderer, args = list(),
     expect_error(sp$eval_batch(X_bad, matrix(x0, 1, byrow = TRUE), NULL), "non-finite|NaN", ignore.case = TRUE)
     expect_error(sp$eval_batch(X, matrix(x0_bad, 1, byrow = TRUE), NULL), "non-finite|NaN", ignore.case = TRUE)
     expect_error(
-      do.call(orderer, c(list(X_bad, x0), args)),
+      .distance_ranking(X_bad, x0, sp),
       "non-finite|NaN",
       ignore.case = TRUE
     )
     expect_error(
-      do.call(orderer, c(list(X, x0_bad), args)),
+      .distance_ranking(X, x0_bad, sp),
       "non-finite|NaN",
       ignore.case = TRUE
     )

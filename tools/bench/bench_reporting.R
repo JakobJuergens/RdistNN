@@ -33,10 +33,9 @@ measure <- function(fn, quiet, id) {
 
 # Instrument only a separate untimed execution, preserving original bindings.
 count_calls <- function(fn) {
-  names <- c("distance_eval", "distance_eval_batch", ".dnn_distance_groups",
-    ".dnn_prepare_distance_groups", ".dnn_compute_group_facts",
-    "rustat_dist_l2", "rustat_dist_l2_batch", "rustat_order_by_l2")
-  names <- names[vapply(names, exists, logical(1L), envir = ns, inherits = FALSE)]
+  names <- c("distance_eval", "distance_eval_batch", ".dnn_prepare_distance_groups", ".dnn_compute_group_facts",
+    "rustat_dist_l2", "rustat_dist_l2_batch")
+  stopifnot(all(vapply(names, exists, logical(1L), envir = ns, inherits = FALSE)))
   originals <- mget(names, ns, inherits = FALSE)
   counts <- setNames(integer(length(names)), names)
   for (name in names) {
@@ -55,6 +54,10 @@ count_calls <- function(fn) {
   suppressWarnings(fn())
   counts
 }
+
+# Positive control: a retired instrumentation target must not report false zeroes.
+probe <- count_calls(function() get(".dnn_prepare_distance_groups", ns)(matrix(c(1, 1, 2))))
+stopifnot(probe[[".dnn_prepare_distance_groups"]] == 1L)
 
 rows <- counters <- numerical <- list()
 for (native in c(FALSE, TRUE)) {

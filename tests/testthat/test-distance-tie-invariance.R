@@ -1,3 +1,7 @@
+# Observation/target permutations, exact-distance ordering and serialized reuse.
+# Distinct profiles at equal distance share mass; input index only orders ranks.
+# Numerical block/deletion references live in test-distance-block-averaging.R;
+# target-specific policy and preparation reuse live in test-distance-tie-localization.R.
 test_that("localization ordering uses exact distances then original index", {
   .with_localization_policy_warnings({
   X <- rbind(c(1, 0), c(-1, 0), c(0, 1), c(0, -1), c(1, 0), c(2, 0))
@@ -36,32 +40,6 @@ test_that("custom distances use input index and supplied ranks remain explicit",
       ranking = stats::setNames(list(explicit), field), weight = rw,
       return = field)
     expect_identical(out[[field]], explicit)
-  }
-  })
-})
-
-test_that("native and R coordinate order helpers use current input indices for ties", {
-  .with_localization_policy_warnings({
-  old <- options(RdistNN.use_compiled = TRUE)
-  on.exit(options(old), add = TRUE)
-  d <- .tie_fixture()
-  cases <- list(
-    list(order_by_l1, list()), list(order_by_l2, list()),
-    list(order_by_l1_scaled, list(rule = "custom", scale_vec = c(1, 1))),
-    list(order_by_l2_scaled, list(rule = "custom", scale_vec = c(1, 1))))
-  symbols <- c("rustat_order_by_l1", "rustat_order_by_l2",
-    "rustat_order_by_l1_scaled", "rustat_order_by_l2_scaled")
-  for (native in c(TRUE, FALSE)) {
-    options(RdistNN.use_compiled = native)
-    for (i in seq_along(cases)) {
-      if (native) expect_true(is.function(.rdistnn_compiled_fun(symbols[[i]])))
-      for (ids in list(1:6, d$perm, c(6L, 2L, 5L, 1L))) {
-        local <- d$X[ids, , drop = FALSE]
-        result <- do.call(cases[[i]][[1L]], c(list(local, c(0, 0)), cases[[i]][[2L]]))
-        expected <- order(result$dx, seq_along(ids))
-        expect_identical(ids[result$ord], ids[expected])
-      }
-    }
   }
   })
 })
@@ -187,8 +165,8 @@ test_that("scaled ties retain input index when transformed coordinates underflow
   expected <- 1:4
   for (native in c(TRUE, FALSE)) {
     options(RdistNN.use_compiled = native)
-    for (ordering in list(order_by_l1_scaled, order_by_l2_scaled)) {
-      result <- ordering(X, 0, rule = "custom", scale_vec = .Machine$double.xmax)
+    for (factory in list(distance_l1_scaled, distance_l2_scaled)) {
+      result <- .distance_ranking(X, 0, factory(rule = "custom", scale_vec = .Machine$double.xmax))
       expect_identical(result$dx, rep(0, 4L))
       expect_identical(result$ord, expected)
     }

@@ -5,7 +5,7 @@
 repo <- normalizePath(file.path(.dir,"../../.."))
 source(file.path(.dir,"R","manuscript_export.R"))
 args <- commandArgs(TRUE)
-options <- list(input_dir=file.path(repo,"markdown_notes/affine_scores/sipp_development/2026-10-12_code_overhaul"),
+options <- list(input_dir=file.path(repo,"markdown_notes/affine_scores/sipp_development/2026-10-24_rdistnn_014_refresh"),
   historical_dir=file.path(repo,"markdown_notes/affine_scores/sipp_development/2026-10-12_overhaul/evidence"),
   output_dir=file.path(repo,"Artifacts/affine_scores/sipp_application_20261013"),
   table_dir=file.path(repo,"Tables/Applications/SIPP_401k/affine_overhaul_20261013"),check_only=FALSE)

@@ -32,11 +32,6 @@
   facts
 }
 
-.dnn_distance_groups <- function(dx) {
-  prepared <- .dnn_prepare_distance_groups(dx)
-  .dnn_remember_group_facts(prepared$groups, prepared$tied_targets)
-  prepared$groups
-}
 
 # Invert validated rank permutations in linear work, preserving target shape.
 .dnn_orders_from_ranks <- function(ranks) {

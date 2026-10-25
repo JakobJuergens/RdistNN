@@ -68,7 +68,6 @@ test_that("sim_cate_data: aipw_oracle matches the dormant-source AIPW score", {
   )
 
   expect_equal(dat$aipw_oracle, aipw_manual, tolerance = 1e-12)
-  expect_false("rho_oracle" %in% names(dat))
 })
 
 test_that("sim_cate_data: unknown design gives informative error", {

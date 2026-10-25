@@ -43,7 +43,7 @@
 #' adding `dx` metadata enables averaging while preserving supplied permutations.
 #' Calls with ties warn once: the accompanying theory assumes a continuous
 #' distance distribution and does not establish inference under persistent ties.
-#' Earlier retained fit schemas require refitting before reporting or reuse.
+#' During experimental development, refit saved models after package updates.
 #'
 #' @section Experimental and Advanced Workflows:
 #' All PLQR functionality is **experimental**, including [plqr_dnn()], its

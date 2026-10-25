@@ -1,8 +1,10 @@
 # Run identity, actual executable provenance and immutable terminal records.
 sipp_401k_fit_fingerprint <- function(fit) {
-  digest::digest(fit[c("schema_version", "estimates", "analysis_data", "dnn_weights",
+  fields <- c("schema_version", "estimates", "analysis_data", "dnn_weights",
     "signals", "nuisances", "tuning_grids", "profile_diagnostics", "profiles",
-    "specification", "method_metadata", "config", "source", "run_info")], algo = "sha256")
+    "specification", "method_metadata", "config", "source", "run_info")
+  if (!is.null(fit$localization)) fields <- c(fields, "localization")
+  digest::digest(fit[fields], algo = "sha256")
 }
 
 sipp_401k_file_hash <- function(path) {

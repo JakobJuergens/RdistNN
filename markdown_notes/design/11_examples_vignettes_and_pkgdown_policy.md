@@ -16,6 +16,21 @@ replication from general onboarding. Where both input routes are supported,
 explain matrix/vector and data-frame usage without repeating equivalent fits
 throughout the collection.
 
+During active experimental development, document the current interfaces and
+briefly tell users to refit saved models after updates. Remove catalogues of
+retired arguments, score methods and object schemas from current tutorials;
+release notes own historical changes. Preserve published replication pins and
+the current serialization/reuse contract.
+
+Give long explanations one primary home and link to them from related guides.
+Repeat short interpretation limits beside the outputs they qualify. Reference
+help must remain independently usable, including syntax, shapes and relevant
+constraints. Sharing roxygen source can reduce maintenance without shortening
+rendered help; judge compression by what the reader sees. This applies
+[R Packages' distinction between function help and workflow vignettes](https://r-pkgs.org/vignettes.html)
+and [Diataxis' separation of user needs](https://diataxis.fr/) to the existing
+documentation roles above; it does not require a new documentation hierarchy.
+
 ## Executable examples
 
 Use small, fast, seeded examples with minimal dependencies. Do not rely on

@@ -3,7 +3,7 @@
 }
 
 test_that("demo subset helpers return integer K by s matrices at boundaries", {
-  cases <- list(c(4L, 1L), c(1L, 3L), c(1L, 1L), c(4L, 3L))
+  cases <- list(c(4L, 1L), c(1L, 3L), c(1L, 1L), c(4L, 3L), c(7L, 4L))
   for (helper in .subset_demo_helpers()) {
     for (case in cases) {
       K <- case[[1L]]
@@ -11,6 +11,7 @@ test_that("demo subset helpers return integer K by s matrices at boundaries", {
       draws <- helper(n = 12L, K = K, s = s, seed = 74L)
       expect_identical(dim(draws), c(K, s))
       expect_type(draws, "integer")
+      expect_identical(draws, helper(n = 12L, K = K, s = s, seed = 74L))
       expect_true(all(draws >= 1L & draws <= 12L))
       if (!identical(dim(draws), c(K, s))) next
       for (row in seq_len(K)) {
@@ -69,4 +70,17 @@ test_that("singleton demo subsets feed batch scores directly", {
     expect_identical(score_eval_batch(score, draws, demo$data, ctx),
       demo$data$Y[as.vector(draws)])
   }
+})
+
+test_that("demo subset helpers reject invalid sampling controls before drawing", {
+  .test_rng_scope({
+    for (helper in .subset_demo_helpers()) {
+      set.seed(271L)
+      before <- .Random.seed
+      expect_error(helper(n = 3L, K = 2L, s = 4L), "s")
+      expect_error(helper(n = 12L, K = 0L), "K")
+      expect_error(helper(n = 0L), "n")
+      expect_identical(.Random.seed, before)
+    }
+  })
 })

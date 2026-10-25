@@ -41,6 +41,43 @@ filters together, then run each moved suite independently. Cross-estimator suite
 such as subset shapes and simulation backends remain cohesive; include them in
 the relevant family selections even when their filenames have a shared prefix.
 
+Name suites and test blocks for their current observable contract, rather than
+an audit, merge milestone or superseded rule. A descriptive `test_that()` title
+is normally sufficient; add a short file-level scope/reference comment where
+neighboring suites overlap or an independent oracle needs explanation. Do not
+split a cohesive suite merely to meet a line-count target. Separate unrelated
+contracts when that gives each one a clear owner and focused run.
+
+The maintained test map must cover every runtime suite, explicitly or through
+a meaningful filename pattern. When renaming or moving a suite, update current
+maps, cross-package references and selectors together, preserve assertion
+bodies/independent references, and verify both independent and combined runs.
+Historical release records and frozen fixture provenance remain unchanged.
+
+## Test maintenance
+
+Test observable current contracts at their stable boundary, following
+[R Packages, test design](https://r-pkgs.org/testing-design.html). Remove tests
+that only preserve a retired private return shape or a removed alias. Redirect
+substantive numerical cases to the current API, retaining their independent
+constants, reference calculations, tolerances and actual-engine requirements.
+Do not replace a removed wrapper with a test helper that recreates its old API.
+Invalid current retained-state checks still protect serialization and reuse;
+they are not an older-version compatibility layer.
+
+Trace shared fixtures from real tests and registration before pruning them.
+Keep single-suite scenarios local and generate only scenarios the suite uses.
+Do not add absence checks or fixture-schema tests merely to memorialize a
+removal. Developer performance counters require a positive control at the
+instrumented boundary so stale hooks cannot yield convincing zero counts.
+
+This also applies to repository checks and retired public arguments: generic
+language rejection does not need a dedicated test for each removed argument.
+Check the current runner, output and validation contracts rather than keeping
+a growing catalogue of old symbols, fields or workflow filenames that must
+stay absent. Rejecting an invalid current schema or policy remains a distinct,
+useful state-validation contract.
+
 ## Error and warning contracts
 
 Follow [the reporting design](05_error_messages_and_warnings.md) when

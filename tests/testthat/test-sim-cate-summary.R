@@ -134,7 +134,7 @@ test_that("summarise_sim_results: error on missing columns", {
   expect_error(summarise_sim_results(bad), "missing required columns")
 })
 
-test_that("summarise_sim_results reports branch, radius, and studentized shape", {
+test_that("summarise_sim_results reports localization, radius, and studentized shape", {
   raw <- sim_cate_run(
     designs = "dgp2_nonlinear",
     n_vals = 160L,
@@ -155,9 +155,6 @@ test_that("summarise_sim_results reports branch, radius, and studentized shape",
     "studentized_mean", "studentized_sd", "studentized_skewness",
     "studentized_excess_kurtosis", "studentized_q025", "studentized_q975"
   )
-  obsolete <- c("branch_drift", "standardized_branch_drift")
-  expect_false(any(obsolete %in% names(raw)))
-  expect_false(any(obsolete %in% names(tab)))
   expect_true(all(required %in% names(tab)))
   expect_true(all(is.finite(as.matrix(tab[, required]))))
   expect_equal(tab$bias, tab$localization_drift + tab$estimator_remainder, tolerance = 1e-12)

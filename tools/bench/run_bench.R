@@ -1,69 +1,40 @@
-# tools/bench/run_bench.R
-# Usage from R:
-#   devtools::load_all()
-#   source("tools/bench/run_bench.R")
-#   rdistnn_bench("cate", n = 5000)
-#   rdistnn_bench("plqr", reps = 10)
-#
-# Usage from shell:
-#   Rscript tools/bench/run_bench.R cate n=5000 reps=10
-
-rdistnn_bench <- function(
-    which = c("cate", "plqr", "jackknife", "jk", "dist_l1", "l1", "dist_l2", "l2"), ...)
-  {
+# Run from the repository root after installing RdistNN or devtools::load_all().
+# Rscript tools/bench/run_bench.R l1 n=5000L reps=3L
+# Rscript tools/bench/run_bench.R cate n=1000L s=8L n_subsets=128L reps=3L
+rdistnn_bench <- function(which = c("cate", "plqr", "jackknife", "jk",
+                                    "dist_l1", "l1", "dist_l2", "l2"), ...) {
   which <- match.arg(which)
-  # Ensure utils are available when sourced directly
-  if (!exists("rdistnn_bench_require")) {
-    source(file.path("tools", "bench", "utils-bench.R"), local = TRUE)
+  if (!requireNamespace("RdistNN", quietly = TRUE)) {
+    stop("Install RdistNN or run devtools::load_all() before benchmarking.", call. = FALSE)
   }
-
-  switch(which,
-         cate = {
-           source(file.path("tools", "bench", "bench_cate.R"), local = TRUE)
-           rdistnn_bench_cate(...)
-         },
-         plqr = {
-           source(file.path("tools", "bench", "bench_plqr.R"), local = TRUE)
-           rdistnn_bench_plqr(...)
-         },
-         jackknife = , jk = {
-           source(file.path("tools", "bench", "bench_jackknife.R"), local = TRUE)
-           rdistnn_bench_jackknife(...)
-         },
-         dist_l2 = , l2 = {
-           source(file.path("tools", "bench", "bench_dist_l2.R"), local = TRUE)
-           rdistnn_bench_dist_l2(...)
-         },
-         dist_l1 = , l1 = {
-           source(file.path("tools", "bench", "bench_dist_l1.R"), local = TRUE)
-           rdistnn_bench_dist_l1(...)
-         }
-  )
+  env <- new.env(parent = asNamespace("RdistNN"))
+  sys.source("tools/bench/utils-bench.R", envir = env)
+  if (which %in% c("dist_l1", "l1", "dist_l2", "l2")) {
+    sys.source("tools/bench/bench_distances.R", envir = env)
+    metric <- if (which %in% c("dist_l1", "l1")) "l1" else "l2"
+    return(do.call(env$rdistnn_bench_distance, c(list(metric = metric), list(...))))
+  }
+  module <- switch(which, cate = "bench_score_cate.R", plqr = "bench_score_plqr.R",
+                   jackknife = "bench_jackknife.R", jk = "bench_jackknife.R")
+  function_name <- switch(which, cate = "rdistnn_bench_cate", plqr = "rdistnn_bench_plqr",
+                          jackknife = "rdistnn_bench_jackknife", jk = "rdistnn_bench_jackknife")
+  sys.source(file.path("tools/bench", module), envir = env)
+  do.call(get(function_name, envir = env), list(...))
 }
 
-# If called via Rscript, parse simple key=value args
-if (identical(environmentName(topenv()), "R_GlobalEnv")) {
+if (sys.nframe() == 0L) {
   args <- commandArgs(trailingOnly = TRUE)
-  if (length(args)) {
-    which <- args[[1]]
-    dots <- list()
-    if (length(args) > 1) {
-      # parse key=value pairs into a list
-      kv <- strsplit(args[-1], "=", fixed = TRUE)
-      for (p in kv) {
-        key <- p[[1]]
-        val <- p[[2]]
-        # try numeric, integer, logical, otherwise keep character
-        if (grepl("^[0-9]+L$", val)) {
-          val <- as.integer(sub("L$", "", val))
-        } else if (grepl("^[0-9.]+$", val)) {
-          val <- as.numeric(val)
-        } else if (val %in% c("TRUE","FALSE")) {
-          val <- as.logical(val)
-        }
-        dots[[key]] <- val
-      }
-    }
-    rdistnn_bench(which, !!!dots)
+  if (!length(args)) stop("Choose cate, plqr, jackknife, l1 or l2.", call. = FALSE)
+  dots <- list()
+  for (part in args[-1L]) {
+    match <- regexec("^([A-Za-z][A-Za-z0-9_.]*)=(.*)$", part)
+    pair <- regmatches(part, match)[[1L]]
+    if (!length(pair)) stop("Arguments must use name=value: ", part, call. = FALSE)
+    value <- pair[[3L]]
+    if (grepl("^[+-]?[0-9]+L$", value)) value <- as.integer(sub("L$", "", value))
+    else if (grepl("^[+-]?([0-9]+[.]?[0-9]*|[.][0-9]+)([eE][+-]?[0-9]+)?$", value)) value <- as.numeric(value)
+    else if (value %in% c("TRUE", "FALSE")) value <- as.logical(value)
+    dots[[pair[[2L]]]] <- value
   }
+  do.call(rdistnn_bench, c(list(which = args[[1L]]), dots))
 }

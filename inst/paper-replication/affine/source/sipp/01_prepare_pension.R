@@ -198,7 +198,7 @@ prepare_sipp_401k <- function(spec = make_sipp_401k_analysis_spec(), raw = NULL)
                       c(mean(data$age), mean(data$asinh_inc)) else mean(data$asinh_inc),
                     scales = if (length(x_cols) == 2L) c(age_scale, income_scale) else income_scale,
                     scale_rule = if (is.null(spec$metric_scales)) "sample_sd" else "fixed",
-                    tie_rule = "input row order"),
+                    tie_rule = "exact_distance_block_averaging_v1"),
       outcomes = sipp_401k_outcome_definitions(spec$asset_cap))),
     source = list(
       package = "hdm",

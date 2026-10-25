@@ -127,12 +127,6 @@ test_that("current CATE fits preserve prediction shapes and serialized state", {
   }
 })
 
-test_that("retired pooled-mean CATE arguments remain rejected", {
-  d <- .cate_provenance_case()
-  expect_error(cate_dnn(data = d, x_cols = "x", y_col = "y", t_col = "d",
-    e_col = "e", m_col = "m0", x0 = 0, s = 3L), "unused argument.*m_col")
-})
-
 test_that("CATE reporting requires current provenance metadata", {
   .with_distance_tie_warning({
   fit <- .cate_provenance_fit(.cate_provenance_case(), x0 = 0, s = 3L)

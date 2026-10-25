@@ -144,8 +144,7 @@ survivor receives `1/(n-1)` after a deletion. Increasing `s` cannot distinguish
 observations within such a group.
 Groups can differ at other targets and under another metric.
 
-The paper assumes a continuous distance distribution, under which the earlier
-and current rules agree almost surely. Calls warn when exact distance ties
+The paper assumes a continuous distance distribution. Calls warn when exact distance ties
 occur because inference with persistent ties is not established. Averaging
 does not establish a uniform mean-squared-error improvement.
 
@@ -153,8 +152,8 @@ A rank table alone cannot reconstruct these weights without the per-target
 groups. Bare supplied `ranks` or `ord` retain strict-order semantics; a list
 that also retains `dx` uses those distances for grouping while preserving the
 supplied permutation. Fits cache and validate the selected policy and groups
-for prediction, candidate views, covariance, diagnostics and plots. Refit
-objects created under earlier tie policies, including version 0.1.2.
+for prediction, candidate views, covariance, diagnostics and plots. During
+experimental development, refit saved models after package updates.
 
 ## Working with Returned Diagnostics
 

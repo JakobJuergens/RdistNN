@@ -22,7 +22,7 @@ test_that("L2 retains finite huge and tiny norms through scalar, batch and order
         .expect_identical_fast(spec$eval(XX, X0[1, ], ctx), D[, 1])
         .expect_identical_fast(spec$eval_batch(XX[c(3, 1), , drop = FALSE], X0, ctx),
                          D[c(3, 1), , drop = FALSE])
-        ordered <- if (scaled) order_by_l2_scaled(XX, X0[1, ], "custom", c(2, 4)) else order_by_l2(XX, X0[1, ])
+        ordered <- if (scaled) .distance_ranking(XX, X0[1, ], distance_l2_scaled(rule = "custom", scale_vec = c(2, 4))) else .distance_ranking(XX, X0[1, ], distance_l2())
         .expect_identical_fast(ordered$dx, D[, 1])
         # Every represented 5h distance tie preserves the input-row index.
         expect_identical(ordered$ord, c(4L, 3L, 1L, 2L, 5L))
@@ -49,11 +49,10 @@ test_that("L2 handles mixed scales, subnormal squared sums and true overflow", {
     expect_identical(dist_l2(matrix(c(1.5e308, 1.5e308), 1), c(0, 0)), Inf)
     # Opposite signed finite coordinates may overflow subtraction; a small
     # inverse scale makes the distance finite and must avoid Inf * 0.
-    expect_equal(dist_l2_scaled(matrix(huge), -huge, 0.25) / (huge / 2), 1, tolerance = 0)
-    expect_identical(dist_l2_scaled(matrix(huge), -huge, 0), 0)
-    expect_equal(dist_l2_scaled(matrix(huge), -huge, 1e-308), 2, tolerance = 4e-15)
-    expect_identical(dist_l2_scaled(matrix(.Machine$double.xmax),
-                     -.Machine$double.xmax, 2^-1074), 0x1.fffffffffffffp-50)
+    expect_equal(distance_l2_scaled()$eval(matrix(huge), -huge, list(inv_s = 0.25)) / (huge / 2), 1, tolerance = 0)
+    expect_identical(distance_l2_scaled()$eval(matrix(huge), -huge, list(inv_s = 0)), 0)
+    expect_equal(distance_l2_scaled()$eval(matrix(huge), -huge, list(inv_s = 1e-308)), 2, tolerance = 4e-15)
+    expect_identical(distance_l2_scaled()$eval(matrix(.Machine$double.xmax), -.Machine$double.xmax, list(inv_s = 2^-1074)), 0x1.fffffffffffffp-50)
   }
 })
 
@@ -124,7 +123,7 @@ test_that("L2 uses the same exceptional range at the Stata finite boundary", {
     D <- distance_l2()$eval_batch(X, matrix(0, 2, 2))
     .expect_identical_fast(D[, 1], c(0x1.9af4345292aafp+511, 0x1.9af4345292aaep+511))
     expect_identical(order(D[, 1]), 2:1)
-    expect_identical(order_by_l2(X, c(0, 0))$ord, 2:1)
+    expect_identical(.distance_ranking(X, c(0, 0), distance_l2())$ord, 2:1)
     .expect_identical_fast(D[, 1], D[, 2])
     squared <- distance_l2(TRUE)$eval_batch(X, matrix(0, 2, 2))
     expect_true(all(is.finite(squared)))

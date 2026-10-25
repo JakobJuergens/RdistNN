@@ -113,6 +113,7 @@ fit_sipp_401k_affine_profiles <- function(sipp, config, run_info = list()) {
                                      lambda_grid = config$dnn_lambda_grid)
   estimates <- diagnostics <- list()
   grids <- weights <- signals <- list()
+  localization <- NULL
   for (scale in names(sipp$outcome_cols)) for (mechanism in names(pred$nuisances)) {
     nuisance <- pred$nuisances[[mechanism]]
     signal <- make_sipp_401k_signal(sipp$data, sipp$outcome_cols[[scale]], nuisance, scale)
@@ -121,6 +122,12 @@ fit_sipp_401k_affine_profiles <- function(sipp, config, run_info = list()) {
     fit <- fit_dnn_arm(sipp$data, sipp, sipp$outcome_cols[[scale]], scalar_nuisance,
       tuning_mode = if (mechanism == "fullsample") "grid" else "default",
       k = config$dnn_k, tuning = tuning)
+    geometry <- sipp_401k_saved_geometry(
+      list(localization = list(policy = fit$meta[["tie_rule", exact = TRUE]],
+                               distances = fit[["dx", exact = TRUE]])),
+      as.matrix(sipp$data[, sipp$x_cols, drop = FALSE]), sipp$X0)
+    if (is.null(localization)) localization <- geometry else if (!identical(localization, geometry))
+      stop("Prediction methods must use identical localization geometry.", call. = FALSE)
     method <- paste0("dnn_", mechanism)
     rows <- make_estimate_rows(sipp$profiles, method, fit$tau, fit$se, config$alpha,
       ess = fit$ess, extra = list(s = fit$meta$s, n_local = NA_integer_))
@@ -148,6 +155,6 @@ fit_sipp_401k_affine_profiles <- function(sipp, config, run_info = list()) {
        profile_diagnostics = do.call(rbind, diagnostics), tuning_grids = grids,
        dnn_weights = weights, analysis_data = make_analysis_data_payload(sipp),
        nuisances = pred$nuisances, signals = signals, models = if (config$save_models) pred$models else NULL,
-       profiles = sipp$profiles, specification = sipp$specification,
+       profiles = sipp$profiles, specification = sipp$specification, localization = localization,
        config = config, run_info = run_info, source = source)
 }

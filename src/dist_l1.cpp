@@ -2,12 +2,10 @@
 // [[Rcpp::plugins(cpp17)]]
 // [[Rcpp::depends(Rcpp)]]
 #include <Rcpp.h>
-#include "fast_order.hpp"
 #include "distance_arithmetic.hpp"
 
 #include "parallel_threads.h"
 
-#include <vector>
 #include <cmath>   // std::fabs
 #include <cstddef> // std::size_t
 #include <limits>
@@ -126,43 +124,4 @@ NumericMatrix rustat_dist_l1_scaled_batch(NumericMatrix X, NumericMatrix X0, Num
   NumericMatrix out(n, m);
   dist_l1_batch_impl(REAL(X), n, p, REAL(X0), m, REAL(inv_s), REAL(out));
   return out;
-}
-
-// =====================================================================
-// Order-by helpers: exact distance ties use input-row index.
-// =====================================================================
-static inline IntegerVector order_by_dx(const std::vector<double> &dx) {
-  const int n = static_cast<int>(dx.size());
-  std::vector<int> ord0(n);
-  rustat::argsort_indices(dx.data(), n, ord0.data());
-  IntegerVector ord(n);
-  for (int i = 0; i < n; ++i)
-    ord[i] = ord0[i] + 1; // 1-based for R
-  return ord;
-}
-
-// [[Rcpp::export(rng = false)]]
-Rcpp::List rustat_order_by_l1(NumericMatrix X, NumericVector x0) {
-  const int n = X.nrow(), p = X.ncol();
-  if (x0.size() != p)
-    stop("x0 length must equal ncol(X).");
-
-  std::vector<double> dx(n);
-  dist_l1_core_ptr(REAL(X), n, p, REAL(x0), /*invsp=*/nullptr, dx.data());
-
-  return List::create(_["dx"] = NumericVector(dx.begin(), dx.end()), _["ord"] = order_by_dx(dx));
-}
-
-// [[Rcpp::export(rng = false)]]
-Rcpp::List rustat_order_by_l1_scaled(NumericMatrix X, NumericVector x0, NumericVector inv_s) {
-  const int n = X.nrow(), p = X.ncol();
-  if (x0.size() != p)
-    stop("x0 length must equal ncol(X).");
-  if (inv_s.size() != p)
-    stop("inv_s length must equal ncol(X).");
-
-  std::vector<double> dx(n);
-  dist_l1_core_ptr(REAL(X), n, p, REAL(x0), REAL(inv_s), dx.data());
-
-  return List::create(_["dx"] = NumericVector(dx.begin(), dx.end()), _["ord"] = order_by_dx(dx));
 }

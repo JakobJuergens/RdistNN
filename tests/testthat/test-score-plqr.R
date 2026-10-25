@@ -4,73 +4,29 @@
 # For any subset S, the kernel returns sum_{i in S} psi_i where
 #   psi_i = (tau - 1{Y_i <= D_i' theta + g(U_i)}) * (D_{i,j} - mD_{i,j}).
 # This suite matches the implementation in R/score-plqr.R.
-# It uses plqr_demo_sets() if available, with a fallback mini generator.
 # -------------------------------------------------------------------
 
 testthat::local_edition(3)
 
-# --- helpers ---------------------------------------------------------
-
-# Fallback mini generator in case plqr_demo_sets() is not present.
-.plqr_minigen <- function(n = 120L, p = 2L, p_d = 2L, tau = 0.5, seed = 1L) {
-  .test_rng_scope({
-    X <- matrix(rnorm(n * p), n, p, dimnames = list(NULL, paste0("X", seq_len(p))))
-    colnames(X) <- paste0("X", seq_len(p))
-    # Oracle mD(X): linear in X with different loads per D-column
-    Gamma <- cbind(
-      0.6 * c(1, -1, rep(0, max(0, p - 2))),
-      0.3 * c(1, 1, rep(0, max(0, p - 2)))
-    )
-    Gamma <- Gamma[seq_len(p), seq_len(p_d), drop = FALSE]
-    mD <- X %*% Gamma
-    colnames(mD) <- paste0("mD", seq_len(p_d))
-    # D = mD + noise
-    D <- mD + matrix(rnorm(n * p_d, sd = 0.7), n, p_d)
-    colnames(D) <- paste0("D", seq_len(p_d))
-    # g_0(X)
-    g_oracle <- 0.5 * sin(X[, 1]) + if (p >= 2) 0.25 * X[, 2]^2 else 0
-    # theta and Y
-    theta_true <- rep(0.5, p_d)
-    Y <- as.vector(D %*% theta_true) + g_oracle + rnorm(n, sd = 0.6)
-    df <- data.frame(X, D, Y = Y, g_oracle = g_oracle, check.names = FALSE)
-    # Also include residual rD columns (useful in some checks)
-    for (j in seq_len(p_d)) df[[paste0("rD", j)]] <- df[[paste0("D", j)]] - mD[, j]
-    list(
-      data = df,
-      x0 = rep(0, p),
-      x_cols = paste0("X", seq_len(p)),
-      d_cols = paste0("D", seq_len(p_d)),
-      theta_true = theta_true,
-      tau = tau,
-      cols = list(
-        Y = "Y",
-        g = "g_oracle",
-        mD = paste0("mD", seq_len(p_d)),
-        rD = paste0("rD", seq_len(p_d))
-      ),
-      subs_all = matrix(seq_len(n), ncol = 1L),
-      subs_empty = matrix(integer(0), ncol = 1L),
-      subs_2col = cbind(seq_len(n), rev(seq_len(n)))
-    )
-  }, seed = seed)
-}
-
-# tests/testthat/test-score-plqr.R  (replace the whole helper)
-.get_plqr_fx <- function(...) {
-  if (exists("plqr_demo_sets", mode = "function")) {
-    # plqr_demo_sets(...) typically accepts (n, p, p_d) — do NOT pass tau here.
-    plqr_demo_sets(...)
-  } else {
-    # Fallback mini scenarios (each carries its own $tau)
-    list(
-      ok_linear   = .plqr_minigen(...),
-      ok_sinusoid = .plqr_minigen(...),
-      ok_bump     = .plqr_minigen(...),
-      ok_clean    = .plqr_minigen(...)
-    )
+# Score scenarios belong to this suite and use the public demo generator.
+# Keep only the four designs actually consumed below, with their original seeds.
+.get_plqr_fx <- function(n = 120L, p = 2L, p_d = 2L) {
+  make_case <- function(design, sigma, seed) {
+    demo <- plqr_demo_data(n, p, p_d, tau = 0.5, sigma = sigma,
+                           design = design, seed = seed)
+    list(data = demo$data, x0 = demo$x0,
+      x_cols = paste0("X", seq_len(p)), d_cols = paste0("D", seq_len(p_d)),
+      theta_true = demo$truth$theta_true, tau = 0.5,
+      cols = list(Y = "Y", g = "g_oracle", mD = paste0("mD", seq_len(p_d)),
+                  rD = paste0("rD", seq_len(p_d))),
+      subs_empty = matrix(integer(), ncol = 1L),
+      subs_2col = cbind(seq_len(n), rev(seq_len(n))))
   }
+  list(ok_linear = make_case("linear", 0.5, 1L),
+       ok_sinusoid = make_case("sinusoidal", 0.4, 2L),
+       ok_bump = make_case("bump", 0.6, 3L),
+       ok_clean = make_case("linear", 1e-8, 4L))
 }
-
 
 psi_tau <- function(u, tau) tau - as.numeric(u <= 0)
 
@@ -103,7 +59,7 @@ test_that("[factory] validates tau, theta length, j range, D/mD lengths, and s",
     ignore.case = FALSE
   )
 
-  # s, k must be positive integers
+  # s must be a positive integer
   expect_error(
     score_plqr_component(x0, x_cols, D_cols, g_col, mD_cols, y_col = "Y",
       theta = rep(0, length(D_cols)), j = 1L, tau = tau, s = 0
@@ -111,13 +67,7 @@ test_that("[factory] validates tau, theta length, j range, D/mD lengths, and s",
     "`s` must be a positive integer\\.",
     ignore.case = FALSE
   )
-  # `k` was a compatibility-only argument and has been removed
-  expect_error(
-    score_plqr_component(x0, x_cols, D_cols, g_col, mD_cols, y_col = "Y",
-      theta = rep(0, length(D_cols)), j = 1L, tau = tau, s = 1, k = 1
-    ),
-    "unused argument"
-  )
+
 
   # D_cols non-empty
   expect_error(
@@ -207,7 +157,7 @@ test_that("[eval] multi-column subsets sum g across subset rows", {
   )
   ctx <- score_setup(sc, df)
 
-  subs <- if (!is.null(scn$subs_2col)) scn$subs_2col else cbind(seq_len(nrow(df)), rev(seq_len(nrow(df))))
+  subs <- scn$subs_2col
   vals <- score_eval_batch(sc, subs, df, ctx)
 
   # Direct row sums using the g-definition

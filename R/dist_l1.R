@@ -47,7 +47,7 @@
 #' x0 <- c(0, 1, -1)
 #' dist_l1(X, x0)
 #'
-#' @seealso `dist_l2()`, `dist_l1_scaled()`, [distance_l1()], `order_by_l1()`
+#' @seealso `dist_l2()`, [distance_l1_scaled()], [distance_l1()], [weights_matrix()]
 #' @keywords internal
 #' @noRd
 dist_l1 <- function(X, x0) {
@@ -63,39 +63,6 @@ dist_l1 <- function(X, x0) {
 }
 
 # -----------------------------------------------------------------------------
-#' Order rows by L1 distance to a point (stable ties)
-#'
-#' Returns distances and a stable ordering. A compiled fast path is used when
-#' available; otherwise the R helper applies the same input-index tie order.
-#'
-#' @inheritParams dist_l1
-#' @return A list with:
-#' * `dx`: numeric vector (length \eqn{n})
-#' * `ord`: integer vector of 1-based row indices
-#'
-#' @examples
-#' set.seed(2)
-#' X <- matrix(rnorm(10), 5, 2)
-#' x0 <- c(0, 0)
-#' order_by_l1(X, x0)
-#'
-#' @seealso `order_by_l1_scaled()`, `dist_l1()`
-#' @keywords internal
-#' @noRd
-order_by_l1 <- function(X, x0) {
-  .assert_no_na(X, x0)
-  X <- as.matrix(X)
-  x0 <- .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X", finite = TRUE)
-
-  cpp <- .rdistnn_compiled_fun("rustat_order_by_l1")
-  if (!is.null(cpp)) {
-    return(cpp(X, x0))
-  }
-
-  dx <- dist_l1(X, x0)
-  ord <- .order_with_ties(dx)
-  list(dx = dx, ord = as.integer(ord))
-}
 
 # -----------------------------------------------------------------------------
 #' L1 distance spec (single and batched evaluation)
@@ -120,7 +87,7 @@ order_by_l1 <- function(X, x0) {
 #' dspec$eval(X, X0[1, ])
 #' dspec$eval_batch(X, X0)
 #'
-#' @seealso [distance_l1_scaled()], `dist_l1()`, `dist_l1_scaled()`
+#' @seealso [distance_l1_scaled()], [distance_eval()], [weights_matrix()]
 #' @export
 distance_l1 <- function() {
   list(
@@ -149,37 +116,6 @@ distance_l1 <- function() {
 }
 
 # -----------------------------------------------------------------------------
-#' Scaled L1 distance (per-coordinate scaling)
-#'
-#' Computes \eqn{\|(X_{i,\cdot} - x_0) \odot \mathrm{inv\_s}\|_1} for each row.
-#' A compiled fast path is used when available; otherwise the R fallback
-#' subtracts before scaling and accumulates coordinates in the same order.
-#'
-#' @inheritParams dist_l1
-#' @param inv_s Numeric vector of length \eqn{p} with elementwise scales
-#'   (often the reciprocals of column scale estimates).
-#'
-#' @return Numeric vector of length \eqn{n}.
-#' @examples
-#' set.seed(1)
-#' X <- matrix(rnorm(12), 4, 3)
-#' dist_l1_scaled(X, c(0, 0, 0), inv_s = c(1, 2, 0.5))
-#' @keywords internal
-#' @noRd
-dist_l1_scaled <- function(X, x0, inv_s) {
-  .assert_no_na(X, x0)
-  X <- as.matrix(X)
-  validated <- .validate_x0_inv_s(x0, inv_s, ncol(X), x_arg = "X", strict = TRUE, finite = TRUE)
-  x0 <- validated$x0
-  inv_s <- validated$inv_s
-
-  cpp <- .rdistnn_compiled_fun("rustat_dist_l1_scaled")
-  if (!is.null(cpp)) {
-    return(cpp(X, x0, inv_s))
-  }
-
-  .dist_l1_R(X, x0, inv_s)
-}
 
 # -----------------------------------------------------------------------------
 #' Scaled L1 distance spec (one-time setup + eval/batch)
@@ -276,52 +212,3 @@ distance_l1_scaled <- function(rule = c("sd", "mad", "iqr", "range", "custom"),
 }
 
 # -----------------------------------------------------------------------------
-#' Order rows by scaled L1 (stable ties)
-#'
-#' Computes per-column scales (or uses `scale_vec` for `"custom"`), then
-#' prefers a compiled fast path if available. Otherwise computes distances
-#' via `dist_l1_scaled()` and orders with a deterministic tie rule.
-#'
-#' @param X Numeric matrix \eqn{n \times p}.
-#' @param x0 Numeric vector of length \eqn{p}.
-#' @param rule Scaling rule: `"sd"`, `"mad"`, `"iqr"`, `"range"`, or `"custom"`.
-#' @param scale_vec Optional numeric vector of length \eqn{p} for
-#'   `rule = "custom"`.
-#' @param eps Small positive number to avoid division by zero in scaling.
-#'
-#' @return A list with:
-#' * `dx`: numeric vector (length \eqn{n})
-#' * `ord`: integer vector of 1-based row indices
-#'
-#' @examples
-#' set.seed(6)
-#' X <- matrix(rnorm(10), 5, 2)
-#' x0 <- c(0, 0)
-#' order_by_l1_scaled(X, x0, rule = "sd")
-#'
-#' @seealso `order_by_l1()`, `dist_l1_scaled()`
-#' @keywords internal
-#' @noRd
-order_by_l1_scaled <- function(X, x0,
-                               rule = c("sd", "mad", "iqr", "range", "custom"),
-                               scale_vec = NULL, eps = 1e-12) {
-  .assert_no_na(X, x0)
-  X <- as.matrix(X)
-  x0 <- .validate_target_vector(x0, ncol(X), x0_arg = "x0", x_arg = "X", finite = TRUE)
-  rule <- .dnn_match_arg(rule)
-
-  inv_s <- if (rule == "custom") {
-    .coerce_inv_s(scale_vec, ncol(X), eps)
-  } else {
-    .compute_inv_scale(X, rule, scale_vec, eps)
-  }
-
-  cpp <- .rdistnn_compiled_fun("rustat_order_by_l1_scaled")
-  if (!is.null(cpp)) {
-    return(cpp(X, x0, as.numeric(inv_s)))
-  }
-
-  dx <- dist_l1_scaled(X, x0, inv_s)
-  ord <- .order_with_ties(dx)
-  list(dx = dx, ord = as.integer(ord))
-}

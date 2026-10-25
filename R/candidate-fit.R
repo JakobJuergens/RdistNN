@@ -646,8 +646,8 @@
 #' Candidate uncertainty redistributes each deleted member's block mass over
 #' the survivors using the `n-1` rank table. Calls with ties warn once: the
 #' accompanying theory assumes a continuous distance distribution and does not
-#' establish inference under persistent ties. Earlier retained fit schemas
-#' require refitting before candidate extraction.
+#' establish inference under persistent ties. During experimental development,
+#' refit saved models after package updates.
 #'
 #' Candidate IDs identify grid rows, not unique values of `s`. Repeated resolved
 #' orders remain separate candidates, and plots distinguish their IDs in labels.

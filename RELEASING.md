@@ -72,12 +72,12 @@ excluded from the source package.
 ## Candidate identity and scientific reproduction
 
 The current version-pinned R release is
-[`v0.1.4`](https://github.com/JakobJuergens/RdistNN/releases/tag/v0.1.4).
+[`v0.1.5`](https://github.com/JakobJuergens/RdistNN/releases/tag/v0.1.5).
 The tag selects the verified production snapshot; its installable source
 package and checksum file are attached to the release. Install with:
 
 ```r
-pak::pak("JakobJuergens/RdistNN@v0.1.4")
+pak::pak("JakobJuergens/RdistNN@v0.1.5")
 ```
 
 The tag fixes the installation source at the released commit. Keep the ordinary

@@ -15,7 +15,7 @@
 #' deletion averages the surviving blocks with the sample-size-n-1 rule.
 #' A warning is emitted once per public call with distance ties: the accompanying
 #' theory assumes a continuous distance distribution and does not establish
-#' inference under persistent ties. Earlier retained fit schemas require refitting.
+#' inference under persistent ties. Refit saved models after package updates during experimental development.
 #'
 #' Two interfaces are supported.
 #'
@@ -52,9 +52,8 @@
 #' nuisance accuracy and deletion stability, see the accompanying
 #' [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
 #' This function accepts supplied oracle, out-of-fold or full-sample predictions;
-#' it does not verify those conditions for a learner. The normalized Robinson
-#' construction is not implemented; use AIPW inputs or a justified supplied signal.
-#' A pooled outcome mean cannot replace the two arm-specific means.
+#' it does not verify those conditions for a learner. AIPW requires both
+#' arm-specific outcome means; a supplied signal is used unchanged.
 #'
 #' With `data`, omit `X`; a direct `pseudo_outcome` vector remains supported.
 #' Column selectors require `data`. Prediction retains the fitted metric and

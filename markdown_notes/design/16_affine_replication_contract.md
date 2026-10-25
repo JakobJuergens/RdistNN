@@ -50,7 +50,19 @@ full-rank deletion engine. Its four profiles contain 2,516,400 main/control
 rows, including 480,000 DNN rows copied across profiles; 10,000 independent
 draw families are shared across them.
 
-The accepted SIPP fit instead records installed RdistNN 0.1.0 files, including
+The current raw-dollar SIPP packet `rdistnn-0.1.4-20261024` records released
+RdistNN 0.1.4, source `4acade538f7ac8a88fe7f837b1673ebc17daa17a`, and its
+installed-file identity. Its accepted fingerprint is
+`5f7203f70e52646d134089a09564a91a2aea45391df8bf1ef2dc8b93bfc836a2`.
+Acceptance and localization-derivation receipts verify exact represented
+distance averaging and its recomputation after each deletion, including zero
+rank weights in a tied block. A stale preparatory tie label remains part of the
+accepted fingerprint and is explained separately; future preparation declares
+the actual policy. Current fits require explicit aligned retained distances
+and policy, and incomplete state requires refitting. Persistent ties and the
+practical forest application remain outside the bounded-series primitive theorem.
+
+Historical SIPP evidence instead records installed RdistNN 0.1.0 files, including
 native-library SHA-256
 `ed485a99bef23ebcaaed1ac1211a9b7a33f79fe3088a682074a4b7558fd724e3`
 and R lazy-load database hashes in `fit_manifest.json`. Its clean sibling
@@ -74,15 +86,27 @@ sharing restrictions.
 Use `inst/paper-replication/affine/manifest.json` for the exact pinned paper
 commit, source identities, accepted evidence and reference-display hashes.
 Run `Rscript inst/paper-replication/affine/verify.R` to verify that snapshot.
-For an editorial-only installed README change, update only its entry in the
-manifest `files` map and verify that every scientific/configuration/evidence
-identity is unchanged. The sync tool also hashes that package-owned README.
+Update package-owned README and launchers before synchronization; regenerate
+the manifest through the sync tool if any hashed file changes afterward.
+The vendored paper commit, manuscript-content snapshot, accepted historical
+executable and executing validation package have separate identities.
 
 Refresh scientific snapshots from the package checkout with:
 
 ```sh
 python3 tools/replication/sync_affine.py --paper PAPER_CHECKOUT --campaign ACCEPTED_CAMPAIGN_ROOT
 ```
+
+The synchronizer selects the active SIPP packet from the parent of
+`application.run_receipt` in committed paper status. Before replacing source or
+configurations, it checks every receipt-bound dependency (including PDFs),
+nested dependencies, run/fingerprint/policy consistency and committed input
+bytes. Packet and nested-fit run IDs have distinct meanings. Simulation roots
+and the historical transformed-outcome inputs remain included. A missing or
+inconsistent active dependency leaves the existing bundle intact. The
+synchronizer needs only the four accepted configuration files, not a simulation
+run cache; byte-for-byte copies verified against the accepted proposal can
+supply an external campaign layout.
 
 The sync adapter replaces the unused older CATE bootstrap with an explicit-path
 shim; all nine frozen scientific files retain their accepted hashes. Rendering

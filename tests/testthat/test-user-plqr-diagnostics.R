@@ -234,3 +234,94 @@ test_that("diagnostic support includes every represented positive localization w
   expect_identical(dd$density_median_weighted,
     RdistNN:::.dnn_weighted_quantile(density, fits$plqr$W[, 1L], .5))
 })
+
+test_that("PLQR diagnostics preserve a large finite scalar Gram", {
+  fit_at_scale <- function(scale) plqr_dnn(
+    X = matrix(seq_len(8L)), x0 = 0, D = matrix(scale, 8L, 1L),
+    mD = matrix(0, 8L, 1L), Y = rep(c(-1, 1), 4L), g = rep(0, 8L),
+    theta_eval = 0, density = rep(.5, 8L), s = 3L, se = TRUE, return = "W"
+  )
+  ordinary <- fit_at_scale(1)
+  large <- fit_at_scale(1e154)
+  expect_true(all(is.finite(vcov(large))) && all(vcov(large) > 0))
+  expect_equal(unname(vcov(large)) * 1e308, unname(vcov(ordinary)), tolerance = 1e-12)
+  ordinary_diagnostics <- diagnostics(ordinary)
+  expect_no_warning(large_diagnostics <- diagnostics(large))
+  expect_true(all(is.finite(large_diagnostics$gram_min_eig)))
+  expect_true(all(is.finite(large_diagnostics$gram_max_eig)))
+  expect_equal(large_diagnostics$gram_min_eig / 1e308,
+    ordinary_diagnostics$gram_min_eig, tolerance = 1e-14)
+  expect_equal(large_diagnostics$gram_max_eig / 1e308,
+    ordinary_diagnostics$gram_max_eig, tolerance = 1e-14)
+  for (field in c("gram_condition_number", "jacobian_condition_number", "jacobian_rank")) {
+    expect_identical(large_diagnostics[[field]], ordinary_diagnostics[[field]])
+  }
+  restored <- unserialize(serialize(large, NULL))
+  expect_identical(diagnostics(restored)$gram_min_eig, large_diagnostics$gram_min_eig)
+})
+
+test_that("PLQR diagnostics mark an out-of-range Gram unavailable", {
+  fit_at_scale <- function(regressor, density) plqr_dnn(
+    X = matrix(seq_len(8L)), x0 = 0, D = matrix(regressor, 8L, 1L),
+    mD = matrix(0, 8L, 1L), Y = rep(c(-1, 1), 4L), g = rep(0, 8L),
+    theta_eval = 0, density = rep(density, 8L), s = 3L, se = TRUE, return = "W"
+  )
+  ordinary <- fit_at_scale(1, 1)
+  large <- fit_at_scale(2e154, 1e-100)
+  expect_true(all(is.finite(vcov(large))) && all(vcov(large) > 0))
+  expect_equal(unname(vcov(large)) * 4e108, unname(vcov(ordinary)), tolerance = 1e-12)
+  expect_no_warning(d <- diagnostics(large))
+  expect_identical(d$gram_available, FALSE)
+  for (field in c("gram_min_eig", "gram_max_eig", "gram_condition_number")) {
+    expect_true(all(is.na(d[[field]])))
+  }
+  expect_identical(d$jacobian_available, TRUE)
+  expect_identical(d$jacobian_rank, 1L)
+  expect_identical(d$jacobian_condition_number, 1)
+  expect_equal(d$jacobian_min_singular_value / 4e208, 1, tolerance = 1e-14)
+  expect_identical(d$theta_vcov_available, TRUE)
+  restored <- unserialize(serialize(large, NULL))
+  expect_identical(diagnostics(restored)$gram_available, FALSE)
+  expect_identical(diagnostics(restored)$jacobian_available, TRUE)
+})
+
+test_that("public PLQR inference retains a finite dense norm-overflow bread", {
+  .with_localization_policy_warnings({
+    a <- 1e154 * sqrt(1.8)
+    b <- 1e154 * sqrt(.2)
+    D <- rbind(c(a, a), c(-a, -a), c(b, -b), c(-b, b))
+    fit <- plqr_dnn(X = matrix(1:4), x0 = 0, D = D, mD = D * 0,
+      Y = c(-1, 1, -1, 1), g = rep(0, 4L), theta_eval = c(0, 0),
+      density = rep(1, 4L), s = 1L, return = "W")
+    expected <- matrix(c(25, -20, -20, 25), 2L) / 144
+    expect_true(all(is.finite(fit$jacobian[[1L]])))
+    expect_true(all(is.finite(vcov(fit))))
+    expect_equal(unname(vcov(fit)) / 1e-308, expected, tolerance = 1e-12)
+    d <- diagnostics(fit)
+    expect_identical(d$gram_available, FALSE)
+    expect_true(is.na(d$gram_condition_number))
+    expect_identical(d$jacobian_available, TRUE)
+    expect_identical(d$jacobian_rank, 2L)
+    expect_equal(d$jacobian_condition_number, 9, tolerance = 1e-13)
+    expect_equal(d$jacobian_min_singular_value / 2e307, 1, tolerance = 1e-13)
+    expect_identical(d$theta_vcov_available, TRUE)
+    restored <- unserialize(serialize(fit, NULL))
+    expect_identical(vcov(restored), vcov(fit))
+    expect_identical(diagnostics(restored)$jacobian_rank, 2L)
+    expect_s3_class(summary(restored), "rdistnn_summary_plqr_result")
+    prediction <- predict(restored, x0 = 0, se.fit = TRUE)
+    expect_equal(unname(prediction$se.fit), unname(fit$theta_se), tolerance = 1e-13)
+  })
+})
+
+test_that("PLQR Jacobian diagnostics preserve conditioning beyond singular-value range", {
+  J <- 1.5e308 * matrix(c(1, 1, 1, -1), 2L)
+  object <- list(jacobian = list(J), theta_vcov = list(diag(1e-309, 2L)),
+    .model = list(density = rep(1, 2L)))
+  d <- RdistNN:::.plqr_jacobian_diagnostics(object, matrix(.5, 2L, 1L))
+  expect_identical(d$jacobian_available, TRUE)
+  expect_identical(d$jacobian_rank, 2L)
+  expect_equal(d$jacobian_condition_number, 1, tolerance = 1e-14)
+  expect_true(is.na(d$jacobian_min_singular_value))
+  expect_identical(d$theta_vcov_available, TRUE)
+})

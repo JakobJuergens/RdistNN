@@ -5,10 +5,6 @@
 \alias{rustat_jackknife_fast_rank}
 \alias{rustat_dist_l1}
 \alias{rustat_dist_l2}
-\alias{rustat_fast_order}
-\alias{rustat_sort_indices}
-\alias{rustat_dist_l1_order}
-\alias{rustat_dist_l2_order}
 \title{Internal: compiled fast paths (not user API)}
 \description{
 These symbols are called by high-level R wrappers and are not part of the

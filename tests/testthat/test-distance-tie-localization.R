@@ -41,7 +41,9 @@ test_that("prepared group facts are reused without reconstructing geometry", {
   }, .package = "RdistNN")
   operation <- function() {
     RdistNN:::.dnn_distance_scope()
-    groups <- RdistNN:::.dnn_distance_groups(matrix(c(1, 1, 2, 3, 4, 5), 3, 2))
+    prepared <- RdistNN:::.dnn_prepare_distance_groups(matrix(c(1, 1, 2, 3, 4, 5), 3, 2))
+    groups <- prepared$groups
+    RdistNN:::.dnn_remember_group_facts(groups, prepared$tied_targets)
     local_mocked_bindings(.dnn_compute_group_facts = function(...) stop("group rehash"), .package = "RdistNN")
     expect_identical(RdistNN:::.dnn_group_facts(groups)$tied_targets, c(TRUE, FALSE))
     expect_true(RdistNN:::.dnn_has_ties(groups))
@@ -56,8 +58,7 @@ test_that("prepared group facts are reused without reconstructing geometry", {
 test_that("saved fit validation reuses groups and rejects mutations before notice reuse", {
   d <- .distance_fixture()
   fit <- .with_localization_policy_warnings(np_dnn(X = d$X, X0 = d$X0, Y = d$y, s = 3L))
-  local_mocked_bindings(.dnn_distance_groups = function(...) stop("group rebuild"),
-    .dnn_prepare_distance_groups = function(...) stop("group preparation"), .package = "RdistNN")
+  local_mocked_bindings(.dnn_prepare_distance_groups = function(...) stop("group preparation"), .package = "RdistNN")
   operation <- function() {
     RdistNN:::.dnn_reuse_scope(fit)
     RdistNN:::.dnn_check_report_state(fit)
@@ -72,10 +73,14 @@ test_that("saved fit validation reuses groups and rejects mutations before notic
 test_that("fresh geometry can become tied within an initially untied operation", {
   operation <- function() {
     RdistNN:::.dnn_distance_scope()
-    first <- RdistNN:::.dnn_distance_groups(matrix(1:4))
+    prepared <- RdistNN:::.dnn_prepare_distance_groups(matrix(1:4))
+    first <- prepared$groups
+    RdistNN:::.dnn_remember_group_facts(first, prepared$tied_targets)
     expect_false(RdistNN:::.dnn_has_ties(first))
     RdistNN:::.dnn_distance_scope(first)
-    second <- RdistNN:::.dnn_distance_groups(matrix(c(1, 1, 3)))
+    prepared <- RdistNN:::.dnn_prepare_distance_groups(matrix(c(1, 1, 3)))
+    second <- prepared$groups
+    RdistNN:::.dnn_remember_group_facts(second, prepared$tied_targets)
     expect_true(RdistNN:::.dnn_has_ties(second))
     RdistNN:::.dnn_distance_scope(second)
   }
@@ -210,9 +215,9 @@ test_that("target distance groups survive serialization, reflection and candidat
   }
   expect_equal(suppressWarnings(predict(f, X0 = d$X0, se.fit = TRUE))$fit,
     f$mu, tolerance = 1e-13)
-  legacy <- f
-  legacy$.model$tie_policy <- "distance_then_covariates_with_duplicate_block_averaging"
-  expect_error(predict(legacy, X0 = d$X0), "Refit|refit")
+  invalid_policy <- f
+  invalid_policy$.model$tie_policy <- "distance_then_covariates_with_duplicate_block_averaging"
+  expect_error(predict(invalid_policy, X0 = d$X0), "Refit|refit")
 })
 
 test_that("public warning reports actual distance ties once even discovered after an untied batch", {

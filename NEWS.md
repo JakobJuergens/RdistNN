@@ -1,3 +1,34 @@
+# RdistNN 0.1.5 (2026-10-25)
+
+- Refresh affine replication with the accepted October 24 SIPP evidence and
+  current paper-owned helpers. The installed fit, independent diagnostics,
+  export and localization workflow retains exact-distance averaging geometry
+  and recomputes averaging after deletion. Preserve frozen simulation evidence.
+- Validate the metadata-selected evidence packet and all committed source,
+  historical evidence and table dependencies before replacing the bundle.
+- Reject inconsistent paired-result components, covariance, concentration and
+  denominator flags with refit guidance, preserving valid partial numerical
+  results and current serialized reuse.
+- Return unresolved experimental ratio confidence sets when cancellation or
+  critical-square underflow prevents reliable classification. Preserve direct
+  deterministic-denominator intervals when their endpoints are representable.
+- Make long native exact-rank table construction interruptible on the calling
+  R thread while preserving numerical tables and the public interface.
+- Correct experimental GMM covariance condition diagnostics at small and large
+  scales. Preserve finite PLQR Gram diagnostics and mark out-of-range values
+  unavailable while retaining valid Jacobian and coefficient covariance results.
+- Normalize exceptional finite PLQR/GMM systems before condition checks and
+  inversion. Preserve large finite Jacobian rank/condition diagnostics, ordinary
+  arithmetic, singularity cutoffs and unexpected solver failures.
+- Require the minimal-dependency gate to execute installed assertions, rejecting
+  empty or entirely skipped selections while allowing optional feature skips.
+- Share demo-subset sampling across NP, CATE and PLQR without changing draws or
+  caller RNG state. Remove unused private adapters and native sorting exports;
+  retain public localization, rank-weight and numerical kernels.
+- Organize tests around current behavior and independent numerical references,
+  and simplify user guidance while retaining scientific limits and refit policy.
+  Ratio confidence-set inversion, PLQR and local IV-GMM remain experimental.
+
 # RdistNN 0.1.4 (2026-10-23)
 
 - Validate complete current fitted state before reporting, serialization reuse,

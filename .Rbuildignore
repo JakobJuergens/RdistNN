@@ -32,7 +32,6 @@
 ^tests/ci$
 ^tests/README\.md$
 ^bench$
-^tools/bench$
 ^Jackknife-GenUStat_JJuergens\.pdf$
 ^Local_Z_Est_JJuergens\.pdf$
 ^src/.*\.(o|so|dll|dylib)$
@@ -44,7 +43,6 @@
 ^\.superpowers$
 (^|/)__pycache__($|/)
 \.py[co]$
-^\.claude$
 ^\.clang-tidy$
 ^\.ruff\.toml$
 ^\.ruff_cache$

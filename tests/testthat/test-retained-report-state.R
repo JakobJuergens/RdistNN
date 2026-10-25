@@ -1,3 +1,7 @@
+# Complete current scientific/reporting state through public reuse consumers.
+# Valid serialized/candidate controls accompany deliberate state corruption;
+# legitimate optional records remain usable. Candidate-specific validation and
+# optional retained fields have separate suites in the test map.
 .retained_report_fits <- function(se = TRUE, method = "exact") {
   X <- matrix(seq_len(8L), ncol = 1L)
   X0 <- matrix(c(0, 9, 0), ncol = 1L)
@@ -615,6 +619,71 @@ test_that("paired uncertainty arrays agree with the retained covariance mode", {
   expect_identical(unavailable$meta$covariance, "paired_frozen_score")
   expect_s3_class(summary(unavailable), "rdistnn_summary_affine_ratio_result")
   expect_true(all(is.na(confint(unavailable))))
+  })
+})
+
+test_that("paired reports reject incomplete or inconsistent retained numerical facts", {
+  changes <- list(
+    neff_missing = function(x) { x$neff <- NULL; x },
+    neff_alias = function(x) { names(x)[names(x) == "neff"] <- "neff_old"; x },
+    neff_short = function(x) { x$neff <- x$neff[1L]; x },
+    neff_zero = function(x) { x$neff[1L] <- 0; x },
+    neff_negative = function(x) { x$neff[1L] <- -1; x },
+    neff_nonfinite = function(x) { x$neff[1L] <- Inf; x },
+    component_missing = function(x) { x$components[1L, 1L] <- NA_real_; x },
+    denominator_zero = function(x) { x$components[1L, 2L] <- 0; x },
+    denominator_sign = function(x) { x$status$negative_denominator[1L] <- TRUE; x },
+    denominator_flag_missing = function(x) { x$status$near_zero_denominator <- NULL; x },
+    denominator_flag_type = function(x) { x$status$near_zero_denominator <- rep(0, nrow(x$status)); x },
+    component_asymmetric = function(x) { x$component_vcov[[1L]][1L, 2L] <- 1; x },
+    component_partial = function(x) { x$component_vcov[[1L]][1L, 1L] <- NA_real_; x },
+    component_unavailable = function(x) { x$component_vcov[[1L]][, ] <- NA_real_; x },
+    variance_mismatch = function(x) { x$theta_vcov[[1L]][1L, 1L] <- 1; x },
+    omega_mismatch = function(x) { x$theta_omega[[1L]][1L, 1L] <- 1; x })
+  routes <- list(summary, function(x) candidate_fit(x, 1L),
+    function(x) predict(x, x0 = .25, se.fit = TRUE))
+  for (fit in .retained_report_fits()[c("ratio", "clate")]) {
+    for (change in changes) for (consume in routes) {
+      error <- tryCatch(consume(change(fit)), error = identity)
+      expect_s3_class(error, "rdistnn_state_error")
+      if (inherits(error, "condition")) {
+        expect_identical(error$code, "state_invalid")
+        expect_match(conditionMessage(error), "[Rr]efit")
+      }
+    }
+  }
+})
+
+test_that("paired numerical failures and undefined ratios retain valid reporting state", {
+  .with_partial_result_warning({
+  base <- list(X = matrix(1:4), x0 = 0, numerator = c(2, 1, 4, 3),
+    denominator = c(1, -1, 2, 1), s = 2L)
+  fits <- list(
+    do.call(affine_ratio_dnn, base),
+    do.call(affine_ratio_dnn, c(base, list(se = FALSE))),
+    affine_ratio_dnn(X = matrix(1:4), x0 = 0,
+      numerator = rep(2, 4), denominator = rep(1, 4), s = 2L),
+    affine_ratio_dnn(X = matrix(1:4), x0 = 0,
+      numerator = c(1, 2, 3, 4), denominator = rep(0, 4), s = 2L),
+    affine_ratio_dnn(X = matrix(1:4), x0 = 0,
+      numerator = c(1, 2, 3, 4) * 1e-200, denominator = rep(1, 4), s = 2L),
+    affine_ratio_dnn(X = matrix(1:4), x0 = 0,
+      numerator = c(1, 2, 3, 4), denominator = rep(1e-200, 4), s = 2L),
+    affine_ratio_dnn(X = matrix(1:4), x0 = 0,
+      numerator = rep(1e308, 4), denominator = rep(1e-308, 4), s = 2L))
+  expect_identical(fits[[3L]]$status$covariance_status, "zero_score_variance")
+  expect_identical(fits[[4L]]$status$ratio_status, "zero_denominator")
+  expect_identical(fits[[5L]]$status$covariance_status, "numerical_failure")
+  expect_true(all(is.na(fits[[5L]]$component_vcov[[1L]])))
+  expect_identical(fits[[6L]]$status$covariance_status, "numerical_failure")
+  expect_true(all(is.finite(fits[[6L]]$component_vcov[[1L]])))
+  expect_identical(fits[[7L]]$status$ratio_status, "ratio_overflow")
+  for (fit in fits) {
+    restored <- unserialize(serialize(fit, NULL))
+    expect_s3_class(summary(restored), "rdistnn_summary_affine_ratio_result")
+    expect_equal(coef(restored), coef(fit))
+    expect_equal(predict(restored, X0 = fit$x0), unname(coef(fit)))
+  }
   })
 })
 

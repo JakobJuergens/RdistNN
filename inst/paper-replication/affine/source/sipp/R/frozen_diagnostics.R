@@ -69,21 +69,60 @@ sipp_401k_rank_weights <- function(n, s) {
   w
 }
 
-sipp_401k_frozen_rank <- function(phi, s) {
+sipp_401k_frozen_rank <- function(phi, s, distance = NULL) {
   phi <- as.matrix(phi); n <- nrow(phi)
   if (n < 2L || s >= n || any(!is.finite(phi)))
     stop("Frozen deletion requires finite signals and order smaller than sample size.", call. = FALSE)
   w <- sipp_401k_rank_weights(n, s); wm <- sipp_401k_rank_weights(n - 1L, s)
   tau <- colSums(w * phi); loo <- matrix(0, n, ncol(phi))
-  for (k in seq_len(ncol(phi))) {
-    before <- c(wm * phi[seq_len(n - 1L), k], 0)
-    after <- c(0, wm * phi[2:n, k])
-    loo[, k] <- c(0, cumsum(before))[seq_len(n)] + c(rev(cumsum(rev(after)))[-1L], 0)
+  if (!is.null(distance) && (length(distance) != n || any(!is.finite(distance)) ||
+      any(distance < 0) || any(diff(distance) < 0)))
+    stop("Distances must be finite, nonnegative and sorted with the signals.", call. = FALSE)
+  if (!is.null(distance) && anyDuplicated(distance)) {
+    group <- cumsum(c(TRUE, diff(distance) != 0))
+    size <- tabulate(group); last <- cumsum(size); first <- last - size + 1L
+    average <- function(x) as.numeric(rowsum(matrix(x, ncol = 1L), group,
+                                             reorder = FALSE)) / size
+    w <- average(w)[group]
+    tau <- colSums(w * phi)
+    before_weight <- average(c(wm, 0))
+    after_weight <- average(c(0, wm))
+    own_weight <- vapply(seq_along(size), function(g)
+      if (size[g] > 1L) mean(wm[seq.int(first[g], last[g] - 1L)]) else 0, numeric(1))
+    totals <- rowsum(phi, group, reorder = FALSE)
+    for (k in seq_len(ncol(phi))) {
+      before <- c(0, cumsum(before_weight * totals[, k]))[seq_along(size)]
+      after <- c(rev(cumsum(rev(after_weight * totals[, k])))[-1L], 0)
+      loo[, k] <- before[group] + after[group] +
+        own_weight[group] * (totals[group, k] - phi[, k])
+    }
+  } else for (k in seq_len(ncol(phi))) {
+      before <- c(wm * phi[seq_len(n - 1L), k], 0)
+      after <- c(0, wm * phi[2:n, k])
+      loo[, k] <- c(0, cumsum(before))[seq_len(n)] + c(rev(cumsum(rev(after)))[-1L], 0)
   }
   pv <- sweep(-(n - 1L) * loo, 2L, n * tau, "+")
   centered <- sweep(pv, 2L, colMeans(pv), "-")
   list(tau = tau, weights = w, loo = loo, pseudo_values = pv, centered = centered,
        covariance = crossprod(centered) / (n * (n - 1L)))
+}
+
+sipp_401k_saved_geometry <- function(fit, X, X0) {
+  geometry <- fit[["localization", exact = TRUE]]
+  if (!is.list(geometry) || !all(c("policy", "distances") %in% names(geometry)) ||
+      !identical(geometry$policy, "exact_distance_block_averaging_v1") ||
+      !is.matrix(geometry$distances) ||
+      !identical(dim(geometry$distances), c(nrow(X), nrow(X0))) ||
+      any(!is.finite(geometry$distances)) || any(geometry$distances < 0))
+    stop("Saved localization policy or distances are incomplete or incompatible; refit with current helpers.",
+         call. = FALSE)
+  for (j in seq_len(nrow(X0))) {
+    expected <- sqrt(rowSums(sweep(X, 2L, X0[j, ], "-")^2))
+    if (any(abs(geometry$distances[, j] - expected) > 1e-12 * pmax(1, expected)))
+      stop("Saved distances disagree with the declared reporting geometry; refit with current helpers.",
+           call. = FALSE)
+  }
+  geometry
 }
 
 analyze_sipp_401k_frozen <- function(fit) {
@@ -99,6 +138,7 @@ analyze_sipp_401k_frozen <- function(fit) {
   if (is.null(cols)) cols <- c("age_z", "asinh_inc_z")
   X <- as.matrix(d[, cols, drop = FALSE]); X0 <- as.matrix(profiles[, cols, drop = FALSE])
   if (any(!is.finite(c(X, X0)))) stop("Reporting geometry must be finite.", call. = FALSE)
+  geometry <- sipp_401k_saved_geometry(fit, X, X0)
   has_components <- identical(fit$schema_version, 2L)
   info <- routes <- paired <- tuning <- ccov <- cmeans <- list()
   ratio <- function(a, b) if (b > 0) a / b else NA_real_
@@ -107,8 +147,9 @@ analyze_sipp_401k_frozen <- function(fit) {
     payload <- fit$dnn_weights[[scale]]
     mechanisms <- names(payload)[!startsWith(names(payload), "pseudo_outcome_")]
     for (j in seq_len(nrow(profiles))) {
-      distance <- sqrt(rowSums(sweep(X, 2L, X0[j, ], "-")^2))
+      distance <- geometry$distances[, j]
       ord <- order(distance, seq_len(n)); centered <- list()
+      tied_distance <- distance[ord]
       for (mechanism in mechanisms) {
         method <- paste0("dnn_", mechanism)
         w <- payload[[mechanism]]; phi <- payload[[paste0("pseudo_outcome_", mechanism)]]
@@ -118,7 +159,7 @@ analyze_sipp_401k_frozen <- function(fit) {
         row <- fit$estimates[fit$estimates$outcome_scale == scale &
           fit$estimates$profile_id == profiles$profile_id[j] & fit$estimates$method == method, ]
         if (nrow(row) != 1L) stop("Missing or duplicate estimate row.", call. = FALSE)
-        z <- sipp_401k_frozen_rank(phi[ord], row$s)
+        z <- sipp_401k_frozen_rank(phi[ord], row$s, tied_distance)
         if (max(abs(z$weights - w[ord, j])) > 1e-12 ||
             abs(z$tau - row$tau) > 1e-7 ||
             abs(sqrt(z$covariance[1, 1]) - row$se) > 1e-5)
@@ -171,7 +212,7 @@ analyze_sipp_401k_frozen <- function(fit) {
               !all(fields %in% names(signal)) ||
               max(abs(rowSums(signal[, fields]) - phi)) > 1e-8 * max(1, abs(phi)))
             stop("Saved signal components or row IDs are inconsistent.", call. = FALSE)
-          cz <- sipp_401k_frozen_rank(as.matrix(signal[ord, fields]), row$s)
+          cz <- sipp_401k_frozen_rank(as.matrix(signal[ord, fields]), row$s, tied_distance)
           if (abs(sum(cz$covariance) - z$covariance[1,1]) > 1e-6 * max(1, z$covariance[1,1]))
             stop("Component covariance does not reconstruct total variance.", call. = FALSE)
           cmeans[[length(cmeans) + 1L]] <- data.frame(outcome_scale = scale,
@@ -185,7 +226,7 @@ analyze_sipp_401k_frozen <- function(fit) {
           stop("Saved estimate uses a different default grid order.", call. = FALSE)
         orders <- unique(grid$candidates$s)
         for (s in orders[is.finite(orders)]) {
-          tz <- sipp_401k_frozen_rank(phi[ord], s)
+          tz <- sipp_401k_frozen_rank(phi[ord], s, tied_distance)
           th <- tz$centered[,1]^2 / sum(tz$centered[,1]^2)
           tuning[[length(tuning) + 1L]] <- data.frame(outcome_scale = scale,
             profile_id = profiles$profile_id[j], method = method, s = s, tau = tz$tau,

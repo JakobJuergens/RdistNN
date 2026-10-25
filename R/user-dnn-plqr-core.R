@@ -54,8 +54,16 @@
 }
 
 .plqr_safe_solve <- function(A) {
-  if (any(!is.finite(A)) || rcond(A) < .Machine$double.eps) return(NULL)
-  solve(A)
+  if (any(!is.finite(A))) return(NULL)
+  power <- 0
+  if (!is.finite(norm(A, type = "1"))) {
+    # Finite entries can have an overflowing norm inside LAPACK's condition
+    # estimate. Binary normalization leaves the ordinary solver route intact.
+    power <- .numeric_binary_parts(max(abs(A)))$power
+    A <- A / 2^power
+  }
+  if (rcond(A) < .Machine$double.eps) return(NULL)
+  if (power == 0) solve(A) else solve(A) / 2^power
 }
 
 .plqr_check_report_model <- function(object, n, m, invalid, require_fields,

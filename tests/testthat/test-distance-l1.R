@@ -10,6 +10,5 @@ test_that("L1 matches basic expectations", {
 run_distance_battery(
   metric_name = "l1",
   mk_spec = distance_l1,
-  orderer = order_by_l1,
   args = list(),
 )

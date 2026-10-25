@@ -119,7 +119,7 @@ test_that("one-observation point estimates and same-order boundary deletions wor
 
 
 test_that("relative denominator status matches the common extreme-signal fixture", {
-  # Shared with the Stata premerge suite: exact s=n selects only the first row,
+  # Shared with Stata test-clate-edge-contracts.do: exact s=n selects only the first row,
   # while every original denominator signal, including inactive row 6, sets scale.
   X <- matrix(1:6, ncol = 1L)
   denominator <- c(rep(1, 5L), -8e307 - 8e307)

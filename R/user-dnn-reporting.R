@@ -369,8 +369,10 @@
     if (!identical(object$row_ids, model$row_ids)) {
       invalid(".model$row_ids/row_ids", "must retain the same observation identities in training-row order")
     }
-    require_fields(c("components", "status", "component_vcov", "theta_vcov", "theta_omega"))
+    require_fields(c("components", "status", "component_vcov", "theta_vcov", "theta_omega", "neff"))
     check_array(object$components, "components", c(m, 2L), allow_na = TRUE)
+    check_array(object[["neff", exact = TRUE]], "neff", m)
+    if (any(object$neff <= 0)) invalid("neff", "must retain positive weight concentration values")
     covariance <- object$meta[["covariance", exact = TRUE]]
     if (!is.character(covariance) || length(covariance) != 1L || is.na(covariance) ||
         !covariance %in% c("none", "paired_frozen_score")) {
@@ -395,6 +397,55 @@
     }
     .affine_validate_retained_status(status, object$theta, object$se,
       covariance == "paired_frozen_score", invalid)
+    require_fields(c("negative_denominator", "near_zero_denominator"), status, "status$")
+    for (field in c("negative_denominator", "near_zero_denominator")) {
+      value <- status[[field, exact = TRUE]]
+      if (!is.logical(value) || !is.null(dim(value)) || length(value) != m || anyNA(value)) {
+        invalid(paste0("status$", field), "must retain aligned non-missing logical flags")
+      }
+    }
+    unavailable_components <- rowSums(is.na(object$components)) > 0L
+    if (any(unavailable_components != (status$ratio_status == "component_overflow"))) {
+      invalid("components/status$ratio_status", "contains inconsistent component availability")
+    }
+    denominator <- object$components[, 2L]
+    if (any((status$ratio_status == "zero_denominator") !=
+            (!unavailable_components & is.finite(denominator) & denominator == 0)) ||
+        any(status$negative_denominator != (is.finite(denominator) & denominator < 0))) {
+      invalid("components/status", "contains inconsistent denominator status flags")
+    }
+    if (covariance == "paired_frozen_score") {
+      # These are redundant retained facts, not a new covariance calculation.
+      # Allow a few rounding units for serialized fits reused on another host.
+      same_scalar <- function(value, expected) {
+        is.finite(value) && is.finite(expected) &&
+          abs(value - expected) <= 8 * .Machine$double.eps *
+            max(abs(value), abs(expected), .Machine$double.xmin)
+      }
+      for (j in seq_len(m)) {
+        component <- object$component_vcov[[j]]
+        absent <- is.na(component)
+        if (any(absent) && !all(absent)) {
+          invalid("component_vcov", "must retain a wholly finite or wholly unavailable matrix per target")
+        }
+        if ((!all(absent) && any(component != t(component))) ||
+            (all(absent) && status$covariance_status[j] != "numerical_failure")) {
+          invalid("component_vcov/status$covariance_status", "contains asymmetric or inconsistent paired covariance")
+        }
+        variance <- object$theta_vcov[[j]][1L, 1L]
+        omega <- object$theta_omega[[j]][1L, 1L]
+        available <- status$ratio_status[j] == "ok" &&
+          status$covariance_status[j] %in% c("ok", "zero_score_variance")
+        if (available) {
+          if (!same_scalar(object$se[j], sqrt(variance)) ||
+              !same_scalar(omega, object$neff[j] * variance)) {
+            invalid("se/theta_vcov/theta_omega", "contains inconsistent retained uncertainty values")
+          }
+        } else if (!is.na(object$se[j]) || !is.na(variance) || !is.na(omega)) {
+          invalid("se/theta_vcov/theta_omega", "is inconsistent with retained covariance availability")
+        }
+      }
+    }
   }
   if (!is.null(scope)) scope$validated_report <- object
   invisible(NULL)

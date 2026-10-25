@@ -56,11 +56,9 @@ test_that("CLATE overlap plots use the instrument and its retained propensity", 
   expect_error(plot_overlap(fit, share_limits = c(.9, .1)), "share_limits")
 })
 
-test_that("CLATE overlap requires retained instrument state without repair inputs", {
+test_that("CLATE overlap validates retained instrument state", {
   skip_if_not_installed("ggplot2")
   fit <- .clate_plot_fit()
-  expect_error(plot_overlap(fit, instrument = fit$.model$iv$A),
-               "unused argument.*instrument")
   expect_error(plot_overlap(fit, type = "propensity", propensity = rep(.5, 8L)),
                "propensity.*CATE")
   for (iv in list(NULL, 1, list(A = fit$.model$iv$A),
@@ -153,8 +151,6 @@ test_that("CLATE influence plots retain paired score contributions", {
   expect_equal(p$data$contribution, reference[p$data$obs_id], tolerance = 1e-12)
   expect_equal(sum(p$data$contribution), 0, tolerance = 1e-12)
   expect_match(p$labels$y, "CLATE")
-  expect_error(plot_influence(fit, pseudo_outcome = rep(0, 8L)),
-               "unused argument.*pseudo_outcome")
   perfect <- .clate_plot_fit(perfect = TRUE)
   cate <- cate_dnn(X = perfect$.model$x_mat, X0 = perfect$x0,
     pseudo_outcome = perfect$.model$signal[, 1L], s = 3L, return = c("W", "dx"))

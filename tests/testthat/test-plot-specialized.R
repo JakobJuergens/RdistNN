@@ -118,11 +118,9 @@ test_that("plot_calibration reproduces the weighted indicator share", {
   expect_error(plot_calibration(.plot_special_cate_fit()), "rdistnn_plqr_result")
 })
 
-test_that("calibration requires its current retained indicator without repair inputs", {
+test_that("calibration validates its current retained indicator", {
   skip_if_not_installed("ggplot2")
   fit <- .plot_special_plqr_fit()
-  expect_error(plot_calibration(fit, residuals = rep(0, nrow(fit$W))),
-               "unused argument.*residuals")
   for (indicator in list(NULL, numeric(), rep(NA_real_, nrow(fit$W)),
                         rep(.5, nrow(fit$W)), rep("0", nrow(fit$W)))) {
     bad <- fit
@@ -159,12 +157,10 @@ test_that("plot_influence computes contributions and labels extremes", {
   expect_error(plot_influence(.plot_special_plqr_fit()), "rdistnn_cate_result")
 })
 
-test_that("influence requires its current retained signal without repair inputs", {
+test_that("influence validates its current retained signal", {
   skip_if_not_installed("ggplot2")
   fit <- .plot_special_cate_fit()
   n <- nrow(fit$W)
-  expect_error(plot_influence(fit, pseudo_outcome = fit$.model$psi),
-               "unused argument.*pseudo_outcome")
   for (signal in list(NULL, numeric(), rep(NA_real_, n), rep("1", n),
                      matrix(1, n, 1L))) {
     bad <- fit

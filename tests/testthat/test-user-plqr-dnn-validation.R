@@ -1,4 +1,4 @@
-# PLQR matrix inputs, wrapper controls, and removed argument names.
+# PLQR matrix inputs, wrapper controls and argument validation.
 test_that("plqr_dnn validation catches shape and theta_eval issues", {
   d <- .make_plqr_data(n = 30L, p = 2L, p_d = 2L, m = 2L, tau = 0.5)
 
@@ -353,27 +353,6 @@ test_that("matrix API rejects non-finite X for plqr_dnn", {
       theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0, k = 2L, s = 3L, se = FALSE
     ),
     regexp = "X.*non-finite", ignore.case = TRUE
-  )
-})
-
-test_that("removed legacy PLQR argument names fail instead of aliasing", {
-  d <- .make_plqr_data(n = 20L, p = 2L, p_d = 1L, m = 1L, tau = 0.5)
-  expect_error(
-    plqr_dnn(
-      X = d$X, D = d$D, q = d$g, mD = d$mD, Y = d$Y,
-      beta = d$theta_eval, tau = d$tau, X0 = d$X0,
-      k = 1L, s = 2L, se = FALSE
-    ),
-    "unused argument"
-  )
-  expect_error(
-    plqr_dnn(
-      data = d$df, x_cols = d$x_cols, D_cols = d$D_cols,
-      q_col = "g_oracle", mD_cols = d$mD_cols, y_col = "Y",
-      theta_eval = d$theta_eval, tau = d$tau, X0 = d$X0,
-      k = 1L, s = 2L, se = FALSE
-    ),
-    "unused argument"
   )
 })
 

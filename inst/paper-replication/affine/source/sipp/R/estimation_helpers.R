@@ -1046,7 +1046,7 @@ fit_dnn_arm <- function(data, sipp, y_col, nuisance, tuning_mode, k,
     tuning_mode = tuning_mode,
     se = se,
     jackknife = jackknife,
-    return = c("W", "ess", "psi")
+    return = c("W", "ess", "psi", "dx")
   )
   if (!is.null(s)) {
     args$s <- s
