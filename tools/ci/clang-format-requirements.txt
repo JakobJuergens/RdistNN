@@ -1,0 +1,7 @@
+# Pinned C++ style checker for CI (tools/ci/check_cpp_style.sh).
+# 18.1.3 matches Ubuntu 24.04's clang-format; releases 20+ format some
+# existing brace/alignment constructs differently, so a floating apt version
+# makes the style gate depend on the runner image. Bump deliberately and
+# reformat src/ and inst/include/ in the same change.
+clang-format==18.1.3 \
+    --hash=sha256:059f2c2e7166f97cf06f78d9bd31d83a9c0416527845cb397296daa43bd2c6e2
