@@ -55,8 +55,17 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Install clang-format
-        run: sudo apt-get update && sudo apt-get install -y clang-format
+      - name: Install pinned clang-format
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m venv "$RUNNER_TEMP/clang-format"
+          "$RUNNER_TEMP/clang-format/bin/python" -m pip install --quiet \
+            --only-binary=:all: --require-hashes \
+            -r tools/ci/clang-format-requirements.txt
+          echo "$RUNNER_TEMP/clang-format/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/clang-format/bin/clang-format" --version \
+            | grep -F 'clang-format version 18.1.3'
 
       - name: Check C++ style
         id: style
