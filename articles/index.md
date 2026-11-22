@@ -38,5 +38,5 @@
 
 ### Paper replication
 
-- [Reproduce the affine paper
+- [Reproduce the conditional Z-estimation paper
   results](https://JakobJuergens.github.io/RdistNN/articles/paper-affine-replication.md):

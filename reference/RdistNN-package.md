@@ -168,8 +168,7 @@ does not change other packages' thread settings.
   [`vignette("jackknife-gen-ustats", package = "RdistNN")`](https://JakobJuergens.github.io/RdistNN/articles/jackknife-gen-ustats.md).
 
 - For statistical background, assumptions and theoretical results, see
-  the accompanying
-  [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
+  the accompanying [paper](https://arxiv.org/abs/2610.38965).
 
 ## See also
 

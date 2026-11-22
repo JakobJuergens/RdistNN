@@ -29,10 +29,9 @@ change. No tolerance or rounding groups nearby distances. Distinct
 covariate profiles can have the same distance.
 
 Fixed top-`k` DNN kernels are implemented for `1 <= k <= s`. The
-accompanying
-[paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
-gives the theory for `k = 1`; accepting another `k` does not establish
-its inferential justification.
+accompanying [paper](https://arxiv.org/abs/2610.38965) gives the theory
+for `k = 1`; accepting another `k` does not establish its inferential
+justification.
 
 ## Basic Usage
 

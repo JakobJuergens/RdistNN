@@ -224,10 +224,8 @@ table.
 - If PLQR residual-regressor state is unavailable, Gram fields are
   present but marked unavailable.
 
-The
-[paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
-states the conditions for inference. These diagnostics do not check all
-of them.
+The [paper](https://arxiv.org/abs/2610.38965) states the conditions for
+inference. These diagnostics do not check all of them.
 
 ## Using diagnostics in scripts
 

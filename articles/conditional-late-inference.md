@@ -8,7 +8,7 @@ Start with the [CLATE
 workflow](https://JakobJuergens.github.io/RdistNN/articles/conditional-late.md)
 for inputs and a complete example. For identification, nuisance-learning
 conditions and asymptotic inference, see the accompanying
-[paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
+[paper](https://arxiv.org/abs/2610.38965).
 
 ## A small paired-signal example
 

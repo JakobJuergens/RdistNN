@@ -1,11 +1,12 @@
-# Reproduce the affine paper results
+# Reproduce the conditional Z-estimation paper results
 
 The installed `paper-replication/affine` bundle provides three
 workflows: recreate manuscript displays from saved evidence, rerun the
 simulation campaign, and fit the SIPP application. It is a
-study-specific companion to this
-[paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
-For general estimation, start with [Getting
+study-specific companion to [*Orthogonal Inference for Conditional
+Z-Estimation without Cross-Fitting: A Distributional Nearest-Neighbor
+Approach*](https://arxiv.org/abs/2610.38965) (Juergens, 2026;
+arXiv:2610.38965). For general estimation, start with [Getting
 started](https://JakobJuergens.github.io/RdistNN/articles/getting-started.md).
 
 ## Locate the installed bundle
@@ -28,6 +29,12 @@ Read its `README.md` for the full protocol and dependencies.
 `manifest.json` pins the paper/source identity, accepted configurations
 and evidence hashes. No paper checkout or original run cache is needed
 to render the saved results.
+
+The arXiv link identifies the public paper. The bundle’s manifest
+separately identifies its accepted manuscript snapshot, historical
+package dependencies and saved evidence. A fresh run uses the installed
+package and records that executable identity; it does not replace the
+accepted evidence.
 
 ## Recreate tables and figures without refitting
 

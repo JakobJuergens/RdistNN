@@ -15,8 +15,8 @@ distance ties is not established; see the [weight
 guide](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.html#exact-distance-ties).
 
 For statistical background, see the
-[paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
-For the supported CATE, regression and CLATE workflows, use [Getting
+[paper](https://arxiv.org/abs/2610.38965). For the supported CATE,
+regression and CLATE workflows, use [Getting
 started](https://JakobJuergens.github.io/RdistNN/articles/getting-started.md)
 and [Conditional
 LATE](https://JakobJuergens.github.io/RdistNN/articles/conditional-late.md).

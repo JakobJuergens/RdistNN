@@ -26,8 +26,7 @@ experimental.
 [Source and installation](https://github.com/JakobJuergens/RdistNN) ·
 [Documentation](https://JakobJuergens.github.io/RdistNN/) · [Getting
 started](https://JakobJuergens.github.io/RdistNN/articles/getting-started.html)
-· [Accompanying
-paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
+· [Accompanying paper](https://arxiv.org/abs/2610.38965)
 
 ## 0.1.5 production-update announcement draft
 

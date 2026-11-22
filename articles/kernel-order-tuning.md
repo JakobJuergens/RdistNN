@@ -3,9 +3,8 @@
 The order `s` controls localization: larger values concentrate weight
 closer to the reporting profile. A grid compares estimates across orders
 and retains its specified default; it does not select an optimal order.
-The
-[paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
-gives the statistical motivation and inference conditions.
+The [paper](https://arxiv.org/abs/2610.38965) gives the statistical
+motivation and inference conditions.
 
 ## Fit and compare a grid
 

@@ -226,12 +226,11 @@ Nuisance predictions use all pre-instrument adjustment variables, while
 weights use the reporting coordinates X. The estimate is the ratio of
 the adjusted local reduced form and first stage, using common weights.
 
-The accompanying
-[paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
-gives the IV identifying assumptions and conditions for pointwise
-inference. A training label or a computational choice of k or weight
-method does not establish those conditions. Inspect the local first
-stage alongside the ratio.
+The accompanying [paper](https://arxiv.org/abs/2610.38965) gives the IV
+identifying assumptions and conditions for pointwise inference. A
+training label or a computational choice of k or weight method does not
+establish those conditions. Inspect the local first stage alongside the
+ratio.
 
 Covariance keeps paired variation of both frozen signals. The
 residualized IV-GMM workflow uses a different moment and can have a

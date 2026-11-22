@@ -5,9 +5,9 @@ conditional means at selected covariate profiles. Install the package
 using the
 [README](https://github.com/JakobJuergens/RdistNN#installation). Use
 `browseVignettes("RdistNN")` to open the installed guide collection. The
-[paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
-gives the statistical assumptions and results; this guide covers the
-calls and how to read their outputs.
+[paper](https://arxiv.org/abs/2610.38965) gives the statistical
+assumptions and results; this guide covers the calls and how to read
+their outputs.
 
 During active experimental development, refit saved models after package
 updates.

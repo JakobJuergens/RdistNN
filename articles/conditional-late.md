@@ -3,10 +3,9 @@
 [`clate_dnn()`](https://JakobJuergens.github.io/RdistNN/reference/clate_dnn.md)
 estimates conditional effects among compliers using a binary instrument
 `A`, binary treatment `D` and supplied nuisance predictions. The
-[paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
-defines the causal target and identifying assumptions. Reporting
-covariates can be a subset of the controls used to obtain the nuisance
-predictions.
+[paper](https://arxiv.org/abs/2610.38965) defines the causal target and
+identifying assumptions. Reporting covariates can be a subset of the
+controls used to obtain the nuisance predictions.
 
 Observations at exactly equal represented selected-metric distance to a
 target share the mean of their assigned rank weights in both the reduced

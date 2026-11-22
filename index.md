@@ -10,6 +10,10 @@ errors, local support and tuning sensitivity. For causal estimation, you
 supply nuisance predictions; the package constructs the adjusted signals
 and performs local estimation.
 
+The package accompanies [*Orthogonal Inference for Conditional
+Z-Estimation without Cross-Fitting: A Distributional Nearest-Neighbor
+Approach*](https://arxiv.org/abs/2610.38965).
+
 [Get
 started](https://JakobJuergens.github.io/RdistNN/articles/getting-started.html)
 · [Function
@@ -187,10 +191,9 @@ persistent distance ties is not established. The [weight
 guide](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.html#exact-distance-ties)
 explains tie handling, survivor weights and realized support.
 
-The [accompanying
-paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
-states the identification, nuisance-learning, localization and bias
-conditions for inference.
+The [accompanying paper](https://arxiv.org/abs/2610.38965) states the
+identification, nuisance-learning, localization and bias conditions for
+inference.
 
 ## Numerical behavior and engines
 
@@ -208,6 +211,16 @@ the [weight
 guide](https://JakobJuergens.github.io/RdistNN/articles/dnn-weights.html#numerical-limits)
 before interpreting calculations at those scales.
 
+## Citation
+
+Juergens, Jakob R. (2026). *Orthogonal Inference for Conditional
+Z-Estimation without Cross-Fitting: A Distributional Nearest-Neighbor
+Approach*. [arXiv:2610.38965](https://arxiv.org/abs/2610.38965). DOI:
+[10.48550/arXiv.2610.38965](https://doi.org/10.48550/arXiv.2610.38965).
+
+Use `citation("RdistNN")` for the software and methodological
+references.
+
 ## Further reading and help
 
 - [Notation and
@@ -222,10 +235,9 @@ before interpreting calculations at those scales.
 - PLQR, local IV-GMM and ratio confidence-set inversion remain
   **experimental**; use their dedicated reference pages.
 
-Use `citation("RdistNN")` for references. Report problems through the
-[issue tracker](https://github.com/JakobJuergens/RdistNN/issues) with a
-minimal example and
-[`sessionInfo()`](https://rdrr.io/r/utils/sessionInfo.html).
+Report problems through the [issue
+tracker](https://github.com/JakobJuergens/RdistNN/issues) with a minimal
+example and [`sessionInfo()`](https://rdrr.io/r/utils/sessionInfo.html).
 [CONTRIBUTING.md](https://github.com/JakobJuergens/RdistNN/blob/master/CONTRIBUTING.md)
 covers development and numerical-engine contracts. RdistNN is licensed
 under GPL version 3 or later.

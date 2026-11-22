@@ -11,7 +11,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/JakobJuergens/RdistNN/blob/v0.1.5/inst/CITATION)
+[`inst/CITATION`](https://github.com/JakobJuergens/RdistNN/blob/master/inst/CITATION)
 
 Juergens J (2026). *Distributional Nearest-Neighbor Inference for Local
 Conditional Moment Models*. R package version 0.1.5,
@@ -27,15 +27,17 @@ Conditional Moment Models*. R package version 0.1.5,
 
 Juergens J (2026). “Orthogonal Inference for Conditional Z-Estimation
 without Cross-Fitting: A Distributional Nearest-Neighbor Approach.”
-Manuscript available upon request,
-<https://jakobjuergens.com/research/#orthogonal-inference-conditional-z>.
+arXiv preprint arXiv:2610.38965.
+[doi:10.48550/arXiv.2610.38965](https://doi.org/10.48550/arXiv.2610.38965).
+<https://arxiv.org/abs/2610.38965>.
 
-    @Unpublished{,
+    @Misc{,
       title = {Orthogonal Inference for Conditional Z-Estimation without Cross-Fitting: A Distributional Nearest-Neighbor Approach},
       author = {Jakob R. Juergens},
       year = {2026},
-      note = {Manuscript available upon request},
-      url = {https://jakobjuergens.com/research/#orthogonal-inference-conditional-z},
+      howpublished = {arXiv preprint arXiv:2610.38965},
+      doi = {10.48550/arXiv.2610.38965},
+      url = {https://arxiv.org/abs/2610.38965},
     }
 
 Juergens J (2025). “Jackknife Variance Estimation for Hájek-Dominated

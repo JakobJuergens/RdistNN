@@ -5,7 +5,7 @@ Start with [Getting
 started](https://JakobJuergens.github.io/RdistNN/articles/getting-started.md)
 for an analysis you can run. For the statistical setup, assumptions and
 derivations, see the accompanying
-[paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
+[paper](https://arxiv.org/abs/2610.38965).
 
 ## Localization and DNN conventions
 

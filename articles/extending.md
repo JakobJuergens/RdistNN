@@ -412,8 +412,8 @@ explicit shared `ctx`.
 
 Custom estimators need their own statistical justification. The examples
 here show software composition; the
-[paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
-and its references give the background for the package’s estimators.
+[paper](https://arxiv.org/abs/2610.38965) and its references give the
+background for the package’s estimators.
 
 ## Related Articles
 

@@ -8,8 +8,7 @@ for a compact-support rank-weighted rule. Applied users obtain local
 standard errors directly from their fitted estimators; see [Getting
 started](https://JakobJuergens.github.io/RdistNN/articles/getting-started.md).
 Statistical conditions and theory belong to the
-[paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
-and its references.
+[paper](https://arxiv.org/abs/2610.38965) and its references.
 
 ## Supply neighbor indices and a signal
 
