@@ -350,7 +350,7 @@ print.rdistnn_weights_result <- function(x, ...) {
 #' `j <= n - s + k`; for `k = 1` this becomes `j <= n - s + 1`. Distance-block
 #' averaging can extend nonzero observation weights beyond this nominal edge.
 #' Fixed top-`k` kernels are implemented for `1 <= k <= s`. The accompanying
-#' [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
+#' [paper](https://arxiv.org/abs/2610.38965)
 #' gives the theory for the unmodified `k = 1` rule.
 #'
 #' @inheritSection weights_matrix Exact distance ties

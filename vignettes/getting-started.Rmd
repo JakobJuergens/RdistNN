@@ -16,7 +16,7 @@ This walkthrough fits conditional average treatment effects (CATE) and
 conditional means at selected covariate profiles. Install the package using
 the [README](https://github.com/JakobJuergens/RdistNN#installation).
 Use `browseVignettes("RdistNN")` to open the installed guide collection.
-The [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
+The [paper](https://arxiv.org/abs/2610.38965)
 gives the statistical assumptions and results; this guide covers the calls
 and how to read their outputs.
 

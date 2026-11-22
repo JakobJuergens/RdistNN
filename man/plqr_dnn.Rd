@@ -221,7 +221,7 @@ Coefficient uncertainty requires \code{normalize = TRUE} and a density-backed
 Jacobian. \code{theta_meat} chooses analytic score covariance or the full
 jackknife covariance of the localized moment. \code{moment_se} alone is not a
 coefficient standard error. For statistical background and conditions,
-see the \href{https://jakobjuergens.com/research/#orthogonal-inference-conditional-z}{paper}.
+see the \href{https://arxiv.org/abs/2610.38965}{paper}.
 
 A Jacobian, its inverse, or the assembled sandwich covariance outside the
 numeric range leaves coefficient uncertainty unavailable with rescaling

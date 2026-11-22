@@ -50,7 +50,7 @@
 #'
 #' For causal identification and pointwise inference, including conditions on
 #' nuisance accuracy and deletion stability, see the accompanying
-#' [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
+#' [paper](https://arxiv.org/abs/2610.38965).
 #' This function accepts supplied oracle, out-of-fold or full-sample predictions;
 #' it does not verify those conditions for a learner. AIPW requires both
 #' arm-specific outcome means; a supplied signal is used unchanged.

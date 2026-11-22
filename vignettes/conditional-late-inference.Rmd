@@ -16,7 +16,7 @@ This guide explains the covariance and status fields returned by
 `affine_ratio_dnn()` and `clate_dnn()`. Start with the
 [CLATE workflow](conditional-late.html) for inputs and a complete example.
 For identification, nuisance-learning conditions and asymptotic inference,
-see the accompanying [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
+see the accompanying [paper](https://arxiv.org/abs/2610.38965).
 
 ## A small paired-signal example
 

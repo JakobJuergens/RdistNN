@@ -99,7 +99,7 @@
 #' - For jackknife details see
 #'   `vignette("jackknife-gen-ustats", package = "RdistNN")`.
 #' - For statistical background, assumptions and theoretical results, see
-#'   the accompanying [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
+#'   the accompanying [paper](https://arxiv.org/abs/2610.38965).
 #'
 #' @docType package
 #' @name RdistNN-package

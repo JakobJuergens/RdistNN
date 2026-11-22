@@ -42,7 +42,7 @@ exact finite-population rule, the unaveraged rank table has nominal support
 \code{j <= n - s + k}; for \code{k = 1} this becomes \code{j <= n - s + 1}. Distance-block
 averaging can extend nonzero observation weights beyond this nominal edge.
 Fixed top-\code{k} kernels are implemented for \verb{1 <= k <= s}. The accompanying
-\href{https://jakobjuergens.com/research/#orthogonal-inference-conditional-z}{paper}
+\href{https://arxiv.org/abs/2610.38965}{paper}
 gives the theory for the unmodified \code{k = 1} rule.
 }
 \section{Exact distance ties}{

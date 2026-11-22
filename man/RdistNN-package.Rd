@@ -123,7 +123,7 @@ and scores, see \code{vignette("extending", package = "RdistNN")}.
 \item For jackknife details see
 \code{vignette("jackknife-gen-ustats", package = "RdistNN")}.
 \item For statistical background, assumptions and theoretical results, see
-the accompanying \href{https://jakobjuergens.com/research/#orthogonal-inference-conditional-z}{paper}.
+the accompanying \href{https://arxiv.org/abs/2610.38965}{paper}.
 }
 }
 

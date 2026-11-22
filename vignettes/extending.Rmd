@@ -355,7 +355,7 @@ inspect the weighting pipeline. Specs receive ranks rather than raw distances;
 when both ranking and weighting need setup, pass an explicit shared `ctx`.
 
 Custom estimators need their own statistical justification. The examples here
-show software composition; the [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
+show software composition; the [paper](https://arxiv.org/abs/2610.38965)
 and its references give the background for the package's estimators.
 
 ## Related Articles

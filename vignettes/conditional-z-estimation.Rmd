@@ -25,7 +25,7 @@ The package warns that inference with persistent distance ties is not establishe
 see the [weight guide](dnn-weights.html#exact-distance-ties).
 
 For statistical background, see the
-[paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z).
+[paper](https://arxiv.org/abs/2610.38965).
 For the supported CATE, regression and CLATE workflows, use
 [Getting started](getting-started.html) and [Conditional LATE](conditional-late.html).
 

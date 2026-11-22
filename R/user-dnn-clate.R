@@ -33,7 +33,7 @@
 #' adjusted local reduced form and first stage, using common weights.
 #'
 #' The accompanying
-#' [paper](https://jakobjuergens.com/research/#orthogonal-inference-conditional-z)
+#' [paper](https://arxiv.org/abs/2610.38965)
 #' gives the IV identifying assumptions and conditions for pointwise inference.
 #' A training label or a computational choice of k or weight method does not
 #' establish those conditions. Inspect the local first stage alongside the ratio.

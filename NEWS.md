@@ -1,5 +1,14 @@
 # RdistNN 0.1.5 (2026-10-25)
 
+## Documentation update (2026-11-22)
+
+- Cite the public conditional Z-estimation preprint, arXiv:2610.38965, in
+  package citation metadata, the README, function help and guides. Connect
+  the replication guide to the paper while preserving frozen evidence and
+  historical executable identities.
+
+## Release changes (2026-10-25)
+
 - Refresh affine replication with the accepted October 24 SIPP evidence and
   current paper-owned helpers. The installed fit, independent diagnostics,
   export and localization workflow retains exact-distance averaging geometry
