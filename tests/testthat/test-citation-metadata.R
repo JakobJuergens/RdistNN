@@ -32,12 +32,10 @@ test_that("CITATION metadata is valid and release-ready", {
     titles
   )]]
   expect_identical(conditional_z$year, "2026")
-  expect_identical(attr(conditional_z, "bibtype", exact = TRUE), "Unpublished")
-  expect_identical(conditional_z$note, "Manuscript available upon request")
-  expect_identical(
-    conditional_z$url,
-    "https://jakobjuergens.com/research/#orthogonal-inference-conditional-z"
-  )
+  expect_identical(attr(conditional_z, "bibtype", exact = TRUE), "Misc")
+  expect_identical(conditional_z$howpublished, "arXiv preprint arXiv:2610.38965")
+  expect_identical(conditional_z$doi, "10.48550/arXiv.2610.38965")
+  expect_identical(conditional_z$url, "https://arxiv.org/abs/2610.38965")
 
   jackknife <- fields[[match(
     "Jackknife Variance Estimation for Hájek-Dominated Generalized U-Statistics",
